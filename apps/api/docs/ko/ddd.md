@@ -7,6 +7,7 @@ applies_to:
 source: ../en/ddd.md
 last_synced: 2026-06-19
 related:
+  - ./architecture.md
   - ./index.md
 ---
 
@@ -15,30 +16,25 @@ related:
 이 API에서 DDD 용어는 model ownership, language boundary, business behavior를 정의하기 위해 사용한다.
 DDD 용어는 단순한 folder name이 아니다.
 
-## Bounded Contexts
+## API Bounded Context
+
+- 이 API는 하나의 bounded context를 가진다.
+- 추가 bounded context folder를 만들지 않는다.
+- NestJS module 또는 feature folder는 자동으로 bounded context가 아니다.
+
+## Bounded Context 정의
 
 - bounded context는 특정 domain model과 ubiquitous language가 유효한 경계다.
-- 같은 단어라도 다른 bounded context에서는 다른 의미를 가질 수 있다.
-- bounded context 외부 코드는 context 내부 model을 직접 수정하면 MUST NOT 된다.
+- bounded context 외부 코드는 context 내부 model을 직접 수정해서는 안 된다.
 - bounded context 외부 코드는 context 내부 domain object에 의존하지 않는 것이 좋다.
-- context는 ID, DTO, event, port, anti-corruption layer를 통해 통신한다.
 - bounded context는 folder name만이 아니라 model, language, responsibility boundary로 정의된다.
 
 ## Implementation Modules
 
-- implementation module은 실용적인 code wiring 또는 framework module 단위다.
+- implementation module은 실용적인 source grouping, code wiring 또는 framework module 단위다.
+- Source file은 `src/{module}/` 아래 implementation module 기준으로 묶는다.
 - implementation module은 자동으로 DDD bounded context가 아니다.
-- 다른 bounded context는 내부 domain object에 직접 접근하지 말고 public application contract, ID, DTO, event, port를 통해 상호작용하는 것이 좋다.
-
-## Shared Kernel
-
-- `shared-kernel`은 여러 bounded context가 의도적으로 공유하는 domain model의 작은 일부를 담는다.
-- shared-kernel code에는 business meaning이 있다.
-- shared-kernel 변경은 영향을 받는 context owner와 검토한다.
-- `shared-kernel`은 generic duplication-removal directory로 사용하면 MUST NOT 된다.
-- 공유 개념이 불안정하거나 context-specific하다면 성급한 shared kernel보다 중복을 선호한다.
-- shared kernel은 `Money`, `Currency`, `DateRange`처럼 작고 안정적인 domain concept에 사용하는 것을 선호한다.
-- 여러 bounded context가 안정적인 domain concept를 의도적으로 공유하기 전까지 shared-kernel code를 만들지 않는다.
+- Implementation module name은 단일 API bounded context 내부의 business capability 또는 runtime ownership을 설명해야 한다.
 
 ## Domain Model Building Blocks
 
@@ -52,7 +48,5 @@ DDD 용어는 단순한 folder name이 아니다.
 
 ## 리뷰 규칙
 
-- 새 shared abstraction을 shared domain code로 만들기 전에 정말 안정적인 domain concept인지 확인한다.
-- bounded context의 public language가 다른 context의 internal model을 노출하는지 확인한다.
 - domain object가 database row 또는 request DTO처럼 동작하지 않고 business behavior를 표현하는지 확인한다.
-- model boundary 간 통신이 ID, DTO, event, port, anti-corruption mapping을 사용하는지 확인한다.
+- `src/{module}/` implementation module을 domain model boundary로 오해하고 있지 않은지 확인한다.
