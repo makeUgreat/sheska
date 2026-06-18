@@ -1,0 +1,75 @@
+---
+title: API Test Convention
+lang: en
+audience: both
+applies_to:
+  - apps/api
+translation: ../ko/test.md
+related:
+  - ./index.md
+---
+
+# API Test Convention
+
+The API app uses Vitest and separates unit tests from integration tests.
+Unit tests are preferred first based on execution speed and verification scope.
+Write integration tests when the test must verify multiple real components working together, such as framework configuration, module wiring, Nest application bootstrap, routing, or actual HTTP responses.
+
+## Test Tooling
+
+- `apps/api` tests MUST use Vitest.
+- Vitest transforms TypeScript through SWC so NestJS decorator metadata is available in tests.
+- Test files SHOULD import `describe`, `it`, `expect`, and lifecycle functions from `vitest`.
+- Do not add new Jest tests, Jest config files, `ts-jest`, or `@types/jest`.
+- Keep Vitest transform behavior aligned with the API SWC build settings when changing TypeScript target, decorators, or metadata settings.
+
+## Common Review Rules
+
+- Use the standard directory for the test type. Unit tests live near the target source file. Integration tests live under `apps/api/test/`.
+- Use the target name in `describe()`.
+- Each `it()` should call one unit of work and verify one specific behavior result.
+- Keep status code, body, and header assertions in the same `it()` when they verify the same execution result.
+- Split `it()` blocks when the execution path or expected result differs, such as success, failure, exception, boundary value, authentication/authorization, or validation.
+- Verify async behavior clearly with `async/await` or Vitest `resolves`/`rejects` matchers.
+- Do not share state between tests. If a shared resource is required, create it in `beforeEach` and clean it up in `afterEach`.
+- Tests must produce the same result under the same conditions.
+
+## Unit Tests
+
+- Run unit tests with `pnpm test:unit` from the repository root or `pnpm --filter @sheska/api test:unit`.
+- Unit test files use the `.spec.ts` suffix under `apps/api/src`.
+- Target pure services, functions, controllers without HTTP transport, and small units of business logic.
+- Do not use an HTTP server, actual Nest application bootstrap, or external I/O unless DI configuration itself is the behavior under test.
+- Create required dependencies directly or replace them with lightweight mocks/stubs.
+- Use a Nest testing module only when DI configuration must be verified.
+- A unit of work is the flow from an entry point call to an observable behavior result.
+- The behavior result is one of: return value, thrown exception, state change, or dependency call.
+- Return values, exceptions, state changes, and dependency calls are different result types, so test them in separate `it()` blocks.
+
+## Integration Tests
+
+- Run integration tests with `pnpm test:integration` from the repository root or `pnpm --filter @sheska/api test:integration`.
+- Integration test files use `.e2e-spec.ts` or `.integration-spec.ts` under `apps/api/test`.
+- Use integration tests to verify interactions that unit tests cannot cover, such as dependency injection wiring, framework bootstrap, routing, and controller responses.
+- If a test uses hard-to-control elements such as an actual network, REST API, system time, file system, or database, separate it as an integration test instead of a unit test.
+- Do not use integration tests to repeat every domain or application invariant. Keep detailed domain and application rule coverage in unit tests.
+- Nest app integration test files should create the app in `beforeEach` and close it in `afterEach` when the app is initialized.
+- The outer `describe()` should name the integrated target.
+- For route tests, the inner `describe()` should be the controller method and route. Example: `describe('GET /')`.
+- Verify HTTP status code, response body, and important headers together.
+
+## Commands
+
+```bash
+pnpm lint:check         # ESLint checks
+pnpm typecheck          # TypeScript type checking
+pnpm test:unit          # Unit tests
+pnpm test:integration   # Integration and e2e tests
+pnpm test               # Unit tests, then integration tests
+pnpm test:watch         # Vitest watch mode from the API package
+pnpm test:cov           # Unit test coverage from the API package
+```
+
+Before opening a PR, run the checks that match the scope of the change.
+If only isolated services or functions changed, run `pnpm lint:check`, `pnpm typecheck`, and `pnpm test:unit`.
+If routes, module configuration, or application bootstrap flow changed, also run `pnpm test:integration`.

@@ -1,6 +1,6 @@
 # Sheska
 
-Sheska is organized as a pnpm monorepo.
+Sheska는 pnpm monorepo로 구성되어 있다.
 
 ## Workspaces
 
@@ -15,25 +15,25 @@ pnpm install
 
 ## API
 
-Run the API in development mode:
+API를 development mode로 실행한다.
 
 ```bash
 pnpm start:dev
 ```
 
-Build the API:
+API를 build한다.
 
 ```bash
 pnpm build
 ```
 
-Run type checking:
+Type checking을 실행한다.
 
 ```bash
 pnpm typecheck
 ```
 
-Run tests:
+테스트를 실행한다.
 
 ```bash
 pnpm test
@@ -41,7 +41,7 @@ pnpm test:unit
 pnpm test:integration
 ```
 
-Run package commands directly:
+Package command를 직접 실행한다.
 
 ```bash
 pnpm --filter @sheska/api start:dev
