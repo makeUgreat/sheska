@@ -6,16 +6,19 @@ applies_to:
   - apps/api
 translation: ../ko/index.md
 related:
+  - ./architecture.md
   - ./ddd.md
+  - ./source-dependency.md
+  - ./runtime-wiring.md
   - ./test.md
 ---
 
 # API Convention Index
 
-## Source Of Truth
+## Synchronization Policy
 
-English `apps/api` convention documents are the source of truth.
-Korean documents are human-facing translations.
+English and Korean `apps/api` convention documents are paired documents that should describe the same policy.
+When they conflict, choose the intended policy from either language and update both documents in the same change unit.
 
 ## Reading Rules
 
@@ -24,5 +27,8 @@ When changing public project Markdown documents, also read the repository docume
 
 ## Routing
 
+- `apps/api` architecture, source structure, or module boundary decisions: read [API Architecture Convention](./architecture.md).
 - `apps/api` DDD boundaries, domain model ownership, or shared domain language: read [API DDD Convention](./ddd.md).
+- Import direction, layer boundaries, or framework imports: read [API Source Dependency Convention](./source-dependency.md).
+- NestJS DI, provider registration, module wiring, bootstrap flow, or port binding: read [API Runtime Wiring Convention](./runtime-wiring.md).
 - `apps/api` test files, test structure, or test command selection: read [API Test Convention](./test.md).

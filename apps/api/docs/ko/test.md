@@ -18,7 +18,7 @@ API 앱은 Vitest를 사용하며 단위 테스트와 통합 테스트를 분리
 
 ## 테스트 도구
 
-- `apps/api` 테스트는 Vitest를 MUST 사용한다.
+- `apps/api` 테스트는 반드시 Vitest를 사용한다.
 - Vitest는 SWC로 TypeScript를 transform해서 NestJS decorator metadata를 테스트에서도 사용할 수 있게 한다.
 - Test file은 `describe`, `it`, `expect`, lifecycle function을 `vitest`에서 import하는 것을 권장한다.
 - 새 Jest test, Jest config file, `ts-jest`, `@types/jest`를 추가하지 않는다.

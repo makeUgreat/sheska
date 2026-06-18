@@ -9,15 +9,15 @@ translation: ../ko/documentation-guidelines.md
 
 # Documentation Guidelines
 
-Public project Markdown documents are maintained as English source documents and Korean translations.
-English documents are the source of truth, and Korean documents are human-facing translations.
+Public project Markdown documents are maintained as paired English and Korean documents.
+Both languages should describe the same policy.
 
-## Source Of Truth
+## Synchronization Policy
 
-- English documents are the source of truth.
-- Korean and other non-English documents are human-facing translations.
-- If a non-English document conflicts with the English document, use the English document as the source of truth.
-- When a conflict is found, update the translation in the same change unit.
+- English and Korean documents are paired policy documents.
+- Neither language automatically wins when paired documents conflict.
+- If paired documents conflict, choose the intended policy from either language and update both documents in the same change unit.
+- Do not keep one language knowingly stale after resolving a conflict.
 
 ## Scope And Exceptions
 
@@ -44,8 +44,8 @@ English documents are the source of truth, and Korean documents are human-facing
 ## Frontmatter
 
 - Repository documentation under `docs/en/` and `docs/ko/` MUST include YAML frontmatter.
-- English source documents MUST include `title`, `lang: en`, `audience`, `applies_to`, and `translation`.
-- Korean translation documents MUST include `title`, `lang: ko`, `audience`, `applies_to`, `source`, and `last_synced`.
+- English documents MUST include `title`, `lang: en`, `audience`, `applies_to`, and `translation`.
+- Korean documents MUST include `title`, `lang: ko`, `audience`, `applies_to`, `source`, and `last_synced`.
 - `read_when` is recommended for documents routed from `index.md`.
 - Include `related` only when there are clear documents that should be read together.
 - Use relative paths in `related`, `translation`, and `source`.
@@ -60,7 +60,7 @@ Each document should have a clear task trigger that can be routed from `index.md
 - Use one `#` heading for the document title.
 - Use `##` headings for major rule groups.
 - Use `###` headings only when a `##` section has multiple distinct subgroups.
-- Put scope and source-of-truth rules before task-specific rules.
+- Put scope and synchronization policy rules before task-specific rules.
 - Put default rules before exceptions.
 - Group related rules under explicit headings instead of using one long mixed list.
 - Avoid sections whose only purpose is to hold unrelated leftover rules.
@@ -83,10 +83,11 @@ Each document should have a clear task trigger that can be routed from `index.md
 
 - Translate prose and section headings in Korean documents.
 - Write Korean human-facing documents naturally, but keep the strength of requirements the same.
+- Translate requirement language into natural Korean wording.
 
 ### Shared Rules
 
-- Keep code, commands, file paths, URLs, frontmatter keys, requirement keywords, API names, type names, package names, identifiers, and product names untranslated.
+- Keep code, commands, file paths, URLs, frontmatter keys, API names, type names, package names, identifiers, and product names untranslated.
 - Use precise requirement language. Do not make one language stricter or looser than its pair.
 
 ## Requirement Language
@@ -98,5 +99,5 @@ Each document should have a clear task trigger that can be routed from `index.md
 - Use `MAY` for explicitly allowed behavior.
 - Use `Prefer` to mark priority between valid options.
 - Use `Avoid` to discourage a pattern without forbidding it.
-- Keep requirement keywords in English in Korean documents.
+- In Korean documents, translate requirement keywords into natural Korean phrases while preserving requirement strength.
 - Do not overuse `MUST`; reserve it for policy violations, correctness risks, or rules that can be judged consistently.

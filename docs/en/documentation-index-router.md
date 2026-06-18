@@ -37,7 +37,7 @@ It is not a project-wide documentation catalog.
 
 ## Required Sections
 
-- `Source Of Truth`: define which language or document set is canonical.
+- `Synchronization Policy`: define how paired language documents are kept consistent.
 - `Reading Rules`: define how much documentation should be loaded.
 - `Routing`: list task situations and the documents that should be read.
 
