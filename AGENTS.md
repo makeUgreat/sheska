@@ -1,6 +1,7 @@
 # Project Conventions
 
-Use English convention documents as authoritative.
+Use convention indexes as the entry points for project conventions.
+When paired English and Korean documents conflict, choose the intended policy and synchronize both documents.
 
 - [Documentation Convention Index](docs/en/index.md)
 

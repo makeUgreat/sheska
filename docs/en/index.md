@@ -9,10 +9,10 @@ translation: ../ko/index.md
 
 # Documentation Convention Index
 
-## Source Of Truth
+## Synchronization Policy
 
-English documents are the source of truth.
-Korean documents are human-facing translations.
+English and Korean documents are paired documents that should describe the same policy.
+When they conflict, choose the intended policy from either language and update both documents in the same change unit.
 
 ## Reading Rules
 
