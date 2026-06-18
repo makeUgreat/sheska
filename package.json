@@ -1,0 +1,17 @@
+{
+  "name": "sheska",
+  "version": "0.0.1",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "pnpm --filter @sheska/api build",
+    "start:dev": "pnpm --filter @sheska/api start:dev",
+    "lint": "pnpm --filter @sheska/api lint",
+    "lint:check": "pnpm --filter @sheska/api lint:check",
+    "test": "pnpm --filter @sheska/api test",
+    "test:unit": "pnpm --filter @sheska/api test:unit",
+    "test:integration": "pnpm --filter @sheska/api test:integration",
+    "test:e2e": "pnpm --filter @sheska/api test:integration",
+    "typecheck": "pnpm --filter @sheska/api typecheck"
+  }
+}
