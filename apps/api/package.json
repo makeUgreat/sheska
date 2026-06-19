@@ -14,6 +14,8 @@
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "lint:check": "eslint \"{src,test}/**/*.ts\"",
+    "deps:check": "depcruise src test --config .dependency-cruiser.cjs",
+    "deps:graph": "depcruise src test --config .dependency-cruiser.cjs --output-type mermaid --output-to dependency-graph.mmd",
     "typecheck": "tsc --noEmit",
     "test": "pnpm test:unit && pnpm test:integration",
     "test:unit": "vitest run --exclude \"test/**/*.e2e-spec.ts\"",
