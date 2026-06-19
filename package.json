@@ -8,10 +8,15 @@
     "start:dev": "pnpm --filter @sheska/api start:dev",
     "lint": "pnpm --filter @sheska/api lint",
     "lint:check": "pnpm --filter @sheska/api lint:check",
+    "deps:check": "pnpm --filter @sheska/api deps:check",
+    "deps:graph": "pnpm --filter @sheska/api deps:graph",
     "test": "pnpm --filter @sheska/api test",
     "test:unit": "pnpm --filter @sheska/api test:unit",
     "test:integration": "pnpm --filter @sheska/api test:integration",
     "test:e2e": "pnpm --filter @sheska/api test:integration",
     "typecheck": "pnpm --filter @sheska/api typecheck"
+  },
+  "devDependencies": {
+    "dependency-cruiser": "^17.4.2"
   }
 }
