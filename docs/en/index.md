@@ -22,4 +22,8 @@ Do not load every document by default.
 ## Routing
 
 - When creating, editing, or reviewing project Markdown documents: read [Documentation Guidelines](./documentation-guidelines.md).
-- When editing this documentation convention index: read [Documentation Convention Index Router](./documentation-index-router.md).
+
+## Maintenance
+
+Keep this index short.
+Route only documentation convention documents that have clear documentation-work triggers.
