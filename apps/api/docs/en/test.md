@@ -6,6 +6,7 @@ applies_to:
   - apps/api
 translation: ../ko/test.md
 related:
+  - ./architecture.md
   - ./index.md
 ---
 
@@ -13,7 +14,7 @@ related:
 
 The API app uses Vitest and separates unit tests from integration tests.
 Unit tests are preferred first based on execution speed and verification scope.
-Write integration tests when the test must verify multiple real components working together, such as framework configuration, module wiring, Nest application bootstrap, routing, or actual HTTP responses.
+Write integration tests when the test must verify multiple real components working together, such as framework configuration, module wiring, Nest application startup, routing, or actual HTTP responses.
 
 ## Test Tooling
 
@@ -23,23 +24,24 @@ Write integration tests when the test must verify multiple real components worki
 - Do not add new Jest tests, Jest config files, `ts-jest`, or `@types/jest`.
 - Keep Vitest transform behavior aligned with the API SWC build settings when changing TypeScript target, decorators, or metadata settings.
 
-## Common Review Rules
+## Review Heuristics
 
-- Use the standard directory for the test type. Unit tests live near the target source file. Integration tests live under `apps/api/test/`.
-- Use the target name in `describe()`.
+- Prefer the standard directory for the test type. Unit tests live near the target source file. Integration tests live under the matching architecture path in `apps/api/test/{context}/`.
+- Prefer the target name in `describe()`.
 - Each `it()` should call one unit of work and verify one specific behavior result.
 - Keep status code, body, and header assertions in the same `it()` when they verify the same execution result.
 - Split `it()` blocks when the execution path or expected result differs, such as success, failure, exception, boundary value, authentication/authorization, or validation.
 - Verify async behavior clearly with `async/await` or Vitest `resolves`/`rejects` matchers.
-- Do not share state between tests. If a shared resource is required, create it in `beforeEach` and clean it up in `afterEach`.
+- Avoid sharing state between tests. If a shared resource is required, create it in `beforeEach` and clean it up in `afterEach`.
 - Tests must produce the same result under the same conditions.
 
 ## Unit Tests
 
 - Run unit tests with `pnpm test:unit` from the repository root or `pnpm --filter @sheska/api test:unit`.
-- Unit test files use the `.spec.ts` suffix under `apps/api/src`.
+- Vitest discovers unit test files with the `.spec.ts` suffix under `apps/api/src`.
+- Prefer placing unit tests in a `__tests__` directory inside the target file's directory. Example: `apps/api/src/contexts/posts/domain/__tests__/post-title.vo.spec.ts`
 - Target pure services, functions, controllers without HTTP transport, and small units of business logic.
-- Do not use an HTTP server, actual Nest application bootstrap, or external I/O unless DI configuration itself is the behavior under test.
+- Do not use an HTTP server, actual Nest application startup, or external I/O unless DI configuration itself is the behavior under test.
 - Create required dependencies directly or replace them with lightweight mocks/stubs.
 - Use a Nest testing module only when DI configuration must be verified.
 - A unit of work is the flow from an entry point call to an observable behavior result.
@@ -49,13 +51,14 @@ Write integration tests when the test must verify multiple real components worki
 ## Integration Tests
 
 - Run integration tests with `pnpm test:integration` from the repository root or `pnpm --filter @sheska/api test:integration`.
-- Integration test files use `.e2e-spec.ts` or `.integration-spec.ts` under `apps/api/test`.
-- Use integration tests to verify interactions that unit tests cannot cover, such as dependency injection wiring, framework bootstrap, routing, and controller responses.
+- Vitest discovers integration test files with `.e2e-spec.ts` or `.integration-spec.ts` under `apps/api/test`.
+- Prefer splitting integration spec files by context and architecture layer. For example, use `apps/api/test/posts/presentation/posts-http.controller.integration-spec.ts` for an HTTP controller adapter.
+- Use integration tests to verify interactions that unit tests cannot cover, such as dependency injection wiring, framework startup, routing, and controller responses.
 - If a test uses hard-to-control elements such as an actual network, REST API, system time, file system, or database, separate it as an integration test instead of a unit test.
-- Do not use integration tests to repeat every domain or application invariant. Keep detailed domain and application rule coverage in unit tests.
+- Do not use integration tests to repeat every domain or application invariant. Keep detailed domain and application rule coverage in unit tests, and use integration tests for observable boundary behavior such as request and response shape, validation pipe behavior, dependency injection wiring, framework routing, and repository save/find contracts.
 - Nest app integration test files should create the app in `beforeEach` and close it in `afterEach` when the app is initialized.
 - The outer `describe()` should name the integrated target.
-- For route tests, the inner `describe()` should be the controller method and route. Example: `describe('GET /')`.
+- For route tests, the inner `describe()` should usually be the controller method and route. Example: `describe('GET /')`.
 - Verify HTTP status code, response body, and important headers together.
 
 ## Commands
@@ -72,4 +75,4 @@ pnpm test:cov           # Unit test coverage from the API package
 
 Before opening a PR, run the checks that match the scope of the change.
 If only isolated services or functions changed, run `pnpm lint:check`, `pnpm typecheck`, and `pnpm test:unit`.
-If routes, module configuration, or application bootstrap flow changed, also run `pnpm test:integration`.
+If routes, module configuration, or application startup flow changed, also run `pnpm test:integration`.

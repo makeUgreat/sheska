@@ -23,4 +23,8 @@ last_synced: 2026-06-19
 ## 라우팅
 
 - 문서를 생성, 수정, 리뷰할 때: [문서 작성 가이드라인](./documentation-guidelines.md)을 읽는다.
-- 이 문서 컨벤션 인덱스를 수정할 때: [문서 컨벤션 인덱스 라우터](./documentation-index-router.md)를 읽는다.
+
+## 유지보수
+
+이 인덱스는 짧게 유지한다.
+명확한 문서 작업 trigger가 있는 문서 컨벤션 문서만 라우팅한다.

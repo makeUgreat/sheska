@@ -9,8 +9,8 @@ translation: ../ko/documentation-guidelines.md
 
 # Documentation Guidelines
 
-Public project Markdown documents are maintained as paired English and Korean documents.
-Both languages should describe the same policy.
+Durable project Markdown documents are maintained as paired English and Korean documents when they define conventions, project behavior, or long-lived project understanding.
+Paired documents should describe the same policy.
 
 ## Synchronization Policy
 
@@ -21,17 +21,29 @@ Both languages should describe the same policy.
 
 ## Scope And Exceptions
 
-- This guideline applies to public project Markdown documentation, including root documentation, repository-wide docs, app docs, and tool READMEs.
+- This guideline applies to durable project Markdown documentation, including root documentation, repository-wide docs, app docs, and maintained tool READMEs.
 - Agent instruction files such as `AGENTS.md` are execution instructions rather than human-facing documentation, so language pairs are not required.
 - Temporary or hidden working notes, such as files under `.codex/temp/`, are excluded.
+- Generated documents, short local notes, and narrow tool-specific files may stay single-language when a paired document would add maintenance cost without improving project understanding.
+
+## Documentation Role
+
+- This project treats documentation as part of the engineering harness.
+- Documentation provides feedforward guidance: it should shape decisions before implementation by explaining intent, boundaries, mental models, tradeoffs, and review standards.
+- Static analysis, tests, type checks, generators, and CI are feedback controls and verification gates: they verify concrete, structured, and repeatable requirements during or after implementation.
+- Documentation SHOULD guide judgment where automation cannot express context well.
+- Documentation SHOULD NOT duplicate long mechanical rule lists that are already enforced by feedback controls or verification gates.
+- When a mechanical requirement matters, documentation SHOULD explain why it exists, when it matters, and where enforcement lives instead of restating every enforced detail.
+- Use `MUST` in documentation only when a human or agent must make the decision before automated verification can help, or when violating the rule creates a policy, correctness, or maintenance risk.
+- Prefer flexible guidance for implementation choices that depend on context, provided automated checks or tests can catch the exact required shape later.
 
 ## Language Pairs
 
 - Use language-based directory names for translated documentation.
 - Use `en` for English documents and `ko` for Korean documents.
-- Documentation under `docs/en/` MUST have a matching Korean document under `docs/ko/` with the same relative path and file name.
-- Documentation under `apps/*/docs/en/` MUST have a matching Korean document under `apps/*/docs/ko/` with the same relative path and file name.
-- Public Markdown files outside language directories MUST use English as the base file and Korean as `*.ko.md`. Example: `README.md` and `README.ko.md`.
+- Durable convention documents under `docs/en/` MUST have matching Korean documents under `docs/ko/` with the same relative path and file name.
+- Durable app convention documents under `apps/*/docs/en/` MUST have matching Korean documents under `apps/*/docs/ko/` with the same relative path and file name.
+- Public Markdown files outside language directories SHOULD use English as the base file and Korean as `*.ko.md` when they are long-lived user-facing or maintainer-facing documents. Example: `README.md` and `README.ko.md`.
 
 ## Synchronization
 
@@ -41,14 +53,13 @@ Both languages should describe the same policy.
 - Rules, exceptions, commands, paths, code examples, API names, and type names must have the same meaning in both documents.
 - When one language changes, update the paired language in the same PR or change unit.
 
-## Frontmatter
+## Metadata
 
-- Repository documentation under `docs/en/` and `docs/ko/` MUST include YAML frontmatter.
-- English documents MUST include `title`, `lang: en`, `audience`, `applies_to`, and `translation`.
-- Korean documents MUST include `title`, `lang: ko`, `audience`, `applies_to`, `source`, and `last_synced`.
-- `read_when` is recommended for documents routed from `index.md`.
+- Durable convention documents SHOULD include YAML frontmatter or equivalent metadata that identifies the title, language, audience or scope, and paired document.
+- Keep metadata keys consistent within a document family, but do not add keys that are not consumed by readers, tools, or maintenance workflow.
+- Include `read_when` only when a document is routed from an index and the trigger is useful at the document itself.
 - Include `related` only when there are clear documents that should be read together.
-- Use relative paths in `related`, `translation`, and `source`.
+- Use relative paths in cross-document metadata links.
 
 ## Document Routing
 
@@ -68,7 +79,9 @@ Each document should have a clear task trigger that can be routed from `index.md
 ## Rule Quality
 
 - Add documentation rules only when they express a reusable principle, long-term convention, review standard, or maintenance reason.
+- Add rules when they improve future decisions before automated checks run.
 - Avoid adding rules that only patch a temporary repository state, one-off migration gap, or unusual current situation.
+- Avoid documenting exact syntax, formatting, or structure only to mirror an automated check, unless the document adds intent, boundaries, or routing.
 - Keep temporary handling in work notes, PR descriptions, or the specific change context instead of promoting it to a convention document.
 
 ## Writing Style
@@ -76,7 +89,7 @@ Each document should have a clear task trigger that can be routed from `index.md
 ### English Documents
 
 - Write English agent-facing documents in concise, directive prose.
-- Prefer short rules over explanatory paragraphs.
+- Prefer concise rules, but include rationale when judgment, tradeoffs, or exceptions matter.
 - Explain intent for rules covered by static checks, instead of repeating only what the check catches.
 
 ### Korean Documents
@@ -89,6 +102,8 @@ Each document should have a clear task trigger that can be routed from `index.md
 
 - Keep code, commands, file paths, URLs, frontmatter keys, API names, type names, package names, identifiers, and product names untranslated.
 - Use precise requirement language. Do not make one language stricter or looser than its pair.
+- Write documentation as guidance for capable implementers. Use direct language, but do not turn every preference into a prohibition.
+- Include nuance when a rule has tradeoffs, known exceptions, or depends on implementation context.
 
 ## Requirement Language
 

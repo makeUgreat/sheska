@@ -13,55 +13,149 @@ related:
 # API Source Dependency Convention
 
 Source dependency rules decide what a source file may import.
-Runtime wiring MAY connect objects more flexibly, but it MUST NOT weaken source dependency rules.
+Dependency direction MUST remain consistent from outer layers toward inner layers.
+
+## Visual Dependency Map
+
+Read every arrow as "the source may import the target."
+If a dependency is not shown here and is not explicitly allowed in this document, treat it as forbidden by default.
+
+```mermaid
+flowchart TB
+  subgraph adapters[Outer Adapters]
+    direction LR
+    presentation[Presentation]
+    infrastructure[Infrastructure]
+  end
+
+  application[Application]
+  domain[Domain]
+  core[Core]
+
+  subgraph kernels[Kernels]
+    direction TB
+    presentationKernel[Presentation Kernel]
+    infrastructureKernel[Infrastructure Kernel]
+    applicationKernel[Application Kernel]
+    domainKernel[Domain Kernel]
+  end
+
+  presentation --> application
+  infrastructure --> application
+  application --> domain
+  domain --> core
+
+  presentation --> presentationKernel
+  infrastructure --> infrastructureKernel
+  application --> applicationKernel
+  domain --> domainKernel
+  presentationKernel --> core
+  infrastructureKernel --> core
+  applicationKernel --> core
+  domainKernel --> core
+```
+
+The primary source direction is:
+
+```text
+presentation -> application -> domain -> core
+infrastructure -> application -> domain -> core
+```
+
+## Forbidden Shortcuts
+
+```text
+domain -/-> application
+domain -/-> infrastructure
+domain -/-> presentation
+domain -/-> platform
+application core -/-> infrastructure implementations
+application core -/-> presentation DTOs
+application core -/-> framework decorators
+application core -/-> framework DI APIs
+application core -/-> platform concrete types
+```
 
 ## Source Direction
 
-The default source direction inside each `src/{module}/` implementation module is:
-
-```text
-presentation -> application -> domain
-infrastructure -> application -> domain
-```
-
-- Domain code does not depend on application, infrastructure, presentation, bootstrap, NestJS, database, HTTP, SDK, or other framework details.
-- Application code may depend on domain code.
-- Presentation code may depend on application code and protocol/framework libraries.
-- Infrastructure code may depend on application contracts, domain code, external libraries, and framework libraries when implementing adapters.
-- `api.module.ts` and implementation modules MAY depend on application, presentation, and infrastructure code to compose runtime providers.
-
-Cross-module source imports SHOULD prefer application-level contracts or use cases.
-Do not import another module's domain objects only to reuse internal state or validation.
-When two modules need the same domain language, reconsider whether the behavior belongs in one module before extracting shared code.
-
-## Framework Dependency Policy
-
-- Domain code MUST NOT import NestJS decorators, NestJS DI APIs, transport DTOs, persistence clients, or external SDK clients.
-- Application code SHOULD keep use case flow and contracts understandable without framework knowledge.
-- Application code MAY use NestJS decorators or DI when avoiding them would add more indirection than value.
-- Presentation and infrastructure code MAY use NestJS and protocol or adapter libraries directly.
-- Do not introduce a forbidden domain dependency only to make NestJS provider registration easier.
+- `core` does not depend on any project layer.
+- Kernel directories may depend on `core`.
+- `domain` may depend on `core` and `kernels/domain`.
+- `application` may depend on `core`, `domain`, and `kernels/application`.
+- `infrastructure` may depend on `core`, `domain`, `application`, `kernels/infrastructure`, and external libraries when implementing adapters.
+- `presentation` may depend on `core`, `application`, `kernels/presentation`, and framework libraries when handling external protocols.
+- A bounded context root wiring module MAY depend on that context's application, presentation, and infrastructure code to compose the feature.
+- Production code outside `platform` MUST NOT import `platform`, except the thin `src/main.ts` entrypoint.
+- Domain code MUST NOT import `platform`, NestJS, database, HTTP, SDK, infrastructure, presentation, or application code.
+- Application core MUST NOT import infrastructure implementations, presentation DTOs, framework decorators, framework DI APIs, or platform concrete types.
 
 ## Import Path Policy
 
+- Project path aliases are declared only in [`apps/api/tsconfig.json`](../../tsconfig.json).
+- TypeScript, Vitest, and static analysis tools should consume `tsconfig.json` instead of redefining project alias meaning.
+- Path aliases represent stable architectural boundaries, not general path-shortening conveniences.
+- Keep aliases limited to named source boundaries such as `@core/*`, `@kernels/*`, `@contexts/*`, and `@platform/*`.
+- Do not add broad aliases such as `@api/*`, `@src/*`, or `@/*`.
+- When aliases exist for source boundaries, production `src` imports should use them when crossing those boundaries.
 - Prefer relative imports inside the same local implementation area.
-- Do not add `index.ts` barrel files by default.
-- Prefer direct imports from concrete files inside the same app.
-- Use an `index.ts` only when a directory is intentionally maintained as a stable public API boundary.
-- Do not use `index.ts` only to shorten import paths.
-- Avoid broad aliases such as `@api/*`, `@src/*`, or `@/*`.
-- Do not add path aliases only to shorten nearby relative imports.
+- Use `index.ts` files as public surfaces for intentionally exported contracts, not as default folder decoration.
+- Cross-boundary imports SHOULD target a public surface when one exists.
+- Production imports into kernel directories, context domain code, and application ports should use their public surfaces.
+- Avoid deep imports into another context or layer internals unless this document explicitly allows the dependency.
 
-## Layer Responsibilities
+## Core
 
-- `src/{module}/domain` contains entities, value objects, aggregates, domain services, domain events, domain errors, and business invariants.
-- `src/{module}/application` contains use cases, application services, command/query handlers, application errors, transaction boundaries, and application-owned ports when needed.
-- `src/{module}/infrastructure` contains database, ORM, external API, file system, message broker, SDK, and persistence adapter code.
-- `src/{module}/presentation` contains controllers, resolvers, request DTOs, response DTOs, protocol mappers, guards, pipes, and HTTP error mapping.
-- Shared kernel is not part of the current API structure.
+- `core` contains pure primitives that have no layer, framework, bounded context, or business vocabulary.
+- Examples include `Result`, `Option`, `BaseError`, `assertNever`, and generic guards.
+- Any layer MAY depend on `core`.
+- `core` MUST NOT depend on project layers, frameworks, external SDKs, or business concepts.
 
-## Review Rules
+## Domain Layer
 
-- Check that domain code stays free of framework and adapter details.
-- Check that application code does not depend on presentation DTOs or infrastructure implementations.
-- Check that shared abstractions are stable boundaries, not general utility buckets.
+- The domain layer contains business rules and domain models.
+- Use it for entities, value objects, aggregates, domain services, domain events, and domain errors.
+- Domain code MUST NOT know application, infrastructure, presentation, framework, database, HTTP, or SDK details.
+- Domain code SHOULD express pure business behavior and invariants.
+- Domain code may depend on `core` and `kernels/domain`.
+
+## Application Layer
+
+- The application layer expresses use cases and application flow.
+- Use it for commands, queries, use case handlers, application services, application-owned port interfaces, transaction boundaries, and application errors.
+- Application core means use case flow and contracts, not NestJS module or provider registration.
+- Application code uses domain models to execute user intent.
+- Application code MUST NOT know infrastructure implementation details.
+- Application code MUST NOT know presentation request or response DTO shapes.
+- Application core MUST NOT depend on framework decorators or framework DI APIs.
+- NestJS module files for application use case wiring belong at the bounded context root when they are needed, not under `contexts/{context-name}/application`.
+- Application code MAY convert domain errors and port errors into application or use case errors.
+- Application core may depend on `core`, domain code, and `kernels/application`.
+
+## Infrastructure Layer
+
+- The infrastructure layer implements technical adapters.
+- Use it for database, ORM, external API, file system, message broker, SDK, and persistence code.
+- Infrastructure code implements application-owned ports or domain/application contracts.
+- Adapter code converts technology-specific errors, such as Prisma, TypeORM, HTTP client, SDK, or Drizzle errors, into port or infrastructure errors.
+- Infrastructure code MAY depend on frameworks and external libraries.
+- Infrastructure code does not need to know presentation code.
+
+## Presentation Layer
+
+- The presentation layer is the entry point for external requests and responses.
+- Use it for controllers, resolvers, request DTOs, response DTOs, protocol mappers, and HTTP error mappers.
+- Presentation code calls application use cases.
+- Presentation code converts application errors into protocol responses and applies masking policy.
+- Presentation code SHOULD NOT expose domain or infrastructure errors directly to clients.
+- Presentation code MAY depend on frameworks and protocol libraries.
+
+## Kernel Directories
+
+- `kernels/domain` contains common domain-layer policy and stable domain concepts intentionally shared by multiple bounded contexts.
+- `kernels/application` contains common application-layer contracts only.
+- `kernels/infrastructure` contains common infrastructure adapter policy only.
+- `kernels/presentation` contains common presentation-layer policy only.
+- Kernel directories MAY depend on `core`.
+- Kernel directories MUST NOT depend on bounded contexts, platform code, framework code, or outer layers.
+- Kernel directories MUST NOT become generic utility buckets.
+- Feature-specific policy belongs inside the owning bounded context.
