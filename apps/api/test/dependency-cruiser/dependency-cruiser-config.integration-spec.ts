@@ -19,7 +19,7 @@ import type {
 } from 'dependency-cruiser';
 
 const apiRoot = process.cwd();
-const configPath = path.join(apiRoot, '.dependency-cruiser.cjs');
+const configPath = path.join(apiRoot, 'dependency-cruiser/config.cjs');
 
 const rootRuleNames = ['no-circular', 'not-to-unresolvable'];
 
@@ -328,7 +328,7 @@ function getViolationRuleNames(result: IReporterOutput): string[] {
   );
 }
 
-describe('.dependency-cruiser.cjs', () => {
+describe('dependency-cruiser/config.cjs', () => {
   it('registers root and API rules together', async () => {
     const config = await extractDepcruiseConfig(configPath);
     const ruleNames = config.forbidden?.map((rule) => rule.name);
