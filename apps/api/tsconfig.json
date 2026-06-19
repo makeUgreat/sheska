@@ -14,6 +14,12 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
+    "paths": {
+      "@contexts/*": ["src/contexts/*"],
+      "@core/*": ["src/core/*"],
+      "@kernels/*": ["src/kernels/*"],
+      "@platform/*": ["src/platform/*"]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
