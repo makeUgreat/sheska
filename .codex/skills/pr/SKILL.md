@@ -1,15 +1,15 @@
 ---
 name: pr
-description: Use this project skill for pull request planning, PR unit decisions, PR description drafting, squash-merge history writing, and coordinating PR preparation with the cm skill.
+description: Use this project skill for full pull request preparation and creation, including PR unit decisions, commit preparation, branch setup, pushing, opening draft PRs, PR description drafting, squash-merge history writing, and coordinating PR preparation with the cm skill.
 metadata:
   short-description: Prepare history-focused pull requests
 ---
 
 # pr
 
-Use this skill when the user asks for `pr`, pull request preparation, PR unit
-decisions, PR description drafting, PR review readiness, or squash-merge history
-cleanup.
+Use this skill when the user asks for `pr`, `$pr`, pull request preparation,
+pull request creation, PR unit decisions, PR description drafting, PR review
+readiness, or squash-merge history cleanup.
 
 ## Core Behavior
 
@@ -22,21 +22,46 @@ cleanup.
 - Write PR titles and descriptions in English.
 - Use `cm` before PR finalization when the working tree contains uncommitted
   changes or the PR boundary is unclear.
+- Treat a bare `pr` or `$pr` request as approval to complete the full PR
+  publication flow: inspect the diff, prepare any needed commits, create or
+  choose branches, run relevant verification, push the branch or branches, and
+  open draft GitHub PRs. Do not interpret `pr` as draft-only, plan-only, or
+  body-only work unless the user explicitly says so.
 - Treat an explicit `pr` request with uncommitted changes as approval to prepare
   the necessary commits first. Do not stop only to ask whether to commit when the
   diff is a clear, commit-ready PR unit.
 - Treat an explicit request to prepare, open, or update PRs as approval to create
   a clear single PR or stacked PR set, including the necessary commit, branch,
-  base-branch, and PR tool steps, without asking for another confirmation.
+  base-branch, push, and PR tool steps, without asking for another confirmation.
 - Treat an explicit request to open or update a PR as approval to use the
   prepared title and body and run the PR tool without a separate confirmation
   step.
 - When more than one reasonable PR or stack shape exists, choose the clearest
   history-meaningful option and report the rationale. Do not stop only to ask the
   user to choose between valid review shapes.
+- Do not stop after commits, branch creation, title/body drafting, or
+  verification when the PR boundary is clear and a PR creation path is available.
+  Continue through push and draft PR creation.
 - Never fabricate verification. Clearly report tests that were run, skipped, or
   could not be run.
 - Never revert, overwrite, or discard user changes unless explicitly instructed.
+
+## PR Creation Default
+
+Default to creating draft PRs after preparing the history. A `pr` request is
+not complete until each clear PR unit has a corresponding local commit, pushed
+branch, and draft PR URL, unless a blocker requires user input.
+
+Use the GitHub connector to create PRs when available. Use `gh` as a fallback
+when connector creation cannot infer the repository or head branch cleanly. If
+one tool path fails because of authentication or availability, try the other
+available path before reporting a blocker. If pushing succeeds but PR creation
+is blocked, report the pushed branch and GitHub compare URL.
+
+Ask before PR creation only when the existing split-rule blockers apply: the
+diff appears unfinished, unrelated user work cannot be separated safely, product
+or ownership decisions are not inferable, or branch/base/remote state could
+target the wrong history.
 
 ## Bundled Scripts
 
@@ -291,7 +316,7 @@ Do not include:
 10. Report verification gaps in the PR body or final response. Do not block PR
    opening for a verification gap unless the user requested that gate or the gap
    makes the PR misleading.
-11. If the user asks to open or update PRs with a tool, open or update the clear
+11. Push each prepared branch to the remote and open draft PRs for the clear
    single PR or stacked PR set with the drafted titles, bodies, base branches,
    and merge-order notes without asking for another approval, unless a blocker
    requires user input.
