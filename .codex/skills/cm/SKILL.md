@@ -18,35 +18,60 @@ drafting, commit splitting, or help preparing commits.
   accepted atomic candidates immediately and report which commits were created.
 - Write commit messages in English using Conventional Commits.
 - Split changes by atomic commit boundaries, not by file count or diff size.
+- Treat commits as squash-oriented explanation units. They should preserve a
+  clear review and revert intent, but they do not need to be independently
+  runnable when a PR or stacked PR flow records the dependency.
+- When more than one reasonable commit boundary exists, choose the boundary that
+  is easiest to review and explain, then report the choice. Do not stop only to
+  confirm between valid boundaries.
 - Include a `Why:` body in every commit message.
 - Do not include `What:` or `Tests:` in commit messages.
 - Report verification separately in the Codex response or PR description.
 - Never revert, overwrite, or discard user changes unless explicitly instructed.
 
+## Bundled Scripts
+
+- Use `scripts/inspect-changes.sh` to collect read-only git facts before split
+  decisions when the working tree is non-trivial. Treat its output as a compact
+  status and diff summary, not as the final commit boundary.
+- Run it as `bash .codex/skills/cm/scripts/inspect-changes.sh`.
+
 ## Atomic Commit Definition
 
 An atomic commit is not simply a small commit. It is a commit with one clear
-intent that can be independently understood, reviewed, and reverted.
+intent that can be understood, reviewed, and reverted as a coherent explanation
+unit for PR preparation.
 
-Each commit candidate must pass this checklist:
+Atomic commits are not required to be the smallest independently runnable state.
+When a commit depends on a later commit in the same PR or stacked PR flow, the
+dependency is acceptable if it is intentional, visible in `Why:` or the PR body,
+and the final PR or stack state is the verification boundary.
+
+Use this checklist as a fast boundary check, not as a reason to stall on a clear
+commit:
 
 - **Single intent**: The purpose can be explained in one sentence.
-- **Single commit type**: The change naturally fits one type, such as `feat`,
-  `fix`, `refactor`, `test`, `docs`, or `chore`.
-- **Independent review**: A reviewer can understand the intent and impact from
-  this commit alone.
-- **Independent revert**: Reverting this commit does not remove unrelated
-  changes.
+- **Dominant commit type**: The main change naturally fits one type, such as
+  `feat`, `fix`, `refactor`, `test`, `docs`, or `chore`. Supporting docs, tests,
+  config, or cleanup may stay when they serve the same intent.
+- **Reviewable intent**: A reviewer can understand the intent and impact from
+  the subject, `Why:`, diff, and any stated PR or stack dependency.
+- **Revertable intent**: Reverting this commit removes one coherent change. If
+  it is part of a dependent PR or stack, document that dependency instead of
+  hiding it.
 - **Coherent diff**: All included files contribute to the same problem,
   requirement, or cleanup.
-- **No hidden follow-up dependency**: The commit is not a broken half-step that
-  only makes sense with the next commit.
-- **Direct test relationship**: Included tests directly verify the feature, fix,
-  or refactor in the same commit.
+- **Explicit follow-up dependency**: If the commit needs a later commit in the
+  same PR or stack to become runnable, the dependency is intentional and visible.
+- **Useful test relationship**: Tests stay with the code when they directly
+  explain or verify the same intent, but they may live later in the same PR or
+  stack when the final state is the verification boundary.
 
-If a candidate fails the checklist, split it further. If splitting would break
-the build or make review less clear, keep it together and explain the boundary in
-`Why:`.
+If a candidate is unclear, pick the smallest boundary that preserves the review
+and revert intent. If splitting creates a temporary broken intermediate state but
+makes the review or stacked PR boundary clearer, allow the split and explain the
+dependency in `Why:` or the PR body. If splitting would make the work harder to
+understand, keep it together and explain the boundary in `Why:`.
 
 ## Split Rules
 
@@ -55,23 +80,26 @@ Keep together:
 - Feature code with tests that directly verify it.
 - Bug fix code with its regression test.
 - Types, config, migrations, or lockfiles required by the same change.
+- Small refactors, cleanup, or docs that only exist to make the same change clear
+  and reviewable.
 
-Split by default:
+Prefer splitting when:
 
-- Feature work and refactoring.
-- Bug fixes and nearby cleanup.
-- Test infrastructure changes and feature test additions.
-- Documentation improvements and behavior changes.
-- Dependency upgrades and features that start using the upgraded dependency.
-- Changes that should be independently revertible.
+- Changes have different user-visible intents.
+- Changes should be reviewed, reverted, or explained separately.
+- Dependency, tooling, or test-infrastructure work is useful without the product
+  change that happens nearby.
+- Documentation or cleanup describes a separate convention or decision rather
+  than the same change.
 
-Ask the user before committing when:
+Ask the user before committing only when:
 
-- A change naturally spans multiple commit types.
-- Revert boundaries and review boundaries conflict.
 - Part of the diff appears to be unfinished user work.
-- The working tree contains unrelated changes whose commit boundaries are not
-  clear from the diff.
+- The working tree contains unrelated changes that cannot be staged safely from
+  the diff.
+- Choosing the boundary requires a product, scope, or ownership decision that is
+  not inferable from the request and code.
+- The next step would discard, overwrite, or otherwise risk user changes.
 
 ## Commit Message Rules
 
@@ -133,13 +161,18 @@ exposing a database constraint failure.
 
 ## Workflow
 
-1. Inspect `git status --short` and the relevant diffs.
-2. Split the working tree changes into atomic commit candidates.
-3. Apply the atomic checklist to each candidate.
+1. Inspect `git status --short` and the relevant diffs. Use
+   `scripts/inspect-changes.sh` when a structured fact pack would make the
+   split faster or less error-prone.
+2. Split the working tree changes into the fewest clear commit candidates that
+   preserve review and revert intent.
+3. Use the atomic checklist as a quick sanity check for those candidates.
 4. If the candidates are clear and commit-ready, stage and commit each candidate
    immediately with its Conventional Commit subject and `Why:` body.
 5. Ask the user before committing only when the diff appears unfinished, includes
-   unrelated user work, or has unclear atomic boundaries.
+   unrelated user work that cannot be safely separated, or needs a product,
+   scope, or ownership decision. Do not ask only because a clear candidate
+   depends on a later commit in the same PR or stack.
 6. After committing, report which commits were created, including each subject
    and the files included.
 7. Report verification separately under `Verification`.
