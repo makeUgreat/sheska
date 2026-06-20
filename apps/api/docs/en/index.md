@@ -6,6 +6,7 @@ applies_to:
   - apps/api
 translation: ../ko/index.md
 related:
+  - ./error.md
   - ./architecture.md
   - ./ddd.md
   - ./source-dependency.md
@@ -27,6 +28,7 @@ When changing public project Markdown documents, also read the repository docume
 
 ## Routing
 
+- API error definitions, mapping, masking, propagation, or failure contract reviews: read [API Error Policy](./error.md).
 - `apps/api` architecture, DDD boundary, source structure, or module boundary decisions: read [API Architecture Convention](./architecture.md).
 - `apps/api` DDD boundaries, domain model ownership, or shared domain language: read [API DDD Convention](./ddd.md).
 - Import direction, layer boundaries, or framework imports: read [API Source Dependency Convention](./source-dependency.md).

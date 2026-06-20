@@ -6,6 +6,7 @@ applies_to:
   - apps/api
 translation: ../ko/architecture.md
 related:
+  - ./error.md
   - ./ddd.md
   - ./source-dependency.md
   - ./runtime-wiring.md
@@ -20,8 +21,11 @@ API architecture is described across two axes:
 - DDD model boundaries define where a model, language, and responsibility are valid.
 - Dependency and layer boundaries define which code may depend on which other code.
 
+Read the error policy when defining, transforming, masking, or exposing errors, exceptions, or system errors.
+
 ## Related Documents
 
+- [API Error Policy](./error.md): error meaning, categories, transformation, structure, and unexpected system error handling.
 - [API DDD Convention](./ddd.md): bounded contexts, implementation modules, domain kernel, and domain model rules.
 - [API Source Dependency Convention](./source-dependency.md): import direction, layer boundaries, and framework import rules.
 - [API Runtime Wiring Convention](./runtime-wiring.md): NestJS DI, provider registration, platform runtime, and port binding rules.

@@ -5,8 +5,9 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/architecture.md
-last_synced: 2026-06-19
+last_synced: 2026-06-20
 related:
+  - ./error.md
   - ./ddd.md
   - ./source-dependency.md
   - ./runtime-wiring.md
@@ -21,8 +22,11 @@ API architecture는 두 축으로 설명한다:
 - DDD model boundary는 model, language, responsibility가 유효한 범위를 정의한다.
 - Dependency와 layer boundary는 어떤 code가 다른 code에 의존할 수 있는지 정의한다.
 
+Error, exception, system error를 정의, 변환, masking, 노출하는 경우 error policy를 읽는다.
+
 ## 관련 문서
 
+- [API 오류 정책](./error.md): error meaning, category, transformation, structure, unexpected system error handling 규칙.
 - [API DDD 컨벤션](./ddd.md): bounded context, implementation module, domain kernel, domain model 규칙.
 - [API Source Dependency 컨벤션](./source-dependency.md): import direction, layer boundary, framework import 규칙.
 - [API Runtime Wiring 컨벤션](./runtime-wiring.md): NestJS DI, provider registration, platform runtime, port binding 규칙.
