@@ -329,7 +329,7 @@ function getViolationRuleNames(result: IReporterOutput): string[] {
 }
 
 describe('dependency-cruiser/config.cjs', () => {
-  it('registers root and API rules together', async () => {
+  it('root rule과 API rule을 함께 등록한다', async () => {
     const config = await extractDepcruiseConfig(configPath);
     const ruleNames = config.forbidden?.map((rule) => rule.name);
 
@@ -337,14 +337,14 @@ describe('dependency-cruiser/config.cjs', () => {
     expect(ruleNames).toEqual(expect.arrayContaining(apiRuleNames));
   });
 
-  it('does not report violations for an allowed source graph', async () => {
+  it('허용된 source graph에서는 violation을 보고하지 않는다', async () => {
     const result = await cruiseFixture(validFiles);
 
     expect(getViolationRuleNames(result)).toEqual([]);
     expect(result.exitCode).toBe(0);
   });
 
-  it('reports API dependency rule violations by rule name', async () => {
+  it('API dependency rule violation을 rule name으로 보고한다', async () => {
     const result = await cruiseFixture(invalidFiles);
     const violationRuleNames = getViolationRuleNames(result);
 

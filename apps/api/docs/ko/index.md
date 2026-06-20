@@ -5,8 +5,9 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/index.md
-last_synced: 2026-06-19
+last_synced: 2026-06-20
 related:
+  - ./error.md
   - ./architecture.md
   - ./ddd.md
   - ./source-dependency.md
@@ -28,6 +29,7 @@ related:
 
 ## 라우팅
 
+- API error definition, mapping, masking, propagation, failure contract review 작업: [API 오류 정책](./error.md)을 읽는다.
 - `apps/api` architecture, DDD boundary, source structure, module boundary 결정 작업: [API 아키텍처 컨벤션](./architecture.md)을 읽는다.
 - `apps/api` DDD boundary, domain model ownership, shared domain language 작업: [API DDD 컨벤션](./ddd.md)을 읽는다.
 - Import direction, layer boundary, framework import 작업: [API Source Dependency 컨벤션](./source-dependency.md)을 읽는다.

@@ -44,11 +44,11 @@ async function lintTextWithProjectConfig(
 }
 
 describe('eslint/config.mjs', () => {
-  it('exports a flat config array', () => {
+  it('flat config array를 export한다', () => {
     expect(Array.isArray(eslintConfig)).toBe(true);
   });
 
-  it('applies unused imports and import path style rules to source files', async () => {
+  it('source file에 unused import와 import path style rule을 적용한다', async () => {
     const config = await calculateConfigForFile('src/main.ts');
     const rules = getConfiguredRules(config);
 
@@ -56,7 +56,7 @@ describe('eslint/config.mjs', () => {
     expect(rules['api-local/import-path-style']).toBeDefined();
   });
 
-  it('does not apply source import path style rules to test files', async () => {
+  it('test file에는 source import path style rule을 적용하지 않는다', async () => {
     const config = await calculateConfigForFile(
       'test/eslint/eslint-config.integration-spec.ts',
     );
@@ -66,7 +66,7 @@ describe('eslint/config.mjs', () => {
     expect(rules['api-local/import-path-style']).toBeUndefined();
   });
 
-  it('removes unused imports during autofix', async () => {
+  it('autofix에서 unused import를 제거한다', async () => {
     const result = await lintTextWithProjectConfig(
       `
         import { readFileSync } from 'node:fs';
@@ -80,7 +80,7 @@ describe('eslint/config.mjs', () => {
     expect(result.output).not.toContain('readFileSync');
   });
 
-  it('requires aliases for relative imports that cross source boundaries', async () => {
+  it('source boundary를 넘는 relative import에는 alias를 요구한다', async () => {
     const result = await lintTextWithProjectConfig(
       `
         import { appModule } from './platform/nest/app.module';

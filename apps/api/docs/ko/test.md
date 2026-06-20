@@ -29,6 +29,7 @@ API 앱은 Vitest를 사용하며 단위 테스트와 통합 테스트를 분리
 
 - 테스트 종류에 맞는 표준 디렉터리를 선호한다. 단위 테스트는 대상 source file 가까이에 두고, 통합 테스트는 `apps/api/test/{context}/` 아래 matching architecture path에 둔다.
 - `describe()`에는 테스트 대상 이름을 사용하는 것을 선호한다.
+- `it()` 테스트 케이스 이름은 팀이 동작 의도를 쉽게 검토할 수 있도록 한글 중심으로 작성해야 한다. Route, code identifier, technical term은 더 명확하다면 원문 언어를 유지할 수 있다.
 - 각 `it()`는 하나의 작업 단위를 호출하고 하나의 구체적인 동작 결과를 검증해야 한다.
 - 상태 코드, 본문, 헤더가 같은 실행 결과를 검증한다면 같은 `it()` 안에서 assertion한다.
 - 성공, 실패, 예외, 경계값, 인증/인가, validation처럼 실행 경로나 기대 결과가 다르면 `it()` 블록을 나눈다.
@@ -42,12 +43,21 @@ API 앱은 Vitest를 사용하며 단위 테스트와 통합 테스트를 분리
 - Vitest는 `apps/api/src` 아래의 `.spec.ts` suffix를 가진 단위 테스트 파일을 발견한다.
 - 단위 테스트는 대상 file의 directory 안에 있는 `__tests__` directory에 두는 것을 선호한다. 예: `apps/api/src/contexts/posts/domain/__tests__/post-title.vo.spec.ts`
 - 순수 서비스, 함수, HTTP transport 없는 controller, 작은 비즈니스 로직 단위를 대상으로 한다.
+- 대표적인 edge case, boundary value, invalid shape, error path, immutability, identity/equality behavior, 의미 있는 default behavior가 해당 unit의 contract를 정의한다면 단위 테스트에서 검증해야 한다. 이런 세부사항은 느린 통합 테스트로 미루기보다 단위 테스트 수준에서 증명하는 것을 선호한다.
 - DI 설정 자체가 테스트 대상이 아니라면 HTTP 서버, 실제 Nest 애플리케이션 startup, 외부 I/O를 사용하지 않는다.
 - 필요한 dependency는 직접 만들거나 가벼운 mock/stub으로 대체한다.
 - DI 설정을 검증해야 할 때만 Nest testing module을 사용한다.
 - 작업 단위는 entry point 호출부터 관찰 가능한 동작 결과까지의 흐름이다.
 - 동작 결과는 return value, thrown exception, state change, dependency call 중 하나다.
 - return value, exception, state change, dependency call은 서로 다른 결과 유형이므로 별도 `it()` 블록에서 테스트한다.
+
+## 공통 계약 테스트
+
+- Shared contract, base class, kernel helper, reusable policy는 자신이 소유한 동작을 특히 촘촘한 단위 테스트로 검증해야 한다.
+- 공통 계약 테스트는 최소한의 대표 구현체, fixture, subclass를 사용해 재사용되는 보장을 한 번 증명해야 한다.
+- 공통 계약에 의존하는 구체 구현체는 상속받거나 위임한 contract test를 반복하지 않는다. 자신의 validation, configuration, override, composition, domain-specific behavior만 테스트한다.
+- 구체 구현체가 공통 계약 동작을 override하거나 좁히거나 확장한다면, 구현체 고유 동작과 공통 계약 기대와의 호환성을 모두 테스트한다.
+- Coverage를 review할 때 동작이 shared abstraction에 속한다면 중복된 구현체 테스트를 공통 계약 테스트로 올리는 것을 선호한다.
 
 ## 통합 테스트
 
@@ -60,7 +70,6 @@ API 앱은 Vitest를 사용하며 단위 테스트와 통합 테스트를 분리
 - Nest app integration test file은 app을 초기화한다면 `beforeEach`에서 만들고 `afterEach`에서 닫아야 한다.
 - 바깥 `describe()`는 통합 대상 이름을 지정해야 한다.
 - Route test에서는 안쪽 `describe()`가 보통 controller method와 route를 나타내야 한다. 예: `describe('GET /')`.
-- HTTP 상태 코드, 응답 본문, 중요한 헤더를 함께 검증한다.
 
 ## 명령어
 
