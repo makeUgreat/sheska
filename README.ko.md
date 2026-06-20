@@ -53,4 +53,5 @@ pnpm --filter @sheska/api test
 ## Documentation
 
 - Repository documentation conventions: `docs/en/index.md`, `docs/ko/index.md`
+- Planning documents: `plans/en/README.md`, `plans/ko/README.md`
 - API conventions: `apps/api/docs/en/index.md`, `apps/api/docs/ko/index.md`
