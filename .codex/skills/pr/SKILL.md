@@ -25,19 +25,43 @@ cleanup.
 - Treat an explicit `pr` request with uncommitted changes as approval to prepare
   the necessary commits first. Do not stop only to ask whether to commit when the
   diff is a clear, commit-ready PR unit.
+- Treat an explicit request to prepare, open, or update PRs as approval to create
+  a clear single PR or stacked PR set, including the necessary commit, branch,
+  base-branch, and PR tool steps, without asking for another confirmation.
 - Treat an explicit request to open or update a PR as approval to use the
   prepared title and body and run the PR tool without a separate confirmation
   step.
+- When more than one reasonable PR or stack shape exists, choose the clearest
+  history-meaningful option and report the rationale. Do not stop only to ask the
+  user to choose between valid review shapes.
 - Never fabricate verification. Clearly report tests that were run, skipped, or
   could not be run.
 - Never revert, overwrite, or discard user changes unless explicitly instructed.
+
+## Bundled Scripts
+
+- Use `scripts/inspect-pr-context.sh` to collect read-only branch comparison
+  facts before deciding the PR unit.
+- Use `scripts/render-stack-order.sh` for stacked PRs to generate the branch
+  chain, parent/child positions, merge order, retarget/rebase note, and final
+  verification target.
+- These scripts provide deterministic evidence and stack notes. They do not
+  decide the PR unit, write the durable `Why`, or replace user-facing judgment.
+- Run them with `bash .codex/skills/pr/scripts/<script>.sh --help` for exact
+  options.
 
 ## PR Unit Definition
 
 A PR is one squash-merge history event. It should remain understandable when the
 branch history contains only the squash commit title and the PR body.
 
-Each PR candidate must pass this checklist:
+A stacked PR may be temporarily non-runnable on its own when it is still a clear
+review and history unit. Do not collapse logically separate PRs only to keep each
+intermediate PR independently runnable. The final stack state must be runnable
+or the remaining verification gap must be explicit.
+
+Use this checklist as a fast PR-unit check, not as a reason to stall on a clear
+boundary:
 
 - **Single history event**: The change can be explained as one problem,
   requirement, decision, or cleanup.
@@ -48,13 +72,19 @@ Each PR candidate must pass this checklist:
 - **Revertable intent**: Reverting the squash commit would remove one coherent
   change, not unrelated work.
 - **Coherent verification**: The test or inspection evidence maps to the PR's
-  stated intent.
+  stated intent, or the PR clearly states that final-stack verification is the
+  relevant boundary.
+- **Visible stack dependency**: If the PR depends on another PR or temporarily
+  breaks before a child PR lands, the parent, child, and runnable final state are
+  visible in the PR body.
 - **No hidden bundle**: The PR does not hide unrelated refactors, dependency
   upgrades, documentation changes, or cleanup under a feature or fix.
 
-If a candidate fails the checklist, propose splitting the PR. If splitting would
-make the history less understandable or create broken intermediate states,
-explain why the larger PR is acceptable.
+If a candidate is unclear, pick the smallest history-meaningful boundary that a
+reviewer can approve as one decision. If a candidate is a coherent history event
+but creates a temporary broken intermediate state, prefer a stacked PR with
+explicit dependency and merge-order notes over a larger mixed PR. Keep a larger
+PR when splitting would make the history less understandable.
 
 ## Split Rules
 
@@ -66,21 +96,23 @@ Keep together:
 - Small supporting cleanup when it only exists to make the main change possible
   and would be misleading as a separate PR.
 
-Split by default:
+Prefer splitting when:
 
-- Feature work and unrelated refactoring.
-- Bug fixes and opportunistic cleanup.
-- Dependency upgrades and behavior changes that merely use the upgraded
-  dependency.
-- Test infrastructure changes and tests for a product change.
-- Documentation-only changes and runtime behavior changes.
-- Changes that need different reviewers or different rollback decisions.
+- Changes represent different product, operational, or convention decisions.
+- Changes need different reviewers or different rollback decisions.
+- Dependency, tooling, or test-infrastructure work is useful without the product
+  change that happens nearby.
+- Documentation or cleanup describes a separate durable decision rather than the
+  same change.
 
-Ask the user before finalizing the PR plan when:
+Ask the user before finalizing the PR plan only when:
 
-- The PR boundary is a product decision rather than a code-structure decision.
-- Review boundaries and history boundaries conflict.
 - Part of the diff appears to be unfinished user work.
+- The diff includes unrelated user work that cannot be separated safely.
+- The PR or stack boundary requires a product, rollout, ownership, or reviewer
+  decision that is not inferable from the request and code.
+- Branch, remote, or base-branch state is unsafe or ambiguous enough that opening
+  the PR could target the wrong history.
 
 ## Split Decision Before Opening PRs
 
@@ -88,8 +120,9 @@ Before opening or updating a PR, always decide the PR unit and include that
 decision in the PR preparation output or final user report. Do not pause only to
 ask the user to approve the split decision when the boundary is clear.
 
-Use `git diff --name-status` or the branch comparison to group the diff by
-change kind before deciding the PR unit:
+Use `scripts/inspect-pr-context.sh`, `git diff --name-status`, or the branch
+comparison to scan the diff before deciding the PR unit. Treat change kinds as
+evidence, not as automatic split rules:
 
 - Documentation-only convention changes.
 - Runtime or API behavior changes.
@@ -98,18 +131,38 @@ change kind before deciding the PR unit:
 - Dependency or lockfile changes.
 - Tests.
 
-Split by default when the diff mixes documentation-only convention changes with
-runtime behavior changes. Split by default when the diff mixes lint/tooling
-changes with product behavior, unless the tooling change is required to keep the
-same PR buildable and reviewable. Split by default when dependency changes are
-not solely required by the same runtime change.
+Do not split mechanically only because multiple change kinds appear. Split when
+the mixed kinds represent separate history, review, or rollback decisions. Keep
+them together when they are required to explain, verify, or land one coherent
+requirement.
 
 If the final plan keeps multiple change kinds in one PR, state the reason in
-the PR body or final report. Acceptable reasons include avoiding a broken
-intermediate state, keeping required tests with the behavior they verify, or
-keeping a small shared contract change that is necessary for the same boundary.
+the PR body or final report. Acceptable reasons include one coherent requirement,
+avoiding a broken intermediate state that would not be clearer as an explicit
+stack, keeping required tests with the behavior they verify, or keeping a small
+shared contract change that is necessary for the same boundary.
 Do not open a large mixed PR without documenting why it is one PR instead of
 multiple PRs.
+
+## Stacked PRs
+
+Use stacked PRs when multiple reviewable history events are related and the final
+state should be evaluated together.
+
+- A clear `pr`, `open PR`, or equivalent request is approval to create the full
+  stacked PR set when the stack boundary is clear.
+- Build the stack from the base branch outward: `main <- pr-1 <- pr-2 <- pr-3`.
+- Set each child PR's base branch to its parent PR branch.
+- State the merge order explicitly in every stacked PR and in the final user
+  report. The merge order is parent to child; for `main <- pr-1 <- pr-2 <-
+  pr-3`, merge `pr-1`, then `pr-2`, then `pr-3`.
+- After a parent PR merges, note that child PRs must be retargeted or rebased
+  onto the next parent or the base branch before merging.
+- If an intermediate PR is not independently runnable, include the reason, the
+  child PR that completes the runnable state, and the final verification target.
+- Ask before creating the stack only when the order is a product decision, the
+  dependency graph is ambiguous, branch or remote state is unsafe, or the diff
+  includes unfinished or unrelated user work.
 
 ## cm Skill Coordination
 
@@ -127,8 +180,9 @@ step.
   paste commit messages as a changelog.
 - Move verification reported during `cm` work into the PR `Verification`
   section.
-- If `cm` suggests multiple unrelated commit groups, propose multiple PRs unless
-  the user explicitly wants one combined PR.
+- If `cm` suggests multiple unrelated commit groups, create the clear multiple
+  PRs or stacked PR set when the boundary is inferable. Ask only when combining
+  or splitting would change product scope, ownership, or rollout intent.
 
 ## PR Title Rules
 
@@ -160,10 +214,14 @@ Rules:
 
 ## PR Body Rules
 
-Use this structure by default:
+Use this structure by default. Omit `Stack / Merge Order` for non-stacked PRs:
 
 ```markdown
 ## Summary
+
+- ...
+
+## Stack / Merge Order
 
 - ...
 
@@ -187,6 +245,10 @@ Use this structure by default:
 Section rules:
 
 - `Summary`: State what the PR accomplishes in one to three bullets.
+- `Stack / Merge Order`: Include this section only for stacked PRs. State the
+  branch chain, this PR's position, parent and child PRs, merge order, any
+  retarget/rebase requirement after parent merges, and whether this PR is
+  independently runnable.
 - `Why`: Preserve the durable context: the problem, requirement, decision,
   tradeoff, constraint, or alternative that explains why this PR exists.
 - `Changes`: List the meaningful behavior or structure changes. Do not produce a
@@ -207,22 +269,29 @@ Do not include:
 ## Workflow
 
 1. Inspect `git status --short`, recent commits, and the relevant diff or branch
-   comparison.
+   comparison. Use `scripts/inspect-pr-context.sh` when a structured fact pack
+   would make the PR unit decision faster or less error-prone.
 2. If the working tree has uncommitted changes, apply `cm` rules first to
    identify atomic commit candidates.
 3. If the commit candidates are clear, commit-ready, and belong to the requested
    PR, stage and commit them before drafting the PR.
 4. Ask the user before committing only when the diff appears unfinished, includes
-   unrelated user work, has unclear commit boundaries, or should likely split
-   into multiple PRs.
-5. Decide whether the change belongs in one PR or multiple PRs using the PR unit
-   checklist and the split gate.
-6. Record the PR unit decision before opening or updating any PR.
-7. Draft the PR title as the future squash-merge commit subject.
-8. Draft the PR body using the default sections, emphasizing durable `Why`
+   unrelated user work that cannot be safely separated, or requires a product,
+   scope, ownership, reviewer, or base-branch decision. Do not ask only because
+   the clear boundary is multiple PRs.
+5. Decide whether the change belongs in one PR or a stacked PR set using the PR
+   unit checklist and the split gate.
+6. For stacked PRs, define the branch chain, parent/child PRs, merge order, and
+   final runnable verification target before opening or updating PRs. Use
+   `scripts/render-stack-order.sh` to avoid merge-order mistakes.
+7. Record the PR unit decision before opening or updating any PR.
+8. Draft the PR title as the future squash-merge commit subject.
+9. Draft the PR body using the default sections, emphasizing durable `Why`
    context.
-9. Report any verification gaps separately if they need user attention before the
-   PR is opened.
-10. If the user asks to open or update the PR with a tool, open or update it
-   with the drafted title and body without asking for another approval, unless
-   a blocker requires user input.
+10. Report verification gaps in the PR body or final response. Do not block PR
+   opening for a verification gap unless the user requested that gate or the gap
+   makes the PR misleading.
+11. If the user asks to open or update PRs with a tool, open or update the clear
+   single PR or stacked PR set with the drafted titles, bodies, base branches,
+   and merge-order notes without asking for another approval, unless a blocker
+   requires user input.
