@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { err, ok, type Result } from '../result';
+import { all, err, ok, type Result } from '../result';
 
 describe('Result', () => {
   describe('ok', () => {
@@ -111,6 +111,47 @@ describe('Result', () => {
       err('failed').andThen(mapper);
 
       expect(mapper).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('all', () => {
+    it('모든 Result가 성공이면 성공 값을 object로 묶는다', () => {
+      const result = all({
+        title: ok('첫 글'),
+        count: ok(1),
+      });
+
+      expect(result.isOk()).toBe(true);
+
+      if (result.isOk()) {
+        expect(result.value).toEqual({
+          title: '첫 글',
+          count: 1,
+        });
+      }
+    });
+
+    it('첫 번째 실패 Result를 반환한다', () => {
+      const result = all({
+        title: err('title failed'),
+        content: err('content failed'),
+      });
+
+      expect(result.isErr()).toBe(true);
+
+      if (result.isErr()) {
+        expect(result.error).toBe('title failed');
+      }
+    });
+
+    it('빈 object는 빈 object 성공 Result를 반환한다', () => {
+      const result = all({});
+
+      expect(result.isOk()).toBe(true);
+
+      if (result.isOk()) {
+        expect(result.value).toEqual({});
+      }
     });
   });
 });

@@ -1,5 +1,18 @@
 export type Result<T, E> = Ok<T, E> | Err<T, E>;
 
+type ResultCollection = Record<string, Result<unknown, unknown>>;
+
+type ResultValues<TResults extends ResultCollection> = {
+  [Key in keyof TResults]: TResults[Key] extends Result<infer TValue, unknown>
+    ? TValue
+    : never;
+};
+
+type ResultErrors<TResults extends ResultCollection> =
+  TResults[keyof TResults] extends Result<unknown, infer TError>
+    ? TError
+    : never;
+
 export class Ok<T, E = never> {
   readonly value: T;
 
@@ -54,4 +67,22 @@ export function ok<T>(value: T): Result<T, never> {
 
 export function err<E>(error: E): Result<never, E> {
   return new Err<never, E>(error);
+}
+
+export function all<TResults extends ResultCollection>(
+  results: TResults,
+): Result<ResultValues<TResults>, ResultErrors<TResults>> {
+  const values = {} as ResultValues<TResults>;
+
+  for (const key of Object.keys(results) as Array<keyof TResults>) {
+    const result = results[key];
+
+    if (result.isErr()) {
+      return err(result.error as ResultErrors<TResults>);
+    }
+
+    values[key] = result.value as ResultValues<TResults>[typeof key];
+  }
+
+  return ok(values);
 }
