@@ -44,7 +44,8 @@ export abstract class Entity<TId extends EntityId, EntityProps> {
   >(
     options: ConstructEntityOptions<TId, EntityProps, TError, TInstance>,
   ): Result<TInstance, EntityDomainError | TError> {
-    return Entity.validateBaseParams(options.params)
+    return Entity.normalizeBaseParams(options.params)
+      .andThen((params) => Entity.validateBaseParams(params))
       .andThen(options.validate)
       .map(options.instantiate);
   }
@@ -60,9 +61,31 @@ export abstract class Entity<TId extends EntityId, EntityProps> {
     });
   }
 
+  private static normalizeBaseParams<TId extends EntityId, EntityProps>(
+    params: EntityParams<TId, EntityProps>,
+  ): Result<EntityParams<TId, EntityProps>, never> {
+    if (typeof params.id !== 'string') {
+      return ok(params);
+    }
+
+    return ok({
+      ...params,
+      id: params.id.trim() as TId,
+    });
+  }
+
   private static validateBaseParams<TId extends EntityId, EntityProps>(
     params: EntityParams<TId, EntityProps>,
   ): Result<EntityParams<TId, EntityProps>, EntityDomainError> {
+    if (typeof params.id === 'string' && params.id.length === 0) {
+      return err({
+        kind: 'invariant_violation',
+        code: 'entity.id_empty',
+        message: 'Entity id cannot be empty',
+        details: { fields: ['id'] },
+      });
+    }
+
     if (!Guard.isPlainObject(params.props)) {
       return err({
         kind: 'invariant_violation',

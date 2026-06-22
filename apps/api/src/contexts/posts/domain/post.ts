@@ -1,7 +1,6 @@
-import { all, err, ok, type Result } from '@core/result';
+import { all, ok, type Result } from '@core/result';
 import {
   AggregateRoot,
-  DOMAIN_ERROR_KIND,
   type DomainError,
   type EntityParams,
 } from '@kernels/domain';
@@ -29,13 +28,13 @@ export class Post extends AggregateRoot<PostId, PostProps> {
     }).andThen(({ title, content }) =>
       super.construct({
         params: {
-          id: params.id.trim(),
+          id: params.id,
           props: {
             title,
             content,
           },
         },
-        validate: (entityParams) => Post.validateParams(entityParams),
+        validate: (entityParams) => ok(entityParams),
         instantiate: (entityParams) => new Post(entityParams),
       }),
     );
@@ -43,20 +42,5 @@ export class Post extends AggregateRoot<PostId, PostProps> {
 
   private constructor(params: EntityParams<PostId, PostProps>) {
     super(params);
-  }
-
-  private static validateParams(
-    params: EntityParams<PostId, PostProps>,
-  ): Result<EntityParams<PostId, PostProps>, DomainError> {
-    if (params.id.length === 0) {
-      return err({
-        kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
-        code: 'post.id_empty',
-        message: 'Post id cannot be empty',
-        details: { fields: ['id'] },
-      });
-    }
-
-    return ok(params);
   }
 }
