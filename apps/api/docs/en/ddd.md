@@ -44,11 +44,20 @@ They are not only folder names.
 
 - Aggregates protect consistency boundaries and expose behavior through the aggregate root.
 - Entities have identity and lifecycle.
+- Generic entity identity mechanics, such as ID normalization and empty-ID validation, belong in shared `Entity`/`AggregateRoot`; context aggregates should keep only context-specific identity rules.
 - Value objects describe immutable domain values and validate their own invariants.
 - When repositories belong to the domain layer, they represent domain persistence needs as contracts, not database implementation details.
 - Domain services contain business rules that do not naturally belong to one entity or value object.
 - Domain events describe meaningful business facts that already happened.
 - Domain errors describe business rule failures and should not contain transport, database, or framework details.
+
+## Domain Encapsulation
+
+- Domain objects SHOULD expose behavior through intention-revealing methods instead of generic getters that mirror internal props.
+- Avoid getters and snapshots whose main purpose is to let callers inspect domain state and make domain decisions outside the object.
+- Ask the object to answer a domain question or perform a domain action, such as `isPublishable`, `hasContentHash`, or `markDeleted`, instead of pulling fields out and deciding externally.
+- DTO, persistence, or presentation mapping MAY use explicit mappers or purpose-specific read models at layer boundaries, but those shapes should not become the domain model's default API.
+- Value objects MAY expose a primitive value when the value itself is the domain concept; entities and aggregates should prefer behavior-oriented APIs.
 
 ## Review Rules
 

@@ -91,7 +91,7 @@ describe('Entity', () => {
   describe('construct', () => {
     it('validation을 통과하면 entity를 담은 성공 Result를 반환한다', () => {
       const result = SampleEntity.create({
-        id: 'sample-1',
+        id: '  sample-1  ',
         props: { name: 'spring' },
       });
 
@@ -100,6 +100,18 @@ describe('Entity', () => {
       if (result.isOk()) {
         expect(result.value.id).toBe('sample-1');
         expect(result.value.getProps().name).toBe('spring');
+      }
+    });
+
+    it('문자열 entity identifier가 공백뿐이면 실패 Result를 반환한다', () => {
+      const result = SampleEntity.create({
+        id: '  ',
+      });
+
+      expect(result.isErr()).toBe(true);
+
+      if (result.isErr()) {
+        expect(result.error.code).toBe('entity.id_empty');
       }
     });
 
