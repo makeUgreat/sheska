@@ -40,7 +40,7 @@ Write integration tests when the test must verify multiple real components worki
 
 - Run unit tests with `pnpm test:unit` from the repository root or `pnpm --filter @sheska/api test:unit`.
 - Vitest discovers unit test files with the `.spec.ts` suffix under `apps/api/src`.
-- Prefer placing unit tests in a `__tests__` directory inside the target file's directory. Example: `apps/api/src/contexts/posts/domain/__tests__/post-title.vo.spec.ts`
+- Prefer placing unit tests in a `__tests__` directory inside the target file's directory. Example: `apps/api/src/contexts/posts/domain/__tests__/post-title.spec.ts`
 - Target pure services, functions, controllers without HTTP transport, and small units of business logic.
 - Unit tests should cover representative edge cases, boundary values, invalid shapes, error paths, immutability, identity/equality behavior, and meaningful default behavior when those cases define the unit's contract. Prefer proving these details at the unit level instead of pushing them into slower integration tests.
 - Do not use an HTTP server, actual Nest application startup, or external I/O unless DI configuration itself is the behavior under test.

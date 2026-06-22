@@ -41,7 +41,7 @@ API 앱은 Vitest를 사용하며 단위 테스트와 통합 테스트를 분리
 
 - 단위 테스트는 repository root에서 `pnpm test:unit` 또는 `pnpm --filter @sheska/api test:unit`으로 실행한다.
 - Vitest는 `apps/api/src` 아래의 `.spec.ts` suffix를 가진 단위 테스트 파일을 발견한다.
-- 단위 테스트는 대상 file의 directory 안에 있는 `__tests__` directory에 두는 것을 선호한다. 예: `apps/api/src/contexts/posts/domain/__tests__/post-title.vo.spec.ts`
+- 단위 테스트는 대상 file의 directory 안에 있는 `__tests__` directory에 두는 것을 선호한다. 예: `apps/api/src/contexts/posts/domain/__tests__/post-title.spec.ts`
 - 순수 서비스, 함수, HTTP transport 없는 controller, 작은 비즈니스 로직 단위를 대상으로 한다.
 - 대표적인 edge case, boundary value, invalid shape, error path, immutability, identity/equality behavior, 의미 있는 default behavior가 해당 unit의 contract를 정의한다면 단위 테스트에서 검증해야 한다. 이런 세부사항은 느린 통합 테스트로 미루기보다 단위 테스트 수준에서 증명하는 것을 선호한다.
 - DI 설정 자체가 테스트 대상이 아니라면 HTTP 서버, 실제 Nest 애플리케이션 startup, 외부 I/O를 사용하지 않는다.
