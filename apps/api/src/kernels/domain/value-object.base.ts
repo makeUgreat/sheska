@@ -10,15 +10,18 @@ export type ValueObjectProps<T> = T extends Primitives | Date
   ? DomainPrimitive<T>
   : T;
 
-export interface ConstructValueObjectOptions<
-  TProps,
-  TError,
-  TInstance extends ValueObject<unknown>,
-> {
+export interface ConstructValueObjectOptions<TProps, TError> {
   props: TProps;
   validate: (props: TProps) => Result<TProps, TError>;
-  instantiate: (props: TProps) => TInstance;
 }
+
+type ValueObjectPrototype<TInstance extends ValueObject<unknown>> = {
+  readonly prototype: TInstance;
+};
+
+type ValueObjectConstructor<TProps, TInstance extends ValueObject<unknown>> = {
+  new (props: TProps): TInstance;
+};
 
 export abstract class ValueObject<T> {
   protected readonly props: Readonly<ValueObjectProps<T>>;
@@ -32,9 +35,17 @@ export abstract class ValueObject<T> {
     TError,
     TInstance extends ValueObject<unknown>,
   >(
-    options: ConstructValueObjectOptions<TProps, TError, TInstance>,
+    this: ValueObjectPrototype<TInstance>,
+    options: ConstructValueObjectOptions<TProps, TError>,
   ): Result<TInstance, TError> {
-    return options.validate(options.props).map(options.instantiate);
+    const ValueObjectClass = this as unknown as ValueObjectConstructor<
+      TProps,
+      TInstance
+    >;
+
+    return options
+      .validate(options.props)
+      .map((props) => ValueObject.instantiate(ValueObjectClass, props));
   }
 
   static isValueObject(obj: unknown): obj is ValueObject<unknown> {
@@ -94,6 +105,13 @@ export abstract class ValueObject<T> {
       typeof value === 'boolean' ||
       value instanceof Date
     );
+  }
+
+  private static instantiate<TProps, TInstance extends ValueObject<unknown>>(
+    ValueObjectClass: ValueObjectConstructor<TProps, TInstance>,
+    props: TProps,
+  ): TInstance {
+    return new ValueObjectClass(props);
   }
 
   private createImmutableProps(

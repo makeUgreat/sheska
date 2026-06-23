@@ -15,13 +15,12 @@ class SampleAggregateRoot extends AggregateRoot<string, SampleProps> {
     id: string;
     props?: SampleProps;
   }): Result<SampleAggregateRoot, DomainError> {
-    return super.construct({
+    return SampleAggregateRoot.construct({
       params: {
         id: params.id,
         props: params.props ?? { name: 'spring' },
       },
       validate: (entityParams) => ok(entityParams),
-      instantiate: (entityParams) => new SampleAggregateRoot(entityParams),
     });
   }
 

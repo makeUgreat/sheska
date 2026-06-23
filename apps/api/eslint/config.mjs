@@ -60,6 +60,32 @@ export default tseslint.config(
     },
   },
   {
+    files: ['src/contexts/**/domain/**/*.ts', 'src/kernels/domain/**/*.ts'],
+    ignores: ['src/**/__tests__/**/*.ts', 'src/**/*.{spec,test}.ts'],
+    rules: {
+      '@typescript-eslint/member-ordering': [
+        'error',
+        {
+          classes: {
+            memberTypes: [
+              'private-constructor',
+              [
+                'field',
+                'static-initialization',
+                'constructor',
+                'accessor',
+                'get',
+                'set',
+                'method',
+              ],
+            ],
+            order: 'as-written',
+          },
+        },
+      ],
+    },
+  },
+  {
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',

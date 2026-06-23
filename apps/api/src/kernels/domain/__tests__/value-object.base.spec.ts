@@ -4,7 +4,7 @@ import {
   type DomainError,
   type DomainPrimitive,
 } from '@kernels/domain';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 const sampleEmptyError: DomainError = {
   kind: 'invariant_violation',
@@ -15,10 +15,9 @@ const sampleEmptyError: DomainError = {
 
 class SampleName extends ValueObject<string> {
   static of(value: string): Result<SampleName, DomainError> {
-    return super.construct({
+    return SampleName.construct({
       props: { value: value.trim() },
       validate: (props) => SampleName.validateProps(props),
-      instantiate: (props) => new SampleName(props),
     });
   }
 
@@ -39,10 +38,9 @@ class SampleName extends ValueObject<string> {
 
 class SampleDate extends ValueObject<Date> {
   static of(value: Date): Result<SampleDate, DomainError> {
-    return super.construct({
+    return SampleDate.construct({
       props: { value },
       validate: (props) => ok(props),
-      instantiate: (props) => new SampleDate(props),
     });
   }
 
@@ -60,10 +58,9 @@ interface SampleDetailsProps {
 
 class SampleDetails extends ValueObject<SampleDetailsProps> {
   static of(props: SampleDetailsProps): Result<SampleDetails, DomainError> {
-    return super.construct({
+    return SampleDetails.construct({
       props,
       validate: (valueObjectProps) => ok(valueObjectProps),
-      instantiate: (valueObjectProps) => new SampleDetails(valueObjectProps),
     });
   }
 
@@ -81,11 +78,9 @@ class SampleValueKeyDetails extends ValueObject<SampleValueKeyProps> {
   static of(
     props: SampleValueKeyProps,
   ): Result<SampleValueKeyDetails, DomainError> {
-    return super.construct({
+    return SampleValueKeyDetails.construct({
       props,
       validate: (valueObjectProps) => ok(valueObjectProps),
-      instantiate: (valueObjectProps) =>
-        new SampleValueKeyDetails(valueObjectProps),
     });
   }
 
@@ -95,29 +90,26 @@ class SampleValueKeyDetails extends ValueObject<SampleValueKeyProps> {
 }
 
 class ConfigurableDetails extends ValueObject<SampleDetailsProps> {
+  static constructedCount = 0;
+
   static of(
     props: SampleDetailsProps,
     options?: {
       validate?: (
         valueObjectProps: SampleDetailsProps,
       ) => Result<SampleDetailsProps, DomainError>;
-      instantiate?: (
-        valueObjectProps: SampleDetailsProps,
-      ) => ConfigurableDetails;
     },
   ): Result<ConfigurableDetails, DomainError> {
-    return super.construct({
+    return ConfigurableDetails.construct({
       props,
       validate:
         options?.validate ?? ((valueObjectProps) => ok(valueObjectProps)),
-      instantiate:
-        options?.instantiate ??
-        ((valueObjectProps) => new ConfigurableDetails(valueObjectProps)),
     });
   }
 
-  constructor(props: SampleDetailsProps) {
+  private constructor(props: SampleDetailsProps) {
     super(props);
+    ConfigurableDetails.constructedCount += 1;
   }
 }
 
@@ -143,10 +135,8 @@ describe('ValueObject', () => {
       }
     });
 
-    it('validation이 실패하면 instantiate를 호출하지 않는다', () => {
-      const instantiate = vi.fn((props: SampleDetailsProps) => {
-        return new ConfigurableDetails(props);
-      });
+    it('validation이 실패하면 value object를 생성하지 않는다', () => {
+      ConfigurableDetails.constructedCount = 0;
 
       ConfigurableDetails.of(
         {
@@ -157,11 +147,10 @@ describe('ValueObject', () => {
         },
         {
           validate: () => err(sampleEmptyError),
-          instantiate,
         },
       );
 
-      expect(instantiate).not.toHaveBeenCalled();
+      expect(ConfigurableDetails.constructedCount).toBe(0);
     });
   });
 
