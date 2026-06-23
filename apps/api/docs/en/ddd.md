@@ -51,6 +51,22 @@ They are not only folder names.
 - Domain events describe meaningful business facts that already happened.
 - Domain errors describe business rule failures and should not contain transport, database, or framework details.
 
+## Domain Factory Methods
+
+- Factory method names should make the creation path clear.
+- `create` usually starts a new aggregate or entity lifecycle, `restore` rebuilds an existing one from persistence or another trusted snapshot, and `of` is commonly used for value objects or identity-free domain values.
+- Factory methods MUST call `construct` directly instead of delegating to another factory method such as `create`, `restore`, or `of`.
+- If a creation path needs unusual identity or lifecycle behavior, make that intent clear in the factory name or nearby documentation.
+
+## Repository Method Naming
+
+- `save` persists an aggregate through the repository contract. Use it for create and update unless the context has a meaningful separate command.
+- `findById` looks up one aggregate by its identity and returns `null` when it is absent.
+- `findBy{DomainTerm}` MAY be used for another unique lookup only when that term is part of the bounded context language.
+- `list` returns multiple aggregates or read models. It SHOULD accept explicit criteria when filtering is needed.
+- `get` means the caller expects the resource to exist. Use it only when absence is exceptional in that contract; otherwise prefer `findBy...`.
+- Avoid repository method names that expose storage mechanics, query implementation, or table shape.
+
 ## Domain Encapsulation
 
 - Domain objects SHOULD expose behavior through intention-revealing methods instead of generic getters that mirror internal props.
@@ -58,6 +74,14 @@ They are not only folder names.
 - Ask the object to answer a domain question or perform a domain action, such as `isPublishable`, `hasContentHash`, or `markDeleted`, instead of pulling fields out and deciding externally.
 - DTO, persistence, or presentation mapping MAY use explicit mappers or purpose-specific read models at layer boundaries, but those shapes should not become the domain model's default API.
 - Value objects MAY expose a primitive value when the value itself is the domain concept; entities and aggregates should prefer behavior-oriented APIs.
+
+## Domain API Type Extraction
+
+- Prefer inline object types for simple method parameters or return values that are used by one method and are easy to understand from the method name.
+- Use local, non-exported types when a shape is reused inside one aggregate, would make signatures noisy, or represents internal restore/persistence mapping details.
+- Export method parameter, result, and status types only when another layer or bounded context should import them as a stable contract.
+- Do not create `Params`, `Result`, or `Status` types only because a method is public.
+- Prefer a domain name over a mechanical suffix when a type is worth naming; otherwise keep the shape inline.
 
 ## Review Rules
 
