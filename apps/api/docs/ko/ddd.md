@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/ddd.md
-last_synced: 2026-06-22
+last_synced: 2026-06-23
 related:
   - ./architecture.md
 ---
@@ -52,6 +52,22 @@ DDD 용어는 단순한 folder name이 아니다.
 - Domain event는 이미 발생한 의미 있는 business fact를 설명한다.
 - Domain error는 business rule failure를 설명하며 transport, database, framework detail을 포함하지 않아야 한다.
 
+## Domain Factory Methods
+
+- Factory method 이름은 creation path가 드러나게 짓는 것이 좋다.
+- `create`는 보통 새로운 aggregate 또는 entity lifecycle을 시작하고, `restore`는 persistence 또는 신뢰할 수 있는 snapshot에서 기존 객체를 다시 구성하며, `of`는 value object 또는 identity가 없는 domain value에 주로 사용한다.
+- Factory method는 `create`, `restore`, `of` 같은 다른 factory method에 위임하지 말고 `construct`를 직접 호출해야 한다.
+- 특이한 identity 또는 lifecycle 동작이 필요한 creation path라면 factory name이나 가까운 문서에서 그 의도를 드러낸다.
+
+## Repository Method Naming
+
+- `save`는 repository contract를 통해 aggregate를 저장한다. Context에 의미 있는 별도 command가 없다면 create와 update에 모두 사용한다.
+- `findById`는 identity로 aggregate 하나를 조회하고, 없으면 `null`을 반환한다.
+- `findBy{DomainTerm}`은 해당 term이 bounded context language에 속하는 다른 unique lookup일 때 사용할 수 있다.
+- `list`는 여러 aggregate 또는 read model을 반환한다. Filtering이 필요하면 explicit criteria를 받는 것이 좋다.
+- `get`은 caller가 resource가 존재한다고 기대한다는 의미다. 해당 contract에서 부재가 exceptional일 때만 사용하고, 그렇지 않으면 `findBy...`를 선호한다.
+- Storage mechanics, query implementation, table shape를 노출하는 repository method name은 피한다.
+
 ## Domain Encapsulation
 
 - Domain object는 internal props를 그대로 반영하는 generic getter보다 의도가 드러나는 method로 behavior를 노출하는 것이 좋다.
@@ -59,6 +75,14 @@ DDD 용어는 단순한 folder name이 아니다.
 - Field를 꺼낸 뒤 외부에서 판단하기보다 `isPublishable`, `hasContentHash`, `markDeleted`처럼 객체에게 domain question이나 action을 요청한다.
 - DTO, persistence, presentation mapping은 layer boundary에서 explicit mapper 또는 목적별 read model을 사용할 수 있지만, 그 shape를 domain model의 기본 API로 만들지 않는다.
 - Value object는 값 자체가 domain concept일 때 primitive value를 노출할 수 있지만, entity와 aggregate는 behavior 중심 API를 선호한다.
+
+## Domain API Type Extraction
+
+- 하나의 method에서만 쓰이고 method name만으로 이해하기 쉬운 단순 parameter나 return value는 inline object type을 선호한다.
+- 하나의 aggregate 안에서 재사용되거나, signature를 지나치게 길게 만들거나, internal restore/persistence mapping detail을 표현하는 shape는 export하지 않는 local type을 사용한다.
+- Method parameter, result, status type은 다른 layer 또는 bounded context가 안정적인 contract로 import해야 할 때만 export한다.
+- Method가 public이라는 이유만으로 `Params`, `Result`, `Status` type을 만들지 않는다.
+- 이름 붙일 가치가 있는 type에는 기계적인 suffix보다 domain name을 선호하고, 그렇지 않으면 shape를 inline으로 둔다.
 
 ## 리뷰 규칙
 

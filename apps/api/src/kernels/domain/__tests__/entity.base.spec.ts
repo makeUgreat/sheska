@@ -27,10 +27,9 @@ class SampleEntity extends Entity<string, SampleProps> {
   static restore(
     params: EntityParams<string, SampleProps>,
   ): Result<SampleEntity, DomainError> {
-    return super.construct({
+    return SampleEntity.construct({
       params,
       validate: (entityParams) => ok(entityParams),
-      instantiate: (entityParams) => new SampleEntity(entityParams),
     });
   }
 
@@ -44,13 +43,12 @@ class NumericIdEntity extends Entity<number, SampleProps> {
     id: number;
     props?: SampleProps;
   }): Result<NumericIdEntity, DomainError> {
-    return super.construct({
+    return NumericIdEntity.construct({
       params: {
         id: params.id,
         props: params.props ?? { name: 'spring' },
       },
       validate: (entityParams) => ok(entityParams),
-      instantiate: (entityParams) => new NumericIdEntity(entityParams),
     });
   }
 
@@ -63,27 +61,25 @@ type SampleEntityParams = EntityParams<string, SampleProps>;
 type SampleEntityValidator = (
   params: SampleEntityParams,
 ) => Result<SampleEntityParams, DomainError>;
-type SampleEntityFactory = (params: SampleEntityParams) => ConfigurableEntity;
 
 class ConfigurableEntity extends Entity<string, SampleProps> {
+  static constructedCount = 0;
+
   static restore(
     params: SampleEntityParams,
     options?: {
       validate?: SampleEntityValidator;
-      instantiate?: SampleEntityFactory;
     },
   ): Result<ConfigurableEntity, DomainError> {
-    return super.construct({
+    return ConfigurableEntity.construct({
       params,
       validate: options?.validate ?? ((entityParams) => ok(entityParams)),
-      instantiate:
-        options?.instantiate ??
-        ((entityParams) => new ConfigurableEntity(entityParams)),
     });
   }
 
   constructor(params: SampleEntityParams) {
     super(params);
+    ConfigurableEntity.constructedCount += 1;
   }
 }
 
@@ -225,10 +221,8 @@ describe('Entity', () => {
       expect(validate).not.toHaveBeenCalled();
     });
 
-    it('custom validation이 실패하면 instantiate를 호출하지 않는다', () => {
-      const instantiate = vi.fn((params: SampleEntityParams) => {
-        return new ConfigurableEntity(params);
-      });
+    it('custom validation이 실패하면 entity를 생성하지 않는다', () => {
+      ConfigurableEntity.constructedCount = 0;
 
       ConfigurableEntity.restore(
         {
@@ -237,11 +231,10 @@ describe('Entity', () => {
         },
         {
           validate: () => err(sampleValidationError),
-          instantiate,
         },
       );
 
-      expect(instantiate).not.toHaveBeenCalled();
+      expect(ConfigurableEntity.constructedCount).toBe(0);
     });
   });
 
