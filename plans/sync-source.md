@@ -41,20 +41,19 @@
 흐름:
 
 1. Presentation layer는 transport payload를 검증하고 application command로 변환한다.
-2. Application service는 전달받은 `content` 기준으로 `contentHash`와 `size`를 계산한다.
+2. Application service는 전달받은 `content` 기준으로 `fingerprint`와 `size`를 계산한다.
 3. Repository는 `externalSourceId` 기준으로 기존 source를 조회한다.
 4. 기존 source가 없으면 서버가 UUID v7 `sourceId`를 생성하고 새 source를 저장한다.
-5. 기존 source가 있고 서버가 계산한 `contentHash`가 같으면 저장 갱신과 후속 job 생성을 건너뛴다.
-6. 기존 source가 있고 서버가 계산한 `contentHash`가 다르면 source content와 hash를 갱신한다.
-7. source가 새로 생성되거나 변경되면 source 저장과 후속 job 생성을 같은 durable boundary 안에서 처리한다.
+5. 기존 source가 있고 서버가 계산한 `fingerprint`가 같으면 저장 갱신과 후속 job 생성을 건너뛴다.
+6. 기존 source가 있고 서버가 계산한 `fingerprint`가 다르면 source content와 fingerprint를 갱신한다.
+7. source가 새로 생성되거나 변경되면 source를 저장하고 후속 job을 생성한다.
 8. API는 처리 결과를 반환하되, 후속 job 완료는 보장하지 않는다.
 
 출력:
 
 - `sourceId`
 - `externalSourceId`
-- `contentHash`
-- `status`: `created`, `updated`, `skipped`
+- `fingerprint`
 - `syncJobId`: 후속 job이 생성된 경우에만 포함한다.
 
 실패 처리:
@@ -73,11 +72,11 @@
 ## 동기화 로직 고려사항
 
 - 동기화 처리는 멱등적이어야 한다.
-- 기본 멱등성 기준은 `externalSourceId + contentHash`다.
+- 기본 멱등성 기준은 `externalSourceId + fingerprint`다.
 - 저장소는 `externalSourceId`에 unique constraint를 두어 외부 source 매핑을 보장한다.
-- `contentHash`와 `size`는 서버가 upload payload의 `content` 기준으로 계산한다.
-- 클라이언트가 hash를 보내더라도 서버는 이를 신뢰하지 않고 최적화용 참고값으로만 다룬다.
-- 기존 source의 `contentHash`가 서버가 계산한 `contentHash`와 같으면 저장 갱신과 임베딩 재처리를 건너뛴다.
+- `fingerprint`와 `size`는 서버가 upload payload의 `content` 기준으로 계산한다.
+- 클라이언트가 fingerprint를 보내더라도 서버는 이를 신뢰하지 않고 최적화용 참고값으로만 다룬다.
+- 기존 source의 `fingerprint`가 서버가 계산한 `fingerprint`와 같으면 저장 갱신과 임베딩 재처리를 건너뛴다.
 - upsert를 지원하는 DB를 이용할 수 있다면 활용하여 동시성 문제를 완화한다.
 
 ## 비동기 실패 정책

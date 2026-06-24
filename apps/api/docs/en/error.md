@@ -41,7 +41,8 @@ Refine errors by bounded context, aggregate, service, adapter, or use case only 
 Errors SHOULD be transformed when they cross a boundary where the owner, audience, or contract changes.
 
 - Adapter boundaries translate vendor raw errors into infrastructure or other application-controlled errors when they understand the failure.
-- Use cases MAY translate domain errors into application or use case errors when they own the caller-facing meaning.
+- Use cases SHOULD pass through domain errors from the same bounded context unchanged. Use case errors should represent orchestration or application-owned failures.
+- Use cases MAY translate domain errors only when they intentionally own a different caller-facing contract, such as crossing a bounded context or module boundary.
 - Protocol boundaries translate application errors into presentation errors or thrown protocol exceptions.
 - Independent bounded contexts or modules translate errors through the communication contract used by that boundary.
 - Presentation boundaries MUST mask errors, exceptions, and system errors before exposing them to external clients.
@@ -54,7 +55,7 @@ Prefer transformation where it improves contract stability, information hiding, 
 There is no single correct error shape.
 When defining an application-controlled error, prefer this structure unless the owning contract has a reason to differ.
 
-- `kind`: optional stable category for boundary-level handling. Kernel error bases MAY require it when category policy is shared; domain errors may use it to distinguish invariant violations, state conflicts, and disallowed operations.
+- `kind`: optional stable category for boundary-level handling. Use categories with explicit caller behavior, such as validation failure, dependency unavailability, not found, or state conflict. Do not add catch-all application error kinds for unrecognized system failures.
 - `code`: stable value for people and machines to classify the error. Callers SHOULD depend on `code` instead of parsing `message`.
 - `message`: human-readable context for debugging, operations, or presentation. It MAY change, be localized, masked, or rewritten. Program code MUST NOT depend on exact `message` text.
 - `details`: minimal structured data for caller behavior or machine processing. Because it becomes part of the contract, include only data the receiver may depend on.
@@ -67,7 +68,8 @@ Do not expose internal diagnostic data through presentation errors unless the pr
 Applications cannot know or handle every possible thrown value or failure.
 At boundaries, preserve only the failures the boundary explicitly understands and mask unrecognized failures before exposing them outside the application.
 
-- Convert unrecognized failures into a common unexpected or internal error for that boundary's external contract.
+- Convert recognized technical failures into explicit application-controlled categories only when the caller can handle them as part of the contract.
+- Keep unrecognized failures on the exception or rejected-promise path until a presentation or process boundary masks them as a safe internal response.
 - Preserve the original cause when possible for internal observability.
 - Make unrecognized failures observable through logging, metrics, tracing, or another operational signal.
 - Do not create silent failures by swallowing unknown failures without handling or observability.

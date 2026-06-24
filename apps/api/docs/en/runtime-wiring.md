@@ -101,6 +101,7 @@ flowchart TB
 
 - In this convention, `port` means an application-owned boundary contract by default.
 - A port is not just any interface, error type, DTO, mapper, or shared contract.
+- Use `port` as an architecture term and directory concept, but do not add a `Port` suffix to contract type names. Name the contract by the capability it represents.
 - Runtime wiring MAY connect outer implementations to inner ports without making the inner source file import the outer implementation.
 - Infrastructure adapters may implement application ports.
 - `platform` or adapter wiring registers which implementation satisfies each port.

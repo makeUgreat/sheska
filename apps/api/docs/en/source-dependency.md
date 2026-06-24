@@ -129,7 +129,9 @@ application core -/-> platform concrete types
 - Application code MUST NOT know presentation request or response DTO shapes.
 - Application core MUST NOT depend on framework decorators or framework DI APIs.
 - NestJS module files for application use case wiring belong at the bounded context root when they are needed, not under `contexts/{context-name}/application`.
-- Application code MAY convert domain errors and failure results from application-owned ports into application or use case errors.
+- Application code SHOULD pass through same-context domain errors unchanged by default.
+- Application code MAY convert failure results from application-owned ports into application or use case errors.
+- Application-owned unit-of-work port files SHOULD use the `*.uow.ts` suffix, such as `source-sync.uow.ts`.
 - Application core may depend on `core`, domain code, and `kernels/application`.
 
 ## Infrastructure Layer

@@ -1,5 +1,5 @@
 import { DOMAIN_ERROR_KIND, type DomainErrorOf } from '@kernels/domain';
-import { type SourceContentHashDomainError } from './source-content-hash.error';
+import { type SourceFingerprintDomainError } from './source-fingerprint.error';
 import { type SourceSizeDomainError } from './source-size.error';
 
 type SourceContentSnapshotSizeMismatchError = DomainErrorOf<
@@ -9,6 +9,6 @@ type SourceContentSnapshotSizeMismatchError = DomainErrorOf<
 >;
 
 export type SourceContentSnapshotDomainError =
-  | SourceContentHashDomainError
+  | SourceFingerprintDomainError
   | SourceSizeDomainError
   | SourceContentSnapshotSizeMismatchError;

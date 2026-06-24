@@ -1,8 +1,12 @@
 export { type ExternalSourceIdDomainError } from './external-source-id.error';
 export { ExternalSourceId } from './external-source-id.vo';
+export {
+  SOURCE_CONTENT_SNAPSHOT_CHANGED_EVENT_NAME,
+  type SourceContentSnapshotChangedDomainEvent,
+} from './source-content-snapshot-changed.event';
 export { Source } from './source.aggregate';
-export { type SourceContentHashDomainError } from './source-content-hash.error';
-export { SourceContentHash } from './source-content-hash.vo';
+export { type SourceFingerprintDomainError } from './source-fingerprint.error';
+export { SourceFingerprint } from './source-fingerprint.vo';
 export { type SourceContentSnapshotDomainError } from './source-content-snapshot.error';
 export { SourceContentSnapshot } from './source-content-snapshot.vo';
 export { SourceContent } from './source-content.vo';

@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/runtime-wiring.md
-last_synced: 2026-06-19
+last_synced: 2026-06-24
 related:
   - ./architecture.md
   - ./source-dependency.md
@@ -102,6 +102,7 @@ flowchart TB
 
 - 이 convention에서 `port`는 기본적으로 application-owned boundary contract를 뜻한다.
 - Port는 단순히 모든 interface, error type, DTO, mapper, shared contract를 뜻하지 않는다.
+- `port`는 architecture 용어와 directory 개념으로 사용하되, contract type name에는 `Port` suffix를 붙이지 않는다. Contract는 그것이 나타내는 capability 기준으로 이름 붙인다.
 - Runtime wiring은 inner source file이 outer implementation을 import하지 않게 유지하면서 outer implementation을 inner port에 연결할 수 있다.
 - Infrastructure adapter는 application port를 구현할 수 있다.
 - `platform` 또는 adapter wiring은 각 port를 만족하는 implementation을 등록한다.

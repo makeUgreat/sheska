@@ -52,16 +52,16 @@ const validFiles: Record<string, string> = {
     export const correction = [result, domainKernel].join(':');
   `,
   'src/contexts/corrections/application/ports/index.ts': `
-    export interface CorrectionRepositoryPort {
+    export interface CorrectionRepository {
       save(): void;
     }
   `,
   'src/contexts/corrections/application/use-case.ts': `
     import { correction } from '@contexts/corrections/domain';
-    import type { CorrectionRepositoryPort } from './ports';
+    import type { CorrectionRepository } from './ports';
 
     export class CreateCorrectionUseCase {
-      constructor(private readonly repository: CorrectionRepositoryPort) {}
+      constructor(private readonly repository: CorrectionRepository) {}
 
       execute() {
         this.repository.save();
@@ -70,9 +70,9 @@ const validFiles: Record<string, string> = {
     }
   `,
   'src/contexts/corrections/infrastructure/repository.ts': `
-    import type { CorrectionRepositoryPort } from '@contexts/corrections/application/ports';
+    import type { CorrectionRepository } from '@contexts/corrections/application/ports';
 
-    export class MemoryCorrectionRepository implements CorrectionRepositoryPort {
+    export class MemoryCorrectionRepository implements CorrectionRepository {
       save() {}
     }
   `,
@@ -155,12 +155,12 @@ const invalidFiles: Record<string, string> = {
     export class CreateCorrectionCommand {}
   `,
   'src/contexts/corrections/application/ports/index.ts': `
-    export interface CorrectionRepositoryPort {
+    export interface CorrectionRepository {
       save(): void;
     }
   `,
   'src/contexts/corrections/application/ports/correction.repository.port.ts': `
-    export interface InternalCorrectionRepositoryPort {
+    export interface InternalCorrectionRepository {
       save(): void;
     }
   `,
@@ -173,9 +173,9 @@ const invalidFiles: Record<string, string> = {
     export const value = CorrectionsController;
   `,
   'src/contexts/corrections/infrastructure/uses-application-port-internal.ts': `
-    import type { InternalCorrectionRepositoryPort } from '../application/ports/correction.repository.port';
+    import type { InternalCorrectionRepository } from '../application/ports/correction.repository.port';
 
-    export class Repository implements InternalCorrectionRepositoryPort {
+    export class Repository implements InternalCorrectionRepository {
       save() {}
     }
   `,

@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 describe('ApplicationError', () => {
   it('application error kind 상수를 제공한다', () => {
-    expect(APPLICATION_ERROR_KIND).toMatchObject({
+    expect(APPLICATION_ERROR_KIND).toEqual({
       VALIDATION_FAILED: 'validation_failed',
       DEPENDENCY_UNAVAILABLE: 'dependency_unavailable',
       NOT_FOUND: 'not_found',
@@ -16,7 +16,6 @@ describe('ApplicationError', () => {
       AUTHENTICATION_REQUIRED: 'authentication_required',
       OPERATION_NOT_ALLOWED: 'operation_not_allowed',
       RATE_LIMITED: 'rate_limited',
-      UNEXPECTED: 'unexpected',
     });
   });
 

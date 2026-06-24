@@ -3,7 +3,7 @@ import {
   type DomainErrorOf,
   type EntityDomainError,
 } from '@kernels/domain';
-import { type SourceContentHashDomainError } from './source-content-hash.error';
+import { type SourceFingerprintDomainError } from './source-fingerprint.error';
 
 type SourceSyncJobSourceIdEmptyError = DomainErrorOf<
   typeof DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
@@ -14,6 +14,6 @@ type SourceSyncJobSourceIdEmptyError = DomainErrorOf<
 export type SourceSyncJobValidationError = SourceSyncJobSourceIdEmptyError;
 
 export type SourceSyncJobDomainError =
-  | SourceContentHashDomainError
+  | SourceFingerprintDomainError
   | SourceSyncJobValidationError
   | EntityDomainError;
