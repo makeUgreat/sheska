@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/source-dependency.md
-last_synced: 2026-06-20
+last_synced: 2026-06-24
 related:
   - ./architecture.md
   - ./error.md
@@ -130,7 +130,9 @@ application core -/-> platform concrete types
 - Application code는 presentation request 또는 response DTO shape를 알면 안 된다.
 - Application core는 framework decorator 또는 framework DI API에 의존해서는 안 된다.
 - Application use case wiring용 NestJS module file은 필요할 때 `contexts/{context-name}/application` 아래가 아니라 bounded context root에 둔다.
-- Application code는 domain error와 application-owned port에서 온 failure result를 application 또는 use case error로 변환할 수 있다.
+- Application code는 같은 context의 domain error를 기본적으로 그대로 전파하는 것이 좋다.
+- Application code는 application-owned port에서 온 failure result를 application 또는 use case error로 변환할 수 있다.
+- Application이 소유한 unit-of-work port file은 `source-sync.uow.ts`처럼 `*.uow.ts` suffix를 사용하는 것이 좋다.
 - Application core는 `core`, domain code, `kernels/application`에 의존할 수 있다.
 
 ## Infrastructure Layer

@@ -1,13 +1,13 @@
 import { Result as ResultUtils, err, ok, type Result } from '@core/result';
 import { DOMAIN_ERROR_KIND, ValueObject } from '@kernels/domain';
-import { SourceContentHash } from './source-content-hash.vo';
+import { SourceFingerprint } from './source-fingerprint.vo';
 import { SourceContent } from './source-content.vo';
 import { type SourceContentSnapshotDomainError } from './source-content-snapshot.error';
 import { SourceSize } from './source-size.vo';
 
 interface SourceContentSnapshotProps {
   content: string;
-  contentHash: string;
+  fingerprint: string;
   size: number;
 }
 
@@ -18,20 +18,20 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
 
   static of(params: {
     content: string;
-    contentHash: string;
+    fingerprint: string;
     size: number;
   }): Result<SourceContentSnapshot, SourceContentSnapshotDomainError> {
-    const { content, contentHash, size } = params;
+    const { content, fingerprint, size } = params;
 
     return ResultUtils.combine([
       SourceContent.of(content),
-      SourceContentHash.of(contentHash),
+      SourceFingerprint.of(fingerprint),
       SourceSize.of(size),
-    ]).andThen(([sourceContent, sourceContentHash, sourceSize]) =>
+    ]).andThen(([sourceContent, sourceFingerprint, sourceSize]) =>
       SourceContentSnapshot.construct({
         props: {
           content: sourceContent.value,
-          contentHash: sourceContentHash.value,
+          fingerprint: sourceFingerprint.value,
           size: sourceSize.value,
         },
         validate: (props) => SourceContentSnapshot.validateProps(props),
@@ -39,8 +39,8 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
     );
   }
 
-  hasSameContentHash(other: SourceContentSnapshot): boolean {
-    return this.value.contentHash === other.value.contentHash;
+  hasSameFingerprint(other: SourceContentSnapshot): boolean {
+    return this.value.fingerprint === other.value.fingerprint;
   }
 
   private static validateProps(

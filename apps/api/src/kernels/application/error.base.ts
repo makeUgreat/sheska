@@ -7,7 +7,6 @@ export const APPLICATION_ERROR_KIND = {
   AUTHENTICATION_REQUIRED: 'authentication_required',
   OPERATION_NOT_ALLOWED: 'operation_not_allowed',
   RATE_LIMITED: 'rate_limited',
-  UNEXPECTED: 'unexpected',
 } as const;
 
 export type ApplicationErrorKind =
@@ -44,9 +43,6 @@ export type ApplicationValidationFieldDetail = {
 export type ApplicationValidationDetails = {
   readonly fields: ApplicationValidationFieldDetail[];
 };
-
-export type ValidationFailedFieldDetail = ApplicationValidationFieldDetail;
-export type ValidationFailedDetails = ApplicationValidationDetails;
 
 export type ApplicationErrorDetailsFor<Kind extends ApplicationErrorKind> =
   Kind extends typeof APPLICATION_ERROR_KIND.VALIDATION_FAILED

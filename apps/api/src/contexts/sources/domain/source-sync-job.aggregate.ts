@@ -5,7 +5,7 @@ import {
   newId,
   type EntityParams,
 } from '@kernels/domain';
-import { SourceContentHash } from './source-content-hash.vo';
+import { SourceFingerprint } from './source-fingerprint.vo';
 import {
   type SourceSyncJobDomainError,
   type SourceSyncJobValidationError,
@@ -13,7 +13,7 @@ import {
 
 interface SourceSyncJobProps {
   sourceId: string;
-  contentHash: SourceContentHash;
+  fingerprint: SourceFingerprint;
   status: 'pending';
 }
 
@@ -24,20 +24,20 @@ export class SourceSyncJob extends AggregateRoot<string, SourceSyncJobProps> {
 
   static create(params: {
     sourceId: string;
-    contentHash: string;
+    fingerprint: string;
   }): Result<SourceSyncJob, SourceSyncJobDomainError> {
-    const { sourceId, contentHash } = params;
+    const { sourceId, fingerprint } = params;
 
     return ResultUtils.combine([
       SourceSyncJob.normalizeSourceId(sourceId),
-      SourceContentHash.of(contentHash),
-    ]).andThen(([sourceId, contentHash]) =>
+      SourceFingerprint.of(fingerprint),
+    ]).andThen(([sourceId, fingerprint]) =>
       SourceSyncJob.construct({
         params: {
           id: newId(),
           props: {
             sourceId,
-            contentHash,
+            fingerprint,
             status: 'pending',
           },
         },

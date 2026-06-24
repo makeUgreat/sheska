@@ -1,4 +1,7 @@
-import { Source } from '@contexts/sources/domain';
+import {
+  Source,
+  SOURCE_CONTENT_SNAPSHOT_CHANGED_EVENT_NAME,
+} from '@contexts/sources/domain';
 import { describe, expect, it } from 'vitest';
 
 const byteSize = (content: string): number =>
@@ -15,7 +18,7 @@ describe('Source', () => {
       const result = Source.create({
         externalSourceId: ' Notes/source.md ',
         content,
-        contentHash: ' hash-1 ',
+        fingerprint: ' fingerprint-1 ',
         size: byteSize(content),
       });
 
@@ -28,9 +31,17 @@ describe('Source', () => {
         expect(props.externalSourceId.value).toBe('Notes/source.md');
         expect(props.contentSnapshot.value).toEqual({
           content,
-          contentHash: 'hash-1',
+          fingerprint: 'fingerprint-1',
           size: byteSize(content),
         });
+        expect(result.value.domainEvents).toEqual([
+          expect.objectContaining({
+            eventName: SOURCE_CONTENT_SNAPSHOT_CHANGED_EVENT_NAME,
+            aggregateId: props.id,
+            externalSourceId: 'Notes/source.md',
+            fingerprint: 'fingerprint-1',
+          }),
+        ]);
       }
     });
 
@@ -38,7 +49,7 @@ describe('Source', () => {
       const result = Source.create({
         externalSourceId: 'empty-note',
         content: '',
-        contentHash: 'empty-hash',
+        fingerprint: 'empty-fingerprint',
         size: 0,
       });
 
@@ -49,7 +60,7 @@ describe('Source', () => {
       const result = Source.create({
         externalSourceId: ' ',
         content: '# Source note',
-        contentHash: 'hash-1',
+        fingerprint: 'fingerprint-1',
         size: byteSize('# Source note'),
       });
 
@@ -60,18 +71,18 @@ describe('Source', () => {
       }
     });
 
-    it('contentHash가 공백뿐이면 실패 Result를 반환한다', () => {
+    it('fingerprint가 공백뿐이면 실패 Result를 반환한다', () => {
       const result = Source.create({
         externalSourceId: 'Notes/source.md',
         content: '# Source note',
-        contentHash: ' ',
+        fingerprint: ' ',
         size: byteSize('# Source note'),
       });
 
       expect(result.isErr()).toBe(true);
 
       if (result.isErr()) {
-        expect(result.error.code).toBe('source.content_hash_empty');
+        expect(result.error.code).toBe('source.fingerprint_empty');
       }
     });
 
@@ -79,7 +90,7 @@ describe('Source', () => {
       const result = Source.create({
         externalSourceId: 'Notes/source.md',
         content: '안녕',
-        contentHash: 'hash-1',
+        fingerprint: 'fingerprint-1',
         size: 2,
       });
 
@@ -99,7 +110,7 @@ describe('Source', () => {
         id: ' source-1 ',
         externalSourceId: 'Notes/source.md',
         content,
-        contentHash: 'hash-1',
+        fingerprint: 'fingerprint-1',
         size: byteSize(content),
       });
 
@@ -110,12 +121,30 @@ describe('Source', () => {
       }
     });
 
+    it('복원된 source는 domain event를 기록하지 않는다', () => {
+      const content = '# Source note';
+
+      const result = Source.restore({
+        id: 'source-1',
+        externalSourceId: 'Notes/source.md',
+        content,
+        fingerprint: 'fingerprint-1',
+        size: byteSize(content),
+      });
+
+      expect(result.isOk()).toBe(true);
+
+      if (result.isOk()) {
+        expect(result.value.domainEvents).toEqual([]);
+      }
+    });
+
     it('source id가 공백뿐이면 실패 Result를 반환한다', () => {
       const result = Source.restore({
         id: ' ',
         externalSourceId: 'Notes/source.md',
         content: '# Source note',
-        contentHash: 'hash-1',
+        fingerprint: 'fingerprint-1',
         size: byteSize('# Source note'),
       });
 
@@ -128,11 +157,12 @@ describe('Source', () => {
   });
 
   describe('syncContentSnapshot', () => {
-    it('같은 contentHash이면 skipped 상태를 반환하고 내용을 바꾸지 않는다', () => {
-      const result = Source.create({
+    it('같은 fingerprint이면 내용을 바꾸지 않고 domain event를 기록하지 않는다', () => {
+      const result = Source.restore({
+        id: 'source-1',
         externalSourceId: 'Notes/source.md',
         content: '# Old note',
-        contentHash: 'hash-1',
+        fingerprint: 'fingerprint-1',
         size: byteSize('# Old note'),
       });
 
@@ -141,26 +171,27 @@ describe('Source', () => {
       if (result.isOk()) {
         const applied = result.value.syncContentSnapshot({
           content: '# New note',
-          contentHash: ' hash-1 ',
+          fingerprint: ' fingerprint-1 ',
           size: byteSize('# New note'),
         });
 
         expect(applied.isOk()).toBe(true);
 
         if (applied.isOk()) {
-          expect(applied.value.status).toBe('skipped');
-          expect(
-            applied.value.source.getProps().contentSnapshot.value.content,
-          ).toBe('# Old note');
+          expect(applied.value.getProps().contentSnapshot.value.content).toBe(
+            '# Old note',
+          );
+          expect(applied.value.domainEvents).toEqual([]);
         }
       }
     });
 
-    it('다른 contentHash이면 updated 상태를 반환하고 원문 snapshot을 갱신한다', () => {
-      const result = Source.create({
+    it('다른 fingerprint이면 원문 snapshot을 갱신하고 domain event를 기록한다', () => {
+      const result = Source.restore({
+        id: 'source-1',
         externalSourceId: 'Notes/source.md',
         content: '# Old note',
-        contentHash: 'hash-1',
+        fingerprint: 'fingerprint-1',
         size: byteSize('# Old note'),
       });
 
@@ -170,21 +201,28 @@ describe('Source', () => {
         const content = '# New note';
         const applied = result.value.syncContentSnapshot({
           content,
-          contentHash: ' hash-2 ',
+          fingerprint: ' fingerprint-2 ',
           size: byteSize(content),
         });
 
         expect(applied.isOk()).toBe(true);
 
         if (applied.isOk()) {
-          const props = applied.value.source.getProps();
+          const props = applied.value.getProps();
 
-          expect(applied.value.status).toBe('updated');
           expect(props.contentSnapshot.value).toEqual({
             content,
-            contentHash: 'hash-2',
+            fingerprint: 'fingerprint-2',
             size: byteSize(content),
           });
+          expect(applied.value.domainEvents).toEqual([
+            expect.objectContaining({
+              eventName: SOURCE_CONTENT_SNAPSHOT_CHANGED_EVENT_NAME,
+              aggregateId: 'source-1',
+              externalSourceId: 'Notes/source.md',
+              fingerprint: 'fingerprint-2',
+            }),
+          ]);
         }
       }
     });

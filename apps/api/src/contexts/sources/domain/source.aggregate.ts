@@ -1,5 +1,6 @@
 import { Result as ResultUtils, ok, type Result } from '@core/result';
 import { AggregateRoot, newId, type EntityParams } from '@kernels/domain';
+import { SourceContentSnapshotChangedDomainEvent } from './source-content-snapshot-changed.event';
 import { ExternalSourceId } from './external-source-id.vo';
 import { SourceContentSnapshot } from './source-content-snapshot.vo';
 import { type SourceDomainError } from './source.error';
@@ -13,37 +14,34 @@ interface SourceRestoreParams {
   id: string;
   externalSourceId: string;
   content: string;
-  contentHash: string;
+  fingerprint: string;
   size: number;
 }
 
 interface SourceCreateParams {
   externalSourceId: string;
   content: string;
-  contentHash: string;
+  fingerprint: string;
   size: number;
 }
 
-type SourceContentSyncStatus = 'updated' | 'skipped';
-
-interface SourceContentSyncResult {
-  source: Source;
-  status: SourceContentSyncStatus;
-}
-
-export class Source extends AggregateRoot<string, SourceProps> {
+export class Source extends AggregateRoot<
+  string,
+  SourceProps,
+  SourceContentSnapshotChangedDomainEvent
+> {
   private constructor(params: EntityParams<string, SourceProps>) {
     super(params);
   }
 
   static create(params: SourceCreateParams): Result<Source, SourceDomainError> {
-    const { externalSourceId, content, contentHash, size } = params;
+    const { externalSourceId, content, fingerprint, size } = params;
 
     return ResultUtils.combine([
       ExternalSourceId.of(externalSourceId),
       SourceContentSnapshot.of({
         content,
-        contentHash,
+        fingerprint,
         size,
       }),
     ]).andThen(([externalSourceId, contentSnapshot]) =>
@@ -56,6 +54,16 @@ export class Source extends AggregateRoot<string, SourceProps> {
           },
         },
         validate: (entityParams) => ok(entityParams),
+      }).map((source) => {
+        source.addDomainEvent(
+          new SourceContentSnapshotChangedDomainEvent({
+            aggregateId: source.id,
+            externalSourceId: source.props.externalSourceId.value,
+            fingerprint: contentSnapshot.value.fingerprint,
+          }),
+        );
+
+        return source;
       }),
     );
   }
@@ -63,13 +71,13 @@ export class Source extends AggregateRoot<string, SourceProps> {
   static restore(
     params: SourceRestoreParams,
   ): Result<Source, SourceDomainError> {
-    const { id, externalSourceId, content, contentHash, size } = params;
+    const { id, externalSourceId, content, fingerprint, size } = params;
 
     return ResultUtils.combine([
       ExternalSourceId.of(externalSourceId),
       SourceContentSnapshot.of({
         content,
-        contentHash,
+        fingerprint,
         size,
       }),
     ]).andThen(([externalSourceId, contentSnapshot]) =>
@@ -88,23 +96,24 @@ export class Source extends AggregateRoot<string, SourceProps> {
 
   syncContentSnapshot(params: {
     content: string;
-    contentHash: string;
+    fingerprint: string;
     size: number;
-  }): Result<SourceContentSyncResult, SourceDomainError> {
+  }): Result<Source, SourceDomainError> {
     return SourceContentSnapshot.of(params).map((contentSnapshot) => {
-      if (this.props.contentSnapshot.hasSameContentHash(contentSnapshot)) {
-        return {
-          source: this,
-          status: 'skipped',
-        };
+      if (this.props.contentSnapshot.hasSameFingerprint(contentSnapshot)) {
+        return this;
       }
 
       this.props.contentSnapshot = contentSnapshot;
+      this.addDomainEvent(
+        new SourceContentSnapshotChangedDomainEvent({
+          aggregateId: this.id,
+          externalSourceId: this.props.externalSourceId.value,
+          fingerprint: contentSnapshot.value.fingerprint,
+        }),
+      );
 
-      return {
-        source: this,
-        status: 'updated',
-      };
+      return this;
     });
   }
 }
