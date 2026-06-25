@@ -14,8 +14,8 @@ import {
   type SourceSyncJobRepositoryError,
 } from '@contexts/sources/application/ports';
 import {
-  SourceContentSnapshotCalculator,
   type SourceContentSnapshotCalculation,
+  SourceContentSnapshotCalculator,
 } from '../services/source-content-snapshot-calculator.service';
 import {
   type UploadSourceFingerprintUnavailableError,
@@ -78,16 +78,16 @@ export class UploadSourceUseCase {
     externalSourceId: string,
     snapshot: SourceContentSnapshotCalculation,
   ): Result<Source, UploadSourceUseCaseError> {
-    if (existingSource === null) {
-      return Source.create({
-        externalSourceId,
+    if (existingSource) {
+      return existingSource.syncContentSnapshot({
         content: snapshot.content,
         fingerprint: snapshot.fingerprint,
         size: snapshot.size,
       });
     }
 
-    return existingSource.syncContentSnapshot({
+    return Source.create({
+      externalSourceId,
       content: snapshot.content,
       fingerprint: snapshot.fingerprint,
       size: snapshot.size,
@@ -102,49 +102,56 @@ export class UploadSourceUseCase {
     );
 
     if (!contentSnapshotChangedEvent) {
-      const sourceProps = source.getProps();
-
-      return okAsync<UploadSourceResult, UploadSourceUseCaseError>({
-        sourceId: source.id,
-        externalSourceId: sourceProps.externalSourceId.value,
-        fingerprint: sourceProps.contentSnapshot.value.fingerprint,
-      } satisfies UploadSourceResult);
+      return this.completeUploadForUnchangedContentSnapshot(source);
     }
 
     return SourceSyncJob.create({
       sourceId: contentSnapshotChangedEvent.aggregateId,
       fingerprint: contentSnapshotChangedEvent.fingerprint,
     }).asyncAndThen((syncJob) =>
-      this.saveSourceAndSyncJob(source, syncJob).map((result) => {
-        source.clearDomainEvents();
+      this.sources
+        .save(source)
+        .mapErr((error) => this.mapSourceSyncPersistenceError(error))
+        .andThen((savedSource) =>
+          this.syncJobs
+            .save(syncJob)
+            .mapErr((error) => this.mapSourceSyncPersistenceError(error))
+            .map((savedSyncJob) => {
+              source.clearDomainEvents();
 
-        return result;
-      }),
+              return this.completeUploadForChangedContentSnapshot(
+                savedSource,
+                savedSyncJob,
+              );
+            }),
+        ),
     );
   }
 
-  private saveSourceAndSyncJob(
+  private completeUploadForUnchangedContentSnapshot(
+    source: Source,
+  ): ResultAsync<UploadSourceResult, UploadSourceUseCaseError> {
+    const sourceProps = source.getProps();
+
+    return okAsync({
+      sourceId: source.id,
+      externalSourceId: sourceProps.externalSourceId.value,
+      fingerprint: sourceProps.contentSnapshot.value.fingerprint,
+    } satisfies UploadSourceResult);
+  }
+
+  private completeUploadForChangedContentSnapshot(
     source: Source,
     syncJob: SourceSyncJob,
-  ): ResultAsync<UploadSourceResult, UploadSourceUseCaseError> {
-    return this.sources
-      .save(source)
-      .mapErr((error) => this.mapSourceSyncPersistenceError(error))
-      .andThen((savedSource) =>
-        this.syncJobs
-          .save(syncJob)
-          .mapErr((error) => this.mapSourceSyncPersistenceError(error))
-          .map((savedSyncJob) => {
-            const savedSourceProps = savedSource.getProps();
+  ): UploadSourceResult {
+    const sourceProps = source.getProps();
 
-            return {
-              sourceId: savedSource.id,
-              externalSourceId: savedSourceProps.externalSourceId.value,
-              fingerprint: savedSourceProps.contentSnapshot.value.fingerprint,
-              syncJobId: savedSyncJob.id,
-            } satisfies UploadSourceResult;
-          }),
-      );
+    return {
+      sourceId: source.id,
+      externalSourceId: sourceProps.externalSourceId.value,
+      fingerprint: sourceProps.contentSnapshot.value.fingerprint,
+      syncJobId: syncJob.id,
+    } satisfies UploadSourceResult;
   }
 
   private mapFingerprinterError(
