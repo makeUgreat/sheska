@@ -140,7 +140,7 @@ function sourceRepositoryUnavailableError(): SourceRepositoryError {
     kind: APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
     code: 'source_repository.unavailable',
     message: 'Source repository is unavailable',
-    details: {},
+    details: { causeCode: 'source_repository.unavailable' },
   };
 }
 
@@ -153,12 +153,21 @@ function sourceRepositoryStateConflictError(): SourceRepositoryError {
   };
 }
 
+function sourceRepositoryDomainError(): SourceRepositoryError {
+  return {
+    kind: 'invariant_violation',
+    code: 'source.size_mismatch',
+    message: 'Source size must match content byte size',
+    details: { fields: ['content', 'size'] },
+  };
+}
+
 function sourceSyncJobRepositoryUnavailableError(): SourceSyncJobRepositoryError {
   return {
     kind: APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
     code: 'source_sync_job_repository.unavailable',
     message: 'Source sync job repository is unavailable',
-    details: {},
+    details: { causeCode: 'source_sync_job_repository.unavailable' },
   };
 }
 
@@ -292,9 +301,10 @@ describe('UploadSourceUseCase', () => {
     expect(sources.findExternalSourceIds).toEqual([]);
   });
 
-  it('fingerprint 계산 실패를 upload 실패로 변환한다', async () => {
+  it('fingerprint 계산 실패를 그대로 반환한다', async () => {
     const fingerprinter = new StubSourceFingerprinter();
-    fingerprinter.error = fingerprinterUnavailableError();
+    const fingerprinterError = fingerprinterUnavailableError();
+    fingerprinter.error = fingerprinterError;
     const { sources, useCase } = createUseCase({ fingerprinter });
 
     const result = await useCase.execute({
@@ -305,20 +315,15 @@ describe('UploadSourceUseCase', () => {
     expect(result.isErr()).toBe(true);
 
     if (result.isErr()) {
-      expect(result.error.kind).toBe(
-        APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
-      );
-      expect(result.error.code).toBe('upload_source.fingerprint_unavailable');
-      expect(result.error.details).toEqual({
-        causeCode: 'source_fingerprinter.unavailable',
-      });
+      expect(result.error).toBe(fingerprinterError);
     }
     expect(sources.findExternalSourceIds).toEqual([]);
   });
 
-  it('source 조회 실패를 upload 실패로 변환한다', async () => {
+  it('source 조회 실패를 그대로 반환한다', async () => {
     const sources = new StubSourceRepository();
-    sources.findError = sourceRepositoryUnavailableError();
+    const repositoryError = sourceRepositoryUnavailableError();
+    sources.findError = repositoryError;
     const { useCase } = createUseCase({ sources });
 
     const result = await useCase.execute({
@@ -329,19 +334,14 @@ describe('UploadSourceUseCase', () => {
     expect(result.isErr()).toBe(true);
 
     if (result.isErr()) {
-      expect(result.error.kind).toBe(
-        APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
-      );
-      expect(result.error.code).toBe('upload_source.source_sync_unavailable');
-      expect(result.error.details).toEqual({
-        causeCode: 'source_repository.unavailable',
-      });
+      expect(result.error).toBe(repositoryError);
     }
   });
 
-  it('저장 중 state conflict가 발생하면 conflict 실패로 변환한다', async () => {
+  it('source 조회에서 domain error가 반환되면 그대로 통과시킨다', async () => {
     const sources = new StubSourceRepository();
-    sources.saveSourceError = sourceRepositoryStateConflictError();
+    const domainError = sourceRepositoryDomainError();
+    sources.findError = domainError;
     const { useCase } = createUseCase({ sources });
 
     const result = await useCase.execute({
@@ -352,19 +352,32 @@ describe('UploadSourceUseCase', () => {
     expect(result.isErr()).toBe(true);
 
     if (result.isErr()) {
-      expect(result.error.kind).toBe(APPLICATION_ERROR_KIND.STATE_CONFLICT);
-      expect(result.error.code).toBe(
-        'upload_source.source_sync_state_conflict',
-      );
-      expect(result.error.details).toEqual({
-        causeCode: 'source_repository.state_conflict',
-      });
+      expect(result.error).toBe(domainError);
     }
   });
 
-  it('sync job 저장 실패를 upload 실패로 변환한다', async () => {
+  it('저장 중 state conflict가 발생하면 그대로 반환한다', async () => {
+    const sources = new StubSourceRepository();
+    const repositoryError = sourceRepositoryStateConflictError();
+    sources.saveSourceError = repositoryError;
+    const { useCase } = createUseCase({ sources });
+
+    const result = await useCase.execute({
+      externalSourceId: 'Notes/source.md',
+      content: '# Source note',
+    });
+
+    expect(result.isErr()).toBe(true);
+
+    if (result.isErr()) {
+      expect(result.error).toBe(repositoryError);
+    }
+  });
+
+  it('sync job 저장 실패를 그대로 반환한다', async () => {
     const syncJobs = new StubSourceSyncJobRepository();
-    syncJobs.saveSyncJobError = sourceSyncJobRepositoryUnavailableError();
+    const repositoryError = sourceSyncJobRepositoryUnavailableError();
+    syncJobs.saveSyncJobError = repositoryError;
     const { useCase } = createUseCase({ syncJobs });
 
     const result = await useCase.execute({
@@ -375,13 +388,7 @@ describe('UploadSourceUseCase', () => {
     expect(result.isErr()).toBe(true);
 
     if (result.isErr()) {
-      expect(result.error.kind).toBe(
-        APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
-      );
-      expect(result.error.code).toBe('upload_source.source_sync_unavailable');
-      expect(result.error.details).toEqual({
-        causeCode: 'source_sync_job_repository.unavailable',
-      });
+      expect(result.error).toBe(repositoryError);
     }
   });
 });
