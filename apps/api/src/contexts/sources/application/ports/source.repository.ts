@@ -3,12 +3,17 @@ import {
   APPLICATION_ERROR_KIND,
   type ApplicationErrorOf,
 } from '@kernels/application';
-import { type Source } from '@contexts/sources/domain';
+import { type Source, type SourceDomainError } from '@contexts/sources/domain';
+
+export type SourceRepositoryUnavailableDetails = {
+  readonly causeCode: string;
+};
 
 export type SourceRepositoryUnavailableError = ApplicationErrorOf<
   typeof APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
   'source_repository',
-  'unavailable'
+  'unavailable',
+  SourceRepositoryUnavailableDetails
 >;
 
 export type SourceRepositoryStateConflictError = ApplicationErrorOf<
@@ -17,9 +22,13 @@ export type SourceRepositoryStateConflictError = ApplicationErrorOf<
   'state_conflict'
 >;
 
-export type SourceRepositoryError =
+export type SourceRepositoryApplicationError =
   | SourceRepositoryUnavailableError
   | SourceRepositoryStateConflictError;
+
+export type SourceRepositoryError =
+  | SourceRepositoryApplicationError
+  | SourceDomainError;
 
 export interface SourceRepository {
   findByExternalSourceId(

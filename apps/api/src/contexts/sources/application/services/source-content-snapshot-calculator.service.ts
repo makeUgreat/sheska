@@ -25,7 +25,7 @@ export class SourceContentSnapshotCalculator {
     }));
   }
 
-  private calculateByteSize(content: string): number {
+  private calculateByteSize(content: string) {
     return this.textEncoder.encode(content).length;
   }
 }
