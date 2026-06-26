@@ -5,10 +5,11 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/architecture.md
-last_synced: 2026-06-20
+last_synced: 2026-06-25
 related:
   - ./error.md
   - ./ddd.md
+  - ./persistence.md
   - ./source-dependency.md
   - ./runtime-wiring.md
 ---
@@ -28,6 +29,7 @@ Error, exception, system error를 정의, 변환, masking, 노출하는 경우 e
 
 - [API 오류 정책](./error.md): error meaning, category, transformation, structure, unexpected system error handling 규칙.
 - [API DDD 컨벤션](./ddd.md): bounded context, implementation module, domain kernel, domain model 규칙.
+- [API Persistence 정책](./persistence.md): database schema, migration, ORM persistence, repository mapper, storage constraint 규칙.
 - [API Source Dependency 컨벤션](./source-dependency.md): import direction, layer boundary, framework import 규칙.
 - [API Runtime Wiring 컨벤션](./runtime-wiring.md): NestJS DI, provider registration, platform runtime, port binding 규칙.
 

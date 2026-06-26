@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/error.md
-last_synced: 2026-06-24
+last_synced: 2026-06-26
 read_when:
   - API 오류와 시스템 오류를 정의, 매핑, 마스킹, 전파, 리뷰할 때.
 related:
@@ -43,6 +43,7 @@ related:
 
 - 어댑터 경계는 실패를 이해할 수 있을 때 벤더 원본 오류를 인프라 오류 또는 다른 애플리케이션 제어 오류로 변환한다.
 - 유스케이스는 같은 bounded context에서 온 domain error를 기본적으로 그대로 전파하는 것이 좋다. Use case error는 orchestration 또는 application이 소유한 실패를 표현해야 한다.
+- 같은 application boundary 안에서 application이 소유한 port error가 호출자가 다룰 수 있는 계약이라면, use case는 그 port error를 그대로 전파할 수 있다.
 - 유스케이스가 bounded context 또는 module 경계를 건너는 경우처럼 호출자에게 드러낼 다른 계약을 의도적으로 소유할 때만 domain error를 변환할 수 있다.
 - 프로토콜 경계는 애플리케이션 오류를 표현 계층 오류 또는 던져지는 프로토콜 예외로 변환한다.
 - 독립적인 bounded context 또는 module을 건너는 오류는 그 경계가 사용하는 통신 계약을 통해 변환한다.
@@ -50,6 +51,84 @@ related:
 
 호출 스택이 내부 폴더 경계를 건넜다는 이유만으로 오류를 감싸지 않는다.
 계약 안정성, 정보 은닉, 소유권, 호출자 동작을 개선할 때 변환하는 것을 선호한다.
+
+## 오류 흐름
+
+```mermaid
+flowchart TB
+  subgraph external["External Contracts"]
+    direction LR
+    client["External Client"]
+    vendor["Vendor Raw Error"]
+  end
+
+  subgraph adapters["Boundary Adapters"]
+    direction LR
+    presentation["Presentation Boundary"]
+    infrastructure["Infrastructure Adapter"]
+    infraError["InfrastructureError"]
+  end
+
+  subgraph application["Application-Owned Contracts"]
+    direction LR
+    portError["Application Port Error"]
+    useCaseError["UseCaseError"]
+    useCase["Use Case Result Contract"]
+  end
+
+  subgraph domain["Domain-Owned Contracts"]
+    direction LR
+    domainFailure["Domain Rule Failure"]
+    domainError["DomainError"]
+  end
+
+  vendor --> infrastructure
+  infrastructure --> infraError
+  infraError -->|map to port contract| portError
+  portError -->|pass through| useCase
+  domainFailure --> domainError
+  domainError -->|pass through| useCase
+  useCaseError --> useCase
+
+  useCase --> presentation
+  presentation -->|mask and map| client
+
+  subgraph uncontrolled["Uncontrolled Runtime Failures (Any Layer)"]
+    direction LR
+    anyLayer["May occur in any layer"]
+    exception["Exception or rejected promise path"]
+    boundary["Masked at presentation or process boundary"]
+  end
+
+  anyLayer --> exception
+  exception --> boundary
+```
+
+Domain error는 domain model이 소유한다.
+같은 context의 use case는 보통 그 error를 result contract에 포함하고 그대로 전파하는 것이 좋다.
+
+Vendor raw error는 먼저 adapter boundary에서 정규화한다.
+Infrastructure adapter는 vendor-specific shape, code, metadata를 제거하기 위해 이를 infrastructure error로 변환할 수 있다.
+Adapter가 application이 소유한 port를 구현한다면, application core로 반환하기 전에 인식한 infrastructure failure를 port error contract로 변환하는 것이 좋다.
+
+Application port error는 이미 application이 소유한 dependency contract다.
+호출자가 port contract를 직접 다룰 수 있다면 use case는 보통 이를 그대로 전파하는 것이 좋다.
+Use case-specific error는 여러 dependency failure를 하나의 business operation 아래로 묶는 경우처럼 use case가 구별되는 orchestration 또는 caller-facing meaning을 추가할 때만 만든다.
+
+Presentation boundary는 domain error, port error, use case error를 protocol response로 변환한다.
+외부 client에 failure를 노출하기 전에 이 경계에서 내부 세부 정보를 masking한다.
+
+예상하지 못한 system failure는 presentation 또는 process boundary가 masking하고 observable하게 만들 때까지 exception 또는 rejected-promise 경로에 둔다.
+
+## 벤더 계약 검증
+
+벤더 원본 오류는 외부 계약이다.
+Adapter code가 vendor error의 구조화된 필드를 읽는다면, application이 제어하는 error로 매핑하기 전에 adapter boundary에서 해당 필드를 검증하고 정규화한다.
+
+- Adapter가 database error code, constraint name, SDK error code, HTTP client response metadata처럼 구조화된 vendor field에 의존한다면 외부 error contract에는 `zod` schema를 사용하는 것을 선호한다.
+- 외부 enum-like code set은 `as const` object로 한 번 정의하고, 그 object에서 `zod` enum schema를 만들며, TypeScript type은 `z.infer`로 schema에서 파생한다.
+- 같은 외부 code set에 대해 별도 TypeScript enum 또는 union과 별도 `zod` enum 목록을 따로 유지하지 않는다.
+- Vendor error가 adapter가 소유하지 않는 field를 포함할 수 있다면 알 수 없는 vendor metadata를 허용하고, application contract에 필요한 field만 정규화한다.
 
 ## 오류 구조
 

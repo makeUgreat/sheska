@@ -42,6 +42,7 @@ Errors SHOULD be transformed when they cross a boundary where the owner, audienc
 
 - Adapter boundaries translate vendor raw errors into infrastructure or other application-controlled errors when they understand the failure.
 - Use cases SHOULD pass through domain errors from the same bounded context unchanged. Use case errors should represent orchestration or application-owned failures.
+- Use cases MAY pass through application-owned port errors from the same application boundary unchanged when the port error is already the contract the caller can handle.
 - Use cases MAY translate domain errors only when they intentionally own a different caller-facing contract, such as crossing a bounded context or module boundary.
 - Protocol boundaries translate application errors into presentation errors or thrown protocol exceptions.
 - Independent bounded contexts or modules translate errors through the communication contract used by that boundary.
@@ -49,6 +50,84 @@ Errors SHOULD be transformed when they cross a boundary where the owner, audienc
 
 Do not wrap errors only because a call stack crosses an internal folder boundary.
 Prefer transformation where it improves contract stability, information hiding, ownership, or caller behavior.
+
+## Error Flow
+
+```mermaid
+flowchart TB
+  subgraph external["External Contracts"]
+    direction LR
+    client["External Client"]
+    vendor["Vendor Raw Error"]
+  end
+
+  subgraph adapters["Boundary Adapters"]
+    direction LR
+    presentation["Presentation Boundary"]
+    infrastructure["Infrastructure Adapter"]
+    infraError["InfrastructureError"]
+  end
+
+  subgraph application["Application-Owned Contracts"]
+    direction LR
+    portError["Application Port Error"]
+    useCaseError["UseCaseError"]
+    useCase["Use Case Result Contract"]
+  end
+
+  subgraph domain["Domain-Owned Contracts"]
+    direction LR
+    domainFailure["Domain Rule Failure"]
+    domainError["DomainError"]
+  end
+
+  vendor --> infrastructure
+  infrastructure --> infraError
+  infraError -->|map to port contract| portError
+  portError -->|pass through| useCase
+  domainFailure --> domainError
+  domainError -->|pass through| useCase
+  useCaseError --> useCase
+
+  useCase --> presentation
+  presentation -->|mask and map| client
+
+  subgraph uncontrolled["Uncontrolled Runtime Failures (Any Layer)"]
+    direction LR
+    anyLayer["May occur in any layer"]
+    exception["Exception or rejected promise path"]
+    boundary["Masked at presentation or process boundary"]
+  end
+
+  anyLayer --> exception
+  exception --> boundary
+```
+
+Domain errors are owned by the domain model.
+Same-context use cases should usually include those errors in their result contract and pass them through unchanged.
+
+Vendor raw errors are first normalized at the adapter boundary.
+Infrastructure adapters may convert them to infrastructure errors to remove vendor-specific shape, codes, and metadata.
+When an adapter implements an application-owned port, it should convert recognized infrastructure failures into the port error contract before returning to application core.
+
+Application port errors are already application-owned dependency contracts.
+Use cases should usually pass them through when the caller can handle the port contract directly.
+Create use case-specific errors only when the use case adds a distinct orchestration or caller-facing meaning, such as grouping several dependency failures under one business operation.
+
+Presentation boundaries convert domain errors, port errors, and use case errors into protocol responses.
+Mask internal details there before exposing failures to external clients.
+
+Unexpected system failures should stay on the exception or rejected-promise path until a presentation or process boundary masks them and makes them observable.
+
+## Vendor Contract Validation
+
+Vendor raw errors are external contracts.
+When adapter code reads structured fields from a vendor error, validate and normalize those fields at the adapter boundary before mapping them to an application-controlled error.
+
+- Prefer `zod` schemas for external error contracts when the adapter depends on structured vendor fields, such as database error codes, constraint names, SDK error codes, or HTTP client response metadata.
+- Define external enum-like code sets once as `as const` objects, build the `zod` enum schema from that object, and derive the TypeScript type from the schema with `z.infer`.
+- Avoid maintaining a separate TypeScript enum or union and a separate `zod` enum list for the same external code set.
+- Allow unknown vendor metadata when the vendor error may include fields the adapter does not own; normalize only the fields the application contract needs.
 
 ## Error Structure
 

@@ -5,11 +5,12 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/index.md
-last_synced: 2026-06-20
+last_synced: 2026-06-25
 related:
   - ./error.md
   - ./architecture.md
   - ./ddd.md
+  - ./persistence.md
   - ./source-dependency.md
   - ./runtime-wiring.md
   - ./test.md
@@ -32,6 +33,7 @@ related:
 - API error definition, mapping, masking, propagation, failure contract review 작업: [API 오류 정책](./error.md)을 읽는다.
 - `apps/api` architecture, DDD boundary, source structure, module boundary 결정 작업: [API 아키텍처 컨벤션](./architecture.md)을 읽는다.
 - `apps/api` DDD boundary, domain model ownership, shared domain language 작업: [API DDD 컨벤션](./ddd.md)을 읽는다.
+- Database schema, migration, ORM persistence, repository mapper, storage constraint 결정 작업: [API Persistence 정책](./persistence.md)을 읽는다.
 - Import direction, layer boundary, framework import 작업: [API Source Dependency 컨벤션](./source-dependency.md)을 읽는다.
 - NestJS DI, provider registration, module wiring, platform startup flow, port binding 작업: [API Runtime Wiring 컨벤션](./runtime-wiring.md)을 읽는다.
 - `apps/api` test file, test structure, test command 선택 작업: [API 테스트 컨벤션](./test.md)을 읽는다.
