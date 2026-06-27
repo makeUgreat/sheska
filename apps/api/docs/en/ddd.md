@@ -61,10 +61,12 @@ They are not only folder names.
 ## Repository Method Naming
 
 - `save` persists an aggregate through the repository contract. Use it for create and update unless the context has a meaningful separate command.
-- `findById` looks up one aggregate by its identity and returns `null` when it is absent.
-- `findBy{DomainTerm}` MAY be used for another unique lookup only when that term is part of the bounded context language.
-- `list` returns multiple aggregates or read models. It SHOULD accept explicit criteria when filtering is needed.
-- `get` means the caller expects the resource to exist. Use it only when absence is exceptional in that contract; otherwise prefer `findBy...`.
+- `find` looks up one aggregate or read model by a unique lookup and returns `null` when it is absent.
+- `find` should express lookup meaning through object parameter field names, not method suffixes such as `findBy...`. Example: `find({ id })`, `find({ externalSourceId })`.
+- `get` means the caller expects the resource to exist. Use it only when absence is exceptional in that contract; otherwise prefer `find`.
+- `get` uses the same object parameter naming as `find`. Example: `get({ id })`.
+- `list` returns multiple aggregates or read models. It SHOULD accept an explicit criteria object when filtering is needed.
+- `find` and `get` criteria objects should express only unique lookups that identify one resource. Use `list` for filtering that can return multiple results.
 - Avoid repository method names that expose storage mechanics, query implementation, or table shape.
 
 ## Domain Encapsulation

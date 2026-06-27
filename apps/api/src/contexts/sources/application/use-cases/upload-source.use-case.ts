@@ -51,7 +51,7 @@ export class UploadSourceUseCase {
     snapshot: SourceContentSnapshotCalculation,
   ): ResultAsync<UploadSourceResult, UploadSourceUseCaseError> {
     return this.sources
-      .findByExternalSourceId(externalSourceId)
+      .find({ externalSourceId })
       .andThen((existingSource) =>
         this.syncSource(
           existingSource,

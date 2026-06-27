@@ -11,6 +11,7 @@ import { type Source } from '@contexts/sources/domain';
 import {
   type SourceRepository,
   type SourceRepositoryError,
+  type SourceRepositoryFindCriteria,
 } from '@contexts/sources/application/ports';
 import * as schema from './schema';
 import { SourcePersistenceMapper } from './source.persistence.mapper';
@@ -26,12 +27,12 @@ export class SourceDrizzleRepository
     super('source_postgres_persistence', 'postgres_drizzle');
   }
 
-  findByExternalSourceId(externalSourceId: string) {
+  find(criteria: SourceRepositoryFindCriteria) {
     return this.runPostgres(async () => {
       const [row] = await this.db
         .select()
         .from(schema.sources)
-        .where(eq(schema.sources.externalSourceId, externalSourceId))
+        .where(eq(schema.sources.externalSourceId, criteria.externalSourceId))
         .limit(1);
 
       return row ?? null;

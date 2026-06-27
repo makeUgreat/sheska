@@ -7,6 +7,7 @@ export type {
   SourceRepository,
   SourceRepositoryApplicationError,
   SourceRepositoryError,
+  SourceRepositoryFindCriteria,
   SourceRepositoryStateConflictError,
   SourceRepositoryUnavailableError,
 } from './source.repository';

@@ -30,9 +30,13 @@ export type SourceRepositoryError =
   | SourceRepositoryApplicationError
   | SourceDomainError;
 
+export type SourceRepositoryFindCriteria = {
+  readonly externalSourceId: string;
+};
+
 export interface SourceRepository {
-  findByExternalSourceId(
-    externalSourceId: string,
+  find(
+    criteria: SourceRepositoryFindCriteria,
   ): ResultAsync<Source | null, SourceRepositoryError>;
 
   save(source: Source): ResultAsync<Source, SourceRepositoryError>;

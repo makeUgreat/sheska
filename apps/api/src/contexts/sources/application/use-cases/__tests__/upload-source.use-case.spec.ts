@@ -6,6 +6,7 @@ import {
   type SourceFingerprinterError,
   type SourceRepository,
   type SourceRepositoryError,
+  type SourceRepositoryFindCriteria,
   type SourceSyncJobRepository,
   type SourceSyncJobRepositoryError,
 } from '@contexts/sources/application/ports';
@@ -37,8 +38,8 @@ class StubSourceRepository implements SourceRepository {
   readonly findExternalSourceIds: string[] = [];
   readonly savedSources: Source[] = [];
 
-  findByExternalSourceId(externalSourceId: string) {
-    this.findExternalSourceIds.push(externalSourceId);
+  find(criteria: SourceRepositoryFindCriteria) {
+    this.findExternalSourceIds.push(criteria.externalSourceId);
 
     if (this.findError) {
       return errAsync(this.findError);

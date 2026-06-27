@@ -34,20 +34,15 @@ DDD 용어는 단순한 folder name이 아니다.
 
 - `kernels/domain`은 context domain layer가 공유하는 domain-layer kernel code를 담는다.
 - Domain-kernel code는 stable domain-layer policy와 여러 bounded context가 의도적으로 공유하는 stable domain concept를 포함할 수 있다.
-- Domain-kernel code가 shared domain concept를 모델링한다면 business meaning을 가진다.
 - Shared domain concept 변경은 영향을 받는 context owner와 함께 review한다.
 - `kernels/domain`을 generic duplication-removal directory로 사용해서는 안 된다.
 - 공유 concept가 불안정하거나 context-specific이라면 premature domain-kernel code보다 duplication을 선호한다.
-- `Money`, `Currency`, `DateRange`처럼 작고 안정적인 domain concept에는 `kernels/domain`을 선호한다.
-- 여러 bounded context가 안정적인 domain concept를 의도적으로 공유하기 전에는 shared domain concept code를 만들지 않는다.
 
 ## Domain Model Building Blocks
 
 - Aggregate는 consistency boundary를 보호하고 aggregate root를 통해 behavior를 노출한다.
 - Entity는 identity와 lifecycle을 가진다.
-- ID normalization이나 empty-ID validation 같은 generic entity identity mechanism은 shared `Entity`/`AggregateRoot`에 두고, context aggregate에는 context-specific identity rule만 남긴다.
 - Value object는 immutable domain value를 표현하고 자신의 invariant를 검증한다.
-- Repository가 domain layer에 속하는 경우 database implementation detail이 아니라 domain persistence need를 contract로 표현한다.
 - Domain service는 하나의 entity 또는 value object에 자연스럽게 속하지 않는 business rule을 담는다.
 - Domain event는 이미 발생한 의미 있는 business fact를 설명한다.
 - Domain error는 business rule failure를 설명하며 transport, database, framework detail을 포함하지 않아야 한다.
@@ -62,10 +57,12 @@ DDD 용어는 단순한 folder name이 아니다.
 ## Repository Method Naming
 
 - `save`는 repository contract를 통해 aggregate를 저장한다. Context에 의미 있는 별도 command가 없다면 create와 update에 모두 사용한다.
-- `findById`는 identity로 aggregate 하나를 조회하고, 없으면 `null`을 반환한다.
-- `findBy{DomainTerm}`은 해당 term이 bounded context language에 속하는 다른 unique lookup일 때 사용할 수 있다.
-- `list`는 여러 aggregate 또는 read model을 반환한다. Filtering이 필요하면 explicit criteria를 받는 것이 좋다.
-- `get`은 caller가 resource가 존재한다고 기대한다는 의미다. 해당 contract에서 부재가 exceptional일 때만 사용하고, 그렇지 않으면 `findBy...`를 선호한다.
+- `find`는 하나의 aggregate 또는 read model을 unique lookup으로 조회하고, 없으면 `null`을 반환한다.
+- `find`의 lookup 의미는 object parameter의 field name으로 전달한다. 예: `find({ id })`, `find({ externalSourceId })`.
+- `get`은 caller가 resource가 존재한다고 기대한다는 의미다. 해당 contract에서 부재가 exceptional일 때만 사용하고, 그렇지 않으면 `find`를 선호한다.
+- `get`도 `find`와 같은 object parameter naming을 사용한다. 예: `get({ id })`.
+- `list`는 여러 aggregate 또는 read model을 반환한다. Filtering이 필요하면 explicit criteria object를 받는 것이 좋다.
+- `find`와 `get`의 criteria object는 하나의 resource를 식별하는 unique lookup만 표현해야 한다. 여러 결과가 가능한 filtering은 `list`로 표현한다.
 - Storage mechanics, query implementation, table shape를 노출하는 repository method name은 피한다.
 
 ## Domain Encapsulation
