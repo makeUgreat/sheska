@@ -22,7 +22,6 @@ Use this document when deciding what a failure means, who owns it, when it is tr
 This project separates application-controlled errors from failures the application cannot reasonably control.
 
 - Application-controlled errors are expected failure values owned by application code or a boundary. Use error naming such as `DomainError`, `ApplicationError`, and `InfrastructureError`.
-- Exceptions are thrown or framework-level failure objects, such as NestJS `HttpException` or JavaScript `Error`. Reserve exception naming for thrown objects and external framework types where the project does not own the name.
 - Vendor raw errors are external adapter, SDK, database, HTTP client, or framework failures before the application translates them.
 - System errors are unexpected runtime, process, network, OS, resource, or environment failures that cannot be handled as a normal application contract.
 - Logging MAY support observability, but logging alone is not failure handling.
@@ -33,8 +32,6 @@ Classify application-controlled errors by the boundary that owns their meaning:
 - Application errors: use case, orchestration, and application-owned contract failures.
 - Infrastructure errors: technical adapter failures translated into an application-controlled shape.
 - Presentation errors: protocol-facing failure responses, such as HTTP, GraphQL, or request validation failures.
-
-Refine errors by bounded context, aggregate, service, adapter, or use case only when the refined error has distinct contract meaning.
 
 ## Error Transformation
 
@@ -103,32 +100,6 @@ flowchart TB
   exception --> boundary
 ```
 
-Domain errors are owned by the domain model.
-Same-context use cases should usually include those errors in their result contract and pass them through unchanged.
-
-Vendor raw errors are first normalized at the adapter boundary.
-Infrastructure adapters may convert them to infrastructure errors to remove vendor-specific shape, codes, and metadata.
-When an adapter implements an application-owned port, it should convert recognized infrastructure failures into the port error contract before returning to application core.
-
-Application port errors are already application-owned dependency contracts.
-Use cases should usually pass them through when the caller can handle the port contract directly.
-Create use case-specific errors only when the use case adds a distinct orchestration or caller-facing meaning, such as grouping several dependency failures under one business operation.
-
-Presentation boundaries convert domain errors, port errors, and use case errors into protocol responses.
-Mask internal details there before exposing failures to external clients.
-
-Unexpected system failures should stay on the exception or rejected-promise path until a presentation or process boundary masks them and makes them observable.
-
-## Vendor Contract Validation
-
-Vendor raw errors are external contracts.
-When adapter code reads structured fields from a vendor error, validate and normalize those fields at the adapter boundary before mapping them to an application-controlled error.
-
-- Prefer `zod` schemas for external error contracts when the adapter depends on structured vendor fields, such as database error codes, constraint names, SDK error codes, or HTTP client response metadata.
-- Define external enum-like code sets once as `as const` objects, build the `zod` enum schema from that object, and derive the TypeScript type from the schema with `z.infer`.
-- Avoid maintaining a separate TypeScript enum or union and a separate `zod` enum list for the same external code set.
-- Allow unknown vendor metadata when the vendor error may include fields the adapter does not own; normalize only the fields the application contract needs.
-
 ## Error Structure
 
 There is no single correct error shape.
@@ -141,6 +112,16 @@ When defining an application-controlled error, prefer this structure unless the 
 
 Validation errors MAY include field-level details when the caller can act on them.
 Do not expose internal diagnostic data through presentation errors unless the protocol contract explicitly allows it.
+
+## Vendor Contract Validation
+
+Vendor raw errors are external contracts.
+When adapter code reads structured fields from a vendor error, validate and normalize those fields at the adapter boundary before mapping them to an application-controlled error.
+
+- Prefer `zod` schemas for external error contracts when the adapter depends on structured vendor fields, such as database error codes, constraint names, SDK error codes, or HTTP client response metadata.
+- Define external enum-like code sets once as `as const` objects, build the `zod` enum schema from that object, and derive the TypeScript type from the schema with `z.infer`.
+- Avoid maintaining a separate TypeScript enum or union and a separate `zod` enum list for the same external code set.
+- Allow unknown vendor metadata when the vendor error may include fields the adapter does not own; normalize only the fields the application contract needs.
 
 ## Unexpected System Errors
 

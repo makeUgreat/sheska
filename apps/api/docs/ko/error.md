@@ -23,7 +23,6 @@ related:
 이 프로젝트는 애플리케이션이 제어하는 오류와 애플리케이션이 합리적으로 제어할 수 없는 실패를 구분한다.
 
 - 애플리케이션이 제어하는 오류는 애플리케이션 코드 또는 경계가 소유하는 예상 가능한 실패 값이다. `DomainError`, `ApplicationError`, `InfrastructureError` 같은 오류 이름을 사용하는 것이 좋다.
-- 예외는 NestJS `HttpException` 또는 JavaScript `Error`처럼 던져지거나 프레임워크 수준에서 다루는 실패 객체다. 예외 이름은 던져지는 객체와 프로젝트가 이름을 소유하지 않는 외부 프레임워크 타입에 남겨둔다.
 - 벤더 원본 오류는 애플리케이션이 변환하기 전 외부 어댑터, SDK, 데이터베이스, HTTP 클라이언트, 프레임워크에서 온 실패다.
 - 시스템 오류는 일반 애플리케이션 계약으로 처리할 수 없는 예상하지 못한 런타임, 프로세스, 네트워크, OS, 리소스, 환경 실패다.
 - 로깅은 관측 가능성을 도울 수 있지만, 로깅만으로 실패 처리가 되지는 않는다.
@@ -34,8 +33,6 @@ related:
 - 애플리케이션 오류: 유스케이스, 오케스트레이션, 애플리케이션 소유 계약 실패.
 - 인프라 오류: 애플리케이션이 제어하는 형태로 변환된 기술 어댑터 실패.
 - 표현 계층 오류: HTTP, GraphQL, 요청 검증 실패 같은 프로토콜 대상 실패 응답.
-
-오류 구체화는 구체화된 오류가 구별되는 계약 의미를 가질 때만 bounded context, aggregate, service, adapter, use case 기준으로 한다.
 
 ## 오류 변환
 
@@ -104,32 +101,6 @@ flowchart TB
   exception --> boundary
 ```
 
-Domain error는 domain model이 소유한다.
-같은 context의 use case는 보통 그 error를 result contract에 포함하고 그대로 전파하는 것이 좋다.
-
-Vendor raw error는 먼저 adapter boundary에서 정규화한다.
-Infrastructure adapter는 vendor-specific shape, code, metadata를 제거하기 위해 이를 infrastructure error로 변환할 수 있다.
-Adapter가 application이 소유한 port를 구현한다면, application core로 반환하기 전에 인식한 infrastructure failure를 port error contract로 변환하는 것이 좋다.
-
-Application port error는 이미 application이 소유한 dependency contract다.
-호출자가 port contract를 직접 다룰 수 있다면 use case는 보통 이를 그대로 전파하는 것이 좋다.
-Use case-specific error는 여러 dependency failure를 하나의 business operation 아래로 묶는 경우처럼 use case가 구별되는 orchestration 또는 caller-facing meaning을 추가할 때만 만든다.
-
-Presentation boundary는 domain error, port error, use case error를 protocol response로 변환한다.
-외부 client에 failure를 노출하기 전에 이 경계에서 내부 세부 정보를 masking한다.
-
-예상하지 못한 system failure는 presentation 또는 process boundary가 masking하고 observable하게 만들 때까지 exception 또는 rejected-promise 경로에 둔다.
-
-## 벤더 계약 검증
-
-벤더 원본 오류는 외부 계약이다.
-Adapter code가 vendor error의 구조화된 필드를 읽는다면, application이 제어하는 error로 매핑하기 전에 adapter boundary에서 해당 필드를 검증하고 정규화한다.
-
-- Adapter가 database error code, constraint name, SDK error code, HTTP client response metadata처럼 구조화된 vendor field에 의존한다면 외부 error contract에는 `zod` schema를 사용하는 것을 선호한다.
-- 외부 enum-like code set은 `as const` object로 한 번 정의하고, 그 object에서 `zod` enum schema를 만들며, TypeScript type은 `z.infer`로 schema에서 파생한다.
-- 같은 외부 code set에 대해 별도 TypeScript enum 또는 union과 별도 `zod` enum 목록을 따로 유지하지 않는다.
-- Vendor error가 adapter가 소유하지 않는 field를 포함할 수 있다면 알 수 없는 vendor metadata를 허용하고, application contract에 필요한 field만 정규화한다.
-
 ## 오류 구조
 
 정답인 오류 형태는 하나가 아니다.
@@ -142,6 +113,16 @@ Adapter code가 vendor error의 구조화된 필드를 읽는다면, application
 
 검증 오류는 호출자가 조치할 수 있을 때 필드 수준 세부 정보를 포함할 수 있다.
 프로토콜 계약이 명시적으로 허용하지 않는 한 내부 진단 데이터를 표현 계층 오류로 노출하지 않는다.
+
+## 벤더 계약 검증
+
+벤더 원본 오류는 외부 계약이다.
+Adapter code가 vendor error의 구조화된 필드를 읽는다면, application이 제어하는 error로 매핑하기 전에 adapter boundary에서 해당 필드를 검증하고 정규화한다.
+
+- Adapter가 database error code, constraint name, SDK error code, HTTP client response metadata처럼 구조화된 vendor field에 의존한다면 외부 error contract에는 `zod` schema를 사용하는 것을 선호한다.
+- 외부 enum-like code set은 `as const` object로 한 번 정의하고, 그 object에서 `zod` enum schema를 만들며, TypeScript type은 `z.infer`로 schema에서 파생한다.
+- 같은 외부 code set에 대해 별도 TypeScript enum 또는 union과 별도 `zod` enum 목록을 따로 유지하지 않는다.
+- Vendor error가 adapter가 소유하지 않는 field를 포함할 수 있다면 알 수 없는 vendor metadata를 허용하고, application contract에 필요한 field만 정규화한다.
 
 ## 예상하지 못한 시스템 오류
 
