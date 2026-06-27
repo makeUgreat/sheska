@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:18
+    container_name: sheska.test.db
+    environment:
+      POSTGRES_DB: sheska_test
+      POSTGRES_USER: sheska
+      POSTGRES_PASSWORD: sheska
+      PGDATA: /var/lib/postgresql/data
+    ports:
+      - '55432:5432'
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U sheska -d sheska_test']
+      start_period: 10s
+      start_interval: 1s
+      interval: 2s
+      timeout: 5s
+      retries: 5

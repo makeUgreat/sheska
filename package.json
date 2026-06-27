@@ -14,6 +14,8 @@
     "test": "pnpm --filter @sheska/api test",
     "test:unit": "pnpm --filter @sheska/api test:unit",
     "test:integration": "pnpm --filter @sheska/api test:integration",
+    "test:integration:postgres": "pnpm --filter @sheska/api test:integration:postgres",
+    "test:integration:all": "pnpm --filter @sheska/api test:integration:all",
     "test:e2e": "pnpm --filter @sheska/api test:integration",
     "typecheck": "pnpm --filter @sheska/api typecheck"
   },
