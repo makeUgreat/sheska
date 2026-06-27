@@ -1,7 +1,4 @@
-import {
-  Source,
-  SOURCE_CONTENT_SNAPSHOT_CHANGED_EVENT_NAME,
-} from '@contexts/sources/domain';
+import { Source } from '@contexts/sources/domain';
 import { describe, expect, it } from 'vitest';
 
 const byteSize = (content: string): number =>
@@ -19,7 +16,6 @@ describe('Source', () => {
         externalSourceId: ' Notes/source.md ',
         content,
         fingerprint: ' fingerprint-1 ',
-        size: byteSize(content),
       });
 
       expect(result.isOk()).toBe(true);
@@ -36,7 +32,7 @@ describe('Source', () => {
         });
         expect(result.value.domainEvents).toEqual([
           expect.objectContaining({
-            eventName: SOURCE_CONTENT_SNAPSHOT_CHANGED_EVENT_NAME,
+            eventName: 'source.content_snapshot.changed',
             aggregateId: props.id,
             externalSourceId: 'Notes/source.md',
             fingerprint: 'fingerprint-1',
@@ -50,7 +46,6 @@ describe('Source', () => {
         externalSourceId: 'empty-note',
         content: '',
         fingerprint: 'empty-fingerprint',
-        size: 0,
       });
 
       expect(result.isOk()).toBe(true);
@@ -61,7 +56,6 @@ describe('Source', () => {
         externalSourceId: ' ',
         content: '# Source note',
         fingerprint: 'fingerprint-1',
-        size: byteSize('# Source note'),
       });
 
       expect(result.isErr()).toBe(true);
@@ -76,28 +70,12 @@ describe('Source', () => {
         externalSourceId: 'Notes/source.md',
         content: '# Source note',
         fingerprint: ' ',
-        size: byteSize('# Source note'),
       });
 
       expect(result.isErr()).toBe(true);
 
       if (result.isErr()) {
         expect(result.error.code).toBe('source.fingerprint_empty');
-      }
-    });
-
-    it('content byte size와 size가 다르면 실패 Result를 반환한다', () => {
-      const result = Source.create({
-        externalSourceId: 'Notes/source.md',
-        content: '안녕',
-        fingerprint: 'fingerprint-1',
-        size: 2,
-      });
-
-      expect(result.isErr()).toBe(true);
-
-      if (result.isErr()) {
-        expect(result.error.code).toBe('source.size_mismatch');
       }
     });
   });
@@ -154,6 +132,22 @@ describe('Source', () => {
         expect(result.error.code).toBe('entity.id_empty');
       }
     });
+
+    it('content byte size와 저장된 size가 다르면 실패 Result를 반환한다', () => {
+      const result = Source.restore({
+        id: 'source-1',
+        externalSourceId: 'Notes/source.md',
+        content: '안녕',
+        fingerprint: 'fingerprint-1',
+        size: 2,
+      });
+
+      expect(result.isErr()).toBe(true);
+
+      if (result.isErr()) {
+        expect(result.error.code).toBe('source.size_mismatch');
+      }
+    });
   });
 
   describe('syncContentSnapshot', () => {
@@ -172,7 +166,6 @@ describe('Source', () => {
         const applied = result.value.syncContentSnapshot({
           content: '# New note',
           fingerprint: ' fingerprint-1 ',
-          size: byteSize('# New note'),
         });
 
         expect(applied.isOk()).toBe(true);
@@ -202,7 +195,6 @@ describe('Source', () => {
         const applied = result.value.syncContentSnapshot({
           content,
           fingerprint: ' fingerprint-2 ',
-          size: byteSize(content),
         });
 
         expect(applied.isOk()).toBe(true);
@@ -217,7 +209,7 @@ describe('Source', () => {
           });
           expect(applied.value.domainEvents).toEqual([
             expect.objectContaining({
-              eventName: SOURCE_CONTENT_SNAPSHOT_CHANGED_EVENT_NAME,
+              eventName: 'source.content_snapshot.changed',
               aggregateId: 'source-1',
               externalSourceId: 'Notes/source.md',
               fingerprint: 'fingerprint-2',

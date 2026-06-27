@@ -39,6 +39,8 @@ pnpm typecheck
 pnpm test
 pnpm test:unit
 pnpm test:integration
+pnpm test:integration:postgres
+pnpm test:integration:all
 ```
 
 Package command를 직접 실행한다.

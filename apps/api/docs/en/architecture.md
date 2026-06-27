@@ -8,6 +8,7 @@ translation: ../ko/architecture.md
 related:
   - ./error.md
   - ./ddd.md
+  - ./persistence.md
   - ./source-dependency.md
   - ./runtime-wiring.md
 ---
@@ -15,6 +16,13 @@ related:
 # API Architecture Convention
 
 This document is the API architecture map; use the linked documents for detailed rules.
+
+## Scope
+
+- Use this document when deciding the high-level source area for API code.
+- This document names architectural boundaries and routes to detailed policy documents. It does not replace the DDD, source dependency, runtime wiring, persistence, or error policies.
+
+## Architecture Axes
 
 API architecture is described across two axes:
 
@@ -27,6 +35,7 @@ Read the error policy when defining, transforming, masking, or exposing errors, 
 
 - [API Error Policy](./error.md): error meaning, categories, transformation, structure, and unexpected system error handling.
 - [API DDD Convention](./ddd.md): bounded contexts, implementation modules, domain kernel, and domain model rules.
+- [API Persistence Policy](./persistence.md): database schema, migration, ORM persistence, repository mapper, and storage constraint rules.
 - [API Source Dependency Convention](./source-dependency.md): import direction, layer boundaries, and framework import rules.
 - [API Runtime Wiring Convention](./runtime-wiring.md): NestJS DI, provider registration, platform runtime, and port binding rules.
 

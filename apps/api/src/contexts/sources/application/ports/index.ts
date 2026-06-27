@@ -2,16 +2,19 @@ export type {
   SourceFingerprinter,
   SourceFingerprinterError,
   SourceFingerprinterUnavailableError,
-} from './source-fingerprinter';
+} from './source.fingerprinter';
 export type {
   SourceRepository,
+  SourceRepositoryApplicationError,
   SourceRepositoryError,
+  SourceRepositoryFindCriteria,
   SourceRepositoryStateConflictError,
   SourceRepositoryUnavailableError,
-} from './persistence/source.repository';
+} from './source.repository';
 export type {
   SourceSyncJobRepository,
+  SourceSyncJobRepositoryApplicationError,
   SourceSyncJobRepositoryError,
   SourceSyncJobRepositoryStateConflictError,
   SourceSyncJobRepositoryUnavailableError,
-} from './persistence/source-sync-job.repository';
+} from './source-sync-job.repository';

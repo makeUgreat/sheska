@@ -7,12 +7,9 @@ import {
 export interface SourceContentSnapshotCalculation {
   readonly content: string;
   readonly fingerprint: string;
-  readonly size: number;
 }
 
 export class SourceContentSnapshotCalculator {
-  private readonly textEncoder = new TextEncoder();
-
   constructor(private readonly sourceFingerprinter: SourceFingerprinter) {}
 
   calculate(
@@ -21,11 +18,6 @@ export class SourceContentSnapshotCalculator {
     return this.sourceFingerprinter.calculate(content).map((fingerprint) => ({
       content,
       fingerprint,
-      size: this.calculateByteSize(content),
     }));
-  }
-
-  private calculateByteSize(content: string): number {
-    return this.textEncoder.encode(content).length;
   }
 }

@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/runtime-wiring.md
-last_synced: 2026-06-24
+last_synced: 2026-06-27
 related:
   - ./architecture.md
   - ./source-dependency.md
@@ -16,7 +16,14 @@ related:
 Runtime wiring rule은 object가 어디서 생성되고 implementation이 port에 어떻게 연결되는지 판단한다.
 Runtime wiring은 source dependency rule을 약화해서는 안 된다.
 
-## Runtime Flow And Wiring Map
+## 적용 범위
+
+- Object creation, provider binding, port implementation registration, NestJS DI usage, runtime configuration ownership을 결정할 때 이 문서를 사용한다.
+- Source file이 다른 source file을 import할 수 있는지 판단할 때는 source dependency convention을 사용한다.
+
+## Runtime Model
+
+### Runtime Flow And Wiring Map
 
 이 map은 source import가 아니라 runtime flow와 provider binding을 보여준다.
 실선 arrow는 runtime call/use direction을 나타낸다.

@@ -44,12 +44,45 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   test: {
-    environment: 'node',
-    globals: false,
-    include: ['src/**/*.spec.ts'],
-    passWithNoTests: true,
     coverage: {
       reportsDirectory: '../../coverage/apps/api',
     },
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          environment: 'node',
+          globals: false,
+          include: ['src/**/*.spec.ts'],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'integration',
+          environment: 'node',
+          fileParallelism: false,
+          globals: false,
+          include: ['test/**/*.e2e-spec.ts', 'test/**/*.integration-spec.ts'],
+          exclude: ['test/postgres/**/*.integration-spec.ts'],
+          hookTimeout: 60_000,
+          testTimeout: 30_000,
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'postgres',
+          environment: 'node',
+          fileParallelism: false,
+          globals: false,
+          globalSetup: './test/postgres/support/global-setup.ts',
+          include: ['test/postgres/**/*.integration-spec.ts'],
+          hookTimeout: 60_000,
+          testTimeout: 30_000,
+        },
+      },
+    ],
   },
 });

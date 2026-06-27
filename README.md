@@ -39,6 +39,8 @@ Run tests:
 pnpm test
 pnpm test:unit
 pnpm test:integration
+pnpm test:integration:postgres
+pnpm test:integration:all
 ```
 
 Run package commands directly:

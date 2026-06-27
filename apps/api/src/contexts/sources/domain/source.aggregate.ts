@@ -22,7 +22,6 @@ interface SourceCreateParams {
   externalSourceId: string;
   content: string;
   fingerprint: string;
-  size: number;
 }
 
 export class Source extends AggregateRoot<
@@ -35,14 +34,13 @@ export class Source extends AggregateRoot<
   }
 
   static create(params: SourceCreateParams): Result<Source, SourceDomainError> {
-    const { externalSourceId, content, fingerprint, size } = params;
+    const { externalSourceId, content, fingerprint } = params;
 
     return ResultUtils.combine([
       ExternalSourceId.of(externalSourceId),
-      SourceContentSnapshot.of({
+      SourceContentSnapshot.create({
         content,
         fingerprint,
-        size,
       }),
     ]).andThen(([externalSourceId, contentSnapshot]) =>
       Source.construct({
@@ -75,7 +73,7 @@ export class Source extends AggregateRoot<
 
     return ResultUtils.combine([
       ExternalSourceId.of(externalSourceId),
-      SourceContentSnapshot.of({
+      SourceContentSnapshot.restore({
         content,
         fingerprint,
         size,
@@ -97,10 +95,9 @@ export class Source extends AggregateRoot<
   syncContentSnapshot(params: {
     content: string;
     fingerprint: string;
-    size: number;
   }): Result<Source, SourceDomainError> {
-    return SourceContentSnapshot.of(params).map((contentSnapshot) => {
-      if (this.props.contentSnapshot.hasSameFingerprint(contentSnapshot)) {
+    return SourceContentSnapshot.create(params).map((contentSnapshot) => {
+      if (this.props.contentSnapshot.hasSameContentAs(contentSnapshot)) {
         return this;
       }
 

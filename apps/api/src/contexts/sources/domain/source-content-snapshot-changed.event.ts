@@ -1,8 +1,5 @@
 import { DomainEvent, type DomainEventParams } from '@kernels/domain';
 
-export const SOURCE_CONTENT_SNAPSHOT_CHANGED_EVENT_NAME =
-  'source.content_snapshot_changed';
-
 interface SourceContentSnapshotChangedDomainEventParams extends DomainEventParams<string> {
   readonly externalSourceId: string;
   readonly fingerprint: string;
@@ -10,9 +7,9 @@ interface SourceContentSnapshotChangedDomainEventParams extends DomainEventParam
 
 export class SourceContentSnapshotChangedDomainEvent extends DomainEvent<
   string,
-  typeof SOURCE_CONTENT_SNAPSHOT_CHANGED_EVENT_NAME
+  'source.content_snapshot.changed'
 > {
-  readonly eventName = SOURCE_CONTENT_SNAPSHOT_CHANGED_EVENT_NAME;
+  readonly eventName = 'source.content_snapshot.changed';
   readonly externalSourceId: string;
   readonly fingerprint: string;
 

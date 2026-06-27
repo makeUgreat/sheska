@@ -3,12 +3,20 @@ import {
   APPLICATION_ERROR_KIND,
   type ApplicationErrorOf,
 } from '@kernels/application';
-import { type SourceSyncJob } from '@contexts/sources/domain';
+import {
+  type SourceSyncJob,
+  type SourceSyncJobDomainError,
+} from '@contexts/sources/domain';
+
+export type SourceSyncJobRepositoryUnavailableDetails = {
+  readonly causeCode: string;
+};
 
 export type SourceSyncJobRepositoryUnavailableError = ApplicationErrorOf<
   typeof APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
   'source_sync_job_repository',
-  'unavailable'
+  'unavailable',
+  SourceSyncJobRepositoryUnavailableDetails
 >;
 
 export type SourceSyncJobRepositoryStateConflictError = ApplicationErrorOf<
@@ -17,9 +25,13 @@ export type SourceSyncJobRepositoryStateConflictError = ApplicationErrorOf<
   'state_conflict'
 >;
 
-export type SourceSyncJobRepositoryError =
+export type SourceSyncJobRepositoryApplicationError =
   | SourceSyncJobRepositoryUnavailableError
   | SourceSyncJobRepositoryStateConflictError;
+
+export type SourceSyncJobRepositoryError =
+  | SourceSyncJobRepositoryApplicationError
+  | SourceSyncJobDomainError;
 
 export interface SourceSyncJobRepository {
   save(

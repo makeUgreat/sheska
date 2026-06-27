@@ -16,6 +16,8 @@ drafting, commit splitting, or help preparing commits.
   commit-ready working tree changes.
 - Do not stop only to ask for approval after forming commit messages. Commit the
   accepted atomic candidates immediately and report which commits were created.
+- If the current branch is `master` or another configured default branch, create
+  and switch to a feature branch before staging and committing.
 - Write commit messages in English using Conventional Commits.
 - Split changes by atomic commit boundaries, not by file count or diff size.
 - Treat commits as squash-oriented explanation units. They should preserve a
@@ -161,20 +163,22 @@ exposing a database constraint failure.
 
 ## Workflow
 
-1. Inspect `git status --short` and the relevant diffs. Use
+1. Inspect the current branch, `git status --short`, and the relevant diffs. Use
    `scripts/inspect-changes.sh` when a structured fact pack would make the
    split faster or less error-prone.
-2. Split the working tree changes into the fewest clear commit candidates that
+2. If the current branch is `master` or another configured default branch,
+   create and switch to a feature branch before staging or committing.
+3. Split the working tree changes into the fewest clear commit candidates that
    preserve review and revert intent.
-3. Use the atomic checklist as a quick sanity check for those candidates.
-4. If the candidates are clear and commit-ready, stage and commit each candidate
+4. Use the atomic checklist as a quick sanity check for those candidates.
+5. If the candidates are clear and commit-ready, stage and commit each candidate
    immediately with its Conventional Commit subject and `Why:` body.
-5. Ask the user before committing only when the diff appears unfinished, includes
+6. Ask the user before committing only when the diff appears unfinished, includes
    unrelated user work that cannot be safely separated, or needs a product,
    scope, or ownership decision. Do not ask only because a clear candidate
    depends on a later commit in the same PR or stack.
-6. After committing, report which commits were created, including each subject
+7. After committing, report which commits were created, including each subject
    and the files included.
-7. Report verification separately under `Verification`.
-8. If the diff changes while preparing commits, re-check the split before
+8. Report verification separately under `Verification`.
+9. If the diff changes while preparing commits, re-check the split before
    committing.

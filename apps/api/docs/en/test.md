@@ -13,44 +13,74 @@ related:
 # API Test Convention
 
 The API app uses Vitest and separates unit tests from integration tests.
-Unit tests are preferred first based on execution speed and verification scope.
-Write integration tests when the test must verify multiple real components working together, such as framework configuration, module wiring, Nest application startup, routing, or actual HTTP responses.
+Write integration tests when the test must verify observable behavior across real boundaries, such as framework routing, actual HTTP responses, real adapter modules, or external dependencies.
+
+## Scope
+
+- Use this document when choosing test type, test file placement, test case shape, or API test commands.
 
 ## Test Tooling
 
 - `apps/api` tests MUST use Vitest.
-- Vitest transforms TypeScript through SWC so NestJS decorator metadata is available in tests.
-- Test files SHOULD import `describe`, `it`, `expect`, and lifecycle functions from `vitest`.
-- Do not add new Jest tests, Jest config files, `ts-jest`, or `@types/jest`.
-- Keep Vitest transform behavior aligned with the API SWC build settings when changing TypeScript target, decorators, or metadata settings.
+- Keep Vitest configuration centralized in `apps/api/vitest.config.ts` with named `test.projects`.
+  Add a new test boundary as a named project unless Vitest or another tool requires a separate config file.
 
-## Review Heuristics
+## Test Case Design
 
-- Prefer the standard directory for the test type. Unit tests live near the target source file. Integration tests live under the matching architecture path in `apps/api/test/{context}/`.
 - Prefer the target name in `describe()`.
 - `it()` test case names should be written primarily in Korean so the behavior intent stays easy for the team to review. Keep routes, code identifiers, and technical terms in their original language when that is clearer.
 - Each `it()` should call one unit of work and verify one specific behavior result.
 - Keep status code, body, and header assertions in the same `it()` when they verify the same execution result.
 - Split `it()` blocks when the execution path or expected result differs, such as success, failure, exception, boundary value, authentication/authorization, or validation.
-- Verify async behavior clearly with `async/await` or Vitest `resolves`/`rejects` matchers.
 - Avoid sharing state between tests. If a shared resource is required, create it in `beforeEach` and clean it up in `afterEach`.
 - Tests must produce the same result under the same conditions.
 
-## Unit Tests
+## Test Doubles
 
-- Run unit tests with `pnpm test:unit` from the repository root or `pnpm --filter @sheska/api test:unit`.
-- Vitest discovers unit test files with the `.spec.ts` suffix under `apps/api/src`.
+- Test code MAY depend on Vitest helpers such as `vi.fn()`, `vi.spyOn()`, mock return configuration, and mock assertions to build and inspect test doubles.
+- Prefer test-library mocks over bespoke stub classes when a dependency only needs configured return values, call verification, or simple error injection.
+- Use a hand-written fake or stub class when the test double needs meaningful state, shared behavior across methods, or a domain-specific in-memory implementation that would be harder to read as a group of mock functions.
+- Keep test doubles at the cheapest useful scope. Define them inside the spec file by default, and extract shared factories only when multiple tests need the same behavior.
+- In integration tests, use test doubles only for collaborators outside the boundary being verified. Do not mock the adapter, runtime dependency, or framework wiring that the integration test exists to prove.
+- For boundary-specific integration tests under `test/{boundary}/`, the boundary directory identifies the real dependency under verification. Replace unrelated boundary adapters with test doubles unless the test is explicitly about their boundary.
+
+## Test Fixtures and Factories
+
+- Keep a fixture or helper inside the spec file by default. Extract it only when multiple specs need the same setup shape or when repeated setup hides the behavior under test.
+- Use `buildX` for pure fixture factories that only create in-memory values, domain objects, DTOs, rows, or test doubles without external I/O or persistence side effects.
+- Use `createX` only when the helper persists data, starts runtime resources, or otherwise changes external state.
+- Use `setupX` for helpers that assemble a test environment, such as a Nest application, testing module, mock group, or boundary runtime.
+- Context-wide fixtures shared by unit and integration tests SHOULD live under `test/contexts/{context}/fixtures/`.
+- Boundary-specific fixtures SHOULD live under the matching boundary directory, such as `test/postgres/contexts/{context}/fixtures/`.
+- Keep helpers shared by multiple integration boundaries under `test/support/`.
+- Do not add a test path alias only to shorten imports. Use relative imports unless the source dependency convention intentionally introduces a test-specific alias.
+
+## Test Layers
+
+### Unit Tests
+
 - Prefer placing unit tests in a `__tests__` directory inside the target file's directory. Example: `apps/api/src/contexts/posts/domain/__tests__/post-title.spec.ts`
 - Target pure services, functions, controllers without HTTP transport, and small units of business logic.
 - Unit tests should cover representative edge cases, boundary values, invalid shapes, error paths, immutability, identity/equality behavior, and meaningful default behavior when those cases define the unit's contract. Prefer proving these details at the unit level instead of pushing them into slower integration tests.
-- Do not use an HTTP server, actual Nest application startup, or external I/O unless DI configuration itself is the behavior under test.
+- Do not use an HTTP server, actual Nest application startup, or external I/O.
 - Create required dependencies directly or replace them with lightweight mocks/stubs.
 - Use a Nest testing module only when DI configuration must be verified.
-- A unit of work is the flow from an entry point call to an observable behavior result.
-- The behavior result is one of: return value, thrown exception, state change, or dependency call.
-- Return values, exceptions, state changes, and dependency calls are different result types, so test them in separate `it()` blocks.
 
-## Shared Contract Tests
+#### Domain Unit Tests
+
+- Domain unit tests should focus on behavior and invariants owned by the domain object or domain service.
+- For value objects and domain values, prioritize valid construction, normalization, invariant violations, boundary values, equality or identity behavior, and immutability.
+- For aggregates and entities, prioritize lifecycle creation and restoration, state transitions, consistency boundary protection, domain event emission, and domain errors for invalid domain actions.
+- Express cases in domain language. Do not shape domain tests around DTO, persistence, or API scenarios unless that shape is itself a domain concept.
+
+#### Use Case Unit Tests
+
+- Use case unit tests should be written as cases that reveal the business rule flow the use case coordinates. Split cases by business situation, make each rule branch explicit through inputs and collaborator outcomes, and assert the resulting decision or side effect instead of private helper call order.
+- Prioritize application-level decisions, such as command interpretation, branching by repository or port results, domain result propagation, required persistence or external port calls, and error mapping owned by the use case.
+- Replace collaborators with mocks or stubs at the port boundary. Configure collaborator outcomes to make each business branch explicit, then assert the final result and observable port interactions.
+- Do not repeat detailed domain invariants or adapter storage behavior in use case unit tests. Keep those in domain unit tests or boundary integration tests.
+
+### Shared Contract Tests
 
 - Shared contracts, base classes, kernel helpers, and reusable policies should have especially thorough unit tests for the behavior they own.
 - A shared contract test should prove the reusable guarantee once with minimal representative implementations, fixtures, or subclasses.
@@ -58,17 +88,39 @@ Write integration tests when the test must verify multiple real components worki
 - If a concrete implementation overrides, narrows, or extends shared contract behavior, test both the implementation-specific behavior and compatibility with the shared contract expectation.
 - When reviewing coverage, prefer moving duplicated implementation tests up to the shared contract test when the behavior belongs to the shared abstraction.
 
-## Integration Tests
+### Integration Tests
 
-- Run integration tests with `pnpm test:integration` from the repository root or `pnpm --filter @sheska/api test:integration`.
-- Vitest discovers integration test files with `.e2e-spec.ts` or `.integration-spec.ts` under `apps/api/test`.
-- Prefer splitting integration spec files by context and architecture layer. For example, use `apps/api/test/posts/presentation/posts-http.controller.integration-spec.ts` for an HTTP controller adapter.
-- Use integration tests to verify interactions that unit tests cannot cover, such as dependency injection wiring, framework startup, routing, and controller responses.
+- Prefer splitting integration spec files by external boundary, context, and architecture layer. For example, use `apps/api/test/contexts/posts/presentation/posts-http.controller.integration-spec.ts` for an HTTP controller adapter that does not need a dedicated external boundary directory, and `apps/api/test/postgres/contexts/sources/infrastructure/persistence/source.repository.integration-spec.ts` for a Postgres-backed repository adapter.
+- Use integration tests to verify interactions that unit tests cannot cover, such as routing, request and response handling, real adapter contract behavior, and real external dependency behavior.
 - If a test uses hard-to-control elements such as an actual network, REST API, system time, file system, or database, separate it as an integration test instead of a unit test.
-- Do not use integration tests to repeat every domain or application invariant. Keep detailed domain and application rule coverage in unit tests, and use integration tests for observable boundary behavior such as request and response shape, validation pipe behavior, dependency injection wiring, framework routing, and repository save/find contracts.
+- Do not use integration tests to repeat every domain or application invariant. Keep detailed domain and application rule coverage in unit tests, and use integration tests for observable boundary behavior such as request and response shape, validation pipe behavior, framework routing, adapter wiring observed through a route or port contract, and repository save/find contracts.
 - Nest app integration test files should create the app in `beforeEach` and close it in `afterEach` when the app is initialized.
 - The outer `describe()` should name the integrated target.
 - For route tests, the inner `describe()` should usually be the controller method and route. Example: `describe('GET /')`.
+
+#### Integration Boundary Layout
+
+When an integration test needs a dedicated runtime boundary such as Postgres, Redis, object storage, a message broker, or a real external API, prefer grouping those tests under `test/{boundary}/`.
+The boundary directory names the external runtime dependency; nested directories name the bounded context, layer, and target.
+
+Use filenames to name the test target, not every participating implementation.
+For example, prefer `test/postgres/contexts/sources/application/use-cases/upload-source.use-case.integration-spec.ts` over encoding the repository, hashing, queue, and database implementation choices into the filename.
+Application integration tests should cover the representative production composition for the boundary; implementation-specific behavior belongs in the relevant adapter contract or integration tests.
+
+Place boundary-specific setup and support files under the same boundary directory, such as `test/postgres/support/`.
+Keep helpers shared by multiple integration boundaries under `test/support/`.
+
+#### Adapter Boundary Scope
+
+Adapter integration tests should target the application-owned port or protocol contract through the real adapter implementation and any required external dependency.
+
+Split adapter test coverage by ownership of the behavior under test.
+Unit tests should cover behavior owned by the adapter code itself, such as mapping between external or persistence shapes and domain objects, preserving domain restoration errors, converting adapter or infrastructure failures into the application-owned error contract, and adapter-specific branching that can be proven without real external I/O.
+Integration tests should cover behavior that only becomes meaningful when the selected boundary is assembled, such as real database schema and constraint behavior, ORM query compatibility, transaction or upsert behavior, and repository save/find contracts observed through the real adapter module.
+
+Prefer proving each behavior at the cheapest test layer that can prove it reliably.
+Do not repeat detailed domain, application, or mapper invariant cases in integration tests only because the adapter participates in the flow.
+Integration tests may overlap with unit tests only when the same observable result proves a different responsibility, such as verifying that a real database constraint produces the repository error contract already covered with a fake database in unit tests.
 
 ## Commands
 
@@ -76,12 +128,13 @@ Write integration tests when the test must verify multiple real components worki
 pnpm lint:check         # ESLint checks
 pnpm typecheck          # TypeScript type checking
 pnpm test:unit          # Unit tests
-pnpm test:integration   # Integration and e2e tests
-pnpm test               # Unit tests, then integration tests
+pnpm test:integration   # Integration and e2e tests that do not require Postgres
+pnpm test:integration:postgres # Postgres-backed integration tests
+pnpm test:integration:all # All integration tests
+pnpm test               # Unit tests, then all integration tests
 pnpm test:watch         # Vitest watch mode from the API package
 pnpm test:cov           # Unit test coverage from the API package
 ```
 
 Before opening a PR, run the checks that match the scope of the change.
 If only isolated services or functions changed, run `pnpm lint:check`, `pnpm typecheck`, and `pnpm test:unit`.
-If routes, module configuration, or application startup flow changed, also run `pnpm test:integration`.

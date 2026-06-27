@@ -11,7 +11,15 @@ type SourceSyncJobSourceIdEmptyError = DomainErrorOf<
   'source_id_empty'
 >;
 
-export type SourceSyncJobValidationError = SourceSyncJobSourceIdEmptyError;
+type SourceSyncJobStatusInvalidError = DomainErrorOf<
+  typeof DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
+  'source_sync_job',
+  'status_invalid'
+>;
+
+export type SourceSyncJobValidationError =
+  | SourceSyncJobSourceIdEmptyError
+  | SourceSyncJobStatusInvalidError;
 
 export type SourceSyncJobDomainError =
   | SourceFingerprintDomainError
