@@ -17,6 +17,13 @@ related:
 
 This document is the API architecture map; use the linked documents for detailed rules.
 
+## Scope
+
+- Use this document when deciding the high-level source area for API code.
+- This document names architectural boundaries and routes to detailed policy documents. It does not replace the DDD, source dependency, runtime wiring, persistence, or error policies.
+
+## Architecture Axes
+
 API architecture is described across two axes:
 
 - DDD model boundaries define where a model, language, and responsibility are valid.

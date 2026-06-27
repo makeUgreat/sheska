@@ -1,11 +1,7 @@
 import { Source } from '@contexts/sources/domain';
 
-export function createSourceFixture(
-  params: {
-    externalSourceId?: string;
-    content?: string;
-    fingerprint?: string;
-  } = {},
+export function buildSource(
+  params: Partial<Parameters<typeof Source.create>[0]> = {},
 ): Source {
   const content = params.content ?? '# Source note';
 
@@ -13,10 +9,9 @@ export function createSourceFixture(
     externalSourceId: params.externalSourceId ?? 'Notes/source.md',
     content,
     fingerprint: params.fingerprint ?? 'fingerprint-1',
-    size: byteSize(content),
   })._unsafeUnwrap();
 }
 
-export function byteSize(content: string): number {
+export function sourceContentByteSize(content: string): number {
   return new TextEncoder().encode(content).length;
 }

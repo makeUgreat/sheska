@@ -16,7 +16,14 @@ related:
 Source dependency rules decide what a source file may import.
 Dependency direction MUST remain consistent from outer layers toward inner layers.
 
-## Visual Dependency Map
+## Scope
+
+- Use this document when deciding import direction, source layer ownership, project path aliases, and public surfaces.
+- Use the runtime wiring convention when the question is how implementations are created or bound at runtime.
+
+## Dependency Direction
+
+### Visual Dependency Map
 
 Read every arrow as "the source may import the target."
 If a dependency is not shown here and is not explicitly allowed in this document, treat it as forbidden by default.
@@ -63,7 +70,7 @@ presentation -> application -> domain -> core
 infrastructure -> application -> domain -> core
 ```
 
-## Source Direction
+### Source Direction
 
 Judge source dependencies by the boundaries each source area may import and must not import.
 
@@ -80,7 +87,9 @@ Judge source dependencies by the boundaries each source area may import and must
 `platform` may import bounded context, adapter, and framework code required for runtime startup and module wiring.
 Production code outside `platform` must not import `platform`, except the thin `src/main.ts` entrypoint.
 
-## Import Path Policy
+## Import Surfaces
+
+### Import Path Policy
 
 - Project path aliases are declared only in [`apps/api/tsconfig.json`](../../tsconfig.json).
 - TypeScript, Vitest, and static analysis tools should consume `tsconfig.json` instead of redefining project alias meaning.
@@ -90,7 +99,7 @@ Production code outside `platform` must not import `platform`, except the thin `
 - When aliases exist for source boundaries, production `src` imports should use them when crossing those boundaries.
 - Prefer relative imports inside the same local implementation area.
 
-## Public Surface Policy
+### Public Surface Policy
 
 - `index.ts` files are JavaScript/TypeScript barrel files and should be used as public surfaces for intentionally exported contracts, not as default folder decoration.
 - Do not create `index.ts` files mechanically or re-export every folder-internal export by default.
@@ -100,12 +109,14 @@ Production code outside `platform` must not import `platform`, except the thin `
 - Production imports into kernel directories, context domain code, and application ports should use their public surfaces.
 - Avoid deep imports into another context or layer internals unless this document explicitly allows the dependency.
 
-## Core
+## Source Areas
+
+### Core
 
 - `core` contains pure primitives that have no layer, framework, bounded context, or business vocabulary.
 - Any layer MAY depend on `core`.
 
-## Domain Layer
+### Domain Layer
 
 - The domain layer contains business rules and domain models.
 - Use it for entities, value objects, aggregates, domain services, domain events, and domain errors.
@@ -113,7 +124,7 @@ Production code outside `platform` must not import `platform`, except the thin `
 - Domain code SHOULD express pure business behavior and invariants.
 - Domain code may depend on `core` and `kernels/domain`.
 
-## Application Layer
+### Application Layer
 
 - The application layer expresses use cases and application flow.
 - Application code uses domain models to execute user intent.
@@ -125,7 +136,7 @@ Production code outside `platform` must not import `platform`, except the thin `
 - Application code MAY convert application-owned port failures into application or use case errors when it intentionally adds distinct orchestration or caller-facing meaning.
 - Application core may depend on `core`, domain code, and `kernels/application`.
 
-## Infrastructure Layer
+### Infrastructure Layer
 
 - The infrastructure layer implements technical adapters.
 - Use it for database, ORM, external API, file system, message broker, SDK, and persistence code.
@@ -133,7 +144,7 @@ Production code outside `platform` must not import `platform`, except the thin `
 - Adapter code converts technology-specific errors, such as HTTP client, SDK, or Drizzle errors, into port or infrastructure errors.
 - Infrastructure code MAY depend on frameworks and external libraries.
 
-## Presentation Layer
+### Presentation Layer
 
 - The presentation layer is the entry point for external requests and responses.
 - Use it for controllers, resolvers, request DTOs, response DTOs, protocol mappers, and HTTP error mappers.
@@ -142,7 +153,7 @@ Production code outside `platform` must not import `platform`, except the thin `
 - Presentation code SHOULD NOT expose domain or infrastructure errors directly to clients.
 - Presentation code MAY depend on frameworks and protocol libraries.
 
-## Kernel Directory
+### Kernel Directory
 
 - `kernels/domain` contains common domain-layer policy and stable domain concepts intentionally shared by multiple bounded contexts.
 - `kernels/application` contains common application-layer contracts only.

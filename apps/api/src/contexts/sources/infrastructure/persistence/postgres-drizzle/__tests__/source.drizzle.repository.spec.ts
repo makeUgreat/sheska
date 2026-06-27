@@ -1,8 +1,10 @@
 import { APPLICATION_ERROR_KIND } from '@kernels/application';
 import { POSTGRES_SQLSTATE } from '@kernels/infrastructure';
-import { Source, SourceSyncJob } from '@contexts/sources/domain';
 import { describe, expect, it } from 'vitest';
-import { type SourceRow, type SourceSyncJobRow } from '../schema';
+import { buildSourceSyncJob } from '../../../../../../../test/contexts/sources/fixtures/source-sync-job.fixture';
+import { buildSource } from '../../../../../../../test/contexts/sources/fixtures/source.fixture';
+import { buildSourceSyncJobRow } from '../../../../../../../test/postgres/contexts/sources/fixtures/source-sync-job-row.fixture';
+import { buildSourceRow } from '../../../../../../../test/postgres/contexts/sources/fixtures/source-row.fixture';
 import { SourceDrizzleRepository } from '../source.drizzle.repository';
 import { SourceSyncJobDrizzleRepository } from '../source-sync-job.drizzle.repository';
 
@@ -10,7 +12,7 @@ describe('SourceDrizzleRepository', () => {
   it('save 반환 row가 domain으로 복원되지 않으면 domain error를 반환한다', async () => {
     const repository = new SourceDrizzleRepository(
       createSourceSaveDb([
-        createSourceRow({
+        buildSourceRow({
           content: '안녕',
           fingerprint: 'fingerprint-1',
           sizeBytes: 1,
@@ -18,7 +20,7 @@ describe('SourceDrizzleRepository', () => {
       ]),
     );
 
-    const result = await repository.save(createSource());
+    const result = await repository.save(buildSource());
 
     expect(result.isErr()).toBe(true);
 
@@ -39,7 +41,7 @@ describe('SourceDrizzleRepository', () => {
       ),
     );
 
-    const result = await repository.save(createSource());
+    const result = await repository.save(buildSource());
 
     expect(result.isErr()).toBe(true);
 
@@ -58,7 +60,7 @@ describe('SourceDrizzleRepository', () => {
       createSourceSaveRejectingDb(new Error('connection failed')),
     );
 
-    const result = await repository.save(createSource());
+    const result = await repository.save(buildSource());
 
     expect(result.isErr()).toBe(true);
 
@@ -77,7 +79,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
   it('save 반환 row가 domain으로 복원되지 않으면 domain error를 반환한다', async () => {
     const repository = new SourceSyncJobDrizzleRepository(
       createSourceSyncJobSaveDb([
-        createSourceSyncJobRow({
+        buildSourceSyncJobRow({
           sourceId: 'source-1',
           fingerprint: 'fingerprint-1',
           status: 'completed',
@@ -85,7 +87,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
       ]),
     );
 
-    const result = await repository.save(createSourceSyncJob());
+    const result = await repository.save(buildSourceSyncJob());
 
     expect(result.isErr()).toBe(true);
 
@@ -106,7 +108,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
       ),
     );
 
-    const result = await repository.save(createSourceSyncJob());
+    const result = await repository.save(buildSourceSyncJob());
 
     expect(result.isErr()).toBe(true);
 
@@ -177,52 +179,6 @@ function createSourceSyncJobSaveRejectingDb(
   >[0];
 }
 
-function createSource(): Source {
-  return Source.create({
-    externalSourceId: 'Notes/source.md',
-    content: '# Source note',
-    fingerprint: 'fingerprint-1',
-    size: byteSize('# Source note'),
-  })._unsafeUnwrap();
-}
-
-function createSourceRow(
-  params: Pick<SourceRow, 'content' | 'fingerprint' | 'sizeBytes'>,
-): SourceRow {
-  return {
-    id: 'source-1',
-    externalSourceId: 'Notes/source.md',
-    content: params.content,
-    fingerprint: params.fingerprint,
-    sizeBytes: params.sizeBytes,
-    createdAt: new Date('2026-01-01T00:00:00.000Z'),
-    updatedAt: new Date('2026-01-01T00:00:00.000Z'),
-  };
-}
-
-function createSourceSyncJobRow(
-  params: Pick<SourceSyncJobRow, 'sourceId' | 'fingerprint' | 'status'>,
-): SourceSyncJobRow {
-  return {
-    id: 'source-sync-job-1',
-    sourceId: params.sourceId,
-    fingerprint: params.fingerprint,
-    status: params.status,
-    createdAt: new Date('2026-01-01T00:00:00.000Z'),
-  };
-}
-
-function createSourceSyncJob(): SourceSyncJob {
-  return SourceSyncJob.create({
-    sourceId: 'source-1',
-    fingerprint: 'fingerprint-1',
-  })._unsafeUnwrap();
-}
-
 function createPostgresError(code: string): Error {
   return Object.assign(new Error('Postgres error'), { code });
-}
-
-function byteSize(content: string): number {
-  return new TextEncoder().encode(content).length;
 }

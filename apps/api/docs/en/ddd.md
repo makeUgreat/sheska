@@ -11,19 +11,26 @@ related:
 
 # API DDD Convention
 
-DDD terms in this API are used to define model ownership, language boundaries, and business behavior.
+DDD terms in this API define model ownership, language boundaries, and business behavior.
 They are not only folder names.
 
-## Bounded Contexts
+## Scope
 
-- A bounded context is the boundary where a specific domain model and ubiquitous language are valid.
+- Use this document when deciding bounded context boundaries, domain model ownership, shared domain language, domain-kernel usage, and repository contract names.
+- Use the architecture convention for the source map, the source dependency convention for import direction, and the persistence policy for database and ORM boundaries.
+
+## Model Boundaries
+
+### Bounded Contexts
+
+- A bounded context owns a domain model, ubiquitous language, and responsibility boundary.
 - The same word may have a different meaning in a different bounded context.
 - Code outside a bounded context MUST NOT directly modify the context's internal model.
 - Code outside a bounded context SHOULD NOT depend on the context's internal domain objects.
 - Contexts communicate through IDs, DTOs, events, ports, or anti-corruption layers.
-- A bounded context is defined by model, language, and responsibility boundaries, not by a folder name alone.
+- A folder name may indicate a context, but the boundary is justified by model, language, and responsibility.
 
-## Implementation Modules
+### Implementation Modules
 
 - An implementation module is a practical code wiring or framework module unit.
 - An implementation module is not automatically a DDD bounded context.
@@ -33,25 +40,22 @@ They are not only folder names.
 
 - `kernels/domain` contains domain-layer kernel code shared by context domain layers.
 - Domain-kernel code may include stable domain-layer policies and stable domain concepts intentionally shared by multiple bounded contexts.
-- Domain-kernel code has business meaning when it models a shared domain concept.
 - Review shared domain concept changes with the affected context owners.
 - `kernels/domain` MUST NOT be used as a generic duplication-removal directory.
-- Prefer duplication over premature domain-kernel code when the shared concept is unstable or context-specific.
-- Prefer `kernels/domain` for small, stable domain concepts such as `Money`, `Currency`, or `DateRange`.
-- Do not create shared domain concept code until multiple bounded contexts intentionally share a stable domain concept.
+- Prefer duplication over premature domain-kernel code when a concept is unstable or context-specific.
 
 ## Domain Model Building Blocks
 
 - Aggregates protect consistency boundaries and expose behavior through the aggregate root.
 - Entities have identity and lifecycle.
-- Generic entity identity mechanics, such as ID normalization and empty-ID validation, belong in shared `Entity`/`AggregateRoot`; context aggregates should keep only context-specific identity rules.
 - Value objects describe immutable domain values and validate their own invariants.
-- When repositories belong to the domain layer, they represent domain persistence needs as contracts, not database implementation details.
 - Domain services contain business rules that do not naturally belong to one entity or value object.
 - Domain events describe meaningful business facts that already happened.
 - Domain errors describe business rule failures and should not contain transport, database, or framework details.
 
-## Domain Factory Methods
+## Construction Paths
+
+### Domain Factory Methods
 
 - Factory method names should make the creation path clear.
 - `create` usually starts a new aggregate or entity lifecycle, `restore` rebuilds an existing one from persistence or another trusted snapshot, and `of` is commonly used for value objects or identity-free domain values.
@@ -62,7 +66,7 @@ They are not only folder names.
 
 - `save` persists an aggregate through the repository contract. Use it for create and update unless the context has a meaningful separate command.
 - `find` looks up one aggregate or read model by a unique lookup and returns `null` when it is absent.
-- `find` should express lookup meaning through object parameter field names, not method suffixes such as `findBy...`. Example: `find({ id })`, `find({ externalSourceId })`.
+- `find` should express lookup meaning through object parameter field names. Example: `find({ id })`, `find({ externalSourceId })`.
 - `get` means the caller expects the resource to exist. Use it only when absence is exceptional in that contract; otherwise prefer `find`.
 - `get` uses the same object parameter naming as `find`. Example: `get({ id })`.
 - `list` returns multiple aggregates or read models. It SHOULD accept an explicit criteria object when filtering is needed.
@@ -85,7 +89,7 @@ They are not only folder names.
 - Do not create `Params`, `Result`, or `Status` types only because a method is public.
 - Prefer a domain name over a mechanical suffix when a type is worth naming; otherwise keep the shape inline.
 
-## Review Rules
+## Review Checks
 
 - Check whether a new shared abstraction is really a stable domain concept before making it domain-kernel code.
 - Check whether a bounded context's public language is leaking another context's internal model.

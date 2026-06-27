@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/persistence.md
-last_synced: 2026-06-25
+last_synced: 2026-06-27
 related:
   - ./architecture.md
   - ./ddd.md
@@ -22,14 +22,18 @@ Persistence policy는 database와 ORM adapter가 domain rule의 소유자가 되
 - Domain ownership은 DDD convention을 따르고, layer boundary는 source dependency convention을 따른다.
 - Persistence code는 database와 ORM detail을 알 수 있지만 business meaning의 출처가 되어서는 안 된다.
 
-## 책임 경계
+## 저장소 소유권
+
+### 책임 경계
 
 - Domain과 application code가 domain invariant와 business invariant를 소유한다.
 - Persistence code는 application port를 위해 state를 저장하고 복원한다.
 - Persistence code는 database table validation으로 domain invariant나 business invariant를 강제해서는 안 된다.
 - Persistence code는 신뢰할 수 있는 row, relation, lookup에 필요한 storage integrity를 강제할 수 있다.
 
-## Database Constraint
+## 저장 형태
+
+### Database Constraint
 
 - 허용되는 structural constraint에는 primary key, foreign key, unique constraint, not-null column, index, timestamp 같은 storage default가 포함된다.
 - Repository lookup identity, idempotency key, application contract가 요구하는 storage-level uniqueness를 보호할 때 unique constraint를 사용한다.
@@ -37,7 +41,7 @@ Persistence policy는 database와 ORM adapter가 domain rule의 소유자가 되
 - Value object 또는 aggregate validation을 `CHECK` constraint, database enum restriction, trigger, 또는 이에 준하는 table-level validation으로 중복 구현하지 않는다.
 - Domain이 소유하는 규칙의 예시는 trim된 non-empty string, numeric range, lifecycle status transition, content-derived consistency check다.
 
-## Drizzle Schema
+### Drizzle Schema
 
 - Drizzle table definition은 storage shape, relation, index, structural constraint를 설명해야 한다.
 - Drizzle `pgEnum` 또는 그에 준하는 migration output으로 PostgreSQL enum type을 정의하지 않는다.
@@ -45,13 +49,15 @@ Persistence policy는 database와 ORM adapter가 domain rule의 소유자가 되
 - Adapter ergonomics를 위해 Drizzle schema에서 TypeScript-only narrowing을 사용할 수 있지만, validation과 state transition의 소유자는 domain code다.
 - Generated migration과 snapshot은 단순히 최신 local schema output이 아니라 의도한 persistence policy와 일치해야 한다.
 
-## Repository Mapping
+## 경계 매핑
+
+### Repository Mapping
 
 - Persistence mapper는 infrastructure boundary에서 database row와 domain object를 변환한다.
 - Database row를 domain object로 복원할 때도 domain construction 또는 restoration API를 거쳐야 한다.
 - Domain restoration이 저장된 row를 domain error로 거부하면 domain model을 약화하거나 persistence failure로 이름을 바꾸지 말고 해당 domain error를 그대로 유지한다.
 
-## Persistence Mapper 정책
+### Persistence Mapper 정책
 
 - Repository implementation은 database call, query composition, vendor 또는 storage-only failure를 repository contract error로 변환하는 책임을 소유한다.
 - Persistence mapper는 복원 입력의 shape validation, persistence row에서 domain으로 복원하는 책임, domain object를 insert row로 변환하는 책임을 소유한다.
@@ -64,9 +70,9 @@ Persistence policy는 database와 ORM adapter가 domain rule의 소유자가 되
 - Error mapper file은 mapping 대상이 aggregate나 entity가 아니라 error family라면 `{owner}-error.mapper.ts`를 사용할 수 있다.
 - Persistence에서 복원되는 domain object는 domain invariant를 검증하고 domain event를 기록하지 않는 `restore` 경로를 노출해야 한다.
 - Domain object를 반환하는 repository `save` method는 원래 입력 object가 아니라 database가 반환한 row에서 복원한 domain object를 반환해야 한다.
-- Domain-to-insert mapping은 이미 domain invariant를 통과한 domain object를 신뢰할 수 있다. Adapter에 추가 storage-only constraint가 없다면 insert validation을 중복하지 않는다.
+- Domain-to-insert mapping은 이미 domain invariant를 통과한 domain object를 신뢰할 수 있다. Adapter에 추가 storage-only constraint가 있을 때만 insert validation을 중복할 수 있다.
 
-## Review Rule
+## 리뷰 점검
 
 - 새 database constraint가 storage integrity를 보호하는지, domain invariant를 재구현하는지 확인한다.
 - Drizzle schema change가 database를 business meaning의 소유자로 만들지 않는지 확인한다.

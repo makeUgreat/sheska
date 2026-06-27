@@ -15,16 +15,25 @@ related:
 # API Error Policy
 
 Errors are part of the API's control flow and contracts.
-Use this document when deciding what a failure means, who owns it, when it is transformed, and what information it may expose.
 
-## Failure Types
+## Scope
 
+- Use this document when deciding what a failure means, who owns it, when it is transformed, and what information it may expose.
+- This policy covers application-controlled errors, vendor raw errors, unexpected system errors, and protocol-facing error responses.
+
+## Failure Ownership
+
+### Controlled And Uncontrolled Failures
+
+First decide whether the application owns the failure as a contract.
 This project separates application-controlled errors from failures the application cannot reasonably control.
 
 - Application-controlled errors are expected failure values owned by application code or a boundary. Use error naming such as `DomainError`, `ApplicationError`, and `InfrastructureError`.
 - Vendor raw errors are external adapter, SDK, database, HTTP client, or framework failures before the application translates them.
 - System errors are unexpected runtime, process, network, OS, resource, or environment failures that cannot be handled as a normal application contract.
 - Logging MAY support observability, but logging alone is not failure handling.
+
+### Controlled Error Owners
 
 Classify application-controlled errors by the boundary that owns their meaning:
 
@@ -33,7 +42,7 @@ Classify application-controlled errors by the boundary that owns their meaning:
 - Infrastructure errors: technical adapter failures translated into an application-controlled shape.
 - Presentation errors: protocol-facing failure responses, such as HTTP, GraphQL, or request validation failures.
 
-## Error Transformation
+## Transformation Boundaries
 
 Errors SHOULD be transformed when they cross a boundary where the owner, audience, or contract changes.
 
@@ -100,7 +109,7 @@ flowchart TB
   exception --> boundary
 ```
 
-## Error Structure
+## Error Contract Shape
 
 There is no single correct error shape.
 When defining an application-controlled error, prefer this structure unless the owning contract has a reason to differ.
@@ -113,7 +122,7 @@ When defining an application-controlled error, prefer this structure unless the 
 Validation errors MAY include field-level details when the caller can act on them.
 Do not expose internal diagnostic data through presentation errors unless the protocol contract explicitly allows it.
 
-## Vendor Contract Validation
+## Vendor Error Contracts
 
 Vendor raw errors are external contracts.
 When adapter code reads structured fields from a vendor error, validate and normalize those fields at the adapter boundary before mapping them to an application-controlled error.

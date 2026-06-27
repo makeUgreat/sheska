@@ -1,14 +1,16 @@
-import { Source } from '@contexts/sources/domain';
 import { describe, expect, it } from 'vitest';
-import { type SourceRow } from '../schema';
+import {
+  buildSource,
+  sourceContentByteSize,
+} from '../../../../../../../test/contexts/sources/fixtures/source.fixture';
+import { buildSourceRow } from '../../../../../../../test/postgres/contexts/sources/fixtures/source-row.fixture';
 import { SourcePersistenceMapper } from '../source.persistence.mapper';
 
 describe('SourcePersistenceMapper', () => {
   it('valid source row를 Source aggregate로 복원한다', () => {
-    const row = createSourceRow({
+    const row = buildSourceRow({
       content: '안녕',
       fingerprint: 'fingerprint-1',
-      sizeBytes: byteSize('안녕'),
     });
 
     const result = SourcePersistenceMapper.toDomain(row);
@@ -23,13 +25,13 @@ describe('SourcePersistenceMapper', () => {
       expect(result.value.getProps().contentSnapshot.value).toEqual({
         content: '안녕',
         fingerprint: 'fingerprint-1',
-        size: byteSize('안녕'),
+        size: sourceContentByteSize('안녕'),
       });
     }
   });
 
   it('source row의 persisted snapshot이 domain invariant를 깨면 실패한다', () => {
-    const row = createSourceRow({
+    const row = buildSourceRow({
       content: '안녕',
       fingerprint: 'fingerprint-1',
       sizeBytes: 1,
@@ -50,7 +52,7 @@ describe('SourcePersistenceMapper', () => {
   });
 
   it('Source aggregate를 source insert row로 변환한다', () => {
-    const source = createSource();
+    const source = buildSource();
 
     const row = SourcePersistenceMapper.toInsert(source);
 
@@ -59,34 +61,7 @@ describe('SourcePersistenceMapper', () => {
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
       fingerprint: 'fingerprint-1',
-      sizeBytes: byteSize('# Source note'),
+      sizeBytes: sourceContentByteSize('# Source note'),
     });
   });
 });
-
-function createSourceRow(
-  params: Pick<SourceRow, 'content' | 'fingerprint' | 'sizeBytes'>,
-): SourceRow {
-  return {
-    id: 'source-1',
-    externalSourceId: 'Notes/source.md',
-    content: params.content,
-    fingerprint: params.fingerprint,
-    sizeBytes: params.sizeBytes,
-    createdAt: new Date('2026-01-01T00:00:00.000Z'),
-    updatedAt: new Date('2026-01-01T00:00:00.000Z'),
-  };
-}
-
-function createSource(): Source {
-  return Source.create({
-    externalSourceId: 'Notes/source.md',
-    content: '# Source note',
-    fingerprint: 'fingerprint-1',
-    size: byteSize('# Source note'),
-  })._unsafeUnwrap();
-}
-
-function byteSize(content: string): number {
-  return new TextEncoder().encode(content).length;
-}

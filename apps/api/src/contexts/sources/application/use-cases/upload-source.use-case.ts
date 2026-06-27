@@ -2,17 +2,14 @@ import { okAsync, type Result, type ResultAsync } from '@core/result';
 import {
   ExternalSourceId,
   Source,
-  SOURCE_CONTENT_SNAPSHOT_CHANGED_EVENT_NAME,
   SourceSyncJob,
 } from '@contexts/sources/domain';
 import {
+  type SourceFingerprinterError,
   type SourceRepository,
   type SourceSyncJobRepository,
 } from '@contexts/sources/application/ports';
-import {
-  type SourceContentSnapshotCalculation,
-  SourceContentSnapshotCalculator,
-} from '../services/source-content-snapshot-calculator.service';
+import { type SourceContentSnapshotCalculation } from '../services/source-content-snapshot-calculator.service';
 import { type UploadSourceUseCaseError } from './upload-source.error';
 
 export interface UploadSourceCommand {
@@ -27,9 +24,15 @@ export interface UploadSourceResult {
   readonly syncJobId?: string;
 }
 
+export interface UploadSourceContentSnapshotCalculator {
+  calculate(
+    content: string,
+  ): ResultAsync<SourceContentSnapshotCalculation, SourceFingerprinterError>;
+}
+
 export class UploadSourceUseCase {
   constructor(
-    private readonly contentSnapshotCalculator: SourceContentSnapshotCalculator,
+    private readonly contentSnapshotCalculator: UploadSourceContentSnapshotCalculator,
     private readonly sources: SourceRepository,
     private readonly syncJobs: SourceSyncJobRepository,
   ) {}
@@ -70,7 +73,6 @@ export class UploadSourceUseCase {
       return existingSource.syncContentSnapshot({
         content: snapshot.content,
         fingerprint: snapshot.fingerprint,
-        size: snapshot.size,
       });
     }
 
@@ -78,7 +80,6 @@ export class UploadSourceUseCase {
       externalSourceId,
       content: snapshot.content,
       fingerprint: snapshot.fingerprint,
-      size: snapshot.size,
     });
   }
 
@@ -86,7 +87,7 @@ export class UploadSourceUseCase {
     source: Source,
   ): ResultAsync<UploadSourceResult, UploadSourceUseCaseError> {
     const contentSnapshotChangedEvent = source.findDomainEvent(
-      SOURCE_CONTENT_SNAPSHOT_CHANGED_EVENT_NAME,
+      'source.content_snapshot.changed',
     );
 
     if (!contentSnapshotChangedEvent) {

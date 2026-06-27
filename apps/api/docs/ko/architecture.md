@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/architecture.md
-last_synced: 2026-06-25
+last_synced: 2026-06-27
 related:
   - ./error.md
   - ./ddd.md
@@ -17,6 +17,13 @@ related:
 # API 아키텍처 컨벤션
 
 이 문서는 API architecture map이며, 자세한 규칙은 연결된 문서를 사용한다.
+
+## 적용 범위
+
+- API code의 high-level source area를 결정할 때 이 문서를 사용한다.
+- 이 문서는 architectural boundary를 이름 붙이고 상세 정책 문서로 라우팅한다. DDD, source dependency, runtime wiring, persistence, error policy를 대체하지 않는다.
+
+## 아키텍처 축
 
 API architecture는 두 축으로 설명한다:
 

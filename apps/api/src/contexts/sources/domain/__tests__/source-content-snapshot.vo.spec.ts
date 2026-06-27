@@ -5,14 +5,13 @@ const byteSize = (content: string): number =>
   new TextEncoder().encode(content).length;
 
 describe('SourceContentSnapshot', () => {
-  describe('of', () => {
-    it('유효한 원문 snapshot을 생성하고 fingerprint를 trim한다', () => {
+  describe('create', () => {
+    it('유효한 원문 snapshot을 생성하고 size를 계산하며 fingerprint를 trim한다', () => {
       const content = '# Source note';
 
-      const result = SourceContentSnapshot.of({
+      const result = SourceContentSnapshot.create({
         content,
         fingerprint: ' fingerprint-1 ',
-        size: byteSize(content),
       });
 
       expect(result.isOk()).toBe(true);
@@ -27,20 +26,18 @@ describe('SourceContentSnapshot', () => {
     });
 
     it('빈 content와 size 0을 허용한다', () => {
-      const result = SourceContentSnapshot.of({
+      const result = SourceContentSnapshot.create({
         content: '',
         fingerprint: 'empty-fingerprint',
-        size: 0,
       });
 
       expect(result.isOk()).toBe(true);
     });
 
     it('fingerprint가 공백뿐이면 실패 Result를 반환한다', () => {
-      const result = SourceContentSnapshot.of({
+      const result = SourceContentSnapshot.create({
         content: '# Source note',
         fingerprint: ' ',
-        size: byteSize('# Source note'),
       });
 
       expect(result.isErr()).toBe(true);
@@ -49,9 +46,11 @@ describe('SourceContentSnapshot', () => {
         expect(result.error.code).toBe('source.fingerprint_empty');
       }
     });
+  });
 
+  describe('restore', () => {
     it('content byte size와 size가 다르면 실패 Result를 반환한다', () => {
-      const result = SourceContentSnapshot.of({
+      const result = SourceContentSnapshot.restore({
         content: '안녕',
         fingerprint: 'fingerprint-1',
         size: 2,

@@ -15,7 +15,14 @@ related:
 Runtime wiring rules decide where objects are created and how implementations are connected to ports.
 Runtime wiring MUST NOT weaken source dependency rules.
 
-## Runtime Flow And Wiring Map
+## Scope
+
+- Use this document when deciding object creation, provider binding, port implementation registration, NestJS DI usage, and runtime configuration ownership.
+- Use the source dependency convention when the question is whether one source file may import another.
+
+## Runtime Model
+
+### Runtime Flow And Wiring Map
 
 This map shows runtime flow and provider binding, not source imports.
 Solid arrows show runtime call/use direction.

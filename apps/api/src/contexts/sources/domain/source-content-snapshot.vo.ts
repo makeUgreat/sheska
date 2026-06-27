@@ -16,7 +16,30 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
     super(props);
   }
 
-  static of(params: {
+  static create(params: {
+    content: string;
+    fingerprint: string;
+  }): Result<SourceContentSnapshot, SourceContentSnapshotDomainError> {
+    const { content, fingerprint } = params;
+
+    return ResultUtils.combine([
+      SourceContent.of(content),
+      SourceFingerprint.of(fingerprint),
+    ]).andThen(([sourceContent, sourceFingerprint]) =>
+      SourceSize.of(sourceContent.byteSize).andThen((sourceSize) =>
+        SourceContentSnapshot.construct({
+          props: {
+            content: sourceContent.value,
+            fingerprint: sourceFingerprint.value,
+            size: sourceSize.value,
+          },
+          validate: (props) => ok(props),
+        }),
+      ),
+    );
+  }
+
+  static restore(params: {
     content: string;
     fingerprint: string;
     size: number;
@@ -27,36 +50,28 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
       SourceContent.of(content),
       SourceFingerprint.of(fingerprint),
       SourceSize.of(size),
-    ]).andThen(([sourceContent, sourceFingerprint, sourceSize]) =>
-      SourceContentSnapshot.construct({
+    ]).andThen(([sourceContent, sourceFingerprint, sourceSize]) => {
+      if (!sourceContent.hasByteSize(sourceSize.value)) {
+        return err({
+          kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
+          code: 'source.size_mismatch',
+          message: 'Source size must match content byte size',
+          details: { fields: ['content', 'size'] },
+        } satisfies SourceContentSnapshotDomainError);
+      }
+
+      return SourceContentSnapshot.construct({
         props: {
           content: sourceContent.value,
           fingerprint: sourceFingerprint.value,
           size: sourceSize.value,
         },
-        validate: (props) => SourceContentSnapshot.validateProps(props),
-      }),
-    );
+        validate: (props) => ok(props),
+      });
+    });
   }
 
-  hasSameFingerprint(other: SourceContentSnapshot): boolean {
+  hasSameContentAs(other: SourceContentSnapshot): boolean {
     return this.value.fingerprint === other.value.fingerprint;
-  }
-
-  private static validateProps(
-    props: SourceContentSnapshotProps,
-  ): Result<SourceContentSnapshotProps, SourceContentSnapshotDomainError> {
-    const contentByteSize = new TextEncoder().encode(props.content).length;
-
-    if (contentByteSize === props.size) {
-      return ok(props);
-    }
-
-    return err({
-      kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
-      code: 'source.size_mismatch',
-      message: 'Source size must match content byte size',
-      details: { fields: ['content', 'size'] },
-    } satisfies SourceContentSnapshotDomainError);
   }
 }

@@ -1,180 +1,46 @@
 import { errAsync, okAsync } from '@core/result';
 import { APPLICATION_ERROR_KIND } from '@kernels/application';
-import { Source, type SourceSyncJob } from '@contexts/sources/domain';
 import {
-  type SourceFingerprinter,
   type SourceFingerprinterError,
   type SourceRepository,
   type SourceRepositoryError,
-  type SourceRepositoryFindCriteria,
   type SourceSyncJobRepository,
   type SourceSyncJobRepositoryError,
 } from '@contexts/sources/application/ports';
-import { describe, expect, it } from 'vitest';
-import { SourceContentSnapshotCalculator } from '../../services/source-content-snapshot-calculator.service';
-import { UploadSourceUseCase } from '../upload-source.use-case';
+import { Source, type SourceSyncJob } from '@contexts/sources/domain';
+import { describe, expect, it, type MockedFunction, vi } from 'vitest';
+import {
+  type UploadSourceContentSnapshotCalculator,
+  UploadSourceUseCase,
+} from '../upload-source.use-case';
+import { sourceContentByteSize } from '../../../../../../test/contexts/sources/fixtures/source.fixture';
 
-class StubSourceFingerprinter implements SourceFingerprinter {
-  readonly calls: string[] = [];
-  fingerprint = 'fingerprint-1';
-  error: SourceFingerprinterError | null = null;
+type ContentSnapshotCalculatorMock = {
+  calculate: MockedFunction<UploadSourceContentSnapshotCalculator['calculate']>;
+};
 
-  calculate(content: string) {
-    this.calls.push(content);
+type SourceRepositoryMock = {
+  find: MockedFunction<SourceRepository['find']>;
+  save: MockedFunction<SourceRepository['save']>;
+};
 
-    if (this.error) {
-      return errAsync(this.error);
-    }
-
-    return okAsync(this.fingerprint);
-  }
-}
-
-class StubSourceRepository implements SourceRepository {
-  existingSource: Source | null = null;
-  findError: SourceRepositoryError | null = null;
-  saveSourceError: SourceRepositoryError | null = null;
-
-  readonly findExternalSourceIds: string[] = [];
-  readonly savedSources: Source[] = [];
-
-  find(criteria: SourceRepositoryFindCriteria) {
-    this.findExternalSourceIds.push(criteria.externalSourceId);
-
-    if (this.findError) {
-      return errAsync(this.findError);
-    }
-
-    return okAsync(this.existingSource);
-  }
-
-  save(source: Source) {
-    this.savedSources.push(source);
-
-    if (this.saveSourceError) {
-      return errAsync(this.saveSourceError);
-    }
-
-    return okAsync(source);
-  }
-}
-
-class StubSourceSyncJobRepository implements SourceSyncJobRepository {
-  saveSyncJobError: SourceSyncJobRepositoryError | null = null;
-
-  readonly savedSyncJobs: SourceSyncJob[] = [];
-
-  save(syncJob: SourceSyncJob) {
-    this.savedSyncJobs.push(syncJob);
-
-    if (this.saveSyncJobError) {
-      return errAsync(this.saveSyncJobError);
-    }
-
-    return okAsync(syncJob);
-  }
-}
-
-function createUseCase(
-  params: {
-    fingerprinter?: StubSourceFingerprinter;
-    sources?: StubSourceRepository;
-    syncJobs?: StubSourceSyncJobRepository;
-  } = {},
-): {
-  fingerprinter: StubSourceFingerprinter;
-  sources: StubSourceRepository;
-  syncJobs: StubSourceSyncJobRepository;
-  useCase: UploadSourceUseCase;
-} {
-  const fingerprinter = params.fingerprinter ?? new StubSourceFingerprinter();
-  const sources = params.sources ?? new StubSourceRepository();
-  const syncJobs = params.syncJobs ?? new StubSourceSyncJobRepository();
-  const calculator = new SourceContentSnapshotCalculator(fingerprinter);
-
-  return {
-    fingerprinter,
-    sources,
-    syncJobs,
-    useCase: new UploadSourceUseCase(calculator, sources, syncJobs),
-  };
-}
-
-function createExistingSource(
-  params: {
-    externalSourceId?: string;
-    content?: string;
-    fingerprint?: string;
-  } = {},
-): Source {
-  const content = params.content ?? '# Old note';
-  const result = Source.restore({
-    id: 'source-1',
-    externalSourceId: params.externalSourceId ?? 'Notes/source.md',
-    content,
-    fingerprint: params.fingerprint ?? 'fingerprint-1',
-    size: byteSize(content),
-  });
-
-  if (result.isErr()) {
-    throw new Error(result.error.message);
-  }
-
-  return result.value;
-}
-
-function byteSize(content: string): number {
-  return new TextEncoder().encode(content).length;
-}
-
-function fingerprinterUnavailableError(): SourceFingerprinterError {
-  return {
-    kind: APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
-    code: 'source_fingerprinter.unavailable',
-    message: 'Source fingerprinter is unavailable',
-    details: {},
-  };
-}
-
-function sourceRepositoryUnavailableError(): SourceRepositoryError {
-  return {
-    kind: APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
-    code: 'source_repository.unavailable',
-    message: 'Source repository is unavailable',
-    details: { causeCode: 'source_repository.unavailable' },
-  };
-}
-
-function sourceRepositoryStateConflictError(): SourceRepositoryError {
-  return {
-    kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
-    code: 'source_repository.state_conflict',
-    message: 'Source repository state conflict',
-    details: {},
-  };
-}
-
-function sourceRepositoryDomainError(): SourceRepositoryError {
-  return {
-    kind: 'invariant_violation',
-    code: 'source.size_mismatch',
-    message: 'Source size must match content byte size',
-    details: { fields: ['content', 'size'] },
-  };
-}
-
-function sourceSyncJobRepositoryUnavailableError(): SourceSyncJobRepositoryError {
-  return {
-    kind: APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
-    code: 'source_sync_job_repository.unavailable',
-    message: 'Source sync job repository is unavailable',
-    details: { causeCode: 'source_sync_job_repository.unavailable' },
-  };
-}
+type SourceSyncJobRepositoryMock = {
+  save: MockedFunction<SourceSyncJobRepository['save']>;
+};
 
 describe('UploadSourceUseCase', () => {
-  it('새 externalSourceId이면 source와 sync job을 생성한다', async () => {
-    const { sources, syncJobs, useCase } = createUseCase();
+  it('새 source를 저장하고 sync job을 생성한다', async () => {
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
+      content: '# Source note',
+      fingerprint: 'fingerprint-1',
+    });
+    const sources = createSourceRepositoryMock();
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    const useCase = new UploadSourceUseCase(
+      contentSnapshotCalculator,
+      sources,
+      syncJobs,
+    );
 
     const result = await useCase.execute({
       externalSourceId: ' Notes/source.md ',
@@ -191,122 +57,146 @@ describe('UploadSourceUseCase', () => {
       expect(result.value.sourceId.length).toBeGreaterThan(0);
       expect(result.value.syncJobId?.length).toBeGreaterThan(0);
     }
-
-    expect(sources.findExternalSourceIds).toEqual(['Notes/source.md']);
-    expect(sources.savedSources).toHaveLength(1);
-    expect(syncJobs.savedSyncJobs).toHaveLength(1);
-
-    const savedSource = sources.savedSources[0];
-    const savedSyncJob = syncJobs.savedSyncJobs[0];
-
-    expect(savedSource?.getProps().externalSourceId.value).toBe(
-      'Notes/source.md',
+    expect(contentSnapshotCalculator.calculate).toHaveBeenCalledWith(
+      '# Source note',
     );
-    expect(savedSource?.getProps().contentSnapshot.value).toEqual({
+    expect(sources.find).toHaveBeenCalledWith({
+      externalSourceId: 'Notes/source.md',
+    });
+    expectSourceSavedWith(sources, {
+      externalSourceId: 'Notes/source.md',
       content: '# Source note',
       fingerprint: 'fingerprint-1',
-      size: byteSize('# Source note'),
     });
-    expect(savedSyncJob?.getProps()).toMatchObject({
-      sourceId: savedSource?.id,
-      status: 'pending',
-    });
-    expect(savedSyncJob?.getProps().fingerprint.value).toBe('fingerprint-1');
-    expect(savedSource?.domainEvents).toEqual([]);
-  });
-
-  it('기존 source의 fingerprint가 다르면 source를 갱신하고 sync job을 생성한다', async () => {
-    const sources = new StubSourceRepository();
-    sources.existingSource = createExistingSource({
-      content: '# Old note',
+    expectSyncJobSavedWith(syncJobs, {
+      sourceId: sources.save.mock.calls[0]?.[0]?.id,
       fingerprint: 'fingerprint-1',
     });
-    const fingerprinter = new StubSourceFingerprinter();
-    fingerprinter.fingerprint = 'fingerprint-2';
-    const { syncJobs, useCase } = createUseCase({ fingerprinter, sources });
+  });
 
-    const result = await useCase.execute({
+  it('같은 content snapshot이면 저장과 sync job 생성을 건너뛴다', async () => {
+    const existingSource = restoreSource({
+      id: 'source-1',
       externalSourceId: 'Notes/source.md',
-      content: '# New note',
+      content: '# Source note',
+      fingerprint: 'fingerprint-1',
     });
-
-    expect(result.isOk()).toBe(true);
-
-    if (result.isOk()) {
-      expect(result.value).toMatchObject({
-        sourceId: sources.existingSource.id,
-        externalSourceId: 'Notes/source.md',
-        fingerprint: 'fingerprint-2',
-      });
-      expect(result.value.syncJobId?.length).toBeGreaterThan(0);
-    }
-
-    expect(sources.savedSources).toHaveLength(1);
-    expect(syncJobs.savedSyncJobs).toHaveLength(1);
-    expect(sources.savedSources[0]?.getProps().contentSnapshot.value).toEqual({
-      content: '# New note',
-      fingerprint: 'fingerprint-2',
-      size: byteSize('# New note'),
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
+      content: '# Source note',
+      fingerprint: 'fingerprint-1',
     });
-    expect(syncJobs.savedSyncJobs[0]?.getProps().fingerprint.value).toBe(
-      'fingerprint-2',
+    const sources = createSourceRepositoryMock();
+    sources.find.mockReturnValue(okAsync(existingSource));
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    const useCase = new UploadSourceUseCase(
+      contentSnapshotCalculator,
+      sources,
+      syncJobs,
     );
-    expect(sources.savedSources[0]?.domainEvents).toEqual([]);
-  });
-
-  it('기존 source의 fingerprint가 같으면 저장과 sync job 생성을 건너뛴다', async () => {
-    const sources = new StubSourceRepository();
-    sources.existingSource = createExistingSource({
-      content: '# Old note',
-      fingerprint: 'fingerprint-1',
-    });
-    const { syncJobs, useCase } = createUseCase({ sources });
 
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
-      content: '# New note',
+      content: '# Source note',
     });
 
     expect(result.isOk()).toBe(true);
 
     if (result.isOk()) {
       expect(result.value).toEqual({
-        sourceId: sources.existingSource.id,
+        sourceId: 'source-1',
         externalSourceId: 'Notes/source.md',
         fingerprint: 'fingerprint-1',
       });
     }
-
-    expect(sources.savedSources).toEqual([]);
-    expect(syncJobs.savedSyncJobs).toEqual([]);
-    expect(
-      sources.existingSource.getProps().contentSnapshot.value.content,
-    ).toBe('# Old note');
+    expect(sources.save).not.toHaveBeenCalled();
+    expect(syncJobs.save).not.toHaveBeenCalled();
   });
 
-  it('externalSourceId가 공백뿐이면 domain error를 그대로 반환하고 의존성을 호출하지 않는다', async () => {
-    const { fingerprinter, sources, useCase } = createUseCase();
+  it('다른 content snapshot이면 source를 갱신하고 sync job을 생성한다', async () => {
+    const existingSource = restoreSource({
+      id: 'source-1',
+      externalSourceId: 'Notes/source.md',
+      content: '# Old source note',
+      fingerprint: 'fingerprint-old',
+    });
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
+      content: '# New source note',
+      fingerprint: 'fingerprint-new',
+    });
+    const sources = createSourceRepositoryMock();
+    sources.find.mockReturnValue(okAsync(existingSource));
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    const useCase = new UploadSourceUseCase(
+      contentSnapshotCalculator,
+      sources,
+      syncJobs,
+    );
 
     const result = await useCase.execute({
-      externalSourceId: '  ',
+      externalSourceId: 'Notes/source.md',
+      content: '# New source note',
+    });
+
+    expect(result.isOk()).toBe(true);
+
+    if (result.isOk()) {
+      expect(result.value).toMatchObject({
+        sourceId: 'source-1',
+        externalSourceId: 'Notes/source.md',
+        fingerprint: 'fingerprint-new',
+      });
+      expect(result.value.syncJobId?.length).toBeGreaterThan(0);
+    }
+    expectSourceSavedWith(sources, {
+      externalSourceId: 'Notes/source.md',
+      content: '# New source note',
+      fingerprint: 'fingerprint-new',
+    });
+    expectSyncJobSavedWith(syncJobs, {
+      sourceId: 'source-1',
+      fingerprint: 'fingerprint-new',
+    });
+  });
+
+  it('externalSourceId가 유효하지 않으면 collaborator를 호출하지 않고 실패한다', async () => {
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
+    const sources = createSourceRepositoryMock();
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    const useCase = new UploadSourceUseCase(
+      contentSnapshotCalculator,
+      sources,
+      syncJobs,
+    );
+
+    const result = await useCase.execute({
+      externalSourceId: ' ',
       content: '# Source note',
     });
 
     expect(result.isErr()).toBe(true);
 
     if (result.isErr()) {
-      expect(result.error.kind).toBe('invariant_violation');
       expect(result.error.code).toBe('external_source.id_empty');
     }
-    expect(fingerprinter.calls).toEqual([]);
-    expect(sources.findExternalSourceIds).toEqual([]);
+    expect(contentSnapshotCalculator.calculate).not.toHaveBeenCalled();
+    expect(sources.find).not.toHaveBeenCalled();
+    expect(sources.save).not.toHaveBeenCalled();
+    expect(syncJobs.save).not.toHaveBeenCalled();
   });
 
-  it('fingerprint 계산 실패를 그대로 반환한다', async () => {
-    const fingerprinter = new StubSourceFingerprinter();
-    const fingerprinterError = fingerprinterUnavailableError();
-    fingerprinter.error = fingerprinterError;
-    const { sources, useCase } = createUseCase({ fingerprinter });
+  it('content snapshot 계산 실패를 그대로 반환한다', async () => {
+    const calculationError = sourceFingerprinterUnavailableError();
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
+    contentSnapshotCalculator.calculate.mockReturnValue(
+      errAsync(calculationError),
+    );
+    const sources = createSourceRepositoryMock();
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    const useCase = new UploadSourceUseCase(
+      contentSnapshotCalculator,
+      sources,
+      syncJobs,
+    );
 
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
@@ -316,16 +206,24 @@ describe('UploadSourceUseCase', () => {
     expect(result.isErr()).toBe(true);
 
     if (result.isErr()) {
-      expect(result.error).toBe(fingerprinterError);
+      expect(result.error).toBe(calculationError);
     }
-    expect(sources.findExternalSourceIds).toEqual([]);
+    expect(sources.find).not.toHaveBeenCalled();
+    expect(sources.save).not.toHaveBeenCalled();
+    expect(syncJobs.save).not.toHaveBeenCalled();
   });
 
   it('source 조회 실패를 그대로 반환한다', async () => {
-    const sources = new StubSourceRepository();
-    const repositoryError = sourceRepositoryUnavailableError();
-    sources.findError = repositoryError;
-    const { useCase } = createUseCase({ sources });
+    const findError = sourceRepositoryUnavailableError();
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
+    const sources = createSourceRepositoryMock();
+    sources.find.mockReturnValue(errAsync(findError));
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    const useCase = new UploadSourceUseCase(
+      contentSnapshotCalculator,
+      sources,
+      syncJobs,
+    );
 
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
@@ -335,15 +233,23 @@ describe('UploadSourceUseCase', () => {
     expect(result.isErr()).toBe(true);
 
     if (result.isErr()) {
-      expect(result.error).toBe(repositoryError);
+      expect(result.error).toBe(findError);
     }
+    expect(sources.save).not.toHaveBeenCalled();
+    expect(syncJobs.save).not.toHaveBeenCalled();
   });
 
-  it('source 조회에서 domain error가 반환되면 그대로 통과시킨다', async () => {
-    const sources = new StubSourceRepository();
-    const domainError = sourceRepositoryDomainError();
-    sources.findError = domainError;
-    const { useCase } = createUseCase({ sources });
+  it('source 저장 실패를 반환하고 sync job은 저장하지 않는다', async () => {
+    const saveError = sourceRepositoryUnavailableError();
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
+    const sources = createSourceRepositoryMock();
+    sources.save.mockReturnValue(errAsync(saveError));
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    const useCase = new UploadSourceUseCase(
+      contentSnapshotCalculator,
+      sources,
+      syncJobs,
+    );
 
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
@@ -353,33 +259,22 @@ describe('UploadSourceUseCase', () => {
     expect(result.isErr()).toBe(true);
 
     if (result.isErr()) {
-      expect(result.error).toBe(domainError);
+      expect(result.error).toBe(saveError);
     }
-  });
-
-  it('저장 중 state conflict가 발생하면 그대로 반환한다', async () => {
-    const sources = new StubSourceRepository();
-    const repositoryError = sourceRepositoryStateConflictError();
-    sources.saveSourceError = repositoryError;
-    const { useCase } = createUseCase({ sources });
-
-    const result = await useCase.execute({
-      externalSourceId: 'Notes/source.md',
-      content: '# Source note',
-    });
-
-    expect(result.isErr()).toBe(true);
-
-    if (result.isErr()) {
-      expect(result.error).toBe(repositoryError);
-    }
+    expect(syncJobs.save).not.toHaveBeenCalled();
   });
 
   it('sync job 저장 실패를 그대로 반환한다', async () => {
-    const syncJobs = new StubSourceSyncJobRepository();
-    const repositoryError = sourceSyncJobRepositoryUnavailableError();
-    syncJobs.saveSyncJobError = repositoryError;
-    const { useCase } = createUseCase({ syncJobs });
+    const syncJobSaveError = sourceSyncJobRepositoryUnavailableError();
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
+    const sources = createSourceRepositoryMock();
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    syncJobs.save.mockReturnValue(errAsync(syncJobSaveError));
+    const useCase = new UploadSourceUseCase(
+      contentSnapshotCalculator,
+      sources,
+      syncJobs,
+    );
 
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
@@ -389,7 +284,150 @@ describe('UploadSourceUseCase', () => {
     expect(result.isErr()).toBe(true);
 
     if (result.isErr()) {
-      expect(result.error).toBe(repositoryError);
+      expect(result.error).toBe(syncJobSaveError);
     }
+    expect(sources.save).toHaveBeenCalledOnce();
+  });
+
+  it('domain이 source snapshot을 거부하면 저장하지 않고 실패한다', async () => {
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
+      content: '# Source note',
+      fingerprint: ' ',
+    });
+    const sources = createSourceRepositoryMock();
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    const useCase = new UploadSourceUseCase(
+      contentSnapshotCalculator,
+      sources,
+      syncJobs,
+    );
+
+    const result = await useCase.execute({
+      externalSourceId: 'Notes/source.md',
+      content: '# Source note',
+    });
+
+    expect(result.isErr()).toBe(true);
+
+    if (result.isErr()) {
+      expect(result.error.code).toBe('source.fingerprint_empty');
+    }
+    expect(sources.save).not.toHaveBeenCalled();
+    expect(syncJobs.save).not.toHaveBeenCalled();
   });
 });
+
+function createContentSnapshotCalculatorMock(
+  snapshot = {
+    content: '# Source note',
+    fingerprint: 'fingerprint-1',
+  },
+): ContentSnapshotCalculatorMock {
+  return {
+    calculate: vi
+      .fn<UploadSourceContentSnapshotCalculator['calculate']>()
+      .mockReturnValue(okAsync(snapshot)),
+  };
+}
+
+function createSourceRepositoryMock(): SourceRepositoryMock {
+  return {
+    find: vi.fn<SourceRepository['find']>().mockReturnValue(okAsync(null)),
+    save: vi
+      .fn<SourceRepository['save']>()
+      .mockImplementation((source) => okAsync(source)),
+  };
+}
+
+function createSourceSyncJobRepositoryMock(): SourceSyncJobRepositoryMock {
+  return {
+    save: vi
+      .fn<SourceSyncJobRepository['save']>()
+      .mockImplementation((syncJob) => okAsync(syncJob)),
+  };
+}
+
+function expectSourceSavedWith(
+  sources: ReturnType<typeof createSourceRepositoryMock>,
+  expected: {
+    externalSourceId: string;
+    content: string;
+    fingerprint: string;
+  },
+) {
+  expect(sources.save).toHaveBeenCalledOnce();
+  const savedSource = sources.save.mock.calls[0]?.[0];
+  expect(savedSource?.getProps().externalSourceId.value).toBe(
+    expected.externalSourceId,
+  );
+  expect(savedSource?.getProps().contentSnapshot.value).toEqual({
+    content: expected.content,
+    fingerprint: expected.fingerprint,
+    size: sourceContentByteSize(expected.content),
+  });
+}
+
+function expectSyncJobSavedWith(
+  syncJobs: ReturnType<typeof createSourceSyncJobRepositoryMock>,
+  expected: {
+    sourceId: string | undefined;
+    fingerprint: string;
+  },
+) {
+  expect(syncJobs.save).toHaveBeenCalledOnce();
+  const savedSyncJob = syncJobs.save.mock.calls[0]?.[0];
+  expect(sourceSyncJobProps(savedSyncJob)).toMatchObject({
+    sourceId: expected.sourceId,
+    fingerprint: expected.fingerprint,
+    status: 'pending',
+  });
+}
+
+function sourceSyncJobProps(syncJob: SourceSyncJob | undefined) {
+  const props = syncJob?.getProps();
+
+  return {
+    sourceId: props?.sourceId,
+    fingerprint: props?.fingerprint.value,
+    status: props?.status,
+  };
+}
+
+function restoreSource(params: {
+  id: string;
+  externalSourceId: string;
+  content: string;
+  fingerprint: string;
+}) {
+  return Source.restore({
+    ...params,
+    size: sourceContentByteSize(params.content),
+  })._unsafeUnwrap();
+}
+
+function sourceFingerprinterUnavailableError(): SourceFingerprinterError {
+  return {
+    kind: APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
+    code: 'source_fingerprinter.unavailable',
+    message: 'Source fingerprinter is unavailable',
+    details: {},
+  };
+}
+
+function sourceRepositoryUnavailableError(): SourceRepositoryError {
+  return {
+    kind: APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
+    code: 'source_repository.unavailable',
+    message: 'Source Repository is unavailable',
+    details: { causeCode: 'source_postgres_persistence.unavailable' },
+  };
+}
+
+function sourceSyncJobRepositoryUnavailableError(): SourceSyncJobRepositoryError {
+  return {
+    kind: APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
+    code: 'source_sync_job_repository.unavailable',
+    message: 'Source Sync Job Repository is unavailable',
+    details: { causeCode: 'source_postgres_persistence.unavailable' },
+  };
+}

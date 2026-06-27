@@ -1,11 +1,11 @@
-import { SourceSyncJob } from '@contexts/sources/domain';
 import { describe, expect, it } from 'vitest';
-import { type SourceSyncJobRow } from '../schema';
+import { buildSourceSyncJob } from '../../../../../../../test/contexts/sources/fixtures/source-sync-job.fixture';
+import { buildSourceSyncJobRow } from '../../../../../../../test/postgres/contexts/sources/fixtures/source-sync-job-row.fixture';
 import { SourceSyncJobPersistenceMapper } from '../source-sync-job.persistence.mapper';
 
 describe('SourceSyncJobPersistenceMapper', () => {
   it('valid sync job row를 SourceSyncJob aggregate로 복원한다', () => {
-    const row = createSourceSyncJobRow({
+    const row = buildSourceSyncJobRow({
       sourceId: 'source-1',
       fingerprint: 'fingerprint-1',
       status: 'pending',
@@ -26,7 +26,7 @@ describe('SourceSyncJobPersistenceMapper', () => {
   });
 
   it('sync job row의 persisted status가 domain invariant를 깨면 실패한다', () => {
-    const row = createSourceSyncJobRow({
+    const row = buildSourceSyncJobRow({
       sourceId: 'source-1',
       fingerprint: 'fingerprint-1',
       status: 'completed',
@@ -47,10 +47,7 @@ describe('SourceSyncJobPersistenceMapper', () => {
   });
 
   it('SourceSyncJob aggregate를 sync job insert row로 변환한다', () => {
-    const syncJob = SourceSyncJob.create({
-      sourceId: 'source-1',
-      fingerprint: 'fingerprint-1',
-    })._unsafeUnwrap();
+    const syncJob = buildSourceSyncJob();
 
     const row = SourceSyncJobPersistenceMapper.toInsert(syncJob);
 
@@ -62,15 +59,3 @@ describe('SourceSyncJobPersistenceMapper', () => {
     });
   });
 });
-
-function createSourceSyncJobRow(
-  params: Pick<SourceSyncJobRow, 'sourceId' | 'fingerprint' | 'status'>,
-): SourceSyncJobRow {
-  return {
-    id: 'source-sync-job-1',
-    sourceId: params.sourceId,
-    fingerprint: params.fingerprint,
-    status: params.status,
-    createdAt: new Date('2026-01-01T00:00:00.000Z'),
-  };
-}

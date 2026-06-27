@@ -10,8 +10,8 @@ const execAsync = promisify(exec);
 const POSTGRES_TEST_CONTAINER_NAME = 'sheska.test.db';
 const POSTGRES_TEST_DATABASE_URL =
   'postgres://sheska:sheska@127.0.0.1:55432/sheska_test';
-const POSTGRES_COMPOSE_FILE = resolve(__dirname, 'docker-compose.test-db.yml');
-const POSTGRES_COMPOSE_CWD = resolve(__dirname, '../..');
+const POSTGRES_COMPOSE_FILE = resolve(__dirname, 'docker-compose.yml');
+const POSTGRES_COMPOSE_CWD = resolve(__dirname, '../../..');
 
 export default async function setup(): Promise<() => Promise<void>> {
   try {
@@ -80,7 +80,7 @@ async function runPostgresMigrations(): Promise<void> {
     const database = drizzle({ client: pool, schema });
 
     await migrate(database, {
-      migrationsFolder: resolve(__dirname, '../../drizzle'),
+      migrationsFolder: resolve(__dirname, '../../../drizzle'),
     });
   } finally {
     await pool.end();

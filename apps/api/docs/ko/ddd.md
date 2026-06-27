@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/ddd.md
-last_synced: 2026-06-23
+last_synced: 2026-06-27
 related:
   - ./architecture.md
 ---
@@ -15,22 +15,29 @@ related:
 이 API에서 DDD 용어는 model ownership, language boundary, business behavior를 정의하기 위해 사용한다.
 DDD 용어는 단순한 folder name이 아니다.
 
-## Bounded Context
+## 적용 범위
 
-- Bounded context는 특정 domain model과 ubiquitous language가 유효한 경계다.
+- Bounded context boundary, domain model ownership, shared domain language, domain-kernel usage, repository contract name을 결정할 때 이 문서를 사용한다.
+- Source map은 architecture convention을 사용하고, import direction은 source dependency convention을 사용하며, database와 ORM boundary는 persistence policy를 사용한다.
+
+## 모델 경계
+
+### Bounded Context 경계
+
+- Bounded context는 domain model, ubiquitous language, responsibility boundary를 소유한다.
 - 같은 단어라도 다른 bounded context에서는 다른 의미를 가질 수 있다.
 - bounded context 외부 코드는 context 내부 model을 직접 수정해서는 안 된다.
 - bounded context 외부 코드는 context 내부 domain object에 의존하지 않는 것이 좋다.
 - Context는 ID, DTO, event, port, anti-corruption layer를 통해 통신한다.
-- bounded context는 folder name만이 아니라 model, language, responsibility boundary로 정의된다.
+- Folder name은 context를 나타낼 수 있지만, boundary는 model, language, responsibility로 정당화된다.
 
-## Implementation Modules
+### Implementation Module 경계
 
-- implementation module은 실용적인 code wiring 또는 framework module 단위다.
-- implementation module은 자동으로 DDD bounded context가 아니다.
+- Implementation module은 실용적인 code wiring 또는 framework module 단위다.
+- Implementation module은 자동으로 DDD bounded context가 아니다.
 - 다른 bounded context는 internal domain object에 접근하기보다 public application contract, ID, DTO, event, port를 통해 상호작용하는 것이 좋다.
 
-## Domain Kernel
+## Domain Kernel 사용 기준
 
 - `kernels/domain`은 context domain layer가 공유하는 domain-layer kernel code를 담는다.
 - Domain-kernel code는 stable domain-layer policy와 여러 bounded context가 의도적으로 공유하는 stable domain concept를 포함할 수 있다.
@@ -38,7 +45,7 @@ DDD 용어는 단순한 folder name이 아니다.
 - `kernels/domain`을 generic duplication-removal directory로 사용해서는 안 된다.
 - 공유 concept가 불안정하거나 context-specific이라면 premature domain-kernel code보다 duplication을 선호한다.
 
-## Domain Model Building Blocks
+## Domain Model 구성 요소
 
 - Aggregate는 consistency boundary를 보호하고 aggregate root를 통해 behavior를 노출한다.
 - Entity는 identity와 lifecycle을 가진다.
@@ -47,14 +54,16 @@ DDD 용어는 단순한 folder name이 아니다.
 - Domain event는 이미 발생한 의미 있는 business fact를 설명한다.
 - Domain error는 business rule failure를 설명하며 transport, database, framework detail을 포함하지 않아야 한다.
 
-## Domain Factory Methods
+## 생성 경로
+
+### Domain Factory Method 사용 기준
 
 - Factory method 이름은 creation path가 드러나게 짓는 것이 좋다.
 - `create`는 보통 새로운 aggregate 또는 entity lifecycle을 시작하고, `restore`는 persistence 또는 신뢰할 수 있는 snapshot에서 기존 객체를 다시 구성하며, `of`는 value object 또는 identity가 없는 domain value에 주로 사용한다.
 - Factory method는 `create`, `restore`, `of` 같은 다른 factory method에 위임하지 말고 `construct`를 직접 호출해야 한다.
 - 특이한 identity 또는 lifecycle 동작이 필요한 creation path라면 factory name이나 가까운 문서에서 그 의도를 드러낸다.
 
-## Repository Method Naming
+## Repository Method 이름
 
 - `save`는 repository contract를 통해 aggregate를 저장한다. Context에 의미 있는 별도 command가 없다면 create와 update에 모두 사용한다.
 - `find`는 하나의 aggregate 또는 read model을 unique lookup으로 조회하고, 없으면 `null`을 반환한다.
@@ -65,7 +74,7 @@ DDD 용어는 단순한 folder name이 아니다.
 - `find`와 `get`의 criteria object는 하나의 resource를 식별하는 unique lookup만 표현해야 한다. 여러 결과가 가능한 filtering은 `list`로 표현한다.
 - Storage mechanics, query implementation, table shape를 노출하는 repository method name은 피한다.
 
-## Domain Encapsulation
+## Domain 캡슐화
 
 - Domain object는 internal props를 그대로 반영하는 generic getter보다 의도가 드러나는 method로 behavior를 노출하는 것이 좋다.
 - Caller가 domain state를 밖에서 확인하고 domain decision을 외부에서 내리게 만드는 getter와 snapshot은 피한다.
@@ -73,7 +82,7 @@ DDD 용어는 단순한 folder name이 아니다.
 - DTO, persistence, presentation mapping은 layer boundary에서 explicit mapper 또는 목적별 read model을 사용할 수 있지만, 그 shape를 domain model의 기본 API로 만들지 않는다.
 - Value object는 값 자체가 domain concept일 때 primitive value를 노출할 수 있지만, entity와 aggregate는 behavior 중심 API를 선호한다.
 
-## Domain API Type Extraction
+## Domain API Type 추출
 
 - 하나의 method에서만 쓰이고 method name만으로 이해하기 쉬운 단순 parameter나 return value는 inline object type을 선호한다.
 - 하나의 aggregate 안에서 재사용되거나, signature를 지나치게 길게 만들거나, internal restore/persistence mapping detail을 표현하는 shape는 export하지 않는 local type을 사용한다.
@@ -81,7 +90,7 @@ DDD 용어는 단순한 folder name이 아니다.
 - Method가 public이라는 이유만으로 `Params`, `Result`, `Status` type을 만들지 않는다.
 - 이름 붙일 가치가 있는 type에는 기계적인 suffix보다 domain name을 선호하고, 그렇지 않으면 shape를 inline으로 둔다.
 
-## 리뷰 규칙
+## 리뷰 점검
 
 - 새로운 shared abstraction이 정말 안정적인 domain concept인지 확인한 뒤 domain-kernel code로 만든다.
 - Bounded context의 public language가 다른 context의 internal model을 누출하고 있지 않은지 확인한다.

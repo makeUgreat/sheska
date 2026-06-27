@@ -17,6 +17,10 @@ export class SourceContent extends ValueObject<string> {
     return new TextEncoder().encode(this.value).length;
   }
 
+  hasByteSize(size: number): boolean {
+    return this.byteSize === size;
+  }
+
   private static validateProps(
     props: DomainPrimitive<string>,
   ): Result<DomainPrimitive<string>, never> {
