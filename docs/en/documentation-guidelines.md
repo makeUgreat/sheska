@@ -70,19 +70,27 @@ Each document should have a clear task trigger that can be routed from `index.md
 
 - Use one `#` heading for the document title.
 - Use `##` headings for major rule groups.
-- Use `###` headings only when a `##` section has multiple distinct subgroups.
+- Use heading depth to represent the subject structure, not a fixed two-level template.
+- Use `###` and deeper headings when they keep related rules, rationale, exceptions, examples, and review checks together under one decision area.
 - Put scope and synchronization policy rules before task-specific rules.
 - Put default rules before exceptions.
-- Group related rules under explicit headings instead of using one long mixed list.
+- Group related rules under explicit headings instead of using one long mixed list or repeated sibling sections.
+- Add new instructions to the existing section that owns the decision when one exists.
+- Place rationale, exceptions, and review heuristics close to the rule they qualify.
+- Prefer grouping by the decision a reader is making over grouping by artifact type, chronology, or the order in which rules were discovered.
+- Keep index and routing documents shallow; route to detailed documents instead of duplicating their policy.
 - Avoid sections whose only purpose is to hold unrelated leftover rules.
 
 ## Rule Quality
 
 - Add documentation rules only when they express a reusable principle, long-term convention, review standard, or maintenance reason.
 - Add rules when they improve future decisions before automated checks run.
+- Before adding a rule, check whether an existing section already owns the same decision and update that section instead of repeating the policy elsewhere.
 - Avoid adding rules that only patch a temporary repository state, one-off migration gap, or unusual current situation.
 - Avoid documenting exact syntax, formatting, or structure only to mirror an automated check, unless the document adds intent, boundaries, or routing.
 - Keep temporary handling in work notes, PR descriptions, or the specific change context instead of promoting it to a convention document.
+- State durable desired behavior directly. Prefer `Use Y` over `Do not keep the previous X pattern; use Y` when the previous pattern only matters to the current change.
+- Mention current or past implementation details only when they explain a durable boundary, tradeoff, or migration rule.
 
 ## Writing Style
 
