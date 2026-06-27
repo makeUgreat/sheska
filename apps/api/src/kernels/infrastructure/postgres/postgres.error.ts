@@ -31,6 +31,9 @@ const postgresConflictSchema = z
       ? { sqlState: code, constraint }
       : { sqlState: code };
   });
+const causeSchema = z.looseObject({
+  cause: z.unknown().optional(),
+});
 
 type PostgresPersistenceErrorOf<
   Kind extends InfrastructureErrorKind,
@@ -78,20 +81,20 @@ export function mapPostgresPersistenceError<
     readonly adapter: Adapter;
   },
 ): PostgresInfrastructureError<Owner, Adapter> {
-  const parsedConflict = postgresConflictSchema.safeParse(error);
+  const conflict = findPostgresConflict(error);
   const source = {
     boundary: 'persistence',
     adapter: context.adapter,
   } as const;
 
-  if (parsedConflict.success) {
+  if (conflict) {
     return {
       kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
       code: `${context.owner}.conflict`,
       source,
       message: 'Postgres persistence conflict',
       details: {
-        ...parsedConflict.data,
+        ...conflict,
         cause: error,
       },
     };
@@ -106,4 +109,24 @@ export function mapPostgresPersistenceError<
       cause: error,
     },
   };
+}
+
+function findPostgresConflict(error: unknown): PostgresConflictPayload | null {
+  const visitedErrors = new Set<unknown>();
+  let currentError = error;
+
+  while (currentError !== undefined && !visitedErrors.has(currentError)) {
+    visitedErrors.add(currentError);
+
+    const parsedConflict = postgresConflictSchema.safeParse(currentError);
+
+    if (parsedConflict.success) {
+      return parsedConflict.data;
+    }
+
+    const parsedCause = causeSchema.safeParse(currentError);
+    currentError = parsedCause.success ? parsedCause.data.cause : undefined;
+  }
+
+  return null;
 }

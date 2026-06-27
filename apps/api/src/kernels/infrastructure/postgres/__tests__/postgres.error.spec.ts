@@ -33,6 +33,29 @@ describe('mapPostgresPersistenceError', () => {
     expect(error.details.cause).toBe(vendorError);
   });
 
+  it('wrapper cause 안의 Postgres conflict details를 인식하고 원본 wrapper를 보존한다', () => {
+    const vendorError = {
+      code: POSTGRES_SQLSTATE.UNIQUE_VIOLATION,
+      constraint: 'sources_external_source_id_unique',
+    };
+    const wrappedError = new Error('Failed query', { cause: vendorError });
+
+    const error = mapPostgresPersistenceError(wrappedError, {
+      owner: 'source_postgres_persistence',
+      adapter: 'postgres_drizzle',
+    });
+
+    expect(error).toMatchObject({
+      kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+      code: 'source_postgres_persistence.conflict',
+      details: {
+        sqlState: POSTGRES_SQLSTATE.UNIQUE_VIOLATION,
+        constraint: 'sources_external_source_id_unique',
+      },
+    });
+    expect(error.details.cause).toBe(wrappedError);
+  });
+
   it('unknown failure를 unavailable로 변환하고 원본 cause를 보존한다', () => {
     const cause = new Error('connection failed');
 
