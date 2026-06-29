@@ -1,11 +1,11 @@
 import { errAsync, okAsync } from '@core/result';
-import { APPLICATION_ERROR_KIND } from '@kernels/application';
+import { APPLICATION_FAILURE_KIND } from '@kernels/application';
 import {
-  type SourceFingerprinterError,
+  type SourceFingerprinterFailure,
   type SourceRepository,
-  type SourceRepositoryError,
+  type SourceRepositoryFailure,
   type SourceSyncJobRepository,
-  type SourceSyncJobRepositoryError,
+  type SourceSyncJobRepositoryFailure,
 } from '@contexts/sources/application/ports';
 import { Source, type SourceSyncJob } from '@contexts/sources/domain';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
@@ -181,10 +181,10 @@ describe('UploadSourceUseCase', () => {
   });
 
   it('content snapshot 계산 실패를 그대로 반환한다', async () => {
-    const calculationError = sourceFingerprinterUnavailableError();
+    const calculationFailure = sourceFingerprinterUnavailableFailure();
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
     contentSnapshotCalculator.calculate.mockReturnValue(
-      errAsync(calculationError),
+      errAsync(calculationFailure),
     );
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
@@ -202,7 +202,7 @@ describe('UploadSourceUseCase', () => {
     expect(result.isErr()).toBe(true);
 
     if (result.isErr()) {
-      expect(result.error).toBe(calculationError);
+      expect(result.error).toBe(calculationFailure);
     }
     expect(sources.find).not.toHaveBeenCalled();
     expect(sources.save).not.toHaveBeenCalled();
@@ -210,10 +210,10 @@ describe('UploadSourceUseCase', () => {
   });
 
   it('source 조회 실패를 그대로 반환한다', async () => {
-    const findError = sourceRepositoryUnavailableError();
+    const findFailure = sourceRepositoryUnavailableFailure();
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
     const sources = createSourceRepositoryMock();
-    sources.find.mockReturnValue(errAsync(findError));
+    sources.find.mockReturnValue(errAsync(findFailure));
     const syncJobs = createSourceSyncJobRepositoryMock();
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
@@ -229,17 +229,17 @@ describe('UploadSourceUseCase', () => {
     expect(result.isErr()).toBe(true);
 
     if (result.isErr()) {
-      expect(result.error).toBe(findError);
+      expect(result.error).toBe(findFailure);
     }
     expect(sources.save).not.toHaveBeenCalled();
     expect(syncJobs.save).not.toHaveBeenCalled();
   });
 
   it('source 저장 실패를 반환하고 sync job은 저장하지 않는다', async () => {
-    const saveError = sourceRepositoryUnavailableError();
+    const saveFailure = sourceRepositoryUnavailableFailure();
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
     const sources = createSourceRepositoryMock();
-    sources.save.mockReturnValue(errAsync(saveError));
+    sources.save.mockReturnValue(errAsync(saveFailure));
     const syncJobs = createSourceSyncJobRepositoryMock();
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
@@ -255,17 +255,17 @@ describe('UploadSourceUseCase', () => {
     expect(result.isErr()).toBe(true);
 
     if (result.isErr()) {
-      expect(result.error).toBe(saveError);
+      expect(result.error).toBe(saveFailure);
     }
     expect(syncJobs.save).not.toHaveBeenCalled();
   });
 
   it('sync job 저장 실패를 그대로 반환한다', async () => {
-    const syncJobSaveError = sourceSyncJobRepositoryUnavailableError();
+    const syncJobSaveFailure = sourceSyncJobRepositoryUnavailableFailure();
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
-    syncJobs.save.mockReturnValue(errAsync(syncJobSaveError));
+    syncJobs.save.mockReturnValue(errAsync(syncJobSaveFailure));
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
       sources,
@@ -280,7 +280,7 @@ describe('UploadSourceUseCase', () => {
     expect(result.isErr()).toBe(true);
 
     if (result.isErr()) {
-      expect(result.error).toBe(syncJobSaveError);
+      expect(result.error).toBe(syncJobSaveFailure);
     }
     expect(sources.save).toHaveBeenCalledOnce();
   });
@@ -397,27 +397,27 @@ function restoreSource(params: {
   });
 }
 
-function sourceFingerprinterUnavailableError(): SourceFingerprinterError {
+function sourceFingerprinterUnavailableFailure(): SourceFingerprinterFailure {
   return {
-    kind: APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
+    kind: APPLICATION_FAILURE_KIND.DEPENDENCY_UNAVAILABLE,
     code: 'source_fingerprinter.unavailable',
     message: 'Source fingerprinter is unavailable',
     details: {},
   };
 }
 
-function sourceRepositoryUnavailableError(): SourceRepositoryError {
+function sourceRepositoryUnavailableFailure(): SourceRepositoryFailure {
   return {
-    kind: APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
+    kind: APPLICATION_FAILURE_KIND.DEPENDENCY_UNAVAILABLE,
     code: 'source_repository.unavailable',
     message: 'Source Repository is unavailable',
     details: { causeCode: 'source_postgres_persistence.unavailable' },
   };
 }
 
-function sourceSyncJobRepositoryUnavailableError(): SourceSyncJobRepositoryError {
+function sourceSyncJobRepositoryUnavailableFailure(): SourceSyncJobRepositoryFailure {
   return {
-    kind: APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
+    kind: APPLICATION_FAILURE_KIND.DEPENDENCY_UNAVAILABLE,
     code: 'source_sync_job_repository.unavailable',
     message: 'Source Sync Job Repository is unavailable',
     details: { causeCode: 'source_postgres_persistence.unavailable' },

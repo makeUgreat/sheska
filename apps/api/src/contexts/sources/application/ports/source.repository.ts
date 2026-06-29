@@ -1,7 +1,7 @@
 import { type ResultAsync } from '@core/result';
 import {
-  APPLICATION_ERROR_KIND,
-  type ApplicationErrorOf,
+  APPLICATION_FAILURE_KIND,
+  type ApplicationFailureOf,
 } from '@kernels/application';
 import { type Source } from '@contexts/sources/domain';
 
@@ -9,24 +9,24 @@ export type SourceRepositoryUnavailableDetails = {
   readonly causeCode: string;
 };
 
-export type SourceRepositoryUnavailableError = ApplicationErrorOf<
-  typeof APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
+export type SourceRepositoryUnavailableFailure = ApplicationFailureOf<
+  typeof APPLICATION_FAILURE_KIND.DEPENDENCY_UNAVAILABLE,
   'source_repository',
   'unavailable',
   SourceRepositoryUnavailableDetails
 >;
 
-export type SourceRepositoryStateConflictError = ApplicationErrorOf<
-  typeof APPLICATION_ERROR_KIND.STATE_CONFLICT,
+export type SourceRepositoryStateConflictFailure = ApplicationFailureOf<
+  typeof APPLICATION_FAILURE_KIND.STATE_CONFLICT,
   'source_repository',
   'state_conflict'
 >;
 
-export type SourceRepositoryApplicationError =
-  | SourceRepositoryUnavailableError
-  | SourceRepositoryStateConflictError;
+export type SourceRepositoryApplicationFailure =
+  | SourceRepositoryUnavailableFailure
+  | SourceRepositoryStateConflictFailure;
 
-export type SourceRepositoryError = SourceRepositoryApplicationError;
+export type SourceRepositoryFailure = SourceRepositoryApplicationFailure;
 
 export type SourceRepositoryFindCriteria = {
   readonly externalSourceId: string;
@@ -35,7 +35,7 @@ export type SourceRepositoryFindCriteria = {
 export interface SourceRepository {
   find(
     criteria: SourceRepositoryFindCriteria,
-  ): ResultAsync<Source | null, SourceRepositoryError>;
+  ): ResultAsync<Source | null, SourceRepositoryFailure>;
 
-  save(source: Source): ResultAsync<Source, SourceRepositoryError>;
+  save(source: Source): ResultAsync<Source, SourceRepositoryFailure>;
 }

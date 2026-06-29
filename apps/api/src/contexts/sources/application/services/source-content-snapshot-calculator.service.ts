@@ -1,7 +1,7 @@
 import { type ResultAsync } from '@core/result';
 import {
   type SourceFingerprinter,
-  type SourceFingerprinterError,
+  type SourceFingerprinterFailure,
 } from '@contexts/sources/application/ports';
 
 export interface SourceContentSnapshotCalculation {
@@ -14,7 +14,7 @@ export class SourceContentSnapshotCalculator {
 
   calculate(
     content: string,
-  ): ResultAsync<SourceContentSnapshotCalculation, SourceFingerprinterError> {
+  ): ResultAsync<SourceContentSnapshotCalculation, SourceFingerprinterFailure> {
     return this.sourceFingerprinter.calculate(content).map((fingerprint) => ({
       content,
       fingerprint,

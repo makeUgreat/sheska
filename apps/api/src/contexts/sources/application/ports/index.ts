@@ -1,20 +1,20 @@
 export type {
   SourceFingerprinter,
-  SourceFingerprinterError,
-  SourceFingerprinterUnavailableError,
+  SourceFingerprinterFailure,
+  SourceFingerprinterUnavailableFailure,
 } from './source.fingerprinter';
 export type {
   SourceRepository,
-  SourceRepositoryApplicationError,
-  SourceRepositoryError,
+  SourceRepositoryApplicationFailure,
+  SourceRepositoryFailure,
   SourceRepositoryFindCriteria,
-  SourceRepositoryStateConflictError,
-  SourceRepositoryUnavailableError,
+  SourceRepositoryStateConflictFailure,
+  SourceRepositoryUnavailableFailure,
 } from './source.repository';
 export type {
   SourceSyncJobRepository,
-  SourceSyncJobRepositoryApplicationError,
-  SourceSyncJobRepositoryError,
-  SourceSyncJobRepositoryStateConflictError,
-  SourceSyncJobRepositoryUnavailableError,
+  SourceSyncJobRepositoryApplicationFailure,
+  SourceSyncJobRepositoryFailure,
+  SourceSyncJobRepositoryStateConflictFailure,
+  SourceSyncJobRepositoryUnavailableFailure,
 } from './source-sync-job.repository';

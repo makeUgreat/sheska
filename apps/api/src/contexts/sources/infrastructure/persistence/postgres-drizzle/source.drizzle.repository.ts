@@ -1,15 +1,15 @@
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { APPLICATION_ERROR_KIND } from '@kernels/application';
+import { APPLICATION_FAILURE_KIND } from '@kernels/application';
 import {
-  INFRASTRUCTURE_ERROR_KIND,
+  INFRASTRUCTURE_FAILURE_KIND,
   PostgresRepositoryBase,
-  type PostgresInfrastructureError,
+  type PostgresInfrastructureFailure,
 } from '@kernels/infrastructure';
 import { type Source } from '@contexts/sources/domain';
 import {
   type SourceRepository,
-  type SourceRepositoryError,
+  type SourceRepositoryFailure,
   type SourceRepositoryFindCriteria,
 } from '@contexts/sources/application/ports';
 import * as schema from './schema';
@@ -36,7 +36,7 @@ export class SourceDrizzleRepository
 
       return row ?? null;
     })
-      .mapErr((error) => this.mapPostgresError(error))
+      .mapErr((failure) => this.mapPostgresFailure(failure))
       .map((row) =>
         row === null ? null : SourcePersistenceMapper.toDomain(row),
       );
@@ -62,30 +62,30 @@ export class SourceDrizzleRepository
 
       return row;
     })
-      .mapErr((error) => this.mapPostgresError(error))
+      .mapErr((failure) => this.mapPostgresFailure(failure))
       .map((row) => SourcePersistenceMapper.toDomain(row));
   }
 
-  private mapPostgresError(
-    error: PostgresInfrastructureError<
+  private mapPostgresFailure(
+    failure: PostgresInfrastructureFailure<
       'source_postgres_persistence',
       'postgres_drizzle'
     >,
-  ): SourceRepositoryError {
-    if (error.kind === INFRASTRUCTURE_ERROR_KIND.CONFLICT) {
+  ): SourceRepositoryFailure {
+    if (failure.kind === INFRASTRUCTURE_FAILURE_KIND.CONFLICT) {
       return {
-        kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
+        kind: APPLICATION_FAILURE_KIND.STATE_CONFLICT,
         code: 'source_repository.state_conflict',
         message: 'Source Repository state conflict',
-        details: { causeCode: error.code },
+        details: { causeCode: failure.code },
       };
     }
 
     return {
-      kind: APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
+      kind: APPLICATION_FAILURE_KIND.DEPENDENCY_UNAVAILABLE,
       code: 'source_repository.unavailable',
       message: 'Source Repository is unavailable',
-      details: { causeCode: error.code },
+      details: { causeCode: failure.code },
     };
   }
 }

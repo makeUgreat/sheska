@@ -1,14 +1,14 @@
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { APPLICATION_ERROR_KIND } from '@kernels/application';
+import { APPLICATION_FAILURE_KIND } from '@kernels/application';
 import {
-  INFRASTRUCTURE_ERROR_KIND,
+  INFRASTRUCTURE_FAILURE_KIND,
   PostgresRepositoryBase,
-  type PostgresInfrastructureError,
+  type PostgresInfrastructureFailure,
 } from '@kernels/infrastructure';
 import { type SourceSyncJob } from '@contexts/sources/domain';
 import {
   type SourceSyncJobRepository,
-  type SourceSyncJobRepositoryError,
+  type SourceSyncJobRepositoryFailure,
 } from '@contexts/sources/application/ports';
 import * as schema from './schema';
 import { SourceSyncJobPersistenceMapper } from './source-sync-job.persistence.mapper';
@@ -36,30 +36,30 @@ export class SourceSyncJobDrizzleRepository
 
       return row;
     })
-      .mapErr((error) => this.mapPostgresError(error))
+      .mapErr((failure) => this.mapPostgresFailure(failure))
       .map((row) => SourceSyncJobPersistenceMapper.toDomain(row));
   }
 
-  private mapPostgresError(
-    error: PostgresInfrastructureError<
+  private mapPostgresFailure(
+    failure: PostgresInfrastructureFailure<
       'source_postgres_persistence',
       'postgres_drizzle'
     >,
-  ): SourceSyncJobRepositoryError {
-    if (error.kind === INFRASTRUCTURE_ERROR_KIND.CONFLICT) {
+  ): SourceSyncJobRepositoryFailure {
+    if (failure.kind === INFRASTRUCTURE_FAILURE_KIND.CONFLICT) {
       return {
-        kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
+        kind: APPLICATION_FAILURE_KIND.STATE_CONFLICT,
         code: 'source_sync_job_repository.state_conflict',
         message: 'Source Sync Job Repository state conflict',
-        details: { causeCode: error.code },
+        details: { causeCode: failure.code },
       };
     }
 
     return {
-      kind: APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
+      kind: APPLICATION_FAILURE_KIND.DEPENDENCY_UNAVAILABLE,
       code: 'source_sync_job_repository.unavailable',
       message: 'Source Sync Job Repository is unavailable',
-      details: { causeCode: error.code },
+      details: { causeCode: failure.code },
     };
   }
 }

@@ -1,10 +1,10 @@
 export type {
-  ApplicationErrorBase,
-  ApplicationErrorCode,
-  ApplicationErrorDetailsFor,
-  ApplicationErrorKind,
-  ApplicationErrorOf,
+  ApplicationFailureBase,
+  ApplicationFailureCode,
+  ApplicationFailureDetailsFor,
+  ApplicationFailureKind,
+  ApplicationFailureOf,
   ApplicationValidationDetails,
   ApplicationValidationFieldDetail,
-} from './error.base';
-export { APPLICATION_ERROR_KIND } from './error.base';
+} from './failure.base';
+export { APPLICATION_FAILURE_KIND } from './failure.base';

@@ -1,8 +1,8 @@
 import { fromPromise, type ResultAsync } from '@core/result';
 import {
-  mapPostgresPersistenceError,
-  type PostgresInfrastructureError,
-} from './postgres.error';
+  mapPostgresPersistenceFailure,
+  type PostgresInfrastructureFailure,
+} from './postgres.failure';
 
 export abstract class PostgresRepositoryBase<
   Owner extends string,
@@ -15,9 +15,9 @@ export abstract class PostgresRepositoryBase<
 
   protected runPostgres<T>(
     operation: () => Promise<T>,
-  ): ResultAsync<T, PostgresInfrastructureError<Owner, Adapter>> {
+  ): ResultAsync<T, PostgresInfrastructureFailure<Owner, Adapter>> {
     return fromPromise(Promise.resolve().then(operation), (error) =>
-      mapPostgresPersistenceError(error, {
+      mapPostgresPersistenceFailure(error, {
         owner: this.owner,
         adapter: this.adapter,
       }),

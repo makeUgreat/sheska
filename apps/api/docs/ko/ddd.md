@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/ddd.md
-last_synced: 2026-06-29
+last_synced: 2026-06-30
 related:
   - ./architecture.md
 ---
@@ -52,34 +52,11 @@ DDD 용어는 단순한 folder name이 아니다.
 - Value object는 immutable domain value를 표현하고 자신의 invariant를 검증한다.
 - Domain service는 하나의 entity 또는 value object에 자연스럽게 속하지 않는 business rule을 담는다.
 - Domain event는 이미 발생한 의미 있는 business fact를 설명한다.
-- Domain error는 business rule failure를 설명하며 transport, database, framework detail을 포함하지 않아야 한다.
-
-## 생성 경로
-
-Domain object는 명시적인 value-level failure contract와 constructor invariant guard를 구분한다.
-실패한 생성 경로가 `Result` 채널에 속하는지 exception 채널에 속하는지는 error policy를 기준으로 판단한다.
-
-### Domain Factory Method 사용 기준
-
-- Factory method 이름은 creation path가 드러나게 짓는 것이 좋다.
-- `create`는 보통 새로운 aggregate 또는 entity lifecycle을 시작하고, `restore`는 persistence 또는 신뢰할 수 있는 snapshot에서 기존 객체를 다시 구성하며, `of`는 value object 또는 identity가 없는 domain value에 주로 사용한다.
-- Value-level domain failure를 caller-facing contract로 노출하는 factory method는 `Result`를 반환하고 해당 failure를 domain error로 변환하는 것이 좋다.
-- Entity와 aggregate factory method는 value object factory를 조합한 뒤 aggregate/entity 자체는 constructor를 직접 호출하는 것이 좋다.
-- Value object `of` method는 raw input normalization과 호출자가 수정할 수 있는 value failure를 `Result`로 처리하는 것이 좋다.
-- Unusual identity, lifecycle, event behavior를 숨기게 된다면 factory method가 `create`, `restore`, `of` 같은 다른 lifecycle factory에 위임하지 않는 것이 좋다.
-- 특이한 identity 또는 lifecycle 동작이 필요한 creation path라면 factory name이나 가까운 문서에서 그 의도를 드러낸다.
-
-### Domain Constructor 사용 기준
-
-- Entity, aggregate, value object constructor는 caller가 valid domain props를 직접 제공할 수 있다면 public일 수 있다.
-- Value object constructor는 이미 normalization된 props를 받는다고 가정하고, invariant를 검증하며 invalid state가 constructor에 도달하면 throw하는 것이 좋다.
-- Entity와 aggregate constructor는 base invariant를 방어하고 invalid state가 constructor에 도달하면 throw하는 것이 좋다.
-- Constructor exception은 domain error contract가 아니다. 호출자가 처리해야 하는 실패에는 boundary에서 검증하거나 value-level factory method를 사용한다.
+- Domain failure는 business rule failure를 설명하며 transport, database, framework detail을 포함하지 않아야 한다.
 
 ### Value Object Raw Value 접근
 
 - Value object의 raw value를 읽을 때는 `unpack()`을 사용한다.
-- Value object에 `value` getter를 추가하지 않는다. `unpack()`을 명시적으로 사용하면 `Result.value`와 헷갈리지 않는다.
 - Composite value object에서 여러 field를 읽을 때는 한 번 local variable로 unpack한 뒤 그 variable에서 field를 읽는다.
 
 ## Repository Method 이름

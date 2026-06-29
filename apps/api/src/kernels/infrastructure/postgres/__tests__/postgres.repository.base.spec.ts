@@ -1,8 +1,8 @@
 import {
-  INFRASTRUCTURE_ERROR_KIND,
+  INFRASTRUCTURE_FAILURE_KIND,
   POSTGRES_SQLSTATE,
   PostgresRepositoryBase,
-  type PostgresInfrastructureError,
+  type PostgresInfrastructureFailure,
 } from '@kernels/infrastructure';
 import { describe, expect, it } from 'vitest';
 
@@ -38,7 +38,7 @@ describe('PostgresRepositoryBase', () => {
     const error = await rejectWith(cause);
 
     expect(error).toEqual({
-      kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+      kind: INFRASTRUCTURE_FAILURE_KIND.CONFLICT,
       code: 'test_postgres_persistence.conflict',
       source: {
         boundary: 'persistence',
@@ -57,7 +57,7 @@ describe('PostgresRepositoryBase', () => {
     const error = await rejectWith(cause);
 
     expect(error).toEqual({
-      kind: INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
+      kind: INFRASTRUCTURE_FAILURE_KIND.UNAVAILABLE,
       code: 'test_postgres_persistence.unavailable',
       source: {
         boundary: 'persistence',
@@ -74,7 +74,7 @@ describe('PostgresRepositoryBase', () => {
 async function rejectWith(
   error: unknown,
 ): Promise<
-  PostgresInfrastructureError<'test_postgres_persistence', 'postgres_drizzle'>
+  PostgresInfrastructureFailure<'test_postgres_persistence', 'postgres_drizzle'>
 > {
   const repository = new TestPostgresRepository();
   const result = await repository.run(async () => {

@@ -1,4 +1,4 @@
-import { APPLICATION_ERROR_KIND } from '@kernels/application';
+import { APPLICATION_FAILURE_KIND } from '@kernels/application';
 import { POSTGRES_SQLSTATE } from '@kernels/infrastructure';
 import { describe, expect, it } from 'vitest';
 import { buildSourceSyncJob } from '../../../../../../../test/contexts/sources/fixtures/source-sync-job.fixture';
@@ -38,7 +38,7 @@ describe('SourceDrizzleRepository', () => {
 
     if (result.isErr()) {
       expect(result.error).toEqual({
-        kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
+        kind: APPLICATION_FAILURE_KIND.STATE_CONFLICT,
         code: 'source_repository.state_conflict',
         message: 'Source Repository state conflict',
         details: { causeCode: 'source_postgres_persistence.conflict' },
@@ -57,7 +57,7 @@ describe('SourceDrizzleRepository', () => {
 
     if (result.isErr()) {
       expect(result.error).toEqual({
-        kind: APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
+        kind: APPLICATION_FAILURE_KIND.DEPENDENCY_UNAVAILABLE,
         code: 'source_repository.unavailable',
         message: 'Source Repository is unavailable',
         details: { causeCode: 'source_postgres_persistence.unavailable' },
@@ -96,7 +96,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
 
     if (result.isErr()) {
       expect(result.error).toEqual({
-        kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
+        kind: APPLICATION_FAILURE_KIND.STATE_CONFLICT,
         code: 'source_sync_job_repository.state_conflict',
         message: 'Source Sync Job Repository state conflict',
         details: { causeCode: 'source_postgres_persistence.conflict' },

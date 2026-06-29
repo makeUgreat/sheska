@@ -1,9 +1,9 @@
 import {
-  INFRASTRUCTURE_ERROR_KIND,
-  type InfrastructureErrorCauseDetails,
-  type InfrastructureErrorKind,
-  type InfrastructureErrorOf,
-} from '../error.base';
+  INFRASTRUCTURE_FAILURE_KIND,
+  type InfrastructureFailureCauseDetails,
+  type InfrastructureFailureKind,
+  type InfrastructureFailureOf,
+} from '../failure.base';
 import { z } from 'zod';
 
 export const POSTGRES_SQLSTATE = {
@@ -35,13 +35,13 @@ const causeSchema = z.looseObject({
   cause: z.unknown().optional(),
 });
 
-type PostgresPersistenceErrorOf<
-  Kind extends InfrastructureErrorKind,
+type PostgresPersistenceFailureOf<
+  Kind extends InfrastructureFailureKind,
   Owner extends string,
   Reason extends string,
-  Details extends InfrastructureErrorCauseDetails,
+  Details extends InfrastructureFailureCauseDetails,
   Adapter extends string,
-> = InfrastructureErrorOf<
+> = InfrastructureFailureOf<
   Kind,
   Owner,
   Reason,
@@ -52,26 +52,26 @@ type PostgresPersistenceErrorOf<
   }
 >;
 
-export type PostgresInfrastructureError<
+export type PostgresInfrastructureFailure<
   Owner extends string,
   Adapter extends string,
 > =
-  | PostgresPersistenceErrorOf<
-      typeof INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+  | PostgresPersistenceFailureOf<
+      typeof INFRASTRUCTURE_FAILURE_KIND.CONFLICT,
       Owner,
       'conflict',
-      PostgresConflictPayload & InfrastructureErrorCauseDetails,
+      PostgresConflictPayload & InfrastructureFailureCauseDetails,
       Adapter
     >
-  | PostgresPersistenceErrorOf<
-      typeof INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
+  | PostgresPersistenceFailureOf<
+      typeof INFRASTRUCTURE_FAILURE_KIND.UNAVAILABLE,
       Owner,
       'unavailable',
-      InfrastructureErrorCauseDetails,
+      InfrastructureFailureCauseDetails,
       Adapter
     >;
 
-export function mapPostgresPersistenceError<
+export function mapPostgresPersistenceFailure<
   Owner extends string,
   Adapter extends string,
 >(
@@ -80,7 +80,7 @@ export function mapPostgresPersistenceError<
     readonly owner: Owner;
     readonly adapter: Adapter;
   },
-): PostgresInfrastructureError<Owner, Adapter> {
+): PostgresInfrastructureFailure<Owner, Adapter> {
   const conflict = findPostgresConflict(error);
   const source = {
     boundary: 'persistence',
@@ -89,7 +89,7 @@ export function mapPostgresPersistenceError<
 
   if (conflict) {
     return {
-      kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+      kind: INFRASTRUCTURE_FAILURE_KIND.CONFLICT,
       code: `${context.owner}.conflict`,
       source,
       message: 'Postgres persistence conflict',
@@ -101,7 +101,7 @@ export function mapPostgresPersistenceError<
   }
 
   return {
-    kind: INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
+    kind: INFRASTRUCTURE_FAILURE_KIND.UNAVAILABLE,
     code: `${context.owner}.unavailable`,
     source,
     message: 'Postgres persistence is unavailable',

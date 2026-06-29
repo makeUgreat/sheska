@@ -1,17 +1,17 @@
 import { type ResultAsync } from '@core/result';
 import {
-  type ApplicationErrorOf,
-  APPLICATION_ERROR_KIND,
+  type ApplicationFailureOf,
+  APPLICATION_FAILURE_KIND,
 } from '@kernels/application';
 
-export type SourceFingerprinterUnavailableError = ApplicationErrorOf<
-  typeof APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
+export type SourceFingerprinterUnavailableFailure = ApplicationFailureOf<
+  typeof APPLICATION_FAILURE_KIND.DEPENDENCY_UNAVAILABLE,
   'source_fingerprinter',
   'unavailable'
 >;
 
-export type SourceFingerprinterError = SourceFingerprinterUnavailableError;
+export type SourceFingerprinterFailure = SourceFingerprinterUnavailableFailure;
 
 export interface SourceFingerprinter {
-  calculate(content: string): ResultAsync<string, SourceFingerprinterError>;
+  calculate(content: string): ResultAsync<string, SourceFingerprinterFailure>;
 }

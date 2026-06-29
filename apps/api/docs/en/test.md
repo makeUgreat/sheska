@@ -70,7 +70,7 @@ Write integration tests when the test must verify observable behavior across rea
 
 - Domain unit tests should focus on behavior and invariants owned by the domain object or domain service.
 - For value objects and domain values, prioritize valid construction, normalization, invariant violations, boundary values, equality or identity behavior, and immutability only when it is an explicit contract.
-- For aggregates and entities, prioritize lifecycle creation and restoration, state transitions, consistency boundary protection, domain event emission, and domain errors for invalid domain actions.
+- For aggregates and entities, prioritize lifecycle creation and restoration, state transitions, consistency boundary protection, domain event emission, and domain failures for invalid domain actions.
 - Express cases in domain language. Do not shape domain tests around DTO, persistence, or API scenarios unless that shape is itself a domain concept.
 
 #### Use Case Unit Tests
@@ -115,12 +115,12 @@ Keep helpers shared by multiple integration boundaries under `test/support/`.
 Adapter integration tests should target the application-owned port or protocol contract through the real adapter implementation and any required external dependency.
 
 Split adapter test coverage by ownership of the behavior under test.
-Unit tests should cover behavior owned by the adapter code itself, such as mapping between external or persistence shapes and domain objects, preserving domain restoration errors, converting adapter or infrastructure failures into the application-owned error contract, and adapter-specific branching that can be proven without real external I/O.
+Unit tests should cover behavior owned by the adapter code itself, such as mapping between external or persistence shapes and domain objects, preserving domain restoration failures, converting adapter or infrastructure failures into the application-owned failure contract, and adapter-specific branching that can be proven without real external I/O.
 Integration tests should cover behavior that only becomes meaningful when the selected boundary is assembled, such as real database schema and constraint behavior, ORM query compatibility, transaction or upsert behavior, and repository save/find contracts observed through the real adapter module.
 
 Prefer proving each behavior at the cheapest test layer that can prove it reliably.
 Do not repeat detailed domain, application, or mapper invariant cases in integration tests only because the adapter participates in the flow.
-Integration tests may overlap with unit tests only when the same observable result proves a different responsibility, such as verifying that a real database constraint produces the repository error contract already covered with a fake database in unit tests.
+Integration tests may overlap with unit tests only when the same observable result proves a different responsibility, such as verifying that a real database constraint produces the repository failure contract already covered with a fake database in unit tests.
 
 ## Commands
 

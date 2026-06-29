@@ -1,8 +1,8 @@
 import { errAsync, okAsync } from '@core/result';
-import { APPLICATION_ERROR_KIND } from '@kernels/application';
+import { APPLICATION_FAILURE_KIND } from '@kernels/application';
 import {
   type SourceFingerprinter,
-  type SourceFingerprinterError,
+  type SourceFingerprinterFailure,
 } from '@contexts/sources/application/ports';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { SourceContentSnapshotCalculator } from '../source-content-snapshot-calculator.service';
@@ -11,9 +11,9 @@ type SourceFingerprinterMock = {
   calculate: MockedFunction<SourceFingerprinter['calculate']>;
 };
 
-function fingerprinterUnavailableError(): SourceFingerprinterError {
+function fingerprinterUnavailableFailure(): SourceFingerprinterFailure {
   return {
-    kind: APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
+    kind: APPLICATION_FAILURE_KIND.DEPENDENCY_UNAVAILABLE,
     code: 'source_fingerprinter.unavailable',
     message: 'Source fingerprinter is unavailable',
     details: {},
@@ -39,9 +39,9 @@ describe('SourceContentSnapshotCalculator', () => {
   });
 
   it('fingerprint 계산 실패를 그대로 반환한다', async () => {
-    const fingerprinterError = fingerprinterUnavailableError();
+    const fingerprinterFailure = fingerprinterUnavailableFailure();
     const fingerprinter = createSourceFingerprinterMock();
-    fingerprinter.calculate.mockReturnValue(errAsync(fingerprinterError));
+    fingerprinter.calculate.mockReturnValue(errAsync(fingerprinterFailure));
     const calculator = new SourceContentSnapshotCalculator(fingerprinter);
 
     const result = await calculator.calculate('# Source note');
@@ -49,7 +49,7 @@ describe('SourceContentSnapshotCalculator', () => {
     expect(result.isErr()).toBe(true);
 
     if (result.isErr()) {
-      expect(result.error).toBe(fingerprinterError);
+      expect(result.error).toBe(fingerprinterFailure);
     }
   });
 });

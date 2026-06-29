@@ -1,9 +1,9 @@
 export {
   POSTGRES_SQLSTATE,
-  mapPostgresPersistenceError,
-} from './postgres.error';
+  mapPostgresPersistenceFailure,
+} from './postgres.failure';
 export type {
-  PostgresInfrastructureError,
+  PostgresInfrastructureFailure,
   PostgresSqlState,
-} from './postgres.error';
+} from './postgres.failure';
 export { PostgresRepositoryBase } from './postgres.repository.base';

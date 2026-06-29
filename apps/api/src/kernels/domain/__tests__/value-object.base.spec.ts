@@ -1,12 +1,12 @@
 import { err, ok, type Result } from '@core/result';
 import {
   ValueObject,
-  type DomainError,
+  type DomainFailure,
   type DomainPrimitive,
 } from '@kernels/domain';
 import { describe, expect, it } from 'vitest';
 
-const sampleEmptyError: DomainError = {
+const sampleEmptyError: DomainFailure = {
   kind: 'invariant_violation',
   code: 'sample.empty',
   message: 'Sample cannot be empty',
@@ -14,7 +14,7 @@ const sampleEmptyError: DomainError = {
 };
 
 class SampleName extends ValueObject<string> {
-  static of(value: string): Result<SampleName, DomainError> {
+  static of(value: string): Result<SampleName, DomainFailure> {
     const props = { value: value.trim() };
 
     if (SampleName.isEmpty(props)) {
@@ -54,7 +54,7 @@ interface SampleValueKeyProps {
 class SampleValueKeyDetails extends ValueObject<SampleValueKeyProps> {
   static of(
     props: SampleValueKeyProps,
-  ): Result<SampleValueKeyDetails, DomainError> {
+  ): Result<SampleValueKeyDetails, DomainFailure> {
     return ok(new SampleValueKeyDetails(props));
   }
 
@@ -73,9 +73,9 @@ class ConfigurableDetails extends ValueObject<SampleDetailsProps> {
     options?: {
       validate?: (
         valueObjectProps: SampleDetailsProps,
-      ) => Result<SampleDetailsProps, DomainError>;
+      ) => Result<SampleDetailsProps, DomainFailure>;
     },
-  ): Result<ConfigurableDetails, DomainError> {
+  ): Result<ConfigurableDetails, DomainFailure> {
     const validate =
       options?.validate ?? ((valueObjectProps) => ok(valueObjectProps));
 

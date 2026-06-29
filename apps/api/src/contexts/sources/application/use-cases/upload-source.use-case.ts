@@ -5,12 +5,12 @@ import {
   SourceSyncJob,
 } from '@contexts/sources/domain';
 import {
-  type SourceFingerprinterError,
+  type SourceFingerprinterFailure,
   type SourceRepository,
   type SourceSyncJobRepository,
 } from '@contexts/sources/application/ports';
 import { type SourceContentSnapshotCalculation } from '../services/source-content-snapshot-calculator.service';
-import { type UploadSourceUseCaseError } from './upload-source.error';
+import { type UploadSourceUseCaseFailure } from './upload-source.failure';
 
 export interface UploadSourceCommand {
   readonly externalSourceId: string;
@@ -27,7 +27,7 @@ export interface UploadSourceResult {
 export interface UploadSourceContentSnapshotCalculator {
   calculate(
     content: string,
-  ): ResultAsync<SourceContentSnapshotCalculation, SourceFingerprinterError>;
+  ): ResultAsync<SourceContentSnapshotCalculation, SourceFingerprinterFailure>;
 }
 
 export class UploadSourceUseCase {
@@ -39,7 +39,7 @@ export class UploadSourceUseCase {
 
   execute(
     command: UploadSourceCommand,
-  ): ResultAsync<UploadSourceResult, UploadSourceUseCaseError> {
+  ): ResultAsync<UploadSourceResult, UploadSourceUseCaseFailure> {
     const externalSourceId = ExternalSourceId.of(
       command.externalSourceId,
     ).unpack();
@@ -52,7 +52,7 @@ export class UploadSourceUseCase {
   private uploadSource(
     externalSourceId: string,
     snapshot: SourceContentSnapshotCalculation,
-  ): ResultAsync<UploadSourceResult, UploadSourceUseCaseError> {
+  ): ResultAsync<UploadSourceResult, UploadSourceUseCaseFailure> {
     return this.sources
       .find({ externalSourceId })
       .andThen((existingSource) =>
@@ -83,7 +83,7 @@ export class UploadSourceUseCase {
 
   private persistSourceSync(
     source: Source,
-  ): ResultAsync<UploadSourceResult, UploadSourceUseCaseError> {
+  ): ResultAsync<UploadSourceResult, UploadSourceUseCaseFailure> {
     const contentSnapshotChangedEvent = source.findDomainEvent(
       'source.content_snapshot.changed',
     );

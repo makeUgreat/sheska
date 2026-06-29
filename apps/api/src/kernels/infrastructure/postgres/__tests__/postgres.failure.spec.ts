@@ -1,24 +1,24 @@
 import {
-  INFRASTRUCTURE_ERROR_KIND,
-  mapPostgresPersistenceError,
+  INFRASTRUCTURE_FAILURE_KIND,
+  mapPostgresPersistenceFailure,
   POSTGRES_SQLSTATE,
 } from '@kernels/infrastructure';
 import { describe, expect, it } from 'vitest';
 
-describe('mapPostgresPersistenceError', () => {
+describe('mapPostgresPersistenceFailure', () => {
   it('Postgres conflict details와 원본 vendor error를 보존한다', () => {
     const vendorError = {
       code: POSTGRES_SQLSTATE.UNIQUE_VIOLATION,
       constraint: 'sources_external_source_id_unique',
     };
 
-    const error = mapPostgresPersistenceError(vendorError, {
+    const error = mapPostgresPersistenceFailure(vendorError, {
       owner: 'source_postgres_persistence',
       adapter: 'postgres_drizzle',
     });
 
     expect(error).toMatchObject({
-      kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+      kind: INFRASTRUCTURE_FAILURE_KIND.CONFLICT,
       code: 'source_postgres_persistence.conflict',
       source: {
         boundary: 'persistence',
@@ -40,13 +40,13 @@ describe('mapPostgresPersistenceError', () => {
     };
     const wrappedError = new Error('Failed query', { cause: vendorError });
 
-    const error = mapPostgresPersistenceError(wrappedError, {
+    const error = mapPostgresPersistenceFailure(wrappedError, {
       owner: 'source_postgres_persistence',
       adapter: 'postgres_drizzle',
     });
 
     expect(error).toMatchObject({
-      kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+      kind: INFRASTRUCTURE_FAILURE_KIND.CONFLICT,
       code: 'source_postgres_persistence.conflict',
       details: {
         sqlState: POSTGRES_SQLSTATE.UNIQUE_VIOLATION,
@@ -59,13 +59,13 @@ describe('mapPostgresPersistenceError', () => {
   it('unknown failure를 unavailable로 변환하고 원본 cause를 보존한다', () => {
     const cause = new Error('connection failed');
 
-    const error = mapPostgresPersistenceError(cause, {
+    const error = mapPostgresPersistenceFailure(cause, {
       owner: 'source_postgres_persistence',
       adapter: 'postgres_drizzle',
     });
 
     expect(error).toMatchObject({
-      kind: INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
+      kind: INFRASTRUCTURE_FAILURE_KIND.UNAVAILABLE,
       code: 'source_postgres_persistence.unavailable',
       source: {
         boundary: 'persistence',
@@ -79,13 +79,13 @@ describe('mapPostgresPersistenceError', () => {
   it('지원하지 않는 Postgres code를 conflict로 오인하지 않는다', () => {
     const vendorError = { code: 'toString' };
 
-    const error = mapPostgresPersistenceError(vendorError, {
+    const error = mapPostgresPersistenceFailure(vendorError, {
       owner: 'source_postgres_persistence',
       adapter: 'postgres_drizzle',
     });
 
     expect(error).toMatchObject({
-      kind: INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
+      kind: INFRASTRUCTURE_FAILURE_KIND.UNAVAILABLE,
       code: 'source_postgres_persistence.unavailable',
       message: 'Postgres persistence is unavailable',
     });
