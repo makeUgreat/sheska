@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/error.md
-last_synced: 2026-06-27
+last_synced: 2026-06-29
 read_when:
   - API 오류와 시스템 오류를 정의, 매핑, 마스킹, 전파, 리뷰할 때.
 related:
@@ -42,6 +42,14 @@ related:
 - 애플리케이션 오류: 유스케이스, 오케스트레이션, 애플리케이션 소유 계약 실패.
 - 인프라 오류: 애플리케이션이 제어하는 형태로 변환된 기술 어댑터 실패.
 - 표현 계층 오류: HTTP, GraphQL, 요청 검증 실패 같은 프로토콜 대상 실패 응답.
+
+### Result와 Exception 채널
+
+- 호출자가 수정할 수 있는 검증 실패, 비즈니스 규칙 실패, 호출자가 분기해야 하는 value object factory 실패처럼 애플리케이션이 제어하는 계약으로 의도한 예상 가능한 실패에는 `Result`를 사용한다.
+- 호출자에게 드러낼 유용한 계약이 아닌 예상하지 못한 기술, 운영, 프로그래밍 실패에는 thrown exception 또는 rejected promise를 사용한다.
+- Domain constructor는 내부 invariant를 throw로 방어한다. 여기에는 invalid identifier나 invalid props 같은 entity와 aggregate base invariant, 그리고 직접 constructor를 통해 도달한 value object invariant도 포함된다.
+- Entity, aggregate, value object factory method는 명시적으로 조합하는 value-level domain failure에 대해 여전히 `Result`를 반환할 수 있지만, constructor guard failure는 exception 채널에 둔다.
+- Constructor에서 throw된 invariant failure는 경계가 명시적으로 제어 가능한 오류 계약으로 변환하지 않는 한 bug, 손상된 persisted state, 또는 부족한 boundary validation으로 취급한다.
 
 ## 변환 경계
 

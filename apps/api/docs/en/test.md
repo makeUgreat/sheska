@@ -59,7 +59,7 @@ Write integration tests when the test must verify observable behavior across rea
 
 ### Unit Tests
 
-- Prefer placing unit tests in a `__tests__` directory inside the target file's directory. Example: `apps/api/src/contexts/posts/domain/__tests__/post-title.spec.ts`
+- Prefer placing unit tests in a `__tests__` directory inside the target file's directory. Example: `apps/api/src/contexts/sources/domain/__tests__/source-fingerprint.vo.spec.ts`
 - Target pure services, functions, controllers without HTTP transport, and small units of business logic.
 - Unit tests should cover representative edge cases, boundary values, invalid shapes, error paths, immutability, identity/equality behavior, and meaningful default behavior when those cases define the unit's contract. Prefer proving these details at the unit level instead of pushing them into slower integration tests.
 - Do not use an HTTP server, actual Nest application startup, or external I/O.
@@ -69,7 +69,7 @@ Write integration tests when the test must verify observable behavior across rea
 #### Domain Unit Tests
 
 - Domain unit tests should focus on behavior and invariants owned by the domain object or domain service.
-- For value objects and domain values, prioritize valid construction, normalization, invariant violations, boundary values, equality or identity behavior, and immutability.
+- For value objects and domain values, prioritize valid construction, normalization, invariant violations, boundary values, equality or identity behavior, and immutability only when it is an explicit contract.
 - For aggregates and entities, prioritize lifecycle creation and restoration, state transitions, consistency boundary protection, domain event emission, and domain errors for invalid domain actions.
 - Express cases in domain language. Do not shape domain tests around DTO, persistence, or API scenarios unless that shape is itself a domain concept.
 
@@ -90,7 +90,7 @@ Write integration tests when the test must verify observable behavior across rea
 
 ### Integration Tests
 
-- Prefer splitting integration spec files by external boundary, context, and architecture layer. For example, use `apps/api/test/contexts/posts/presentation/posts-http.controller.integration-spec.ts` for an HTTP controller adapter that does not need a dedicated external boundary directory, and `apps/api/test/postgres/contexts/sources/infrastructure/persistence/source.repository.integration-spec.ts` for a Postgres-backed repository adapter.
+- Prefer splitting integration spec files by external boundary, context, and architecture layer. For example, use `apps/api/test/contexts/sources/presentation/sources-http.controller.integration-spec.ts` for an HTTP controller adapter that does not need a dedicated external boundary directory, and `apps/api/test/postgres/contexts/sources/infrastructure/persistence/source.repository.integration-spec.ts` for a Postgres-backed repository adapter.
 - Use integration tests to verify interactions that unit tests cannot cover, such as routing, request and response handling, real adapter contract behavior, and real external dependency behavior.
 - If a test uses hard-to-control elements such as an actual network, REST API, system time, file system, or database, separate it as an integration test instead of a unit test.
 - Do not use integration tests to repeat every domain or application invariant. Keep detailed domain and application rule coverage in unit tests, and use integration tests for observable boundary behavior such as request and response shape, validation pipe behavior, framework routing, adapter wiring observed through a route or port contract, and repository save/find contracts.

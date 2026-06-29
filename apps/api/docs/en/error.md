@@ -42,6 +42,14 @@ Classify application-controlled errors by the boundary that owns their meaning:
 - Infrastructure errors: technical adapter failures translated into an application-controlled shape.
 - Presentation errors: protocol-facing failure responses, such as HTTP, GraphQL, or request validation failures.
 
+### Result And Exception Channels
+
+- Use `Result` for expected failures that are intentionally part of an application-controlled contract, such as caller-correctable validation failures, business rule failures, and value object factory failures that callers should branch on.
+- Use thrown exceptions or rejected promises for unexpected technical, operational, or programming failures that are not useful caller-facing contracts.
+- Domain constructors guard internal invariants by throwing. This includes entity and aggregate base invariants such as invalid identifiers or invalid props, and value object invariants reached through direct constructors.
+- Entity, aggregate, and value object factory methods may still return `Result` for value-level domain failures they explicitly compose, but constructor guard failures stay on the exception channel.
+- Treat thrown invariant failures from a constructor as a bug, corrupted persisted state, or insufficient boundary validation unless the boundary explicitly translates them into a controlled error contract.
+
 ## Transformation Boundaries
 
 Errors SHOULD be transformed when they cross a boundary where the owner, audience, or contract changes.

@@ -55,12 +55,31 @@ They are not only folder names.
 
 ## Construction Paths
 
+Domain objects separate explicit value-level failure contracts from constructor invariant guards.
+Use the error policy to decide whether a failed construction path belongs on the `Result` channel or the exception channel.
+
 ### Domain Factory Methods
 
 - Factory method names should make the creation path clear.
 - `create` usually starts a new aggregate or entity lifecycle, `restore` rebuilds an existing one from persistence or another trusted snapshot, and `of` is commonly used for value objects or identity-free domain values.
-- Factory methods MUST call `construct` directly instead of delegating to another factory method such as `create`, `restore`, or `of`.
+- Factory methods that expose value-level domain failures as caller-facing contracts SHOULD return `Result` and translate those failures into domain errors.
+- Entity and aggregate factory methods SHOULD compose value object factories and then call constructors directly for the aggregate/entity itself.
+- Value object `of` methods SHOULD handle raw input normalization and caller-correctable value failures through `Result`.
+- Factory methods SHOULD NOT delegate to another lifecycle factory such as `create`, `restore`, or `of` when that would hide unusual identity, lifecycle, or event behavior.
 - If a creation path needs unusual identity or lifecycle behavior, make that intent clear in the factory name or nearby documentation.
+
+### Domain Constructors
+
+- Entity, aggregate, and value object constructors MAY be public when callers can provide valid domain props directly.
+- Value object constructors SHOULD assume already-normalized props, validate invariants, and throw if invalid state reaches the constructor.
+- Entity and aggregate constructors SHOULD guard base invariants and throw if invalid state reaches the constructor.
+- Constructor exceptions are not domain error contracts. Validate at the boundary or use value-level factory methods for failures that callers are expected to handle.
+
+### Value Object Raw Values
+
+- Use `unpack()` to read the raw value from a value object.
+- Do not add a `value` getter to value objects. Keeping `unpack()` explicit avoids confusion with `Result.value`.
+- When reading several fields from a composite value object, unpack once into a local variable and read fields from that variable.
 
 ## Repository Method Naming
 
