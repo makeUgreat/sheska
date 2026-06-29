@@ -3,7 +3,7 @@ import {
   APPLICATION_ERROR_KIND,
   type ApplicationErrorOf,
 } from '@kernels/application';
-import { type Source, type SourceDomainError } from '@contexts/sources/domain';
+import { type Source } from '@contexts/sources/domain';
 
 export type SourceRepositoryUnavailableDetails = {
   readonly causeCode: string;
@@ -26,9 +26,7 @@ export type SourceRepositoryApplicationError =
   | SourceRepositoryUnavailableError
   | SourceRepositoryStateConflictError;
 
-export type SourceRepositoryError =
-  | SourceRepositoryApplicationError
-  | SourceDomainError;
+export type SourceRepositoryError = SourceRepositoryApplicationError;
 
 export type SourceRepositoryFindCriteria = {
   readonly externalSourceId: string;

@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { mapNullableToResult } from '@core/result';
 import { APPLICATION_ERROR_KIND } from '@kernels/application';
 import {
   INFRASTRUCTURE_ERROR_KIND,
@@ -38,8 +37,8 @@ export class SourceDrizzleRepository
       return row ?? null;
     })
       .mapErr((error) => this.mapPostgresError(error))
-      .andThen((row) =>
-        mapNullableToResult(row, SourcePersistenceMapper.toDomain),
+      .map((row) =>
+        row === null ? null : SourcePersistenceMapper.toDomain(row),
       );
   }
 
@@ -64,7 +63,7 @@ export class SourceDrizzleRepository
       return row;
     })
       .mapErr((error) => this.mapPostgresError(error))
-      .andThen((row) => SourcePersistenceMapper.toDomain(row));
+      .map((row) => SourcePersistenceMapper.toDomain(row));
   }
 
   private mapPostgresError(

@@ -37,7 +37,7 @@ export class SourceSyncJobDrizzleRepository
       return row;
     })
       .mapErr((error) => this.mapPostgresError(error))
-      .andThen((row) => SourceSyncJobPersistenceMapper.toDomain(row));
+      .map((row) => SourceSyncJobPersistenceMapper.toDomain(row));
   }
 
   private mapPostgresError(

@@ -9,7 +9,7 @@ import { SourceDrizzleRepository } from '../source.drizzle.repository';
 import { SourceSyncJobDrizzleRepository } from '../source-sync-job.drizzle.repository';
 
 describe('SourceDrizzleRepository', () => {
-  it('save 반환 row가 domain으로 복원되지 않으면 domain error를 반환한다', async () => {
+  it('save 반환 row가 domain으로 복원되지 않으면 throw한다', async () => {
     const repository = new SourceDrizzleRepository(
       createSourceSaveDb([
         buildSourceRow({
@@ -20,18 +20,9 @@ describe('SourceDrizzleRepository', () => {
       ]),
     );
 
-    const result = await repository.save(buildSource());
-
-    expect(result.isErr()).toBe(true);
-
-    if (result.isErr()) {
-      expect(result.error).toMatchObject({
-        kind: 'invariant_violation',
-        code: 'source.size_mismatch',
-        message: 'Source size must match content byte size',
-        details: { fields: ['content', 'size'] },
-      });
-    }
+    await expect(repository.save(buildSource())).rejects.toThrow(
+      'Source size must match content byte size',
+    );
   });
 
   it('Postgres state conflict를 source repository state conflict로 변환한다', async () => {
@@ -76,7 +67,7 @@ describe('SourceDrizzleRepository', () => {
 });
 
 describe('SourceSyncJobDrizzleRepository', () => {
-  it('save 반환 row가 domain으로 복원되지 않으면 domain error를 반환한다', async () => {
+  it('save 반환 row의 persisted status가 domain invariant를 깨면 throw한다', async () => {
     const repository = new SourceSyncJobDrizzleRepository(
       createSourceSyncJobSaveDb([
         buildSourceSyncJobRow({
@@ -87,18 +78,9 @@ describe('SourceSyncJobDrizzleRepository', () => {
       ]),
     );
 
-    const result = await repository.save(buildSourceSyncJob());
-
-    expect(result.isErr()).toBe(true);
-
-    if (result.isErr()) {
-      expect(result.error).toMatchObject({
-        kind: 'invariant_violation',
-        code: 'source_sync_job.status_invalid',
-        message: 'Source sync job status is invalid',
-        details: { fields: ['status'] },
-      });
-    }
+    await expect(repository.save(buildSourceSyncJob())).rejects.toThrow(
+      'Source sync job status is invalid',
+    );
   });
 
   it('Postgres state conflict를 source sync job repository state conflict로 변환한다', async () => {

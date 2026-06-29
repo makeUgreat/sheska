@@ -53,7 +53,9 @@ describe('SourceSyncJobDrizzleRepository', () => {
         sourceId: source.id,
         status: 'pending',
       });
-      expect(result.value.getProps().fingerprint.value).toBe('fingerprint-2');
+      expect(result.value.getProps().fingerprint.unpack()).toBe(
+        'fingerprint-2',
+      );
     }
   });
 

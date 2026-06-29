@@ -1,9 +1,7 @@
-import { Result as ResultUtils, ok, type Result } from '@core/result';
-import { AggregateRoot, newId, type EntityParams } from '@kernels/domain';
+import { AggregateRoot, newId } from '@kernels/domain';
 import { SourceContentSnapshotChangedDomainEvent } from './source-content-snapshot-changed.event';
 import { ExternalSourceId } from './external-source-id.vo';
 import { SourceContentSnapshot } from './source-content-snapshot.vo';
-import { type SourceDomainError } from './source.error';
 
 interface SourceProps {
   externalSourceId: ExternalSourceId;
@@ -16,6 +14,8 @@ interface SourceRestoreParams {
   content: string;
   fingerprint: string;
   size: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 interface SourceCreateParams {
@@ -25,92 +25,82 @@ interface SourceCreateParams {
 }
 
 export class Source extends AggregateRoot<
-  string,
   SourceProps,
   SourceContentSnapshotChangedDomainEvent
 > {
-  private constructor(params: EntityParams<string, SourceProps>) {
-    super(params);
-  }
-
-  static create(params: SourceCreateParams): Result<Source, SourceDomainError> {
+  static create(params: SourceCreateParams): Source {
     const { externalSourceId, content, fingerprint } = params;
+    const source = new Source({
+      id: newId(),
+      props: {
+        externalSourceId: ExternalSourceId.of(externalSourceId),
+        contentSnapshot: SourceContentSnapshot.create({
+          content,
+          fingerprint,
+        }),
+      },
+    });
+    const contentSnapshotProps = source.props.contentSnapshot.unpack();
 
-    return ResultUtils.combine([
-      ExternalSourceId.of(externalSourceId),
-      SourceContentSnapshot.create({
-        content,
-        fingerprint,
-      }),
-    ]).andThen(([externalSourceId, contentSnapshot]) =>
-      Source.construct({
-        params: {
-          id: newId(),
-          props: {
-            externalSourceId,
-            contentSnapshot,
-          },
-        },
-        validate: (entityParams) => ok(entityParams),
-      }).map((source) => {
-        source.addDomainEvent(
-          new SourceContentSnapshotChangedDomainEvent({
-            aggregateId: source.id,
-            externalSourceId: source.props.externalSourceId.value,
-            fingerprint: contentSnapshot.value.fingerprint,
-          }),
-        );
-
-        return source;
+    source.addDomainEvent(
+      new SourceContentSnapshotChangedDomainEvent({
+        aggregateId: source.id,
+        externalSourceId: source.props.externalSourceId.unpack(),
+        fingerprint: contentSnapshotProps.fingerprint,
       }),
     );
+
+    return source;
   }
 
-  static restore(
-    params: SourceRestoreParams,
-  ): Result<Source, SourceDomainError> {
-    const { id, externalSourceId, content, fingerprint, size } = params;
+  static restore(params: SourceRestoreParams): Source {
+    const {
+      id,
+      externalSourceId,
+      content,
+      fingerprint,
+      size,
+      createdAt,
+      updatedAt,
+    } = params;
 
-    return ResultUtils.combine([
-      ExternalSourceId.of(externalSourceId),
-      SourceContentSnapshot.restore({
-        content,
-        fingerprint,
-        size,
-      }),
-    ]).andThen(([externalSourceId, contentSnapshot]) =>
-      Source.construct({
-        params: {
-          id,
-          props: {
-            externalSourceId,
-            contentSnapshot,
-          },
-        },
-        validate: (entityParams) => ok(entityParams),
-      }),
-    );
+    return new Source({
+      id,
+      props: {
+        externalSourceId: ExternalSourceId.of(externalSourceId),
+        contentSnapshot: SourceContentSnapshot.restore({
+          content,
+          fingerprint,
+          size,
+        }),
+      },
+      createdAt,
+      updatedAt,
+    });
   }
 
   syncContentSnapshot(params: {
     content: string;
     fingerprint: string;
-  }): Result<Source, SourceDomainError> {
-    return SourceContentSnapshot.create(params).map((contentSnapshot) => {
-      if (this.props.contentSnapshot.hasSameContentAs(contentSnapshot)) {
-        return this;
-      }
+  }): Source {
+    const contentSnapshot = SourceContentSnapshot.create(params);
 
-      this.props.contentSnapshot = contentSnapshot;
-      this.addDomainEvent(
-        new SourceContentSnapshotChangedDomainEvent({
-          aggregateId: this.id,
-          externalSourceId: this.props.externalSourceId.value,
-          fingerprint: contentSnapshot.value.fingerprint,
-        }),
-      );
-
+    if (this.props.contentSnapshot.hasSameContentAs(contentSnapshot)) {
       return this;
-    });
+    }
+
+    this.props.contentSnapshot = contentSnapshot;
+    const contentSnapshotProps = contentSnapshot.unpack();
+    this.addDomainEvent(
+      new SourceContentSnapshotChangedDomainEvent({
+        aggregateId: this.id,
+        externalSourceId: this.props.externalSourceId.unpack(),
+        fingerprint: contentSnapshotProps.fingerprint,
+      }),
+    );
+
+    return this;
   }
+
+  public validate(): void {}
 }

@@ -158,7 +158,7 @@ describe('UploadSourceUseCase', () => {
     });
   });
 
-  it('externalSourceId가 유효하지 않으면 collaborator를 호출하지 않고 실패한다', async () => {
+  it('externalSourceId가 유효하지 않으면 collaborator를 호출하지 않고 throw한다', () => {
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
@@ -168,16 +168,12 @@ describe('UploadSourceUseCase', () => {
       syncJobs,
     );
 
-    const result = await useCase.execute({
-      externalSourceId: ' ',
-      content: '# Source note',
-    });
-
-    expect(result.isErr()).toBe(true);
-
-    if (result.isErr()) {
-      expect(result.error.code).toBe('external_source.id_empty');
-    }
+    expect(() =>
+      useCase.execute({
+        externalSourceId: ' ',
+        content: '# Source note',
+      }),
+    ).toThrow('External source id cannot be empty');
     expect(contentSnapshotCalculator.calculate).not.toHaveBeenCalled();
     expect(sources.find).not.toHaveBeenCalled();
     expect(sources.save).not.toHaveBeenCalled();
@@ -289,7 +285,7 @@ describe('UploadSourceUseCase', () => {
     expect(sources.save).toHaveBeenCalledOnce();
   });
 
-  it('domain이 source snapshot을 거부하면 저장하지 않고 실패한다', async () => {
+  it('domain이 source snapshot을 거부하면 저장하지 않고 throw한다', async () => {
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
       content: '# Source note',
       fingerprint: ' ',
@@ -302,16 +298,12 @@ describe('UploadSourceUseCase', () => {
       syncJobs,
     );
 
-    const result = await useCase.execute({
+    const result = useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
     });
 
-    expect(result.isErr()).toBe(true);
-
-    if (result.isErr()) {
-      expect(result.error.code).toBe('source.fingerprint_empty');
-    }
+    await expect(result).rejects.toThrow('Source fingerprint cannot be empty');
     expect(sources.save).not.toHaveBeenCalled();
     expect(syncJobs.save).not.toHaveBeenCalled();
   });
@@ -357,10 +349,10 @@ function expectSourceSavedWith(
 ) {
   expect(sources.save).toHaveBeenCalledOnce();
   const savedSource = sources.save.mock.calls[0]?.[0];
-  expect(savedSource?.getProps().externalSourceId.value).toBe(
+  expect(savedSource?.getProps().externalSourceId.unpack()).toBe(
     expected.externalSourceId,
   );
-  expect(savedSource?.getProps().contentSnapshot.value).toEqual({
+  expect(savedSource?.getProps().contentSnapshot.unpack()).toEqual({
     content: expected.content,
     fingerprint: expected.fingerprint,
     size: sourceContentByteSize(expected.content),
@@ -388,7 +380,7 @@ function sourceSyncJobProps(syncJob: SourceSyncJob | undefined) {
 
   return {
     sourceId: props?.sourceId,
-    fingerprint: props?.fingerprint.value,
+    fingerprint: props?.fingerprint.unpack(),
     status: props?.status,
   };
 }
@@ -402,7 +394,7 @@ function restoreSource(params: {
   return Source.restore({
     ...params,
     size: sourceContentByteSize(params.content),
-  })._unsafeUnwrap();
+  });
 }
 
 function sourceFingerprinterUnavailableError(): SourceFingerprinterError {

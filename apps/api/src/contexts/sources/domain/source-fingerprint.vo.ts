@@ -1,37 +1,23 @@
-import { err, ok, type Result } from '@core/result';
-import {
-  DOMAIN_ERROR_KIND,
-  ValueObject,
-  type DomainPrimitive,
-} from '@kernels/domain';
-import { type SourceFingerprintDomainError } from './source-fingerprint.error';
+import { ValueObject, type DomainPrimitive } from '@kernels/domain';
 
 export class SourceFingerprint extends ValueObject<string> {
-  private constructor(props: DomainPrimitive<string>) {
+  constructor(props: DomainPrimitive<string>) {
     super(props);
   }
 
-  static of(
-    value: string,
-  ): Result<SourceFingerprint, SourceFingerprintDomainError> {
-    return SourceFingerprint.construct({
-      props: { value: value.trim() },
-      validate: (props) => SourceFingerprint.validateProps(props),
-    });
+  static of(value: string): SourceFingerprint {
+    const props = { value: value.trim() };
+
+    return new SourceFingerprint(props);
   }
 
-  private static validateProps(
-    props: DomainPrimitive<string>,
-  ): Result<DomainPrimitive<string>, SourceFingerprintDomainError> {
-    if (props.value.length === 0) {
-      return err({
-        kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
-        code: 'source.fingerprint_empty',
-        message: 'Source fingerprint cannot be empty',
-        details: { fields: ['fingerprint'] },
-      } satisfies SourceFingerprintDomainError);
+  protected validate(props: DomainPrimitive<string>): void {
+    if (SourceFingerprint.isEmpty(props)) {
+      throw new Error('Source fingerprint cannot be empty');
     }
+  }
 
-    return ok(props);
+  private static isEmpty(props: DomainPrimitive<string>): boolean {
+    return props.value.length === 0;
   }
 }

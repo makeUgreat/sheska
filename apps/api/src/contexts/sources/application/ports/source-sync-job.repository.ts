@@ -3,10 +3,7 @@ import {
   APPLICATION_ERROR_KIND,
   type ApplicationErrorOf,
 } from '@kernels/application';
-import {
-  type SourceSyncJob,
-  type SourceSyncJobDomainError,
-} from '@contexts/sources/domain';
+import { type SourceSyncJob } from '@contexts/sources/domain';
 
 export type SourceSyncJobRepositoryUnavailableDetails = {
   readonly causeCode: string;
@@ -30,8 +27,7 @@ export type SourceSyncJobRepositoryApplicationError =
   | SourceSyncJobRepositoryStateConflictError;
 
 export type SourceSyncJobRepositoryError =
-  | SourceSyncJobRepositoryApplicationError
-  | SourceSyncJobDomainError;
+  SourceSyncJobRepositoryApplicationError;
 
 export interface SourceSyncJobRepository {
   save(

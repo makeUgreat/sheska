@@ -1,19 +1,14 @@
-import { type Result } from '@core/result';
-import {
-  SourceSyncJob,
-  type SourceSyncJobDomainError,
-} from '@contexts/sources/domain';
+import { SourceSyncJob } from '@contexts/sources/domain';
 import { type SourceSyncJobInsert, type SourceSyncJobRow } from './schema';
 
 export class SourceSyncJobPersistenceMapper {
-  static toDomain(
-    row: SourceSyncJobRow,
-  ): Result<SourceSyncJob, SourceSyncJobDomainError> {
+  static toDomain(row: SourceSyncJobRow): SourceSyncJob {
     return SourceSyncJob.restore({
       id: row.id,
       sourceId: row.sourceId,
       fingerprint: row.fingerprint,
       status: row.status,
+      createdAt: row.createdAt,
     });
   }
 
@@ -23,7 +18,7 @@ export class SourceSyncJobPersistenceMapper {
     return {
       id: syncJob.id,
       sourceId: props.sourceId,
-      fingerprint: props.fingerprint.value,
+      fingerprint: props.fingerprint.unpack(),
       status: props.status,
     };
   }

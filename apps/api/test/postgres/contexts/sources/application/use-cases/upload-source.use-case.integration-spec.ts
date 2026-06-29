@@ -79,11 +79,13 @@ describe('UploadSourceUseCase', () => {
 
       if (sourceResult.isOk()) {
         expect(sourceResult.value?.id).toBe(result.value.sourceId);
-        expect(sourceResult.value?.getProps().contentSnapshot.value).toEqual({
-          content,
-          fingerprint,
-          size: sourceContentByteSize(content),
-        });
+        expect(sourceResult.value?.getProps().contentSnapshot.unpack()).toEqual(
+          {
+            content,
+            fingerprint,
+            size: sourceContentByteSize(content),
+          },
+        );
       }
 
       const [syncJob] = await findSyncJobsBySourceId(result.value.sourceId);
@@ -163,7 +165,7 @@ describe('UploadSourceUseCase', () => {
     expect(sourceResult.isOk()).toBe(true);
 
     if (sourceResult.isOk()) {
-      expect(sourceResult.value?.getProps().contentSnapshot.value).toEqual({
+      expect(sourceResult.value?.getProps().contentSnapshot.unpack()).toEqual({
         content: newContent,
         fingerprint: newFingerprint,
         size: sourceContentByteSize(newContent),

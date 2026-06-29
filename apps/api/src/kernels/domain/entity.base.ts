@@ -1,132 +1,88 @@
 import { Guard } from '@core/guard';
-import { err, ok, type Result } from '@core/result';
-import { type EntityDomainError } from './entity.error';
-import { DOMAIN_ERROR_KIND, type DomainError } from './error.base';
 
-export type EntityId = string | number;
+export type AggregateID = string;
 
-export interface BaseEntityProps<TId extends EntityId = EntityId> {
-  id: TId;
+export interface BaseEntityProps {
+  id: AggregateID;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface EntityParams<TId extends EntityId, T> {
-  id: TId;
+export interface CreateEntityProps<T> {
+  id: AggregateID;
   props: T;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export interface ConstructEntityOptions<
-  TId extends EntityId,
-  EntityProps,
-  TError extends DomainError,
-> {
-  params: EntityParams<TId, EntityProps>;
-  validate: (
-    params: EntityParams<TId, EntityProps>,
-  ) => Result<EntityParams<TId, EntityProps>, TError>;
-}
-
-type EntityPrototype<
-  TId extends EntityId,
-  EntityProps,
-  TInstance extends Entity<TId, EntityProps>,
-> = {
-  readonly prototype: TInstance;
-};
-
-type EntityConstructor<
-  TId extends EntityId,
-  EntityProps,
-  TInstance extends Entity<TId, EntityProps>,
-> = {
-  new (params: EntityParams<TId, EntityProps>): TInstance;
-};
-
-export abstract class Entity<TId extends EntityId, EntityProps> {
-  protected readonly _id: TId;
+export abstract class Entity<EntityProps> {
+  protected _id: AggregateID;
   protected readonly props: EntityProps;
+  private readonly _createdAt: Date;
+  private _updatedAt: Date;
 
-  protected constructor(params: EntityParams<TId, EntityProps>) {
-    this._id = params.id;
-    this.props = params.props;
+  protected constructor({
+    id,
+    createdAt,
+    updatedAt,
+    props,
+  }: CreateEntityProps<EntityProps>) {
+    this.setId(id);
+    this.validateProps(props);
+    const now = new Date();
+    this._createdAt = createdAt || now;
+    this._updatedAt = updatedAt || now;
+    this.props = props;
+    this.validate();
   }
 
-  protected static construct<
-    TId extends EntityId,
-    EntityProps,
-    TError extends DomainError,
-    TInstance extends Entity<TId, EntityProps>,
-  >(
-    this: EntityPrototype<TId, EntityProps, TInstance>,
-    options: ConstructEntityOptions<TId, EntityProps, TError>,
-  ): Result<TInstance, EntityDomainError | TError> {
-    const EntityClass = this as unknown as EntityConstructor<
-      TId,
-      EntityProps,
-      TInstance
-    >;
+  /**
+   * There are certain rules that always have to be true (invariants)
+   * for each entity. Validate method is called every time an entity is
+   * constructed to make sure those rules are respected.
+   */
+  public abstract validate(): void;
 
-    return Entity.normalizeBaseParams(options.params)
-      .andThen((params) => Entity.validateBaseParams(params))
-      .andThen(options.validate)
-      .map((params) => Entity.instantiate(EntityClass, params));
-  }
-
-  get id(): TId {
+  get id(): AggregateID {
     return this._id;
   }
 
-  getProps(): EntityProps & BaseEntityProps<TId> {
+  private setId(id: AggregateID): void {
+    this._id = id;
+  }
+
+  get createdAt(): Date {
+    return this._createdAt;
+  }
+
+  get updatedAt(): Date {
+    return this._updatedAt;
+  }
+
+  getProps(): EntityProps & BaseEntityProps {
     return Object.freeze({
       ...this.props,
       id: this._id,
+      createdAt: this._createdAt,
+      updatedAt: this._updatedAt,
     });
   }
 
-  private static normalizeBaseParams<TId extends EntityId, EntityProps>(
-    params: EntityParams<TId, EntityProps>,
-  ): Result<EntityParams<TId, EntityProps>, never> {
-    if (typeof params.id !== 'string') {
-      return ok(params);
+  private validateProps(props: EntityProps): void {
+    if (!Guard.isPlainObject(props)) {
+      throw new Error('Entity props must be an object');
     }
 
-    return ok({
-      ...params,
-      id: params.id.trim() as TId,
-    });
-  }
-
-  private static validateBaseParams<TId extends EntityId, EntityProps>(
-    params: EntityParams<TId, EntityProps>,
-  ): Result<EntityParams<TId, EntityProps>, EntityDomainError> {
-    if (typeof params.id === 'string' && params.id.length === 0) {
-      return err({
-        kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
-        code: 'entity.id_empty',
-        message: 'Entity id cannot be empty',
-        details: { fields: ['id'] },
-      } satisfies EntityDomainError);
+    if (Guard.isEmpty(props)) {
+      throw new Error('Entity props should not be empty');
     }
 
-    if (!Guard.isPlainObject(params.props)) {
-      return err({
-        kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
-        code: 'entity.props_not_object',
-        message: 'Entity props must be an object',
-        details: { fields: ['props'] },
-      } satisfies EntityDomainError);
+    const maxProps = 50;
+
+    if (Object.keys(props).length > maxProps) {
+      throw new Error(
+        `Entity props should not have more than ${maxProps} properties`,
+      );
     }
-
-    return ok(params);
-  }
-
-  private static instantiate<
-    TId extends EntityId,
-    EntityProps,
-    TInstance extends Entity<TId, EntityProps>,
-  >(
-    EntityClass: EntityConstructor<TId, EntityProps, TInstance>,
-    params: EntityParams<TId, EntityProps>,
-  ): TInstance {
-    return new EntityClass(params);
   }
 }
