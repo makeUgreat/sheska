@@ -4,7 +4,7 @@ import { Test } from '@nestjs/testing';
 import {
   type SourceRepository,
   type SourceSyncJobRepository,
-} from '@contexts/sources/application/ports';
+} from '@contexts/sources/domain';
 import { SOURCES_TOKENS } from '@contexts/sources/sources.tokens';
 import { AppModule } from '@platform/nest/app.module';
 import { buildSourceSyncJob } from '../../../../../contexts/sources/fixtures/source-sync-job.fixture';
@@ -45,35 +45,22 @@ describe('SourceSyncJobDrizzleRepository', () => {
 
     const result = await repository.save(syncJob);
 
-    expect(result.isOk()).toBe(true);
-
-    if (result.isOk()) {
-      expect(result.value.id).toBe(syncJob.id);
-      expect(result.value.getProps()).toMatchObject({
-        sourceId: source.id,
-        status: 'pending',
-      });
-      expect(result.value.getProps().fingerprint.unpack()).toBe(
-        'fingerprint-2',
-      );
-    }
+    expect(result.id).toBe(syncJob.id);
+    expect(result.getProps()).toMatchObject({
+      sourceId: source.id,
+      status: 'pending',
+    });
+    expect(result.getProps().fingerprint.unpack()).toBe('fingerprint-2');
   });
 
-  it('없는 sourceId로 저장하면 state conflict로 매핑한다', async () => {
+  it('없는 sourceId로 저장하면 exception으로 전파한다', async () => {
     const syncJob = buildSourceSyncJob({
       sourceId: 'unknown-source',
       fingerprint: 'fingerprint-1',
     });
 
-    const result = await repository.save(syncJob);
-
-    expect(result.isErr()).toBe(true);
-
-    if (result.isErr()) {
-      expect(result.error.kind).toBe('state_conflict');
-      expect(result.error.code).toBe(
-        'source_sync_job_repository.state_conflict',
-      );
-    }
+    await expect(repository.save(syncJob)).rejects.toThrow(
+      'Source Sync Job Repository operation failed',
+    );
   });
 });

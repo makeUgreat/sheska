@@ -5,10 +5,8 @@ import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { DATABASE_TOKENS } from '@kernels/infrastructure';
-import {
-  type SourceFingerprinter,
-  type SourceRepository,
-} from '@contexts/sources/application/ports';
+import { type SourceFingerprinter } from '@contexts/sources/application/ports';
+import { type SourceRepository } from '@contexts/sources/domain';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
 import * as schema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
 import { SOURCES_TOKENS } from '@contexts/sources/sources.tokens';
@@ -74,19 +72,13 @@ describe('UploadSourceUseCase', () => {
       expect(result.value.sourceId.length).toBeGreaterThan(0);
       expect(result.value.syncJobId?.length).toBeGreaterThan(0);
 
-      const sourceResult = await sources.find({ externalSourceId });
-      expect(sourceResult.isOk()).toBe(true);
-
-      if (sourceResult.isOk()) {
-        expect(sourceResult.value?.id).toBe(result.value.sourceId);
-        expect(sourceResult.value?.getProps().contentSnapshot.unpack()).toEqual(
-          {
-            content,
-            fingerprint,
-            size: sourceContentByteSize(content),
-          },
-        );
-      }
+      const source = await sources.find({ externalSourceId });
+      expect(source?.id).toBe(result.value.sourceId);
+      expect(source?.getProps().contentSnapshot.unpack()).toEqual({
+        content,
+        fingerprint,
+        size: sourceContentByteSize(content),
+      });
 
       const [syncJob] = await findSyncJobsBySourceId(result.value.sourceId);
 
@@ -161,16 +153,12 @@ describe('UploadSourceUseCase', () => {
       expect(secondResult.value.syncJobId?.length).toBeGreaterThan(0);
     }
 
-    const sourceResult = await sources.find({ externalSourceId });
-    expect(sourceResult.isOk()).toBe(true);
-
-    if (sourceResult.isOk()) {
-      expect(sourceResult.value?.getProps().contentSnapshot.unpack()).toEqual({
-        content: newContent,
-        fingerprint: newFingerprint,
-        size: sourceContentByteSize(newContent),
-      });
-    }
+    const source = await sources.find({ externalSourceId });
+    expect(source?.getProps().contentSnapshot.unpack()).toEqual({
+      content: newContent,
+      fingerprint: newFingerprint,
+      size: sourceContentByteSize(newContent),
+    });
 
     const persistedSyncJobs = await findSyncJobsBySourceId(
       firstResult.value.sourceId,

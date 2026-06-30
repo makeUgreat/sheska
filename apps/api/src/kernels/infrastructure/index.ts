@@ -10,9 +10,3 @@ export type {
   InfrastructureInvalidDataDetails,
 } from './failure.base';
 export { INFRASTRUCTURE_FAILURE_KIND } from './failure.base';
-export { POSTGRES_SQLSTATE, mapPostgresPersistenceFailure } from './postgres';
-export type {
-  PostgresInfrastructureFailure,
-  PostgresSqlState,
-} from './postgres';
-export { PostgresRepositoryBase } from './postgres';

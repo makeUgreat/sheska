@@ -2,10 +2,10 @@ import { Module, type DynamicModule } from '@nestjs/common';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKENS } from '@kernels/infrastructure';
 import {
-  type SourceFingerprinter,
   type SourceRepository,
   type SourceSyncJobRepository,
-} from '@contexts/sources/application/ports';
+} from '@contexts/sources/domain';
+import { type SourceFingerprinter } from '@contexts/sources/application/ports';
 import { SourceContentSnapshotCalculator } from '@contexts/sources/application/services/source-content-snapshot-calculator.service';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
 import { SourceFingerprinterSha256 } from '@contexts/sources/infrastructure/fingerprinter/source.fingerprinter.sha256';

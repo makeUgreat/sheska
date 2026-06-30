@@ -6,3 +6,8 @@ export { SourceContentSnapshot } from './source-content-snapshot.vo';
 export { SourceContent } from './source-content.vo';
 export { SourceSize } from './source-size.vo';
 export { SourceSyncJob } from './source-sync-job.aggregate';
+export {
+  type SourceRepository,
+  type SourceRepositoryFindCriteria,
+} from './source.repository';
+export { type SourceSyncJobRepository } from './source-sync-job.repository';

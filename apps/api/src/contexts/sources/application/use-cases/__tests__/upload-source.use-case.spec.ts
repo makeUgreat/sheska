@@ -1,13 +1,12 @@
 import { errAsync, okAsync } from '@core/result';
 import { APPLICATION_FAILURE_KIND } from '@kernels/application';
 import {
-  type SourceFingerprinterFailure,
+  Source,
   type SourceRepository,
-  type SourceRepositoryFailure,
+  type SourceSyncJob,
   type SourceSyncJobRepository,
-  type SourceSyncJobRepositoryFailure,
-} from '@contexts/sources/application/ports';
-import { Source, type SourceSyncJob } from '@contexts/sources/domain';
+} from '@contexts/sources/domain';
+import { type SourceFingerprinterFailure } from '@contexts/sources/application/ports';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import {
   type UploadSourceContentSnapshotCalculator,
@@ -86,7 +85,7 @@ describe('UploadSourceUseCase', () => {
       fingerprint: 'fingerprint-1',
     });
     const sources = createSourceRepositoryMock();
-    sources.find.mockReturnValue(okAsync(existingSource));
+    sources.find.mockResolvedValue(existingSource);
     const syncJobs = createSourceSyncJobRepositoryMock();
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
@@ -124,7 +123,7 @@ describe('UploadSourceUseCase', () => {
       fingerprint: 'fingerprint-new',
     });
     const sources = createSourceRepositoryMock();
-    sources.find.mockReturnValue(okAsync(existingSource));
+    sources.find.mockResolvedValue(existingSource);
     const syncJobs = createSourceSyncJobRepositoryMock();
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
@@ -209,11 +208,11 @@ describe('UploadSourceUseCase', () => {
     expect(syncJobs.save).not.toHaveBeenCalled();
   });
 
-  it('source 조회 실패를 그대로 반환한다', async () => {
-    const findFailure = sourceRepositoryUnavailableFailure();
+  it('source 조회 exception을 전파한다', async () => {
+    const findFailure = new Error('Source Repository operation failed');
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
     const sources = createSourceRepositoryMock();
-    sources.find.mockReturnValue(errAsync(findFailure));
+    sources.find.mockRejectedValue(findFailure);
     const syncJobs = createSourceSyncJobRepositoryMock();
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
@@ -221,25 +220,21 @@ describe('UploadSourceUseCase', () => {
       syncJobs,
     );
 
-    const result = await useCase.execute({
+    const result = useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
     });
 
-    expect(result.isErr()).toBe(true);
-
-    if (result.isErr()) {
-      expect(result.error).toBe(findFailure);
-    }
+    await expect(result).rejects.toThrow('Source Repository operation failed');
     expect(sources.save).not.toHaveBeenCalled();
     expect(syncJobs.save).not.toHaveBeenCalled();
   });
 
-  it('source 저장 실패를 반환하고 sync job은 저장하지 않는다', async () => {
-    const saveFailure = sourceRepositoryUnavailableFailure();
+  it('source 저장 exception을 전파하고 sync job은 저장하지 않는다', async () => {
+    const saveFailure = new Error('Source Repository operation failed');
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
     const sources = createSourceRepositoryMock();
-    sources.save.mockReturnValue(errAsync(saveFailure));
+    sources.save.mockRejectedValue(saveFailure);
     const syncJobs = createSourceSyncJobRepositoryMock();
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
@@ -247,41 +242,37 @@ describe('UploadSourceUseCase', () => {
       syncJobs,
     );
 
-    const result = await useCase.execute({
+    const result = useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
     });
 
-    expect(result.isErr()).toBe(true);
-
-    if (result.isErr()) {
-      expect(result.error).toBe(saveFailure);
-    }
+    await expect(result).rejects.toThrow('Source Repository operation failed');
     expect(syncJobs.save).not.toHaveBeenCalled();
   });
 
-  it('sync job 저장 실패를 그대로 반환한다', async () => {
-    const syncJobSaveFailure = sourceSyncJobRepositoryUnavailableFailure();
+  it('sync job 저장 exception을 전파한다', async () => {
+    const syncJobSaveFailure = new Error(
+      'Source Sync Job Repository operation failed',
+    );
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
-    syncJobs.save.mockReturnValue(errAsync(syncJobSaveFailure));
+    syncJobs.save.mockRejectedValue(syncJobSaveFailure);
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
       sources,
       syncJobs,
     );
 
-    const result = await useCase.execute({
+    const result = useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
     });
 
-    expect(result.isErr()).toBe(true);
-
-    if (result.isErr()) {
-      expect(result.error).toBe(syncJobSaveFailure);
-    }
+    await expect(result).rejects.toThrow(
+      'Source Sync Job Repository operation failed',
+    );
     expect(sources.save).toHaveBeenCalledOnce();
   });
 
@@ -324,10 +315,10 @@ function createContentSnapshotCalculatorMock(
 
 function createSourceRepositoryMock(): SourceRepositoryMock {
   return {
-    find: vi.fn<SourceRepository['find']>().mockReturnValue(okAsync(null)),
+    find: vi.fn<SourceRepository['find']>().mockResolvedValue(null),
     save: vi
       .fn<SourceRepository['save']>()
-      .mockImplementation((source) => okAsync(source)),
+      .mockImplementation((source) => Promise.resolve(source)),
   };
 }
 
@@ -335,7 +326,7 @@ function createSourceSyncJobRepositoryMock(): SourceSyncJobRepositoryMock {
   return {
     save: vi
       .fn<SourceSyncJobRepository['save']>()
-      .mockImplementation((syncJob) => okAsync(syncJob)),
+      .mockImplementation((syncJob) => Promise.resolve(syncJob)),
   };
 }
 
@@ -403,23 +394,5 @@ function sourceFingerprinterUnavailableFailure(): SourceFingerprinterFailure {
     code: 'source_fingerprinter.unavailable',
     message: 'Source fingerprinter is unavailable',
     details: {},
-  };
-}
-
-function sourceRepositoryUnavailableFailure(): SourceRepositoryFailure {
-  return {
-    kind: APPLICATION_FAILURE_KIND.DEPENDENCY_UNAVAILABLE,
-    code: 'source_repository.unavailable',
-    message: 'Source Repository is unavailable',
-    details: { causeCode: 'source_postgres_persistence.unavailable' },
-  };
-}
-
-function sourceSyncJobRepositoryUnavailableFailure(): SourceSyncJobRepositoryFailure {
-  return {
-    kind: APPLICATION_FAILURE_KIND.DEPENDENCY_UNAVAILABLE,
-    code: 'source_sync_job_repository.unavailable',
-    message: 'Source Sync Job Repository is unavailable',
-    details: { causeCode: 'source_postgres_persistence.unavailable' },
   };
 }

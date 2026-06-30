@@ -1,51 +1,38 @@
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { APPLICATION_FAILURE_KIND } from '@kernels/application';
 import {
-  INFRASTRUCTURE_FAILURE_KIND,
-  PostgresRepositoryBase,
-  type PostgresInfrastructureFailure,
-} from '@kernels/infrastructure';
-import { type Source } from '@contexts/sources/domain';
-import {
+  type Source,
   type SourceRepository,
-  type SourceRepositoryFailure,
   type SourceRepositoryFindCriteria,
-} from '@contexts/sources/application/ports';
+} from '@contexts/sources/domain';
 import * as schema from './schema';
 import { SourcePersistenceMapper } from './source.persistence.mapper';
 
-export class SourceDrizzleRepository
-  extends PostgresRepositoryBase<
-    'source_postgres_persistence',
-    'postgres_drizzle'
-  >
-  implements SourceRepository
-{
-  constructor(private readonly db: NodePgDatabase<typeof schema>) {
-    super('source_postgres_persistence', 'postgres_drizzle');
-  }
+export class SourceDrizzleRepository implements SourceRepository {
+  constructor(private readonly db: NodePgDatabase<typeof schema>) {}
 
-  find(criteria: SourceRepositoryFindCriteria) {
-    return this.runPostgres(async () => {
-      const [row] = await this.db
+  async find(criteria: SourceRepositoryFindCriteria): Promise<Source | null> {
+    let row: schema.SourceRow | undefined;
+
+    try {
+      [row] = await this.db
         .select()
         .from(schema.sources)
         .where(eq(schema.sources.externalSourceId, criteria.externalSourceId))
         .limit(1);
+    } catch (error: unknown) {
+      throw new Error('Source Repository operation failed', { cause: error });
+    }
 
-      return row ?? null;
-    })
-      .mapErr((failure) => this.mapPostgresFailure(failure))
-      .map((row) =>
-        row === null ? null : SourcePersistenceMapper.toDomain(row),
-      );
+    return row === undefined ? null : SourcePersistenceMapper.toDomain(row);
   }
 
-  save(source: Source) {
-    return this.runPostgres(async () => {
-      const sourceInsert = SourcePersistenceMapper.toInsert(source);
-      const [row] = await this.db
+  async save(source: Source): Promise<Source> {
+    const sourceInsert = SourcePersistenceMapper.toInsert(source);
+    let row: schema.SourceRow;
+
+    try {
+      [row] = await this.db
         .insert(schema.sources)
         .values(sourceInsert)
         .onConflictDoUpdate({
@@ -59,33 +46,10 @@ export class SourceDrizzleRepository
           },
         })
         .returning();
-
-      return row;
-    })
-      .mapErr((failure) => this.mapPostgresFailure(failure))
-      .map((row) => SourcePersistenceMapper.toDomain(row));
-  }
-
-  private mapPostgresFailure(
-    failure: PostgresInfrastructureFailure<
-      'source_postgres_persistence',
-      'postgres_drizzle'
-    >,
-  ): SourceRepositoryFailure {
-    if (failure.kind === INFRASTRUCTURE_FAILURE_KIND.CONFLICT) {
-      return {
-        kind: APPLICATION_FAILURE_KIND.STATE_CONFLICT,
-        code: 'source_repository.state_conflict',
-        message: 'Source Repository state conflict',
-        details: { causeCode: failure.code },
-      };
+    } catch (error: unknown) {
+      throw new Error('Source Repository operation failed', { cause: error });
     }
 
-    return {
-      kind: APPLICATION_FAILURE_KIND.DEPENDENCY_UNAVAILABLE,
-      code: 'source_repository.unavailable',
-      message: 'Source Repository is unavailable',
-      details: { causeCode: failure.code },
-    };
+    return SourcePersistenceMapper.toDomain(row);
   }
 }
