@@ -1,3 +1,4 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { fromSafePromise, type ResultAsync } from '@core/result';
 import {
   ExternalSourceId,
@@ -7,7 +8,14 @@ import {
   type SourceSyncJobRepository,
 } from '@contexts/sources/domain';
 import { type SourceFingerprinterFailure } from '@contexts/sources/application/ports';
-import { type SourceContentSnapshotCalculation } from '../services/source-content-snapshot-calculator.service';
+import {
+  SourceContentSnapshotCalculator,
+  type SourceContentSnapshotCalculation,
+} from '../services/source-content-snapshot-calculator.service';
+import {
+  SOURCE_REPOSITORY,
+  SOURCE_SYNC_JOB_REPOSITORY,
+} from '@contexts/sources/sources.di-tokens';
 import { type UploadSourceUseCaseFailure } from './upload-source.failure';
 
 export interface UploadSourceCommand {
@@ -28,10 +36,14 @@ export interface UploadSourceContentSnapshotCalculator {
   ): ResultAsync<SourceContentSnapshotCalculation, SourceFingerprinterFailure>;
 }
 
+@Injectable()
 export class UploadSourceUseCase {
   constructor(
+    @Inject(SourceContentSnapshotCalculator)
     private readonly contentSnapshotCalculator: UploadSourceContentSnapshotCalculator,
+    @Inject(SOURCE_REPOSITORY)
     private readonly sources: SourceRepository,
+    @Inject(SOURCE_SYNC_JOB_REPOSITORY)
     private readonly syncJobs: SourceSyncJobRepository,
   ) {}
 

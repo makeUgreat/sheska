@@ -26,6 +26,7 @@ const rootRuleNames = ['no-circular', 'not-to-unresolvable'];
 const apiRuleNames = [
   'api-not-to-platform-from-production',
   'api-inner-layers-not-to-frameworks',
+  'api-application-not-to-non-di-nest-frameworks',
   'api-core-is-independent',
   'api-kernels-stay-in-layer',
   'api-domain-stays-inner',
@@ -56,16 +57,22 @@ const validFiles: Record<string, string> = {
       save(): void;
     }
   `,
+  'src/contexts/corrections/corrections.di-tokens.ts': `
+    export const CORRECTION_REPOSITORY = Symbol('CORRECTION_REPOSITORY');
+  `,
   'src/contexts/corrections/application/use-case.ts': `
+    import { Injectable } from '@nestjs/common';
     import { correction } from '@contexts/corrections/domain';
+    import { CORRECTION_REPOSITORY } from '../corrections.di-tokens';
     import type { CorrectionRepository } from './ports';
 
+    @Injectable()
     export class CreateCorrectionUseCase {
       constructor(private readonly repository: CorrectionRepository) {}
 
       execute() {
         this.repository.save();
-        return correction;
+        return [correction, CORRECTION_REPOSITORY.description].join(':');
       }
     }
   `,
@@ -125,6 +132,11 @@ const invalidFiles: Record<string, string> = {
 
     export const value = CreateCorrectionCommand;
   `,
+  'src/contexts/corrections/domain/uses-framework.ts': `
+    import { Injectable } from '@nestjs/common';
+
+    export const decorator = Injectable;
+  `,
   'src/contexts/corrections/domain/uses-kernel-internal.ts': `
     import { EntityBase } from '../../../kernels/domain/entity.base';
 
@@ -147,9 +159,9 @@ const invalidFiles: Record<string, string> = {
     export const value = CorrectionAggregate;
   `,
   'src/contexts/corrections/application/uses-framework.ts': `
-    import { Injectable } from '@nestjs/common';
+    import { ModuleRef } from '@nestjs/core';
 
-    export const decorator = Injectable;
+    export const value = ModuleRef;
   `,
   'src/contexts/corrections/application/commands/create-correction.command.ts': `
     export class CreateCorrectionCommand {}
@@ -218,6 +230,7 @@ async function createFixture(files: Record<string, string>): Promise<string> {
         private: true,
         dependencies: {
           '@nestjs/common': '0.0.0',
+          '@nestjs/core': '0.0.0',
         },
       },
       null,
@@ -249,7 +262,7 @@ async function createFixture(files: Record<string, string>): Promise<string> {
       writeFixtureFile(fixtureRoot, filePath, content),
     ),
   );
-  await writeFakeNestPackage(fixtureRoot);
+  await writeFakeNestPackages(fixtureRoot);
 
   return fixtureRoot;
 }
@@ -265,22 +278,39 @@ async function writeFixtureFile(
   await writeFile(absolutePath, content);
 }
 
-async function writeFakeNestPackage(fixtureRoot: string): Promise<void> {
-  const packageRoot =
-    'node_modules/.pnpm/@nestjs+common@0.0.0/node_modules/@nestjs/common';
-  const packageLink = path.join(fixtureRoot, 'node_modules/@nestjs/common');
+async function writeFakeNestPackages(fixtureRoot: string): Promise<void> {
+  await Promise.all([
+    writeFakeNestPackage(fixtureRoot, 'common', {
+      Injectable: '() => () => undefined',
+      Inject: '() => () => undefined',
+    }),
+    writeFakeNestPackage(fixtureRoot, 'core', {
+      ModuleRef: 'class ModuleRef {}',
+    }),
+  ]);
+}
 
-  await writeFixtureFile(
+async function writeFakeNestPackage(
+  fixtureRoot: string,
+  packageName: string,
+  exports: Record<string, string>,
+): Promise<void> {
+  const packageRoot = `node_modules/.pnpm/@nestjs+${packageName}@0.0.0/node_modules/@nestjs/${packageName}`;
+  const packageLink = path.join(
     fixtureRoot,
-    `${packageRoot}/index.js`,
-    'exports.Injectable = () => () => undefined;',
+    `node_modules/@nestjs/${packageName}`,
   );
+  const exportSource = Object.entries(exports)
+    .map(([name, value]) => `exports.${name} = ${value};`)
+    .join('\n');
+
+  await writeFixtureFile(fixtureRoot, `${packageRoot}/index.js`, exportSource);
   await writeFixtureFile(
     fixtureRoot,
     `${packageRoot}/package.json`,
     JSON.stringify(
       {
-        name: '@nestjs/common',
+        name: `@nestjs/${packageName}`,
         version: '0.0.0',
         main: 'index.js',
       },

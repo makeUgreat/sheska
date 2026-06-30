@@ -86,6 +86,25 @@ export default tseslint.config(
     },
   },
   {
+    files: ['src/contexts/**/application/**/*.ts'],
+    ignores: ['src/**/__tests__/**/*.ts', 'src/**/*.{spec,test}.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@nestjs/common',
+              allowImportNames: ['Inject', 'Injectable'],
+              message:
+                'Application code may import only narrow NestJS DI metadata from @nestjs/common.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',

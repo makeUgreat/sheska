@@ -5,7 +5,10 @@ import {
   type SourceRepository,
   type SourceSyncJobRepository,
 } from '@contexts/sources/domain';
-import { SOURCES_TOKENS } from '@contexts/sources/sources.tokens';
+import {
+  SOURCE_REPOSITORY,
+  SOURCE_SYNC_JOB_REPOSITORY,
+} from '@contexts/sources/sources.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
 import { buildSourceSyncJob } from '../../../../../contexts/sources/fixtures/source-sync-job.fixture';
 import { buildSource } from '../../../../../contexts/sources/fixtures/source.fixture';
@@ -21,12 +24,8 @@ describe('SourceSyncJobDrizzleRepository', () => {
     }).compile();
     app = moduleFixture.createNestApplication();
     await app.init();
-    sourceRepository = app.get<SourceRepository>(
-      SOURCES_TOKENS.sourceRepository,
-    );
-    repository = app.get<SourceSyncJobRepository>(
-      SOURCES_TOKENS.sourceSyncJobRepository,
-    );
+    sourceRepository = app.get<SourceRepository>(SOURCE_REPOSITORY);
+    repository = app.get<SourceSyncJobRepository>(SOURCE_SYNC_JOB_REPOSITORY);
   });
 
   afterAll(async () => {

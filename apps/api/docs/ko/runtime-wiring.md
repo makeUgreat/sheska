@@ -97,11 +97,12 @@ flowchart TB
 
 ## NestJS DI
 
-- NestJS DI는 `platform/nest`, presentation adapter, infrastructure adapter에서 runtime wiring으로 사용할 수 있다.
-- NestJS DI 때문에 domain 또는 application core에서 NestJS로 source dependency가 생기면 안 된다.
-- Framework decorator와 provider registration은 application core가 아니라 `platform/nest`, presentation adapter, infrastructure adapter에서 사용한다.
-- Provider factory 또는 동등한 wiring을 사용해 application core에 framework import를 추가하지 않고 application use case를 생성한다.
-- Application use case는 explicit dependency로 생성되는 plain TypeScript class로 유지하는 것이 좋다.
+- NestJS DI는 `platform/nest`, presentation adapter, infrastructure adapter, application use case 또는 service에서 실용적인 runtime wiring으로 사용할 수 있다.
+- NestJS DI 때문에 domain code에서 NestJS로 source dependency가 생기면 안 된다.
+- Application use case와 service는 constructor injection을 위해 `@Injectable()`, `@Inject()`, provider token 같은 좁은 DI metadata를 사용할 수 있다.
+- Provider registration과 module composition은 application code 곳곳에 흩뜨리지 말고 `platform/nest` 또는 bounded context root module에 둔다.
+- Application use case는 explicit dependency로 생성되는 plain TypeScript class로도 instantiation 가능하게 유지하는 것이 좋다.
+- Use case behavior를 NestJS request object, module reference, container lookup, lifecycle callback 또는 다른 framework runtime API에 의존하게 만들지 않는다.
 - Bounded context root module은 해당 context의 application, presentation, infrastructure provider를 조립할 수 있다.
 - NestJS provider는 use case folder마다 module을 복제하기보다 bounded context 또는 runtime boundary 단위로 조립하는 것을 선호한다.
 
