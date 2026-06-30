@@ -1,5 +1,9 @@
 const docs = require('../docs.cjs');
-const { frameworkDependency, sourceTestFiles } = require('../patterns.cjs');
+const {
+  frameworkDependency,
+  nestCommonDependency,
+  sourceTestFiles,
+} = require('../patterns.cjs');
 
 module.exports = [
   {
@@ -20,18 +24,31 @@ module.exports = [
     name: 'api-inner-layers-not-to-frameworks',
     severity: 'error',
     comment:
-      'Core, domain, kernels, and application core must stay framework-independent. Keep framework decorators and SDK imports in platform, feature root modules, presentation, or infrastructure adapters. ' +
+      'Core, domain, and kernels must stay framework-independent. Keep framework decorators and SDK imports in platform, feature root modules, presentation, infrastructure adapters, or the narrow application DI exception. ' +
       `See ${docs.runtimeWiring}#nestjs-di.`,
     from: {
       path: [
         '^src/core/',
         '^src/kernels/',
         '^src/contexts/[^/]+/domain/',
-        '^src/contexts/[^/]+/application/',
       ],
     },
     to: {
       path: frameworkDependency,
+    },
+  },
+  {
+    name: 'api-application-not-to-non-di-nest-frameworks',
+    severity: 'error',
+    comment:
+      'Application code may use @nestjs/common only for narrow DI metadata. Keep other NestJS runtime APIs outside application code. ' +
+      `See ${docs.runtimeWiring}#nestjs-di.`,
+    from: {
+      path: '^src/contexts/[^/]+/application/',
+    },
+    to: {
+      path: frameworkDependency,
+      pathNot: nestCommonDependency,
     },
   },
 ];

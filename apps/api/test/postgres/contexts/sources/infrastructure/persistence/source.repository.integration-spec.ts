@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { type SourceRepository } from '@contexts/sources/domain';
-import { SOURCES_TOKENS } from '@contexts/sources/sources.tokens';
+import { SOURCE_REPOSITORY } from '@contexts/sources/sources.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
 import {
   buildSource,
@@ -19,7 +19,7 @@ describe('SourceDrizzleRepository', () => {
     }).compile();
     app = moduleFixture.createNestApplication();
     await app.init();
-    repository = app.get<SourceRepository>(SOURCES_TOKENS.sourceRepository);
+    repository = app.get<SourceRepository>(SOURCE_REPOSITORY);
   });
 
   afterAll(async () => {

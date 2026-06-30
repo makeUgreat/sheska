@@ -96,11 +96,12 @@ flowchart TB
 
 ## NestJS DI
 
-- NestJS DI MAY be used as runtime wiring in `platform/nest`, presentation adapters, or infrastructure adapters.
-- NestJS DI MUST NOT create a source dependency from domain or application core to NestJS.
-- Use framework decorators and provider registration in `platform/nest`, presentation adapters, or infrastructure adapters, not in application core.
-- Use provider factories or equivalent wiring to create application use cases without adding framework imports to application core.
-- Application use cases SHOULD remain plain TypeScript classes constructed from explicit dependencies.
+- NestJS DI MAY be used pragmatically as runtime wiring in `platform/nest`, presentation adapters, infrastructure adapters, and application use cases or services.
+- NestJS DI MUST NOT create a source dependency from domain code to NestJS.
+- Application use cases and services MAY use narrow DI metadata such as `@Injectable()`, `@Inject()`, and provider tokens for constructor injection.
+- Keep provider registration and module composition in `platform/nest` or bounded context root modules instead of scattering module wiring through application code.
+- Application use cases SHOULD remain instantiable as plain TypeScript classes constructed from explicit dependencies.
+- Do not make use case behavior depend on NestJS request objects, module references, container lookups, lifecycle callbacks, or other framework runtime APIs.
 - Bounded context root modules MAY compose that context's application, presentation, and infrastructure providers.
 - Prefer composing providers by bounded context or runtime boundary instead of mirroring every use case folder as a NestJS module.
 

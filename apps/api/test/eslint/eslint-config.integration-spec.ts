@@ -96,4 +96,48 @@ describe('eslint/config.mjs', () => {
 
     expect(message).toContain('@platform/nest/app.module');
   });
+
+  it('application code에서 좁은 NestJS DI metadata import를 허용한다', async () => {
+    const result = await lintTextWithProjectConfig(
+      `
+        import { Inject, Injectable } from '@nestjs/common';
+
+        @Injectable()
+        export class CreateCorrectionUseCase {
+          constructor(@Inject('repository') private readonly repository: unknown) {}
+
+          execute() {
+            return this.repository;
+          }
+        }
+      `,
+      'src/contexts/sources/application/use-cases/upload-source.use-case.ts',
+    );
+
+    expect(
+      result.messages.some(
+        (lintMessage) => lintMessage.ruleId === 'no-restricted-imports',
+      ),
+    ).toBe(false);
+  });
+
+  it('application code에서 NestJS DI 범위를 벗어난 common import를 금지한다', async () => {
+    const result = await lintTextWithProjectConfig(
+      `
+        import { Controller, Injectable } from '@nestjs/common';
+
+        @Injectable()
+        export class CreateCorrectionUseCase {
+          controller = Controller;
+        }
+      `,
+      'src/contexts/sources/application/use-cases/upload-source.use-case.ts',
+    );
+
+    const message = result.messages.find(
+      (lintMessage) => lintMessage.ruleId === 'no-restricted-imports',
+    )?.message;
+
+    expect(message).toContain('Application code may import only narrow');
+  });
 });

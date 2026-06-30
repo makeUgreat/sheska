@@ -79,7 +79,7 @@ Judge source dependencies by the boundaries each source area may import and must
 | `core` | Nothing | project layers, frameworks, external SDKs, and business concepts |
 | `kernels` | `core` | bounded context implementations, `platform`, framework code, and outer layers |
 | `domain` | `core`, `kernels/domain` | `application`, `infrastructure`, `presentation`, `platform`, NestJS, database, HTTP, and SDK code |
-| `application` | `core`, `domain`, `kernels/application` | infrastructure implementations, presentation DTOs, framework decorators, framework DI APIs, and platform concrete types |
+| `application` | `core`, `domain`, `kernels/application`, same-context `*.di-tokens.ts` files, and narrow NestJS DI APIs used only for provider construction | infrastructure implementations, presentation DTOs, non-DI framework runtime APIs, and platform concrete types |
 | `infrastructure` | `core`, `domain`, `application`, `kernels/infrastructure`, frameworks, or external libraries when implementing adapters | `presentation` and `platform` startup code |
 | `presentation` | `core`, `application`, `kernels/presentation`, frameworks, or protocol libraries when handling external protocols | infrastructure implementations, database adapters, and SDK adapters |
 | Bounded context root wiring module | that context's application, presentation, and infrastructure code to compose the feature | arbitrary composition of another context's internal implementation |
@@ -130,11 +130,14 @@ Production code outside `platform` must not import `platform`, except the thin `
 - Application code uses domain models to execute user intent.
 - Application code MUST NOT know infrastructure implementation details.
 - Application code MUST NOT know presentation request or response DTO shapes.
-- Application core MUST NOT depend on framework decorators or framework DI APIs.
+- Application code MAY use narrow NestJS DI APIs, such as provider decorators or injection tokens, when they only describe object construction.
+- Application code MAY import provider tokens from same-context `*.di-tokens.ts` files.
+- Application use case behavior MUST NOT depend on NestJS runtime objects, module configuration, container lookups, or framework lifecycle callbacks.
+- Keep application dependencies explicit in constructors so use cases remain instantiable as plain TypeScript classes in tests.
 - Application code SHOULD pass through same-context domain failures unchanged by default.
 - Application code SHOULD pass through application-owned port failures unchanged when the port failure is already the contract the caller can handle.
 - Application code MAY convert application-owned port failures into application or use case failures when it intentionally adds distinct orchestration or caller-facing meaning.
-- Application core may depend on `core`, domain code, and `kernels/application`.
+- Aside from the narrow DI metadata and same-context provider tokens allowed above, application core may depend on `core`, domain code, and `kernels/application`.
 
 ### Infrastructure Layer
 

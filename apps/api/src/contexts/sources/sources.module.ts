@@ -1,18 +1,17 @@
 import { Module, type DynamicModule } from '@nestjs/common';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKENS } from '@kernels/infrastructure';
-import {
-  type SourceRepository,
-  type SourceSyncJobRepository,
-} from '@contexts/sources/domain';
-import { type SourceFingerprinter } from '@contexts/sources/application/ports';
 import { SourceContentSnapshotCalculator } from '@contexts/sources/application/services/source-content-snapshot-calculator.service';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
 import { SourceFingerprinterSha256 } from '@contexts/sources/infrastructure/fingerprinter/source.fingerprinter.sha256';
 import * as sourcesSchema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
 import { SourceDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.drizzle.repository';
 import { SourceSyncJobDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source-sync-job.drizzle.repository';
-import { SOURCES_TOKENS } from './sources.tokens';
+import {
+  SOURCE_FINGERPRINTER,
+  SOURCE_REPOSITORY,
+  SOURCE_SYNC_JOB_REPOSITORY,
+} from './sources.di-tokens';
 
 export type SourcesModuleOptions = Record<string, never>;
 
@@ -23,40 +22,23 @@ export class SourcesModule {
       module: SourcesModule,
       providers: [
         {
-          provide: SOURCES_TOKENS.sourceFingerprinter,
+          provide: SOURCE_FINGERPRINTER,
           useClass: SourceFingerprinterSha256,
         },
+        SourceContentSnapshotCalculator,
         {
-          provide: SourceContentSnapshotCalculator,
-          useFactory: (fingerprinter: SourceFingerprinter) =>
-            new SourceContentSnapshotCalculator(fingerprinter),
-          inject: [SOURCES_TOKENS.sourceFingerprinter],
-        },
-        {
-          provide: SOURCES_TOKENS.sourceRepository,
+          provide: SOURCE_REPOSITORY,
           useFactory: (db: NodePgDatabase<typeof sourcesSchema>) =>
             new SourceDrizzleRepository(db),
           inject: [DATABASE_TOKENS.drizzleDatabase],
         },
         {
-          provide: SOURCES_TOKENS.sourceSyncJobRepository,
+          provide: SOURCE_SYNC_JOB_REPOSITORY,
           useFactory: (db: NodePgDatabase<typeof sourcesSchema>) =>
             new SourceSyncJobDrizzleRepository(db),
           inject: [DATABASE_TOKENS.drizzleDatabase],
         },
-        {
-          provide: UploadSourceUseCase,
-          useFactory: (
-            calculator: SourceContentSnapshotCalculator,
-            sources: SourceRepository,
-            syncJobs: SourceSyncJobRepository,
-          ) => new UploadSourceUseCase(calculator, sources, syncJobs),
-          inject: [
-            SourceContentSnapshotCalculator,
-            SOURCES_TOKENS.sourceRepository,
-            SOURCES_TOKENS.sourceSyncJobRepository,
-          ],
-        },
+        UploadSourceUseCase,
       ],
       exports: [UploadSourceUseCase],
     };

@@ -9,7 +9,10 @@ import { type SourceFingerprinter } from '@contexts/sources/application/ports';
 import { type SourceRepository } from '@contexts/sources/domain';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
 import * as schema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
-import { SOURCES_TOKENS } from '@contexts/sources/sources.tokens';
+import {
+  SOURCE_FINGERPRINTER,
+  SOURCE_REPOSITORY,
+} from '@contexts/sources/sources.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
 import { sourceContentByteSize } from '../../../../../contexts/sources/fixtures/source.fixture';
 
@@ -35,7 +38,7 @@ describe('UploadSourceUseCase', () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(SOURCES_TOKENS.sourceFingerprinter)
+      .overrideProvider(SOURCE_FINGERPRINTER)
       .useValue(sourceFingerprinter)
       .compile();
     app = moduleFixture.createNestApplication();
@@ -43,7 +46,7 @@ describe('UploadSourceUseCase', () => {
     database = app.get<NodePgDatabase<typeof schema>>(
       DATABASE_TOKENS.drizzleDatabase,
     );
-    sources = app.get<SourceRepository>(SOURCES_TOKENS.sourceRepository);
+    sources = app.get<SourceRepository>(SOURCE_REPOSITORY);
     useCase = app.get(UploadSourceUseCase);
   });
 

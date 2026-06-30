@@ -54,7 +54,7 @@ module.exports = [
     to: {
       path: '^src/',
       pathNot:
-        '^src/(core/|kernels/application/|contexts/$1/(domain|application)/)',
+        '^src/(core/|kernels/application/|contexts/$1/(domain|application)/|contexts/$1/[^/]+[.]di-tokens[.]ts$)',
     },
   },
   {
