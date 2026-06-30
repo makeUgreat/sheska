@@ -25,7 +25,8 @@ Persistence policy decides how database and ORM adapters preserve stored data wi
 
 ### Responsibility Boundary
 
-- Domain and application code own domain and business invariants.
+- Domain code owns domain and business invariants.
+- Application code owns use-case orchestration, transaction boundaries, authorization and input/output flow, and application-owned contract constraints.
 - Persistence code stores and restores state for application ports.
 - Persistence code must not enforce domain or business invariants with database table validation.
 - Persistence code may enforce storage integrity that is required for reliable rows, relations, and lookups.
@@ -36,7 +37,7 @@ Persistence policy decides how database and ORM adapters preserve stored data wi
 
 - Allowed structural constraints include primary keys, foreign keys, unique constraints, not-null columns, indexes, and storage defaults such as timestamps.
 - Use unique constraints when they protect repository lookup identity, idempotency keys, or storage-level uniqueness required by an application contract.
-- Do not use database-native enum types. Store enum-like values in scalar columns and keep allowed-value meaning in domain/application code.
+- Do not use database-native enum types. Store enum-like values in scalar columns and keep allowed-value meaning in the owning domain or application contract.
 - Do not duplicate value object or aggregate validation as `CHECK` constraints, database enum restrictions, triggers, or equivalent table-level validation.
 - Examples of domain-owned rules include trimmed non-empty strings, numeric ranges, lifecycle status transitions, and content-derived consistency checks.
 

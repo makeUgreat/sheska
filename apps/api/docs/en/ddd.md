@@ -46,12 +46,31 @@ They are not only folder names.
 
 ## Domain Model Building Blocks
 
-- Aggregates protect consistency boundaries and expose behavior through the aggregate root.
-- Entities have identity and lifecycle.
-- Value objects describe immutable domain values and validate their own invariants.
-- Domain services contain business rules that do not naturally belong to one entity or value object.
-- Domain events describe meaningful business facts that already happened.
-- Domain failures describe business rule failures and should not contain transport, database, or framework details.
+DDD building blocks are chosen by the domain role they play, not by where a class happens to live.
+
+### Building Block Roles
+
+| Concept | Role |
+|---|---|
+| Entity | Domain object with identity whose state can change during its lifecycle. |
+| Value Object | Immutable object whose meaning is determined by its values, not by identity. |
+| Aggregate | Group of entities and value objects whose consistency must be protected together. |
+| Aggregate Root | Only externally reachable entry point into an aggregate; it protects aggregate invariants. |
+| Domain Method | Behavior on an entity or aggregate that changes its state according to domain rules. |
+| Domain Service | Business rule that does not naturally belong to a single entity, value object, or aggregate root. |
+| Repository | Domain collection-like abstraction for saving and retrieving aggregates; it is not a database query helper. |
+| Factory | Encapsulation of complex domain object creation rules. |
+| Domain Event | Meaningful business fact that already happened inside the domain. |
+| Specification | Reusable domain condition or decision rule. |
+| Domain Failure | Business rule failure without transport, database, or framework details. |
+
+### Responsibility Placement
+
+- Put a rule in the domain when it is a business invariant that must hold regardless of caller, storage, transport, or use case entry point.
+- Put orchestration in the application layer when code decides what to load, authorize, call, transact, and save to execute a use case.
+- Put implementation in the infrastructure layer when code decides how to query, persist, publish, call an external API, or use a technical library.
+- Application services and use cases load needed objects, call domain methods or domain services, and save changes. They should not implement domain judgments directly.
+- Infrastructure adapters implement database, ORM, message broker, external API, file system, SDK, and persistence details behind domain or application contracts.
 
 ### Value Object Raw Value Access
 
@@ -90,4 +109,7 @@ They are not only folder names.
 - Check whether a new shared abstraction is really a stable domain concept before making it domain-kernel code.
 - Check whether a bounded context's public language is leaking another context's internal model.
 - Check whether a domain object is expressing business behavior instead of acting as a database row or request DTO.
+- Check whether a business invariant belongs in the domain instead of application orchestration or infrastructure implementation.
+- Check whether a use case is invoking domain behavior instead of extracting state and making domain decisions externally.
+- Check whether a repository is modeling aggregate storage and retrieval rather than exposing storage mechanics as a query helper.
 - Check whether communication across model boundaries uses IDs, DTOs, events, ports, or anti-corruption mapping.

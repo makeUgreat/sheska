@@ -47,12 +47,31 @@ DDD 용어는 단순한 folder name이 아니다.
 
 ## Domain Model 구성 요소
 
-- Aggregate는 consistency boundary를 보호하고 aggregate root를 통해 behavior를 노출한다.
-- Entity는 identity와 lifecycle을 가진다.
-- Value object는 immutable domain value를 표현하고 자신의 invariant를 검증한다.
-- Domain service는 하나의 entity 또는 value object에 자연스럽게 속하지 않는 business rule을 담는다.
-- Domain event는 이미 발생한 의미 있는 business fact를 설명한다.
-- Domain failure는 business rule failure를 설명하며 transport, database, framework detail을 포함하지 않아야 한다.
+DDD 구성 요소는 class가 위치한 곳이 아니라 domain에서 맡는 역할로 선택한다.
+
+### 구성 요소 역할
+
+| 개념 | 역할 |
+|---|---|
+| Entity | 생명주기 동안 상태가 변할 수 있는 identity를 가진 domain object. |
+| Value Object | Identity가 아니라 값 자체로 의미가 결정되는 immutable object. |
+| Aggregate | 함께 consistency를 지켜야 하는 entity와 value object의 묶음. |
+| Aggregate Root | Aggregate 외부에서 접근 가능한 유일한 진입점이며 aggregate invariant를 보호한다. |
+| Domain Method | Entity 또는 aggregate가 domain rule에 따라 자기 상태를 바꾸는 behavior. |
+| Domain Service | 하나의 entity, value object, aggregate root에 자연스럽게 속하지 않는 business rule. |
+| Repository | Aggregate를 저장하고 다시 가져오는 domain collection-like abstraction이며 database query helper가 아니다. |
+| Factory | 복잡한 domain object 생성 규칙을 캡슐화한다. |
+| Domain Event | Domain 안에서 이미 발생한 의미 있는 business fact. |
+| Specification | 재사용 가능한 domain condition 또는 판정 rule. |
+| Domain Failure | Transport, database, framework detail이 없는 business rule failure. |
+
+### 책임 배치 기준
+
+- Caller, storage, transport, use case entry point와 무관하게 반드시 지켜야 하는 business invariant라면 domain에 둔다.
+- Use case를 실행하기 위해 무엇을 load, authorize, call, transact, save할지 결정하는 orchestration은 application layer에 둔다.
+- Query, persist, publish, external API call, technical library 사용 방법을 결정하는 implementation은 infrastructure layer에 둔다.
+- Application service와 use case는 필요한 object를 불러오고 domain method 또는 domain service를 호출한 뒤 변경을 저장한다. Domain 판단을 직접 구현하지 않는 것이 좋다.
+- Infrastructure adapter는 database, ORM, message broker, external API, file system, SDK, persistence detail을 domain 또는 application contract 뒤에서 구현한다.
 
 ### Value Object Raw Value 접근
 
@@ -91,4 +110,7 @@ DDD 용어는 단순한 folder name이 아니다.
 - 새로운 shared abstraction이 정말 안정적인 domain concept인지 확인한 뒤 domain-kernel code로 만든다.
 - Bounded context의 public language가 다른 context의 internal model을 누출하고 있지 않은지 확인한다.
 - domain object가 database row 또는 request DTO처럼 동작하지 않고 business behavior를 표현하는지 확인한다.
+- Business invariant가 application orchestration 또는 infrastructure implementation이 아니라 domain에 속하는지 확인한다.
+- Use case가 state를 꺼내 외부에서 domain decision을 내리지 않고 domain behavior를 호출하는지 확인한다.
+- Repository가 storage mechanics를 query helper로 노출하지 않고 aggregate 저장과 조회를 모델링하는지 확인한다.
 - Model boundary를 넘는 통신이 ID, DTO, event, port, anti-corruption mapping을 사용하는지 확인한다.

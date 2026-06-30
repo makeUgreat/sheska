@@ -75,9 +75,9 @@ Write integration tests when the test must verify observable behavior across rea
 
 #### Use Case Unit Tests
 
-- Use case unit tests should be written as cases that reveal the business rule flow the use case coordinates. Split cases by business situation, make each rule branch explicit through inputs and collaborator outcomes, and assert the resulting decision or side effect instead of private helper call order.
+- Use case unit tests should be written as cases that reveal the application flow the use case coordinates. Split cases by business situation, make each orchestration branch explicit through inputs and collaborator outcomes, and assert the resulting decision or side effect instead of private helper call order.
 - Prioritize application-level decisions, such as command interpretation, branching by repository or port results, domain result propagation, required persistence or external port calls, and error mapping owned by the use case.
-- Replace collaborators with mocks or stubs at the port boundary. Configure collaborator outcomes to make each business branch explicit, then assert the final result and observable port interactions.
+- Replace collaborators with mocks or stubs at the port boundary. Configure collaborator outcomes to make each orchestration branch explicit, then assert the final result and observable port interactions.
 - Do not repeat detailed domain invariants or adapter storage behavior in use case unit tests. Keep those in domain unit tests or boundary integration tests.
 
 ### Shared Contract Tests

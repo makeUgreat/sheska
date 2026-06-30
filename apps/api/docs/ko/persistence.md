@@ -26,7 +26,8 @@ Persistence policy는 database와 ORM adapter가 domain rule의 소유자가 되
 
 ### 책임 경계
 
-- Domain과 application code가 domain invariant와 business invariant를 소유한다.
+- Domain code가 domain invariant와 business invariant를 소유한다.
+- Application code는 use-case orchestration, transaction boundary, 권한/입출력 흐름, application-owned contract constraint를 소유한다.
 - Persistence code는 application port를 위해 state를 저장하고 복원한다.
 - Persistence code는 database table validation으로 domain invariant나 business invariant를 강제해서는 안 된다.
 - Persistence code는 신뢰할 수 있는 row, relation, lookup에 필요한 storage integrity를 강제할 수 있다.
@@ -37,7 +38,7 @@ Persistence policy는 database와 ORM adapter가 domain rule의 소유자가 되
 
 - 허용되는 structural constraint에는 primary key, foreign key, unique constraint, not-null column, index, timestamp 같은 storage default가 포함된다.
 - Repository lookup identity, idempotency key, application contract가 요구하는 storage-level uniqueness를 보호할 때 unique constraint를 사용한다.
-- Database-native enum type은 사용하지 않는다. Enum-like value는 scalar column에 저장하고, 허용 값의 의미는 domain/application code에 둔다.
+- Database-native enum type은 사용하지 않는다. Enum-like value는 scalar column에 저장하고, 허용 값의 의미는 그 값을 소유하는 domain 또는 application contract에 둔다.
 - Value object 또는 aggregate validation을 `CHECK` constraint, database enum restriction, trigger, 또는 이에 준하는 table-level validation으로 중복 구현하지 않는다.
 - Domain이 소유하는 규칙의 예시는 trim된 non-empty string, numeric range, lifecycle status transition, content-derived consistency check다.
 
