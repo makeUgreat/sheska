@@ -84,7 +84,7 @@ export class UploadSourceUseCase {
   private persistSourceSync(
     source: Source,
   ): ResultAsync<UploadSourceResult, UploadSourceUseCaseFailure> {
-    const contentSnapshotChangedEvent = source.findDomainEvent(
+    const contentSnapshotChangedEvent = source.findEvent(
       'source.content_snapshot.changed',
     );
 
@@ -99,7 +99,7 @@ export class UploadSourceUseCase {
 
     return this.sources.save(source).andThen((savedSource) =>
       this.syncJobs.save(syncJob).map((savedSyncJob) => {
-        source.clearDomainEvents();
+        source.clearEvents();
 
         return this.completeUploadForChangedContentSnapshot(
           savedSource,

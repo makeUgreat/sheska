@@ -19,7 +19,7 @@ export abstract class AggregateRoot<
     return [...this._domainEvents];
   }
 
-  findDomainEvent<TEventName extends TDomainEvent['eventName']>(
+  findEvent<TEventName extends TDomainEvent['eventName']>(
     eventName: TEventName,
   ): DomainEventByName<TDomainEvent, TEventName> | undefined {
     return this._domainEvents.find(
@@ -27,11 +27,11 @@ export abstract class AggregateRoot<
     ) as DomainEventByName<TDomainEvent, TEventName> | undefined;
   }
 
-  clearDomainEvents(): void {
+  clearEvents(): void {
     this._domainEvents = [];
   }
 
-  protected addDomainEvent(domainEvent: TDomainEvent): void {
+  protected addEvent(domainEvent: TDomainEvent): void {
     this._domainEvents.push(domainEvent);
   }
 }

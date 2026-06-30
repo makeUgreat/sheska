@@ -42,7 +42,7 @@ export class Source extends AggregateRoot<
     });
     const contentSnapshotProps = source.props.contentSnapshot.unpack();
 
-    source.addDomainEvent(
+    source.addEvent(
       new SourceContentSnapshotChangedDomainEvent({
         aggregateId: source.id,
         externalSourceId: source.props.externalSourceId.unpack(),
@@ -91,7 +91,7 @@ export class Source extends AggregateRoot<
 
     this.props.contentSnapshot = contentSnapshot;
     const contentSnapshotProps = contentSnapshot.unpack();
-    this.addDomainEvent(
+    this.addEvent(
       new SourceContentSnapshotChangedDomainEvent({
         aggregateId: this.id,
         externalSourceId: this.props.externalSourceId.unpack(),

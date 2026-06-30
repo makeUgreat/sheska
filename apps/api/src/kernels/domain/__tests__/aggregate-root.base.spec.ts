@@ -40,7 +40,7 @@ class SampleAggregateRoot extends AggregateRoot<
   public validate(): void {}
 
   changeName(name: string): void {
-    this.addDomainEvent(
+    this.addEvent(
       new SampleDomainEvent({
         aggregateId: this.id,
         occurredAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -99,7 +99,7 @@ describe('AggregateRoot', () => {
     });
   });
 
-  describe('findDomainEvent', () => {
+  describe('findEvent', () => {
     it('eventName으로 기록된 domain event를 찾는다', () => {
       const aggregate = SampleAggregateRoot.create({
         id: 'sample-1',
@@ -107,7 +107,7 @@ describe('AggregateRoot', () => {
 
       aggregate.changeName('summer');
 
-      const domainEvent = aggregate.findDomainEvent('sample.changed');
+      const domainEvent = aggregate.findEvent('sample.changed');
 
       expect(domainEvent).toMatchObject({
         eventName: 'sample.changed',
@@ -121,11 +121,11 @@ describe('AggregateRoot', () => {
         id: 'sample-1',
       });
 
-      expect(aggregate.findDomainEvent('sample.changed')).toBeUndefined();
+      expect(aggregate.findEvent('sample.changed')).toBeUndefined();
     });
   });
 
-  describe('clearDomainEvents', () => {
+  describe('clearEvents', () => {
     it('기록된 domain event를 비운다', () => {
       const aggregate = SampleAggregateRoot.create({
         id: 'sample-1',
@@ -133,7 +133,7 @@ describe('AggregateRoot', () => {
 
       aggregate.changeName('summer');
 
-      aggregate.clearDomainEvents();
+      aggregate.clearEvents();
 
       expect(aggregate.domainEvents).toEqual([]);
     });
