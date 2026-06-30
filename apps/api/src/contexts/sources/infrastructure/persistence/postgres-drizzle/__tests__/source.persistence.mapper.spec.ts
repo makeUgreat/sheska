@@ -13,42 +13,27 @@ describe('SourcePersistenceMapper', () => {
       fingerprint: 'fingerprint-1',
     });
 
-    const result = SourcePersistenceMapper.toDomain(row);
+    const source = SourcePersistenceMapper.toDomain(row);
 
-    expect(result.isOk()).toBe(true);
-
-    if (result.isOk()) {
-      expect(result.value.id).toBe('source-1');
-      expect(result.value.getProps().externalSourceId.value).toBe(
-        'Notes/source.md',
-      );
-      expect(result.value.getProps().contentSnapshot.value).toEqual({
-        content: '안녕',
-        fingerprint: 'fingerprint-1',
-        size: sourceContentByteSize('안녕'),
-      });
-    }
+    expect(source.id).toBe('source-1');
+    expect(source.getProps().externalSourceId.unpack()).toBe('Notes/source.md');
+    expect(source.getProps().contentSnapshot.unpack()).toEqual({
+      content: '안녕',
+      fingerprint: 'fingerprint-1',
+      size: sourceContentByteSize('안녕'),
+    });
   });
 
-  it('source row의 persisted snapshot이 domain invariant를 깨면 실패한다', () => {
+  it('source row의 persisted snapshot이 domain invariant를 깨면 throw한다', () => {
     const row = buildSourceRow({
       content: '안녕',
       fingerprint: 'fingerprint-1',
       sizeBytes: 1,
     });
 
-    const result = SourcePersistenceMapper.toDomain(row);
-
-    expect(result.isErr()).toBe(true);
-
-    if (result.isErr()) {
-      expect(result.error).toMatchObject({
-        kind: 'invariant_violation',
-        code: 'source.size_mismatch',
-        message: 'Source size must match content byte size',
-        details: { fields: ['content', 'size'] },
-      });
-    }
+    expect(() => SourcePersistenceMapper.toDomain(row)).toThrow(
+      'Source size must match content byte size',
+    );
   });
 
   it('Source aggregate를 source insert row로 변환한다', () => {

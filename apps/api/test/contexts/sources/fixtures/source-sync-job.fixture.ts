@@ -6,5 +6,5 @@ export function buildSourceSyncJob(
   return SourceSyncJob.create({
     sourceId: params.sourceId ?? 'source-1',
     fingerprint: params.fingerprint ?? 'fingerprint-1',
-  })._unsafeUnwrap();
+  });
 }

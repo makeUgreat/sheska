@@ -1,4 +1,4 @@
-export const INFRASTRUCTURE_ERROR_KIND = {
+export const INFRASTRUCTURE_FAILURE_KIND = {
   // A required infrastructure dependency is not available.
   UNAVAILABLE: 'unavailable',
   // A required infrastructure dependency timed out.
@@ -15,29 +15,29 @@ export const INFRASTRUCTURE_ERROR_KIND = {
   UNEXPECTED: 'unexpected',
 } as const;
 
-export type InfrastructureErrorKind =
-  (typeof INFRASTRUCTURE_ERROR_KIND)[keyof typeof INFRASTRUCTURE_ERROR_KIND];
+export type InfrastructureFailureKind =
+  (typeof INFRASTRUCTURE_FAILURE_KIND)[keyof typeof INFRASTRUCTURE_FAILURE_KIND];
 
-export type InfrastructureErrorCode<
+export type InfrastructureFailureCode<
   Owner extends string,
   Reason extends string,
 > = `${Owner}.${Reason}`;
 
-export interface InfrastructureErrorSource {
+export interface InfrastructureFailureSource {
   readonly boundary: 'persistence';
   readonly adapter: string;
 }
 
-export type InfrastructureErrorCauseDetails = {
+export type InfrastructureFailureCauseDetails = {
   readonly cause: unknown;
 };
 
-export interface InfrastructureErrorBase<
-  Kind extends InfrastructureErrorKind = InfrastructureErrorKind,
+export interface InfrastructureFailureBase<
+  Kind extends InfrastructureFailureKind = InfrastructureFailureKind,
   Code extends string = string,
-  Details extends InfrastructureErrorCauseDetails =
-    InfrastructureErrorDetailsFor<Kind>,
-  Source extends InfrastructureErrorSource = InfrastructureErrorSource,
+  Details extends InfrastructureFailureCauseDetails =
+    InfrastructureFailureDetailsFor<Kind>,
+  Source extends InfrastructureFailureSource = InfrastructureFailureSource,
 > {
   readonly kind: Kind;
   readonly code: Code;
@@ -46,27 +46,27 @@ export interface InfrastructureErrorBase<
   readonly details: Details;
 }
 
-export type InfrastructureErrorOf<
-  Kind extends InfrastructureErrorKind,
+export type InfrastructureFailureOf<
+  Kind extends InfrastructureFailureKind,
   Owner extends string,
   Reason extends string,
-  Details extends InfrastructureErrorCauseDetails =
-    InfrastructureErrorDetailsFor<Kind>,
-  Source extends InfrastructureErrorSource = InfrastructureErrorSource,
-> = InfrastructureErrorBase<
+  Details extends InfrastructureFailureCauseDetails =
+    InfrastructureFailureDetailsFor<Kind>,
+  Source extends InfrastructureFailureSource = InfrastructureFailureSource,
+> = InfrastructureFailureBase<
   Kind,
-  InfrastructureErrorCode<Owner, Reason>,
+  InfrastructureFailureCode<Owner, Reason>,
   Details,
   Source
 >;
 
 export type InfrastructureInvalidDataDetails =
-  InfrastructureErrorCauseDetails & {
+  InfrastructureFailureCauseDetails & {
     readonly fields: string[];
   };
 
-export type InfrastructureErrorDetailsFor<
-  Kind extends InfrastructureErrorKind,
-> = Kind extends typeof INFRASTRUCTURE_ERROR_KIND.INVALID_DATA
+export type InfrastructureFailureDetailsFor<
+  Kind extends InfrastructureFailureKind,
+> = Kind extends typeof INFRASTRUCTURE_FAILURE_KIND.INVALID_DATA
   ? InfrastructureInvalidDataDetails
-  : InfrastructureErrorCauseDetails;
+  : InfrastructureFailureCauseDetails;

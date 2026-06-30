@@ -9,7 +9,7 @@ export function buildSource(
     externalSourceId: params.externalSourceId ?? 'Notes/source.md',
     content,
     fingerprint: params.fingerprint ?? 'fingerprint-1',
-  })._unsafeUnwrap();
+  });
 }
 
 export function sourceContentByteSize(content: string): number {

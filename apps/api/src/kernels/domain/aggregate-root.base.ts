@@ -1,5 +1,5 @@
 import { type DomainEvent } from './domain-event.base';
-import { Entity, type EntityId } from './entity.base';
+import { Entity } from './entity.base';
 
 type DomainEventByName<
   TDomainEvent extends DomainEvent,
@@ -10,17 +10,16 @@ type DomainEventByName<
     : Extract<TDomainEvent, { readonly eventName: TEventName }>;
 
 export abstract class AggregateRoot<
-  TId extends EntityId,
   EntityProps,
-  TDomainEvent extends DomainEvent<TId> = DomainEvent<TId>,
-> extends Entity<TId, EntityProps> {
+  TDomainEvent extends DomainEvent = DomainEvent,
+> extends Entity<EntityProps> {
   private _domainEvents: TDomainEvent[] = [];
 
   get domainEvents(): readonly TDomainEvent[] {
     return [...this._domainEvents];
   }
 
-  findDomainEvent<TEventName extends TDomainEvent['eventName']>(
+  findEvent<TEventName extends TDomainEvent['eventName']>(
     eventName: TEventName,
   ): DomainEventByName<TDomainEvent, TEventName> | undefined {
     return this._domainEvents.find(
@@ -28,11 +27,11 @@ export abstract class AggregateRoot<
     ) as DomainEventByName<TDomainEvent, TEventName> | undefined;
   }
 
-  clearDomainEvents(): void {
+  clearEvents(): void {
     this._domainEvents = [];
   }
 
-  protected addDomainEvent(domainEvent: TDomainEvent): void {
+  protected addEvent(domainEvent: TDomainEvent): void {
     this._domainEvents.push(domainEvent);
   }
 }

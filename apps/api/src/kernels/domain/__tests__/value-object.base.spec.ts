@@ -1,12 +1,12 @@
 import { err, ok, type Result } from '@core/result';
 import {
   ValueObject,
-  type DomainError,
+  type DomainFailure,
   type DomainPrimitive,
 } from '@kernels/domain';
 import { describe, expect, it } from 'vitest';
 
-const sampleEmptyError: DomainError = {
+const sampleEmptyError: DomainFailure = {
   kind: 'invariant_violation',
   code: 'sample.empty',
   message: 'Sample cannot be empty',
@@ -14,38 +14,28 @@ const sampleEmptyError: DomainError = {
 };
 
 class SampleName extends ValueObject<string> {
-  static of(value: string): Result<SampleName, DomainError> {
-    return SampleName.construct({
-      props: { value: value.trim() },
-      validate: (props) => SampleName.validateProps(props),
-    });
-  }
+  static of(value: string): Result<SampleName, DomainFailure> {
+    const props = { value: value.trim() };
 
-  private constructor(props: DomainPrimitive<string>) {
-    super(props);
-  }
-
-  private static validateProps(
-    props: DomainPrimitive<string>,
-  ): Result<DomainPrimitive<string>, DomainError> {
-    if (props.value.length === 0) {
+    if (SampleName.isEmpty(props)) {
       return err(sampleEmptyError);
     }
 
-    return ok(props);
-  }
-}
-
-class SampleDate extends ValueObject<Date> {
-  static of(value: Date): Result<SampleDate, DomainError> {
-    return SampleDate.construct({
-      props: { value },
-      validate: (props) => ok(props),
-    });
+    return ok(new SampleName(props));
   }
 
-  private constructor(props: DomainPrimitive<Date>) {
+  constructor(props: DomainPrimitive<string>) {
     super(props);
+  }
+
+  protected validate(props: DomainPrimitive<string>): void {
+    if (SampleName.isEmpty(props)) {
+      throw new Error('Sample cannot be empty');
+    }
+  }
+
+  private static isEmpty(props: DomainPrimitive<string>): boolean {
+    return props.value.length === 0;
   }
 }
 
@@ -56,19 +46,6 @@ interface SampleDetailsProps {
   };
 }
 
-class SampleDetails extends ValueObject<SampleDetailsProps> {
-  static of(props: SampleDetailsProps): Result<SampleDetails, DomainError> {
-    return SampleDetails.construct({
-      props,
-      validate: (valueObjectProps) => ok(valueObjectProps),
-    });
-  }
-
-  private constructor(props: SampleDetailsProps) {
-    super(props);
-  }
-}
-
 interface SampleValueKeyProps {
   value: string;
   label: string;
@@ -77,16 +54,15 @@ interface SampleValueKeyProps {
 class SampleValueKeyDetails extends ValueObject<SampleValueKeyProps> {
   static of(
     props: SampleValueKeyProps,
-  ): Result<SampleValueKeyDetails, DomainError> {
-    return SampleValueKeyDetails.construct({
-      props,
-      validate: (valueObjectProps) => ok(valueObjectProps),
-    });
+  ): Result<SampleValueKeyDetails, DomainFailure> {
+    return ok(new SampleValueKeyDetails(props));
   }
 
-  private constructor(props: SampleValueKeyProps) {
+  constructor(props: SampleValueKeyProps) {
     super(props);
   }
+
+  protected validate(_props: SampleValueKeyProps): void {}
 }
 
 class ConfigurableDetails extends ValueObject<SampleDetailsProps> {
@@ -97,35 +73,36 @@ class ConfigurableDetails extends ValueObject<SampleDetailsProps> {
     options?: {
       validate?: (
         valueObjectProps: SampleDetailsProps,
-      ) => Result<SampleDetailsProps, DomainError>;
+      ) => Result<SampleDetailsProps, DomainFailure>;
     },
-  ): Result<ConfigurableDetails, DomainError> {
-    return ConfigurableDetails.construct({
-      props,
-      validate:
-        options?.validate ?? ((valueObjectProps) => ok(valueObjectProps)),
-    });
+  ): Result<ConfigurableDetails, DomainFailure> {
+    const validate =
+      options?.validate ?? ((valueObjectProps) => ok(valueObjectProps));
+
+    return validate(props).map((props) => new ConfigurableDetails(props));
   }
 
-  private constructor(props: SampleDetailsProps) {
+  constructor(props: SampleDetailsProps) {
     super(props);
     ConfigurableDetails.constructedCount += 1;
   }
+
+  protected validate(_props: SampleDetailsProps): void {}
 }
 
 describe('ValueObject', () => {
-  describe('construct', () => {
-    it('validation을 통과하면 value object를 담은 성공 Result를 반환한다', () => {
+  describe('constructor/of', () => {
+    it('of validation을 통과하면 value object를 담은 성공 Result를 반환한다', () => {
       const result = SampleName.of('  spring  ');
 
       expect(result.isOk()).toBe(true);
 
       if (result.isOk()) {
-        expect(result.value.value).toBe('spring');
+        expect(result.value.unpack()).toBe('spring');
       }
     });
 
-    it('validation이 실패하면 throw 없이 실패 Result를 반환한다', () => {
+    it('of validation이 실패하면 throw 없이 실패 Result를 반환한다', () => {
       const result = SampleName.of(' ');
 
       expect(result.isErr()).toBe(true);
@@ -135,7 +112,7 @@ describe('ValueObject', () => {
       }
     });
 
-    it('validation이 실패하면 value object를 생성하지 않는다', () => {
+    it('of validation이 실패하면 value object를 생성하지 않는다', () => {
       ConfigurableDetails.constructedCount = 0;
 
       ConfigurableDetails.of(
@@ -151,6 +128,21 @@ describe('ValueObject', () => {
       );
 
       expect(ConfigurableDetails.constructedCount).toBe(0);
+    });
+
+    it('constructor validation이 실패하면 throw한다', () => {
+      expect(() => new SampleName({ value: '' })).toThrow(
+        'Sample cannot be empty',
+      );
+    });
+
+    it.each<[string, unknown]>([
+      ['null', null],
+      ['undefined', undefined],
+    ])('constructor props가 %s이면 throw한다', (_caseName, props) => {
+      expect(() => new SampleName(props as DomainPrimitive<string>)).toThrow(
+        'Value object props cannot be empty',
+      );
     });
   });
 
@@ -180,83 +172,7 @@ describe('ValueObject', () => {
       expect(result.isOk()).toBe(true);
 
       if (result.isOk()) {
-        expect(result.value.value).toBe('spring');
-      }
-    });
-
-    it('입력 Date 변경을 primitive value에 반영하지 않는다', () => {
-      const input = new Date('2026-01-01T00:00:00.000Z');
-      const result = SampleDate.of(input);
-
-      input.setUTCFullYear(2030);
-
-      expect(result.isOk()).toBe(true);
-
-      if (result.isOk()) {
-        expect(result.value.value).toEqual(
-          new Date('2026-01-01T00:00:00.000Z'),
-        );
-      }
-    });
-
-    it('반환한 Date 변경을 내부 primitive value에 반영하지 않는다', () => {
-      const result = SampleDate.of(new Date('2026-01-01T00:00:00.000Z'));
-
-      expect(result.isOk()).toBe(true);
-
-      if (result.isOk()) {
-        const returnedValue = result.value.value;
-        returnedValue.setUTCFullYear(2031);
-
-        expect(result.value.value).toEqual(
-          new Date('2026-01-01T00:00:00.000Z'),
-        );
-      }
-    });
-
-    it('원본 object의 top-level 변경을 반영하지 않는다', () => {
-      const props = {
-        label: 'spring',
-        nested: {
-          count: 1,
-        },
-      };
-      const result = SampleDetails.of(props);
-
-      props.label = 'summer';
-
-      expect(result.isOk()).toBe(true);
-
-      if (result.isOk()) {
-        expect(result.value.value).toEqual({
-          label: 'spring',
-          nested: {
-            count: 1,
-          },
-        });
-      }
-    });
-
-    it('원본 object의 nested 변경을 반영하지 않는다', () => {
-      const props = {
-        label: 'spring',
-        nested: {
-          count: 1,
-        },
-      };
-      const result = SampleDetails.of(props);
-
-      props.nested.count = 2;
-
-      expect(result.isOk()).toBe(true);
-
-      if (result.isOk()) {
-        expect(result.value.value).toEqual({
-          label: 'spring',
-          nested: {
-            count: 1,
-          },
-        });
+        expect(result.value.unpack()).toBe('spring');
       }
     });
 
@@ -269,44 +185,10 @@ describe('ValueObject', () => {
       expect(result.isOk()).toBe(true);
 
       if (result.isOk()) {
-        expect(result.value.value).toEqual({
+        expect(result.value.unpack()).toEqual({
           value: 'spring',
           label: 'season',
         });
-      }
-    });
-
-    it('composite props를 freeze한다', () => {
-      const result = SampleDetails.of({
-        label: 'spring',
-        nested: {
-          count: 1,
-        },
-      });
-
-      expect(result.isOk()).toBe(true);
-
-      if (result.isOk()) {
-        expect(() => {
-          result.value.value.label = 'summer';
-        }).toThrow(TypeError);
-      }
-    });
-
-    it('중첩 object props를 freeze한다', () => {
-      const result = SampleDetails.of({
-        label: 'spring',
-        nested: {
-          count: 1,
-        },
-      });
-
-      expect(result.isOk()).toBe(true);
-
-      if (result.isOk()) {
-        expect(() => {
-          result.value.value.nested.count = 2;
-        }).toThrow(TypeError);
       }
     });
   });

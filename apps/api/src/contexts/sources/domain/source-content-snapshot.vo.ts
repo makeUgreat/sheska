@@ -1,8 +1,6 @@
-import { Result as ResultUtils, err, ok, type Result } from '@core/result';
-import { DOMAIN_ERROR_KIND, ValueObject } from '@kernels/domain';
+import { ValueObject } from '@kernels/domain';
 import { SourceFingerprint } from './source-fingerprint.vo';
 import { SourceContent } from './source-content.vo';
-import { type SourceContentSnapshotDomainError } from './source-content-snapshot.error';
 import { SourceSize } from './source-size.vo';
 
 interface SourceContentSnapshotProps {
@@ -12,66 +10,52 @@ interface SourceContentSnapshotProps {
 }
 
 export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProps> {
-  private constructor(props: SourceContentSnapshotProps) {
+  constructor(props: SourceContentSnapshotProps) {
     super(props);
   }
 
   static create(params: {
     content: string;
     fingerprint: string;
-  }): Result<SourceContentSnapshot, SourceContentSnapshotDomainError> {
+  }): SourceContentSnapshot {
     const { content, fingerprint } = params;
+    const sourceContent = SourceContent.of(content);
+    const sourceFingerprint = SourceFingerprint.of(fingerprint);
 
-    return ResultUtils.combine([
-      SourceContent.of(content),
-      SourceFingerprint.of(fingerprint),
-    ]).andThen(([sourceContent, sourceFingerprint]) =>
-      SourceSize.of(sourceContent.byteSize).andThen((sourceSize) =>
-        SourceContentSnapshot.construct({
-          props: {
-            content: sourceContent.value,
-            fingerprint: sourceFingerprint.value,
-            size: sourceSize.value,
-          },
-          validate: (props) => ok(props),
-        }),
-      ),
-    );
+    return new SourceContentSnapshot({
+      content: sourceContent.unpack(),
+      fingerprint: sourceFingerprint.unpack(),
+      size: SourceSize.of(sourceContent.byteSize).unpack(),
+    });
   }
 
   static restore(params: {
     content: string;
     fingerprint: string;
     size: number;
-  }): Result<SourceContentSnapshot, SourceContentSnapshotDomainError> {
+  }): SourceContentSnapshot {
     const { content, fingerprint, size } = params;
+    const sourceContent = SourceContent.of(content);
+    const sourceFingerprint = SourceFingerprint.of(fingerprint);
+    const sourceSize = SourceSize.of(size);
 
-    return ResultUtils.combine([
-      SourceContent.of(content),
-      SourceFingerprint.of(fingerprint),
-      SourceSize.of(size),
-    ]).andThen(([sourceContent, sourceFingerprint, sourceSize]) => {
-      if (!sourceContent.hasByteSize(sourceSize.value)) {
-        return err({
-          kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
-          code: 'source.size_mismatch',
-          message: 'Source size must match content byte size',
-          details: { fields: ['content', 'size'] },
-        } satisfies SourceContentSnapshotDomainError);
-      }
-
-      return SourceContentSnapshot.construct({
-        props: {
-          content: sourceContent.value,
-          fingerprint: sourceFingerprint.value,
-          size: sourceSize.value,
-        },
-        validate: (props) => ok(props),
-      });
+    return new SourceContentSnapshot({
+      content: sourceContent.unpack(),
+      fingerprint: sourceFingerprint.unpack(),
+      size: sourceSize.unpack(),
     });
   }
 
   hasSameContentAs(other: SourceContentSnapshot): boolean {
-    return this.value.fingerprint === other.value.fingerprint;
+    const current = this.unpack();
+    const next = other.unpack();
+
+    return current.fingerprint === next.fingerprint;
+  }
+
+  protected validate(props: SourceContentSnapshotProps): void {
+    if (!SourceContent.of(props.content).hasByteSize(props.size)) {
+      throw new Error('Source size must match content byte size');
+    }
   }
 }

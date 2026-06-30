@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { type SourceRepository } from '@contexts/sources/application/ports';
+import { type SourceRepository } from '@contexts/sources/domain';
 import { SOURCES_TOKENS } from '@contexts/sources/sources.tokens';
 import { AppModule } from '@platform/nest/app.module';
 import {
@@ -33,17 +33,13 @@ describe('SourceDrizzleRepository', () => {
     const saveResult = await repository.save(source);
     const findResult = await repository.find({ externalSourceId });
 
-    expect(saveResult.isOk()).toBe(true);
-    expect(findResult.isOk()).toBe(true);
-
-    if (findResult.isOk()) {
-      expect(findResult.value?.id).toBe(source.id);
-      expect(findResult.value?.getProps().contentSnapshot.value).toEqual({
-        content: '# Source note',
-        fingerprint: 'fingerprint-1',
-        size: sourceContentByteSize('# Source note'),
-      });
-    }
+    expect(saveResult.id).toBe(source.id);
+    expect(findResult?.id).toBe(source.id);
+    expect(findResult?.getProps().contentSnapshot.unpack()).toEqual({
+      content: '# Source note',
+      fingerprint: 'fingerprint-1',
+      size: sourceContentByteSize('# Source note'),
+    });
   });
 
   it('source를 갱신한다', async () => {
@@ -51,28 +47,23 @@ describe('SourceDrizzleRepository', () => {
     const source = buildSource({ externalSourceId });
     await repository.save(source);
 
-    source
-      .syncContentSnapshot({
-        content: '# Changed source note',
-        fingerprint: 'fingerprint-2',
-      })
-      ._unsafeUnwrap();
+    source.syncContentSnapshot({
+      content: '# Changed source note',
+      fingerprint: 'fingerprint-2',
+    });
 
     const saveResult = await repository.save(source);
     const findResult = await repository.find({ externalSourceId });
 
-    expect(saveResult.isOk()).toBe(true);
-
-    if (findResult.isOk()) {
-      expect(findResult.value?.getProps().contentSnapshot.value).toEqual({
-        content: '# Changed source note',
-        fingerprint: 'fingerprint-2',
-        size: sourceContentByteSize('# Changed source note'),
-      });
-    }
+    expect(saveResult.id).toBe(source.id);
+    expect(findResult?.getProps().contentSnapshot.unpack()).toEqual({
+      content: '# Changed source note',
+      fingerprint: 'fingerprint-2',
+      size: sourceContentByteSize('# Changed source note'),
+    });
   });
 
-  it('externalSourceId unique 충돌을 state conflict로 매핑한다', async () => {
+  it('externalSourceId unique 충돌을 exception으로 전파한다', async () => {
     const externalSourceId = 'Notes/conflict-source.md';
     const firstSource = buildSource({ externalSourceId });
     const secondSource = buildSource({
@@ -83,13 +74,8 @@ describe('SourceDrizzleRepository', () => {
 
     await repository.save(firstSource);
 
-    const result = await repository.save(secondSource);
-
-    expect(result.isErr()).toBe(true);
-
-    if (result.isErr()) {
-      expect(result.error.kind).toBe('state_conflict');
-      expect(result.error.code).toBe('source_repository.state_conflict');
-    }
+    await expect(repository.save(secondSource)).rejects.toThrow(
+      'Source Repository operation failed',
+    );
   });
 });

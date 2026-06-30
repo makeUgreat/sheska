@@ -1,142 +1,40 @@
-import { err, ok, type Result } from '@core/result';
-import { Entity, type DomainError, type EntityParams } from '@kernels/domain';
-import { describe, expect, it, vi } from 'vitest';
+import { Entity, type CreateEntityProps } from '@kernels/domain';
+import { describe, expect, it } from 'vitest';
 
 interface SampleProps {
   name: string;
 }
 
-const sampleValidationError: DomainError = {
-  kind: 'invariant_violation',
-  code: 'sample.invalid',
-  message: 'Sample is invalid',
-  details: { fields: ['name'] },
-};
-
-class SampleEntity extends Entity<string, SampleProps> {
-  static create(params: {
-    id: string;
-    props?: SampleProps;
-  }): Result<SampleEntity, DomainError> {
-    return SampleEntity.restore({
-      id: params.id,
-      props: params.props ?? { name: 'spring' },
-    });
-  }
-
-  static restore(
-    params: EntityParams<string, SampleProps>,
-  ): Result<SampleEntity, DomainError> {
-    return SampleEntity.construct({
-      params,
-      validate: (entityParams) => ok(entityParams),
-    });
-  }
-
-  private constructor(params: EntityParams<string, SampleProps>) {
+class SampleEntity extends Entity<SampleProps> {
+  constructor(params: CreateEntityProps<SampleProps>) {
     super(params);
   }
+
+  public validate(): void {}
 }
 
-class NumericIdEntity extends Entity<number, SampleProps> {
-  static create(params: {
-    id: number;
-    props?: SampleProps;
-  }): Result<NumericIdEntity, DomainError> {
-    return NumericIdEntity.construct({
-      params: {
-        id: params.id,
-        props: params.props ?? { name: 'spring' },
-      },
-      validate: (entityParams) => ok(entityParams),
-    });
-  }
-
-  private constructor(params: EntityParams<number, SampleProps>) {
+class ValidatedEntity extends Entity<SampleProps> {
+  constructor(params: CreateEntityProps<SampleProps>) {
     super(params);
   }
-}
 
-type SampleEntityParams = EntityParams<string, SampleProps>;
-type SampleEntityValidator = (
-  params: SampleEntityParams,
-) => Result<SampleEntityParams, DomainError>;
-
-class ConfigurableEntity extends Entity<string, SampleProps> {
-  static constructedCount = 0;
-
-  static restore(
-    params: SampleEntityParams,
-    options?: {
-      validate?: SampleEntityValidator;
-    },
-  ): Result<ConfigurableEntity, DomainError> {
-    return ConfigurableEntity.construct({
-      params,
-      validate: options?.validate ?? ((entityParams) => ok(entityParams)),
-    });
-  }
-
-  constructor(params: SampleEntityParams) {
-    super(params);
-    ConfigurableEntity.constructedCount += 1;
+  public validate(): void {
+    if (this.props.name.trim().length === 0) {
+      throw new Error('Sample name cannot be empty');
+    }
   }
 }
 
 describe('Entity', () => {
-  describe('construct', () => {
-    it('validation을 통과하면 entity를 담은 성공 Result를 반환한다', () => {
-      const result = SampleEntity.create({
+  describe('constructor', () => {
+    it('문자열 entity identifier를 그대로 보존한다', () => {
+      const entity = new SampleEntity({
         id: '  sample-1  ',
         props: { name: 'spring' },
       });
 
-      expect(result.isOk()).toBe(true);
-
-      if (result.isOk()) {
-        expect(result.value.id).toBe('sample-1');
-        expect(result.value.getProps().name).toBe('spring');
-      }
-    });
-
-    it('문자열 entity identifier가 공백뿐이면 실패 Result를 반환한다', () => {
-      const result = SampleEntity.create({
-        id: '  ',
-      });
-
-      expect(result.isErr()).toBe(true);
-
-      if (result.isErr()) {
-        expect(result.error.code).toBe('entity.id_empty');
-      }
-    });
-
-    it('숫자형 entity identifier를 지원한다', () => {
-      const result = NumericIdEntity.create({
-        id: 1,
-      });
-
-      expect(result.isOk()).toBe(true);
-
-      if (result.isOk()) {
-        expect(result.value.id).toBe(1);
-        expect(result.value.getProps().id).toBe(1);
-      }
-    });
-
-    it('base entity 수준에서 빈 props를 허용한다', () => {
-      const result = SampleEntity.restore({
-        id: 'sample-1',
-        props: {} as SampleProps,
-      });
-
-      expect(result.isOk()).toBe(true);
-
-      if (result.isOk()) {
-        expect(result.value.getProps()).toEqual({
-          id: 'sample-1',
-        });
-      }
+      expect(entity.id).toBe('  sample-1  ');
+      expect(entity.getProps().name).toBe('spring');
     });
 
     it.each<[string, unknown]>([
@@ -144,37 +42,72 @@ describe('Entity', () => {
       ['null', null],
       ['array', []],
       ['Date instance', new Date('2026-01-01T00:00:00.000Z')],
-    ])('props가 %s이면 실패 Result를 반환한다', (_caseName, props) => {
-      const result = SampleEntity.restore({
-        id: 'sample-1',
-        props: props as SampleProps,
-      });
-
-      expect(result.isErr()).toBe(true);
-
-      if (result.isErr()) {
-        expect(result.error.code).toBe('entity.props_not_object');
-      }
+    ])('props가 %s이면 throw한다', (_caseName, props) => {
+      expect(
+        () =>
+          new SampleEntity({
+            id: 'sample-1',
+            props: props as SampleProps,
+          }),
+      ).toThrow('Entity props must be an object');
     });
 
-    it('base entity 수준에서 많은 props를 허용한다', () => {
+    it('빈 props이면 throw한다', () => {
+      expect(
+        () =>
+          new SampleEntity({
+            id: 'sample-1',
+            props: {} as SampleProps,
+          }),
+      ).toThrow('Entity props should not be empty');
+    });
+
+    it('props가 너무 많으면 throw한다', () => {
       const props = Object.fromEntries(
         Array.from({ length: 51 }, (_, index) => [`prop${index}`, index]),
       ) as unknown as SampleProps;
-      const result = SampleEntity.restore({
+
+      expect(
+        () =>
+          new SampleEntity({
+            id: 'sample-1',
+            props,
+          }),
+      ).toThrow('Entity props should not have more than 50 properties');
+    });
+
+    it('subclass validate가 실패하면 throw한다', () => {
+      expect(
+        () =>
+          new ValidatedEntity({
+            id: 'sample-1',
+            props: { name: ' ' },
+          }),
+      ).toThrow('Sample name cannot be empty');
+    });
+  });
+
+  describe('getProps', () => {
+    it('id와 entity props를 함께 반환한다', () => {
+      const createdAt = new Date('2026-01-01T00:00:00.000Z');
+      const updatedAt = new Date('2026-01-02T00:00:00.000Z');
+      const entity = new SampleEntity({
         id: 'sample-1',
-        props,
+        props: { name: 'spring' },
+        createdAt,
+        updatedAt,
       });
 
-      expect(result.isOk()).toBe(true);
-
-      if (result.isOk()) {
-        expect(Object.keys(result.value.getProps()).length).toBe(52);
-      }
+      expect(entity.getProps()).toEqual({
+        id: 'sample-1',
+        name: 'spring',
+        createdAt,
+        updatedAt,
+      });
     });
 
     it('props에 id field가 있어도 entity ID를 유지한다', () => {
-      const result = SampleEntity.restore({
+      const entity = new SampleEntity({
         id: 'entity-id',
         props: {
           id: 'props-id',
@@ -182,91 +115,18 @@ describe('Entity', () => {
         } as unknown as SampleProps,
       });
 
-      expect(result.isOk()).toBe(true);
-
-      if (result.isOk()) {
-        expect(result.value.getProps().id).toBe('entity-id');
-      }
+      expect(entity.getProps().id).toBe('entity-id');
     });
 
-    it('custom validation이 실패하면 실패 Result를 반환한다', () => {
-      const result = ConfigurableEntity.restore(
-        {
-          id: 'sample-1',
-          props: { name: 'spring' },
-        },
-        {
-          validate: () => err(sampleValidationError),
-        },
-      );
-
-      expect(result.isErr()).toBe(true);
-
-      if (result.isErr()) {
-        expect(result.error).toBe(sampleValidationError);
-      }
-    });
-
-    it('base validation이 실패하면 custom validation을 호출하지 않는다', () => {
-      const validate = vi.fn((params: SampleEntityParams) => ok(params));
-
-      ConfigurableEntity.restore(
-        {
-          id: 'sample-1',
-          props: null as unknown as SampleProps,
-        },
-        { validate },
-      );
-
-      expect(validate).not.toHaveBeenCalled();
-    });
-
-    it('custom validation이 실패하면 entity를 생성하지 않는다', () => {
-      ConfigurableEntity.constructedCount = 0;
-
-      ConfigurableEntity.restore(
-        {
-          id: 'sample-1',
-          props: { name: 'spring' },
-        },
-        {
-          validate: () => err(sampleValidationError),
-        },
-      );
-
-      expect(ConfigurableEntity.constructedCount).toBe(0);
-    });
-  });
-
-  describe('getProps', () => {
-    it('id와 entity props를 함께 반환한다', () => {
-      const result = SampleEntity.create({
+    it('재할당할 수 없는 props를 반환한다', () => {
+      const entity = new SampleEntity({
         id: 'sample-1',
         props: { name: 'spring' },
       });
 
-      expect(result.isOk()).toBe(true);
-
-      if (result.isOk()) {
-        expect(result.value.getProps()).toEqual({
-          id: 'sample-1',
-          name: 'spring',
-        });
-      }
-    });
-
-    it('재할당할 수 없는 props를 반환한다', () => {
-      const result = SampleEntity.create({
-        id: 'sample-1',
-      });
-
-      expect(result.isOk()).toBe(true);
-
-      if (result.isOk()) {
-        expect(() => {
-          Object.assign(result.value.getProps(), { name: 'summer' });
-        }).toThrow(TypeError);
-      }
+      expect(() => {
+        Object.assign(entity.getProps(), { name: 'summer' });
+      }).toThrow(TypeError);
     });
   });
 });

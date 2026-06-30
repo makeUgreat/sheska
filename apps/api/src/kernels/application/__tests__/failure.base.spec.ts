@@ -1,13 +1,13 @@
 import {
-  APPLICATION_ERROR_KIND,
-  type ApplicationErrorOf,
+  APPLICATION_FAILURE_KIND,
+  type ApplicationFailureOf,
   type ApplicationValidationDetails,
 } from '@kernels/application';
 import { describe, expect, it } from 'vitest';
 
-describe('ApplicationError', () => {
+describe('ApplicationFailure', () => {
   it('application error kind 상수를 제공한다', () => {
-    expect(APPLICATION_ERROR_KIND).toEqual({
+    expect(APPLICATION_FAILURE_KIND).toEqual({
       VALIDATION_FAILED: 'validation_failed',
       DEPENDENCY_UNAVAILABLE: 'dependency_unavailable',
       NOT_FOUND: 'not_found',
@@ -28,12 +28,12 @@ describe('ApplicationError', () => {
         },
       ],
     };
-    const error: ApplicationErrorOf<
-      typeof APPLICATION_ERROR_KIND.VALIDATION_FAILED,
+    const error: ApplicationFailureOf<
+      typeof APPLICATION_FAILURE_KIND.VALIDATION_FAILED,
       'document_sync',
       'source_id_empty'
     > = {
-      kind: APPLICATION_ERROR_KIND.VALIDATION_FAILED,
+      kind: APPLICATION_FAILURE_KIND.VALIDATION_FAILED,
       code: 'document_sync.source_id_empty',
       message: 'Document sync source id cannot be empty',
       details,

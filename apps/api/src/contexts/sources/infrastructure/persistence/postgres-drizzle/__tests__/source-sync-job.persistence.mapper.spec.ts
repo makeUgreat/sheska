@@ -11,39 +11,26 @@ describe('SourceSyncJobPersistenceMapper', () => {
       status: 'pending',
     });
 
-    const result = SourceSyncJobPersistenceMapper.toDomain(row);
+    const syncJob = SourceSyncJobPersistenceMapper.toDomain(row);
 
-    expect(result.isOk()).toBe(true);
-
-    if (result.isOk()) {
-      expect(result.value.id).toBe('source-sync-job-1');
-      expect(result.value.getProps()).toMatchObject({
-        sourceId: 'source-1',
-        status: 'pending',
-      });
-      expect(result.value.getProps().fingerprint.value).toBe('fingerprint-1');
-    }
+    expect(syncJob.id).toBe('source-sync-job-1');
+    expect(syncJob.getProps()).toMatchObject({
+      sourceId: 'source-1',
+      status: 'pending',
+    });
+    expect(syncJob.getProps().fingerprint.unpack()).toBe('fingerprint-1');
   });
 
-  it('sync job row의 persisted status가 domain invariant를 깨면 실패한다', () => {
+  it('sync job row의 persisted status가 domain invariant를 깨면 throw한다', () => {
     const row = buildSourceSyncJobRow({
       sourceId: 'source-1',
       fingerprint: 'fingerprint-1',
       status: 'completed',
     });
 
-    const result = SourceSyncJobPersistenceMapper.toDomain(row);
-
-    expect(result.isErr()).toBe(true);
-
-    if (result.isErr()) {
-      expect(result.error).toMatchObject({
-        kind: 'invariant_violation',
-        code: 'source_sync_job.status_invalid',
-        message: 'Source sync job status is invalid',
-        details: { fields: ['status'] },
-      });
-    }
+    expect(() => SourceSyncJobPersistenceMapper.toDomain(row)).toThrow(
+      'Source sync job status is invalid',
+    );
   });
 
   it('SourceSyncJob aggregate를 sync job insert row로 변환한다', () => {

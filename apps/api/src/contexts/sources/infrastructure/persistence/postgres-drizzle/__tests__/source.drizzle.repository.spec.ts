@@ -1,5 +1,3 @@
-import { APPLICATION_ERROR_KIND } from '@kernels/application';
-import { POSTGRES_SQLSTATE } from '@kernels/infrastructure';
 import { describe, expect, it } from 'vitest';
 import { buildSourceSyncJob } from '../../../../../../../test/contexts/sources/fixtures/source-sync-job.fixture';
 import { buildSource } from '../../../../../../../test/contexts/sources/fixtures/source.fixture';
@@ -9,7 +7,7 @@ import { SourceDrizzleRepository } from '../source.drizzle.repository';
 import { SourceSyncJobDrizzleRepository } from '../source-sync-job.drizzle.repository';
 
 describe('SourceDrizzleRepository', () => {
-  it('save 반환 row가 domain으로 복원되지 않으면 domain error를 반환한다', async () => {
+  it('save 반환 row가 domain으로 복원되지 않으면 throw한다', async () => {
     const repository = new SourceDrizzleRepository(
       createSourceSaveDb([
         buildSourceRow({
@@ -20,63 +18,34 @@ describe('SourceDrizzleRepository', () => {
       ]),
     );
 
-    const result = await repository.save(buildSource());
-
-    expect(result.isErr()).toBe(true);
-
-    if (result.isErr()) {
-      expect(result.error).toMatchObject({
-        kind: 'invariant_violation',
-        code: 'source.size_mismatch',
-        message: 'Source size must match content byte size',
-        details: { fields: ['content', 'size'] },
-      });
-    }
+    await expect(repository.save(buildSource())).rejects.toThrow(
+      'Source size must match content byte size',
+    );
   });
 
-  it('Postgres state conflict를 source repository state conflict로 변환한다', async () => {
+  it('Postgres conflict는 source repository exception으로 전파한다', async () => {
     const repository = new SourceDrizzleRepository(
-      createSourceSaveRejectingDb(
-        createPostgresError(POSTGRES_SQLSTATE.UNIQUE_VIOLATION),
-      ),
+      createSourceSaveRejectingDb(createPostgresError('23505')),
     );
 
-    const result = await repository.save(buildSource());
-
-    expect(result.isErr()).toBe(true);
-
-    if (result.isErr()) {
-      expect(result.error).toEqual({
-        kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
-        code: 'source_repository.state_conflict',
-        message: 'Source Repository state conflict',
-        details: { causeCode: 'source_postgres_persistence.conflict' },
-      });
-    }
+    await expect(repository.save(buildSource())).rejects.toThrow(
+      'Source Repository operation failed',
+    );
   });
 
-  it('unknown failure를 source repository unavailable로 변환한다', async () => {
+  it('unknown failure는 source repository exception으로 전파한다', async () => {
     const repository = new SourceDrizzleRepository(
       createSourceSaveRejectingDb(new Error('connection failed')),
     );
 
-    const result = await repository.save(buildSource());
-
-    expect(result.isErr()).toBe(true);
-
-    if (result.isErr()) {
-      expect(result.error).toEqual({
-        kind: APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
-        code: 'source_repository.unavailable',
-        message: 'Source Repository is unavailable',
-        details: { causeCode: 'source_postgres_persistence.unavailable' },
-      });
-    }
+    await expect(repository.save(buildSource())).rejects.toThrow(
+      'Source Repository operation failed',
+    );
   });
 });
 
 describe('SourceSyncJobDrizzleRepository', () => {
-  it('save 반환 row가 domain으로 복원되지 않으면 domain error를 반환한다', async () => {
+  it('save 반환 row의 persisted status가 domain invariant를 깨면 throw한다', async () => {
     const repository = new SourceSyncJobDrizzleRepository(
       createSourceSyncJobSaveDb([
         buildSourceSyncJobRow({
@@ -87,39 +56,29 @@ describe('SourceSyncJobDrizzleRepository', () => {
       ]),
     );
 
-    const result = await repository.save(buildSourceSyncJob());
-
-    expect(result.isErr()).toBe(true);
-
-    if (result.isErr()) {
-      expect(result.error).toMatchObject({
-        kind: 'invariant_violation',
-        code: 'source_sync_job.status_invalid',
-        message: 'Source sync job status is invalid',
-        details: { fields: ['status'] },
-      });
-    }
+    await expect(repository.save(buildSourceSyncJob())).rejects.toThrow(
+      'Source sync job status is invalid',
+    );
   });
 
-  it('Postgres state conflict를 source sync job repository state conflict로 변환한다', async () => {
+  it('Postgres conflict는 source sync job repository exception으로 전파한다', async () => {
     const repository = new SourceSyncJobDrizzleRepository(
-      createSourceSyncJobSaveRejectingDb(
-        createPostgresError(POSTGRES_SQLSTATE.FOREIGN_KEY_VIOLATION),
-      ),
+      createSourceSyncJobSaveRejectingDb(createPostgresError('23503')),
     );
 
-    const result = await repository.save(buildSourceSyncJob());
+    await expect(repository.save(buildSourceSyncJob())).rejects.toThrow(
+      'Source Sync Job Repository operation failed',
+    );
+  });
 
-    expect(result.isErr()).toBe(true);
+  it('unknown failure는 source sync job repository exception으로 전파한다', async () => {
+    const repository = new SourceSyncJobDrizzleRepository(
+      createSourceSyncJobSaveRejectingDb(new Error('connection failed')),
+    );
 
-    if (result.isErr()) {
-      expect(result.error).toEqual({
-        kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
-        code: 'source_sync_job_repository.state_conflict',
-        message: 'Source Sync Job Repository state conflict',
-        details: { causeCode: 'source_postgres_persistence.conflict' },
-      });
-    }
+    await expect(repository.save(buildSourceSyncJob())).rejects.toThrow(
+      'Source Sync Job Repository operation failed',
+    );
   });
 });
 

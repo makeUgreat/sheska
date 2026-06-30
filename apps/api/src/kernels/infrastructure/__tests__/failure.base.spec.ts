@@ -1,14 +1,14 @@
 import {
-  INFRASTRUCTURE_ERROR_KIND,
-  type InfrastructureErrorCauseDetails,
-  type InfrastructureErrorOf,
+  INFRASTRUCTURE_FAILURE_KIND,
+  type InfrastructureFailureCauseDetails,
+  type InfrastructureFailureOf,
   type InfrastructureInvalidDataDetails,
 } from '@kernels/infrastructure';
 import { describe, expect, it } from 'vitest';
 
-describe('InfrastructureError', () => {
+describe('InfrastructureFailure', () => {
   it('infrastructure error kind 상수를 제공한다', () => {
-    expect(INFRASTRUCTURE_ERROR_KIND).toEqual({
+    expect(INFRASTRUCTURE_FAILURE_KIND).toEqual({
       UNAVAILABLE: 'unavailable',
       TIMEOUT: 'timeout',
       CONFLICT: 'conflict',
@@ -20,14 +20,14 @@ describe('InfrastructureError', () => {
   });
 
   it('infrastructure error source로 boundary와 adapter를 표현한다', () => {
-    const error: InfrastructureErrorOf<
-      typeof INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
+    const error: InfrastructureFailureOf<
+      typeof INFRASTRUCTURE_FAILURE_KIND.UNAVAILABLE,
       'source_postgres_persistence',
       'unavailable',
-      InfrastructureErrorCauseDetails,
+      InfrastructureFailureCauseDetails,
       { readonly boundary: 'persistence'; readonly adapter: 'postgres_drizzle' }
     > = {
-      kind: INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
+      kind: INFRASTRUCTURE_FAILURE_KIND.UNAVAILABLE,
       code: 'source_postgres_persistence.unavailable',
       source: {
         boundary: 'persistence',
@@ -50,12 +50,12 @@ describe('InfrastructureError', () => {
       fields: ['contentSnapshot.size'],
       cause: { code: 'source.size_mismatch' },
     };
-    const error: InfrastructureErrorOf<
-      typeof INFRASTRUCTURE_ERROR_KIND.INVALID_DATA,
+    const error: InfrastructureFailureOf<
+      typeof INFRASTRUCTURE_FAILURE_KIND.INVALID_DATA,
       'source_postgres_persistence',
       'row_invalid'
     > = {
-      kind: INFRASTRUCTURE_ERROR_KIND.INVALID_DATA,
+      kind: INFRASTRUCTURE_FAILURE_KIND.INVALID_DATA,
       code: 'source_postgres_persistence.row_invalid',
       source: {
         boundary: 'persistence',

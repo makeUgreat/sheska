@@ -1,16 +1,14 @@
-import { okAsync, type Result, type ResultAsync } from '@core/result';
+import { fromSafePromise, type ResultAsync } from '@core/result';
 import {
   ExternalSourceId,
   Source,
   SourceSyncJob,
-} from '@contexts/sources/domain';
-import {
-  type SourceFingerprinterError,
   type SourceRepository,
   type SourceSyncJobRepository,
-} from '@contexts/sources/application/ports';
+} from '@contexts/sources/domain';
+import { type SourceFingerprinterFailure } from '@contexts/sources/application/ports';
 import { type SourceContentSnapshotCalculation } from '../services/source-content-snapshot-calculator.service';
-import { type UploadSourceUseCaseError } from './upload-source.error';
+import { type UploadSourceUseCaseFailure } from './upload-source.failure';
 
 export interface UploadSourceCommand {
   readonly externalSourceId: string;
@@ -27,7 +25,7 @@ export interface UploadSourceResult {
 export interface UploadSourceContentSnapshotCalculator {
   calculate(
     content: string,
-  ): ResultAsync<SourceContentSnapshotCalculation, SourceFingerprinterError>;
+  ): ResultAsync<SourceContentSnapshotCalculation, SourceFingerprinterFailure>;
 }
 
 export class UploadSourceUseCase {
@@ -39,28 +37,23 @@ export class UploadSourceUseCase {
 
   execute(
     command: UploadSourceCommand,
-  ): ResultAsync<UploadSourceResult, UploadSourceUseCaseError> {
-    return ExternalSourceId.of(command.externalSourceId)
-      .map((externalSourceId) => externalSourceId.value)
-      .asyncAndThen((externalSourceId) =>
-        this.contentSnapshotCalculator
-          .calculate(command.content)
-          .andThen((snapshot) => this.uploadSource(externalSourceId, snapshot)),
-      );
-  }
+  ): ResultAsync<UploadSourceResult, UploadSourceUseCaseFailure> {
+    const externalSourceId = ExternalSourceId.of(
+      command.externalSourceId,
+    ).unpack();
 
-  private uploadSource(
-    externalSourceId: string,
-    snapshot: SourceContentSnapshotCalculation,
-  ): ResultAsync<UploadSourceResult, UploadSourceUseCaseError> {
-    return this.sources
-      .find({ externalSourceId })
-      .andThen((existingSource) =>
-        this.syncSource(
-          existingSource,
-          externalSourceId,
-          snapshot,
-        ).asyncAndThen((source) => this.persistSourceSync(source)),
+    return this.contentSnapshotCalculator
+      .calculate(command.content)
+      .andThen((snapshot) =>
+        fromSafePromise(
+          this.sources
+            .find({ externalSourceId })
+            .then((existingSource) =>
+              this.persistSourceSync(
+                this.syncSource(existingSource, externalSourceId, snapshot),
+              ),
+            ),
+        ),
       );
   }
 
@@ -68,7 +61,7 @@ export class UploadSourceUseCase {
     existingSource: Source | null,
     externalSourceId: string,
     snapshot: SourceContentSnapshotCalculation,
-  ): Result<Source, UploadSourceUseCaseError> {
+  ): Source {
     if (existingSource) {
       return existingSource.syncContentSnapshot({
         content: snapshot.content,
@@ -83,10 +76,8 @@ export class UploadSourceUseCase {
     });
   }
 
-  private persistSourceSync(
-    source: Source,
-  ): ResultAsync<UploadSourceResult, UploadSourceUseCaseError> {
-    const contentSnapshotChangedEvent = source.findDomainEvent(
+  private async persistSourceSync(source: Source): Promise<UploadSourceResult> {
+    const contentSnapshotChangedEvent = source.findEvent(
       'source.content_snapshot.changed',
     );
 
@@ -94,31 +85,31 @@ export class UploadSourceUseCase {
       return this.completeUploadForUnchangedContentSnapshot(source);
     }
 
-    return SourceSyncJob.create({
+    const syncJob = SourceSyncJob.create({
       sourceId: contentSnapshotChangedEvent.aggregateId,
       fingerprint: contentSnapshotChangedEvent.fingerprint,
-    }).asyncAndThen((syncJob) =>
-      this.sources.save(source).andThen((savedSource) =>
-        this.syncJobs.save(syncJob).map((savedSyncJob) => {
-          source.clearDomainEvents();
+    });
 
-          return this.completeUploadForChangedContentSnapshot(
-            savedSource,
-            savedSyncJob,
-          );
-        }),
-      ),
+    const savedSource = await this.sources.save(source);
+    const savedSyncJob = await this.syncJobs.save(syncJob);
+
+    source.clearEvents();
+
+    return this.completeUploadForChangedContentSnapshot(
+      savedSource,
+      savedSyncJob,
     );
   }
 
   private completeUploadForUnchangedContentSnapshot(source: Source) {
     const sourceProps = source.getProps();
+    const contentSnapshot = sourceProps.contentSnapshot.unpack();
 
-    return okAsync({
+    return {
       sourceId: source.id,
-      externalSourceId: sourceProps.externalSourceId.value,
-      fingerprint: sourceProps.contentSnapshot.value.fingerprint,
-    } satisfies UploadSourceResult);
+      externalSourceId: sourceProps.externalSourceId.unpack(),
+      fingerprint: contentSnapshot.fingerprint,
+    } satisfies UploadSourceResult;
   }
 
   private completeUploadForChangedContentSnapshot(
@@ -126,11 +117,12 @@ export class UploadSourceUseCase {
     syncJob: SourceSyncJob,
   ) {
     const sourceProps = source.getProps();
+    const contentSnapshot = sourceProps.contentSnapshot.unpack();
 
     return {
       sourceId: source.id,
-      externalSourceId: sourceProps.externalSourceId.value,
-      fingerprint: sourceProps.contentSnapshot.value.fingerprint,
+      externalSourceId: sourceProps.externalSourceId.unpack(),
+      fingerprint: contentSnapshot.fingerprint,
       syncJobId: syncJob.id,
     } satisfies UploadSourceResult;
   }
