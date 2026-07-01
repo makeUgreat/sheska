@@ -30,7 +30,7 @@ related:
 
 ## 라우팅
 
-- API failure/error definition, mapping, masking, propagation, failure contract review 작업: [API 오류 정책](./error.md)을 읽는다.
+- API error, exception, masking, propagation, error response contract review 작업: [API 오류 정책](./error.md)을 읽는다.
 - `apps/api` architecture, DDD boundary, source structure, module boundary 결정 작업: [API 아키텍처 컨벤션](./architecture.md)을 읽는다.
 - `apps/api` DDD boundary, domain model ownership, shared domain language 작업: [API DDD 컨벤션](./ddd.md)을 읽는다.
 - Database schema, migration, ORM persistence, repository mapper, storage constraint 결정 작업: [API Persistence 정책](./persistence.md)을 읽는다.

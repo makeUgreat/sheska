@@ -1,4 +1,9 @@
-import { ValueObject, type DomainPrimitive } from '@kernels/domain';
+import {
+  DomainException,
+  DOMAIN_ERROR_KIND,
+  ValueObject,
+  type DomainPrimitive,
+} from '@kernels/domain';
 
 export class SourceFingerprint extends ValueObject<string> {
   constructor(props: DomainPrimitive<string>) {
@@ -13,7 +18,12 @@ export class SourceFingerprint extends ValueObject<string> {
 
   protected validate(props: DomainPrimitive<string>): void {
     if (SourceFingerprint.isEmpty(props)) {
-      throw new Error('Source fingerprint cannot be empty');
+      throw new DomainException({
+        kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
+        code: 'source.empty_fingerprint',
+        message: 'Source fingerprint cannot be empty',
+        details: { fields: ['fingerprint'] },
+      });
     }
   }
 

@@ -119,7 +119,7 @@ Production code outside `platform` must not import `platform`, except the thin `
 ### Domain Layer
 
 - The domain layer contains business rules and domain models.
-- Use it for entities, value objects, aggregates, domain services, domain events, and domain failures.
+- Use it for entities, value objects, aggregates, domain services, and domain events.
 - Domain code MUST NOT know application, infrastructure, presentation, framework, database, HTTP, or SDK details.
 - Domain code SHOULD express pure business behavior and invariants.
 - Domain code may depend on `core` and `kernels/domain`.
@@ -134,9 +134,7 @@ Production code outside `platform` must not import `platform`, except the thin `
 - Application code MAY import provider tokens from same-context `*.di-tokens.ts` files.
 - Application use case behavior MUST NOT depend on NestJS runtime objects, module configuration, container lookups, or framework lifecycle callbacks.
 - Keep application dependencies explicit in constructors so use cases remain instantiable as plain TypeScript classes in tests.
-- Application code SHOULD pass through same-context domain failures unchanged by default.
-- Application code SHOULD pass through application-owned port failures unchanged when the port failure is already the contract the caller can handle.
-- Application code MAY convert application-owned port failures into application or use case failures when it intentionally adds distinct orchestration or caller-facing meaning.
+- Application code SHOULD let domain, infrastructure, and system exceptions propagate unless the use case can recover or add application-owned context.
 - Aside from the narrow DI metadata and same-context provider tokens allowed above, application core may depend on `core`, domain code, and `kernels/application`.
 
 ### Infrastructure Layer
@@ -144,7 +142,7 @@ Production code outside `platform` must not import `platform`, except the thin `
 - The infrastructure layer implements technical adapters.
 - Use it for database, ORM, external API, file system, message broker, SDK, and persistence code.
 - Infrastructure code implements application-owned ports or domain/application contracts.
-- Adapter code converts technology-specific errors, such as HTTP client, SDK, or Drizzle errors, into port or infrastructure failures.
+- Adapter code may wrap technology-specific errors, such as HTTP client, SDK, or Drizzle errors, in regular `Error` objects with `cause` when adding adapter context.
 - Infrastructure code MAY depend on frameworks and external libraries.
 
 ### Presentation Layer
@@ -152,8 +150,8 @@ Production code outside `platform` must not import `platform`, except the thin `
 - The presentation layer is the entry point for external requests and responses.
 - Use it for controllers, resolvers, request DTOs, response DTOs, protocol mappers, and HTTP error mappers.
 - Presentation code calls application use cases.
-- Presentation code converts application failures into protocol responses and applies masking policy.
-- Presentation code SHOULD NOT expose domain or infrastructure failures directly to clients.
+- Presentation code converts protocol exceptions into protocol responses and applies masking policy.
+- Presentation code SHOULD NOT expose domain, infrastructure, vendor, or system exception details directly to clients.
 - Presentation code MAY depend on frameworks and protocol libraries.
 
 ### Kernel Directory

@@ -29,11 +29,11 @@ API architecture is described across two axes:
 - DDD model boundaries define where a model, language, and responsibility are valid.
 - Dependency and layer boundaries define which code may depend on which other code.
 
-Read the error policy when defining, transforming, masking, or exposing application failures, errors, exceptions, or system errors.
+Read the error policy when defining, transforming, masking, or exposing application errors, exceptions, protocol error responses, or system errors.
 
 ## Related Documents
 
-- [API Error Policy](./error.md): application failure meaning, categories, transformation, structure, and unexpected system error handling.
+- [API Error Policy](./error.md): application error meaning, categories, transformation, response structure, and unexpected system error handling.
 - [API DDD Convention](./ddd.md): bounded contexts, implementation modules, domain kernel, and domain model rules.
 - [API Persistence Policy](./persistence.md): database schema, migration, ORM persistence, repository mapper, and storage constraint rules.
 - [API Source Dependency Convention](./source-dependency.md): import direction, layer boundaries, and framework import rules.

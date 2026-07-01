@@ -1,12 +1,10 @@
 export { DATABASE_TOKENS } from './database.tokens';
-export type {
-  InfrastructureFailureBase,
-  InfrastructureFailureCode,
-  InfrastructureFailureCauseDetails,
-  InfrastructureFailureDetailsFor,
-  InfrastructureFailureKind,
-  InfrastructureFailureOf,
-  InfrastructureFailureSource,
-  InfrastructureInvalidDataDetails,
-} from './failure.base';
-export { INFRASTRUCTURE_FAILURE_KIND } from './failure.base';
+export {
+  INFRASTRUCTURE_ERROR_KIND,
+  type InfrastructureErrorBase,
+  type InfrastructureErrorOf,
+  type InfrastructureErrorKind,
+  type InfrastructureErrorSource,
+  type InfrastructureErrorCauseDetails,
+  type InfrastructureInvalidDataDetails,
+} from './error.base';

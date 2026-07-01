@@ -14,62 +14,64 @@ related:
 
 # API Error Policy
 
-Failures and errors are part of the API's control flow and contracts.
+Errors are part of API control flow and external contracts.
 
 ## Scope
 
-- Use this document when deciding what a failure means, who owns it, when it is transformed, and what information it may expose.
-- This policy covers application-controlled failures, vendor raw errors, unexpected system errors, and protocol-facing error responses.
+- Use this document when deciding what an error means, who owns it, when it is transformed, and what information it may expose.
+- This policy covers thrown exceptions, rejected promises, vendor raw errors, unexpected system errors, and protocol-facing error responses.
 
-## Failure Ownership
+## Error Ownership
 
-### Controlled And Uncontrolled Failures
+### Exception And Response Channels
 
-First decide whether the application owns the failure as a contract.
-This project separates application-controlled failures from failures the application cannot reasonably control.
+This project uses exceptions as the default error channel.
+Use a structured response envelope only at protocol-facing boundaries.
 
-- Application-controlled failures are expected failure values owned by application code or a boundary. Use failure-family names such as `DomainFailure`, `ApplicationFailure`, and `InfrastructureFailure` for reusable controlled failure shapes.
-- Vendor raw errors are external adapter, SDK, database, HTTP client, or framework failures before the application translates them.
-- System errors are unexpected runtime, process, network, OS, resource, or environment failures that cannot be handled as a normal application contract.
-- Logging MAY support observability, but logging alone is not failure handling.
+- A thrown error, exception, or rejected promise is interrupted control flow. Use it for domain invariant failures, technical adapter failures, operational failures, and programming errors.
+- Request validation is handled at the presentation boundary and may throw a protocol exception with a structured response body.
+- A caller should catch an exception only when it can recover, add boundary context, or translate it into a protocol response.
+- Application use cases should normally let infrastructure, domain, and system exceptions propagate.
+- Do not add `Result`/failure-family contracts by default. Introduce a returned failure contract only when the caller has a stable, useful branching behavior that is clearer than exception propagation.
+- Domain constructors and factories guard invariants by throwing. Treat thrown invariant failures as bugs, corrupted persisted state, or insufficient boundary validation unless a boundary explicitly translates them.
 
-### Controlled Failure Owners
+### Error Shape Contracts
 
-Classify application-controlled failures by the boundary that owns their meaning:
+Structured error shapes are defined as data contracts independent of the channel that carries them.
 
-- Domain failures: business rule failures and domain invariant violations.
-- Application failures: use case, orchestration, and application-owned contract failures.
-- Infrastructure failures: technical adapter failures translated into an application-controlled shape.
-- Presentation failures: protocol-facing failure responses, such as HTTP, GraphQL, or request validation failures.
+- Each kernel layer defines its error shapes in `error.base.ts`: `DomainErrorBase`, `ApplicationErrorBase`, `InfrastructureErrorBase`.
+- An error shape carries `kind`, `code`, `message`, and `details`. The `kind` classifies the failure; the `code` identifies it stably for callers and machines.
+- The same error shape may be carried by an exception channel (`DomainException`, `ApplicationException`) or a result channel (`Result.err(error)`). Choose the channel based on whether the caller needs to branch on the failure, not on the shape of the data.
+- Layer-specific exception wrappers (`DomainException`, `ApplicationException`) hold the error shape in their `error` property. Use them when throwing structured errors that a boundary must identify and translate.
+- The HTTP presentation boundary maps `ApplicationErrorKind` to HTTP status codes. Domain and infrastructure errors are always masked as `500`.
 
-### Result Failure And Exception Channels
+### Error Owners
 
-- Use `Result` for expected failures that are intentionally part of an application-controlled contract, such as caller-correctable validation failures, business rule failures, and value object factory failures that callers should branch on.
-- Call the unsuccessful branch of a `Result` a `Result failure` in policy prose. Name aliases or unions that specifically describe a `Result` failure contract with a `Failure` suffix, such as `SourceRepositoryFailure` or `UploadSourceUseCaseFailure`.
-- Name reusable failure-family types with a `Failure` suffix, such as `DomainFailure`, `ApplicationFailure`, and `InfrastructureFailure`.
-- A `Result failure` is returned data. It must be visible in the function signature, should be handled by caller branching, and should represent a stable contract the caller can act on.
-- A thrown error, exception, or rejected promise is interrupted control flow. Use it for unexpected technical, operational, or programming failures that are not useful caller-facing contracts.
-- Domain constructors guard internal invariants by throwing. This includes entity and aggregate base invariants such as invalid identifiers or invalid props, and value object invariants reached through direct constructors.
-- Entity, aggregate, and value object factory methods may still return `Result` for value-level domain failures they explicitly compose, but constructor guard failures stay on the exception channel.
-- Treat thrown invariant failures from a constructor as a bug, corrupted persisted state, or insufficient boundary validation unless the boundary explicitly translates them into a controlled failure contract.
-- Do not throw an expected `Result failure` only to avoid result plumbing. Do not convert an unknown thrown value into a `Result failure` unless the boundary owns a stable, caller-actionable contract for it.
+Classify errors by the boundary that owns their meaning:
+
+- Domain errors: business invariant and domain model guard failures without transport, database, framework, or SDK details.
+- Application errors: use case and orchestration failures that are not owned by a specific external adapter or protocol.
+- Infrastructure errors: technical adapter failures, including database, SDK, HTTP client, file system, message broker, and persistence failures.
+- Presentation errors: protocol-facing exceptions and response bodies, such as HTTP validation responses.
+- Vendor raw errors: external adapter, SDK, database, HTTP client, or framework failures before application code wraps or masks them.
+- System errors: unexpected runtime, process, network, OS, resource, or environment failures that cannot be handled as a normal application contract.
+
+Logging may support observability, but logging alone is not error handling.
 
 ## Transformation Boundaries
 
-Failures SHOULD be transformed when they cross a boundary where the owner, audience, or contract changes.
+Transform errors when they cross a boundary where the owner, audience, or exposure policy changes.
 
-- Adapter boundaries translate vendor raw errors into infrastructure or other application-controlled failures when they understand the failure.
-- Use cases SHOULD pass through domain failures from the same bounded context unchanged. Use case failures should represent orchestration or application-owned failures.
-- Use cases MAY pass through application-owned port failures from the same application boundary unchanged when the port failure is already the contract the caller can handle.
-- Use cases MAY translate domain failures only when they intentionally own a different caller-facing contract, such as crossing a bounded context or module boundary.
-- Protocol boundaries translate application failures into presentation failures or thrown protocol exceptions.
-- Independent bounded contexts or modules translate failures through the communication contract used by that boundary.
-- Presentation boundaries MUST mask failures, errors, exceptions, and system errors before exposing them to external clients.
+- Adapter boundaries may wrap vendor raw errors in regular `Error` objects with `cause` when adding adapter context.
+- Use cases should not translate infrastructure exceptions only because an infrastructure dependency failed.
+- Protocol boundaries translate known protocol exceptions and mask unrecognized exceptions before exposing them to external clients.
+- Independent bounded contexts or modules translate errors through the communication contract used by that boundary.
+- Presentation boundaries must mask domain, infrastructure, vendor, system, and unknown errors before exposing them to external clients.
 
-Do not wrap failures only because a call stack crosses an internal folder boundary.
-Prefer transformation where it improves contract stability, information hiding, ownership, or caller behavior.
+Do not wrap errors only because a call stack crosses an internal folder boundary.
+Prefer transformation where it improves information hiding, ownership, observability, or caller behavior.
 
-## Failure Flow
+## Error Flow
 
 ```mermaid
 flowchart TB
@@ -83,34 +85,25 @@ flowchart TB
     direction LR
     presentation["Presentation Boundary"]
     infrastructure["Infrastructure Adapter"]
-    infraFailure["InfrastructureFailure"]
   end
 
-  subgraph application["Application-Owned Contracts"]
+  subgraph application["Application Flow"]
     direction LR
-    portFailure["Application Port Failure"]
-    useCaseFailure["UseCaseFailure"]
-    useCase["Use Case Result Failure Contract"]
+    useCase["Use Case"]
   end
 
-  subgraph domain["Domain-Owned Contracts"]
+  subgraph domain["Domain"]
     direction LR
-    domainFailure["Domain Rule Failure"]
-    domainContractFailure["DomainFailure"]
+    domainModel["Domain Model"]
   end
 
   vendor --> infrastructure
-  infrastructure --> infraFailure
-  infraFailure -->|map to port contract| portFailure
-  portFailure -->|pass through| useCase
-  domainFailure --> domainContractFailure
-  domainContractFailure -->|pass through| useCase
-  useCaseFailure --> useCase
+  infrastructure -->|throws or rejects| useCase
+  domainModel -->|throws| useCase
+  useCase -->|throws or returns| presentation
+  presentation -->|normalize and mask| client
 
-  useCase --> presentation
-  presentation -->|mask and map| client
-
-  subgraph uncontrolled["Uncontrolled Runtime Failures (Any Layer)"]
+  subgraph uncontrolled["Uncontrolled Runtime Errors"]
     direction LR
     anyLayer["May occur in any layer"]
     exception["Exception or rejected promise path"]
@@ -121,23 +114,23 @@ flowchart TB
   exception --> boundary
 ```
 
-## Failure Contract Shape
+## Protocol Error Response Shape
 
-There is no single correct failure shape.
-When defining an application-controlled failure, prefer this structure unless the owning contract has a reason to differ.
+Protocol-facing error responses should use a stable envelope.
+For HTTP responses, use `HttpErrorEnvelope` from `kernels/presentation` unless the owning protocol has a reason to differ.
 
-- `kind`: optional stable category for boundary-level handling. Use categories with explicit caller behavior, such as validation failure, dependency unavailability, not found, or state conflict. Do not add catch-all application failure kinds for unrecognized system failures.
-- `code`: stable value for people and machines to classify the failure. Callers SHOULD depend on `code` instead of parsing `message`.
-- `message`: human-readable context for debugging, operations, or presentation. It MAY change, be localized, masked, or rewritten. Program code MUST NOT depend on exact `message` text.
-- `details`: minimal structured data for caller behavior or machine processing. Because it becomes part of the contract, include only data the receiver may depend on.
+- `statusCode`: numeric protocol status.
+- `code`: stable value for people and machines to classify the response. Callers should depend on `code` instead of parsing `message`.
+- `message`: human-readable context for presentation or debugging. It may change, be localized, masked, or rewritten. Program code must not depend on exact `message` text.
+- `details`: minimal structured data for caller behavior or machine processing. Because it becomes part of the response contract, include only data the receiver may depend on.
 
-Validation failures MAY include field-level details when the caller can act on them.
-Do not expose internal diagnostic data through presentation failures unless the protocol contract explicitly allows it.
+Validation responses may include field-level details when the caller can act on them.
+Do not expose internal diagnostic data through protocol responses unless the protocol contract explicitly allows it.
 
 ## Vendor Error Contracts
 
 Vendor raw errors are external contracts.
-When adapter code reads structured fields from a vendor error, validate and normalize those fields at the adapter boundary before mapping them to an application-controlled failure.
+When adapter code reads structured fields from a vendor error, validate and normalize those fields at the adapter boundary before wrapping or translating the error.
 
 - Prefer `zod` schemas for external error contracts when the adapter depends on structured vendor fields, such as database error codes, constraint names, SDK error codes, or HTTP client response metadata.
 - Define external enum-like code sets once as `as const` objects, build the `zod` enum schema from that object, and derive the TypeScript type from the schema with `z.infer`.
@@ -146,13 +139,13 @@ When adapter code reads structured fields from a vendor error, validate and norm
 
 ## Unexpected System Errors
 
-Applications cannot know or handle every possible thrown value or failure.
-At boundaries, preserve only the failures the boundary explicitly understands and mask unrecognized failures before exposing them outside the application.
+Applications cannot know or handle every possible thrown value or rejected promise.
+At boundaries, preserve only the errors the boundary explicitly understands and mask unrecognized errors before exposing them outside the application.
 
-- Convert recognized technical failures into explicit application-controlled categories only when the caller can handle them as part of the contract.
+- Convert recognized technical failures into explicit protocol responses only when the external caller can handle them as part of the protocol contract.
 - Keep unrecognized failures on the exception or rejected-promise path until a presentation or process boundary masks them as a safe internal response.
 - Preserve the original cause when possible for internal observability.
 - Make unrecognized failures observable through logging, metrics, tracing, or another operational signal.
 - Do not create silent failures by swallowing unknown failures without handling or observability.
 
-Unexpected system error responses sent outside the application MUST be stable, safe, and masked.
+Unexpected system error responses sent outside the application must be stable, safe, and masked.

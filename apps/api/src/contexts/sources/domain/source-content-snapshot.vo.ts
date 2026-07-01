@@ -1,4 +1,8 @@
-import { ValueObject } from '@kernels/domain';
+import {
+  DomainException,
+  DOMAIN_ERROR_KIND,
+  ValueObject,
+} from '@kernels/domain';
 import { SourceFingerprint } from './source-fingerprint.vo';
 import { SourceContent } from './source-content.vo';
 import { SourceSize } from './source-size.vo';
@@ -55,7 +59,12 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
 
   protected validate(props: SourceContentSnapshotProps): void {
     if (!SourceContent.of(props.content).hasByteSize(props.size)) {
-      throw new Error('Source size must match content byte size');
+      throw new DomainException({
+        kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
+        code: 'source.size_content_mismatch',
+        message: 'Source size must match content byte size',
+        details: { fields: ['size', 'content'] },
+      });
     }
   }
 }

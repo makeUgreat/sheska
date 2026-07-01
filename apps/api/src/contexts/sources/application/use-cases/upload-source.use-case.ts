@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { fromSafePromise, type ResultAsync } from '@core/result';
 import {
   ExternalSourceId,
   Source,
@@ -7,7 +6,6 @@ import {
   type SourceRepository,
   type SourceSyncJobRepository,
 } from '@contexts/sources/domain';
-import { type SourceFingerprinterFailure } from '@contexts/sources/application/ports';
 import {
   SourceContentSnapshotCalculator,
   type SourceContentSnapshotCalculation,
@@ -16,7 +14,6 @@ import {
   SOURCE_REPOSITORY,
   SOURCE_SYNC_JOB_REPOSITORY,
 } from '@contexts/sources/sources.di-tokens';
-import { type UploadSourceUseCaseFailure } from './upload-source.failure';
 
 export interface UploadSourceCommand {
   readonly externalSourceId: string;
@@ -31,9 +28,7 @@ export interface UploadSourceResult {
 }
 
 export interface UploadSourceContentSnapshotCalculator {
-  calculate(
-    content: string,
-  ): ResultAsync<SourceContentSnapshotCalculation, SourceFingerprinterFailure>;
+  calculate(content: string): Promise<SourceContentSnapshotCalculation>;
 }
 
 @Injectable()
@@ -47,26 +42,18 @@ export class UploadSourceUseCase {
     private readonly syncJobs: SourceSyncJobRepository,
   ) {}
 
-  execute(
-    command: UploadSourceCommand,
-  ): ResultAsync<UploadSourceResult, UploadSourceUseCaseFailure> {
+  async execute(command: UploadSourceCommand): Promise<UploadSourceResult> {
     const externalSourceId = ExternalSourceId.of(
       command.externalSourceId,
     ).unpack();
+    const snapshot = await this.contentSnapshotCalculator.calculate(
+      command.content,
+    );
+    const existingSource = await this.sources.find({ externalSourceId });
 
-    return this.contentSnapshotCalculator
-      .calculate(command.content)
-      .andThen((snapshot) =>
-        fromSafePromise(
-          this.sources
-            .find({ externalSourceId })
-            .then((existingSource) =>
-              this.persistSourceSync(
-                this.syncSource(existingSource, externalSourceId, snapshot),
-              ),
-            ),
-        ),
-      );
+    return this.persistSourceSync(
+      this.syncSource(existingSource, externalSourceId, snapshot),
+    );
   }
 
   private syncSource(

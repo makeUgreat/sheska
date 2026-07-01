@@ -1,5 +1,1 @@
-export type {
-  SourceFingerprinter,
-  SourceFingerprinterFailure,
-  SourceFingerprinterUnavailableFailure,
-} from './source.fingerprinter';
+export type { SourceFingerprinter } from './source.fingerprinter';
