@@ -117,8 +117,7 @@ flowchart TB
 
 ## Non-Port Contracts
 
-- Domain failures are domain contracts, not ports.
-- Application failures are use case contracts, not ports.
 - Presentation DTOs and mappers are protocol adapter contracts, not ports.
-- Infrastructure failure types and persistence mappers are adapter contracts, not ports.
+- Presentation error response envelopes are protocol adapter contracts, not ports.
+- Infrastructure exceptions and persistence mappers are adapter concerns, not ports.
 - If an outer layer contract must be consumed by application core, move the contract inward and model it as an application port or application-kernel contract.

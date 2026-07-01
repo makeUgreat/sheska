@@ -62,7 +62,6 @@ DDD building blocks are chosen by the domain role they play, not by where a clas
 | Factory | Encapsulation of complex domain object creation rules. |
 | Domain Event | Meaningful business fact that already happened inside the domain. |
 | Specification | Reusable domain condition or decision rule. |
-| Domain Failure | Business rule failure without transport, database, or framework details. |
 
 ### Responsibility Placement
 

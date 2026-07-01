@@ -40,17 +40,17 @@ const apiRuleNames = [
 ];
 
 const validFiles: Record<string, string> = {
-  'src/core/result.ts': `
-    export const result = 'ok';
+  'src/core/guard.ts': `
+    export const guard = 'ok';
   `,
   'src/kernels/domain/index.ts': `
     export const domainKernel = 'domain-kernel';
   `,
   'src/contexts/corrections/domain/index.ts': `
-    import { result } from '@core/result';
+    import { guard } from '@core/guard';
     import { domainKernel } from '@kernels/domain';
 
-    export const correction = [result, domainKernel].join(':');
+    export const correction = [guard, domainKernel].join(':');
   `,
   'src/contexts/corrections/application/ports/index.ts': `
     export interface CorrectionRepository {

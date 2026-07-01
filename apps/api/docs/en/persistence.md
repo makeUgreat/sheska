@@ -55,19 +55,18 @@ Persistence policy decides how database and ORM adapters preserve stored data wi
 
 - Persistence mappers translate between database rows and domain objects at the infrastructure boundary.
 - Restoring a database row into a domain object must still pass through domain construction or restoration APIs.
-- If domain restoration rejects a stored row with a domain failure value, keep that failure unchanged instead of weakening the domain model or relabeling it as a persistence failure.
+- If domain restoration rejects a stored row by throwing, let that exception preserve the domain invariant failure instead of weakening the domain model or relabeling it as a persistence error.
 
 ### Persistence Mapper Policy
 
-- Repository implementations own database calls, query composition, and vendor or storage-only failure conversion to repository contract failures.
+- Repository implementations own database calls, query composition, and wrapping vendor or storage-only errors when adapter context is useful.
 - Persistence mappers own restoration input shape validation, persistence row to domain restoration, and domain object to insert row conversion.
-- Persistence mapper restoration methods should return `Result` instead of throwing. When domain restoration returns a domain failure, mappers and repositories should pass it through unchanged.
-- Do not wrap mapper-returned domain failures as repository or persistence failures only because the failure occurred while restoring a row.
+- Persistence mapper restoration methods should let domain restoration exceptions propagate unchanged.
+- Do not wrap domain restoration exceptions as repository or persistence errors only because the exception occurred while restoring a row.
 - Aggregate persistence mappers should be split by restored aggregate or entity. Avoid collecting unrelated aggregate mappings in one adapter-wide mapper.
 - Persistence adapter file names should read `{domain-name}.{purpose-or-adapter}.{role}.ts` so the subject, boundary, and role stay sortable and easy to search.
 - Name persistence mapper files `{aggregate-or-entity}.persistence.mapper.ts` and classes `{AggregateOrEntity}PersistenceMapper`, such as `source.persistence.mapper.ts` and `SourcePersistenceMapper`.
 - Name concrete repository adapter files `{aggregate-or-entity}.{adapter}.repository.ts` and classes `{AggregateOrEntity}{Adapter}Repository`, such as `source.drizzle.repository.ts` and `SourceDrizzleRepository`.
-- Failure mapper files may use `{owner}-failure.mapper.ts` when the mapped subject is a failure family instead of an aggregate or entity.
 - Domain objects restored from persistence should expose a `restore` path that validates domain invariants and does not record domain events.
 - Repository `save` methods that return a domain object should return the domain object restored from the database-returned row, not the original input object.
 - Domain-to-insert mapping may trust domain objects that already passed domain invariants. Use duplicate insert validation only when the adapter has an additional storage-only constraint.

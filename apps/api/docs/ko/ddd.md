@@ -63,7 +63,6 @@ DDD 구성 요소는 class가 위치한 곳이 아니라 domain에서 맡는 역
 | Factory | 복잡한 domain object 생성 규칙을 캡슐화한다. |
 | Domain Event | Domain 안에서 이미 발생한 의미 있는 business fact. |
 | Specification | 재사용 가능한 domain condition 또는 판정 rule. |
-| Domain Failure | Transport, database, framework detail이 없는 business rule failure. |
 
 ### 책임 배치 기준
 

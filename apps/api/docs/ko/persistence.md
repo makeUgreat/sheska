@@ -56,19 +56,18 @@ Persistence policy는 database와 ORM adapter가 domain rule의 소유자가 되
 
 - Persistence mapper는 infrastructure boundary에서 database row와 domain object를 변환한다.
 - Database row를 domain object로 복원할 때도 domain construction 또는 restoration API를 거쳐야 한다.
-- Domain restoration이 저장된 row를 domain failure value로 거부하면 domain model을 약화하거나 persistence failure로 이름을 바꾸지 말고 해당 failure를 그대로 유지한다.
+- Domain restoration이 저장된 row를 throw로 거부하면 domain model을 약화하거나 persistence error로 이름을 바꾸지 말고 해당 exception이 domain invariant failure를 보존하게 둔다.
 
 ### Persistence Mapper 정책
 
-- Repository implementation은 database call, query composition, vendor 또는 storage-only failure를 repository contract failure로 변환하는 책임을 소유한다.
+- Repository implementation은 database call, query composition, adapter context가 유용할 때 vendor 또는 storage-only error를 감싸는 책임을 소유한다.
 - Persistence mapper는 복원 입력의 shape validation, persistence row에서 domain으로 복원하는 책임, domain object를 insert row로 변환하는 책임을 소유한다.
-- Persistence mapper의 restore method는 throw 대신 `Result`를 반환하는 것을 기본으로 한다. Domain restoration이 domain failure를 반환하면 mapper와 repository는 그 failure를 그대로 통과시켜야 한다.
-- Row를 복원하는 중 발생했다는 이유만으로 mapper가 반환한 domain failure를 repository failure 또는 persistence failure로 감싸지 않는다.
+- Persistence mapper의 restore method는 domain restoration exception을 그대로 전파하는 것이 좋다.
+- Row를 복원하는 중 발생했다는 이유만으로 domain restoration exception을 repository 또는 persistence error로 감싸지 않는다.
 - Aggregate persistence mapper는 복원 대상 aggregate 또는 entity 단위로 나누는 것이 좋다. 관련 없는 aggregate mapping을 하나의 adapter-wide mapper에 모으지 않는다.
 - Persistence adapter file name은 `{domain-name}.{purpose-or-adapter}.{role}.ts` 순서로 읽히게 해서 subject, boundary, role을 정렬하고 검색하기 쉽게 둔다.
 - Persistence mapper file은 `{aggregate-or-entity}.persistence.mapper.ts`, class는 `{AggregateOrEntity}PersistenceMapper`로 이름 짓는다. 예: `source.persistence.mapper.ts`, `SourcePersistenceMapper`.
 - Concrete repository adapter file은 `{aggregate-or-entity}.{adapter}.repository.ts`, class는 `{AggregateOrEntity}{Adapter}Repository`로 이름 짓는다. 예: `source.drizzle.repository.ts`, `SourceDrizzleRepository`.
-- Failure mapper file은 mapping 대상이 aggregate나 entity가 아니라 failure family라면 `{owner}-failure.mapper.ts`를 사용할 수 있다.
 - Persistence에서 복원되는 domain object는 domain invariant를 검증하고 domain event를 기록하지 않는 `restore` 경로를 노출해야 한다.
 - Domain object를 반환하는 repository `save` method는 원래 입력 object가 아니라 database가 반환한 row에서 복원한 domain object를 반환해야 한다.
 - Domain-to-insert mapping은 이미 domain invariant를 통과한 domain object를 신뢰할 수 있다. Adapter에 추가 storage-only constraint가 있을 때만 insert validation을 중복할 수 있다.

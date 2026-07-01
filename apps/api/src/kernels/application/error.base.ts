@@ -1,4 +1,4 @@
-export const APPLICATION_FAILURE_KIND = {
+export const APPLICATION_ERROR_KIND = {
   VALIDATION_FAILED: 'validation_failed',
   DEPENDENCY_UNAVAILABLE: 'dependency_unavailable',
   NOT_FOUND: 'not_found',
@@ -9,16 +9,16 @@ export const APPLICATION_FAILURE_KIND = {
   RATE_LIMITED: 'rate_limited',
 } as const;
 
-export type ApplicationFailureKind =
-  (typeof APPLICATION_FAILURE_KIND)[keyof typeof APPLICATION_FAILURE_KIND];
+export type ApplicationErrorKind =
+  (typeof APPLICATION_ERROR_KIND)[keyof typeof APPLICATION_ERROR_KIND];
 
-export type ApplicationFailureCode<
+export type ApplicationErrorCode<
   Owner extends string,
   Reason extends string,
 > = `${Owner}.${Reason}`;
 
-export interface ApplicationFailureBase<
-  Kind extends ApplicationFailureKind = ApplicationFailureKind,
+export interface ApplicationErrorBase<
+  Kind extends ApplicationErrorKind = ApplicationErrorKind,
   Code extends string = string,
   Details = unknown,
 > {
@@ -28,16 +28,12 @@ export interface ApplicationFailureBase<
   readonly details: Details;
 }
 
-export type ApplicationFailureOf<
-  Kind extends ApplicationFailureKind,
+export type ApplicationErrorOf<
+  Kind extends ApplicationErrorKind,
   Owner extends string,
   Reason extends string,
-  Details = ApplicationFailureDetailsFor<Kind>,
-> = ApplicationFailureBase<
-  Kind,
-  ApplicationFailureCode<Owner, Reason>,
-  Details
->;
+  Details = ApplicationErrorDetailsFor<Kind>,
+> = ApplicationErrorBase<Kind, ApplicationErrorCode<Owner, Reason>, Details>;
 
 export type ApplicationValidationFieldDetail = {
   readonly path: string;
@@ -48,7 +44,7 @@ export type ApplicationValidationDetails = {
   readonly fields: ApplicationValidationFieldDetail[];
 };
 
-export type ApplicationFailureDetailsFor<Kind extends ApplicationFailureKind> =
-  Kind extends typeof APPLICATION_FAILURE_KIND.VALIDATION_FAILED
+export type ApplicationErrorDetailsFor<Kind extends ApplicationErrorKind> =
+  Kind extends typeof APPLICATION_ERROR_KIND.VALIDATION_FAILED
     ? ApplicationValidationDetails
     : unknown;

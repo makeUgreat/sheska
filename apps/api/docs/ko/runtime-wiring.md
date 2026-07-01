@@ -118,8 +118,7 @@ flowchart TB
 
 ## Non-Port Contracts
 
-- Domain failure는 domain contract이지 port가 아니다.
-- Application failure는 use case contract이지 port가 아니다.
 - Presentation DTO와 mapper는 protocol adapter contract이지 port가 아니다.
-- Infrastructure failure type과 persistence mapper는 adapter contract이지 port가 아니다.
+- Presentation error response envelope는 protocol adapter contract이지 port가 아니다.
+- Infrastructure exception과 persistence mapper는 adapter concern이지 port가 아니다.
 - Outer layer contract를 application core가 소비해야 한다면, 그 contract를 안쪽으로 옮겨 application port 또는 application-kernel contract로 모델링한다.

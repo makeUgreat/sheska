@@ -1,6 +1,5 @@
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { okAsync } from '@core/result';
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -30,7 +29,7 @@ describe('UploadSourceUseCase', () => {
         throw new Error(`Missing test fingerprint for content: ${content}`);
       }
 
-      return okAsync(fingerprint);
+      return Promise.resolve(fingerprint);
     },
   };
 
@@ -65,33 +64,29 @@ describe('UploadSourceUseCase', () => {
 
     const result = await useCase.execute({ externalSourceId, content });
 
-    expect(result.isOk()).toBe(true);
+    expect(result).toMatchObject({
+      externalSourceId,
+      fingerprint,
+    });
+    expect(result.sourceId.length).toBeGreaterThan(0);
+    expect(result.syncJobId?.length).toBeGreaterThan(0);
 
-    if (result.isOk()) {
-      expect(result.value).toMatchObject({
-        externalSourceId,
-        fingerprint,
-      });
-      expect(result.value.sourceId.length).toBeGreaterThan(0);
-      expect(result.value.syncJobId?.length).toBeGreaterThan(0);
+    const source = await sources.find({ externalSourceId });
+    expect(source?.id).toBe(result.sourceId);
+    expect(source?.getProps().contentSnapshot.unpack()).toEqual({
+      content,
+      fingerprint,
+      size: sourceContentByteSize(content),
+    });
 
-      const source = await sources.find({ externalSourceId });
-      expect(source?.id).toBe(result.value.sourceId);
-      expect(source?.getProps().contentSnapshot.unpack()).toEqual({
-        content,
-        fingerprint,
-        size: sourceContentByteSize(content),
-      });
+    const [syncJob] = await findSyncJobsBySourceId(result.sourceId);
 
-      const [syncJob] = await findSyncJobsBySourceId(result.value.sourceId);
-
-      expect(syncJob).toMatchObject({
-        id: result.value.syncJobId,
-        sourceId: result.value.sourceId,
-        fingerprint,
-        status: 'pending',
-      });
-    }
+    expect(syncJob).toMatchObject({
+      id: result.syncJobId,
+      sourceId: result.sourceId,
+      fingerprint,
+      status: 'pending',
+    });
   });
 
   it('같은 content를 다시 업로드하면 저장 갱신과 sync job 생성을 건너뛴다', async () => {
@@ -99,26 +94,17 @@ describe('UploadSourceUseCase', () => {
     const content = '# Same source note';
     const fingerprint = useFingerprint(content, 'fingerprint-unchanged-source');
     const firstResult = await useCase.execute({ externalSourceId, content });
-    expect(firstResult.isOk()).toBe(true);
-
-    if (firstResult.isErr()) {
-      throw new Error(firstResult.error.message);
-    }
 
     const secondResult = await useCase.execute({ externalSourceId, content });
 
-    expect(secondResult.isOk()).toBe(true);
-
-    if (secondResult.isOk()) {
-      expect(secondResult.value).toEqual({
-        sourceId: firstResult.value.sourceId,
-        externalSourceId,
-        fingerprint,
-      });
-    }
+    expect(secondResult).toEqual({
+      sourceId: firstResult.sourceId,
+      externalSourceId,
+      fingerprint,
+    });
 
     const persistedSyncJobs = await findSyncJobsBySourceId(
-      firstResult.value.sourceId,
+      firstResult.sourceId,
     );
 
     expect(persistedSyncJobs).toHaveLength(1);
@@ -134,27 +120,18 @@ describe('UploadSourceUseCase', () => {
       externalSourceId,
       content: oldContent,
     });
-    expect(firstResult.isOk()).toBe(true);
-
-    if (firstResult.isErr()) {
-      throw new Error(firstResult.error.message);
-    }
 
     const secondResult = await useCase.execute({
       externalSourceId,
       content: newContent,
     });
 
-    expect(secondResult.isOk()).toBe(true);
-
-    if (secondResult.isOk()) {
-      expect(secondResult.value).toMatchObject({
-        sourceId: firstResult.value.sourceId,
-        externalSourceId,
-        fingerprint: newFingerprint,
-      });
-      expect(secondResult.value.syncJobId?.length).toBeGreaterThan(0);
-    }
+    expect(secondResult).toMatchObject({
+      sourceId: firstResult.sourceId,
+      externalSourceId,
+      fingerprint: newFingerprint,
+    });
+    expect(secondResult.syncJobId?.length).toBeGreaterThan(0);
 
     const source = await sources.find({ externalSourceId });
     expect(source?.getProps().contentSnapshot.unpack()).toEqual({
@@ -164,7 +141,7 @@ describe('UploadSourceUseCase', () => {
     });
 
     const persistedSyncJobs = await findSyncJobsBySourceId(
-      firstResult.value.sourceId,
+      firstResult.sourceId,
     );
 
     expect(persistedSyncJobs).toHaveLength(2);

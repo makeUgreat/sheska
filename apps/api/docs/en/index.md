@@ -29,7 +29,7 @@ When changing public project Markdown documents, also read the repository docume
 
 ## Routing
 
-- API failure/error definitions, mapping, masking, propagation, or failure contract reviews: read [API Error Policy](./error.md).
+- API error, exception, masking, propagation, or error response contract reviews: read [API Error Policy](./error.md).
 - `apps/api` architecture, DDD boundary, source structure, or module boundary decisions: read [API Architecture Convention](./architecture.md).
 - `apps/api` DDD boundaries, domain model ownership, or shared domain language: read [API DDD Convention](./ddd.md).
 - Database schema, migration, ORM persistence, repository mapper, or storage constraint decisions: read [API Persistence Policy](./persistence.md).
