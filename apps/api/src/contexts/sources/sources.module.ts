@@ -7,6 +7,7 @@ import { SourceFingerprinterSha256 } from '@contexts/sources/infrastructure/fing
 import * as sourcesSchema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
 import { SourceDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.drizzle.repository';
 import { SourceSyncJobDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source-sync-job.drizzle.repository';
+import { SourcesHttpController } from '@contexts/sources/presentation/http/sources-http.controller';
 import {
   SOURCE_FINGERPRINTER,
   SOURCE_REPOSITORY,
@@ -20,6 +21,7 @@ export class SourcesModule {
   static forRoot(_options: SourcesModuleOptions = {}): DynamicModule {
     return {
       module: SourcesModule,
+      controllers: [SourcesHttpController],
       providers: [
         {
           provide: SOURCE_FINGERPRINTER,
