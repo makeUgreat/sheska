@@ -10,6 +10,7 @@ describe('DEFAULT_SETTINGS', () => {
   it('defaults healthCheckIntervalMinutes to 5', () => {
     expect(DEFAULT_SETTINGS.healthCheckIntervalMinutes).toBe(5);
   });
+
 });
 
 function makeTab(api = { health: vi.fn().mockResolvedValue({ status: 'ok' }) }): SheskaSettingTab {
@@ -145,5 +146,6 @@ describe('SheskaSettingTab', () => {
         },
       });
     });
+
   });
 });

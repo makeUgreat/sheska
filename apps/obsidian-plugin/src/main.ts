@@ -1,4 +1,4 @@
-import { Notice, Plugin } from 'obsidian';
+import { Notice, Plugin, TFile } from 'obsidian';
 import { SheskaApiClient } from '@/api/client';
 import { DEFAULT_SETTINGS, SheskaSettingTab } from '@/settings';
 import type { SheskaSettings } from '@/settings';
@@ -26,6 +26,30 @@ export default class SheskaPlugin extends Plugin {
         }
       },
     });
+
+    this.addCommand({
+      id: 'sheska-upload-note',
+      name: 'Upload current note to Sheska',
+      callback: async () => {
+        const file = this.app.workspace.getActiveFile();
+        if (!file) {
+          new Notice('No active note to upload.');
+          return;
+        }
+        await this.uploadFile(file);
+      },
+    });
+
+    this.registerEvent(
+      this.app.workspace.on('file-menu', (menu, abstractFile) => {
+        if (!(abstractFile instanceof TFile)) return;
+        menu.addItem((item) => {
+          item.setTitle('Upload to Sheska').onClick(async () => {
+            await this.uploadFile(abstractFile);
+          });
+        });
+      }),
+    );
 
     this.startHealthCheckInterval();
   }
@@ -55,6 +79,17 @@ export default class SheskaPlugin extends Plugin {
         });
       }, minutes * 60 * 1000),
     );
+  }
+
+  private async uploadFile(file: TFile): Promise<void> {
+    try {
+      const content = await this.app.vault.read(file);
+      await this.api.uploadSource({ externalSourceId: file.path, content });
+      new Notice('Note uploaded to Sheska.');
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err);
+      new Notice(`Failed to upload note to Sheska: ${reason}`);
+    }
   }
 
   private stopHealthCheckInterval(): void {

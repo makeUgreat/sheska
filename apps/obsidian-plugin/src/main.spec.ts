@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { noticeMessages } from '../__mocks__/obsidian';
+import {
+  noticeMessages,
+  fileMenuItems,
+  fileMenuHandler,
+  TFile,
+  Menu,
+} from '../__mocks__/obsidian';
 import SheskaPlugin from './main';
 import { DEFAULT_SETTINGS } from './settings';
 
@@ -18,6 +24,7 @@ describe('SheskaPlugin', () => {
   beforeEach(() => {
     plugin = makePlugin();
     noticeMessages.length = 0;
+    fileMenuItems.length = 0;
     vi.clearAllMocks();
   });
 
@@ -48,7 +55,10 @@ describe('SheskaPlugin', () => {
     it('falls back to DEFAULT_SETTINGS when loadData returns empty', async () => {
       await plugin.loadSettings();
 
-      expect(plugin.settings).toEqual(DEFAULT_SETTINGS);
+      expect(plugin.settings).toMatchObject({
+        apiBaseUrl: DEFAULT_SETTINGS.apiBaseUrl,
+        healthCheckIntervalMinutes: DEFAULT_SETTINGS.healthCheckIntervalMinutes,
+      });
     });
 
     it('merges saved data over defaults', async () => {
@@ -118,6 +128,138 @@ describe('SheskaPlugin', () => {
         'Sheska API health check failed. Check settings.',
       );
       vi.useRealTimers();
+    });
+  });
+
+  describe('sheska-upload-note command', () => {
+    async function getUploadCallback(): Promise<() => Promise<void>> {
+      await plugin.onload();
+      const calls = vi.mocked(plugin.addCommand).mock.calls;
+      const uploadCall = calls.find((c) => c[0].id === 'sheska-upload-note');
+      return (uploadCall![0] as unknown as { callback: () => Promise<void> })
+        .callback;
+    }
+
+    it('registers the sheska-upload-note command', async () => {
+      await plugin.onload();
+
+      expect(plugin.addCommand).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'sheska-upload-note' }),
+      );
+    });
+
+    it('shows success Notice when upload succeeds', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              sourceId: '1',
+              externalSourceId: 'test.md',
+              fingerprint: 'abc',
+            }),
+        }),
+      );
+      plugin.app.workspace.getActiveFile = vi
+        .fn()
+        .mockReturnValue(new TFile('test.md'));
+      plugin.app.vault.read = vi.fn().mockResolvedValue('# Hello');
+      const callback = await getUploadCallback();
+
+      await callback();
+
+      expect(noticeMessages).toContain('Note uploaded to Sheska.');
+    });
+
+    it('shows Notice when there is no active file', async () => {
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(null);
+      const callback = await getUploadCallback();
+
+      await callback();
+
+      expect(noticeMessages).toContain('No active note to upload.');
+    });
+
+    it('shows failure Notice with error message when upload fails', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
+      );
+      plugin.app.workspace.getActiveFile = vi
+        .fn()
+        .mockReturnValue(new TFile('test.md'));
+      plugin.app.vault.read = vi.fn().mockResolvedValue('content');
+      const callback = await getUploadCallback();
+
+      await callback();
+
+      expect(noticeMessages).toContain(
+        'Failed to upload note to Sheska: ECONNREFUSED',
+      );
+    });
+
+  });
+
+  describe('file-menu upload item', () => {
+    it('registers a file-menu event handler', async () => {
+      await plugin.onload();
+
+      expect(plugin.registerEvent).toHaveBeenCalledOnce();
+    });
+
+    it('adds an Upload to Sheska item to the file menu', async () => {
+      await plugin.onload();
+      const handler = fileMenuHandler!;
+      const menu = new Menu();
+      const file = new TFile('note.md');
+
+      handler(menu, file);
+
+      expect(fileMenuItems).toHaveLength(1);
+      expect(fileMenuItems[0].title).toBe('Upload to Sheska');
+    });
+
+    it('shows success Notice when file-menu upload succeeds', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              sourceId: '2',
+              externalSourceId: 'note.md',
+              fingerprint: 'xyz',
+            }),
+        }),
+      );
+      plugin.app.vault.read = vi.fn().mockResolvedValue('# Note');
+      await plugin.onload();
+      const handler = fileMenuHandler!;
+      const menu = new Menu();
+      handler(menu, new TFile('note.md'));
+
+      await fileMenuItems[0].click();
+
+      expect(noticeMessages).toContain('Note uploaded to Sheska.');
+    });
+
+    it('shows failure Notice with error message when file-menu upload fails', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockRejectedValue(new Error('Network error')),
+      );
+      plugin.app.vault.read = vi.fn().mockResolvedValue('content');
+      await plugin.onload();
+      const handler = fileMenuHandler!;
+      const menu = new Menu();
+      handler(menu, new TFile('note.md'));
+
+      await fileMenuItems[0].click();
+
+      expect(noticeMessages).toContain(
+        'Failed to upload note to Sheska: Network error',
+      );
     });
   });
 

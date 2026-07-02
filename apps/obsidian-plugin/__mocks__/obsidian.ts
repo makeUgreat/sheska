@@ -1,11 +1,66 @@
 import { vi } from 'vitest';
 
-export class App {}
+export class TFile {
+  constructor(public path: string) {}
+}
+
+export interface RenderedMenuItem {
+  title: string;
+  click(): Promise<void>;
+}
+
+export const fileMenuItems: RenderedMenuItem[] = [];
+export let fileMenuHandler: ((menu: Menu, file: TFile) => void) | null = null;
+
+class MockMenuItem {
+  private record: RenderedMenuItem;
+  constructor(record: RenderedMenuItem) {
+    this.record = record;
+  }
+  setTitle(title: string): this {
+    this.record.title = title;
+    return this;
+  }
+  onClick(cb: () => void | Promise<void>): this {
+    this.record.click = async () => cb();
+    return this;
+  }
+}
+
+export class Menu {
+  addItem(cb: (item: MockMenuItem) => void): this {
+    const record: RenderedMenuItem = { title: '', click: async () => {} };
+    fileMenuItems.push(record);
+    cb(new MockMenuItem(record));
+    return this;
+  }
+}
+
+class MockWorkspace {
+  getActiveFile = vi.fn().mockReturnValue(null);
+
+  on(event: string, handler: (menu: Menu, file: TFile) => void): object {
+    if (event === 'file-menu') {
+      fileMenuHandler = handler;
+    }
+    return {};
+  }
+}
+
+class MockVault {
+  read = vi.fn().mockResolvedValue('');
+}
+
+export class App {
+  workspace = new MockWorkspace();
+  vault = new MockVault();
+}
 
 export class Plugin {
   app = new App();
   addCommand = vi.fn();
   addSettingTab = vi.fn();
+  registerEvent = vi.fn();
   loadData = vi.fn().mockResolvedValue({});
   saveData = vi.fn().mockResolvedValue(undefined);
   registerInterval = vi.fn((id: number) => id);
