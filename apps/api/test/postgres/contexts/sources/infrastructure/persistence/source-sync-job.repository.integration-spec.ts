@@ -58,8 +58,8 @@ describe('SourceSyncJobDrizzleRepository', () => {
       fingerprint: 'fingerprint-1',
     });
 
-    await expect(repository.save(syncJob)).rejects.toThrow(
-      'Source Sync Job Repository operation failed',
-    );
+    await expect(repository.save(syncJob)).rejects.toMatchObject({
+      error: { kind: 'conflict', code: 'source_sync_job.save_failed' },
+    });
   });
 });
