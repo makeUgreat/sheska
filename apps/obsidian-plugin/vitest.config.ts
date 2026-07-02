@@ -12,8 +12,10 @@ export default defineConfig({
     name: 'unit',
     environment: 'node',
     globals: false,
+    setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.spec.ts'],
     coverage: {
+      provider: 'v8',
       reportsDirectory: '../../coverage/apps/obsidian-plugin',
     },
   },

@@ -81,4 +81,91 @@ describe('SheskaApiClient', () => {
       );
     });
   });
+
+  // Contract tests — shapes mirror the API DTOs in apps/api
+  describe('health', () => {
+    it('calls GET /health and returns { status }', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve({ status: 'ok' }),
+        }),
+      );
+
+      const result = await client.health();
+
+      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/health', {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      expect(result).toEqual({ status: 'ok' });
+    });
+  });
+
+  describe('uploadSource', () => {
+    it('calls POST /sources with externalSourceId and content', async () => {
+      const response = {
+        sourceId: 'src-1',
+        externalSourceId: 'vault/note.md',
+        fingerprint: 'abc123',
+        syncJobId: 'job-1',
+      };
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(response),
+        }),
+      );
+
+      const result = await client.uploadSource({
+        externalSourceId: 'vault/note.md',
+        content: '# Hello',
+      });
+
+      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/sources', {
+        method: 'POST',
+        body: JSON.stringify({ externalSourceId: 'vault/note.md', content: '# Hello' }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      expect(result).toEqual(response);
+    });
+
+    it('syncJobId is optional in the response', async () => {
+      const response = {
+        sourceId: 'src-2',
+        externalSourceId: 'vault/note.md',
+        fingerprint: 'def456',
+      };
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(response),
+        }),
+      );
+
+      const result = await client.uploadSource({
+        externalSourceId: 'vault/note.md',
+        content: '# Hello',
+      });
+
+      expect(result.syncJobId).toBeUndefined();
+    });
+
+    it('throws on 422 when request body is invalid', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 422,
+          statusText: 'Unprocessable Entity',
+        }),
+      );
+
+      await expect(
+        client.uploadSource({ externalSourceId: '', content: '' }),
+      ).rejects.toThrow('Sheska API error: 422 Unprocessable Entity');
+    });
+  });
 });

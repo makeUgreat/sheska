@@ -14,7 +14,7 @@
     "harness:static": "pnpm typecheck && pnpm lint:check && pnpm deps:check",
     "test": "vitest run",
     "test:watch": "vitest",
-    "deploy:local": "pnpm build && : \"${OBSIDIAN_PLUGIN_DIR:?Set OBSIDIAN_PLUGIN_DIR to your Obsidian plugin directory}\" && mkdir -p \"$OBSIDIAN_PLUGIN_DIR\" && cp main.js manifest.json \"$OBSIDIAN_PLUGIN_DIR/\""
+    "deploy:local": "pnpm build && mkdir -p \"/Users/a1234/Documents/Obsidian Vault/.obsidian/plugins/sheska\" && cp main.js manifest.json \"/Users/a1234/Documents/Obsidian Vault/.obsidian/plugins/sheska/\""
   },
   "dependencies": {
     "obsidian": "latest"

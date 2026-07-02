@@ -3,6 +3,9 @@ dist
 node_modules
 build
 
+# Obsidian plugin build output
+apps/obsidian-plugin/main.js
+
 # Logs
 logs
 *.log

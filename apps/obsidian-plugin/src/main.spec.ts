@@ -75,6 +75,52 @@ describe('SheskaPlugin', () => {
     });
   });
 
+  describe('health check interval', () => {
+    it('starts an interval on load when healthCheckIntervalMinutes > 0', async () => {
+      vi.useFakeTimers();
+      plugin = makePlugin({ healthCheckIntervalMinutes: 1 });
+
+      await plugin.onload();
+
+      expect(plugin.registerInterval).toHaveBeenCalledOnce();
+      vi.useRealTimers();
+    });
+
+    it('does not start an interval when healthCheckIntervalMinutes is 0', async () => {
+      plugin = makePlugin({ healthCheckIntervalMinutes: 0 });
+
+      await plugin.onload();
+
+      expect(plugin.registerInterval).not.toHaveBeenCalled();
+    });
+
+    it('restarts the interval after saveSettings', async () => {
+      vi.useFakeTimers();
+      plugin = makePlugin({ healthCheckIntervalMinutes: 1 });
+      await plugin.onload();
+      vi.mocked(plugin.registerInterval).mockClear();
+
+      await plugin.saveSettings();
+
+      expect(plugin.registerInterval).toHaveBeenCalledOnce();
+      vi.useRealTimers();
+    });
+
+    it('shows failure Notice when health check fires and API is unreachable', async () => {
+      vi.useFakeTimers();
+      plugin = makePlugin({ healthCheckIntervalMinutes: 1 });
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNREFUSED')));
+
+      await plugin.onload();
+      await vi.advanceTimersByTimeAsync(60 * 1000);
+
+      expect(noticeMessages).toContain(
+        'Sheska API health check failed. Check settings.',
+      );
+      vi.useRealTimers();
+    });
+  });
+
   describe('sheska-ping command', () => {
     async function getPingCallback(): Promise<() => Promise<void>> {
       await plugin.onload();
