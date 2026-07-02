@@ -1,0 +1,37 @@
+{
+  "name": "@sheska/obsidian-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Obsidian plugin for Sheska API",
+  "main": "main.js",
+  "scripts": {
+    "build": "node esbuild.config.mjs production",
+    "dev": "node esbuild.config.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint --config eslint/config.mjs \"src/**/*.ts\" --fix",
+    "lint:check": "eslint --config eslint/config.mjs \"src/**/*.ts\"",
+    "deps:check": "depcruise src --config dependency-cruiser/config.cjs",
+    "harness:static": "pnpm typecheck && pnpm lint:check && pnpm deps:check",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "deploy:local": "pnpm build && : \"${OBSIDIAN_PLUGIN_DIR:?Set OBSIDIAN_PLUGIN_DIR to your Obsidian plugin directory}\" && mkdir -p \"$OBSIDIAN_PLUGIN_DIR\" && cp main.js manifest.json \"$OBSIDIAN_PLUGIN_DIR/\""
+  },
+  "dependencies": {
+    "obsidian": "latest"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@types/node": "^22.0.0",
+    "builtin-modules": "^4.0.0",
+    "dependency-cruiser": "^17.4.2",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.18.0",
+    "eslint-plugin-prettier": "^5.2.2",
+    "eslint-plugin-unused-imports": "^4.4.1",
+    "globals": "^16.0.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.20.0",
+    "vitest": "^3.0.0"
+  }
+}
