@@ -11,6 +11,10 @@ import {
   PresentationException,
   PRESENTATION_ERROR_KIND,
 } from '@kernels/presentation';
+import {
+  InfrastructureException,
+  INFRASTRUCTURE_ERROR_KIND,
+} from '@kernels/infrastructure';
 import { HttpExceptionFilter } from '../http-exception.filter';
 
 function buildMockHost(): {
@@ -252,6 +256,103 @@ describe('HttpExceptionFilter', () => {
           expect.objectContaining({ code: 'internal.unexpected' }),
         );
       });
+    });
+  });
+
+  describe('InfrastructureException', () => {
+    it.each([
+      [INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE],
+      [INFRASTRUCTURE_ERROR_KIND.TIMEOUT, HttpStatus.SERVICE_UNAVAILABLE],
+      [INFRASTRUCTURE_ERROR_KIND.CONFLICT, HttpStatus.CONFLICT],
+      [
+        INFRASTRUCTURE_ERROR_KIND.RESTORE_FAILED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      ],
+      [
+        INFRASTRUCTURE_ERROR_KIND.INVALID_DATA,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      ],
+      [
+        INFRASTRUCTURE_ERROR_KIND.BAD_RESPONSE,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      ],
+      [INFRASTRUCTURE_ERROR_KIND.UNEXPECTED, HttpStatus.INTERNAL_SERVER_ERROR],
+    ] as const)('%s → %i 로 응답한다', (kind, expectedStatus) => {
+      const { host, status } = buildMockHost();
+      const filter = new HttpExceptionFilter();
+
+      filter.catch(
+        new InfrastructureException({
+          kind,
+          code: 'test.error',
+          source: { boundary: 'persistence', adapter: 'test.drizzle' },
+          message: 'test',
+          details: { cause: new Error('raw db error') },
+        }),
+        host,
+      );
+
+      expect(status).toHaveBeenCalledWith(expectedStatus);
+    });
+
+    it('details를 빈 객체로 마스킹한다', () => {
+      const { host, json } = buildMockHost();
+      const filter = new HttpExceptionFilter();
+
+      filter.catch(
+        new InfrastructureException({
+          kind: INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
+          code: 'source.find_failed',
+          source: { boundary: 'persistence', adapter: 'source.drizzle' },
+          message: 'Source find operation failed',
+          details: { cause: new Error('connection refused') },
+        }),
+        host,
+      );
+
+      expect(json).toHaveBeenCalledWith(
+        expect.objectContaining({ details: {} }),
+      );
+    });
+
+    it('error.code를 응답 body의 code로 사용한다', () => {
+      const { host, json } = buildMockHost();
+      const filter = new HttpExceptionFilter();
+
+      filter.catch(
+        new InfrastructureException({
+          kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+          code: 'source.save_failed',
+          source: { boundary: 'persistence', adapter: 'source.drizzle' },
+          message: 'Source save operation failed',
+          details: { cause: new Error('unique violation') },
+        }),
+        host,
+      );
+
+      expect(json).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'source.save_failed' }),
+      );
+    });
+
+    it('statusCode를 응답 body에 포함한다', () => {
+      const { host, json } = buildMockHost();
+      const filter = new HttpExceptionFilter();
+
+      filter.catch(
+        new InfrastructureException({
+          kind: INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
+          code: 'source.find_failed',
+          source: { boundary: 'persistence', adapter: 'source.drizzle' },
+          message: 'Source find operation failed',
+          details: { cause: new Error('connection refused') },
+        }),
+        host,
+      );
+
+      expect(json).toHaveBeenCalledWith(
+        expect.objectContaining({ statusCode: HttpStatus.SERVICE_UNAVAILABLE }),
+      );
     });
   });
 

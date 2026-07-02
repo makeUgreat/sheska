@@ -74,8 +74,8 @@ describe('SourceDrizzleRepository', () => {
 
     await repository.save(firstSource);
 
-    await expect(repository.save(secondSource)).rejects.toThrow(
-      'Source Repository operation failed',
-    );
+    await expect(repository.save(secondSource)).rejects.toMatchObject({
+      error: { kind: 'conflict', code: 'source.save_failed' },
+    });
   });
 });

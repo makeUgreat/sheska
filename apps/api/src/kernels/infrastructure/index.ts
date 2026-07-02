@@ -8,3 +8,5 @@ export {
   type InfrastructureErrorCauseDetails,
   type InfrastructureInvalidDataDetails,
 } from './error.base';
+export { InfrastructureException } from './infrastructure.exception';
+export { classifyPostgresError } from './postgres-error.classifier';
