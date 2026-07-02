@@ -9,7 +9,7 @@ import { ZodValidationPipe } from './pipes/zod-validation.pipe';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
+      envFilePath: `.env.${process.env.NODE_ENV}`,
       isGlobal: true,
     }),
     DatabaseModule,

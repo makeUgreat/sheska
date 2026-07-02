@@ -86,8 +86,7 @@ flowchart TB
 
 - Environment variable definition은 그 값을 사용하는 boundary에 속한다.
 - Local API runtime value는 commit하면 안 되는 `apps/api/.env`에 둔다.
-- `NODE_ENV`는 Node runtime mode를 설명한다.
-- `APP_ENV`는 API app environment를 선택한다.
+- `NODE_ENV`는 Node runtime mode를 설명하고 API app environment를 선택한다 (`development`, `production`, `test`).
 - Runtime selector의 허용 값과 default는 그 값을 소유하는 typed config schema 또는 mapper에 둔다.
 - Environment variable owner는 schema, default, typed config mapper, owner-specific validation rule을 정의하는 것이 좋다.
 - `platform`은 app-level과 selection-level environment schema를 aggregate하고 process startup에서 API runtime validation을 실행한다.
