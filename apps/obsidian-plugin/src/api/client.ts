@@ -1,3 +1,21 @@
+// API contract types mirrored from apps/api
+
+export interface HealthResponse {
+  status: string;
+}
+
+export interface UploadSourceRequest {
+  externalSourceId: string;
+  content: string;
+}
+
+export interface UploadSourceResponse {
+  sourceId: string;
+  externalSourceId: string;
+  fingerprint: string;
+  syncJobId?: string;
+}
+
 export class SheskaApiClient {
   constructor(private readonly baseUrl: string) {}
 
@@ -27,5 +45,13 @@ export class SheskaApiClient {
       method: 'POST',
       body: JSON.stringify(body),
     });
+  }
+
+  health(): Promise<HealthResponse> {
+    return this.get<HealthResponse>('/health');
+  }
+
+  uploadSource(body: UploadSourceRequest): Promise<UploadSourceResponse> {
+    return this.post<UploadSourceResponse>('/sources', body);
   }
 }

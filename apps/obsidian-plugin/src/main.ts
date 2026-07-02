@@ -6,6 +6,7 @@ import type { SheskaSettings } from '@/settings';
 export default class SheskaPlugin extends Plugin {
   declare settings: SheskaSettings;
   declare api: SheskaApiClient;
+  private healthCheckIntervalId: number | null = null;
 
   async onload(): Promise<void> {
     await this.loadSettings();
@@ -18,13 +19,19 @@ export default class SheskaPlugin extends Plugin {
       name: 'Ping Sheska API',
       callback: async () => {
         try {
-          await this.api.get('/health');
+          await this.api.health();
           new Notice('Sheska API is reachable.');
         } catch {
           new Notice('Failed to reach Sheska API. Check settings.');
         }
       },
     });
+
+    this.startHealthCheckInterval();
+  }
+
+  onunload(): void {
+    this.stopHealthCheckInterval();
   }
 
   async loadSettings(): Promise<void> {
@@ -34,5 +41,26 @@ export default class SheskaPlugin extends Plugin {
 
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
+    this.stopHealthCheckInterval();
+    this.startHealthCheckInterval();
+  }
+
+  private startHealthCheckInterval(): void {
+    const minutes = this.settings.healthCheckIntervalMinutes;
+    if (minutes <= 0) return;
+    this.healthCheckIntervalId = this.registerInterval(
+      window.setInterval(() => {
+        this.api.health().catch(() => {
+          new Notice('Sheska API health check failed. Check settings.');
+        });
+      }, minutes * 60 * 1000),
+    );
+  }
+
+  private stopHealthCheckInterval(): void {
+    if (this.healthCheckIntervalId !== null) {
+      window.clearInterval(this.healthCheckIntervalId);
+      this.healthCheckIntervalId = null;
+    }
   }
 }

@@ -4,6 +4,7 @@ import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { SourcesModule } from '@contexts/sources/sources.module';
 import { DatabaseModule } from './database/database.module';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
+import { HealthModule } from './health/health.module';
 import { ZodValidationPipe } from './pipes/zod-validation.pipe';
 
 @Module({
@@ -13,6 +14,7 @@ import { ZodValidationPipe } from './pipes/zod-validation.pipe';
       isGlobal: true,
     }),
     DatabaseModule,
+    HealthModule,
     SourcesModule.forRoot(),
   ],
   providers: [
