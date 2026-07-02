@@ -8,7 +8,6 @@ import {
 import {
   classifyPostgresError,
   InfrastructureException,
-  INFRASTRUCTURE_ERROR_KIND,
 } from '@kernels/infrastructure';
 import * as schema from './schema';
 import { SourcePersistenceMapper } from './source.persistence.mapper';
@@ -41,17 +40,7 @@ export class SourceDrizzleRepository implements SourceRepository {
       return null;
     }
 
-    try {
-      return SourcePersistenceMapper.toDomain(row);
-    } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: INFRASTRUCTURE_ERROR_KIND.RESTORE_FAILED,
-        code: 'source.restore_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
-        message: 'Source row could not be restored to domain',
-        details: { cause: error },
-      });
-    }
+    return SourcePersistenceMapper.toDomain(row);
   }
 
   async save(source: Source): Promise<Source> {
@@ -83,16 +72,6 @@ export class SourceDrizzleRepository implements SourceRepository {
       });
     }
 
-    try {
-      return SourcePersistenceMapper.toDomain(row);
-    } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: INFRASTRUCTURE_ERROR_KIND.RESTORE_FAILED,
-        code: 'source.restore_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
-        message: 'Source row could not be restored to domain',
-        details: { cause: error },
-      });
-    }
+    return SourcePersistenceMapper.toDomain(row);
   }
 }

@@ -9,17 +9,12 @@ import {
   type PresentationValidationDetails,
   type PresentationValidationFieldDetail,
 } from '@kernels/presentation';
-import { type ZodError, type ZodIssue, type ZodType } from 'zod';
+import { type z } from 'zod';
+import { type $ZodError, type $ZodIssue } from 'zod/v4/core';
 
 interface ZodValidationMetadata {
-  readonly zodSchema: ZodType;
-  readonly zodErrorCode?: string;
-  readonly zodErrorMessage?: string;
-  readonly zodMessageForIssue?: (issue: ZodIssue, path: string) => string;
+  readonly zodSchema: z.ZodType;
 }
-
-const DEFAULT_ERROR_CODE = 'request.validation_failed';
-const DEFAULT_ERROR_MESSAGE = 'Invalid request';
 
 @Injectable()
 export class ZodValidationPipe implements PipeTransform<unknown, unknown> {
@@ -35,34 +30,30 @@ export class ZodValidationPipe implements PipeTransform<unknown, unknown> {
     if (!result.success) {
       throw new PresentationException({
         kind: PRESENTATION_ERROR_KIND.VALIDATION_FAILED,
-        code: validationMetadata.zodErrorCode ?? DEFAULT_ERROR_CODE,
-        message: validationMetadata.zodErrorMessage ?? DEFAULT_ERROR_MESSAGE,
-        details: this.toValidationDetails(result.error, validationMetadata),
+        code: 'request.validation_failed',
+        message: 'Invalid request',
+        details: this.toValidationDetails(result.error),
       });
     }
 
     return result.data;
   }
 
-  private toValidationDetails(
-    error: ZodError,
-    metadata: ZodValidationMetadata,
-  ): PresentationValidationDetails {
+  private toValidationDetails(error: $ZodError): PresentationValidationDetails {
     return {
-      fields: this.toValidationFieldDetails(error.issues, metadata),
+      fields: this.toValidationFieldDetails(error.issues),
     };
   }
 
   private toValidationFieldDetails(
-    issues: ZodIssue[],
-    metadata: ZodValidationMetadata,
+    issues: $ZodIssue[],
   ): PresentationValidationFieldDetail[] {
     const fields = new Map<string, string[]>();
 
     for (const issue of issues) {
       const path = this.pathForIssue(issue);
       const messages = fields.get(path) ?? [];
-      messages.push(this.messageForIssue(issue, path, metadata));
+      messages.push(issue.message);
       fields.set(path, messages);
     }
 
@@ -72,18 +63,10 @@ export class ZodValidationPipe implements PipeTransform<unknown, unknown> {
     }));
   }
 
-  private pathForIssue(issue: ZodIssue): string {
+  private pathForIssue(issue: $ZodIssue): string {
     const path = issue.path.join('.');
 
     return path.length > 0 ? path : 'body';
-  }
-
-  private messageForIssue(
-    issue: ZodIssue,
-    path: string,
-    metadata: ZodValidationMetadata,
-  ): string {
-    return metadata.zodMessageForIssue?.(issue, path) ?? issue.message;
   }
 }
 
@@ -102,13 +85,10 @@ function zodValidationMetadataOf(
 
   return {
     zodSchema: candidate.zodSchema,
-    zodErrorCode: candidate.zodErrorCode,
-    zodErrorMessage: candidate.zodErrorMessage,
-    zodMessageForIssue: candidate.zodMessageForIssue,
   };
 }
 
-function isZodSchema(value: unknown): value is ZodType {
+function isZodSchema(value: unknown): value is z.ZodType {
   return (
     typeof value === 'object' &&
     value !== null &&
