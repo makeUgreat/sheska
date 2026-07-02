@@ -1,4 +1,4 @@
-import { z, type ZodIssue } from 'zod';
+import { z } from 'zod';
 import { type UploadSourceResult } from '@contexts/sources/application/use-cases/upload-source.use-case';
 
 export const uploadSourceHttpRequestSchema = z
@@ -11,15 +11,8 @@ export const uploadSourceHttpRequestSchema = z
   })
   .strict();
 
-export type UploadSourceHttpRequest = z.infer<
-  typeof uploadSourceHttpRequestSchema
->;
-
-export class UploadSourceHttpRequestDto {
+export class UploadSourceHttpRequest {
   static readonly zodSchema = uploadSourceHttpRequestSchema;
-  static readonly zodErrorCode = 'sources.upload.validation_failed';
-  static readonly zodErrorMessage = 'Invalid upload source request';
-  static readonly zodMessageForIssue = messageForUploadSourceHttpRequestIssue;
 
   readonly externalSourceId!: string;
   readonly content!: string;
@@ -41,25 +34,4 @@ export function toUploadSourceHttpResponse(
     fingerprint: result.fingerprint,
     syncJobId: result.syncJobId,
   };
-}
-
-export function messageForUploadSourceHttpRequestIssue(
-  issue: ZodIssue,
-  path: string,
-): string {
-  if (path === 'externalSourceId') {
-    return issue.code === 'invalid_type'
-      ? 'externalSourceId must be a string'
-      : 'externalSourceId cannot be empty';
-  }
-
-  if (path === 'content') {
-    return 'content must be a string';
-  }
-
-  if (issue.code === 'unrecognized_keys') {
-    return 'Request contains unknown fields';
-  }
-
-  return 'Request body is invalid';
 }

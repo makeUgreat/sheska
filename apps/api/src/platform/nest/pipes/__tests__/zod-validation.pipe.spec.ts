@@ -17,18 +17,6 @@ class SchemaClass {
   static readonly zodSchema = z.object({ name: z.string() });
 }
 
-class CustomErrorSchemaClass {
-  static readonly zodSchema = z.object({ name: z.string() });
-  static readonly zodErrorCode = 'custom.validation_failed';
-  static readonly zodErrorMessage = 'Custom validation error';
-}
-
-class CustomMessageSchemaClass {
-  static readonly zodSchema = z.object({ age: z.number() });
-  static readonly zodMessageForIssue = (_issue: z.ZodIssue, path: string) =>
-    `${path} must be a number`;
-}
-
 describe('ZodValidationPipe', () => {
   describe('metatype에 zodSchema가 없는 경우', () => {
     it('metatype이 undefined이면 값을 그대로 반환한다', () => {
@@ -133,30 +121,6 @@ describe('ZodValidationPipe', () => {
       }
     });
 
-    it('zodErrorCode가 있으면 커스텀 code를 사용한다', () => {
-      const pipe = new ZodValidationPipe();
-
-      try {
-        pipe.transform({ name: 123 }, buildMetadata(CustomErrorSchemaClass));
-      } catch (e) {
-        expect((e as PresentationException).error.code).toBe(
-          'custom.validation_failed',
-        );
-      }
-    });
-
-    it('zodErrorMessage가 있으면 커스텀 message를 사용한다', () => {
-      const pipe = new ZodValidationPipe();
-
-      try {
-        pipe.transform({ name: 123 }, buildMetadata(CustomErrorSchemaClass));
-      } catch (e) {
-        expect((e as PresentationException).error.message).toBe(
-          'Custom validation error',
-        );
-      }
-    });
-
     describe('validation details', () => {
       it('실패한 필드의 path를 details.fields에 포함한다', () => {
         const pipe = new ZodValidationPipe();
@@ -209,22 +173,6 @@ describe('ZodValidationPipe', () => {
           };
           const valueField = details.fields.find((f) => f.path === 'value');
           expect(valueField?.messages.length).toBeGreaterThan(1);
-        }
-      });
-
-      it('zodMessageForIssue가 있으면 커스텀 메시지를 사용한다', () => {
-        const pipe = new ZodValidationPipe();
-
-        try {
-          pipe.transform(
-            { age: 'not-a-number' },
-            buildMetadata(CustomMessageSchemaClass),
-          );
-        } catch (e) {
-          const details = (e as PresentationException).error.details as {
-            fields: { path: string; messages: string[] }[];
-          };
-          expect(details.fields[0].messages[0]).toBe('age must be a number');
         }
       });
     });

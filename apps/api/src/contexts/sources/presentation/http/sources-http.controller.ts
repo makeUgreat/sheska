@@ -2,7 +2,7 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
 import {
   toUploadSourceHttpResponse,
-  UploadSourceHttpRequestDto,
+  UploadSourceHttpRequest,
   type UploadSourceHttpResponse,
 } from './dto/upload-source.http.dto';
 
@@ -13,7 +13,7 @@ export class SourcesHttpController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async upload(
-    @Body() request: UploadSourceHttpRequestDto,
+    @Body() request: UploadSourceHttpRequest,
   ): Promise<UploadSourceHttpResponse> {
     const result = await this.uploadSourceUseCase.execute({
       externalSourceId: request.externalSourceId,
