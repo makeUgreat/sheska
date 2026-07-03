@@ -1,9 +1,10 @@
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   type Source,
   type SourceRepository,
   type SourceRepositoryFindCriteria,
+  type SourceRepositoryGetCriteria,
 } from '@contexts/sources/domain';
 import {
   classifyPostgresError,
@@ -41,6 +42,53 @@ export class SourceDrizzleRepository implements SourceRepository {
     }
 
     return SourcePersistenceMapper.toDomain(row);
+  }
+
+  async get(criteria: SourceRepositoryGetCriteria): Promise<Source | null> {
+    let row: schema.SourceRow | undefined;
+
+    try {
+      [row] = await this.db
+        .select()
+        .from(schema.sources)
+        .where(eq(schema.sources.id, criteria.id))
+        .limit(1);
+    } catch (error: unknown) {
+      throw new InfrastructureException({
+        kind: classifyPostgresError(error),
+        code: 'source.get_failed',
+        source: { boundary: 'persistence', adapter: ADAPTER },
+        message: 'Source get operation failed',
+        details: { cause: error },
+      });
+    }
+
+    if (row === undefined) {
+      return null;
+    }
+
+    return SourcePersistenceMapper.toDomain(row);
+  }
+
+  async list(): Promise<Source[]> {
+    let rows: schema.SourceRow[];
+
+    try {
+      rows = await this.db
+        .select()
+        .from(schema.sources)
+        .orderBy(desc(schema.sources.createdAt));
+    } catch (error: unknown) {
+      throw new InfrastructureException({
+        kind: classifyPostgresError(error),
+        code: 'source.list_failed',
+        source: { boundary: 'persistence', adapter: ADAPTER },
+        message: 'Source list operation failed',
+        details: { cause: error },
+      });
+    }
+
+    return rows.map((row) => SourcePersistenceMapper.toDomain(row));
   }
 
   async save(source: Source): Promise<Source> {

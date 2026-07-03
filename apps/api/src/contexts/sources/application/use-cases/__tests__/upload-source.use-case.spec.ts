@@ -17,6 +17,8 @@ type ContentSnapshotCalculatorMock = {
 
 type SourceRepositoryMock = {
   find: MockedFunction<SourceRepository['find']>;
+  get: MockedFunction<SourceRepository['get']>;
+  list: MockedFunction<SourceRepository['list']>;
   save: MockedFunction<SourceRepository['save']>;
 };
 
@@ -295,6 +297,8 @@ function createContentSnapshotCalculatorMock(
 function createSourceRepositoryMock(): SourceRepositoryMock {
   return {
     find: vi.fn<SourceRepository['find']>().mockResolvedValue(null),
+    get: vi.fn<SourceRepository['get']>().mockResolvedValue(null),
+    list: vi.fn<SourceRepository['list']>().mockResolvedValue([]),
     save: vi
       .fn<SourceRepository['save']>()
       .mockImplementation((source) => Promise.resolve(source)),

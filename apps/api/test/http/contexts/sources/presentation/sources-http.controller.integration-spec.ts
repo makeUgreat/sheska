@@ -3,6 +3,8 @@ import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
+import { ListSourcesUseCase } from '@contexts/sources/application/use-cases/list-sources.use-case';
+import { GetSourceUseCase } from '@contexts/sources/application/use-cases/get-source.use-case';
 import {
   ApplicationException,
   APPLICATION_ERROR_KIND,
@@ -25,14 +27,30 @@ type UploadSourceUseCaseMock = {
   execute: MockedFunction<UploadSourceUseCase['execute']>;
 };
 
+type ListSourcesUseCaseMock = {
+  execute: MockedFunction<ListSourcesUseCase['execute']>;
+};
+
+type GetSourceUseCaseMock = {
+  execute: MockedFunction<GetSourceUseCase['execute']>;
+};
+
 describe('SourcesHttpController', () => {
   let app: INestApplication;
   let httpServer: Server;
   let uploadSourceUseCase: UploadSourceUseCaseMock;
+  let listSourcesUseCase: ListSourcesUseCaseMock;
+  let getSourceUseCase: GetSourceUseCaseMock;
 
   beforeEach(async () => {
     uploadSourceUseCase = {
       execute: vi.fn<UploadSourceUseCase['execute']>(),
+    };
+    listSourcesUseCase = {
+      execute: vi.fn<ListSourcesUseCase['execute']>(),
+    };
+    getSourceUseCase = {
+      execute: vi.fn<GetSourceUseCase['execute']>(),
     };
 
     const testingModule = await Test.createTestingModule({
@@ -41,6 +59,14 @@ describe('SourcesHttpController', () => {
         {
           provide: UploadSourceUseCase,
           useValue: uploadSourceUseCase,
+        },
+        {
+          provide: ListSourcesUseCase,
+          useValue: listSourcesUseCase,
+        },
+        {
+          provide: GetSourceUseCase,
+          useValue: getSourceUseCase,
         },
         {
           provide: APP_PIPE,
@@ -60,6 +86,134 @@ describe('SourcesHttpController', () => {
 
   afterEach(async () => {
     await app.close();
+  });
+
+  describe('GET /sources', () => {
+    it('source 목록을 200 응답으로 반환한다', async () => {
+      const now = new Date('2026-01-01T00:00:00.000Z');
+      listSourcesUseCase.execute.mockResolvedValue({
+        sources: [
+          {
+            sourceId: 'source-1',
+            externalSourceId: 'Notes/source.md',
+            fingerprint: 'fingerprint-1',
+            sizeBytes: 14,
+            createdAt: now,
+            updatedAt: now,
+          },
+        ],
+      });
+
+      const response = await request(httpServer).get('/sources').expect(200);
+
+      expect(response.body).toEqual({
+        sources: [
+          {
+            sourceId: 'source-1',
+            externalSourceId: 'Notes/source.md',
+            fingerprint: 'fingerprint-1',
+            sizeBytes: 14,
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          },
+        ],
+      });
+      expect(listSourcesUseCase.execute).toHaveBeenCalledOnce();
+    });
+
+    it('source가 없으면 빈 배열을 반환한다', async () => {
+      listSourcesUseCase.execute.mockResolvedValue({ sources: [] });
+
+      const response = await request(httpServer).get('/sources').expect(200);
+
+      expect(response.body).toEqual({ sources: [] });
+    });
+
+    it('exception이 발생하면 500 응답으로 마스킹한다', async () => {
+      listSourcesUseCase.execute.mockRejectedValue(
+        new Error('Source Repository operation failed'),
+      );
+
+      const response = await request(httpServer).get('/sources').expect(500);
+
+      expect(response.body).toEqual({
+        statusCode: 500,
+        code: 'internal.unexpected',
+        message: 'Internal server error',
+        details: {},
+      });
+    });
+  });
+
+  describe('GET /sources/:id', () => {
+    it('source를 200 응답으로 반환한다', async () => {
+      const now = new Date('2026-01-01T00:00:00.000Z');
+      getSourceUseCase.execute.mockResolvedValue({
+        sourceId: 'source-1',
+        externalSourceId: 'Notes/source.md',
+        content: '# Source note',
+        fingerprint: 'fingerprint-1',
+        sizeBytes: 14,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      const response = await request(httpServer)
+        .get('/sources/source-1')
+        .expect(200);
+
+      expect(response.body).toEqual({
+        sourceId: 'source-1',
+        externalSourceId: 'Notes/source.md',
+        content: '# Source note',
+        fingerprint: 'fingerprint-1',
+        sizeBytes: 14,
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      });
+      expect(getSourceUseCase.execute).toHaveBeenCalledWith({
+        sourceId: 'source-1',
+      });
+    });
+
+    it('source가 없으면 404 응답을 반환한다', async () => {
+      getSourceUseCase.execute.mockRejectedValue(
+        new ApplicationException({
+          kind: APPLICATION_ERROR_KIND.NOT_FOUND,
+          code: 'sources.source_not_found',
+          message: 'Source not found',
+          details: {},
+        }),
+      );
+
+      const response = await request(httpServer)
+        .get('/sources/non-existent')
+        .expect(404);
+
+      expect(response.body).toEqual({
+        statusCode: 404,
+        code: 'sources.source_not_found',
+        message: 'Source not found',
+        details: {},
+      });
+    });
+
+    it('exception이 발생하면 500 응답으로 마스킹한다', async () => {
+      getSourceUseCase.execute.mockRejectedValue(
+        new Error('Source Repository operation failed'),
+      );
+
+      const response = await request(httpServer)
+        .get('/sources/source-1')
+        .expect(500);
+
+      expect(response.body).toEqual({
+        statusCode: 500,
+        code: 'internal.unexpected',
+        message: 'Internal server error',
+        details: {},
+      });
+    });
   });
 
   describe('POST /sources', () => {
@@ -102,13 +256,13 @@ describe('SourcesHttpController', () => {
 
       expect(response.body).toEqual({
         statusCode: 400,
-        code: 'sources.upload.validation_failed',
-        message: 'Invalid upload source request',
+        code: 'request.validation_failed',
+        message: 'Invalid request',
         details: {
           fields: [
             {
               path: 'externalSourceId',
-              messages: ['externalSourceId cannot be empty'],
+              messages: ['Too small: expected string to have >=1 characters'],
             },
           ],
         },

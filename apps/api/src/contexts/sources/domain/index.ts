@@ -9,5 +9,6 @@ export { SourceSyncJob } from './source-sync-job.aggregate';
 export {
   type SourceRepository,
   type SourceRepositoryFindCriteria,
+  type SourceRepositoryGetCriteria,
 } from './source.repository';
 export { type SourceSyncJobRepository } from './source-sync-job.repository';
