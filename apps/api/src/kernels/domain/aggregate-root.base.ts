@@ -1,37 +1,35 @@
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { type DomainEvent } from './domain-event.base';
 import { Entity } from './entity.base';
+import { type LoggerPort } from './logger.port';
 
-type DomainEventByName<
-  TDomainEvent extends DomainEvent,
-  TEventName extends TDomainEvent['eventName'],
-> =
-  Extract<TDomainEvent, { readonly eventName: TEventName }> extends never
-    ? TDomainEvent
-    : Extract<TDomainEvent, { readonly eventName: TEventName }>;
+export abstract class AggregateRoot<EntityProps> extends Entity<EntityProps> {
+  private _domainEvents: DomainEvent[] = [];
 
-export abstract class AggregateRoot<
-  EntityProps,
-  TDomainEvent extends DomainEvent = DomainEvent,
-> extends Entity<EntityProps> {
-  private _domainEvents: TDomainEvent[] = [];
-
-  get domainEvents(): readonly TDomainEvent[] {
+  get domainEvents(): readonly DomainEvent[] {
     return [...this._domainEvents];
   }
 
-  findEvent<TEventName extends TDomainEvent['eventName']>(
-    eventName: TEventName,
-  ): DomainEventByName<TDomainEvent, TEventName> | undefined {
-    return this._domainEvents.find(
-      (domainEvent) => domainEvent.eventName === eventName,
-    ) as DomainEventByName<TDomainEvent, TEventName> | undefined;
-  }
-
-  clearEvents(): void {
+  public clearEvents(): void {
     this._domainEvents = [];
   }
 
-  protected addEvent(domainEvent: TDomainEvent): void {
+  public async publishEvents(
+    logger: LoggerPort,
+    eventEmitter: EventEmitter2,
+  ): Promise<void> {
+    await Promise.all(
+      this._domainEvents.map(async (event) => {
+        logger.debug(
+          `"${event.eventName}" event published for aggregate ${this.constructor.name}: ${this.id}`,
+        );
+        return eventEmitter.emitAsync(event.eventName, event);
+      }),
+    );
+    this.clearEvents();
+  }
+
+  protected addEvent(domainEvent: DomainEvent): void {
     this._domainEvents.push(domainEvent);
   }
 }

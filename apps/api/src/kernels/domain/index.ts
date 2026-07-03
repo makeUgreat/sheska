@@ -1,4 +1,5 @@
 export { AggregateRoot } from './aggregate-root.base';
+export { type LoggerPort } from './logger.port';
 export { DomainException } from './domain.exception';
 export { DomainEvent, type DomainEventParams } from './domain-event.base';
 export {

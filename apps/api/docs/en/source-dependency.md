@@ -164,3 +164,8 @@ Production code outside `platform` must not import `platform`, except the thin `
 - Kernel directories MUST NOT depend on bounded contexts, platform code, framework code, or outer layers.
 - Kernel directories MUST NOT become generic utility buckets.
 - Feature-specific policy belongs inside the owning bounded context.
+
+### EventEmitter Exception
+
+`kernels/domain` and domain layer code MAY depend on Node.js's `EventEmitter` family as an explicit exception.
+`EventEmitter2` and similar libraries are thin extensions of Node's built-in `EventEmitter` and are treated as part of the Node.js runtime rather than as framework or external SDK dependencies.

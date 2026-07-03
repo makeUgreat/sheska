@@ -19,10 +19,7 @@ class SampleDomainEvent extends DomainEvent<'sample.changed'> {
   }
 }
 
-class SampleAggregateRoot extends AggregateRoot<
-  SampleProps,
-  SampleDomainEvent
-> {
+class SampleAggregateRoot extends AggregateRoot<SampleProps> {
   static create(params: {
     id: string;
     props?: SampleProps;
@@ -96,32 +93,6 @@ describe('AggregateRoot', () => {
       );
 
       expect(aggregate.domainEvents).toHaveLength(1);
-    });
-  });
-
-  describe('findEvent', () => {
-    it('eventName으로 기록된 domain event를 찾는다', () => {
-      const aggregate = SampleAggregateRoot.create({
-        id: 'sample-1',
-      });
-
-      aggregate.changeName('summer');
-
-      const domainEvent = aggregate.findEvent('sample.changed');
-
-      expect(domainEvent).toMatchObject({
-        eventName: 'sample.changed',
-        aggregateId: 'sample-1',
-        name: 'summer',
-      });
-    });
-
-    it('eventName에 맞는 domain event가 없으면 undefined를 반환한다', () => {
-      const aggregate = SampleAggregateRoot.create({
-        id: 'sample-1',
-      });
-
-      expect(aggregate.findEvent('sample.changed')).toBeUndefined();
     });
   });
 
