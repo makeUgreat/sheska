@@ -1,6 +1,6 @@
 export { ExternalSourceId } from './external-source-id.vo';
-export { type SourceContentSnapshotChangedDomainEvent } from './source-content-snapshot-changed.event';
-export { Source } from './source.aggregate';
+export { Source, type SyncContentSnapshotResult } from './source.aggregate';
+export { type SourceSyncJobCreatedDomainEvent } from './source-sync-job-created.event';
 export { SourceFingerprint } from './source-fingerprint.vo';
 export { SourceContentSnapshot } from './source-content-snapshot.vo';
 export { SourceContent } from './source-content.vo';

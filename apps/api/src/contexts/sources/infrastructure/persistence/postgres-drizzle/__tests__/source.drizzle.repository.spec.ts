@@ -96,7 +96,9 @@ function createSourceSyncJobSaveRejectingDb(
   return {
     insert: () => ({
       values: () => ({
-        returning: () => Promise.reject(error),
+        onConflictDoUpdate: () => ({
+          returning: () => Promise.reject(error),
+        }),
       }),
     }),
   } as unknown as ConstructorParameters<

@@ -1,5 +1,4 @@
 import { AggregateRoot, newId } from '@kernels/domain';
-import { SourceContentSnapshotChangedDomainEvent } from './source-content-snapshot-changed.event';
 import { ExternalSourceId } from './external-source-id.vo';
 import { SourceContentSnapshot } from './source-content-snapshot.vo';
 
@@ -24,13 +23,15 @@ interface SourceCreateParams {
   fingerprint: string;
 }
 
-export class Source extends AggregateRoot<
-  SourceProps,
-  SourceContentSnapshotChangedDomainEvent
-> {
+export interface SyncContentSnapshotResult {
+  source: Source;
+  changed: boolean;
+}
+
+export class Source extends AggregateRoot<SourceProps> {
   static create(params: SourceCreateParams): Source {
     const { externalSourceId, content, fingerprint } = params;
-    const source = new Source({
+    return new Source({
       id: newId(),
       props: {
         externalSourceId: ExternalSourceId.of(externalSourceId),
@@ -40,17 +41,6 @@ export class Source extends AggregateRoot<
         }),
       },
     });
-    const contentSnapshotProps = source.props.contentSnapshot.unpack();
-
-    source.addEvent(
-      new SourceContentSnapshotChangedDomainEvent({
-        aggregateId: source.id,
-        externalSourceId: source.props.externalSourceId.unpack(),
-        fingerprint: contentSnapshotProps.fingerprint,
-      }),
-    );
-
-    return source;
   }
 
   static restore(params: SourceRestoreParams): Source {
@@ -82,24 +72,15 @@ export class Source extends AggregateRoot<
   syncContentSnapshot(params: {
     content: string;
     fingerprint: string;
-  }): Source {
+  }): SyncContentSnapshotResult {
     const contentSnapshot = SourceContentSnapshot.create(params);
 
     if (this.props.contentSnapshot.hasSameContentAs(contentSnapshot)) {
-      return this;
+      return { source: this, changed: false };
     }
 
     this.props.contentSnapshot = contentSnapshot;
-    const contentSnapshotProps = contentSnapshot.unpack();
-    this.addEvent(
-      new SourceContentSnapshotChangedDomainEvent({
-        aggregateId: this.id,
-        externalSourceId: this.props.externalSourceId.unpack(),
-        fingerprint: contentSnapshotProps.fingerprint,
-      }),
-    );
-
-    return this;
+    return { source: this, changed: true };
   }
 
   public validate(): void {}

@@ -25,7 +25,7 @@ describe('SourceSyncJobPersistenceMapper', () => {
     const row = buildSourceSyncJobRow({
       sourceId: 'source-1',
       fingerprint: 'fingerprint-1',
-      status: 'completed',
+      status: 'unknown_status',
     });
 
     expect(() => SourceSyncJobPersistenceMapper.toDomain(row)).toThrow(

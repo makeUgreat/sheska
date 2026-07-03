@@ -1,4 +1,5 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   ExternalSourceId,
   Source,
@@ -33,6 +34,8 @@ export interface UploadSourceContentSnapshotCalculator {
 
 @Injectable()
 export class UploadSourceUseCase {
+  private readonly logger = new Logger(UploadSourceUseCase.name);
+
   constructor(
     @Inject(SourceContentSnapshotCalculator)
     private readonly contentSnapshotCalculator: UploadSourceContentSnapshotCalculator,
@@ -40,6 +43,7 @@ export class UploadSourceUseCase {
     private readonly sources: SourceRepository,
     @Inject(SOURCE_SYNC_JOB_REPOSITORY)
     private readonly syncJobs: SourceSyncJobRepository,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute(command: UploadSourceCommand): Promise<UploadSourceResult> {
@@ -49,80 +53,48 @@ export class UploadSourceUseCase {
     const snapshot = await this.contentSnapshotCalculator.calculate(
       command.content,
     );
-    const existingSource = await this.sources.find({ externalSourceId });
+    const source = await this.sources.find({ externalSourceId });
 
-    return this.persistSourceSync(
-      this.syncSource(existingSource, externalSourceId, snapshot),
-    );
-  }
-
-  private syncSource(
-    existingSource: Source | null,
-    externalSourceId: string,
-    snapshot: SourceContentSnapshotCalculation,
-  ): Source {
-    if (existingSource) {
-      return existingSource.syncContentSnapshot({
-        content: snapshot.content,
-        fingerprint: snapshot.fingerprint,
-      });
+    if (!source) {
+      return this.persistChange(
+        Source.create({ externalSourceId, ...snapshot }),
+        command.content,
+      );
     }
 
-    return Source.create({
-      externalSourceId,
-      content: snapshot.content,
-      fingerprint: snapshot.fingerprint,
-    });
+    const { changed } = source.syncContentSnapshot(snapshot);
+    if (!changed) return this.completeUpload(source);
+    return this.persistChange(source, command.content);
   }
 
-  private async persistSourceSync(source: Source): Promise<UploadSourceResult> {
-    const contentSnapshotChangedEvent = source.findEvent(
-      'source.content_snapshot.changed',
-    );
-
-    if (!contentSnapshotChangedEvent) {
-      return this.completeUploadForUnchangedContentSnapshot(source);
-    }
+  private async persistChange(
+    source: Source,
+    content: string,
+  ): Promise<UploadSourceResult> {
+    const { fingerprint } = source.getProps().contentSnapshot.unpack();
 
     const syncJob = SourceSyncJob.create({
-      sourceId: contentSnapshotChangedEvent.aggregateId,
-      fingerprint: contentSnapshotChangedEvent.fingerprint,
+      sourceId: source.id,
+      fingerprint,
+      content,
     });
 
     const savedSource = await this.sources.save(source);
     const savedSyncJob = await this.syncJobs.save(syncJob);
 
-    source.clearEvents();
+    await syncJob.publishEvents(this.logger, this.eventEmitter);
 
-    return this.completeUploadForChangedContentSnapshot(
-      savedSource,
-      savedSyncJob,
-    );
+    return this.completeUpload(savedSource, savedSyncJob);
   }
 
-  private completeUploadForUnchangedContentSnapshot(source: Source) {
-    const sourceProps = source.getProps();
-    const contentSnapshot = sourceProps.contentSnapshot.unpack();
+  private completeUpload(source: Source, syncJob?: SourceSyncJob): UploadSourceResult {
+    const { externalSourceId, contentSnapshot } = source.getProps();
 
     return {
       sourceId: source.id,
-      externalSourceId: sourceProps.externalSourceId.unpack(),
-      fingerprint: contentSnapshot.fingerprint,
-    } satisfies UploadSourceResult;
-  }
-
-  private completeUploadForChangedContentSnapshot(
-    source: Source,
-    syncJob: SourceSyncJob,
-  ) {
-    const sourceProps = source.getProps();
-    const contentSnapshot = sourceProps.contentSnapshot.unpack();
-
-    return {
-      sourceId: source.id,
-      externalSourceId: sourceProps.externalSourceId.unpack(),
-      fingerprint: contentSnapshot.fingerprint,
-      syncJobId: syncJob.id,
-    } satisfies UploadSourceResult;
+      externalSourceId: externalSourceId.unpack(),
+      fingerprint: contentSnapshot.unpack().fingerprint,
+      syncJobId: syncJob?.id,
+    };
   }
 }

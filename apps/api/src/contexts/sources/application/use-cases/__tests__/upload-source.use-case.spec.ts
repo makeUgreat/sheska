@@ -1,9 +1,10 @@
 import {
   Source,
+  SourceSyncJob,
   type SourceRepository,
-  type SourceSyncJob,
   type SourceSyncJobRepository,
 } from '@contexts/sources/domain';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import {
   type UploadSourceContentSnapshotCalculator,
@@ -23,6 +24,7 @@ type SourceRepositoryMock = {
 };
 
 type SourceSyncJobRepositoryMock = {
+  find: MockedFunction<SourceSyncJobRepository['find']>;
   save: MockedFunction<SourceSyncJobRepository['save']>;
 };
 
@@ -34,10 +36,12 @@ describe('UploadSourceUseCase', () => {
     });
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
+    const eventEmitter = createEventEmitterMock();
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      eventEmitter,
     );
 
     const result = await useCase.execute({
@@ -62,8 +66,9 @@ describe('UploadSourceUseCase', () => {
       content: '# Source note',
       fingerprint: 'fingerprint-1',
     });
-    expectSyncJobSavedWith(syncJobs, {
+    expectSyncJobSavedWith(syncJobs, eventEmitter, {
       sourceId: sources.save.mock.calls[0]?.[0]?.id,
+      content: '# Source note',
       fingerprint: 'fingerprint-1',
     });
   });
@@ -86,6 +91,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createEventEmitterMock(),
     );
 
     const result = await useCase.execute({
@@ -116,10 +122,12 @@ describe('UploadSourceUseCase', () => {
     const sources = createSourceRepositoryMock();
     sources.find.mockResolvedValue(existingSource);
     const syncJobs = createSourceSyncJobRepositoryMock();
+    const eventEmitter = createEventEmitterMock();
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      eventEmitter,
     );
 
     const result = await useCase.execute({
@@ -138,8 +146,9 @@ describe('UploadSourceUseCase', () => {
       content: '# New source note',
       fingerprint: 'fingerprint-new',
     });
-    expectSyncJobSavedWith(syncJobs, {
+    expectSyncJobSavedWith(syncJobs, eventEmitter, {
       sourceId: 'source-1',
+      content: '# New source note',
       fingerprint: 'fingerprint-new',
     });
   });
@@ -152,6 +161,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createEventEmitterMock(),
     );
 
     await expect(
@@ -176,6 +186,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createEventEmitterMock(),
     );
 
     const result = useCase.execute({
@@ -199,6 +210,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createEventEmitterMock(),
     );
 
     const result = useCase.execute({
@@ -221,6 +233,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createEventEmitterMock(),
     );
 
     const result = useCase.execute({
@@ -244,6 +257,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createEventEmitterMock(),
     );
 
     const result = useCase.execute({
@@ -268,6 +282,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createEventEmitterMock(),
     );
 
     const result = useCase.execute({
@@ -307,10 +322,18 @@ function createSourceRepositoryMock(): SourceRepositoryMock {
 
 function createSourceSyncJobRepositoryMock(): SourceSyncJobRepositoryMock {
   return {
+    find: vi.fn<SourceSyncJobRepository['find']>().mockResolvedValue(null),
     save: vi
       .fn<SourceSyncJobRepository['save']>()
       .mockImplementation((syncJob) => Promise.resolve(syncJob)),
   };
+}
+
+function createEventEmitterMock(): EventEmitter2 {
+  return {
+    emit: vi.fn(),
+    emitAsync: vi.fn().mockResolvedValue([]),
+  } as unknown as EventEmitter2;
 }
 
 function expectSourceSavedWith(
@@ -335,8 +358,10 @@ function expectSourceSavedWith(
 
 function expectSyncJobSavedWith(
   syncJobs: ReturnType<typeof createSourceSyncJobRepositoryMock>,
+  eventEmitter: EventEmitter2,
   expected: {
     sourceId: string | undefined;
+    content: string;
     fingerprint: string;
   },
 ) {
@@ -347,6 +372,15 @@ function expectSyncJobSavedWith(
     fingerprint: expected.fingerprint,
     status: 'pending',
   });
+  expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+    'source.sync_job.created',
+    expect.objectContaining({
+      eventName: 'source.sync_job.created',
+      sourceId: expected.sourceId,
+      content: expected.content,
+      fingerprint: expected.fingerprint,
+    }),
+  );
 }
 
 function sourceSyncJobProps(syncJob: SourceSyncJob | undefined) {
