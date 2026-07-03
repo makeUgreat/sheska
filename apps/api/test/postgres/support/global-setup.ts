@@ -1,10 +1,7 @@
 import { exec } from 'node:child_process';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { migrate } from 'drizzle-orm/node-postgres/migrator';
-import { Pool } from 'pg';
-import * as schema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
+import { runMigrations } from '../../../database/migrator';
 
 const execAsync = promisify(exec);
 const POSTGRES_TEST_CONTAINER_NAME = 'sheska.test.db';
@@ -16,7 +13,7 @@ const POSTGRES_COMPOSE_CWD = resolve(__dirname, '../../..');
 export default async function setup(): Promise<() => Promise<void>> {
   try {
     await executeTestDatabaseContainer();
-    await runPostgresMigrations();
+    await runMigrations(POSTGRES_TEST_DATABASE_URL);
 
     return async () => {
       await execAsync(`docker compose -f "${POSTGRES_COMPOSE_FILE}" down -v`, {
@@ -69,20 +66,4 @@ async function waitForHealthyContainer(): Promise<void> {
   throw new Error(
     `Timed out waiting for ${POSTGRES_TEST_CONTAINER_NAME} healthcheck`,
   );
-}
-
-async function runPostgresMigrations(): Promise<void> {
-  const pool = new Pool({
-    connectionString: POSTGRES_TEST_DATABASE_URL,
-  });
-
-  try {
-    const database = drizzle({ client: pool, schema });
-
-    await migrate(database, {
-      migrationsFolder: resolve(__dirname, '../../../drizzle'),
-    });
-  } finally {
-    await pool.end();
-  }
 }
