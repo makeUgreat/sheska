@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { type UploadSourceResult } from '@contexts/sources/application/use-cases/upload-source.use-case';
 
 export const uploadSourceHttpRequestSchema = z
   .object({
@@ -23,15 +22,4 @@ export interface UploadSourceHttpResponse {
   readonly externalSourceId: string;
   readonly fingerprint: string;
   readonly syncJobId?: string;
-}
-
-export function toUploadSourceHttpResponse(
-  result: UploadSourceResult,
-): UploadSourceHttpResponse {
-  return {
-    sourceId: result.sourceId,
-    externalSourceId: result.externalSourceId,
-    fingerprint: result.fingerprint,
-    syncJobId: result.syncJobId,
-  };
 }

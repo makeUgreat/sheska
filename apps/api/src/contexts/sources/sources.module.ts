@@ -2,6 +2,8 @@ import { Module, type DynamicModule } from '@nestjs/common';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKENS } from '@kernels/infrastructure';
 import { SourceContentSnapshotCalculator } from '@contexts/sources/application/services/source-content-snapshot-calculator.service';
+import { GetSourceUseCase } from '@contexts/sources/application/use-cases/get-source.use-case';
+import { ListSourcesUseCase } from '@contexts/sources/application/use-cases/list-sources.use-case';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
 import { SourceFingerprinterSha256 } from '@contexts/sources/infrastructure/fingerprinter/source.fingerprinter.sha256';
 import * as sourcesSchema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
@@ -40,9 +42,11 @@ export class SourcesModule {
             new SourceSyncJobDrizzleRepository(db),
           inject: [DATABASE_TOKENS.drizzleDatabase],
         },
+        ListSourcesUseCase,
+        GetSourceUseCase,
         UploadSourceUseCase,
       ],
-      exports: [UploadSourceUseCase],
+      exports: [ListSourcesUseCase, GetSourceUseCase, UploadSourceUseCase],
     };
   }
 }

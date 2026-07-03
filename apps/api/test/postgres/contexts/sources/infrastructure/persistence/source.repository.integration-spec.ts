@@ -63,6 +63,39 @@ describe('SourceDrizzleRepository', () => {
     });
   });
 
+  it('id로 source를 조회한다', async () => {
+    const source = buildSource({ externalSourceId: 'Notes/get-source.md' });
+    await repository.save(source);
+
+    const result = await repository.get({ id: source.id });
+
+    expect(result?.id).toBe(source.id);
+    expect(result?.getProps().contentSnapshot.unpack()).toEqual({
+      content: '# Source note',
+      fingerprint: 'fingerprint-1',
+      size: sourceContentByteSize('# Source note'),
+    });
+  });
+
+  it('존재하지 않는 id는 null을 반환한다', async () => {
+    const result = await repository.get({ id: 'non-existent-id' });
+
+    expect(result).toBeNull();
+  });
+
+  it('source 목록을 반환한다', async () => {
+    const source1 = buildSource({ externalSourceId: 'Notes/list-source-1.md' });
+    const source2 = buildSource({ externalSourceId: 'Notes/list-source-2.md' });
+    await repository.save(source1);
+    await repository.save(source2);
+
+    const result = await repository.list();
+
+    const ids = result.map((s) => s.id);
+    expect(ids).toContain(source1.id);
+    expect(ids).toContain(source2.id);
+  });
+
   it('externalSourceId unique 충돌을 exception으로 전파한다', async () => {
     const externalSourceId = 'Notes/conflict-source.md';
     const firstSource = buildSource({ externalSourceId });

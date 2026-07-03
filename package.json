@@ -16,7 +16,10 @@
     "test:integration": "pnpm --filter @sheska/api test:integration",
     "test:integration:postgres": "pnpm --filter @sheska/api test:integration:postgres",
     "test:integration:all": "pnpm --filter @sheska/api test:integration:all",
-    "typecheck": "pnpm --filter @sheska/api typecheck"
+    "typecheck": "pnpm --filter @sheska/api typecheck",
+    "dev:ui": "pnpm --filter @sheska/ui dev",
+    "build:ui": "pnpm --filter @sheska/ui build",
+    "test:ui": "pnpm --filter @sheska/ui test"
   },
   "devDependencies": {
     "dependency-cruiser": "^17.4.2"
