@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { type ListSourcesResult } from '@contexts/sources/application/use-cases/list-sources.use-case';
 
 export const listSourcesHttpRequestSchema = z
   .object({
@@ -26,19 +25,4 @@ export interface SourceSummaryHttpResponse {
 
 export interface ListSourcesHttpResponse {
   readonly sources: SourceSummaryHttpResponse[];
-}
-
-export function toListSourcesHttpResponse(
-  result: ListSourcesResult,
-): ListSourcesHttpResponse {
-  return {
-    sources: result.sources.map((s) => ({
-      sourceId: s.sourceId,
-      externalSourceId: s.externalSourceId,
-      fingerprint: s.fingerprint,
-      sizeBytes: s.sizeBytes,
-      createdAt: s.createdAt.toISOString(),
-      updatedAt: s.updatedAt.toISOString(),
-    })),
-  };
 }
