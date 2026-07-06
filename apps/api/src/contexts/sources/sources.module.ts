@@ -5,11 +5,12 @@ import { SourceContentSnapshotCalculator } from '@contexts/sources/application/s
 import { GetSourceUseCase } from '@contexts/sources/application/use-cases/get-source.use-case';
 import { ListSourcesUseCase } from '@contexts/sources/application/use-cases/list-sources.use-case';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
-import { SourceFingerprinterSha256 } from '@contexts/sources/infrastructure/fingerprinter/source.fingerprinter.sha256';
+import { SourceSha256Fingerprinter } from '@contexts/sources/infrastructure/fingerprinter/source.sha256.fingerprinter';
 import * as sourcesSchema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
-import { SourceDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.drizzle.repository';
-import { SourceSyncJobDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source-sync-job.drizzle.repository';
+import { SourcePgDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
+import { SourceSyncJobPgDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source-sync-job.pg-drizzle.repository';
 import { SourcesHttpController } from '@contexts/sources/presentation/http/sources-http.controller';
+import { HandleIngestionResultHandler } from '@contexts/sources/application/event-handlers/handle-ingestion-result.handler';
 import {
   SOURCE_FINGERPRINTER,
   SOURCE_REPOSITORY,
@@ -27,24 +28,25 @@ export class SourcesModule {
       providers: [
         {
           provide: SOURCE_FINGERPRINTER,
-          useClass: SourceFingerprinterSha256,
+          useClass: SourceSha256Fingerprinter,
         },
         SourceContentSnapshotCalculator,
         {
           provide: SOURCE_REPOSITORY,
           useFactory: (db: NodePgDatabase<typeof sourcesSchema>) =>
-            new SourceDrizzleRepository(db),
+            new SourcePgDrizzleRepository(db),
           inject: [DATABASE_TOKENS.drizzleDatabase],
         },
         {
           provide: SOURCE_SYNC_JOB_REPOSITORY,
           useFactory: (db: NodePgDatabase<typeof sourcesSchema>) =>
-            new SourceSyncJobDrizzleRepository(db),
+            new SourceSyncJobPgDrizzleRepository(db),
           inject: [DATABASE_TOKENS.drizzleDatabase],
         },
         ListSourcesUseCase,
         GetSourceUseCase,
         UploadSourceUseCase,
+        HandleIngestionResultHandler,
       ],
       exports: [ListSourcesUseCase, GetSourceUseCase, UploadSourceUseCase],
     };

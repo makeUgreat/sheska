@@ -6,12 +6,14 @@ import {
   INFRASTRUCTURE_ERROR_KIND,
   InfrastructureException,
 } from '@kernels/infrastructure';
+import { QueueHealthProbe } from '../queue/queue-health.probe';
 
 @Controller('health')
 export class HealthController {
   constructor(
     @Inject(DATABASE_TOKENS.drizzleDatabase)
     private readonly db: NodePgDatabase,
+    private readonly queueHealthProbe: QueueHealthProbe,
   ) {}
 
   @Get()
@@ -24,6 +26,18 @@ export class HealthController {
         code: 'health.database_unreachable',
         message: 'Database is unreachable',
         source: { boundary: 'persistence', adapter: 'postgres' },
+        details: { cause: undefined },
+      });
+    }
+
+    try {
+      await this.queueHealthProbe.check();
+    } catch {
+      throw new InfrastructureException({
+        kind: INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
+        code: 'health.queue_unreachable',
+        message: 'Queue is unreachable',
+        source: { boundary: 'message-broker', adapter: 'bullmq' },
         details: { cause: undefined },
       });
     }

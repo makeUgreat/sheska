@@ -10,6 +10,7 @@ related:
   - ./error.md
   - ./ddd.md
   - ./persistence.md
+  - ./infrastructure.md
   - ./source-dependency.md
   - ./runtime-wiring.md
 ---
@@ -37,6 +38,7 @@ Application error, exception, protocol error response, system error를 정의, �
 - [API 오류 정책](./error.md): application error meaning, category, transformation, response structure, unexpected system error handling 규칙.
 - [API DDD 컨벤션](./ddd.md): bounded context, implementation module, domain kernel, domain model 규칙.
 - [API Persistence 정책](./persistence.md): database schema, migration, ORM persistence, repository mapper, storage constraint 규칙.
+- [API Infrastructure 컨벤션](./infrastructure.md): infrastructure adapter file 명명, 디렉토리 구조, adapter 컨벤션 규칙.
 - [API Source Dependency 컨벤션](./source-dependency.md): import direction, layer boundary, framework import 규칙.
 - [API Runtime Wiring 컨벤션](./runtime-wiring.md): NestJS DI, provider registration, platform runtime, port binding 규칙.
 

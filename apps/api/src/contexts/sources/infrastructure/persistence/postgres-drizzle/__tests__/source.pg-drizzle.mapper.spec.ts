@@ -4,16 +4,16 @@ import {
   sourceContentByteSize,
 } from '../../../../../../../test/contexts/sources/fixtures/source.fixture';
 import { buildSourceRow } from '../../../../../../../test/postgres/contexts/sources/fixtures/source-row.fixture';
-import { SourcePersistenceMapper } from '../source.persistence.mapper';
+import { SourcePgDrizzleMapper } from '../source.pg-drizzle.mapper';
 
-describe('SourcePersistenceMapper', () => {
+describe('SourcePgDrizzleMapper', () => {
   it('valid source row를 Source aggregate로 복원한다', () => {
     const row = buildSourceRow({
       content: '안녕',
       fingerprint: 'fingerprint-1',
     });
 
-    const source = SourcePersistenceMapper.toDomain(row);
+    const source = SourcePgDrizzleMapper.toDomain(row);
 
     expect(source.id).toBe('source-1');
     expect(source.getProps().externalSourceId.unpack()).toBe('Notes/source.md');
@@ -31,7 +31,7 @@ describe('SourcePersistenceMapper', () => {
       sizeBytes: 1,
     });
 
-    expect(() => SourcePersistenceMapper.toDomain(row)).toThrow(
+    expect(() => SourcePgDrizzleMapper.toDomain(row)).toThrow(
       'Source size must match content byte size',
     );
   });
@@ -39,7 +39,7 @@ describe('SourcePersistenceMapper', () => {
   it('Source aggregate를 source insert row로 변환한다', () => {
     const source = buildSource();
 
-    const row = SourcePersistenceMapper.toInsert(source);
+    const row = SourcePgDrizzleMapper.toInsert(source);
 
     expect(row).toEqual({
       id: source.id,

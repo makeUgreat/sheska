@@ -9,11 +9,11 @@ import {
   InfrastructureException,
 } from '@kernels/infrastructure';
 import * as schema from './schema';
-import { SourceSyncJobPersistenceMapper } from './source-sync-job.persistence.mapper';
+import { SourceSyncJobPgDrizzleMapper } from './source-sync-job.pg-drizzle.mapper';
 
-const ADAPTER = 'source-sync-job.drizzle';
+const ADAPTER = 'source-sync-job.pg-drizzle';
 
-export class SourceSyncJobDrizzleRepository implements SourceSyncJobRepository {
+export class SourceSyncJobPgDrizzleRepository implements SourceSyncJobRepository {
   constructor(private readonly db: NodePgDatabase<typeof schema>) {}
 
   async find(criteria: { id: string }): Promise<SourceSyncJob | null> {
@@ -24,11 +24,11 @@ export class SourceSyncJobDrizzleRepository implements SourceSyncJobRepository {
       .limit(1)
       .then((rows) => rows[0] ?? null);
 
-    return row ? SourceSyncJobPersistenceMapper.toDomain(row) : null;
+    return row ? SourceSyncJobPgDrizzleMapper.toDomain(row) : null;
   }
 
   async save(syncJob: SourceSyncJob): Promise<SourceSyncJob> {
-    const insert = SourceSyncJobPersistenceMapper.toInsert(syncJob);
+    const insert = SourceSyncJobPgDrizzleMapper.toInsert(syncJob);
     let row: schema.SourceSyncJobRow;
 
     try {
@@ -50,6 +50,6 @@ export class SourceSyncJobDrizzleRepository implements SourceSyncJobRepository {
       });
     }
 
-    return SourceSyncJobPersistenceMapper.toDomain(row);
+    return SourceSyncJobPgDrizzleMapper.toDomain(row);
   }
 }

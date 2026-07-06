@@ -5,12 +5,12 @@ import {
 } from '@kernels/infrastructure';
 import { buildSourceSyncJob } from '../../../../../../../test/contexts/sources/fixtures/source-sync-job.fixture';
 import { buildSource } from '../../../../../../../test/contexts/sources/fixtures/source.fixture';
-import { SourceDrizzleRepository } from '../source.drizzle.repository';
-import { SourceSyncJobDrizzleRepository } from '../source-sync-job.drizzle.repository';
+import { SourcePgDrizzleRepository } from '../source.pg-drizzle.repository';
+import { SourceSyncJobPgDrizzleRepository } from '../source-sync-job.pg-drizzle.repository';
 
-describe('SourceDrizzleRepository', () => {
+describe('SourcePgDrizzleRepository', () => {
   it('Postgres conflict는 CONFLICT exception으로 전파한다', async () => {
-    const repository = new SourceDrizzleRepository(
+    const repository = new SourcePgDrizzleRepository(
       createSourceSaveRejectingDb(createPostgresError('23505')),
     );
 
@@ -26,7 +26,7 @@ describe('SourceDrizzleRepository', () => {
   });
 
   it('unknown failure는 UNEXPECTED exception으로 전파한다', async () => {
-    const repository = new SourceDrizzleRepository(
+    const repository = new SourcePgDrizzleRepository(
       createSourceSaveRejectingDb(new Error('connection failed')),
     );
 
@@ -42,9 +42,9 @@ describe('SourceDrizzleRepository', () => {
   });
 });
 
-describe('SourceSyncJobDrizzleRepository', () => {
+describe('SourceSyncJobPgDrizzleRepository', () => {
   it('Postgres conflict는 CONFLICT exception으로 전파한다', async () => {
-    const repository = new SourceSyncJobDrizzleRepository(
+    const repository = new SourceSyncJobPgDrizzleRepository(
       createSourceSyncJobSaveRejectingDb(createPostgresError('23503')),
     );
 
@@ -60,7 +60,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
   });
 
   it('unknown failure는 UNEXPECTED exception으로 전파한다', async () => {
-    const repository = new SourceSyncJobDrizzleRepository(
+    const repository = new SourceSyncJobPgDrizzleRepository(
       createSourceSyncJobSaveRejectingDb(new Error('connection failed')),
     );
 
@@ -78,7 +78,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
 
 function createSourceSaveRejectingDb(
   error: Error,
-): ConstructorParameters<typeof SourceDrizzleRepository>[0] {
+): ConstructorParameters<typeof SourcePgDrizzleRepository>[0] {
   return {
     insert: () => ({
       values: () => ({
@@ -87,12 +87,12 @@ function createSourceSaveRejectingDb(
         }),
       }),
     }),
-  } as unknown as ConstructorParameters<typeof SourceDrizzleRepository>[0];
+  } as unknown as ConstructorParameters<typeof SourcePgDrizzleRepository>[0];
 }
 
 function createSourceSyncJobSaveRejectingDb(
   error: Error,
-): ConstructorParameters<typeof SourceSyncJobDrizzleRepository>[0] {
+): ConstructorParameters<typeof SourceSyncJobPgDrizzleRepository>[0] {
   return {
     insert: () => ({
       values: () => ({
@@ -102,7 +102,7 @@ function createSourceSyncJobSaveRejectingDb(
       }),
     }),
   } as unknown as ConstructorParameters<
-    typeof SourceSyncJobDrizzleRepository
+    typeof SourceSyncJobPgDrizzleRepository
   >[0];
 }
 

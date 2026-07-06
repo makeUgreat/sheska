@@ -1,6 +1,6 @@
 import { AggregateRoot, newId } from '@kernels/domain';
 import { SourceFingerprint } from './source-fingerprint.vo';
-import { SourceSyncJobCreatedDomainEvent } from './source-sync-job-created.event';
+import { SourceSyncJobCreatedDomainEvent } from './source-sync-job.event';
 
 interface SourceSyncJobProps {
   sourceId: string;
@@ -78,6 +78,8 @@ export class SourceSyncJob extends AggregateRoot<SourceSyncJobProps> {
   }
 
   private static isStatus(status: string): status is SourceSyncJobStatus {
-    return status === 'pending' || status === 'completed' || status === 'failed';
+    return (
+      status === 'pending' || status === 'completed' || status === 'failed'
+    );
   }
 }

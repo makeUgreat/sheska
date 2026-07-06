@@ -10,6 +10,7 @@ related:
   - ./architecture.md
   - ./ddd.md
   - ./persistence.md
+  - ./infrastructure.md
   - ./source-dependency.md
   - ./runtime-wiring.md
   - ./test.md
@@ -33,6 +34,7 @@ When changing public project Markdown documents, also read the repository docume
 - `apps/api` architecture, DDD boundary, source structure, or module boundary decisions: read [API Architecture Convention](./architecture.md).
 - `apps/api` DDD boundaries, domain model ownership, or shared domain language: read [API DDD Convention](./ddd.md).
 - Database schema, migration, ORM persistence, repository mapper, or storage constraint decisions: read [API Persistence Policy](./persistence.md).
+- Infrastructure adapter file naming, directory structure, or adapter conventions: read [API Infrastructure Convention](./infrastructure.md).
 - Import direction, layer boundaries, or framework imports: read [API Source Dependency Convention](./source-dependency.md).
 - NestJS DI, provider registration, module wiring, platform startup flow, or port binding: read [API Runtime Wiring Convention](./runtime-wiring.md).
 - `apps/api` test files, test structure, or test command selection: read [API Test Convention](./test.md).

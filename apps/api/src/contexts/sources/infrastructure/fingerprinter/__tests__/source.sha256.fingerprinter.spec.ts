@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { SourceFingerprinterSha256 } from '../source.fingerprinter.sha256';
+import { SourceSha256Fingerprinter } from '../source.sha256.fingerprinter';
 
-describe('SourceFingerprinterSha256', () => {
+describe('SourceSha256Fingerprinter', () => {
   it('content의 SHA-256 hex fingerprint를 계산한다', async () => {
-    const fingerprinter = new SourceFingerprinterSha256();
+    const fingerprinter = new SourceSha256Fingerprinter();
 
     const result = await fingerprinter.calculate('hello');
 

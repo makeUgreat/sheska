@@ -1,0 +1,32 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
+import { type SourceSyncJobRepository } from '@contexts/sources/domain';
+import { SOURCE_SYNC_JOB_REPOSITORY } from '@contexts/sources/sources.di-tokens';
+
+interface IngestionResultDomainEventPayload {
+  readonly syncJobId: string;
+}
+
+@Injectable()
+export class HandleIngestionResultHandler {
+  constructor(
+    @Inject(SOURCE_SYNC_JOB_REPOSITORY)
+    private readonly syncJobs: SourceSyncJobRepository,
+  ) {}
+
+  @OnEvent('source.ingestion.completed')
+  async onCompleted(event: IngestionResultDomainEventPayload): Promise<void> {
+    const syncJob = await this.syncJobs.find({ id: event.syncJobId });
+    if (!syncJob) return;
+    syncJob.markCompleted();
+    await this.syncJobs.save(syncJob);
+  }
+
+  @OnEvent('source.ingestion.failed')
+  async onFailed(event: IngestionResultDomainEventPayload): Promise<void> {
+    const syncJob = await this.syncJobs.find({ id: event.syncJobId });
+    if (!syncJob) return;
+    syncJob.markFailed();
+    await this.syncJobs.save(syncJob);
+  }
+}
