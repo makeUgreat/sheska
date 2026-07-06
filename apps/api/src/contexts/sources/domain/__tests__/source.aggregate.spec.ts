@@ -26,14 +26,6 @@ describe('Source', () => {
         fingerprint: 'fingerprint-1',
         size: byteSize(content),
       });
-      expect(source.domainEvents).toEqual([
-        expect.objectContaining({
-          eventName: 'source.content_snapshot.changed',
-          aggregateId: props.id,
-          externalSourceId: 'Notes/source.md',
-          fingerprint: 'fingerprint-1',
-        }),
-      ]);
     });
 
     it('빈 content와 size 0을 허용한다', () => {
@@ -82,20 +74,6 @@ describe('Source', () => {
       expect(source.id).toBe(' source-1 ');
     });
 
-    it('복원된 source는 domain event를 기록하지 않는다', () => {
-      const content = '# Source note';
-
-      const source = Source.restore({
-        id: 'source-1',
-        externalSourceId: 'Notes/source.md',
-        content,
-        fingerprint: 'fingerprint-1',
-        size: byteSize(content),
-      });
-
-      expect(source.domainEvents).toEqual([]);
-    });
-
     it('content byte size와 저장된 size가 다르면 throw한다', () => {
       expect(() =>
         Source.restore({
@@ -110,7 +88,7 @@ describe('Source', () => {
   });
 
   describe('syncContentSnapshot', () => {
-    it('같은 fingerprint이면 내용을 바꾸지 않고 domain event를 기록하지 않는다', () => {
+    it('같은 fingerprint이면 내용을 바꾸지 않고 changed false를 반환한다', () => {
       const source = Source.restore({
         id: 'source-1',
         externalSourceId: 'Notes/source.md',
@@ -119,17 +97,17 @@ describe('Source', () => {
         size: byteSize('# Old note'),
       });
 
-      const applied = source.syncContentSnapshot({
+      const { source: applied, changed } = source.syncContentSnapshot({
         content: '# New note',
         fingerprint: ' fingerprint-1 ',
       });
       const contentSnapshot = applied.getProps().contentSnapshot.unpack();
 
       expect(contentSnapshot.content).toBe('# Old note');
-      expect(applied.domainEvents).toEqual([]);
+      expect(changed).toBe(false);
     });
 
-    it('다른 fingerprint이면 원문 snapshot을 갱신하고 domain event를 기록한다', () => {
+    it('다른 fingerprint이면 원문 snapshot을 갱신하고 changed true를 반환한다', () => {
       const source = Source.restore({
         id: 'source-1',
         externalSourceId: 'Notes/source.md',
@@ -139,7 +117,7 @@ describe('Source', () => {
       });
 
       const content = '# New note';
-      const applied = source.syncContentSnapshot({
+      const { source: applied, changed } = source.syncContentSnapshot({
         content,
         fingerprint: ' fingerprint-2 ',
       });
@@ -150,14 +128,7 @@ describe('Source', () => {
         fingerprint: 'fingerprint-2',
         size: byteSize(content),
       });
-      expect(applied.domainEvents).toEqual([
-        expect.objectContaining({
-          eventName: 'source.content_snapshot.changed',
-          aggregateId: 'source-1',
-          externalSourceId: 'Notes/source.md',
-          fingerprint: 'fingerprint-2',
-        }),
-      ]);
+      expect(changed).toBe(true);
     });
   });
 });

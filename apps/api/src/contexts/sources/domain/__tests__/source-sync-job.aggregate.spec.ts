@@ -6,6 +6,7 @@ describe('SourceSyncJob', () => {
     it('pending 상태로 sync job을 생성한다', () => {
       const syncJob = SourceSyncJob.create({
         sourceId: 'source-1',
+        content: '# Source note',
         fingerprint: 'fingerprint-1',
       });
       const props = syncJob.getProps();
@@ -16,6 +17,23 @@ describe('SourceSyncJob', () => {
       });
       expect(props.id.length).toBeGreaterThan(0);
       expect(props.fingerprint.unpack()).toBe('fingerprint-1');
+    });
+
+    it('생성 시 SourceSyncJobCreatedDomainEvent를 기록한다', () => {
+      const syncJob = SourceSyncJob.create({
+        sourceId: 'source-1',
+        content: '# Source note',
+        fingerprint: 'fingerprint-1',
+      });
+
+      expect(syncJob.domainEvents).toHaveLength(1);
+      expect(syncJob.domainEvents[0]).toMatchObject({
+        eventName: 'source.sync_job.created',
+        aggregateId: syncJob.id,
+        sourceId: 'source-1',
+        content: '# Source note',
+        fingerprint: 'fingerprint-1',
+      });
     });
   });
 
@@ -52,7 +70,7 @@ describe('SourceSyncJob', () => {
           id: 'source-sync-job-1',
           sourceId: 'source-1',
           fingerprint: 'fingerprint-1',
-          status: 'completed',
+          status: 'unknown_status',
         }),
       ).toThrow('Source sync job status is invalid');
     });

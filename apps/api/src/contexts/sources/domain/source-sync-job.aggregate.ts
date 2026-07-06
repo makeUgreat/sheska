@@ -1,5 +1,6 @@
 import { AggregateRoot, newId } from '@kernels/domain';
 import { SourceFingerprint } from './source-fingerprint.vo';
+import { SourceSyncJobCreatedDomainEvent } from './source-sync-job-created.event';
 
 interface SourceSyncJobProps {
   sourceId: string;
@@ -7,10 +8,11 @@ interface SourceSyncJobProps {
   status: SourceSyncJobStatus;
 }
 
-type SourceSyncJobStatus = 'pending';
+type SourceSyncJobStatus = 'pending' | 'completed' | 'failed';
 
 interface SourceSyncJobCreateParams {
   sourceId: string;
+  content: string;
   fingerprint: string;
 }
 
@@ -24,9 +26,9 @@ interface SourceSyncJobRestoreParams {
 
 export class SourceSyncJob extends AggregateRoot<SourceSyncJobProps> {
   static create(params: SourceSyncJobCreateParams): SourceSyncJob {
-    const { sourceId, fingerprint } = params;
+    const { sourceId, content, fingerprint } = params;
 
-    return new SourceSyncJob({
+    const syncJob = new SourceSyncJob({
       id: newId(),
       props: {
         sourceId,
@@ -34,6 +36,17 @@ export class SourceSyncJob extends AggregateRoot<SourceSyncJobProps> {
         status: 'pending',
       },
     });
+
+    syncJob.addEvent(
+      new SourceSyncJobCreatedDomainEvent({
+        aggregateId: syncJob.id,
+        sourceId,
+        content,
+        fingerprint: syncJob.props.fingerprint.unpack(),
+      }),
+    );
+
+    return syncJob;
   }
 
   static restore(params: SourceSyncJobRestoreParams): SourceSyncJob {
@@ -50,6 +63,14 @@ export class SourceSyncJob extends AggregateRoot<SourceSyncJobProps> {
     });
   }
 
+  markCompleted(): void {
+    this.props.status = 'completed';
+  }
+
+  markFailed(): void {
+    this.props.status = 'failed';
+  }
+
   public validate(): void {
     if (!SourceSyncJob.isStatus(this.props.status)) {
       throw new Error('Source sync job status is invalid');
@@ -57,6 +78,6 @@ export class SourceSyncJob extends AggregateRoot<SourceSyncJobProps> {
   }
 
   private static isStatus(status: string): status is SourceSyncJobStatus {
-    return status === 'pending';
+    return status === 'pending' || status === 'completed' || status === 'failed';
   }
 }
