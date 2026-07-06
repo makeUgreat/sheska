@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { type Job } from 'bullmq';
 import {
   IngestionCompletedDomainEvent,
@@ -41,6 +41,7 @@ export class EmbedResultConsumer extends WorkerHost {
     this.eventEmitter.emit(event.eventName, event);
   }
 
+  @OnWorkerEvent('failed')
   onFailed(job: Job<EmbedResultPayload> | undefined): void {
     if (!job) return;
     const event = new IngestionFailedDomainEvent({

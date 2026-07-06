@@ -11,7 +11,7 @@ import {
   EmbedResultConsumer,
   EMBED_RESULTS_QUEUE,
 } from '@contexts/ingestion/application/queue-handlers/embed-result.consumer';
-import { OllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama/ollama-http.embedder';
+import { OllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.embedder';
 import { SourceVectorPgDrizzleRepository } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/source-vector.pg-drizzle.repository';
 import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
 import { EMBEDDER, SOURCE_VECTOR_REPOSITORY } from './ingestion.di-tokens';
