@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseOllamaConfig } from './ollama.config';
+import { parseOllamaConfig } from '../ollama.config';
 
 describe('parseOllamaConfig', () => {
   const validEnv = {

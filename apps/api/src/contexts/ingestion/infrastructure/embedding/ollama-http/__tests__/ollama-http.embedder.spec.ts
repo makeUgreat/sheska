@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { InfrastructureException } from '@kernels/infrastructure';
-import { OllamaHttpEmbedder } from './ollama-http.embedder';
+import { OllamaHttpEmbedder } from '../ollama-http.embedder';
 
 describe('OllamaHttpEmbedder', () => {
   let client: OllamaHttpEmbedder;
@@ -20,7 +20,7 @@ describe('OllamaHttpEmbedder', () => {
     client = new OllamaHttpEmbedder(configService);
   });
 
-  it('returns embedding and model on success', async () => {
+  it('성공 시 임베딩과 모델을 반환한다', async () => {
     const fakeEmbedding = [0.1, 0.2, 0.3];
     vi.stubGlobal(
       'fetch',
@@ -40,7 +40,7 @@ describe('OllamaHttpEmbedder', () => {
     });
   });
 
-  it('throws InfrastructureException with UNAVAILABLE when fetch fails', async () => {
+  it('fetch가 실패하면 UNAVAILABLE InfrastructureException을 던진다', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockRejectedValue(new Error('Network error')),
@@ -54,7 +54,7 @@ describe('OllamaHttpEmbedder', () => {
     });
   });
 
-  it('throws InfrastructureException with INVALID_DATA when response shape is unexpected', async () => {
+  it('응답 형태가 올바르지 않으면 INVALID_DATA InfrastructureException을 던진다', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -71,7 +71,7 @@ describe('OllamaHttpEmbedder', () => {
     });
   });
 
-  it('throws InfrastructureException with BAD_RESPONSE when Ollama responds with an error status', async () => {
+  it('Ollama가 에러 상태로 응답하면 BAD_RESPONSE InfrastructureException을 던진다', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
