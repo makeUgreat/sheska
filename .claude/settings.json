@@ -7,7 +7,8 @@
           {
             "type": "command",
             "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/mark_dirty.js\"",
-            "timeout": 30
+            "timeout": 30,
+            "statusMessage": "Marking repository dirty for static checks"
           }
         ]
       }
@@ -19,7 +20,8 @@
           {
             "type": "command",
             "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/stop_check.js\"",
-            "timeout": 600
+            "timeout": 600,
+            "statusMessage": "Running static analysis harness"
           }
         ]
       }
