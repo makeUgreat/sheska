@@ -13,8 +13,11 @@ readiness, or squash-merge history cleanup.
 
 ## Core Behavior
 
-- Treat each PR as a permanent history record because this project uses squash
-  merge by default.
+- Determine the PR type before choosing a merge strategy. Sub-branch PRs
+  (`feature/{name}/{layer}` → `feature/{name}`) use squash merge to collapse
+  wip commits into one logical unit. Integration branch PRs (`feature/{name}`
+  → `main`) use `--no-ff` with commits preserved so the feature history remains
+  traceable in main.
 - Optimize PR title and body for future readers who need to understand which PR
   introduced a change and why it was made.
 - Prefer reviewable, history-meaningful PR units over file-count or commit-count
@@ -62,6 +65,44 @@ Ask before PR creation only when the existing split-rule blockers apply: the
 diff appears unfinished, unrelated user work cannot be separated safely, product
 or ownership decisions are not inferable, or branch/base/remote state could
 target the wrong history.
+
+## Branch Structure
+
+This project uses a tiered branch structure. Identify the branch tier before
+deciding the PR type, merge strategy, and base branch.
+
+```
+main
+ └─ feature/{name}                    (integration branch)
+     ├─ feature/{name}/schema
+     ├─ feature/{name}/backend
+     └─ feature/{name}/ui
+```
+
+**Missing integration branch**: If the current branch matches a sub-branch
+pattern (`feature/{name}/{layer}`) but the parent integration branch
+(`feature/{name}`) does not exist locally or remotely:
+1. Stop and do not open any PR.
+2. Infer the integration branch name from the current branch name.
+3. Propose the inferred name as a suggestion and ask the user to confirm,
+   provide a different name, or cancel.
+4. Create the integration branch from the default branch only after the user
+   confirms the name.
+
+**Integration branch expiry**: Note when an integration branch has existed for
+more than two weeks without merging to main, as diff accumulation increases
+conflict risk.
+
+## Merge Strategy by PR Type
+
+| PR type | Merge command | Reason |
+|---|---|---|
+| Sub-branch → integration branch | `git merge --squash` | Collapse wip commits; produce one logical-unit commit |
+| Integration branch → main | `git merge --no-ff` | Preserve per-layer commits; keep feature boundary visible in main history; enable `git bisect` |
+| main → integration branch (sync) | `git merge main` | Integration branch is shared; rebase rewrites hashes and breaks sub-branches in progress |
+
+**Rebase rule**: Rebase is allowed on private sub-branches. Rebase is
+prohibited on shared branches (integration branches and main).
 
 ## Bundled Scripts
 
@@ -239,7 +280,9 @@ Rules:
 
 ## PR Body Rules
 
-Use this structure by default. Omit `Stack / Merge Order` for non-stacked PRs:
+Use this structure by default. Omit `Stack / Merge Order` for non-stacked PRs.
+For integration branch PRs (`feature/{name}` → `main`), include `Merge
+Strategy` to make the `--no-ff` requirement explicit to the reviewer:
 
 ```markdown
 ## Summary
@@ -262,10 +305,17 @@ Use this structure by default. Omit `Stack / Merge Order` for non-stacked PRs:
 
 - ...
 
+## Merge Strategy
+
+Merge with `--no-ff`. Do not squash. Preserves per-layer commit history for
+traceability and `git bisect`.
+
 ## Risk / Notes
 
 - ...
 ```
+
+Omit `Merge Strategy` for sub-branch PRs (squash is the default expectation).
 
 Section rules:
 
@@ -293,30 +343,36 @@ Do not include:
 
 ## Workflow
 
-1. Inspect `git status --short`, recent commits, and the relevant diff or branch
+1. Detect the branch tier (sub-branch, integration branch, or default branch)
+   and determine the PR type and merge strategy before any other step. If the
+   current branch matches a sub-branch pattern but the integration branch does
+   not exist, stop, propose the inferred integration branch name, and wait for
+   user confirmation before creating it.
+2. Inspect `git status --short`, recent commits, and the relevant diff or branch
    comparison. Use `scripts/inspect-pr-context.sh` when a structured fact pack
    would make the PR unit decision faster or less error-prone.
-2. If the working tree has uncommitted changes, apply `cm` rules first to
+3. If the working tree has uncommitted changes, apply `cm` rules first to
    identify atomic commit candidates.
-3. If the commit candidates are clear, commit-ready, and belong to the requested
+4. If the commit candidates are clear, commit-ready, and belong to the requested
    PR, stage and commit them before drafting the PR.
-4. Ask the user before committing only when the diff appears unfinished, includes
+5. Ask the user before committing only when the diff appears unfinished, includes
    unrelated user work that cannot be safely separated, or requires a product,
    scope, ownership, reviewer, or base-branch decision. Do not ask only because
    the clear boundary is multiple PRs.
-5. Decide whether the change belongs in one PR or a stacked PR set using the PR
+6. Decide whether the change belongs in one PR or a stacked PR set using the PR
    unit checklist and the split gate.
-6. For stacked PRs, define the branch chain, parent/child PRs, merge order, and
+7. For stacked PRs, define the branch chain, parent/child PRs, merge order, and
    final runnable verification target before opening or updating PRs. Use
    `scripts/render-stack-order.sh` to avoid merge-order mistakes.
-7. Record the PR unit decision before opening or updating any PR.
-8. Draft the PR title as the future squash-merge commit subject.
-9. Draft the PR body using the default sections, emphasizing durable `Why`
-   context.
-10. Report verification gaps in the PR body or final response. Do not block PR
-   opening for a verification gap unless the user requested that gate or the gap
-   makes the PR misleading.
-11. Push each prepared branch to the remote and open draft PRs for the clear
-   single PR or stacked PR set with the drafted titles, bodies, base branches,
-   and merge-order notes without asking for another approval, unless a blocker
-   requires user input.
+8. Record the PR unit decision and merge strategy before opening or updating any PR.
+9. Draft the PR title as the squash-merge commit subject (sub-branch PRs) or
+   the feature-boundary label (integration branch PRs).
+10. Draft the PR body using the default sections, emphasizing durable `Why`
+    context. Include `Merge Strategy` for integration branch PRs.
+11. Report verification gaps in the PR body or final response. Do not block PR
+    opening for a verification gap unless the user requested that gate or the gap
+    makes the PR misleading.
+12. Push each prepared branch to the remote and open draft PRs for the clear
+    single PR or stacked PR set with the drafted titles, bodies, base branches,
+    and merge-order notes without asking for another approval, unless a blocker
+    requires user input.

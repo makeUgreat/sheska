@@ -8,7 +8,7 @@
 
 ## 핵심 동작
 
-- 이 프로젝트는 기본적으로 squash merge를 사용하므로, 각 PR을 영구적인 history record로 봅니다.
+- PR을 열기 전에 PR 유형과 merge 전략을 먼저 결정합니다. 하위 브랜치 PR(`feature/{name}/{layer}` → `feature/{name}`)은 squash merge로 wip 커밋을 하나의 논리 단위로 정리합니다. 통합 브랜치 PR(`feature/{name}` → `main`)은 `--no-ff`로 커밋을 보존하여 main history에서 기능 추적이 가능하게 합니다.
 - PR 제목과 본문은 나중에 어떤 PR이 변경을 도입했고 왜 그랬는지 이해해야 하는 사람을 기준으로 최적화합니다.
 - 파일 수나 커밋 수보다 리뷰 가능하고 history 의미가 분명한 PR 단위를 우선합니다.
 - PR 제목과 설명은 영어로 작성합니다.
@@ -19,6 +19,36 @@
 - 합리적인 PR 또는 stack 형태가 둘 이상이면 history 의미가 가장 명확한 선택지를 고르고 그 이유를 보고합니다. 유효한 review 형태 중 하나를 고르기 위해 멈춰서 사용자에게 묻지 않습니다.
 - 검증 결과를 지어내지 않습니다. 실행한 테스트, 생략한 테스트, 실행할 수 없었던 테스트를 명확히 보고합니다.
 - 사용자가 명시적으로 지시하지 않는 한 사용자 변경사항을 되돌리거나 덮어쓰거나 삭제하지 않습니다.
+
+## 브랜치 구조
+
+PR 유형, merge 전략, base branch를 결정하기 전에 현재 브랜치 계층을 파악합니다.
+
+```
+main
+ └─ feature/{name}                    (통합 브랜치)
+     ├─ feature/{name}/schema
+     ├─ feature/{name}/backend
+     └─ feature/{name}/ui
+```
+
+**통합 브랜치 부재 처리**: 현재 브랜치가 하위 패턴(`feature/{name}/{layer}`)인데 부모 통합 브랜치(`feature/{name}`)가 존재하지 않으면:
+1. 작업을 중단하고 PR을 열지 않습니다.
+2. 현재 브랜치 이름에서 통합 브랜치 이름을 추론합니다.
+3. 추론된 이름을 제안으로 제시하고 사용자에게 확인, 다른 이름 입력, 또는 취소 여부를 묻습니다.
+4. 사용자가 이름을 확인한 뒤에만 기본 브랜치에서 통합 브랜치를 생성합니다.
+
+**통합 브랜치 만료**: 통합 브랜치가 2주 이상 main에 merge되지 않은 경우 diff 누적으로 인한 conflict 위험을 알립니다.
+
+## PR 유형별 Merge 전략
+
+| PR 유형 | Merge 명령 | 이유 |
+|---|---|---|
+| 하위 브랜치 → 통합 브랜치 | `git merge --squash` | wip 커밋 정리, 논리 단위 커밋 생성 |
+| 통합 브랜치 → main | `git merge --no-ff` | 레이어별 커밋 보존, main history에서 기능 경계 가시성 유지, `git bisect` 활용 가능 |
+| main → 통합 브랜치 (최신화) | `git merge main` | 통합 브랜치는 공유 브랜치. rebase는 커밋 해시를 바꾸므로 하위 브랜치 기반이 깨짐 |
+
+**Rebase 원칙**: 개인 브랜치(하위 브랜치)에서는 rebase 허용. 공유 브랜치(통합 브랜치, main)에서는 rebase 금지.
 
 ## 포함 스크립트
 
@@ -137,6 +167,7 @@ docs: document PR history rules
 ## PR 본문 규칙
 
 기본 구조입니다. stacked PR이 아니면 `Stack / Merge Order`를 생략합니다.
+통합 브랜치 PR(`feature/{name}` → `main`)에는 `Merge Strategy` 섹션을 포함하여 `--no-ff` 요건을 리뷰어에게 명시합니다.
 
 ```markdown
 ## Summary
@@ -159,10 +190,16 @@ docs: document PR history rules
 
 - ...
 
+## Merge Strategy
+
+`--no-ff`로 merge합니다. squash하지 않습니다. 레이어별 커밋 히스토리 보존 및 `git bisect` 활용을 위한 것입니다.
+
 ## Risk / Notes
 
 - ...
 ```
+
+하위 브랜치 PR에는 `Merge Strategy`를 생략합니다(squash가 기본 예상 전략).
 
 섹션 규칙:
 
@@ -182,15 +219,16 @@ docs: document PR history rules
 
 ## 작업 흐름
 
-1. `git status --short`, 최근 커밋, 관련 diff 또는 브랜치 비교를 확인합니다.
+1. 브랜치 계층(하위 브랜치, 통합 브랜치, 기본 브랜치)을 파악하고 PR 유형과 merge 전략을 가장 먼저 결정합니다. 하위 브랜치 패턴이지만 통합 브랜치가 없으면, 작업을 중단하고 추론된 통합 브랜치 이름을 제안한 뒤 사용자 확인을 기다립니다.
+2. `git status --short`, 최근 커밋, 관련 diff 또는 브랜치 비교를 확인합니다.
    구조화된 fact pack이 PR 단위 결정을 더 빠르거나 덜 오류 나게 만든다면 `scripts/inspect-pr-context.sh`를 사용합니다.
-2. working tree에 커밋되지 않은 변경이 있으면 먼저 `cm` 규칙으로 atomic commit 후보를 찾습니다.
-3. 후보가 명확하고 커밋 준비가 끝났으며 요청된 PR에 속하면 PR draft 전에 stage하고 commit합니다.
-4. diff가 미완성으로 보이거나, 관련 없는 사용자 작업을 안전하게 분리할 수 없거나, product, scope, ownership, reviewer, base-branch 결정이 필요한 경우에만 사용자에게 확인합니다. 명확한 경계가 여러 PR이라는 이유만으로 묻지 않습니다.
-5. PR unit checklist와 split gate로 하나의 PR인지 stacked PR 묶음인지 결정합니다.
-6. Stacked PR이라면 PR을 열거나 업데이트하기 전에 branch chain, parent/child PR, merge 순서, 실행 가능한 최종 검증 대상을 정합니다. merge-order 실수를 줄이기 위해 `scripts/render-stack-order.sh`를 사용합니다.
-7. PR을 열거나 업데이트하기 전에 PR 단위 결정을 기록합니다.
-8. PR 제목은 미래의 squash-merge commit subject로 작성합니다.
-9. PR 본문은 기본 섹션을 사용하고 오래 남을 `Why` 맥락을 강조합니다.
-10. 검증 gap은 PR 본문이나 최종 응답에 보고합니다. 사용자가 해당 gate를 요청했거나 gap이 PR을 오해하게 만들 때만 PR 생성을 막습니다.
-11. 사용자가 도구로 PR을 열거나 업데이트하라고 요청하면, blocker가 없는 한 준비된 제목, 본문, base branch, merge-order note로 명확한 단일 PR 또는 stacked PR 묶음을 추가 확인 없이 생성하거나 업데이트합니다.
+3. working tree에 커밋되지 않은 변경이 있으면 먼저 `cm` 규칙으로 atomic commit 후보를 찾습니다.
+4. 후보가 명확하고 커밋 준비가 끝났으며 요청된 PR에 속하면 PR draft 전에 stage하고 commit합니다.
+5. diff가 미완성으로 보이거나, 관련 없는 사용자 작업을 안전하게 분리할 수 없거나, product, scope, ownership, reviewer, base-branch 결정이 필요한 경우에만 사용자에게 확인합니다. 명확한 경계가 여러 PR이라는 이유만으로 묻지 않습니다.
+6. PR unit checklist와 split gate로 하나의 PR인지 stacked PR 묶음인지 결정합니다.
+7. Stacked PR이라면 PR을 열거나 업데이트하기 전에 branch chain, parent/child PR, merge 순서, 실행 가능한 최종 검증 대상을 정합니다. merge-order 실수를 줄이기 위해 `scripts/render-stack-order.sh`를 사용합니다.
+8. PR을 열거나 업데이트하기 전에 PR 단위 결정과 merge 전략을 기록합니다.
+9. PR 제목은 하위 브랜치 PR의 경우 squash-merge commit subject로, 통합 브랜치 PR의 경우 기능 경계를 나타내는 레이블로 작성합니다.
+10. PR 본문은 기본 섹션을 사용하고 오래 남을 `Why` 맥락을 강조합니다. 통합 브랜치 PR에는 `Merge Strategy` 섹션을 포함합니다.
+11. 검증 gap은 PR 본문이나 최종 응답에 보고합니다. 사용자가 해당 gate를 요청했거나 gap이 PR을 오해하게 만들 때만 PR 생성을 막습니다.
+12. 사용자가 도구로 PR을 열거나 업데이트하라고 요청하면, blocker가 없는 한 준비된 제목, 본문, base branch, merge-order note로 명확한 단일 PR 또는 stacked PR 묶음을 추가 확인 없이 생성하거나 업데이트합니다.

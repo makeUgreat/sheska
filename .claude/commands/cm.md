@@ -17,9 +17,11 @@ drafting, commit splitting, or help preparing commits.
   and switch to a feature branch before staging and committing.
 - Write commit messages in English using Conventional Commits.
 - Split changes by atomic commit boundaries, not by file count or diff size.
-- Treat commits as squash-oriented explanation units. They should preserve a
-  clear review and revert intent, but they do not need to be independently
-  runnable when a PR or stacked PR flow records the dependency.
+- Adapt commit granularity to branch context. On a sub-branch
+  (`feature/{name}/{layer}`), small work-in-progress commits are acceptable
+  because they will be squashed into the integration branch. On an integration
+  branch (`feature/{name}`), write logical-unit commits using Conventional
+  Commits because they are preserved when the branch merges to main.
 - When more than one reasonable commit boundary exists, choose the boundary that
   is easiest to review and explain, then report the choice. Do not stop only to
   confirm between valid boundaries.
@@ -27,6 +29,38 @@ drafting, commit splitting, or help preparing commits.
 - Do not include `What:` or `Tests:` in commit messages.
 - Report verification separately in the Claude response or PR description.
 - Never revert, overwrite, or discard user changes unless explicitly instructed.
+
+## Branch Context
+
+This project uses a tiered branch structure. Detect the current branch type
+before deciding commit granularity.
+
+```
+main
+ └─ feature/{name}                    (integration branch)
+     ├─ feature/{name}/schema
+     ├─ feature/{name}/backend
+     └─ feature/{name}/ui
+```
+
+**Sub-branch** (`feature/{name}/{layer}`):
+- Work-in-progress commits (`wip:`, `fix typo`, `add test`) are acceptable.
+- Commits will be squashed when merging into the integration branch, so
+  individual commits do not need to be independently runnable.
+
+**Integration branch** (`feature/{name}`):
+- Commits are preserved when the branch merges to main with `--no-ff`.
+- Write logical-unit commits (e.g., one commit per layer or per coherent
+  requirement). Do not make wip-style commits directly on this branch.
+
+**Missing integration branch**: If the current branch matches a sub-branch
+pattern (`feature/{name}/{layer}`) but the parent integration branch
+(`feature/{name}`) does not exist locally or remotely:
+1. Stop and do not proceed with staging or committing.
+2. Infer the integration branch name from the current branch name.
+3. Propose the inferred name and ask the user to confirm, change it, or cancel.
+4. Create the integration branch from the default branch only after the user
+   confirms the name.
 
 ## Bundled Scripts
 
@@ -158,24 +192,42 @@ Checking before insertion gives the API a stable validation error instead of
 exposing a database constraint failure.
 ```
 
+## Sub-branch to Integration Branch Merge
+
+When merging a sub-branch into its integration branch, use squash merge to
+collapse wip commits into one logical-unit commit:
+
+```bash
+git checkout feature/{name}
+git merge --squash feature/{name}/{layer}
+git commit -m "feat({scope}): <imperative summary>"
+```
+
+The squash commit message must follow Conventional Commits and include a `Why:`
+body. This commit is what gets preserved in main history.
+
 ## Workflow
 
-1. Inspect the current branch, `git status --short`, and the relevant diffs. Use
+1. Detect the branch context (sub-branch, integration branch, or default
+   branch). If the branch matches a sub-branch pattern but the integration
+   branch does not exist, stop, propose the inferred integration branch name,
+   and wait for user confirmation before creating it.
+2. Inspect the current branch, `git status --short`, and the relevant diffs. Use
    `scripts/inspect-changes.sh` when a structured fact pack would make the
    split faster or less error-prone.
-2. If the current branch is `master` or another configured default branch,
+3. If the current branch is `master` or another configured default branch,
    create and switch to a feature branch before staging or committing.
-3. Split the working tree changes into the fewest clear commit candidates that
+4. Split the working tree changes into the fewest clear commit candidates that
    preserve review and revert intent.
-4. Use the atomic checklist as a quick sanity check for those candidates.
-5. If the candidates are clear and commit-ready, stage and commit each candidate
+5. Use the atomic checklist as a quick sanity check for those candidates.
+6. If the candidates are clear and commit-ready, stage and commit each candidate
    immediately with its Conventional Commit subject and `Why:` body.
-6. Ask the user before committing only when the diff appears unfinished, includes
+7. Ask the user before committing only when the diff appears unfinished, includes
    unrelated user work that cannot be safely separated, or needs a product,
    scope, or ownership decision. Do not ask only because a clear candidate
    depends on a later commit in the same PR or stack.
-7. After committing, report which commits were created, including each subject
+8. After committing, report which commits were created, including each subject
    and the files included.
-8. Report verification separately under `Verification`.
-9. If the diff changes while preparing commits, re-check the split before
-   committing.
+9. Report verification separately under `Verification`.
+10. If the diff changes while preparing commits, re-check the split before
+    committing.

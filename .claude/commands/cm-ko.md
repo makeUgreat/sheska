@@ -13,12 +13,38 @@ description: 변경사항을 atomic commit으로 분리
 - 현재 브랜치가 `master` 또는 다른 기본 브랜치라면 stage하거나 커밋하기 전에 feature branch를 만들고 전환합니다.
 - 커밋 메시지는 영어 Conventional Commits 형식으로 작성합니다.
 - 변경사항은 파일 수나 diff 크기가 아니라 atomic commit 경계로 나눕니다.
-- 커밋은 squash merge를 준비하는 설명 단위로 봅니다. 명확한 review와 revert 의도는 유지해야 하지만, PR 또는 stacked PR 흐름에서 의존성을 기록한다면 각 커밋이 독립적으로 실행 가능할 필요는 없습니다.
+- 커밋 세분화 수준은 브랜치 컨텍스트에 따라 다르게 가져갑니다. 하위 브랜치(`feature/{name}/{layer}`)에서는 wip 커밋이 허용됩니다. 통합 브랜치(`feature/{name}`)에서는 main에 보존될 커밋이므로 Conventional Commits 기준의 논리 단위로 작성합니다.
 - 합리적인 commit 경계가 둘 이상이면 review하고 설명하기 가장 쉬운 경계를 선택하고 그 선택을 보고합니다. 유효한 경계 중 하나를 고르기 위해 멈춰서 확인받지 않습니다.
 - 모든 커밋 메시지 본문에는 `Why:`를 포함합니다.
 - 커밋 메시지에는 `What:`이나 `Tests:`를 포함하지 않습니다.
 - 검증 결과는 커밋 메시지가 아니라 Claude 응답이나 PR 설명에 따로 보고합니다.
 - 사용자가 명시적으로 지시하지 않는 한 사용자 변경사항을 되돌리거나 덮어쓰거나 삭제하지 않습니다.
+
+## 브랜치 컨텍스트
+
+이 프로젝트는 계층형 브랜치 구조를 사용합니다. 커밋 전략을 결정하기 전에 현재 브랜치 유형을 파악합니다.
+
+```
+main
+ └─ feature/{name}                    (통합 브랜치)
+     ├─ feature/{name}/schema
+     ├─ feature/{name}/backend
+     └─ feature/{name}/ui
+```
+
+**하위 브랜치** (`feature/{name}/{layer}`):
+- wip, fix typo, add test 등 세분화 커밋 허용
+- 통합 브랜치에 squash merge될 예정이므로 개별 커밋의 독립 실행 가능성 불필요
+
+**통합 브랜치** (`feature/{name}`):
+- main에 `--no-ff`로 merge될 때 커밋이 보존됨
+- 레이어 단위 또는 요구사항 단위의 논리적 커밋으로 작성. wip 커밋은 직접 만들지 않음
+
+**통합 브랜치 부재 처리**: 현재 브랜치가 하위 패턴(`feature/{name}/{layer}`)인데 부모 통합 브랜치(`feature/{name}`)가 존재하지 않으면:
+1. 작업을 중단하고 stage 또는 커밋을 진행하지 않습니다.
+2. 현재 브랜치 이름에서 통합 브랜치 이름을 추론합니다.
+3. 추론된 이름을 제안하고 사용자에게 확인, 다른 이름 입력, 또는 취소 여부를 묻습니다.
+4. 사용자가 이름을 확인한 뒤에만 기본 브랜치에서 통합 브랜치를 생성합니다.
 
 ## 포함 스크립트
 
@@ -121,14 +147,27 @@ Checking before insertion gives the API a stable validation error instead of
 exposing a database constraint failure.
 ```
 
+## 하위 브랜치 → 통합 브랜치 Merge
+
+하위 브랜치를 통합 브랜치에 merge할 때는 squash merge로 wip 커밋을 하나의 논리 단위 커밋으로 합칩니다.
+
+```bash
+git checkout feature/{name}
+git merge --squash feature/{name}/{layer}
+git commit -m "feat({scope}): <imperative summary>"
+```
+
+squash 커밋 메시지는 Conventional Commits 형식과 `Why:` 본문을 포함해야 합니다. 이 커밋이 main history에 남는 단위가 됩니다.
+
 ## 작업 흐름
 
-1. 현재 브랜치, `git status --short`, 관련 diff를 확인합니다. 구조화된 fact pack이 분리를 더 빠르거나 덜 오류 나게 만든다면 `scripts/inspect-changes.sh`를 사용합니다.
-2. 현재 브랜치가 `master` 또는 기본 브랜치라면 stage하거나 커밋하기 전에 feature branch를 만들고 전환합니다.
-3. working tree 변경사항을 review와 revert 의도를 유지하는 가장 적은 수의 명확한 commit 후보로 나눕니다.
-4. atomic checklist는 후보를 빠르게 점검하는 용도로 사용합니다.
-5. 후보가 명확하고 커밋 준비가 끝났으면 각 후보를 바로 stage하고 Conventional Commit 제목과 `Why:` 본문으로 커밋합니다.
-6. diff가 미완성으로 보이거나, 관련 없는 사용자 작업을 안전하게 분리할 수 없거나, product, scope, ownership 결정이 필요할 때만 사용자에게 확인합니다. 명확한 후보가 같은 PR 또는 stack의 뒤따르는 커밋에 의존한다는 이유만으로 묻지 않습니다.
-7. 커밋 후 생성한 커밋 제목과 포함 파일을 보고합니다.
-8. 검증 결과는 `Verification`으로 따로 보고합니다.
-9. 커밋 준비 중 diff가 바뀌면 다시 분리 기준을 확인합니다.
+1. 브랜치 컨텍스트(하위 브랜치, 통합 브랜치, 기본 브랜치)를 파악합니다. 하위 브랜치 패턴이지만 통합 브랜치가 없으면, 작업을 중단하고 추론된 통합 브랜치 이름을 제안한 뒤 사용자 확인을 기다립니다.
+2. 현재 브랜치, `git status --short`, 관련 diff를 확인합니다. 구조화된 fact pack이 분리를 더 빠르거나 덜 오류 나게 만든다면 `scripts/inspect-changes.sh`를 사용합니다.
+3. 현재 브랜치가 `master` 또는 기본 브랜치라면 stage하거나 커밋하기 전에 feature branch를 만들고 전환합니다.
+4. working tree 변경사항을 review와 revert 의도를 유지하는 가장 적은 수의 명확한 commit 후보로 나눕니다.
+5. atomic checklist는 후보를 빠르게 점검하는 용도로 사용합니다.
+6. 후보가 명확하고 커밋 준비가 끝났으면 각 후보를 바로 stage하고 Conventional Commit 제목과 `Why:` 본문으로 커밋합니다.
+7. diff가 미완성으로 보이거나, 관련 없는 사용자 작업을 안전하게 분리할 수 없거나, product, scope, ownership 결정이 필요할 때만 사용자에게 확인합니다. 명확한 후보가 같은 PR 또는 stack의 뒤따르는 커밋에 의존한다는 이유만으로 묻지 않습니다.
+8. 커밋 후 생성한 커밋 제목과 포함 파일을 보고합니다.
+9. 검증 결과는 `Verification`으로 따로 보고합니다.
+10. 커밋 준비 중 diff가 바뀌면 다시 분리 기준을 확인합니다.
