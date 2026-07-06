@@ -24,7 +24,7 @@ export type InfrastructureErrorCode<
 > = `${Owner}.${Reason}`;
 
 export interface InfrastructureErrorSource {
-  readonly boundary: 'persistence' | 'message-broker';
+  readonly boundary: 'persistence' | 'message-broker' | 'http-client';
   readonly adapter: string;
 }
 
