@@ -64,9 +64,9 @@ Persistence policy decides how database and ORM adapters preserve stored data wi
 - Persistence mapper restoration methods should let domain restoration exceptions propagate unchanged.
 - Do not wrap domain restoration exceptions as repository or persistence errors only because the exception occurred while restoring a row.
 - Aggregate persistence mappers should be split by restored aggregate or entity. Avoid collecting unrelated aggregate mappings in one adapter-wide mapper.
-- Persistence adapter file names should read `{domain-name}.{purpose-or-adapter}.{role}.ts` so the subject, boundary, and role stay sortable and easy to search.
-- Name persistence mapper files `{aggregate-or-entity}.persistence.mapper.ts` and classes `{AggregateOrEntity}PersistenceMapper`, such as `source.persistence.mapper.ts` and `SourcePersistenceMapper`.
-- Name concrete repository adapter files `{aggregate-or-entity}.{adapter}.repository.ts` and classes `{AggregateOrEntity}{Adapter}Repository`, such as `source.drizzle.repository.ts` and `SourceDrizzleRepository`.
+- Persistence adapter file names follow the adapter file naming rules in the [API Infrastructure Convention](./infrastructure.md).
+- Name persistence mapper files `{aggregate-or-entity}.persistence.mapper.ts` and classes `{AggregateOrEntity}PersistenceMapper`, such as `source.pg-drizzle.mapper.ts` and `SourcePgDrizzleMapper`.
+- Name concrete repository adapter files `{aggregate-or-entity}.{adapter}.repository.ts` and classes `{AggregateOrEntity}{Adapter}Repository`, such as `source.pg-drizzle.repository.ts` and `SourcePgDrizzleRepository`.
 - Domain objects restored from persistence should expose a `restore` path that validates domain invariants and does not record domain events.
 - Repository `save` methods that return a domain object should return the domain object restored from the database-returned row, not the original input object.
 - Domain-to-insert mapping may trust domain objects that already passed domain invariants. Use duplicate insert validation only when the adapter has an additional storage-only constraint.

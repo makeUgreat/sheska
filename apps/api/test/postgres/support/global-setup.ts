@@ -5,6 +5,7 @@ import { runMigrations } from '../../../database/migrator';
 
 const execAsync = promisify(exec);
 const POSTGRES_TEST_CONTAINER_NAME = 'sheska.test.db';
+const REDIS_TEST_CONTAINER_NAME = 'sheska.test.redis';
 const POSTGRES_TEST_DATABASE_URL =
   'postgres://sheska:sheska@127.0.0.1:55432/sheska_test';
 const POSTGRES_COMPOSE_FILE = resolve(__dirname, 'docker-compose.yml');
@@ -34,19 +35,23 @@ async function executeTestDatabaseContainer(): Promise<void> {
   await execAsync(`docker compose -f "${POSTGRES_COMPOSE_FILE}" up -d`, {
     cwd: POSTGRES_COMPOSE_CWD,
   });
-  await waitForHealthyContainer();
+  await waitForHealthyContainer(POSTGRES_TEST_CONTAINER_NAME);
+  await waitForHealthyContainer(REDIS_TEST_CONTAINER_NAME);
   console.info(
     ` ✅ ${POSTGRES_TEST_CONTAINER_NAME} is healthy at ${POSTGRES_TEST_DATABASE_URL}`,
   );
+  console.info(
+    ` ✅ ${REDIS_TEST_CONTAINER_NAME} is healthy at 127.0.0.1:56379`,
+  );
 }
 
-async function waitForHealthyContainer(): Promise<void> {
+async function waitForHealthyContainer(containerName: string): Promise<void> {
   for (let attempt = 1; attempt <= 10; attempt += 1) {
     let status = 'unavailable';
 
     try {
       const { stdout } = await execAsync(
-        `docker inspect --format='{{.State.Health.Status}}' ${POSTGRES_TEST_CONTAINER_NAME}`,
+        `docker inspect --format='{{.State.Health.Status}}' ${containerName}`,
         { cwd: POSTGRES_COMPOSE_CWD },
       );
       status = stdout.trim();
@@ -63,7 +68,5 @@ async function waitForHealthyContainer(): Promise<void> {
     );
   }
 
-  throw new Error(
-    `Timed out waiting for ${POSTGRES_TEST_CONTAINER_NAME} healthcheck`,
-  );
+  throw new Error(`Timed out waiting for ${containerName} healthcheck`);
 }

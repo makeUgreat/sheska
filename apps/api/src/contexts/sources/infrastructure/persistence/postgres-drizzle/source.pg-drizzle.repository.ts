@@ -11,11 +11,11 @@ import {
   InfrastructureException,
 } from '@kernels/infrastructure';
 import * as schema from './schema';
-import { SourcePersistenceMapper } from './source.persistence.mapper';
+import { SourcePgDrizzleMapper } from './source.pg-drizzle.mapper';
 
-const ADAPTER = 'source.drizzle';
+const ADAPTER = 'source.pg-drizzle';
 
-export class SourceDrizzleRepository implements SourceRepository {
+export class SourcePgDrizzleRepository implements SourceRepository {
   constructor(private readonly db: NodePgDatabase<typeof schema>) {}
 
   async find(criteria: SourceRepositoryFindCriteria): Promise<Source | null> {
@@ -41,7 +41,7 @@ export class SourceDrizzleRepository implements SourceRepository {
       return null;
     }
 
-    return SourcePersistenceMapper.toDomain(row);
+    return SourcePgDrizzleMapper.toDomain(row);
   }
 
   async get(criteria: SourceRepositoryGetCriteria): Promise<Source | null> {
@@ -67,7 +67,7 @@ export class SourceDrizzleRepository implements SourceRepository {
       return null;
     }
 
-    return SourcePersistenceMapper.toDomain(row);
+    return SourcePgDrizzleMapper.toDomain(row);
   }
 
   async list(): Promise<Source[]> {
@@ -88,11 +88,11 @@ export class SourceDrizzleRepository implements SourceRepository {
       });
     }
 
-    return rows.map((row) => SourcePersistenceMapper.toDomain(row));
+    return rows.map((row) => SourcePgDrizzleMapper.toDomain(row));
   }
 
   async save(source: Source): Promise<Source> {
-    const sourceInsert = SourcePersistenceMapper.toInsert(source);
+    const sourceInsert = SourcePgDrizzleMapper.toInsert(source);
     let row: schema.SourceRow;
 
     try {
@@ -120,6 +120,6 @@ export class SourceDrizzleRepository implements SourceRepository {
       });
     }
 
-    return SourcePersistenceMapper.toDomain(row);
+    return SourcePgDrizzleMapper.toDomain(row);
   }
 }

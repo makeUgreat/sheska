@@ -1,7 +1,7 @@
 import { SourceSyncJob } from '@contexts/sources/domain';
 import { type SourceSyncJobInsert, type SourceSyncJobRow } from './schema';
 
-export class SourceSyncJobPersistenceMapper {
+export class SourceSyncJobPgDrizzleMapper {
   static toDomain(row: SourceSyncJobRow): SourceSyncJob {
     return SourceSyncJob.restore({
       id: row.id,

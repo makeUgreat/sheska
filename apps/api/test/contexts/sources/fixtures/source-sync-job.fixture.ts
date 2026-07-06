@@ -5,6 +5,7 @@ export function buildSourceSyncJob(
 ): SourceSyncJob {
   return SourceSyncJob.create({
     sourceId: params.sourceId ?? 'source-1',
+    content: params.content ?? 'content-1',
     fingerprint: params.fingerprint ?? 'fingerprint-1',
   });
 }

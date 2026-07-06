@@ -124,6 +124,26 @@ Prefer proving each behavior at the cheapest test layer that can prove it reliab
 Do not repeat detailed domain, application, or mapper invariant cases in integration tests only because the adapter participates in the flow.
 Integration tests may overlap with unit tests only when the same observable result proves a different responsibility, such as verifying that a real database constraint produces the repository exception behavior already covered with a fake database in unit tests.
 
+#### Boundary Ownership and Overlap
+
+The integration test boundary directory defines the primary real boundary under verification.
+Do not decide the test scope only from the entry point being called.
+The same route, controller, use case, or port may appear in more than one integration boundary when each test proves a different responsibility.
+
+Within a boundary-specific integration test, keep the primary boundary real and replace unrelated external boundaries with test doubles.
+For example, an HTTP health test under `test/http/` should verify route matching, status codes, response body shape, and exception-filter mapping with database and queue collaborators mocked.
+A Postgres health test under `test/postgres/` should verify the real database module, provider wiring, and query compatibility, while mocking queue collaborators unless the test is explicitly about the queue boundary.
+
+Test names in boundary-specific integration tests should describe the responsibility owned by that boundary, not just the shared entry point or an incidental observable result.
+For example, a Postgres health test may call `GET /health`, but its `describe()` and `it()` names should emphasize real Postgres wiring or query compatibility rather than HTTP status codes or response body shape.
+
+Failure cases belong at the cheapest layer that owns the behavior.
+Protocol error mapping and response shape failures usually belong in the protocol boundary test with controlled test doubles.
+Real dependency failure cases belong in that dependency boundary only when the behavior cannot be proven reliably without the real dependency, such as real database constraint behavior, transaction behavior, connection setup, or ORM query compatibility.
+
+Cross-boundary smoke tests that use several real external dependencies are allowed only when they prove production composition rather than a single adapter contract.
+Keep them few, prefer happy-path coverage, and place or name them so the broader scope is explicit.
+
 ## Commands
 
 ```bash

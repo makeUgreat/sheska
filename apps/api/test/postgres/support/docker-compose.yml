@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:18
+    image: pgvector/pgvector:pg18
     container_name: sheska.test.db
     environment:
       POSTGRES_DB: sheska_test
@@ -14,6 +14,21 @@ services:
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U sheska -d sheska_test']
       start_period: 10s
+      start_interval: 1s
+      interval: 2s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:8-alpine
+    container_name: sheska.test.redis
+    ports:
+      - '56379:6379'
+    tmpfs:
+      - /data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      start_period: 5s
       start_interval: 1s
       interval: 2s
       timeout: 5s

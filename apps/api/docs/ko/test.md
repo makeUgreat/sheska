@@ -125,6 +125,26 @@ Adapter test coverage는 검증하려는 동작의 소유자가 어디에 있는
 Adapter가 흐름에 참여한다는 이유만으로 상세한 domain, application, mapper invariant case를 통합 테스트에서 반복하지 않는다.
 같은 observable result를 검증하더라도 책임이 다르면 제한적으로 중복을 허용할 수 있다. 예를 들어 단위 테스트에서 fake database로 검증한 repository exception behavior를, 통합 테스트에서는 실제 database constraint가 같은 behavior로 이어지는지 확인할 수 있다.
 
+#### Boundary 소유권과 중복
+
+Integration test boundary directory는 검증 대상인 primary real boundary를 정의한다.
+호출하는 entry point만 보고 test scope를 결정하지 않는다.
+같은 route, controller, use case, port라도 각 테스트가 서로 다른 책임을 증명한다면 둘 이상의 integration boundary에 나타날 수 있다.
+
+Boundary-specific integration test에서는 primary boundary를 실제로 붙이고, 관련 없는 external boundary는 test double로 대체한다.
+예를 들어 `test/http/` 아래의 health test는 database와 queue collaborator를 mock으로 두고 route matching, status code, response body shape, exception-filter mapping을 검증해야 한다.
+`test/postgres/` 아래의 health test는 실제 database module, provider wiring, query compatibility를 검증해야 하며, queue boundary를 명시적으로 테스트하는 경우가 아니라면 queue collaborator는 mock으로 둔다.
+
+Boundary-specific integration test의 test name은 공유 entry point나 부수적으로 관찰되는 결과가 아니라, 해당 boundary가 소유한 책임을 설명해야 한다.
+예를 들어 Postgres health test가 `GET /health`를 호출하더라도 `describe()`와 `it()` 이름은 HTTP status code나 response body shape보다 실제 Postgres wiring 또는 query compatibility를 강조해야 한다.
+
+Failure case는 그 behavior를 소유한 가장 저렴한 layer에 둔다.
+Protocol error mapping과 response shape failure는 대체로 controlled test double을 사용하는 protocol boundary test에 둔다.
+Real dependency failure case는 실제 dependency 없이는 신뢰성 있게 증명할 수 없을 때만 해당 dependency boundary에 둔다. 예를 들어 실제 database constraint behavior, transaction behavior, connection setup, ORM query compatibility가 이에 해당한다.
+
+여러 real external dependency를 함께 붙이는 cross-boundary smoke test는 단일 adapter contract가 아니라 production composition을 증명할 때만 허용한다.
+이런 테스트는 적게 유지하고, happy path coverage를 선호하며, 더 넓은 scope가 명확하게 드러나도록 배치하거나 이름을 정한다.
+
 ## 명령어
 
 ```bash

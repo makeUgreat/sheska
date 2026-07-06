@@ -28,6 +28,11 @@ type SourceSyncJobRepositoryMock = {
   save: MockedFunction<SourceSyncJobRepository['save']>;
 };
 
+type EventEmitterMock = {
+  emit: MockedFunction<EventEmitter2['emit']>;
+  emitAsync: MockedFunction<EventEmitter2['emitAsync']>;
+};
+
 describe('UploadSourceUseCase', () => {
   it('새 source를 저장하고 sync job을 생성한다', async () => {
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
@@ -41,7 +46,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
-      eventEmitter,
+      asEventEmitter(eventEmitter),
     );
 
     const result = await useCase.execute({
@@ -91,7 +96,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
-      createEventEmitterMock(),
+      asEventEmitter(createEventEmitterMock()),
     );
 
     const result = await useCase.execute({
@@ -127,7 +132,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
-      eventEmitter,
+      asEventEmitter(eventEmitter),
     );
 
     const result = await useCase.execute({
@@ -161,7 +166,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
-      createEventEmitterMock(),
+      asEventEmitter(createEventEmitterMock()),
     );
 
     await expect(
@@ -186,7 +191,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
-      createEventEmitterMock(),
+      asEventEmitter(createEventEmitterMock()),
     );
 
     const result = useCase.execute({
@@ -210,7 +215,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
-      createEventEmitterMock(),
+      asEventEmitter(createEventEmitterMock()),
     );
 
     const result = useCase.execute({
@@ -233,7 +238,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
-      createEventEmitterMock(),
+      asEventEmitter(createEventEmitterMock()),
     );
 
     const result = useCase.execute({
@@ -257,7 +262,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
-      createEventEmitterMock(),
+      asEventEmitter(createEventEmitterMock()),
     );
 
     const result = useCase.execute({
@@ -282,7 +287,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
-      createEventEmitterMock(),
+      asEventEmitter(createEventEmitterMock()),
     );
 
     const result = useCase.execute({
@@ -329,11 +334,15 @@ function createSourceSyncJobRepositoryMock(): SourceSyncJobRepositoryMock {
   };
 }
 
-function createEventEmitterMock(): EventEmitter2 {
+function createEventEmitterMock(): EventEmitterMock {
   return {
     emit: vi.fn(),
     emitAsync: vi.fn().mockResolvedValue([]),
-  } as unknown as EventEmitter2;
+  };
+}
+
+function asEventEmitter(eventEmitter: EventEmitterMock): EventEmitter2 {
+  return eventEmitter as unknown as EventEmitter2;
 }
 
 function expectSourceSavedWith(
@@ -358,7 +367,7 @@ function expectSourceSavedWith(
 
 function expectSyncJobSavedWith(
   syncJobs: ReturnType<typeof createSourceSyncJobRepositoryMock>,
-  eventEmitter: EventEmitter2,
+  eventEmitter: EventEmitterMock,
   expected: {
     sourceId: string | undefined;
     content: string;

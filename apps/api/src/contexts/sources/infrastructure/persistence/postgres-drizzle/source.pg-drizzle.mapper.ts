@@ -1,7 +1,7 @@
 import { Source } from '@contexts/sources/domain';
 import { type SourceInsert, type SourceRow } from './schema';
 
-export class SourcePersistenceMapper {
+export class SourcePgDrizzleMapper {
   static toDomain(this: void, row: SourceRow): Source {
     return Source.restore({
       id: row.id,

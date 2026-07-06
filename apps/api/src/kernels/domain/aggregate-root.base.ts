@@ -1,7 +1,10 @@
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { type DomainEvent } from './domain-event.base';
 import { Entity } from './entity.base';
 import { type LoggerPort } from './logger.port';
+
+interface DomainEventPublisher {
+  emitAsync(eventName: string, event: DomainEvent): Promise<unknown>;
+}
 
 export abstract class AggregateRoot<EntityProps> extends Entity<EntityProps> {
   private _domainEvents: DomainEvent[] = [];
@@ -16,7 +19,7 @@ export abstract class AggregateRoot<EntityProps> extends Entity<EntityProps> {
 
   public async publishEvents(
     logger: LoggerPort,
-    eventEmitter: EventEmitter2,
+    eventEmitter: DomainEventPublisher,
   ): Promise<void> {
     await Promise.all(
       this._domainEvents.map(async (event) => {

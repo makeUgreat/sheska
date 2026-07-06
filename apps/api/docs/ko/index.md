@@ -11,6 +11,7 @@ related:
   - ./architecture.md
   - ./ddd.md
   - ./persistence.md
+  - ./infrastructure.md
   - ./source-dependency.md
   - ./runtime-wiring.md
   - ./test.md
@@ -34,6 +35,7 @@ related:
 - `apps/api` architecture, DDD boundary, source structure, module boundary 결정 작업: [API 아키텍처 컨벤션](./architecture.md)을 읽는다.
 - `apps/api` DDD boundary, domain model ownership, shared domain language 작업: [API DDD 컨벤션](./ddd.md)을 읽는다.
 - Database schema, migration, ORM persistence, repository mapper, storage constraint 결정 작업: [API Persistence 정책](./persistence.md)을 읽는다.
+- Infrastructure adapter file 명명, 디렉토리 구조, adapter 컨벤션 작업: [API Infrastructure 컨벤션](./infrastructure.md)을 읽는다.
 - Import direction, layer boundary, framework import 작업: [API Source Dependency 컨벤션](./source-dependency.md)을 읽는다.
 - NestJS DI, provider registration, module wiring, platform startup flow, port binding 작업: [API Runtime Wiring 컨벤션](./runtime-wiring.md)을 읽는다.
 - `apps/api` test file, test structure, test command 선택 작업: [API 테스트 컨벤션](./test.md)을 읽는다.

@@ -19,5 +19,21 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:8-alpine
+    container_name: sheska.development.redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - sheska_development_redis:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      start_period: 5s
+      start_interval: 1s
+      interval: 2s
+      timeout: 5s
+      retries: 5
+
 volumes:
   sheska_development_db:
+  sheska_development_redis:
