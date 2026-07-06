@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+
+# Compiled output
+dist/
+build/
+main.js
+
+# Tests
+coverage/
+.nyc_output/

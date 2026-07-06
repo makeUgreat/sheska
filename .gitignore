@@ -1,10 +1,9 @@
-# compiled output
-dist
-node_modules
-build
+# Dependencies
+/node_modules/
 
-# Obsidian plugin build output
-apps/obsidian-plugin/main.js
+# Compiled output
+/dist/
+/build/
 
 # Logs
 logs

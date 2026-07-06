@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Compiled output
+dist/
+build/
+
+# Tests
+coverage/
+.nyc_output/
+
+# Vite
+.vite/
+vite.config.ts.timestamp-*
+vite.config.*.timestamp-*
