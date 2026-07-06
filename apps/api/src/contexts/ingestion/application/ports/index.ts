@@ -1,1 +1,1 @@
-export { type EmbedJob, type EmbedJobDispatcher } from './embed-job-dispatcher';
+export { type Embedder } from './embedder.port';

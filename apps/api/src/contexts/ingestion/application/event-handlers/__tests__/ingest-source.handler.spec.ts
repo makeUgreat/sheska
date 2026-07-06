@@ -1,22 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
+import { type Queue } from 'bullmq';
 import { IngestSourceHandler } from '../ingest-source.handler';
 
 describe('IngestSourceHandler', () => {
-  it('sync_job.created 이벤트를 embed job으로 dispatch한다', async () => {
-    const dispatch = vi.fn().mockResolvedValue(undefined);
-    const handler = new IngestSourceHandler({ dispatch });
+  it('sync_job.created 이벤트를 처리해 embed-requests 큐에 요청을 추가한다', async () => {
+    const add = vi.fn().mockResolvedValue(undefined);
+    const handler = new IngestSourceHandler({ add } as unknown as Queue);
 
     const event = {
       aggregateId: 'sync-job-1',
       sourceId: 'source-1',
       content: '# Source note',
-      fingerprint: 'fingerprint-1',
     };
 
     await handler.handle(event);
 
-    expect(dispatch).toHaveBeenCalledOnce();
-    expect(dispatch).toHaveBeenCalledWith({
+    expect(add).toHaveBeenCalledWith('embed-request', {
       sourceId: 'source-1',
       syncJobId: 'sync-job-1',
       content: '# Source note',
