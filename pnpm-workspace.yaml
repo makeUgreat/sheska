@@ -1,2 +1,5 @@
 packages:
   - "apps/*"
+  - "e2e"
+
+inject-workspace-packages: true
