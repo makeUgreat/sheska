@@ -84,19 +84,20 @@ export class SheskaSettingTab extends PluginSettingTab {
               String(this.pluginWithSettings.settings[control.key] ?? ''),
             )
             .onChange(async (value) => {
-              (this.pluginWithSettings.settings as unknown as Record<string, unknown>)[
-                control.key
-              ] = value;
+              (
+                this.pluginWithSettings.settings as unknown as Record<
+                  string,
+                  unknown
+                >
+              )[control.key] = value;
               await this.pluginWithSettings.saveSettings();
             });
         });
       } else if (control.type === 'number') {
         setting.addText((text) => {
           text.inputEl.type = 'number';
-          if (control.min !== undefined)
-            text.inputEl.min = String(control.min);
-          if (control.max !== undefined)
-            text.inputEl.max = String(control.max);
+          if (control.min !== undefined) text.inputEl.min = String(control.min);
+          if (control.max !== undefined) text.inputEl.max = String(control.max);
           text
             .setValue(
               String(this.pluginWithSettings.settings[control.key] ?? ''),
@@ -104,9 +105,12 @@ export class SheskaSettingTab extends PluginSettingTab {
             .onChange(async (value) => {
               const parsed = Number(value);
               if (!Number.isNaN(parsed)) {
-                (this.pluginWithSettings.settings as unknown as Record<string, unknown>)[
-                  control.key
-                ] = parsed;
+                (
+                  this.pluginWithSettings.settings as unknown as Record<
+                    string,
+                    unknown
+                  >
+                )[control.key] = parsed;
                 await this.pluginWithSettings.saveSettings();
               }
             });

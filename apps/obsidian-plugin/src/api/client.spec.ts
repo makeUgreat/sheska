@@ -125,7 +125,10 @@ describe('SheskaApiClient', () => {
 
       expect(fetch).toHaveBeenCalledWith('http://localhost:3000/sources', {
         method: 'POST',
-        body: JSON.stringify({ externalSourceId: 'vault/note.md', content: '# Hello' }),
+        body: JSON.stringify({
+          externalSourceId: 'vault/note.md',
+          content: '# Hello',
+        }),
         headers: { 'Content-Type': 'application/json' },
       });
       expect(result).toEqual(response);

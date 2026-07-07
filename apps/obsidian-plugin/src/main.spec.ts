@@ -119,7 +119,10 @@ describe('SheskaPlugin', () => {
     it('shows failure Notice when health check fires and API is unreachable', async () => {
       vi.useFakeTimers();
       plugin = makePlugin({ healthCheckIntervalMinutes: 1 });
-      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNREFUSED')));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
+      );
 
       await plugin.onload();
       await vi.advanceTimersByTimeAsync(60 * 1000);
@@ -198,7 +201,6 @@ describe('SheskaPlugin', () => {
         'Failed to upload note to Sheska: ECONNREFUSED',
       );
     });
-
   });
 
   describe('file-menu upload item', () => {
