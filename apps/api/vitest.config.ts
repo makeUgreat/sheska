@@ -60,10 +60,11 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          name: 'integration',
+          name: 'local',
           environment: 'node',
           fileParallelism: false,
           globals: false,
+          globalSetup: './test/integration/support/global-setup.ts',
           include: ['test/**/*.e2e-spec.ts', 'test/**/*.integration-spec.ts'],
           exclude: [
             'test/postgres/**/*.integration-spec.ts',

@@ -150,8 +150,11 @@ Real dependency failure case는 실제 dependency 없이는 신뢰성 있게 증
 pnpm lint:check         # ESLint 검사
 pnpm typecheck          # TypeScript type checking
 pnpm test:unit          # 단위 테스트
-pnpm test:integration   # Postgres가 필요 없는 통합 및 e2e 테스트
+pnpm test:integration:local # Postgres, Redis, Ollama가 필요 없는 local 통합 테스트
 pnpm test:integration:postgres # Postgres 기반 통합 테스트
+pnpm test:integration:redis # Redis 기반 통합 테스트
+pnpm test:integration:ollama # Ollama 기반 통합 테스트
+pnpm test:integration   # 모든 통합 테스트
 pnpm test:integration:all # 모든 통합 테스트
 pnpm test               # 단위 테스트, 그 다음 모든 통합 테스트
 pnpm test:watch         # API package에서 Vitest watch 모드

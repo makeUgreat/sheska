@@ -1,11 +1,14 @@
 import { type INestApplication } from '@nestjs/common';
+import { getQueueToken } from '@nestjs/bullmq';
 import { Test } from '@nestjs/testing';
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { type Queue } from 'bullmq';
 import { DATABASE_TOKENS } from '@kernels/infrastructure';
 import { type SourceFingerprinter } from '@contexts/sources/application/ports';
 import { type SourceRepository } from '@contexts/sources/domain';
+import { EMBED_REQUESTS_QUEUE } from '@contexts/ingestion/application/queue-handlers/embed-request.consumer';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
 import * as schema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
 import {
@@ -20,6 +23,7 @@ describe('UploadSourceUseCase', () => {
   let database: NodePgDatabase<typeof schema>;
   let sources: SourceRepository;
   let useCase: UploadSourceUseCase;
+  let embedRequestsQueue: Queue;
   const fingerprints = new Map<string, string>();
   const sourceFingerprinter: SourceFingerprinter = {
     calculate(content: string) {
@@ -42,6 +46,8 @@ describe('UploadSourceUseCase', () => {
       .compile();
     app = moduleFixture.createNestApplication();
     await app.init();
+    embedRequestsQueue = app.get<Queue>(getQueueToken(EMBED_REQUESTS_QUEUE));
+    await embedRequestsQueue.pause();
     database = app.get<NodePgDatabase<typeof schema>>(
       DATABASE_TOKENS.drizzleDatabase,
     );
@@ -54,6 +60,7 @@ describe('UploadSourceUseCase', () => {
   });
 
   afterAll(async () => {
+    await embedRequestsQueue.obliterate({ force: true });
     await app.close();
   });
 

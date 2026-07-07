@@ -149,8 +149,11 @@ Keep them few, prefer happy-path coverage, and place or name them so the broader
 pnpm lint:check         # ESLint checks
 pnpm typecheck          # TypeScript type checking
 pnpm test:unit          # Unit tests
-pnpm test:integration   # Integration and e2e tests that do not require Postgres
+pnpm test:integration:local # Local integration tests that do not require Postgres, Redis, or Ollama
 pnpm test:integration:postgres # Postgres-backed integration tests
+pnpm test:integration:redis # Redis-backed integration tests
+pnpm test:integration:ollama # Ollama-backed integration tests
+pnpm test:integration   # All integration tests
 pnpm test:integration:all # All integration tests
 pnpm test               # Unit tests, then all integration tests
 pnpm test:watch         # Vitest watch mode from the API package
