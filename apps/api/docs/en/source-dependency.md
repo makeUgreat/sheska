@@ -169,3 +169,12 @@ Production code outside `platform` must not import `platform`, except the thin `
 
 `kernels/domain` and domain layer code MAY depend on Node.js's `EventEmitter` family as an explicit exception.
 `EventEmitter2` and similar libraries are thin extensions of Node's built-in `EventEmitter` and are treated as part of the Node.js runtime rather than as framework or external SDK dependencies.
+
+### BullMQ Queue Handler Exception
+
+Application layer code that acts as an internal async pipeline stage MAY extend `WorkerHost` and use `@Processor` and `@OnWorkerEvent` from `@nestjs/bullmq` as an explicit exception.
+
+This exception applies only when the queue consumer orchestrates application flow between internally published queues within the same bounded context — not when consuming integration events published by an external system.
+External integration event consumers belong outside the application layer.
+
+`@OnWorkerEvent` is a framework lifecycle callback, but suppressing it here would force the worker error-handling concern into infrastructure, splitting cohesive orchestration logic across layers without a meaningful benefit.

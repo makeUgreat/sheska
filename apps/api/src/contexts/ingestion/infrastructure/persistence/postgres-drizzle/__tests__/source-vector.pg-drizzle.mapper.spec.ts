@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   buildSourceVector,
   VALID_EMBEDDING,
-} from '../../../../../../../test/contexts/ingestion/fixtures/source-vector.fixture';
-import { buildSourceVectorRow } from '../../../../../../../test/postgres/contexts/ingestion/fixtures/source-vector-row.fixture';
+} from '../../../../../../../test/domains/fixtures/source-vector.fixture';
+import { buildSourceVectorRow } from '../../../../../../../test/postgres/ingestion/fixtures/source-vector-row.fixture';
 import { SourceVectorPgDrizzleMapper } from '../source-vector.pg-drizzle.mapper';
 
 describe('SourceVectorPgDrizzleMapper', () => {
@@ -13,7 +13,7 @@ describe('SourceVectorPgDrizzleMapper', () => {
     const sourceVector = SourceVectorPgDrizzleMapper.toDomain(row);
 
     expect(sourceVector.id).toBe('source-1');
-    expect(sourceVector.getProps().model.unpack()).toBe('nomic-embed-text');
+    expect(sourceVector.getProps().model.unpack()).toBe('qwen3-embedding:0.6b');
     expect(sourceVector.getProps().embedding.unpack().values).toEqual(
       VALID_EMBEDDING,
     );
@@ -35,7 +35,7 @@ describe('SourceVectorPgDrizzleMapper', () => {
     expect(row).toEqual({
       sourceId: 'source-1',
       embedding: VALID_EMBEDDING,
-      model: 'nomic-embed-text',
+      model: 'qwen3-embedding:0.6b',
     });
   });
 });

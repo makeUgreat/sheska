@@ -10,7 +10,7 @@ import {
   type UploadSourceContentSnapshotCalculator,
   UploadSourceUseCase,
 } from '../upload-source.use-case';
-import { sourceContentByteSize } from '../../../../../../test/contexts/sources/fixtures/source.fixture';
+import { sourceContentByteSize } from '../../../../../../test/domains/fixtures/source.fixture';
 
 type ContentSnapshotCalculatorMock = {
   calculate: MockedFunction<UploadSourceContentSnapshotCalculator['calculate']>;

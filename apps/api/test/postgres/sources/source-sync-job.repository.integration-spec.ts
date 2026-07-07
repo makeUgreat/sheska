@@ -10,8 +10,8 @@ import {
   SOURCE_SYNC_JOB_REPOSITORY,
 } from '@contexts/sources/sources.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
-import { buildSourceSyncJob } from '../../../../../contexts/sources/fixtures/source-sync-job.fixture';
-import { buildSource } from '../../../../../contexts/sources/fixtures/source.fixture';
+import { buildSourceSyncJob } from '../../domains/fixtures/source-sync-job.fixture';
+import { buildSource } from '../../domains/fixtures/source.fixture';
 
 describe('SourceSyncJobDrizzleRepository', () => {
   let app: INestApplication;

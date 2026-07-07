@@ -23,7 +23,7 @@ describe('EmbedRequestConsumer', () => {
   describe('process', () => {
     it('content를 임베딩하고 embed-results 큐에 결과를 추가한다', async () => {
       const fakeEmbedding = [0.1, 0.2, 0.3];
-      const fakeModel = 'nomic-embed-text';
+      const fakeModel = 'qwen3-embedding:0.6b';
       const embed = vi
         .fn()
         .mockResolvedValue({ embedding: fakeEmbedding, model: fakeModel });

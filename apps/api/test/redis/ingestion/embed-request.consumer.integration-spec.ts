@@ -62,7 +62,7 @@ describe('EmbedRequestConsumer', () => {
   it('content를 임베딩하고 결과 job을 embed-results 큐에 추가한다', async () => {
     embed.mockResolvedValue({
       embedding: [0.1, 0.2, 0.3],
-      model: 'nomic-embed-text',
+      model: 'qwen3-embedding:0.6b',
     });
 
     const job = await embedRequestsQueue.add('embed-request', {
@@ -80,7 +80,7 @@ describe('EmbedRequestConsumer', () => {
       sourceId: 'source-1',
       syncJobId: 'sync-job-1',
       embedding: [0.1, 0.2, 0.3],
-      model: 'nomic-embed-text',
+      model: 'qwen3-embedding:0.6b',
     });
   });
 

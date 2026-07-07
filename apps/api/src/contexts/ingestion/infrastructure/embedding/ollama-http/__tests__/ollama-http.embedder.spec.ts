@@ -6,7 +6,7 @@ import { OllamaHttpEmbedder } from '../ollama-http.embedder';
 describe('OllamaHttpEmbedder', () => {
   let client: OllamaHttpEmbedder;
   const baseUrl = 'http://localhost:11434';
-  const model = 'nomic-embed-text';
+  const model = 'qwen3-embedding:0.6b';
 
   beforeEach(() => {
     const configService = {

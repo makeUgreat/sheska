@@ -21,7 +21,6 @@ const sampleInvariantViolation: SampleInvariantViolation = {
 describe('DomainException', () => {
   it('전체 형태', () => {
     const exception = new DomainException(sampleInvariantViolation);
-    console.dir(exception);
     expect(exception.name).toBe('DomainException');
     expect(exception.message).toBe('Name cannot be empty');
     expect(exception.error).toEqual({

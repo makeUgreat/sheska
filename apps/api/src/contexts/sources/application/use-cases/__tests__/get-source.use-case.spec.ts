@@ -2,7 +2,7 @@ import { type SourceRepository } from '@contexts/sources/domain';
 import { APPLICATION_ERROR_KIND } from '@kernels/application';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { GetSourceUseCase } from '../get-source.use-case';
-import { buildSource } from '../../../../../../test/contexts/sources/fixtures/source.fixture';
+import { buildSource } from '../../../../../../test/domains/fixtures/source.fixture';
 
 type SourceRepositoryMock = {
   get: MockedFunction<SourceRepository['get']>;

@@ -60,14 +60,16 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          name: 'integration',
+          name: 'local',
           environment: 'node',
           fileParallelism: false,
           globals: false,
+          globalSetup: './test/integration/support/global-setup.ts',
           include: ['test/**/*.e2e-spec.ts', 'test/**/*.integration-spec.ts'],
           exclude: [
             'test/postgres/**/*.integration-spec.ts',
             'test/redis/**/*.integration-spec.ts',
+            'test/ollama/**/*.integration-spec.ts',
           ],
           hookTimeout: 60_000,
           testTimeout: 30_000,
@@ -96,6 +98,19 @@ export default defineConfig({
           globalSetup: './test/redis/support/global-setup.ts',
           include: ['test/redis/**/*.integration-spec.ts'],
           hookTimeout: 60_000,
+          testTimeout: 30_000,
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'ollama',
+          environment: 'node',
+          fileParallelism: false,
+          globals: false,
+          globalSetup: './test/ollama/support/global-setup.ts',
+          include: ['test/ollama/**/*.integration-spec.ts'],
+          hookTimeout: 360_000,
           testTimeout: 30_000,
         },
       },

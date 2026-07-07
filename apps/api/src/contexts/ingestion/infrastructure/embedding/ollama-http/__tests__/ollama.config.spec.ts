@@ -4,13 +4,13 @@ import { parseOllamaConfig } from '../ollama.config';
 describe('parseOllamaConfig', () => {
   const validEnv = {
     OLLAMA_BASE_URL: 'http://localhost:11434',
-    OLLAMA_MODEL: 'nomic-embed-text',
+    OLLAMA_MODEL: 'qwen3-embedding:0.6b',
   };
 
   it('OLLAMA 설정이 유효하면 typed config를 반환한다', () => {
     expect(parseOllamaConfig(validEnv)).toEqual({
       baseUrl: 'http://localhost:11434',
-      model: 'nomic-embed-text',
+      model: 'qwen3-embedding:0.6b',
     });
   });
 

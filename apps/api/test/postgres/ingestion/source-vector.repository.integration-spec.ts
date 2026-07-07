@@ -9,8 +9,8 @@ import { AppModule } from '@platform/nest/app.module';
 import {
   buildSourceVector,
   VALID_EMBEDDING,
-} from '../../../../../contexts/ingestion/fixtures/source-vector.fixture';
-import { buildSource } from '../../../../../contexts/sources/fixtures/source.fixture';
+} from '../../domains/fixtures/source-vector.fixture';
+import { buildSource } from '../../domains/fixtures/source.fixture';
 
 describe('SourceVectorDrizzleRepository', () => {
   let app: INestApplication;

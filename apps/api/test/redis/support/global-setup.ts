@@ -1,22 +1,38 @@
 import { exec } from 'node:child_process';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
+import {
+  type IntegrationAdapterLogContext,
+  logIntegrationAdapterBanner,
+  logIntegrationAdapterStep,
+} from '../../support/integration-adapter-logger';
 
 const execAsync = promisify(exec);
 const REDIS_TEST_CONTAINER_NAME = 'sheska.test.redis';
 const REDIS_TEST_URL = 'redis://127.0.0.1:56379';
 const REDIS_COMPOSE_FILE = resolve(__dirname, 'docker-compose.yml');
 const REDIS_COMPOSE_CWD = resolve(__dirname, '../../..');
+const REDIS_LOG_CONTEXT: IntegrationAdapterLogContext = {
+  adapter: 'REDIS',
+  boundary: 'message-broker',
+  module: 'QueueModule',
+  target: REDIS_TEST_URL,
+};
 
 export default async function setup(): Promise<() => Promise<void>> {
   try {
+    logIntegrationAdapterBanner(REDIS_LOG_CONTEXT);
     await executeTestRedisContainer();
 
     return async () => {
       await execAsync(`docker compose -f "${REDIS_COMPOSE_FILE}" down -v`, {
         cwd: REDIS_COMPOSE_CWD,
       });
-      console.info(` 🧹 ${REDIS_TEST_CONTAINER_NAME} cleaned up`);
+      logIntegrationAdapterStep(
+        REDIS_LOG_CONTEXT,
+        'DONE',
+        `${REDIS_TEST_CONTAINER_NAME} cleaned up`,
+      );
     };
   } catch (error) {
     console.error(error);
@@ -25,15 +41,27 @@ export default async function setup(): Promise<() => Promise<void>> {
 }
 
 async function executeTestRedisContainer(): Promise<void> {
+  logIntegrationAdapterStep(
+    REDIS_LOG_CONTEXT,
+    'START',
+    'Resetting docker compose services',
+  );
   await execAsync(`docker compose -f "${REDIS_COMPOSE_FILE}" down -v`, {
     cwd: REDIS_COMPOSE_CWD,
   });
+  logIntegrationAdapterStep(
+    REDIS_LOG_CONTEXT,
+    'START',
+    'Starting docker compose services',
+  );
   await execAsync(`docker compose -f "${REDIS_COMPOSE_FILE}" up -d`, {
     cwd: REDIS_COMPOSE_CWD,
   });
   await waitForHealthyContainer(REDIS_TEST_CONTAINER_NAME);
-  console.info(
-    ` ✅ ${REDIS_TEST_CONTAINER_NAME} is healthy at ${REDIS_TEST_URL}`,
+  logIntegrationAdapterStep(
+    REDIS_LOG_CONTEXT,
+    'READY',
+    `${REDIS_TEST_CONTAINER_NAME} is healthy`,
   );
 }
 
