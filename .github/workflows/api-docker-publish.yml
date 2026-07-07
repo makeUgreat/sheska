@@ -11,6 +11,7 @@ on:
 
 env:
   IMAGE_NAME: sheska-api
+  DOCKER_HUB_USERNAME: willom2c
 
 jobs:
   build:
@@ -21,14 +22,14 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_HUB_HASH_USERNAME }}
+          username: ${{ env.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_HASH_PAT }}
 
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: willom2c/${{ env.IMAGE_NAME }}
+          images: ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}
           tags: |
             type=sha,format=long
             type=raw,value=latest,enable={{is_default_branch}}
@@ -45,7 +46,7 @@ jobs:
       - name: Clean up old local images (keep last 10)
         if: always()
         run: |
-          IMAGE=willom2c/${{ env.IMAGE_NAME }}
+          IMAGE=${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}
           OLD_IMAGES=$(docker images "${IMAGE}" --format "{{.ID}} {{.CreatedAt}}" | sort -k2 | head -n -10 | awk '{print $1}')
           if [ -n "$OLD_IMAGES" ]; then
             echo "$OLD_IMAGES" | xargs -r docker rmi -f || true
