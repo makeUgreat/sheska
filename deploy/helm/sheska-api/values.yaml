@@ -1,0 +1,39 @@
+replicaCount: 2
+image:
+  repository: willom2c/sheska-api
+  pullPolicy: IfNotPresent
+  tag: "latest"
+service:
+  type: ClusterIP
+  port: 3000
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+  hosts:
+    - host: api-sheska.meogle.co.kr
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+resources:
+  requests:
+    memory: 512Mi
+nodeSelector: {}
+tolerations: []
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: NotIn
+              values:
+                - hash-n97-1
+topologySpread:
+  enabled: true
+  maxSkew: 1
+  topologyKey: kubernetes.io/hostname
+  whenUnsatisfiable: DoNotSchedule
+  matchLabelKeys:
+    - pod-template-hash
