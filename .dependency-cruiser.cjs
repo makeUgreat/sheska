@@ -12,13 +12,15 @@ module.exports = {
       },
     },
     {
-      name: 'not-to-unresolvable',
+      name: 'app-not-to-other-app',
       severity: 'error',
       comment:
-        'Imports must resolve to a real local file, package dependency, or Node built-in module.',
-      from: {},
+        'Apps must not import another app workspace directly. Promote shared code into a dedicated shared workspace or communicate through an explicit contract.',
+      from: {
+        path: '^apps/([^/]+)/',
+      },
       to: {
-        couldNotResolve: true,
+        path: '^apps/(?!$1/)[^/]+/',
       },
     },
   ],
@@ -26,6 +28,12 @@ module.exports = {
     combinedDependencies: true,
     doNotFollow: {
       path: 'node_modules',
+    },
+    exclude: {
+      path: [
+        '(^|/)node_modules/',
+        '^apps/[^/]+/(dist|coverage)/',
+      ],
     },
     moduleSystems: ['cjs', 'es6'],
     parser: 'swc',
