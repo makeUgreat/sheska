@@ -1,14 +1,17 @@
 ---
-title: 문서 컨벤션 인덱스
+title: 저장소 컨벤션 인덱스
 lang: ko
 audience: both
 applies_to:
   - repository
 source: ../en/index.md
-last_synced: 2026-06-19
+last_synced: 2026-07-07
+related:
+  - ./documentation-guidelines.md
+  - ./monorepo.md
 ---
 
-# 문서 컨벤션 인덱스
+# 저장소 컨벤션 인덱스
 
 ## 동기화 정책
 
@@ -23,8 +26,9 @@ last_synced: 2026-06-19
 ## 라우팅
 
 - 문서를 생성, 수정, 리뷰할 때: [문서 작성 가이드라인](./documentation-guidelines.md)을 읽는다.
+- workspace layout, 루트 package script, 저장소 단위 명령어, static harness 동작을 변경할 때: [모노레포 정책](./monorepo.md)을 읽는다.
 
 ## 유지보수
 
 이 인덱스는 짧게 유지한다.
-명확한 문서 작업 trigger가 있는 문서 컨벤션 문서만 라우팅한다.
+명확한 작업 trigger가 있는 저장소 컨벤션 문서만 라우팅한다.
