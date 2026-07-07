@@ -146,19 +146,19 @@ Keep them few, prefer happy-path coverage, and place or name them so the broader
 ## Commands
 
 ```bash
-pnpm lint:check         # ESLint checks
-pnpm typecheck          # TypeScript type checking
-pnpm test:unit          # Unit tests
-pnpm test:integration:local # Local integration tests that do not require Postgres, Redis, or Ollama
-pnpm test:integration:postgres # Postgres-backed integration tests
-pnpm test:integration:redis # Redis-backed integration tests
-pnpm test:integration:ollama # Ollama-backed integration tests
-pnpm test:integration   # All integration tests
-pnpm test:integration:all # All integration tests
-pnpm test               # Unit tests, then all integration tests
-pnpm test:watch         # Vitest watch mode from the API package
-pnpm test:cov           # Unit test coverage from the API package
+pnpm --filter @sheska/api lint:check         # ESLint checks
+pnpm --filter @sheska/api typecheck          # TypeScript type checking
+pnpm --filter @sheska/api test:unit          # Unit tests
+pnpm --filter @sheska/api test:integration:local # Local integration tests that do not require Postgres, Redis, or Ollama
+pnpm --filter @sheska/api test:integration:postgres # Postgres-backed integration tests
+pnpm --filter @sheska/api test:integration:redis # Redis-backed integration tests
+pnpm --filter @sheska/api test:integration:ollama # Ollama-backed integration tests
+pnpm --filter @sheska/api test:integration   # All integration tests
+pnpm --filter @sheska/api test:integration:all # All integration tests
+pnpm --filter @sheska/api test               # Unit tests, then all integration tests
+pnpm --filter @sheska/api test:watch         # Vitest watch mode from the API package
+pnpm --filter @sheska/api test:cov           # Unit test coverage from the API package
 ```
 
 Before opening a PR, run the checks that match the scope of the change.
-If only isolated services or functions changed, run `pnpm lint:check`, `pnpm typecheck`, and `pnpm test:unit`.
+If only isolated services or functions changed, run `pnpm --filter @sheska/api lint:check`, `pnpm --filter @sheska/api typecheck`, and `pnpm --filter @sheska/api test:unit`.

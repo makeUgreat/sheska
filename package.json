@@ -4,22 +4,8 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "pnpm --filter @sheska/api build",
-    "start:dev": "pnpm --filter @sheska/api start:dev",
-    "lint": "pnpm --filter @sheska/api lint",
-    "lint:check": "pnpm --filter @sheska/api lint:check",
-    "deps:check": "pnpm --filter @sheska/api deps:check",
-    "deps:graph": "pnpm --filter @sheska/api deps:graph",
-    "harness:static": "pnpm --filter @sheska/api harness:static",
-    "test": "pnpm --filter @sheska/api test",
-    "test:unit": "pnpm --filter @sheska/api test:unit",
-    "test:integration": "pnpm --filter @sheska/api test:integration",
-    "test:integration:postgres": "pnpm --filter @sheska/api test:integration:postgres",
-    "test:integration:all": "pnpm --filter @sheska/api test:integration:all",
-    "typecheck": "pnpm --filter @sheska/api typecheck",
-    "dev:ui": "pnpm --filter @sheska/ui dev",
-    "build:ui": "pnpm --filter @sheska/ui build",
-    "test:ui": "pnpm --filter @sheska/ui test"
+    "deps:check": "depcruise apps --config dependency-cruiser/config.cjs",
+    "harness:static": "pnpm deps:check && pnpm -r --if-present harness:static"
   },
   "devDependencies": {
     "dependency-cruiser": "^17.4.2"

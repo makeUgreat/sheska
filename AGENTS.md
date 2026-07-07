@@ -3,7 +3,8 @@
 Use convention indexes as the entry points for project conventions.
 When paired English and Korean documents conflict, choose the intended policy and synchronize both documents.
 
-- [Documentation Convention Index](docs/en/index.md)
+- [Repository Convention Index](docs/en/index.md)
+- Workspace layout, root package scripts, repository-level commands, or static harness behavior: [Monorepo Policy](docs/en/monorepo.md)
 
 ## App Conventions
 
