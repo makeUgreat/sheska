@@ -4,7 +4,7 @@ RUN corepack enable && corepack prepare pnpm@10.19.0 --activate
 
 WORKDIR /app
 
-COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc ./
 COPY apps/api/package.json ./apps/api/
 
 RUN pnpm install --frozen-lockfile --filter @sheska/api
