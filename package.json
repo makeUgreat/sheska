@@ -4,7 +4,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "deps:check": "depcruise apps --config dependency-cruiser/config.cjs",
+    "deps:check": "depcruise apps --config .dependency-cruiser.cjs",
     "harness:static": "pnpm deps:check && pnpm -r --if-present harness:static"
   },
   "devDependencies": {

@@ -6,7 +6,20 @@ const sourceDependencyRules = require('./rules/source-dependency.cjs');
 
 module.exports = {
   extends: '../../../.dependency-cruiser.cjs',
-  forbidden: [...runtimeWiringRules, ...sourceDependencyRules],
+  forbidden: [
+    {
+      name: 'not-to-unresolvable',
+      severity: 'error',
+      comment:
+        'Imports must resolve to a real local file, package dependency, or Node built-in module.',
+      from: {},
+      to: {
+        couldNotResolve: true,
+      },
+    },
+    ...runtimeWiringRules,
+    ...sourceDependencyRules,
+  ],
   options: {
     exclude: {
       path: ['^dist/', '^coverage/'],

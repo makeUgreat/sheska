@@ -5,7 +5,19 @@ const sourceDependencyRules = require('./rules/source-dependency.cjs');
 
 module.exports = {
   extends: '../../../.dependency-cruiser.cjs',
-  forbidden: [...sourceDependencyRules],
+  forbidden: [
+    {
+      name: 'not-to-unresolvable',
+      severity: 'error',
+      comment:
+        'Imports must resolve to a real local file, package dependency, or Node built-in module.',
+      from: {},
+      to: {
+        couldNotResolve: true,
+      },
+    },
+    ...sourceDependencyRules,
+  ],
   options: {
     exclude: {
       path: ['^src/.*\\.spec\\.ts$'],
