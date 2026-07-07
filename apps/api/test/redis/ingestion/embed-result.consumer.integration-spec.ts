@@ -14,7 +14,7 @@ import {
   IngestionCompletedDomainEvent,
   IngestionFailedDomainEvent,
 } from '@contexts/ingestion/domain';
-import { VALID_EMBEDDING } from '../../../../../contexts/ingestion/fixtures/source-vector.fixture';
+import { VALID_EMBEDDING } from '../../domains/fixtures/source-vector.fixture';
 
 const REDIS_CONNECTION = { host: '127.0.0.1', port: 56379 };
 
@@ -64,7 +64,7 @@ describe('EmbedResultConsumer', () => {
       sourceId: 'source-1',
       syncJobId: 'sync-job-1',
       embedding: VALID_EMBEDDING,
-      model: 'nomic-embed-text',
+      model: 'qwen3-embedding:0.6b',
     });
 
     await job.waitUntilFinished(queueEvents);
@@ -92,7 +92,7 @@ describe('EmbedResultConsumer', () => {
         sourceId: 'source-1',
         syncJobId: 'sync-job-1',
         embedding: VALID_EMBEDDING,
-        model: 'nomic-embed-text',
+        model: 'qwen3-embedding:0.6b',
       },
       { attempts: 1 },
     );

@@ -9,12 +9,12 @@ describe('SourceVector', () => {
       const sourceVector = SourceVector.create({
         sourceId: 'source-1',
         embedding: validEmbedding,
-        model: 'nomic-embed-text',
+        model: 'qwen3-embedding:0.6b',
       });
       const props = sourceVector.getProps();
 
       expect(sourceVector.id).toBe('source-1');
-      expect(props.model.unpack()).toBe('nomic-embed-text');
+      expect(props.model.unpack()).toBe('qwen3-embedding:0.6b');
       expect(props.embedding.unpack().values).toEqual(validEmbedding);
     });
 
@@ -33,7 +33,7 @@ describe('SourceVector', () => {
         SourceVector.create({
           sourceId: 'source-1',
           embedding: [0.1, 0.2],
-          model: 'nomic-embed-text',
+          model: 'qwen3-embedding:0.6b',
         }),
       ).toThrow('Embedding vector must have 1024 dimensions, got 2');
     });
@@ -44,7 +44,7 @@ describe('SourceVector', () => {
       const sourceVector = SourceVector.restore({
         sourceId: 'source-1',
         embedding: validEmbedding,
-        model: 'nomic-embed-text',
+        model: 'qwen3-embedding:0.6b',
       });
 
       expect(sourceVector.id).toBe('source-1');

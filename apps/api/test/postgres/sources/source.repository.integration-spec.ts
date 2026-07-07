@@ -7,7 +7,7 @@ import { AppModule } from '@platform/nest/app.module';
 import {
   buildSource,
   sourceContentByteSize,
-} from '../../../../../contexts/sources/fixtures/source.fixture';
+} from '../../domains/fixtures/source.fixture';
 
 describe('SourceDrizzleRepository', () => {
   let app: INestApplication;

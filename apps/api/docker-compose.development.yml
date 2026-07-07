@@ -34,6 +34,33 @@ services:
       timeout: 5s
       retries: 5
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: sheska.development.ollama
+    ports:
+      - '11434:11434'
+    volumes:
+      - sheska_development_ollama:/root/.ollama
+    healthcheck:
+      test: ['CMD', 'ollama', 'list']
+      start_period: 15s
+      start_interval: 2s
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: sheska.development.ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: ['ollama', 'pull', 'qwen3-embedding:0.6b']
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    restart: no
+
 volumes:
   sheska_development_db:
   sheska_development_redis:
+  sheska_development_ollama:

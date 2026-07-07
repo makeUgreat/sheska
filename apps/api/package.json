@@ -29,7 +29,8 @@
     "test:integration": "vitest run --project integration",
     "test:integration:postgres": "vitest run --project postgres",
     "test:integration:redis": "vitest run --project redis",
-    "test:integration:all": "pnpm test:integration && pnpm test:integration:postgres && pnpm test:integration:redis",
+    "test:integration:ollama": "vitest run --project ollama",
+    "test:integration:all": "pnpm test:integration && pnpm test:integration:postgres && pnpm test:integration:redis && pnpm test:integration:ollama",
     "test:watch": "vitest --project unit",
     "test:cov": "vitest run --project unit --coverage",
     "test:debug": "vitest --project unit --inspect-brk --no-file-parallelism"

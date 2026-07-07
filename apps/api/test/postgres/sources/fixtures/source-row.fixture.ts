@@ -1,5 +1,5 @@
 import { type SourceRow } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
-import { sourceContentByteSize } from '../../../../contexts/sources/fixtures/source.fixture';
+import { sourceContentByteSize } from '../../../domains/fixtures/source.fixture';
 
 const persistedAt = new Date('2026-01-01T00:00:00.000Z');
 

@@ -102,14 +102,13 @@ Write integration tests when the test must verify observable behavior across rea
 
 Group integration specs under `test/{boundary}/`.
 The boundary directory names the protocol or runtime dependency under verification, such as HTTP, Postgres, Redis, object storage, a message broker, or a real external API.
-Nested directories name the bounded context, layer, and target.
-Use `test/contexts/{context}/` for shared context fixtures or helpers that are not owned by one integration boundary, not for boundary-specific specs.
+Nest one level deeper to name the bounded context: `test/{boundary}/{context}/`.
+Use the filename to identify the target; do not mirror the source architecture layer in the path.
+For example, prefer `test/postgres/sources/upload-source.use-case.integration-spec.ts` over encoding the layer path in the directory.
 
-Use filenames to name the test target, not every participating implementation.
-For example, prefer `test/postgres/contexts/sources/application/use-cases/upload-source.use-case.integration-spec.ts` over encoding the repository, hashing, queue, and database implementation choices into the filename.
-Application integration tests should cover the representative production composition for the boundary; implementation-specific behavior belongs in the relevant adapter contract or integration tests.
-
-Place boundary-specific setup and support files under the same boundary directory, such as `test/postgres/support/`.
+Use `test/domains/fixtures/` for shared domain fixtures and helpers that are not owned by one integration boundary.
+Use `test/{boundary}/{context}/fixtures/` for boundary-specific fixtures.
+Place boundary-specific setup and support files under `test/{boundary}/support/`.
 Keep helpers shared by multiple integration boundaries under `test/support/`.
 
 #### Adapter Boundary Scope

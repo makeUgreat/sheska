@@ -8,7 +8,7 @@ export function buildSourceVector(
   return SourceVector.create({
     sourceId: params.sourceId ?? 'source-1',
     embedding: params.embedding ?? VALID_EMBEDDING,
-    model: params.model ?? 'nomic-embed-text',
+    model: params.model ?? 'qwen3-embedding:0.6b',
   });
 }
 

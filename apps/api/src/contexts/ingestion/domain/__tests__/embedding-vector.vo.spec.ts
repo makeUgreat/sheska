@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { EmbeddingModel } from '../embedding-model.vo';
 import { EmbeddingVector } from '../embedding-vector.vo';
 
-const model = EmbeddingModel.of('nomic-embed-text');
+const model = EmbeddingModel.of('qwen3-embedding:0.6b');
 const validEmbedding = Array.from({ length: 1024 }, (_, i) => i * 0.001);
 
 describe('EmbeddingVector', () => {

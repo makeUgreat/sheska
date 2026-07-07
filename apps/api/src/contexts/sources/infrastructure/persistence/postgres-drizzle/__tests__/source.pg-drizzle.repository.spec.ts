@@ -3,8 +3,8 @@ import {
   InfrastructureException,
   INFRASTRUCTURE_ERROR_KIND,
 } from '@kernels/infrastructure';
-import { buildSourceSyncJob } from '../../../../../../../test/contexts/sources/fixtures/source-sync-job.fixture';
-import { buildSource } from '../../../../../../../test/contexts/sources/fixtures/source.fixture';
+import { buildSourceSyncJob } from '../../../../../../../test/domains/fixtures/source-sync-job.fixture';
+import { buildSource } from '../../../../../../../test/domains/fixtures/source.fixture';
 import { SourcePgDrizzleRepository } from '../source.pg-drizzle.repository';
 import { SourceSyncJobPgDrizzleRepository } from '../source-sync-job.pg-drizzle.repository';
 

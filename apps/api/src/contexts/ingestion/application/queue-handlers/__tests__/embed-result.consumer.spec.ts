@@ -5,7 +5,7 @@ import {
   IngestionCompletedDomainEvent,
   IngestionFailedDomainEvent,
 } from '@contexts/ingestion/domain';
-import { VALID_EMBEDDING } from '../../../../../../test/contexts/ingestion/fixtures/source-vector.fixture';
+import { VALID_EMBEDDING } from '../../../../../../test/domains/fixtures/source-vector.fixture';
 import {
   EmbedResultConsumer,
   type EmbedResultPayload,
@@ -19,7 +19,7 @@ function buildJob(
       sourceId: data.sourceId ?? 'source-1',
       syncJobId: data.syncJobId ?? 'sync-job-1',
       embedding: data.embedding ?? VALID_EMBEDDING,
-      model: data.model ?? 'nomic-embed-text',
+      model: data.model ?? 'qwen3-embedding:0.6b',
     },
   } as Job<EmbedResultPayload>;
 }

@@ -6,7 +6,7 @@ import {
 } from '@kernels/domain';
 
 const EMBEDDING_MODEL_SPECS: Record<string, { dimensions: number }> = {
-  'nomic-embed-text': { dimensions: 1024 },
+  'qwen3-embedding:0.6b': { dimensions: 1024 },
 };
 
 export class EmbeddingModel extends ValueObject<string> {

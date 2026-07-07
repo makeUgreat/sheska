@@ -13,7 +13,7 @@ import {
   SOURCE_REPOSITORY,
 } from '@contexts/sources/sources.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
-import { sourceContentByteSize } from '../../../../../contexts/sources/fixtures/source.fixture';
+import { sourceContentByteSize } from '../../domains/fixtures/source.fixture';
 
 describe('UploadSourceUseCase', () => {
   let app: INestApplication;

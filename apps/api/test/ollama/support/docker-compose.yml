@@ -1,0 +1,18 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: sheska.test.ollama
+    ports:
+      - '11435:11434'
+    volumes:
+      - ollama_test_data:/root/.ollama
+    healthcheck:
+      test: ['CMD', 'ollama', 'list']
+      start_period: 15s
+      start_interval: 2s
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ollama_test_data:
