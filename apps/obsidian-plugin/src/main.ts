@@ -73,11 +73,14 @@ export default class SheskaPlugin extends Plugin {
     const minutes = this.settings.healthCheckIntervalMinutes;
     if (minutes <= 0) return;
     this.healthCheckIntervalId = this.registerInterval(
-      window.setInterval(() => {
-        this.api.health().catch(() => {
-          new Notice('Sheska API health check failed. Check settings.');
-        });
-      }, minutes * 60 * 1000),
+      window.setInterval(
+        () => {
+          this.api.health().catch(() => {
+            new Notice('Sheska API health check failed. Check settings.');
+          });
+        },
+        minutes * 60 * 1000,
+      ),
     );
   }
 

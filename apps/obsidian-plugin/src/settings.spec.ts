@@ -10,10 +10,11 @@ describe('DEFAULT_SETTINGS', () => {
   it('defaults healthCheckIntervalMinutes to 5', () => {
     expect(DEFAULT_SETTINGS.healthCheckIntervalMinutes).toBe(5);
   });
-
 });
 
-function makeTab(api = { health: vi.fn().mockResolvedValue({ status: 'ok' }) }): SheskaSettingTab {
+function makeTab(
+  api = { health: vi.fn().mockResolvedValue({ status: 'ok' }) },
+): SheskaSettingTab {
   const plugin = {
     settings: { ...DEFAULT_SETTINGS },
     saveSettings: vi.fn().mockResolvedValue(undefined),
@@ -34,7 +35,9 @@ describe('SheskaSettingTab', () => {
 
       tab.display();
 
-      expect(renderedSettings).toHaveLength(tab.getSettingDefinitions().length + 1);
+      expect(renderedSettings).toHaveLength(
+        tab.getSettingDefinitions().length + 1,
+      );
     });
 
     it('renders apiBaseUrl as the first setting', () => {
@@ -68,7 +71,10 @@ describe('SheskaSettingTab', () => {
 
       tab.display();
 
-      expect((tab as unknown as { containerEl: { empty: ReturnType<typeof vi.fn> } }).containerEl.empty).toHaveBeenCalledOnce();
+      expect(
+        (tab as unknown as { containerEl: { empty: ReturnType<typeof vi.fn> } })
+          .containerEl.empty,
+      ).toHaveBeenCalledOnce();
     });
 
     describe('ping button', () => {
@@ -92,13 +98,17 @@ describe('SheskaSettingTab', () => {
       });
 
       it('shows failure Notice when API is unreachable', async () => {
-        const api = { health: vi.fn().mockRejectedValue(new Error('ECONNREFUSED')) };
+        const api = {
+          health: vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
+        };
         const tab = makeTab(api);
         tab.display();
 
         await renderedSettings.at(-1)!.buttons[0].click();
 
-        expect(noticeMessages).toContain('Failed to reach Sheska API. Check settings.');
+        expect(noticeMessages).toContain(
+          'Failed to reach Sheska API. Check settings.',
+        );
       });
 
       it('calls api.health()', async () => {
@@ -146,6 +156,5 @@ describe('SheskaSettingTab', () => {
         },
       });
     });
-
   });
 });
