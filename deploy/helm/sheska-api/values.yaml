@@ -1,4 +1,6 @@
 replicaCount: 2
+secret:
+  name: sheska-api-secret
 image:
   repository: willom2c/sheska-api
   pullPolicy: IfNotPresent
