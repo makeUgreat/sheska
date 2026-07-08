@@ -43,6 +43,19 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Save image tag to artifact
+        run: |
+          TAG=$(echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n' | grep "sha-" | head -n1 | sed 's/.*://')
+          echo "$TAG" > /tmp/image-tag.txt
+          echo "Image tag: $TAG"
+
+      - name: Upload image tag artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-tag
+          path: /tmp/image-tag.txt
+          retention-days: 7
+
       - name: Clean up old local images (keep last 10)
         if: always()
         run: |
