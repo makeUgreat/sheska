@@ -10,9 +10,14 @@ COPY apps/api/package.json ./apps/api/
 RUN pnpm install --frozen-lockfile --filter @sheska/api
 
 COPY apps/api/src ./apps/api/src
-COPY apps/api/tsconfig.json apps/api/tsconfig.build.json apps/api/nest-cli.json ./apps/api/
+COPY apps/api/database ./apps/api/database
+COPY apps/api/tsconfig.json apps/api/tsconfig.build.json apps/api/nest-cli.json apps/api/tsconfig.migrate.json ./apps/api/
 
 RUN pnpm --filter @sheska/api build
+
+# Build migration scripts
+RUN pnpm --filter @sheska/api exec tsc --project tsconfig.migrate.json
+RUN cp -r apps/api/database/drizzle apps/api/dist/database/drizzle
 
 RUN pnpm deploy --filter @sheska/api --prod /prod
 

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: sheska-postgres
+description: PostgreSQL with pgvector for Sheska
+type: application
+version: 0.1.0
+appVersion: "18"

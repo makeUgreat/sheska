@@ -1,0 +1,17 @@
+image:
+  repository: pgvector/pgvector
+  tag: "pg18"
+  pullPolicy: IfNotPresent
+
+secret:
+  name: sheska-postgres-secret
+
+storage:
+  size: 100Gi
+
+resources:
+  requests:
+    memory: 512Mi
+
+nodeSelector:
+  kubernetes.io/hostname: hash-n150
