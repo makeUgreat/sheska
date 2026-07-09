@@ -11,4 +11,4 @@ resources:
     memory: 128Mi
 
 nodeSelector:
-  kubernetes.io/hostname: hash-n100
+  kubernetes.io/hostname: hash-n100-1
