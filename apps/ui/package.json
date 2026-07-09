@@ -12,7 +12,8 @@
     "lint:check": "eslint --config eslint/config.mjs \"src/**/*.{ts,tsx}\"",
     "test": "vitest run",
     "test:watch": "vitest",
-    "harness:static": "pnpm typecheck && pnpm lint:check"
+    "harness:static": "pnpm typecheck && pnpm lint:check",
+    "harness:build": "pnpm build"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.2",
