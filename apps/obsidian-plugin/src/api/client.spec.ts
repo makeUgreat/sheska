@@ -84,7 +84,7 @@ describe('SheskaApiClient', () => {
 
   // Contract tests — shapes mirror the API DTOs in apps/api
   describe('health', () => {
-    it('calls GET /health and returns { status }', async () => {
+    it('calls GET /readyz and returns { status }', async () => {
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({
@@ -95,7 +95,7 @@ describe('SheskaApiClient', () => {
 
       const result = await client.health();
 
-      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/health', {
+      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/readyz', {
         headers: { 'Content-Type': 'application/json' },
       });
       expect(result).toEqual({ status: 'ok' });
