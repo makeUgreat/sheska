@@ -1,7 +1,4 @@
-import { config } from 'dotenv';
 import { runMigrations } from './migrator';
-
-config({ path: `.env.${process.env.NODE_ENV ?? 'development'}` });
 
 async function main(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL;

@@ -1,9 +1,6 @@
-import { config } from 'dotenv';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from '../src/contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
-
-config({ path: '.env.development' });
 
 async function main(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL;
