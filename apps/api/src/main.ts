@@ -5,7 +5,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors(
     process.env.NODE_ENV === 'production'
-      ? { origin: 'app://obsidian.md' }
+      ? { origin: ['app://obsidian.md', 'https://hash.meogle.co.kr'] }
       : { origin: true },
   );
   await app.listen(process.env.PORT ?? 3000);
