@@ -74,9 +74,19 @@ describe('HealthController HTTP contract', () => {
     await app.close();
   });
 
-  describe('GET /health', () => {
+  describe('GET /livez', () => {
+    it('의존성 없이 즉시 200과 { status: "ok" }를 반환한다', async () => {
+      const response = await request(httpServer).get('/livez').expect(200);
+
+      expect(response.body).toEqual({ status: 'ok' });
+      expect(db.execute).not.toHaveBeenCalled();
+      expect(queueHealthProbe.check).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('GET /readyz', () => {
     it('dependency probe가 정상이면 200과 { status: "ok" }를 반환한다', async () => {
-      const response = await request(httpServer).get('/health').expect(200);
+      const response = await request(httpServer).get('/readyz').expect(200);
 
       expect(response.body).toEqual({ status: 'ok' });
       expect(db.execute).toHaveBeenCalledOnce();
@@ -86,7 +96,7 @@ describe('HealthController HTTP contract', () => {
     it('DB probe가 실패하면 503을 반환한다', async () => {
       db.execute.mockRejectedValue(new Error('connection refused'));
 
-      const response = await request(httpServer).get('/health').expect(503);
+      const response = await request(httpServer).get('/readyz').expect(503);
 
       expect(response.body).toMatchObject({
         statusCode: 503,
@@ -98,7 +108,7 @@ describe('HealthController HTTP contract', () => {
     it('queue probe가 실패하면 503을 반환한다', async () => {
       queueHealthProbe.check.mockRejectedValue(new Error('connection refused'));
 
-      const response = await request(httpServer).get('/health').expect(503);
+      const response = await request(httpServer).get('/readyz').expect(503);
 
       expect(response.body).toMatchObject({
         statusCode: 503,

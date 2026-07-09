@@ -48,7 +48,7 @@ export class SheskaApiClient {
   }
 
   health(): Promise<HealthResponse> {
-    return this.get<HealthResponse>('/health');
+    return this.get<HealthResponse>('/readyz');
   }
 
   uploadSource(body: UploadSourceRequest): Promise<UploadSourceResponse> {

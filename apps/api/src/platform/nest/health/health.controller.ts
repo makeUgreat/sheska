@@ -8,7 +8,7 @@ import {
 } from '@kernels/infrastructure';
 import { QueueHealthProbe } from '../queue/queue-health.probe';
 
-@Controller('health')
+@Controller()
 export class HealthController {
   constructor(
     @Inject(DATABASE_TOKENS.drizzleDatabase)
@@ -16,8 +16,13 @@ export class HealthController {
     private readonly queueHealthProbe: QueueHealthProbe,
   ) {}
 
-  @Get()
-  async check(): Promise<{ status: string }> {
+  @Get('livez')
+  live(): { status: string } {
+    return { status: 'ok' };
+  }
+
+  @Get('readyz')
+  async ready(): Promise<{ status: string }> {
     try {
       await this.db.execute(sql`SELECT 1`);
     } catch {

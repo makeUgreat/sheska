@@ -67,8 +67,8 @@ describe('HealthController Postgres boundary', () => {
   });
 
   describe('Postgres health query', () => {
-    it('실제 Postgres 연결로 health query를 실행한다', async () => {
-      const response = await request(httpServer).get('/health').expect(200);
+    it('실제 Postgres 연결로 readyz query를 실행한다', async () => {
+      const response = await request(httpServer).get('/readyz').expect(200);
 
       expect(response.body).toEqual({ status: 'ok' });
       expect(queueHealthProbe.check).toHaveBeenCalledOnce();
