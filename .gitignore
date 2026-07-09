@@ -20,6 +20,7 @@ lerna-debug.log*
 # Tests
 coverage/
 .nyc_output/
+test-results/
 
 # IDEs and editors
 /.idea
@@ -62,3 +63,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # AI
 .codex/temp/
 .claude/temp/
+.playwright-mcp/
+
+# Development integration settings (contains secrets)
+.dev-integrations.env

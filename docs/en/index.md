@@ -26,6 +26,7 @@ Do not load every document by default.
 
 - When creating, editing, or reviewing project Markdown documents: read [Documentation Guidelines](./documentation-guidelines.md).
 - When changing workspace layout, root package scripts, repository-level commands, or static harness behavior: read [Monorepo Policy](./monorepo.md).
+- When using external tools for development or testing (Playwright MCP, Obsidian MCP, Obsidian Local REST API): read [Development Integrations](./dev-integrations.md).
 
 ## Maintenance
 
