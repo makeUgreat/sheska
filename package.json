@@ -5,7 +5,8 @@
   "license": "UNLICENSED",
   "scripts": {
     "deps:check": "depcruise apps --config .dependency-cruiser.cjs",
-    "harness:static": "pnpm deps:check && pnpm -r --if-present harness:static"
+    "harness:static": "pnpm deps:check && pnpm -r --if-present harness:static",
+    "harness:build": "pnpm -r --if-present harness:build && docker build -f apps/api/Dockerfile -t sheska-api:local . && docker run --rm sheska-api:local node -e \"['dist/main.js','dist/database/migrate.js'].forEach(f=>{require('fs').statSync(f);console.log(f+' OK')})\""
   },
   "devDependencies": {
     "dependency-cruiser": "^17.4.2"

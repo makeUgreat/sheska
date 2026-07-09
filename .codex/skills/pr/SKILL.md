@@ -372,7 +372,11 @@ Do not include:
 11. Report verification gaps in the PR body or final response. Do not block PR
     opening for a verification gap unless the user requested that gate or the gap
     makes the PR misleading.
-12. Push each prepared branch to the remote and open draft PRs for the clear
+12. Run `pnpm harness:build` from the repository root before pushing. This
+    builds the app, compiles migration scripts, builds the Docker image, and
+    verifies the image runs. If it fails, fix the issue and re-run before
+    proceeding. Do not push or open a PR if `harness:build` fails.
+13. Push each prepared branch to the remote and open draft PRs for the clear
     single PR or stacked PR set with the drafted titles, bodies, base branches,
     and merge-order notes without asking for another approval, unless a blocker
     requires user input.
