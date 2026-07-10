@@ -7,6 +7,8 @@ service:
   type: ClusterIP
   port: 11434
 
+model: qwen3-embedding:0.6b
+
 storage:
   size: 50Gi
 
