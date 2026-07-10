@@ -13,6 +13,9 @@ import { PinoLoggerAdapter } from './pino-logger.adapter';
         return {
           pinoHttp: {
             level,
+            autoLogging: {
+              ignore: (req) => ['/livez', '/readyz'].includes(req.url ?? ''),
+            },
           },
         };
       },
