@@ -4,7 +4,7 @@ secret:
 image:
   repository: willom2c/sheska-api
   pullPolicy: IfNotPresent
-  tag: "sha-dfaba8d622e1b0d50037e07d761399bfb5ff03b4"
+  tag: "sha-20804e9c57dfc05a0f0615a424ab3e3ab6765dc6"
 service:
   type: ClusterIP
   port: 3000
@@ -23,7 +23,6 @@ resources:
     memory: 512Mi
 embedding:
   baseUrl: http://ollama.sheska.svc.cluster.local:11434
-
 nodeSelector: {}
 tolerations: []
 affinity:
