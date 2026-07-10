@@ -21,9 +21,7 @@ import { QueueModule } from './queue/queue.module';
     DatabaseModule,
     HealthModule,
     SourcesModule.forRoot(),
-    ...(process.env.INGESTION_ENABLED === 'true'
-      ? [IngestionModule.forRoot()]
-      : []),
+    IngestionModule.forRoot(),
   ],
   providers: [
     {

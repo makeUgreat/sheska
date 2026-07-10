@@ -21,6 +21,9 @@ ingress:
 resources:
   requests:
     memory: 512Mi
+embedding:
+  baseUrl: http://ollama.sheska.svc.cluster.local:11434
+
 nodeSelector: {}
 tolerations: []
 affinity:

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { OllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.embedder';
 
 const OLLAMA_TEST_BASE_URL = 'http://127.0.0.1:11435';
-const OLLAMA_TEST_MODEL = 'qwen3-embedding:0.6b';
+const OLLAMA_TEST_MODEL = 'qwen3-embedding:0.6b'; // OllamaHttpEmbedder에 하드코딩된 모델과 일치해야 함
 
 describe('OllamaHttpEmbedder (integration)', () => {
   let embedder: OllamaHttpEmbedder;
@@ -11,8 +11,7 @@ describe('OllamaHttpEmbedder (integration)', () => {
   beforeAll(() => {
     const configService = {
       get: (key: string) => {
-        if (key === 'OLLAMA_BASE_URL') return OLLAMA_TEST_BASE_URL;
-        if (key === 'OLLAMA_MODEL') return OLLAMA_TEST_MODEL;
+        if (key === 'EMBEDDING_BASE_URL') return OLLAMA_TEST_BASE_URL;
       },
     } as unknown as ConfigService;
 
