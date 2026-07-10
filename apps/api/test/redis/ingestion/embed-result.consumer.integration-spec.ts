@@ -9,6 +9,7 @@ import {
   EMBED_RESULTS_QUEUE,
   type EmbedResultPayload,
 } from '@contexts/ingestion/application/queue-handlers/embed-result.consumer';
+import { LOGGER } from '@kernels/application';
 import { SOURCE_VECTOR_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
 import {
   IngestionCompletedDomainEvent,
@@ -36,6 +37,15 @@ describe('EmbedResultConsumer', () => {
       providers: [
         EmbedResultConsumer,
         { provide: SOURCE_VECTOR_REPOSITORY, useValue: { save } },
+        {
+          provide: LOGGER,
+          useValue: {
+            log: vi.fn(),
+            error: vi.fn(),
+            warn: vi.fn(),
+            debug: vi.fn(),
+          },
+        },
       ],
     }).compile();
 

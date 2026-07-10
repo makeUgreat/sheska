@@ -7,6 +7,10 @@ import {
   type EmbedRequestPayload,
 } from '../embed-request.consumer';
 
+function buildMockLogger() {
+  return { log: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
+}
+
 function buildJob(
   data: Partial<EmbedRequestPayload> = {},
 ): Job<EmbedRequestPayload> {
@@ -32,6 +36,7 @@ describe('EmbedRequestConsumer', () => {
         { embed },
         { add } as unknown as Queue,
         new EventEmitter2(),
+        buildMockLogger(),
       );
 
       await consumer.process(buildJob());
@@ -54,6 +59,7 @@ describe('EmbedRequestConsumer', () => {
         { embed: vi.fn() },
         { add: vi.fn() } as unknown as Queue,
         eventEmitter,
+        buildMockLogger(),
       );
 
       consumer.onFailed(buildJob({ syncJobId: 'sync-job-1' }));
@@ -72,6 +78,7 @@ describe('EmbedRequestConsumer', () => {
         { embed: vi.fn() },
         { add: vi.fn() } as unknown as Queue,
         eventEmitter,
+        buildMockLogger(),
       );
 
       consumer.onFailed(undefined);

@@ -11,6 +11,10 @@ import {
   type EmbedResultPayload,
 } from '../embed-result.consumer';
 
+function buildMockLogger() {
+  return { log: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
+}
+
 function buildJob(
   data: Partial<EmbedResultPayload> = {},
 ): Job<EmbedResultPayload> {
@@ -30,7 +34,11 @@ describe('EmbedResultConsumer', () => {
       const save = vi.fn().mockResolvedValue(undefined);
       const eventEmitter = new EventEmitter2();
       const emit = vi.spyOn(eventEmitter, 'emit');
-      const consumer = new EmbedResultConsumer({ save }, eventEmitter);
+      const consumer = new EmbedResultConsumer(
+        { save },
+        eventEmitter,
+        buildMockLogger(),
+      );
 
       await consumer.process(buildJob());
 
@@ -48,6 +56,7 @@ describe('EmbedResultConsumer', () => {
       const consumer = new EmbedResultConsumer(
         { save: vi.fn().mockResolvedValue(undefined) },
         eventEmitter,
+        buildMockLogger(),
       );
 
       await consumer.process(buildJob({ syncJobId: 'sync-job-42' }));
@@ -61,7 +70,11 @@ describe('EmbedResultConsumer', () => {
     it('job이 있으면 ingestion-failed 이벤트를 emit한다', () => {
       const eventEmitter = new EventEmitter2();
       const emit = vi.spyOn(eventEmitter, 'emit');
-      const consumer = new EmbedResultConsumer({ save: vi.fn() }, eventEmitter);
+      const consumer = new EmbedResultConsumer(
+        { save: vi.fn() },
+        eventEmitter,
+        buildMockLogger(),
+      );
 
       consumer.onFailed(buildJob({ syncJobId: 'sync-job-1' }));
 
@@ -75,7 +88,11 @@ describe('EmbedResultConsumer', () => {
     it('job이 undefined이면 아무것도 하지 않는다', () => {
       const eventEmitter = new EventEmitter2();
       const emit = vi.spyOn(eventEmitter, 'emit');
-      const consumer = new EmbedResultConsumer({ save: vi.fn() }, eventEmitter);
+      const consumer = new EmbedResultConsumer(
+        { save: vi.fn() },
+        eventEmitter,
+        buildMockLogger(),
+      );
 
       consumer.onFailed(undefined);
 

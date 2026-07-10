@@ -13,6 +13,7 @@ import {
   EMBED_RESULTS_QUEUE,
   type EmbedResultPayload,
 } from '@contexts/ingestion/application/queue-handlers/embed-result.consumer';
+import { LOGGER } from '@kernels/application';
 import { EMBEDDER } from '@contexts/ingestion/ingestion.di-tokens';
 import { IngestionFailedDomainEvent } from '@contexts/ingestion/domain';
 
@@ -38,6 +39,15 @@ describe('EmbedRequestConsumer', () => {
       providers: [
         EmbedRequestConsumer,
         { provide: EMBEDDER, useValue: { embed } },
+        {
+          provide: LOGGER,
+          useValue: {
+            log: vi.fn(),
+            error: vi.fn(),
+            warn: vi.fn(),
+            debug: vi.fn(),
+          },
+        },
       ],
     }).compile();
 

@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { LOGGER, type LoggerPort } from '@kernels/application';
 import {
   ExternalSourceId,
   Source,
@@ -34,13 +35,6 @@ export interface UploadSourceContentSnapshotCalculator {
 
 @Injectable()
 export class UploadSourceUseCase {
-  private readonly logger = {
-    log: () => undefined,
-    error: () => undefined,
-    warn: () => undefined,
-    debug: () => undefined,
-  };
-
   constructor(
     @Inject(SourceContentSnapshotCalculator)
     private readonly contentSnapshotCalculator: UploadSourceContentSnapshotCalculator,
@@ -49,6 +43,8 @@ export class UploadSourceUseCase {
     @Inject(SOURCE_SYNC_JOB_REPOSITORY)
     private readonly syncJobs: SourceSyncJobRepository,
     private readonly eventEmitter: EventEmitter2,
+    @Inject(LOGGER)
+    private readonly logger: LoggerPort,
   ) {}
 
   async execute(command: UploadSourceCommand): Promise<UploadSourceResult> {

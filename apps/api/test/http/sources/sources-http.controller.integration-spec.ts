@@ -12,6 +12,7 @@ import {
 import { SourcesHttpController } from '@contexts/sources/presentation/http/sources-http.controller';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
 import { ZodValidationPipe } from '@platform/nest/pipes/zod-validation.pipe';
+import { LOGGER } from '@kernels/application';
 import request from 'supertest';
 import {
   afterEach,
@@ -71,6 +72,15 @@ describe('SourcesHttpController', () => {
         {
           provide: APP_PIPE,
           useClass: ZodValidationPipe,
+        },
+        {
+          provide: LOGGER,
+          useValue: {
+            log: vi.fn(),
+            error: vi.fn(),
+            warn: vi.fn(),
+            debug: vi.fn(),
+          },
         },
         {
           provide: APP_FILTER,

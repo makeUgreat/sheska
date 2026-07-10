@@ -8,6 +8,7 @@ source: ../en/index.md
 last_synced: 2026-06-25
 related:
   - ./error.md
+  - ./logging.md
   - ./architecture.md
   - ./ddd.md
   - ./persistence.md
@@ -32,6 +33,7 @@ related:
 ## 라우팅
 
 - API error, exception, masking, propagation, error response contract review 작업: [API 오류 정책](./error.md)을 읽는다.
+- 로그 여부 결정, 로그 레벨, 어디서 로그를 남길지, 장애 로그 정책 작업: [API 로깅 정책](./logging.md)을 읽는다.
 - `apps/api` architecture, DDD boundary, source structure, module boundary 결정 작업: [API 아키텍처 컨벤션](./architecture.md)을 읽는다.
 - `apps/api` DDD boundary, domain model ownership, shared domain language 작업: [API DDD 컨벤션](./ddd.md)을 읽는다.
 - Database schema, migration, ORM persistence, repository mapper, storage constraint 결정 작업: [API Persistence 정책](./persistence.md)을 읽는다.

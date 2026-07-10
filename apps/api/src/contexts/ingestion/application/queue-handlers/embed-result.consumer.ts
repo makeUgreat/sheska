@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { type Job } from 'bullmq';
+import { LOGGER, type LoggerPort } from '@kernels/application';
 import {
   IngestionCompletedDomainEvent,
   IngestionFailedDomainEvent,
@@ -26,6 +27,8 @@ export class EmbedResultConsumer extends WorkerHost {
     @Inject(SOURCE_VECTOR_REPOSITORY)
     private readonly sourceVectors: SourceVectorRepository,
     private readonly eventEmitter: EventEmitter2,
+    @Inject(LOGGER)
+    private readonly logger: LoggerPort,
   ) {
     super();
   }
@@ -44,6 +47,12 @@ export class EmbedResultConsumer extends WorkerHost {
   @OnWorkerEvent('failed')
   onFailed(job: Job<EmbedResultPayload> | undefined): void {
     if (!job) return;
+    this.logger.error('Embed result failed', {
+      jobId: job.id,
+      sourceId: job.data.sourceId,
+      syncJobId: job.data.syncJobId,
+      attemptsMade: job.attemptsMade,
+    });
     const event = new IngestionFailedDomainEvent({
       aggregateId: job.data.syncJobId,
       syncJobId: job.data.syncJobId,

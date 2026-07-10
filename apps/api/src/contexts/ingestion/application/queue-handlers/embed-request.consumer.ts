@@ -7,6 +7,7 @@ import {
 } from '@nestjs/bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { type Job, type Queue } from 'bullmq';
+import { LOGGER, type LoggerPort } from '@kernels/application';
 import { IngestionFailedDomainEvent } from '@contexts/ingestion/domain';
 import { type Embedder } from '@contexts/ingestion/application/ports';
 import { EMBEDDER } from '@contexts/ingestion/ingestion.di-tokens';
@@ -32,6 +33,8 @@ export class EmbedRequestConsumer extends WorkerHost {
     @InjectQueue(EMBED_RESULTS_QUEUE)
     private readonly resultsQueue: Queue,
     private readonly eventEmitter: EventEmitter2,
+    @Inject(LOGGER)
+    private readonly logger: LoggerPort,
   ) {
     super();
   }
@@ -51,6 +54,12 @@ export class EmbedRequestConsumer extends WorkerHost {
   @OnWorkerEvent('failed')
   onFailed(job: Job<EmbedRequestPayload> | undefined): void {
     if (!job) return;
+    this.logger.error('Embed request failed', {
+      jobId: job.id,
+      sourceId: job.data.sourceId,
+      syncJobId: job.data.syncJobId,
+      attemptsMade: job.attemptsMade,
+    });
     const event = new IngestionFailedDomainEvent({
       aggregateId: job.data.syncJobId,
       syncJobId: job.data.syncJobId,

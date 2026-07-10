@@ -7,6 +7,7 @@ applies_to:
 translation: ../ko/index.md
 related:
   - ./error.md
+  - ./logging.md
   - ./architecture.md
   - ./ddd.md
   - ./persistence.md
@@ -31,6 +32,7 @@ When changing public project Markdown documents, also read the repository docume
 ## Routing
 
 - API error, exception, masking, propagation, or error response contract reviews: read [API Error Policy](./error.md).
+- Logging decisions, log levels, where to log, or fault log policy: read [API Logging Policy](./logging.md).
 - `apps/api` architecture, DDD boundary, source structure, or module boundary decisions: read [API Architecture Convention](./architecture.md).
 - `apps/api` DDD boundaries, domain model ownership, or shared domain language: read [API DDD Convention](./ddd.md).
 - Database schema, migration, ORM persistence, repository mapper, or storage constraint decisions: read [API Persistence Policy](./persistence.md).
