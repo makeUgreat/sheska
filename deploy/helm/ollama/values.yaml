@@ -1,0 +1,19 @@
+image:
+  repository: ollama/ollama
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 11434
+
+storage:
+  size: 50Gi
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 2Gi
+
+nodeSelector:
+  kubernetes.io/hostname: hash-n97-1
