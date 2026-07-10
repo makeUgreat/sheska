@@ -11,8 +11,7 @@ describe('OllamaHttpEmbedder', () => {
   beforeEach(() => {
     const configService = {
       get: (key: string) => {
-        if (key === 'OLLAMA_BASE_URL') return baseUrl;
-        if (key === 'OLLAMA_MODEL') return model;
+        if (key === 'EMBEDDING_BASE_URL') return baseUrl;
         throw new Error(`Unknown config key: ${key}`);
       },
     } as unknown as ConfigService;

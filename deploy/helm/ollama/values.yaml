@@ -1,0 +1,21 @@
+image:
+  repository: ollama/ollama
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 11434
+
+model: qwen3-embedding:0.6b
+
+storage:
+  size: 50Gi
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 2Gi
+
+nodeSelector:
+  kubernetes.io/hostname: hash-n97-1

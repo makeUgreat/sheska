@@ -21,11 +21,10 @@ export class OllamaHttpEmbedder implements Embedder {
 
   constructor(private readonly configService: ConfigService) {
     const config = parseOllamaConfig({
-      OLLAMA_BASE_URL: this.configService.get('OLLAMA_BASE_URL'),
-      OLLAMA_MODEL: this.configService.get('OLLAMA_MODEL'),
+      EMBEDDING_BASE_URL: this.configService.get('EMBEDDING_BASE_URL'),
     });
     this.baseUrl = config.baseUrl;
-    this.model = config.model;
+    this.model = 'qwen3-embedding:0.6b';
   }
 
   async embed(text: string): Promise<{ embedding: number[]; model: string }> {
