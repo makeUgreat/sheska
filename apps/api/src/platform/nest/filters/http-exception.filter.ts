@@ -4,6 +4,7 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Inject,
 } from '@nestjs/common';
 import { type Response } from 'express';
 import {
@@ -25,6 +26,7 @@ import {
   type InfrastructureErrorBase,
   type InfrastructureErrorKind,
 } from '@kernels/infrastructure';
+import { LOGGER, type LoggerPort } from '@kernels/application';
 
 const INTERNAL_ERROR_RESPONSE = {
   statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -66,6 +68,8 @@ const APPLICATION_KIND_TO_HTTP_STATUS: Record<ApplicationErrorKind, number> = {
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  constructor(@Inject(LOGGER) private readonly logger: LoggerPort) {}
+
   catch(exception: unknown, host: ArgumentsHost): void {
     const response = host.switchToHttp().getResponse<Response>();
 
@@ -91,10 +95,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (isInfrastructureException(exception)) {
       const errorResponse = this.toInfrastructureErrorResponse(exception);
+      this.logger.error('Infrastructure failure', { error: exception.error });
       response.status(errorResponse.statusCode).json(errorResponse);
       return;
     }
 
+    this.logger.error('Unexpected system error', { error: exception });
     response
       .status(HttpStatus.INTERNAL_SERVER_ERROR)
       .json(INTERNAL_ERROR_RESPONSE);

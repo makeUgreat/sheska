@@ -33,6 +33,10 @@ type EventEmitterMock = {
   emitAsync: MockedFunction<EventEmitter2['emitAsync']>;
 };
 
+function buildMockLogger() {
+  return { log: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
+}
+
 describe('UploadSourceUseCase', () => {
   it('새 source를 저장하고 sync job을 생성한다', async () => {
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
@@ -47,6 +51,7 @@ describe('UploadSourceUseCase', () => {
       sources,
       syncJobs,
       asEventEmitter(eventEmitter),
+      buildMockLogger(),
     );
 
     const result = await useCase.execute({
@@ -97,6 +102,7 @@ describe('UploadSourceUseCase', () => {
       sources,
       syncJobs,
       asEventEmitter(createEventEmitterMock()),
+      buildMockLogger(),
     );
 
     const result = await useCase.execute({
@@ -133,6 +139,7 @@ describe('UploadSourceUseCase', () => {
       sources,
       syncJobs,
       asEventEmitter(eventEmitter),
+      buildMockLogger(),
     );
 
     const result = await useCase.execute({
@@ -167,6 +174,7 @@ describe('UploadSourceUseCase', () => {
       sources,
       syncJobs,
       asEventEmitter(createEventEmitterMock()),
+      buildMockLogger(),
     );
 
     await expect(
@@ -192,6 +200,7 @@ describe('UploadSourceUseCase', () => {
       sources,
       syncJobs,
       asEventEmitter(createEventEmitterMock()),
+      buildMockLogger(),
     );
 
     const result = useCase.execute({
@@ -216,6 +225,7 @@ describe('UploadSourceUseCase', () => {
       sources,
       syncJobs,
       asEventEmitter(createEventEmitterMock()),
+      buildMockLogger(),
     );
 
     const result = useCase.execute({
@@ -239,6 +249,7 @@ describe('UploadSourceUseCase', () => {
       sources,
       syncJobs,
       asEventEmitter(createEventEmitterMock()),
+      buildMockLogger(),
     );
 
     const result = useCase.execute({
@@ -263,6 +274,7 @@ describe('UploadSourceUseCase', () => {
       sources,
       syncJobs,
       asEventEmitter(createEventEmitterMock()),
+      buildMockLogger(),
     );
 
     const result = useCase.execute({
@@ -288,6 +300,7 @@ describe('UploadSourceUseCase', () => {
       sources,
       syncJobs,
       asEventEmitter(createEventEmitterMock()),
+      buildMockLogger(),
     );
 
     const result = useCase.execute({

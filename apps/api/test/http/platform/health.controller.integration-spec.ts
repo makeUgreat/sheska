@@ -4,6 +4,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import { DATABASE_TOKENS } from '@kernels/infrastructure';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
+import { LOGGER } from '@kernels/application';
 import { HealthController } from '@platform/nest/health/health.controller';
 import { QueueHealthProbe } from '@platform/nest/queue/queue-health.probe';
 import request from 'supertest';
@@ -57,6 +58,15 @@ describe('HealthController HTTP contract', () => {
         {
           provide: QueueHealthProbe,
           useValue: queueHealthProbe,
+        },
+        {
+          provide: LOGGER,
+          useValue: {
+            log: vi.fn(),
+            error: vi.fn(),
+            warn: vi.fn(),
+            debug: vi.fn(),
+          },
         },
         {
           provide: APP_FILTER,
