@@ -7,7 +7,7 @@ spec:
   project: sheska
   source:
     repoURL: https://github.com/makeUgreat/sheska.git
-    path: deploy/helm/ollama
+    path: deploy/helm/sheska-ollama
     targetRevision: master
   destination:
     server: https://kubernetes.default.svc
