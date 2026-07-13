@@ -59,7 +59,8 @@ describe('SourceSyncJobDrizzleRepository', () => {
     });
 
     await expect(repository.save(syncJob)).rejects.toMatchObject({
-      error: { kind: 'conflict', code: 'source_sync_job.save_failed' },
+      kind: 'conflict',
+      code: 'source_sync_job.save_failed',
     });
   });
 

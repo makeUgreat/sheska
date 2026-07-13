@@ -108,7 +108,8 @@ describe('SourceDrizzleRepository', () => {
     await repository.save(firstSource);
 
     await expect(repository.save(secondSource)).rejects.toMatchObject({
-      error: { kind: 'conflict', code: 'source.save_failed' },
+      kind: 'conflict',
+      code: 'source.save_failed',
     });
   });
 });

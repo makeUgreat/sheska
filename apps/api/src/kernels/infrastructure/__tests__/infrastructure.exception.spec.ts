@@ -27,7 +27,8 @@ describe('InfrastructureException', () => {
     expect(exception).toBeInstanceOf(InfrastructureException);
     expect(exception.name).toBe('InfrastructureException');
     expect(exception.message).toBe('Database is unavailable');
-    expect(exception.error).toEqual(sampleUnavailableError);
+    expect(exception.kind).toBe(INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE);
+    expect(exception.code).toBe('sample.db_unavailable');
   });
 
   describe('instanceof', () => {
@@ -60,38 +61,32 @@ describe('InfrastructureException', () => {
     });
   });
 
-  describe('error', () => {
-    it('생성자에 전달한 error shape을 보관한다', () => {
+  describe('구조화된 필드', () => {
+    it('kind로 실패 종류를 식별한다', () => {
       const exception = new InfrastructureException(sampleUnavailableError);
 
-      expect(exception.error).toBe(sampleUnavailableError);
+      expect(exception.kind).toBe(INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE);
     });
 
-    it('error.kind로 실패 종류를 식별한다', () => {
+    it('code로 실패를 안정적으로 식별한다', () => {
       const exception = new InfrastructureException(sampleUnavailableError);
 
-      expect(exception.error.kind).toBe(INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE);
+      expect(exception.code).toBe('sample.db_unavailable');
     });
 
-    it('error.code로 실패를 안정적으로 식별한다', () => {
+    it('source로 실패 위치를 식별한다', () => {
       const exception = new InfrastructureException(sampleUnavailableError);
 
-      expect(exception.error.code).toBe('sample.db_unavailable');
-    });
-
-    it('error.source로 실패 위치를 식별한다', () => {
-      const exception = new InfrastructureException(sampleUnavailableError);
-
-      expect(exception.error.source).toEqual({
+      expect(exception.source).toEqual({
         boundary: 'persistence',
         adapter: 'sample.drizzle',
       });
     });
 
-    it('error.details에 cause를 보관한다', () => {
+    it('details에 cause를 보관한다', () => {
       const exception = new InfrastructureException(sampleUnavailableError);
 
-      expect(exception.error.details).toBe(sampleUnavailableError.details);
+      expect(exception.details).toBe(sampleUnavailableError.details);
     });
   });
 });

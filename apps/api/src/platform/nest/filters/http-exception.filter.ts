@@ -10,23 +10,22 @@ import { type Response } from 'express';
 import {
   PresentationException,
   PRESENTATION_ERROR_KIND,
-  type PresentationErrorBase,
   type PresentationErrorKind,
   type HttpErrorEnvelope,
 } from '@kernels/presentation';
 import {
   ApplicationException,
   APPLICATION_ERROR_KIND,
-  type ApplicationErrorBase,
   type ApplicationErrorKind,
+  LOGGER,
+  type LoggerPort,
+  toErrorLogContext,
 } from '@kernels/application';
 import {
   InfrastructureException,
   INFRASTRUCTURE_ERROR_KIND,
-  type InfrastructureErrorBase,
   type InfrastructureErrorKind,
 } from '@kernels/infrastructure';
-import { LOGGER, type LoggerPort } from '@kernels/application';
 
 const INTERNAL_ERROR_RESPONSE = {
   statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -95,49 +94,46 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (isInfrastructureException(exception)) {
       const errorResponse = this.toInfrastructureErrorResponse(exception);
-      this.logger.error('Infrastructure failure', { error: exception.error });
+      this.logger.error('Infrastructure failure', toErrorLogContext(exception));
       response.status(errorResponse.statusCode).json(errorResponse);
       return;
     }
 
-    this.logger.error('Unexpected system error', { error: exception });
+    this.logger.error('Unexpected system error', toErrorLogContext(exception));
     response
       .status(HttpStatus.INTERNAL_SERVER_ERROR)
       .json(INTERNAL_ERROR_RESPONSE);
   }
 
-  private toPresentationErrorResponse<E extends PresentationErrorBase>(
-    exception: PresentationException<E>,
-  ): HttpErrorEnvelope<E['code'], E['details']> {
-    const { error } = exception;
+  private toPresentationErrorResponse(
+    exception: PresentationException,
+  ): HttpErrorEnvelope {
     return {
-      statusCode: PRESENTATION_KIND_TO_HTTP_STATUS[error.kind],
-      code: error.code,
-      message: error.message,
-      details: error.details,
+      statusCode: PRESENTATION_KIND_TO_HTTP_STATUS[exception.kind],
+      code: exception.code,
+      message: exception.message,
+      details: exception.details,
     };
   }
 
-  private toApplicationErrorResponse<E extends ApplicationErrorBase>(
-    exception: ApplicationException<E>,
-  ): HttpErrorEnvelope<E['code'], E['details']> {
-    const { error } = exception;
+  private toApplicationErrorResponse(
+    exception: ApplicationException,
+  ): HttpErrorEnvelope {
     return {
-      statusCode: APPLICATION_KIND_TO_HTTP_STATUS[error.kind],
-      code: error.code,
-      message: error.message,
-      details: error.details,
+      statusCode: APPLICATION_KIND_TO_HTTP_STATUS[exception.kind],
+      code: exception.code,
+      message: exception.message,
+      details: exception.details,
     };
   }
 
-  private toInfrastructureErrorResponse<E extends InfrastructureErrorBase>(
-    exception: InfrastructureException<E>,
-  ): HttpErrorEnvelope<E['code'], Record<string, never>> {
-    const { error } = exception;
+  private toInfrastructureErrorResponse(
+    exception: InfrastructureException,
+  ): HttpErrorEnvelope {
     return {
-      statusCode: INFRASTRUCTURE_KIND_TO_HTTP_STATUS[error.kind],
-      code: error.code,
-      message: error.message,
+      statusCode: INFRASTRUCTURE_KIND_TO_HTTP_STATUS[exception.kind],
+      code: exception.code,
+      message: exception.message,
       details: {},
     };
   }
@@ -145,19 +141,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
 function isPresentationException(
   value: unknown,
-): value is PresentationException<PresentationErrorBase> {
+): value is PresentationException {
   return value instanceof PresentationException;
 }
 
-function isApplicationException(
-  value: unknown,
-): value is ApplicationException<ApplicationErrorBase> {
+function isApplicationException(value: unknown): value is ApplicationException {
   return value instanceof ApplicationException;
 }
 
 function isInfrastructureException(
   value: unknown,
-): value is InfrastructureException<InfrastructureErrorBase> {
+): value is InfrastructureException {
   return value instanceof InfrastructureException;
 }
 

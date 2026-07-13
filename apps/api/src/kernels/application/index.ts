@@ -1,4 +1,5 @@
 export { ApplicationException } from './application.exception';
+export { toErrorLogContext } from './error-log-context';
 export {
   APPLICATION_ERROR_KIND,
   type ApplicationErrorBase,

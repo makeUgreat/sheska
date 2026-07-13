@@ -1,3 +1,5 @@
+import { type BaseError } from '@core/base-error';
+
 export const INFRASTRUCTURE_ERROR_KIND = {
   // A required infrastructure dependency is not available.
   UNAVAILABLE: 'unavailable',
@@ -38,7 +40,7 @@ export interface InfrastructureErrorBase<
   Details extends InfrastructureErrorCauseDetails =
     InfrastructureErrorDetailsFor<Kind>,
   Source extends InfrastructureErrorSource = InfrastructureErrorSource,
-> {
+> extends BaseError {
   readonly kind: Kind;
   readonly code: Code;
   readonly source: Source;
