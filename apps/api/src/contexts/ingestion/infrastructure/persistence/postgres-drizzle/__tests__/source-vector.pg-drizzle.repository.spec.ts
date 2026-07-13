@@ -16,10 +16,8 @@ describe('SourceVectorPgDrizzleRepository', () => {
 
     await expect(result).rejects.toBeInstanceOf(InfrastructureException);
     await expect(result).rejects.toMatchObject({
-      error: {
-        kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
-        code: 'source_vector.save_failed',
-      },
+      kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+      code: 'source_vector.save_failed',
     });
   });
 
@@ -32,10 +30,8 @@ describe('SourceVectorPgDrizzleRepository', () => {
 
     await expect(result).rejects.toBeInstanceOf(InfrastructureException);
     await expect(result).rejects.toMatchObject({
-      error: {
-        kind: INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
-        code: 'source_vector.save_failed',
-      },
+      kind: INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
+      code: 'source_vector.save_failed',
     });
   });
 });

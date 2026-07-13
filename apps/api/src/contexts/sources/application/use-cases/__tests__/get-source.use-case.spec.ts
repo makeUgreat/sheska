@@ -64,10 +64,8 @@ describe('GetSourceUseCase', () => {
     await expect(
       useCase.execute({ sourceId: 'non-existent' }),
     ).rejects.toMatchObject({
-      error: {
-        kind: APPLICATION_ERROR_KIND.NOT_FOUND,
-        code: 'sources.source_not_found',
-      },
+      kind: APPLICATION_ERROR_KIND.NOT_FOUND,
+      code: 'sources.source_not_found',
     });
   });
 

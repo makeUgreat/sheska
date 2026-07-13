@@ -23,12 +23,8 @@ describe('DomainException', () => {
     const exception = new DomainException(sampleInvariantViolation);
     expect(exception.name).toBe('DomainException');
     expect(exception.message).toBe('Name cannot be empty');
-    expect(exception.error).toEqual({
-      kind: 'invariant_violation',
-      code: 'sample.empty_name',
-      message: 'Name cannot be empty',
-      details: { fields: ['name'] },
-    });
+    expect(exception.kind).toBe(DOMAIN_ERROR_KIND.INVARIANT_VIOLATION);
+    expect(exception.code).toBe('sample.empty_name');
   });
 
   describe('instanceof', () => {
@@ -61,29 +57,23 @@ describe('DomainException', () => {
     });
   });
 
-  describe('error', () => {
-    it('생성자에 전달한 error shape을 보관한다', () => {
+  describe('구조화된 필드', () => {
+    it('kind로 실패 종류를 식별한다', () => {
       const exception = new DomainException(sampleInvariantViolation);
 
-      expect(exception.error).toBe(sampleInvariantViolation);
+      expect(exception.kind).toBe(DOMAIN_ERROR_KIND.INVARIANT_VIOLATION);
     });
 
-    it('error.kind로 실패 종류를 식별한다', () => {
+    it('code로 실패를 안정적으로 식별한다', () => {
       const exception = new DomainException(sampleInvariantViolation);
 
-      expect(exception.error.kind).toBe(DOMAIN_ERROR_KIND.INVARIANT_VIOLATION);
+      expect(exception.code).toBe('sample.empty_name');
     });
 
-    it('error.code로 실패를 안정적으로 식별한다', () => {
+    it('details로 구조화된 메타데이터를 보관한다', () => {
       const exception = new DomainException(sampleInvariantViolation);
 
-      expect(exception.error.code).toBe('sample.empty_name');
-    });
-
-    it('error.details로 구조화된 메타데이터를 보관한다', () => {
-      const exception = new DomainException(sampleInvariantViolation);
-
-      expect(exception.error.details).toEqual({ fields: ['name'] });
+      expect(exception.details).toEqual({ fields: ['name'] });
     });
   });
 });

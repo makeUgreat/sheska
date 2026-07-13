@@ -49,7 +49,8 @@ describe('OllamaHttpEmbedder', () => {
       InfrastructureException,
     );
     await expect(client.embed('hello')).rejects.toMatchObject({
-      error: { kind: 'unavailable', code: 'ollama.request_failed' },
+      kind: 'unavailable',
+      code: 'ollama.request_failed',
     });
   });
 
@@ -66,7 +67,8 @@ describe('OllamaHttpEmbedder', () => {
       InfrastructureException,
     );
     await expect(client.embed('hello')).rejects.toMatchObject({
-      error: { kind: 'invalid_data', code: 'ollama.invalid_response' },
+      kind: 'invalid_data',
+      code: 'ollama.invalid_response',
     });
   });
 
@@ -84,7 +86,8 @@ describe('OllamaHttpEmbedder', () => {
       InfrastructureException,
     );
     await expect(client.embed('hello')).rejects.toMatchObject({
-      error: { kind: 'bad_response', code: 'ollama.bad_response' },
+      kind: 'bad_response',
+      code: 'ollama.bad_response',
     });
   });
 });

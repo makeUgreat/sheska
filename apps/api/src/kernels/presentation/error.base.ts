@@ -1,3 +1,5 @@
+import { type BaseError } from '@core/base-error';
+
 export const PRESENTATION_ERROR_KIND = {
   VALIDATION_FAILED: 'validation_failed',
 } as const;
@@ -14,7 +16,7 @@ export interface PresentationErrorBase<
   Kind extends PresentationErrorKind = PresentationErrorKind,
   Code extends string = string,
   Details = unknown,
-> {
+> extends BaseError {
   readonly kind: Kind;
   readonly code: Code;
   readonly message: string;

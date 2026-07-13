@@ -1,3 +1,5 @@
+import { type BaseError } from '@core/base-error';
+
 export const DOMAIN_ERROR_KIND = {
   INVARIANT_VIOLATION: 'invariant_violation',
   STATE_CONFLICT: 'state_conflict',
@@ -16,7 +18,7 @@ export interface DomainErrorBase<
   Kind extends DomainErrorKind = DomainErrorKind,
   Code extends string = string,
   Details = unknown,
-> {
+> extends BaseError {
   readonly kind: Kind;
   readonly code: Code;
   readonly message: string;
