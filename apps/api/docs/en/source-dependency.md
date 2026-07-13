@@ -9,6 +9,7 @@ related:
   - ./architecture.md
   - ./error.md
   - ./runtime-wiring.md
+  - ./context-integration.md
 ---
 
 # API Source Dependency Convention

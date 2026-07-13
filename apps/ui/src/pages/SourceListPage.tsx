@@ -1,5 +1,26 @@
 import { Link } from 'react-router-dom';
 import { useListSources } from '@/api/queries';
+import { type SyncJobSummary } from '@/api/client';
+
+function SyncJobBadge({ syncJob }: { syncJob: SyncJobSummary | null }) {
+  if (!syncJob) {
+    return <span className="text-xs text-gray-400">no job</span>;
+  }
+
+  const styles = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    completed: 'bg-green-100 text-green-800',
+    failed: 'bg-red-100 text-red-800',
+  } as const;
+
+  const style = styles[syncJob.status] ?? 'bg-gray-100 text-gray-700';
+
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${style}`}>
+      {syncJob.status}
+    </span>
+  );
+}
 
 export function SourceListPage() {
   const { data, isLoading, error } = useListSources();
@@ -31,9 +52,12 @@ export function SourceListPage() {
               >
                 {s.externalSourceId}
               </Link>
-              <span className="text-sm text-gray-500">
-                {s.sizeBytes} bytes · {new Date(s.updatedAt).toLocaleString()}
-              </span>
+              <div className="flex items-center gap-3">
+                <SyncJobBadge syncJob={s.latestSyncJob} />
+                <span className="text-sm text-gray-500">
+                  {s.sizeBytes} bytes · {new Date(s.updatedAt).toLocaleString()}
+                </span>
+              </div>
             </li>
           ))}
         </ul>

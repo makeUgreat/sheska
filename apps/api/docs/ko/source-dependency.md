@@ -8,6 +8,7 @@ source: ../en/source-dependency.md
 last_synced: 2026-06-30
 related:
   - ./architecture.md
+  - ./context-integration.md
   - ./error.md
   - ./runtime-wiring.md
 ---

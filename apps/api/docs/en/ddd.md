@@ -7,6 +7,7 @@ applies_to:
 translation: ../ko/ddd.md
 related:
   - ./architecture.md
+  - ./context-integration.md
 ---
 
 # API DDD Convention

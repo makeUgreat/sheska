@@ -14,6 +14,12 @@ export class ListSourcesHttpRequest {
   readonly limit?: number;
 }
 
+export interface SyncJobSummaryHttpResponse {
+  readonly syncJobId: string;
+  readonly status: string;
+  readonly createdAt: string;
+}
+
 export interface SourceSummaryHttpResponse {
   readonly sourceId: string;
   readonly externalSourceId: string;
@@ -21,6 +27,7 @@ export interface SourceSummaryHttpResponse {
   readonly sizeBytes: number;
   readonly createdAt: string;
   readonly updatedAt: string;
+  readonly latestSyncJob: SyncJobSummaryHttpResponse | null;
 }
 
 export interface ListSourcesHttpResponse {

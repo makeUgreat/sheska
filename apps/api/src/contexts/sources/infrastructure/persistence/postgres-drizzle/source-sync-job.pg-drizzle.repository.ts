@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   type SourceSyncJob,
@@ -21,6 +21,20 @@ export class SourceSyncJobPgDrizzleRepository implements SourceSyncJobRepository
       .select()
       .from(schema.sourceSyncJobs)
       .where(eq(schema.sourceSyncJobs.id, criteria.id))
+      .limit(1)
+      .then((rows) => rows[0] ?? null);
+
+    return row ? SourceSyncJobPgDrizzleMapper.toDomain(row) : null;
+  }
+
+  async findLatestBySourceId(criteria: {
+    sourceId: string;
+  }): Promise<SourceSyncJob | null> {
+    const row = await this.db
+      .select()
+      .from(schema.sourceSyncJobs)
+      .where(eq(schema.sourceSyncJobs.sourceId, criteria.sourceId))
+      .orderBy(desc(schema.sourceSyncJobs.createdAt))
       .limit(1)
       .then((rows) => rows[0] ?? null);
 

@@ -8,6 +8,7 @@ source: ../en/ddd.md
 last_synced: 2026-06-30
 related:
   - ./architecture.md
+  - ./context-integration.md
 ---
 
 # API DDD 컨벤션

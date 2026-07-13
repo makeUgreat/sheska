@@ -62,4 +62,30 @@ describe('SourceSyncJobDrizzleRepository', () => {
       error: { kind: 'conflict', code: 'source_sync_job.save_failed' },
     });
   });
+
+  it('sourceId로 가장 최근 sync job을 반환한다', async () => {
+    const source = buildSource({
+      externalSourceId: 'Notes/sync-job-latest.md',
+    });
+    await sourceRepository.save(source);
+    const first = buildSourceSyncJob({ sourceId: source.id });
+    const second = buildSourceSyncJob({ sourceId: source.id });
+    await repository.save(first);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await repository.save(second);
+
+    const result = await repository.findLatestBySourceId({
+      sourceId: source.id,
+    });
+
+    expect(result?.id).toBe(second.id);
+  });
+
+  it('sync job이 없으면 null을 반환한다', async () => {
+    const result = await repository.findLatestBySourceId({
+      sourceId: 'non-existent-source',
+    });
+
+    expect(result).toBeNull();
+  });
 });
