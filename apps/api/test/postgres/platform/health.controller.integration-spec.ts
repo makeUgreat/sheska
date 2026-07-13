@@ -7,6 +7,7 @@ import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filte
 import { HealthController } from '@platform/nest/health/health.controller';
 import { DatabaseModule } from '@platform/nest/database/database.module';
 import { QueueHealthProbe } from '@platform/nest/queue/queue-health.probe';
+import { LOGGER } from '@kernels/application';
 import request from 'supertest';
 import {
   afterAll,
@@ -49,6 +50,15 @@ describe('HealthController Postgres boundary', () => {
         {
           provide: QueueHealthProbe,
           useValue: queueHealthProbe,
+        },
+        {
+          provide: LOGGER,
+          useValue: {
+            log: vi.fn(),
+            error: vi.fn(),
+            warn: vi.fn(),
+            debug: vi.fn(),
+          },
         },
         {
           provide: APP_FILTER,

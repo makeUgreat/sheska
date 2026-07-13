@@ -1,5 +1,11 @@
 // API contract types mirrored from apps/api
 
+export interface SyncJobSummary {
+  syncJobId: string;
+  status: 'pending' | 'completed' | 'failed';
+  createdAt: string;
+}
+
 export interface SourceSummary {
   sourceId: string;
   externalSourceId: string;
@@ -7,10 +13,18 @@ export interface SourceSummary {
   sizeBytes: number;
   createdAt: string;
   updatedAt: string;
+  latestSyncJob: SyncJobSummary | null;
 }
 
 export interface ListSourcesResponse {
   sources: SourceSummary[];
+}
+
+export interface EmbeddingInfo {
+  model: string;
+  dimensions: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface GetSourceResponse {
@@ -21,6 +35,8 @@ export interface GetSourceResponse {
   sizeBytes: number;
   createdAt: string;
   updatedAt: string;
+  latestSyncJob: SyncJobSummary | null;
+  embedding: EmbeddingInfo | null;
 }
 
 import { type HttpClient } from './http';

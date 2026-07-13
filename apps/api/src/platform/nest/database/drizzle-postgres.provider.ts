@@ -3,10 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as sourcesSchema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
+import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
 import { parseDatabaseConfig } from './database.config';
 
 const schema = {
   ...sourcesSchema,
+  ...ingestionSchema,
 };
 
 export type ApiDrizzleSchema = typeof schema;

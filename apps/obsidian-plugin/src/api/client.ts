@@ -30,7 +30,10 @@ export class SheskaApiClient {
     });
 
     if (!res.ok) {
-      throw new Error(`Sheska API error: ${res.status} ${res.statusText}`);
+      const body = await res.text().catch(() => '');
+      throw new Error(
+        `Sheska API error: ${res.status} ${res.statusText}${body ? ` — ${body}` : ''}`,
+      );
     }
 
     return res.json() as Promise<T>;

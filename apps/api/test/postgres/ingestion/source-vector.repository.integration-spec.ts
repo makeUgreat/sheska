@@ -62,4 +62,28 @@ describe('SourceVectorDrizzleRepository', () => {
       ),
     ).resolves.not.toThrow();
   });
+
+  it('sourceId로 source vector를 반환한다', async () => {
+    const source = await sourceRepository.save(
+      buildSource({
+        externalSourceId: 'Notes/source-vector-find.md',
+      }),
+    );
+    const sourceVector = buildSourceVector({ sourceId: source.id });
+    await repository.save(sourceVector);
+
+    const result = await repository.findBySourceId({ sourceId: source.id });
+
+    expect(result).not.toBeNull();
+    expect(result?.id).toBe(source.id);
+    expect(result?.getProps().model.unpack()).toBe('qwen3-embedding:0.6b');
+  });
+
+  it('source vector가 없으면 null을 반환한다', async () => {
+    const result = await repository.findBySourceId({
+      sourceId: 'non-existent-source',
+    });
+
+    expect(result).toBeNull();
+  });
 });

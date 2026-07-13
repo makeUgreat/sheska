@@ -36,6 +36,13 @@ export class SourcesHttpController {
         sizeBytes: s.sizeBytes,
         createdAt: s.createdAt.toISOString(),
         updatedAt: s.updatedAt.toISOString(),
+        latestSyncJob: s.latestSyncJob
+          ? {
+              syncJobId: s.latestSyncJob.syncJobId,
+              status: s.latestSyncJob.status,
+              createdAt: s.latestSyncJob.createdAt.toISOString(),
+            }
+          : null,
       })),
     };
   }
@@ -43,6 +50,7 @@ export class SourcesHttpController {
   @Get(':id')
   async get(@Param('id') id: string): Promise<GetSourceHttpResponse> {
     const result = await this.getSourceUseCase.execute({ sourceId: id });
+
     return {
       sourceId: result.sourceId,
       externalSourceId: result.externalSourceId,
@@ -51,6 +59,21 @@ export class SourcesHttpController {
       sizeBytes: result.sizeBytes,
       createdAt: result.createdAt.toISOString(),
       updatedAt: result.updatedAt.toISOString(),
+      latestSyncJob: result.latestSyncJob
+        ? {
+            syncJobId: result.latestSyncJob.syncJobId,
+            status: result.latestSyncJob.status,
+            createdAt: result.latestSyncJob.createdAt.toISOString(),
+          }
+        : null,
+      embedding: result.embedding
+        ? {
+            model: result.embedding.model,
+            dimensions: result.embedding.dimensions,
+            createdAt: result.embedding.createdAt.toISOString(),
+            updatedAt: result.embedding.updatedAt.toISOString(),
+          }
+        : null,
     };
   }
 

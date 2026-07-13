@@ -1,4 +1,8 @@
-import { type SourceRepository } from '@contexts/sources/domain';
+import {
+  type SourceRepository,
+  type SourceSyncJobRepository,
+} from '@contexts/sources/domain';
+import { type SourceEmbeddingLookup } from '@contexts/sources/application/ports';
 import { APPLICATION_ERROR_KIND } from '@kernels/application';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { GetSourceUseCase } from '../get-source.use-case';
@@ -6,6 +10,16 @@ import { buildSource } from '../../../../../../test/domains/fixtures/source.fixt
 
 type SourceRepositoryMock = {
   get: MockedFunction<SourceRepository['get']>;
+};
+
+type SourceSyncJobRepositoryMock = {
+  findLatestBySourceId: MockedFunction<
+    SourceSyncJobRepository['findLatestBySourceId']
+  >;
+};
+
+type SourceEmbeddingLookupMock = {
+  findBySourceId: MockedFunction<SourceEmbeddingLookup['findBySourceId']>;
 };
 
 describe('GetSourceUseCase', () => {
@@ -16,9 +30,13 @@ describe('GetSourceUseCase', () => {
       fingerprint: 'fingerprint-1',
     });
     const sources = createSourceRepositoryMock();
+    const syncJobs = createSyncJobRepositoryMock();
+    const embeddingLookup = createEmbeddingLookupMock();
     sources.get.mockResolvedValue(source);
     const useCase = new GetSourceUseCase(
       sources as unknown as SourceRepository,
+      syncJobs as unknown as SourceSyncJobRepository,
+      embeddingLookup,
     );
 
     const result = await useCase.execute({ sourceId: source.id });
@@ -34,9 +52,13 @@ describe('GetSourceUseCase', () => {
 
   it('source가 없으면 NOT_FOUND exception을 throw한다', async () => {
     const sources = createSourceRepositoryMock();
+    const syncJobs = createSyncJobRepositoryMock();
+    const embeddingLookup = createEmbeddingLookupMock();
     sources.get.mockResolvedValue(null);
     const useCase = new GetSourceUseCase(
       sources as unknown as SourceRepository,
+      syncJobs as unknown as SourceSyncJobRepository,
+      embeddingLookup,
     );
 
     await expect(
@@ -52,9 +74,13 @@ describe('GetSourceUseCase', () => {
   it('repository get exception을 전파한다', async () => {
     const getFailure = new Error('Source Repository operation failed');
     const sources = createSourceRepositoryMock();
+    const syncJobs = createSyncJobRepositoryMock();
+    const embeddingLookup = createEmbeddingLookupMock();
     sources.get.mockRejectedValue(getFailure);
     const useCase = new GetSourceUseCase(
       sources as unknown as SourceRepository,
+      syncJobs as unknown as SourceSyncJobRepository,
+      embeddingLookup,
     );
 
     await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(
@@ -66,5 +92,21 @@ describe('GetSourceUseCase', () => {
 function createSourceRepositoryMock(): SourceRepositoryMock {
   return {
     get: vi.fn<SourceRepository['get']>().mockResolvedValue(null),
+  };
+}
+
+function createSyncJobRepositoryMock(): SourceSyncJobRepositoryMock {
+  return {
+    findLatestBySourceId: vi
+      .fn<SourceSyncJobRepository['findLatestBySourceId']>()
+      .mockResolvedValue(null),
+  };
+}
+
+function createEmbeddingLookupMock(): SourceEmbeddingLookupMock {
+  return {
+    findBySourceId: vi
+      .fn<SourceEmbeddingLookup['findBySourceId']>()
+      .mockResolvedValue(null),
   };
 }
