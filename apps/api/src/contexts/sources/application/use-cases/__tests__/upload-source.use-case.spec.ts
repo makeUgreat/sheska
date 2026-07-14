@@ -11,6 +11,7 @@ import {
   UploadSourceUseCase,
 } from '../upload-source.use-case';
 import { sourceContentByteSize } from '../../../../../../test/domains/fixtures/source.fixture';
+import type { SourceEmbeddingLookup } from '@contexts/sources/application/ports';
 
 type ContentSnapshotCalculatorMock = {
   calculate: MockedFunction<UploadSourceContentSnapshotCalculator['calculate']>;
@@ -36,6 +37,10 @@ type EventEmitterMock = {
   emitAsync: MockedFunction<EventEmitter2['emitAsync']>;
 };
 
+type SourceEmbeddingLookupMock = {
+  findBySourceId: MockedFunction<SourceEmbeddingLookup['findBySourceId']>;
+};
+
 function buildMockLogger() {
   return { log: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
 }
@@ -55,6 +60,7 @@ describe('UploadSourceUseCase', () => {
       syncJobs,
       asEventEmitter(eventEmitter),
       buildMockLogger(),
+      createEmbeddingLookupMock(),
     );
 
     const result = await useCase.execute({
@@ -86,7 +92,7 @@ describe('UploadSourceUseCase', () => {
     });
   });
 
-  it('같은 content snapshot이면 저장과 sync job 생성을 건너뛴다', async () => {
+  it('같은 content snapshot이고 임베딩이 있으면 저장과 sync job 생성을 건너뛴다', async () => {
     const existingSource = restoreSource({
       id: 'source-1',
       externalSourceId: 'Notes/source.md',
@@ -106,6 +112,7 @@ describe('UploadSourceUseCase', () => {
       syncJobs,
       asEventEmitter(createEventEmitterMock()),
       buildMockLogger(),
+      createEmbeddingLookupMock({ hasEmbedding: true }),
     );
 
     const result = await useCase.execute({
@@ -120,6 +127,43 @@ describe('UploadSourceUseCase', () => {
     });
     expect(sources.save).not.toHaveBeenCalled();
     expect(syncJobs.save).not.toHaveBeenCalled();
+  });
+
+  it('같은 content snapshot이라도 임베딩이 없으면 sync job을 생성한다', async () => {
+    const existingSource = restoreSource({
+      id: 'source-1',
+      externalSourceId: 'Notes/source.md',
+      content: '# Source note',
+      fingerprint: 'fingerprint-1',
+    });
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
+      content: '# Source note',
+      fingerprint: 'fingerprint-1',
+    });
+    const sources = createSourceRepositoryMock();
+    sources.find.mockResolvedValue(existingSource);
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    const eventEmitter = createEventEmitterMock();
+    const useCase = new UploadSourceUseCase(
+      contentSnapshotCalculator,
+      sources,
+      syncJobs,
+      asEventEmitter(eventEmitter),
+      buildMockLogger(),
+      createEmbeddingLookupMock({ hasEmbedding: false }),
+    );
+
+    const result = await useCase.execute({
+      externalSourceId: 'Notes/source.md',
+      content: '# Source note',
+    });
+
+    expect(result.syncJobId?.length).toBeGreaterThan(0);
+    expectSyncJobSavedWith(syncJobs, eventEmitter, {
+      sourceId: 'source-1',
+      content: '# Source note',
+      fingerprint: 'fingerprint-1',
+    });
   });
 
   it('다른 content snapshot이면 source를 갱신하고 sync job을 생성한다', async () => {
@@ -143,6 +187,7 @@ describe('UploadSourceUseCase', () => {
       syncJobs,
       asEventEmitter(eventEmitter),
       buildMockLogger(),
+      createEmbeddingLookupMock(),
     );
 
     const result = await useCase.execute({
@@ -178,6 +223,7 @@ describe('UploadSourceUseCase', () => {
       syncJobs,
       asEventEmitter(createEventEmitterMock()),
       buildMockLogger(),
+      createEmbeddingLookupMock(),
     );
 
     await expect(
@@ -204,6 +250,7 @@ describe('UploadSourceUseCase', () => {
       syncJobs,
       asEventEmitter(createEventEmitterMock()),
       buildMockLogger(),
+      createEmbeddingLookupMock(),
     );
 
     const result = useCase.execute({
@@ -229,6 +276,7 @@ describe('UploadSourceUseCase', () => {
       syncJobs,
       asEventEmitter(createEventEmitterMock()),
       buildMockLogger(),
+      createEmbeddingLookupMock(),
     );
 
     const result = useCase.execute({
@@ -253,6 +301,7 @@ describe('UploadSourceUseCase', () => {
       syncJobs,
       asEventEmitter(createEventEmitterMock()),
       buildMockLogger(),
+      createEmbeddingLookupMock(),
     );
 
     const result = useCase.execute({
@@ -278,6 +327,7 @@ describe('UploadSourceUseCase', () => {
       syncJobs,
       asEventEmitter(createEventEmitterMock()),
       buildMockLogger(),
+      createEmbeddingLookupMock(),
     );
 
     const result = useCase.execute({
@@ -304,6 +354,7 @@ describe('UploadSourceUseCase', () => {
       syncJobs,
       asEventEmitter(createEventEmitterMock()),
       buildMockLogger(),
+      createEmbeddingLookupMock(),
     );
 
     const result = useCase.execute({
@@ -357,6 +408,23 @@ function createEventEmitterMock(): EventEmitterMock {
   return {
     emit: vi.fn(),
     emitAsync: vi.fn().mockResolvedValue([]),
+  };
+}
+
+const STUB_EMBEDDING_INFO = {
+  model: 'qwen3-embedding:0.6b',
+  dimensions: 1024,
+  createdAt: new Date('2026-01-01'),
+  updatedAt: new Date('2026-01-01'),
+};
+
+function createEmbeddingLookupMock(
+  { hasEmbedding } = { hasEmbedding: false },
+): SourceEmbeddingLookupMock {
+  return {
+    findBySourceId: vi
+      .fn<SourceEmbeddingLookup['findBySourceId']>()
+      .mockResolvedValue(hasEmbedding ? STUB_EMBEDDING_INFO : null),
   };
 }
 

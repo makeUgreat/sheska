@@ -11,12 +11,14 @@ import { type SourceRepository } from '@contexts/sources/domain';
 import { EMBED_REQUESTS_QUEUE } from '@contexts/ingestion/application/queue-handlers/embed-request.consumer';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
 import * as schema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
+import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
 import {
   SOURCE_FINGERPRINTER,
   SOURCE_REPOSITORY,
 } from '@contexts/sources/sources.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
 import { sourceContentByteSize } from '../../domains/fixtures/source.fixture';
+import { VALID_EMBEDDING } from '../../domains/fixtures/source-vector.fixture';
 
 describe('UploadSourceUseCase', () => {
   let app: INestApplication;
@@ -96,11 +98,42 @@ describe('UploadSourceUseCase', () => {
     });
   });
 
-  it('같은 content를 다시 업로드하면 저장 갱신과 sync job 생성을 건너뛴다', async () => {
-    const externalSourceId = 'Notes/upload-usecase-unchanged-source.md';
+  it('같은 content를 다시 업로드할 때 임베딩이 없으면 sync job을 생성한다', async () => {
+    const externalSourceId = 'Notes/upload-usecase-unchanged-no-embedding.md';
     const content = '# Same source note';
     const fingerprint = useFingerprint(content, 'fingerprint-unchanged-source');
     const firstResult = await useCase.execute({ externalSourceId, content });
+
+    const secondResult = await useCase.execute({ externalSourceId, content });
+
+    expect(secondResult).toMatchObject({
+      sourceId: firstResult.sourceId,
+      externalSourceId,
+      fingerprint,
+    });
+    expect(secondResult.syncJobId?.length).toBeGreaterThan(0);
+
+    const persistedSyncJobs = await findSyncJobsBySourceId(
+      firstResult.sourceId,
+    );
+
+    expect(persistedSyncJobs).toHaveLength(2);
+  });
+
+  it('같은 content를 다시 업로드할 때 임베딩이 최신이면 저장 갱신과 sync job 생성을 건너뛴다', async () => {
+    const externalSourceId = 'Notes/upload-usecase-unchanged-with-embedding.md';
+    const content = '# Same source note with embedding';
+    const fingerprint = useFingerprint(
+      content,
+      'fingerprint-unchanged-with-embedding',
+    );
+    const firstResult = await useCase.execute({ externalSourceId, content });
+
+    await database.insert(ingestionSchema.sourceVectors).values({
+      sourceId: firstResult.sourceId,
+      embedding: VALID_EMBEDDING,
+      model: 'qwen3-embedding:0.6b',
+    });
 
     const secondResult = await useCase.execute({ externalSourceId, content });
 
