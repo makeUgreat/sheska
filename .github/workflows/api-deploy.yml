@@ -61,6 +61,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: deploy
+          fetch-depth: 0
           token: ${{ github.token }}
 
       - name: Merge master into deploy
