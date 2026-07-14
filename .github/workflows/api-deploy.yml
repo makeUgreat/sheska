@@ -63,6 +63,13 @@ jobs:
           ref: deploy
           token: ${{ github.token }}
 
+      - name: Merge master into deploy
+        run: |
+          git config user.name "${{ env.BOT_NAME }}"
+          git config user.email "${{ env.BOT_EMAIL }}"
+          git fetch origin master
+          git merge origin/master --no-edit
+
       - name: Update image tag in values.yaml
         uses: mikefarah/yq@v4
         with:
