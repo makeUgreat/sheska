@@ -51,6 +51,10 @@ describe('OllamaHttpEmbedder', () => {
     await expect(client.embed('hello')).rejects.toMatchObject({
       kind: 'unavailable',
       code: 'ollama.request_failed',
+      cause: expect.objectContaining({
+        name: expect.any(String) as string,
+        message: expect.any(String) as string,
+      }) as unknown,
     });
   });
 

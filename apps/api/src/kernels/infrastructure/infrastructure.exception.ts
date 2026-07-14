@@ -10,7 +10,7 @@ export class InfrastructureException<
   readonly details: F['details'];
 
   constructor(error: F) {
-    super(error.message);
+    super(error.message, { cause: error.cause });
     this.name = 'InfrastructureException';
     this.error = error;
     this.kind = error.kind;

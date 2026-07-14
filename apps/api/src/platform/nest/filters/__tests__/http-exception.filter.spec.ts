@@ -300,7 +300,8 @@ describe('HttpExceptionFilter', () => {
           code: 'test.error',
           source: { boundary: 'persistence', adapter: 'test.drizzle' },
           message: 'test',
-          details: { cause: new Error('raw db error') },
+          details: {},
+          cause: new Error('raw db error'),
         }),
         host,
       );
@@ -318,7 +319,8 @@ describe('HttpExceptionFilter', () => {
           code: 'source.find_failed',
           source: { boundary: 'persistence', adapter: 'source.drizzle' },
           message: 'Source find operation failed',
-          details: { cause: new Error('connection refused') },
+          details: {},
+          cause: new Error('connection refused'),
         }),
         host,
       );
@@ -338,7 +340,8 @@ describe('HttpExceptionFilter', () => {
           code: 'source.save_failed',
           source: { boundary: 'persistence', adapter: 'source.drizzle' },
           message: 'Source save operation failed',
-          details: { cause: new Error('unique violation') },
+          details: {},
+          cause: new Error('unique violation'),
         }),
         host,
       );
@@ -358,7 +361,8 @@ describe('HttpExceptionFilter', () => {
           code: 'source.find_failed',
           source: { boundary: 'persistence', adapter: 'source.drizzle' },
           message: 'Source find operation failed',
-          details: { cause: new Error('connection refused') },
+          details: {},
+          cause: new Error('connection refused'),
         }),
         host,
       );
@@ -433,7 +437,8 @@ describe('HttpExceptionFilter', () => {
           code: 'source.find_failed',
           source: { boundary: 'persistence', adapter: 'source.drizzle' },
           message: 'Source find operation failed',
-          details: { cause: new Error('connection refused') },
+          details: {},
+          cause: new Error('connection refused'),
         }),
         host,
       );

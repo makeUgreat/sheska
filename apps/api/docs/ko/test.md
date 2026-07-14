@@ -120,6 +120,8 @@ Adapter test coverage는 검증하려는 동작의 소유자가 어디에 있는
 단위 테스트는 adapter code 자체가 소유한 동작을 검증해야 한다. 예를 들어 external 또는 persistence shape와 domain object 사이의 mapping, domain restoration exception 보존, adapter 또는 infrastructure exception을 유용한 context로 감싸는 동작, 실제 외부 I/O 없이 증명할 수 있는 adapter-specific branching을 단위 테스트에서 다룬다.
 통합 테스트는 선택된 boundary가 조립되었을 때만 의미가 있는 동작을 검증해야 한다. 예를 들어 실제 database schema와 constraint 동작, ORM query compatibility, transaction 또는 upsert 동작, 실제 adapter module을 통해 관찰되는 repository save/find contract를 통합 테스트에서 다룬다.
 
+Adapter가 외부 dependency에서 던진 error를 감싸는 경우, 단위 테스트는 wrapping behavior를 검증해야 한다. 즉, 어떤 값이 throw되었을 때 결과 InfrastructureException의 kind, code, source, 그리고 `cause`의 직렬화 가능한 shape를 assertion하는 것이다. 이때 단위 테스트는 편의상 임의의 error 값을 주입해도 된다. Boundary directory 안의 대응하는 통합 테스트는 도달할 수 없는 호스트나 거부된 연결처럼 실제 실패 경로를 최소 하나 검증해야 하며, 이를 통해 runtime에서 dependency가 실제로 무엇을 throw하는지를 고정한다. 실제 error shape는 adapter가 아니라 runtime이 부과하는 contract이며, 실제 호출 없이는 확인할 수 없다. 이 경우는 Boundary 소유권과 중복 섹션의 일반 규칙에서 설명하는 특수한 사례에 해당한다. 즉, real dependency failure case는 실제 dependency 없이는 신뢰성 있게 증명할 수 없을 때만 해당 dependency boundary에 둔다.
+
 각 동작은 신뢰성 있게 증명할 수 있는 가장 저렴한 test layer에서 검증하는 것을 선호한다.
 Adapter가 흐름에 참여한다는 이유만으로 상세한 domain, application, mapper invariant case를 통합 테스트에서 반복하지 않는다.
 같은 observable result를 검증하더라도 책임이 다르면 제한적으로 중복을 허용할 수 있다. 예를 들어 단위 테스트에서 fake database로 검증한 repository exception behavior를, 통합 테스트에서는 실제 database constraint가 같은 behavior로 이어지는지 확인할 수 있다.

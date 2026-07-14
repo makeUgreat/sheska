@@ -16,7 +16,8 @@ const sampleUnavailableError: SampleUnavailableError = {
   code: 'sample.db_unavailable',
   source: { boundary: 'persistence', adapter: 'sample.drizzle' },
   message: 'Database is unavailable',
-  details: { cause: new Error('connection refused') },
+  details: {},
+  cause: new Error('connection refused'),
 };
 
 describe('InfrastructureException', () => {
@@ -83,10 +84,16 @@ describe('InfrastructureException', () => {
       });
     });
 
-    it('details에 cause를 보관한다', () => {
+    it('details를 보관한다', () => {
       const exception = new InfrastructureException(sampleUnavailableError);
 
       expect(exception.details).toBe(sampleUnavailableError.details);
+    });
+
+    it('cause를 Error.cause로 전달한다', () => {
+      const exception = new InfrastructureException(sampleUnavailableError);
+
+      expect(exception.cause).toBe(sampleUnavailableError.cause);
     });
   });
 });
