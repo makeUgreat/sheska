@@ -23,4 +23,4 @@ translation: ../en/dev-integrations.md
 | Redis MCP | 개발 캐시 상태, 키, 값 확인. 접속은 `.dev-integrations.env`의 `DEV_REDIS_URL` 사용. |
 | Obsidian Local REST API | `apps/obsidian-plugin` 개발 중 실행 중인 Obsidian 인스턴스에 대한 임시 확인 (플러그인 상태, vault 파일, 매니페스트). 인증은 `.dev-integrations.env`의 `OBSIDIAN_REST_API_KEY` 사용. |
 | Obsidian MCP | `apps/obsidian-plugin` 개발 중 더 깊은 vault 상호작용이 필요할 때. 인증은 `.dev-integrations.env`의 `OBSIDIAN_MCP_API_KEY` 사용. |
-| 홈 k3s 클러스터 | 배포 확인, 로그 검사, 인프라 디버깅. 접속 정보는 `~/WebstormProjects/hash-infra` 참고 — 해당 저장소의 `CLAUDE.md`를 확인. |
+| 홈 k3s 클러스터 | 배포 확인, 로그 검사, 인프라 디버깅. 접속 정보는 `~/WebstormProjects/hash-infra` 참고 — 해당 저장소의 `CLAUDE.md`를 확인. **kubectl 실행 전 사용자가 SSH 터널을 먼저 열어야 한다. Claude는 터널을 직접 열 수 없다.** |
