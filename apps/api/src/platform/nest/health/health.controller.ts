@@ -31,7 +31,7 @@ export class HealthController {
         code: 'health.database_unreachable',
         message: 'Database is unreachable',
         source: { boundary: 'persistence', adapter: 'postgres' },
-        details: { cause: undefined },
+        details: {},
       });
     }
 
@@ -43,7 +43,7 @@ export class HealthController {
         code: 'health.queue_unreachable',
         message: 'Queue is unreachable',
         source: { boundary: 'message-broker', adapter: 'bullmq' },
-        details: { cause: undefined },
+        details: {},
       });
     }
 

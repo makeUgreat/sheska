@@ -60,7 +60,8 @@ export class SourceSyncJobPgDrizzleRepository implements SourceSyncJobRepository
         code: 'source_sync_job.save_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source sync job save operation failed',
-        details: { cause: error },
+        details: {},
+        cause: error,
       });
     }
 

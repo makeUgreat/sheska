@@ -50,7 +50,8 @@ export class SourceVectorPgDrizzleRepository implements SourceVectorRepository {
         code: 'source_vector.save_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source vector upsert operation failed',
-        details: { cause: error },
+        details: {},
+        cause: error,
       });
     }
   }

@@ -42,7 +42,8 @@ export class OllamaHttpEmbedder implements Embedder {
         code: 'ollama.request_failed',
         source: { boundary: 'http-client', adapter: ADAPTER },
         message: 'Ollama service is unavailable',
-        details: { cause: error },
+        details: {},
+        cause: error,
       });
     }
 
@@ -52,7 +53,7 @@ export class OllamaHttpEmbedder implements Embedder {
         code: 'ollama.bad_response',
         source: { boundary: 'http-client', adapter: ADAPTER },
         message: `Ollama returned an error response: ${response.status} ${response.statusText}`,
-        details: { cause: null },
+        details: {},
       });
     }
 
@@ -64,9 +65,9 @@ export class OllamaHttpEmbedder implements Embedder {
         source: { boundary: 'http-client', adapter: ADAPTER },
         message: 'Ollama response did not match expected shape',
         details: {
-          cause: parsed.error,
           fields: parsed.error.issues.map((i) => i.path.join('.')),
         },
+        cause: parsed.error,
       });
     }
     return { embedding: parsed.data.embedding, model: this.model };

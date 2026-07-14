@@ -30,6 +30,36 @@ describe('toErrorLogContext', () => {
     });
   });
 
+  it('cause가 Error이면 직렬화 가능한 shape으로 변환한다', () => {
+    const rootCause = new Error('connect ECONNREFUSED');
+    const cause = new TypeError('fetch failed', { cause: rootCause });
+
+    const exception = Object.assign(
+      new Error('service unavailable', { cause }),
+      {
+        kind: 'unavailable',
+        code: 'service.request_failed',
+        details: {},
+      },
+    );
+
+    expect(toErrorLogContext(exception)).toEqual({
+      errorName: 'Error',
+      error: 'service unavailable',
+      kind: 'unavailable',
+      code: 'service.request_failed',
+      details: {},
+      cause: {
+        name: 'TypeError',
+        message: 'fetch failed',
+        cause: {
+          name: 'Error',
+          message: 'connect ECONNREFUSED',
+        },
+      },
+    });
+  });
+
   it('exception 내부 error shape으로 error 메시지를 덮어쓰지 않는다', () => {
     const exception = new ApplicationException({
       kind: APPLICATION_ERROR_KIND.NOT_FOUND,

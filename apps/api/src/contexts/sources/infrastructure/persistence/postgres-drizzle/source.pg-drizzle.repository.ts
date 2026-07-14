@@ -33,7 +33,8 @@ export class SourcePgDrizzleRepository implements SourceRepository {
         code: 'source.find_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source find operation failed',
-        details: { cause: error },
+        details: {},
+        cause: error,
       });
     }
 
@@ -59,7 +60,8 @@ export class SourcePgDrizzleRepository implements SourceRepository {
         code: 'source.get_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source get operation failed',
-        details: { cause: error },
+        details: {},
+        cause: error,
       });
     }
 
@@ -84,7 +86,8 @@ export class SourcePgDrizzleRepository implements SourceRepository {
         code: 'source.list_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source list operation failed',
-        details: { cause: error },
+        details: {},
+        cause: error,
       });
     }
 
@@ -116,7 +119,8 @@ export class SourcePgDrizzleRepository implements SourceRepository {
         code: 'source.save_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source save operation failed',
-        details: { cause: error },
+        details: {},
+        cause: error,
       });
     }
 
