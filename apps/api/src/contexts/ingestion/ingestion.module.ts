@@ -42,6 +42,7 @@ export class IngestionModule {
         EmbedRequestConsumer,
         EmbedResultConsumer,
       ],
+      exports: [SOURCE_VECTOR_REPOSITORY],
     };
   }
 }

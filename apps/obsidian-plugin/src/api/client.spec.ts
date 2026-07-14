@@ -28,18 +28,35 @@ describe('SheskaApiClient', () => {
       expect(result).toEqual(mockData);
     });
 
-    it('throws when response is not ok', async () => {
+    it('throws with status when response body is empty', async () => {
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({
           ok: false,
           status: 401,
           statusText: 'Unauthorized',
+          text: () => Promise.resolve(''),
         }),
       );
 
       await expect(client.get('/health')).rejects.toThrow(
         'Sheska API error: 401 Unauthorized',
+      );
+    });
+
+    it('throws with body when response includes error details', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized',
+          text: () => Promise.resolve('invalid token'),
+        }),
+      );
+
+      await expect(client.get('/health')).rejects.toThrow(
+        'Sheska API error: 401 Unauthorized — invalid token',
       );
     });
   });
@@ -73,6 +90,7 @@ describe('SheskaApiClient', () => {
           ok: false,
           status: 422,
           statusText: 'Unprocessable Entity',
+          text: () => Promise.resolve(''),
         }),
       );
 
@@ -163,6 +181,7 @@ describe('SheskaApiClient', () => {
           ok: false,
           status: 422,
           statusText: 'Unprocessable Entity',
+          text: () => Promise.resolve(''),
         }),
       );
 

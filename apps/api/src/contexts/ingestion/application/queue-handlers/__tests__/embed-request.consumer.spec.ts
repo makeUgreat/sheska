@@ -62,12 +62,57 @@ describe('EmbedRequestConsumer', () => {
         buildMockLogger(),
       );
 
-      consumer.onFailed(buildJob({ syncJobId: 'sync-job-1' }));
+      consumer.onFailed(
+        buildJob({ syncJobId: 'sync-job-1' }),
+        new Error('embed failed'),
+      );
 
       expect(emit).toHaveBeenCalledOnce();
       expect(emit).toHaveBeenCalledWith(
         'source.ingestion.failed',
         expect.any(IngestionFailedDomainEvent),
+      );
+    });
+
+    it('에러 메시지를 로그에 기록한다', () => {
+      const logger = buildMockLogger();
+      const consumer = new EmbedRequestConsumer(
+        { embed: vi.fn() },
+        { add: vi.fn() } as unknown as Queue,
+        new EventEmitter2(),
+        logger,
+      );
+
+      consumer.onFailed(buildJob(), new Error('connection refused'));
+
+      expect(logger.error).toHaveBeenCalledWith(
+        'Embed request failed',
+        expect.objectContaining({ error: 'connection refused' }),
+      );
+    });
+
+    it('구조화된 exception이면 kind와 code를 로그에 기록한다', () => {
+      const logger = buildMockLogger();
+      const consumer = new EmbedRequestConsumer(
+        { embed: vi.fn() },
+        { add: vi.fn() } as unknown as Queue,
+        new EventEmitter2(),
+        logger,
+      );
+      const error = Object.assign(new Error('Ollama unavailable'), {
+        kind: 'unavailable',
+        code: 'ollama.request_failed',
+        source: { boundary: 'http-client', adapter: 'ollama.embedder' },
+      });
+
+      consumer.onFailed(buildJob(), error);
+
+      expect(logger.error).toHaveBeenCalledWith(
+        'Embed request failed',
+        expect.objectContaining({
+          kind: 'unavailable',
+          code: 'ollama.request_failed',
+        }),
       );
     });
 
@@ -81,7 +126,7 @@ describe('EmbedRequestConsumer', () => {
         buildMockLogger(),
       );
 
-      consumer.onFailed(undefined);
+      consumer.onFailed(undefined, new Error('irrelevant'));
 
       expect(emit).not.toHaveBeenCalled();
     });

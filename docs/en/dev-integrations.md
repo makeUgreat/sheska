@@ -23,4 +23,4 @@ Copy `.dev-integrations.env.example` to get started.
 | Redis MCP | Inspect dev cache state, keys, and values. Connection via `DEV_REDIS_URL` in `.dev-integrations.env`. |
 | Obsidian Local REST API | Ad-hoc checks against a running Obsidian instance (plugin state, vault files, manifest) during `apps/obsidian-plugin` development. Auth via `OBSIDIAN_REST_API_KEY` in `.dev-integrations.env`. |
 | Obsidian MCP | Deeper vault interaction during `apps/obsidian-plugin` development. Auth via `OBSIDIAN_MCP_API_KEY` in `.dev-integrations.env`. |
-| Home k3s Cluster | Deployment verification, log inspection, infrastructure debugging. Connection info in `~/WebstormProjects/hash-infra` — see that repo's `CLAUDE.md`. |
+| Home k3s Cluster | Deployment verification, log inspection, infrastructure debugging. Connection info in `~/WebstormProjects/hash-infra` — see that repo's `CLAUDE.md`. **The user must open the SSH tunnel before Claude can run kubectl commands. Claude cannot open the tunnel itself.** |

@@ -14,6 +14,7 @@ related:
   - ./infrastructure.md
   - ./source-dependency.md
   - ./runtime-wiring.md
+  - ./context-integration.md
   - ./test.md
 ---
 
@@ -39,4 +40,5 @@ When changing public project Markdown documents, also read the repository docume
 - Infrastructure adapter file naming, directory structure, or adapter conventions: read [API Infrastructure Convention](./infrastructure.md).
 - Import direction, layer boundaries, or framework imports: read [API Source Dependency Convention](./source-dependency.md).
 - NestJS DI, provider registration, module wiring, platform startup flow, or port binding: read [API Runtime Wiring Convention](./runtime-wiring.md).
+- Cross-context data integration, consumer-owned port or adapter placement, or Pull vs Push strategy decisions: read [API Context Integration Convention](./context-integration.md).
 - `apps/api` test files, test structure, or test command selection: read [API Test Convention](./test.md).

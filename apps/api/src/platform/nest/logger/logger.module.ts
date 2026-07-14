@@ -13,6 +13,10 @@ import { PinoLoggerAdapter } from './pino-logger.adapter';
         return {
           pinoHttp: {
             level,
+            timestamp: () => `,"time":"${new Date().toISOString()}"`,
+            autoLogging: {
+              ignore: (req) => ['/livez', '/readyz'].includes(req.url ?? ''),
+            },
           },
         };
       },

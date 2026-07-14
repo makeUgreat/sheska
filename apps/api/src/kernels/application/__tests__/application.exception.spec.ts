@@ -26,12 +26,8 @@ describe('ApplicationException', () => {
     expect(exception).toBeInstanceOf(ApplicationException);
     expect(exception.name).toBe('ApplicationException');
     expect(exception.message).toBe('Resource not found');
-    expect(exception.error).toEqual({
-      kind: 'not_found',
-      code: 'sample.resource_not_found',
-      message: 'Resource not found',
-      details: undefined,
-    });
+    expect(exception.kind).toBe(APPLICATION_ERROR_KIND.NOT_FOUND);
+    expect(exception.code).toBe('sample.resource_not_found');
   });
 
   describe('instanceof', () => {
@@ -64,23 +60,17 @@ describe('ApplicationException', () => {
     });
   });
 
-  describe('error', () => {
-    it('생성자에 전달한 error shape을 보관한다', () => {
+  describe('구조화된 필드', () => {
+    it('kind로 실패 종류를 식별한다', () => {
       const exception = new ApplicationException(sampleNotFoundError);
 
-      expect(exception.error).toBe(sampleNotFoundError);
+      expect(exception.kind).toBe(APPLICATION_ERROR_KIND.NOT_FOUND);
     });
 
-    it('error.kind로 실패 종류를 식별한다', () => {
+    it('code로 실패를 안정적으로 식별한다', () => {
       const exception = new ApplicationException(sampleNotFoundError);
 
-      expect(exception.error.kind).toBe(APPLICATION_ERROR_KIND.NOT_FOUND);
-    });
-
-    it('error.code로 실패를 안정적으로 식별한다', () => {
-      const exception = new ApplicationException(sampleNotFoundError);
-
-      expect(exception.error.code).toBe('sample.resource_not_found');
+      expect(exception.code).toBe('sample.resource_not_found');
     });
   });
 });

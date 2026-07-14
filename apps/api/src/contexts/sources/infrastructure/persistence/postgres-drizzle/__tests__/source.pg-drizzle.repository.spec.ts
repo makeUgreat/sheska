@@ -18,10 +18,8 @@ describe('SourcePgDrizzleRepository', () => {
 
     await expect(result).rejects.toBeInstanceOf(InfrastructureException);
     await expect(result).rejects.toMatchObject({
-      error: {
-        kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
-        code: 'source.save_failed',
-      },
+      kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+      code: 'source.save_failed',
     });
   });
 
@@ -34,10 +32,8 @@ describe('SourcePgDrizzleRepository', () => {
 
     await expect(result).rejects.toBeInstanceOf(InfrastructureException);
     await expect(result).rejects.toMatchObject({
-      error: {
-        kind: INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
-        code: 'source.save_failed',
-      },
+      kind: INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
+      code: 'source.save_failed',
     });
   });
 });
@@ -52,10 +48,8 @@ describe('SourceSyncJobPgDrizzleRepository', () => {
 
     await expect(result).rejects.toBeInstanceOf(InfrastructureException);
     await expect(result).rejects.toMatchObject({
-      error: {
-        kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
-        code: 'source_sync_job.save_failed',
-      },
+      kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+      code: 'source_sync_job.save_failed',
     });
   });
 
@@ -68,10 +62,8 @@ describe('SourceSyncJobPgDrizzleRepository', () => {
 
     await expect(result).rejects.toBeInstanceOf(InfrastructureException);
     await expect(result).rejects.toMatchObject({
-      error: {
-        kind: INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
-        code: 'source_sync_job.save_failed',
-      },
+      kind: INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
+      code: 'source_sync_job.save_failed',
     });
   });
 });

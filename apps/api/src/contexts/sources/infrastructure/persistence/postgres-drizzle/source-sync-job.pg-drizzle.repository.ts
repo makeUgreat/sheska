@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   type SourceSyncJob,
@@ -27,6 +27,20 @@ export class SourceSyncJobPgDrizzleRepository implements SourceSyncJobRepository
     return row ? SourceSyncJobPgDrizzleMapper.toDomain(row) : null;
   }
 
+  async findLatestBySourceId(criteria: {
+    sourceId: string;
+  }): Promise<SourceSyncJob | null> {
+    const row = await this.db
+      .select()
+      .from(schema.sourceSyncJobs)
+      .where(eq(schema.sourceSyncJobs.sourceId, criteria.sourceId))
+      .orderBy(desc(schema.sourceSyncJobs.createdAt))
+      .limit(1)
+      .then((rows) => rows[0] ?? null);
+
+    return row ? SourceSyncJobPgDrizzleMapper.toDomain(row) : null;
+  }
+
   async save(syncJob: SourceSyncJob): Promise<SourceSyncJob> {
     const insert = SourceSyncJobPgDrizzleMapper.toInsert(syncJob);
     let row: schema.SourceSyncJobRow;
@@ -46,7 +60,8 @@ export class SourceSyncJobPgDrizzleRepository implements SourceSyncJobRepository
         code: 'source_sync_job.save_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source sync job save operation failed',
-        details: { cause: error },
+        details: {},
+        cause: error,
       });
     }
 

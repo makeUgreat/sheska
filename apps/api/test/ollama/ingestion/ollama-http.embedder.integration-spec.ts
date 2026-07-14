@@ -1,9 +1,11 @@
 import { describe, beforeAll, it, expect } from 'vitest';
 import { ConfigService } from '@nestjs/config';
+import { InfrastructureException } from '@kernels/infrastructure';
 import { OllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.embedder';
 
 const OLLAMA_TEST_BASE_URL = 'http://127.0.0.1:11435';
 const OLLAMA_TEST_MODEL = 'qwen3-embedding:0.6b'; // OllamaHttpEmbedder에 하드코딩된 모델과 일치해야 함
+const OLLAMA_UNREACHABLE_URL = 'http://127.0.0.1:19999';
 
 describe('OllamaHttpEmbedder (integration)', () => {
   let embedder: OllamaHttpEmbedder;
@@ -42,5 +44,33 @@ describe('OllamaHttpEmbedder (integration)', () => {
     ]);
 
     expect(r1.embedding).not.toEqual(r2.embedding);
+  });
+});
+
+describe('OllamaHttpEmbedder — 서비스 불가 (integration)', () => {
+  let unreachableEmbedder: OllamaHttpEmbedder;
+
+  beforeAll(() => {
+    const configService = {
+      get: (key: string) => {
+        if (key === 'EMBEDDING_BASE_URL') return OLLAMA_UNREACHABLE_URL;
+      },
+    } as unknown as ConfigService;
+
+    unreachableEmbedder = new OllamaHttpEmbedder(configService);
+  });
+
+  it('Ollama에 연결할 수 없으면 cause가 직렬화된 InfrastructureException을 던진다', async () => {
+    await expect(unreachableEmbedder.embed('hello')).rejects.toThrow(
+      InfrastructureException,
+    );
+    await expect(unreachableEmbedder.embed('hello')).rejects.toMatchObject({
+      kind: 'unavailable',
+      code: 'ollama.request_failed',
+      cause: expect.objectContaining({
+        name: expect.any(String) as string,
+        message: expect.any(String) as string,
+      }) as unknown,
+    });
   });
 });

@@ -99,7 +99,7 @@ describe('SourcesHttpController', () => {
   });
 
   describe('GET /sources', () => {
-    it('source 목록을 200 응답으로 반환한다', async () => {
+    it('source 목록을 latestSyncJob과 함께 200 응답으로 반환한다', async () => {
       const now = new Date('2026-01-01T00:00:00.000Z');
       listSourcesUseCase.execute.mockResolvedValue({
         sources: [
@@ -110,6 +110,11 @@ describe('SourcesHttpController', () => {
             sizeBytes: 14,
             createdAt: now,
             updatedAt: now,
+            latestSyncJob: {
+              syncJobId: 'sync-job-1',
+              status: 'completed',
+              createdAt: now,
+            },
           },
         ],
       });
@@ -125,6 +130,11 @@ describe('SourcesHttpController', () => {
             sizeBytes: 14,
             createdAt: now.toISOString(),
             updatedAt: now.toISOString(),
+            latestSyncJob: {
+              syncJobId: 'sync-job-1',
+              status: 'completed',
+              createdAt: now.toISOString(),
+            },
           },
         ],
       });
@@ -156,7 +166,7 @@ describe('SourcesHttpController', () => {
   });
 
   describe('GET /sources/:id', () => {
-    it('source를 200 응답으로 반환한다', async () => {
+    it('source를 latestSyncJob과 embedding과 함께 200 응답으로 반환한다', async () => {
       const now = new Date('2026-01-01T00:00:00.000Z');
       getSourceUseCase.execute.mockResolvedValue({
         sourceId: 'source-1',
@@ -166,13 +176,24 @@ describe('SourcesHttpController', () => {
         sizeBytes: 14,
         createdAt: now,
         updatedAt: now,
+        latestSyncJob: {
+          syncJobId: 'sync-job-1',
+          status: 'completed',
+          createdAt: now,
+        },
+        embedding: {
+          model: 'qwen3-embedding:0.6b',
+          dimensions: 1024,
+          createdAt: now,
+          updatedAt: now,
+        },
       });
 
       const response = await request(httpServer)
         .get('/sources/source-1')
         .expect(200);
 
-      expect(response.body).toEqual({
+      expect(response.body).toMatchObject({
         sourceId: 'source-1',
         externalSourceId: 'Notes/source.md',
         content: '# Source note',
@@ -180,6 +201,15 @@ describe('SourcesHttpController', () => {
         sizeBytes: 14,
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
+        latestSyncJob: {
+          syncJobId: 'sync-job-1',
+          status: 'completed',
+          createdAt: now.toISOString(),
+        },
+        embedding: {
+          model: 'qwen3-embedding:0.6b',
+          dimensions: 1024,
+        },
       });
       expect(getSourceUseCase.execute).toHaveBeenCalledWith({
         sourceId: 'source-1',

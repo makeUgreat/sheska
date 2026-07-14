@@ -5,7 +5,6 @@ export {
   type InfrastructureErrorOf,
   type InfrastructureErrorKind,
   type InfrastructureErrorSource,
-  type InfrastructureErrorCauseDetails,
   type InfrastructureInvalidDataDetails,
 } from './error.base';
 export { InfrastructureException } from './infrastructure.exception';

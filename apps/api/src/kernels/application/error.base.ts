@@ -1,3 +1,5 @@
+import { type BaseError } from '@core/base-error';
+
 export const APPLICATION_ERROR_KIND = {
   VALIDATION_FAILED: 'validation_failed',
   DEPENDENCY_UNAVAILABLE: 'dependency_unavailable',
@@ -21,7 +23,7 @@ export interface ApplicationErrorBase<
   Kind extends ApplicationErrorKind = ApplicationErrorKind,
   Code extends string = string,
   Details = unknown,
-> {
+> extends BaseError {
   readonly kind: Kind;
   readonly code: Code;
   readonly message: string;

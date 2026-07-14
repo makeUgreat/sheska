@@ -1,3 +1,5 @@
+import { type BaseError } from '@core/base-error';
+
 export const INFRASTRUCTURE_ERROR_KIND = {
   // A required infrastructure dependency is not available.
   UNAVAILABLE: 'unavailable',
@@ -28,30 +30,25 @@ export interface InfrastructureErrorSource {
   readonly adapter: string;
 }
 
-export type InfrastructureErrorCauseDetails = {
-  readonly cause: unknown;
-};
-
 export interface InfrastructureErrorBase<
   Kind extends InfrastructureErrorKind = InfrastructureErrorKind,
   Code extends string = string,
-  Details extends InfrastructureErrorCauseDetails =
-    InfrastructureErrorDetailsFor<Kind>,
+  Details extends Record<string, unknown> = InfrastructureErrorDetailsFor<Kind>,
   Source extends InfrastructureErrorSource = InfrastructureErrorSource,
-> {
+> extends BaseError {
   readonly kind: Kind;
   readonly code: Code;
   readonly source: Source;
   readonly message: string;
   readonly details: Details;
+  readonly cause?: unknown;
 }
 
 export type InfrastructureErrorOf<
   Kind extends InfrastructureErrorKind,
   Owner extends string,
   Reason extends string,
-  Details extends InfrastructureErrorCauseDetails =
-    InfrastructureErrorDetailsFor<Kind>,
+  Details extends Record<string, unknown> = InfrastructureErrorDetailsFor<Kind>,
   Source extends InfrastructureErrorSource = InfrastructureErrorSource,
 > = InfrastructureErrorBase<
   Kind,
@@ -60,13 +57,12 @@ export type InfrastructureErrorOf<
   Source
 >;
 
-export type InfrastructureInvalidDataDetails =
-  InfrastructureErrorCauseDetails & {
-    readonly fields: string[];
-  };
+export type InfrastructureInvalidDataDetails = {
+  readonly fields: string[];
+};
 
 export type InfrastructureErrorDetailsFor<
   Kind extends InfrastructureErrorKind,
 > = Kind extends typeof INFRASTRUCTURE_ERROR_KIND.INVALID_DATA
   ? InfrastructureInvalidDataDetails
-  : InfrastructureErrorCauseDetails;
+  : Record<string, unknown>;
