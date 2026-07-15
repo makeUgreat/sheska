@@ -5,7 +5,7 @@ import {
   IngestionCompletedDomainEvent,
   IngestionFailedDomainEvent,
 } from '@contexts/ingestion/domain';
-import { VALID_EMBEDDING } from '../../../../../../test/domains/fixtures/source-vector.fixture';
+import { VALID_EMBEDDING } from '../../../../../../test/support/domains/fixtures/source-vector.fixture';
 import {
   EmbedResultConsumer,
   type EmbedResultPayload,

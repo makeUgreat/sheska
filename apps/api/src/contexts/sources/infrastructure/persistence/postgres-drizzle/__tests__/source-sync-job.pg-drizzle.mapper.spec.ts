@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildSourceSyncJob } from '../../../../../../../test/domains/fixtures/source-sync-job.fixture';
-import { buildSourceSyncJobRow } from '../../../../../../../test/postgres/sources/fixtures/source-sync-job-row.fixture';
+import { buildSourceSyncJob } from '../../../../../../../test/support/domains/fixtures/source-sync-job.fixture';
+import { buildSourceSyncJobRow } from '../../../../../../../test/adapters/postgres/sources/fixtures/source-sync-job-row.fixture';
 import { SourceSyncJobPgDrizzleMapper } from '../source-sync-job.pg-drizzle.mapper';
 
 describe('SourceSyncJobPgDrizzleMapper', () => {

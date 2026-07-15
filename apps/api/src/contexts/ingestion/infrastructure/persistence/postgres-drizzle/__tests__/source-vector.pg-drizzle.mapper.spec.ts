@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   buildSourceVector,
   VALID_EMBEDDING,
-} from '../../../../../../../test/domains/fixtures/source-vector.fixture';
-import { buildSourceVectorRow } from '../../../../../../../test/postgres/ingestion/fixtures/source-vector-row.fixture';
+} from '../../../../../../../test/support/domains/fixtures/source-vector.fixture';
+import { buildSourceVectorRow } from '../../../../../../../test/adapters/postgres/ingestion/fixtures/source-vector-row.fixture';
 import { SourceVectorPgDrizzleMapper } from '../source-vector.pg-drizzle.mapper';
 
 describe('SourceVectorPgDrizzleMapper', () => {

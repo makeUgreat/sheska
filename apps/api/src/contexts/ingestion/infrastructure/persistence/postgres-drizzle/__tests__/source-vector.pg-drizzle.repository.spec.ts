@@ -3,7 +3,7 @@ import {
   InfrastructureException,
   INFRASTRUCTURE_ERROR_KIND,
 } from '@kernels/infrastructure';
-import { buildSourceVector } from '../../../../../../../test/domains/fixtures/source-vector.fixture';
+import { buildSourceVector } from '../../../../../../../test/support/domains/fixtures/source-vector.fixture';
 import { SourceVectorPgDrizzleRepository } from '../source-vector.pg-drizzle.repository';
 
 describe('SourceVectorPgDrizzleRepository', () => {

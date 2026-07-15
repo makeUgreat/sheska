@@ -6,7 +6,7 @@ import { type SourceEmbeddingLookup } from '@contexts/sources/application/ports'
 import { APPLICATION_ERROR_KIND } from '@kernels/application';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { GetSourceUseCase } from '../get-source.use-case';
-import { buildSource } from '../../../../../../test/domains/fixtures/source.fixture';
+import { buildSource } from '../../../../../../test/support/domains/fixtures/source.fixture';
 
 type SourceRepositoryMock = {
   get: MockedFunction<SourceRepository['get']>;

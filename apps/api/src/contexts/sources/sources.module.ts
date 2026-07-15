@@ -62,7 +62,12 @@ export class SourcesModule {
         UploadSourceUseCase,
         HandleIngestionResultHandler,
       ],
-      exports: [ListSourcesUseCase, GetSourceUseCase, UploadSourceUseCase],
+      exports: [
+        SOURCE_REPOSITORY,
+        ListSourcesUseCase,
+        GetSourceUseCase,
+        UploadSourceUseCase,
+      ],
     };
   }
 }
