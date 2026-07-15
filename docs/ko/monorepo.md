@@ -26,6 +26,22 @@ last_synced: 2026-07-07
 - 둘 이상의 앱이 production code로 import해야 하는 공유 코드는 전용 shared workspace로 승격해야 한다.
 - 앱은 다른 앱의 `src` 파일을 직접 import하지 않는 것을 원칙으로 한다. 앱 간 contract는 package dependency, generated client, schema, API, 또는 전용 shared workspace를 통해 이동해야 한다.
 
+## Workspace 간 런타임 테스트 정책
+
+한 workspace의 통합 테스트가 다른 서비스를 실행해야 한다면, 실행되는 서비스가 test runtime command를 소유한다.
+소비하는 workspace는 그 서비스를 black-box runtime dependency로 보고, 검증하려는 public protocol을 통해 통신해야 한다.
+
+- Workspace는 자기 테스트를 위해 다른 앱의 `src` 파일, framework module, test-only internal을 import해서 그 앱을 compose해서는 안 된다.
+- 다른 workspace가 어떤 서비스를 대상으로 테스트해야 한다면, 해당 service workspace는 재사용 가능한 test runtime package script를 제공하는 것이 좋다. 예를 들어 API workspace는 필요한 database, queue, migration, environment, application server, readiness check, shutdown behavior를 시작하는 test runtime command를 제공할 수 있다.
+- 기본 reusable service runtime에는 `test:runtime:start`, `test:runtime:wait`, `test:runtime:url`, `test:runtime:stop`을 사용한다. 한 workspace가 여러 public runtime boundary를 의도적으로 제공할 때만 `test:runtime:http:start` 같은 boundary segment를 추가한다.
+- 소비하는 workspace는 `pnpm --filter <workspace> <script>` 또는 그 filtered package script에 위임하는 local harness를 통해 다른 서비스를 시작하는 것을 원칙으로 한다.
+- Producing workspace는 compose file, test environment variable, migration, seed, port, readiness check, cleanup처럼 service-specific test runtime에 필요한 runtime detail을 소유한다.
+- Consuming workspace는 자신의 contract test와 base URL 같은 필요한 public endpoint configuration만 소유한다.
+- 포트 충돌을 피하기 위해 runtime이 dynamic host port를 사용한다면, producing workspace는 consumer가 compose 내부 구조를 몰라도 되도록 `test:runtime:url`로 endpoint를 제공해야 한다.
+- 동시에 사용될 수 있는 runtime command는 `SHESKA_TEST_RUNTIME_ID` 같은 caller-provided runtime identifier를 지원하고, 이를 Docker Compose project name 같은 runtime-owned resource 격리에 사용하는 것이 좋다.
+- Service-specific runtime harness는 소유 workspace에 두는 것을 선호한다. 여러 workspace가 같은 reusable runtime abstraction을 필요로 하게 된 뒤에만 shared harness package로 승격한다.
+- Workspace가 앱이라는 이유만으로 `test:runtime:*` script를 만들 필요는 없다. 다른 workspace가 해당 앱을 runtime dependency로 필요로 할 때만 추가한다.
+
 ## Ignore 파일 정책
 
 루트 `.gitignore`는 모든 workspace에 공통으로 적용되는 generated file, dependency, test-output pattern을 소유한다.

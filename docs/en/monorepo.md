@@ -25,6 +25,22 @@ Repository-level policy decides how workspaces are discovered, how root commands
 - Shared code should be promoted into a dedicated shared workspace when more than one app needs to import it as production code.
 - Apps SHOULD NOT import another app's `src` files directly. Cross-app contracts should move through package dependencies, generated clients, schemas, APIs, or a dedicated shared workspace.
 
+## Cross-Workspace Runtime Test Policy
+
+When one workspace needs another service running for an integration test, the service being started owns the test runtime command.
+The consuming workspace should treat that service as a black-box runtime dependency and communicate through the public protocol being tested.
+
+- A workspace MUST NOT import another app's `src` files, framework modules, or test-only internals to compose that app for its own tests.
+- A service workspace SHOULD expose package scripts for reusable test runtimes when another workspace needs to test against that service. For example, an API workspace may expose a test runtime command that starts its required database, queue, migrations, environment, application server, readiness check, and shutdown behavior.
+- Use `test:runtime:start`, `test:runtime:wait`, `test:runtime:url`, and `test:runtime:stop` for the default reusable service runtime. Add a boundary segment, such as `test:runtime:http:start`, only when one workspace intentionally exposes multiple public runtime boundaries.
+- Consuming workspaces SHOULD start another service through `pnpm --filter <workspace> <script>` or through a local harness that delegates to that filtered package script.
+- The producing workspace owns runtime details such as compose files, test environment variables, migrations, seeds, ports, readiness checks, and cleanup for its service-specific test runtime.
+- The consuming workspace owns only its contract test and the public endpoint configuration it needs, such as a base URL.
+- When a runtime uses a dynamic host port to avoid collisions, the producing workspace should expose that endpoint through `test:runtime:url` so consumers do not need to know compose internals.
+- Runtime commands that may be used concurrently SHOULD support a caller-provided runtime identifier, such as `SHESKA_TEST_RUNTIME_ID`, and use it to isolate runtime-owned resources like Docker Compose project names.
+- Prefer keeping service-specific runtime harnesses in the owning workspace. Promote a shared harness package only after multiple workspaces need the same reusable runtime abstraction.
+- Workspaces do not need `test:runtime:*` scripts just because they are apps. Add them only when another workspace needs that app as a runtime dependency.
+
 ## Ignore File Policy
 
 The root `.gitignore` owns common generated, dependency, and test-output patterns for all workspaces.
