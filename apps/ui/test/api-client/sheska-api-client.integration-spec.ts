@@ -94,4 +94,53 @@ describe('SheskaApiClient', () => {
       'HTTP error: 404 Not Found',
     );
   });
+
+  it('listPosts 응답 계약이 실제 API와 일치한다', async () => {
+    const baseUrl =
+      process.env.SHESKA_API_CLIENT_INTEGRATION_BASE_URL ??
+      (await readFile(BASE_URL_FILE, 'utf8')).trim();
+    const client = new SheskaApiClient(new HttpClient(baseUrl));
+
+    const uploadResponse = await fetch(`${baseUrl}/sources`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        externalSourceId: `ui-api-client-${randomUUID()}`,
+        content: `API client integration test content ${randomUUID()}`,
+      }),
+    });
+    expect(uploadResponse.status).toBe(201);
+    const uploaded = (await uploadResponse.json()) as { sourceId: string };
+
+    const publishResponse = await fetch(`${baseUrl}/posts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sourceId: uploaded.sourceId,
+        title: `통합 테스트 포스트 ${randomUUID()}`,
+      }),
+    });
+    expect(publishResponse.status).toBe(201);
+    const published = (await publishResponse.json()) as {
+      postId: string;
+      sourceId: string;
+      title: string;
+    };
+
+    const response = await client.listPosts();
+
+    expect(Array.isArray(response.posts)).toBe(true);
+    expect(response.posts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          postId: published.postId,
+          sourceId: published.sourceId,
+          title: published.title,
+          viewCount: expect.any(Number),
+          createdAt: expect.any(String),
+          updatedAt: expect.any(String),
+        }),
+      ]),
+    );
+  });
 });

@@ -69,7 +69,7 @@ export function SourceDetailPage() {
 
   return (
     <main>
-      <Link to="/">← Back to sources</Link>
+      <Link to="/sources">← Back to sources</Link>
       {isLoading ? (
         <p>Loading...</p>
       ) : error ? (

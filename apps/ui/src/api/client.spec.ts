@@ -57,6 +57,53 @@ describe('SheskaApiClient', () => {
     });
   });
 
+  describe('listPosts', () => {
+    it('GET /posts를 호출하고 posts 배열을 반환한다', async () => {
+      const now = '2026-01-01T00:00:00.000Z';
+      const response = {
+        posts: [
+          {
+            postId: 'post-1',
+            sourceId: 'source-1',
+            title: '테스트 포스트',
+            viewCount: 3,
+            createdAt: now,
+            updatedAt: now,
+          },
+        ],
+      };
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(response),
+        }),
+      );
+
+      const result = await client.listPosts();
+
+      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/posts', {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      expect(result).toEqual(response);
+    });
+
+    it('응답이 ok가 아니면 throw한다', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 500,
+          statusText: 'Internal Server Error',
+        }),
+      );
+
+      await expect(client.listPosts()).rejects.toThrow(
+        'HTTP error: 500 Internal Server Error',
+      );
+    });
+  });
+
   describe('getSource', () => {
     it('GET /sources/:id를 호출하고 source detail을 반환한다', async () => {
       const now = '2026-01-01T00:00:00.000Z';
