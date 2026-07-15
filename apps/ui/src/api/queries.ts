@@ -19,6 +19,15 @@ export function useSource(id: string | undefined) {
   });
 }
 
+export function usePost(id: string | undefined) {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: ['posts', id],
+    queryFn: () => client.getPost(id!),
+    enabled: !!id,
+  });
+}
+
 export function useListPosts() {
   const client = useApiClient();
   return useQuery({
