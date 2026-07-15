@@ -7,6 +7,7 @@ applies_to:
 translation: ../ko/index.md
 related:
   - ./test.md
+  - ./deployment.md
 ---
 
 # UI Convention Index
@@ -24,3 +25,4 @@ When changing public project Markdown documents, also read the repository docume
 ## Routing
 
 - `apps/ui` test files, test structure, or test command selection: read [UI Test Convention](./test.md).
+- Dockerfile, Cloudflare Pages config, or vite build settings: read [UI Deployment](./deployment.md).

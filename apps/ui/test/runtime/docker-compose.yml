@@ -1,0 +1,22 @@
+services:
+  ui:
+    build:
+      context: ../../../..
+      dockerfile: apps/ui/Dockerfile
+    environment:
+      API_BASE_URL: ${API_BASE_URL}
+    ports:
+      - '127.0.0.1::4173'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(''http://127.0.0.1:4173'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+        ]
+      start_period: 10s
+      start_interval: 1s
+      interval: 2s
+      timeout: 5s
+      retries: 10
