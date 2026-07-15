@@ -7,6 +7,7 @@ applies_to:
 source: ../en/index.md
 related:
   - ./test.md
+  - ./deployment.md
 ---
 
 # UI 컨벤션 인덱스
@@ -24,3 +25,4 @@ related:
 ## 라우팅
 
 - `apps/ui` test file, test structure, test command를 선택하거나 변경할 때: [UI 테스트 컨벤션](./test.md)을 읽는다.
+- Dockerfile, Cloudflare Pages 설정, vite 빌드 설정을 변경하거나 검토할 때: [UI 배포](./deployment.md)를 읽는다.
