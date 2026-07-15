@@ -1,0 +1,26 @@
+---
+title: UI 컨벤션 인덱스
+lang: ko
+audience: both
+applies_to:
+  - apps/ui
+source: ../en/index.md
+related:
+  - ./test.md
+---
+
+# UI 컨벤션 인덱스
+
+## 동기화 정책
+
+영어와 한국어 `apps/ui` 컨벤션 문서는 같은 정책을 설명하는 쌍 문서다.
+두 문서가 충돌하면 어느 한 언어를 자동으로 우선하지 말고 의도한 정책을 선택해 같은 변경 단위에서 두 문서를 함께 갱신한다.
+
+## 읽기 규칙
+
+현재 작업과 관련 있는 `apps/ui` 컨벤션 문서만 읽는다.
+공개 프로젝트 Markdown 문서를 변경할 때는 repository documentation convention index도 함께 읽는다.
+
+## 라우팅
+
+- `apps/ui` test file, test structure, test command를 선택하거나 변경할 때: [UI 테스트 컨벤션](./test.md)을 읽는다.

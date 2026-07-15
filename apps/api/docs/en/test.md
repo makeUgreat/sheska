@@ -157,10 +157,17 @@ pnpm --filter @sheska/api test:integration:redis # Redis-backed integration test
 pnpm --filter @sheska/api test:integration:ollama # Ollama-backed integration tests
 pnpm --filter @sheska/api test:integration   # All integration tests
 pnpm --filter @sheska/api test:integration:all # All integration tests
+pnpm --filter @sheska/api test:runtime:start # Start the reusable test runtime for consumer workspaces
+pnpm --filter @sheska/api test:runtime:wait  # Wait until the test runtime is ready
+pnpm --filter @sheska/api test:runtime:url   # Print the test runtime base URL
+pnpm --filter @sheska/api test:runtime:stop  # Stop the test runtime and owned dependencies
 pnpm --filter @sheska/api test               # Unit tests, then all integration tests
 pnpm --filter @sheska/api test:watch         # Vitest watch mode from the API package
 pnpm --filter @sheska/api test:cov           # Unit test coverage from the API package
 ```
+
+Set `SHESKA_TEST_RUNTIME_ID` when running more than one API test runtime concurrently.
+Use the same runtime id for `test:runtime:start`, `test:runtime:wait`, `test:runtime:url`, and `test:runtime:stop`.
 
 Before opening a PR, run the checks that match the scope of the change.
 If only isolated services or functions changed, run `pnpm --filter @sheska/api lint:check`, `pnpm --filter @sheska/api typecheck`, and `pnpm --filter @sheska/api test:unit`.

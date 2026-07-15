@@ -3,8 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiClientProvider } from '@/api/client-context';
-import { type SheskaApiClient } from '@/api/client';
-import { SourceListPage } from './SourceListPage';
+import { type SheskaApiClient, type SourceSummary } from '@/api/client';
+import { SourceListPage } from '@/pages/SourceListPage';
 
 function createTestQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -41,6 +41,7 @@ describe('SourceListPage', () => {
 
     renderPage(client);
 
+    expect(screen.getByRole('heading', { name: 'Sources' })).toBeDefined();
     expect(screen.getByText('Loading...')).toBeDefined();
   });
 
@@ -56,27 +57,35 @@ describe('SourceListPage', () => {
     });
   });
 
-  it('source 목록을 렌더링한다', async () => {
+  it('source 목록과 상세 링크를 렌더링한다', async () => {
     const now = '2026-01-01T00:00:00.000Z';
+    const source: SourceSummary = {
+      sourceId: 'source-1',
+      externalSourceId: 'Notes/source.md',
+      fingerprint: 'fingerprint-1',
+      sizeBytes: 14,
+      createdAt: now,
+      updatedAt: now,
+      latestSyncJob: {
+        syncJobId: 'sync-job-1',
+        status: 'completed',
+        createdAt: now,
+      },
+    };
     const client = buildMockClient({
       listSources: vi.fn().mockResolvedValue({
-        sources: [
-          {
-            sourceId: 'source-1',
-            externalSourceId: 'Notes/source.md',
-            fingerprint: 'fingerprint-1',
-            sizeBytes: 14,
-            createdAt: now,
-            updatedAt: now,
-          },
-        ],
+        sources: [source],
       }),
     });
 
     renderPage(client);
 
     await waitFor(() => {
-      expect(screen.getByText('Notes/source.md')).toBeDefined();
+      const link = screen.getByRole('link', { name: 'Notes/source.md' });
+      expect(link).toBeDefined();
+      expect(link.getAttribute('href')).toBe('/sources/source-1');
+      expect(screen.getByText('completed')).toBeDefined();
+      expect(screen.getByText(/14 bytes/)).toBeDefined();
     });
   });
 

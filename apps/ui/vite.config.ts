@@ -19,8 +19,43 @@ export default defineConfig({
     },
   },
   test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: ['src/test/setup.ts'],
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          environment: 'jsdom',
+          globals: true,
+          setupFiles: ['test/support/setup.ts'],
+          include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx'],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'integration',
+          environment: 'jsdom',
+          globals: true,
+          setupFiles: ['test/support/setup.ts'],
+          include: [
+            'test/**/*.integration-spec.ts',
+            'test/**/*.integration-spec.tsx',
+          ],
+          exclude: ['test/api-client/**/*.integration-spec.ts'],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'api-client',
+          environment: 'node',
+          globals: true,
+          globalSetup: ['test/api-client/support/global-setup.ts'],
+          include: ['test/api-client/**/*.integration-spec.ts'],
+          hookTimeout: 120_000,
+          testTimeout: 30_000,
+        },
+      },
+    ],
   },
 });

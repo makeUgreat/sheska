@@ -158,10 +158,17 @@ pnpm --filter @sheska/api test:integration:redis # Redis 기반 통합 테스트
 pnpm --filter @sheska/api test:integration:ollama # Ollama 기반 통합 테스트
 pnpm --filter @sheska/api test:integration   # 모든 통합 테스트
 pnpm --filter @sheska/api test:integration:all # 모든 통합 테스트
+pnpm --filter @sheska/api test:runtime:start # Consumer workspace용 재사용 test runtime 시작
+pnpm --filter @sheska/api test:runtime:wait  # test runtime이 준비될 때까지 대기
+pnpm --filter @sheska/api test:runtime:url   # test runtime base URL 출력
+pnpm --filter @sheska/api test:runtime:stop  # test runtime과 소유 dependency 정리
 pnpm --filter @sheska/api test               # 단위 테스트, 그 다음 모든 통합 테스트
 pnpm --filter @sheska/api test:watch         # API package에서 Vitest watch 모드
 pnpm --filter @sheska/api test:cov           # API package에서 단위 테스트 커버리지
 ```
+
+API test runtime을 동시에 둘 이상 실행할 때는 `SHESKA_TEST_RUNTIME_ID`를 설정한다.
+`test:runtime:start`, `test:runtime:wait`, `test:runtime:url`, `test:runtime:stop`에는 같은 runtime id를 사용해야 한다.
 
 PR을 열기 전에 변경 범위에 맞는 검사를 실행한다.
 고립된 서비스나 함수만 변경했다면 `pnpm --filter @sheska/api lint:check`, `pnpm --filter @sheska/api typecheck`, `pnpm --filter @sheska/api test:unit`을 실행한다.
