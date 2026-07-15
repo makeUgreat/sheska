@@ -112,17 +112,15 @@ describe('SheskaApiClient', () => {
     expect(uploadResponse.status).toBe(201);
     const uploaded = (await uploadResponse.json()) as { sourceId: string };
 
-    const title = `통합 테스트 포스트 ${randomUUID()}`;
     const result = await client.publishPost({
       sourceId: uploaded.sourceId,
-      title,
     });
 
     expect(result).toEqual(
       expect.objectContaining({
         postId: expect.any(String),
         sourceId: uploaded.sourceId,
-        title,
+        title: expect.any(String),
         viewCount: 0,
         createdAt: expect.any(String),
         updatedAt: expect.any(String),

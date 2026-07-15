@@ -125,13 +125,12 @@ describe('SheskaApiClient', () => {
 
       const result = await client.publishPost({
         sourceId: 'source-1',
-        title: '테스트 포스트',
       });
 
       expect(fetch).toHaveBeenCalledWith('http://localhost:3000/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sourceId: 'source-1', title: '테스트 포스트' }),
+        body: JSON.stringify({ sourceId: 'source-1' }),
       });
       expect(result).toEqual(response);
     });
@@ -147,7 +146,7 @@ describe('SheskaApiClient', () => {
       );
 
       await expect(
-        client.publishPost({ sourceId: 'source-1', title: '테스트 포스트' }),
+        client.publishPost({ sourceId: 'source-1' }),
       ).rejects.toThrow('HTTP error: 409 Conflict');
     });
   });

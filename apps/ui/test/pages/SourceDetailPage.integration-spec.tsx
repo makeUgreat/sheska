@@ -144,30 +144,35 @@ describe('SourceDetailPage', () => {
   });
 
   describe('게시하기', () => {
-    it('제목 입력 필드와 게시하기 버튼이 렌더링된다', async () => {
+    it('게시하기 버튼이 렌더링된다', async () => {
       const client = buildMockClient();
 
       renderPage(client);
 
       await waitFor(() => {
         expect(screen.getByRole('heading', { name: '게시하기' })).toBeDefined();
-        expect(screen.getByPlaceholderText('포스트 제목')).toBeDefined();
         expect(screen.getByRole('button', { name: '게시하기' })).toBeDefined();
       });
     });
 
-    it('제목이 비어있으면 게시하기 버튼이 비활성화된다', async () => {
-      const client = buildMockClient();
+    it('게시 중이면 게시하기 버튼이 비활성화된다', async () => {
+      const user = userEvent.setup();
+      const client = buildMockClient({
+        publishPost: vi.fn().mockReturnValue(new Promise(() => {})),
+      });
 
       renderPage(client);
 
+      await waitFor(() => screen.getByRole('heading', { name: '게시하기' }));
+      await user.click(screen.getByRole('button', { name: '게시하기' }));
+
       await waitFor(() => {
-        const button = screen.getByRole('button', { name: '게시하기' });
+        const button = screen.getByRole('button', { name: '게시 중...' });
         expect((button as HTMLButtonElement).disabled).toBe(true);
       });
     });
 
-    it('제목 입력 후 게시하기 클릭 시 publishPost가 올바른 인수로 호출된다', async () => {
+    it('게시하기 클릭 시 publishPost가 sourceId로 호출된다', async () => {
       const user = userEvent.setup();
       const publishPost = vi.fn().mockResolvedValue(MOCK_POST);
       const client = buildMockClient({ publishPost });
@@ -176,16 +181,11 @@ describe('SourceDetailPage', () => {
 
       await waitFor(() => screen.getByRole('heading', { name: '게시하기' }));
 
-      await user.type(
-        screen.getByPlaceholderText('포스트 제목'),
-        '테스트 포스트',
-      );
       await user.click(screen.getByRole('button', { name: '게시하기' }));
 
       await waitFor(() => {
         expect(publishPost).toHaveBeenCalledWith({
           sourceId: 'source-1',
-          title: '테스트 포스트',
         });
       });
     });
@@ -198,10 +198,6 @@ describe('SourceDetailPage', () => {
 
       await waitFor(() => screen.getByRole('heading', { name: '게시하기' }));
 
-      await user.type(
-        screen.getByPlaceholderText('포스트 제목'),
-        '테스트 포스트',
-      );
       await user.click(screen.getByRole('button', { name: '게시하기' }));
 
       await waitFor(() => {
@@ -224,10 +220,6 @@ describe('SourceDetailPage', () => {
 
       await waitFor(() => screen.getByRole('heading', { name: '게시하기' }));
 
-      await user.type(
-        screen.getByPlaceholderText('포스트 제목'),
-        '테스트 포스트',
-      );
       await user.click(screen.getByRole('button', { name: '게시하기' }));
 
       await waitFor(() => {
