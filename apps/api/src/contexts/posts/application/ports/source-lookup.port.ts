@@ -1,3 +1,8 @@
+export interface SourceInfo {
+  readonly content: string;
+  readonly externalSourceId: string;
+}
+
 export interface SourceLookup {
-  exists(sourceId: string): Promise<boolean>;
+  find(sourceId: string): Promise<SourceInfo | null>;
 }

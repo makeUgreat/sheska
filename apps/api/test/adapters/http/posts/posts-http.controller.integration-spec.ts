@@ -4,6 +4,7 @@ import { Test } from '@nestjs/testing';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { PublishPostUseCase } from '@contexts/posts/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/posts/application/use-cases/get-post.use-case';
+import { ListPostsUseCase } from '@contexts/posts/application/use-cases/list-posts.use-case';
 import {
   ApplicationException,
   APPLICATION_ERROR_KIND,
@@ -31,21 +32,28 @@ type GetPostUseCaseMock = {
   execute: MockedFunction<GetPostUseCase['execute']>;
 };
 
+type ListPostsUseCaseMock = {
+  execute: MockedFunction<ListPostsUseCase['execute']>;
+};
+
 describe('PostsHttpController', () => {
   let app: INestApplication;
   let httpServer: Server;
   let publishPostUseCase: PublishPostUseCaseMock;
   let getPostUseCase: GetPostUseCaseMock;
+  let listPostsUseCase: ListPostsUseCaseMock;
 
   beforeEach(async () => {
     publishPostUseCase = { execute: vi.fn<PublishPostUseCase['execute']>() };
     getPostUseCase = { execute: vi.fn<GetPostUseCase['execute']>() };
+    listPostsUseCase = { execute: vi.fn<ListPostsUseCase['execute']>() };
 
     const testingModule = await Test.createTestingModule({
       controllers: [PostsHttpController],
       providers: [
         { provide: PublishPostUseCase, useValue: publishPostUseCase },
         { provide: GetPostUseCase, useValue: getPostUseCase },
+        { provide: ListPostsUseCase, useValue: listPostsUseCase },
         { provide: APP_PIPE, useClass: ZodValidationPipe },
         {
           provide: LOGGER,
@@ -83,7 +91,7 @@ describe('PostsHttpController', () => {
 
       const response = await request(httpServer)
         .post('/posts')
-        .send({ sourceId: 'source-1', title: '  테스트 포스트  ' })
+        .send({ sourceId: 'source-1' })
         .expect(201);
 
       expect(response.body).toEqual({
@@ -96,14 +104,13 @@ describe('PostsHttpController', () => {
       });
       expect(publishPostUseCase.execute).toHaveBeenCalledWith({
         sourceId: 'source-1',
-        title: '테스트 포스트',
       });
     });
 
     it('요청 body가 유효하지 않으면 400 응답을 반환하고 use case를 호출하지 않는다', async () => {
       const response = await request(httpServer)
         .post('/posts')
-        .send({ sourceId: 'source-1', title: '   ' })
+        .send({})
         .expect(400);
 
       expect(response.body).toMatchObject({
@@ -125,7 +132,7 @@ describe('PostsHttpController', () => {
 
       const response = await request(httpServer)
         .post('/posts')
-        .send({ sourceId: 'non-existent', title: '포스트' })
+        .send({ sourceId: 'non-existent' })
         .expect(404);
 
       expect(response.body).toEqual({
@@ -148,7 +155,7 @@ describe('PostsHttpController', () => {
 
       const response = await request(httpServer)
         .post('/posts')
-        .send({ sourceId: 'source-1', title: '포스트' })
+        .send({ sourceId: 'source-1' })
         .expect(409);
 
       expect(response.body).toEqual({
@@ -166,7 +173,7 @@ describe('PostsHttpController', () => {
 
       const response = await request(httpServer)
         .post('/posts')
-        .send({ sourceId: 'source-1', title: '포스트' })
+        .send({ sourceId: 'source-1' })
         .expect(500);
 
       expect(response.body).toEqual({

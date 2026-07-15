@@ -9,7 +9,7 @@ export function PostDetailPage() {
     <main className="mx-auto max-w-3xl px-4 py-10">
       <Link
         to="/posts"
-        className="mb-6 inline-block text-sm text-gray-500 hover:text-gray-900"
+        className="mb-6 inline-block text-sm font-medium text-gray-500 hover:text-gray-900"
       >
         ← Back to posts
       </Link>
@@ -23,27 +23,72 @@ export function PostDetailPage() {
           Error: {error.message}
         </p>
       ) : post ? (
-        <>
-          <h1 className="mb-6 text-2xl font-bold text-gray-900">
-            {post.title}
-          </h1>
-          <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
-            <dt className="font-medium text-gray-500">ID</dt>
-            <dd className="font-mono text-gray-900">{post.postId}</dd>
-            <dt className="font-medium text-gray-500">Source ID</dt>
-            <dd className="font-mono text-gray-900">{post.sourceId}</dd>
-            <dt className="font-medium text-gray-500">View Count</dt>
-            <dd className="text-gray-900">{post.viewCount}</dd>
-            <dt className="font-medium text-gray-500">Created</dt>
-            <dd className="text-gray-900">
-              {new Date(post.createdAt).toLocaleString()}
-            </dd>
-            <dt className="font-medium text-gray-500">Updated</dt>
-            <dd className="text-gray-900">
-              {new Date(post.updatedAt).toLocaleString()}
-            </dd>
+        <article>
+          <header className="mb-8 border-b border-gray-200 pb-6">
+            <p className="mb-2 text-xs font-semibold uppercase text-blue-600">
+              Post
+            </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <h1 className="break-words text-3xl font-bold text-gray-950">
+                {post.title}
+              </h1>
+              <div className="shrink-0 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-center">
+                <div className="text-2xl font-semibold text-gray-950">
+                  {post.viewCount}
+                </div>
+                <div className="text-xs font-medium uppercase text-gray-500">
+                  views
+                </div>
+              </div>
+            </div>
+            <p className="mt-3 text-sm text-gray-500">
+              Updated {new Date(post.updatedAt).toLocaleString()}
+            </p>
+          </header>
+
+          <dl className="grid gap-4 rounded-lg border border-gray-200 bg-white p-5 sm:grid-cols-2">
+            <div>
+              <dt className="text-xs font-medium uppercase text-gray-500">
+                Post ID
+              </dt>
+              <dd className="mt-1 break-all font-mono text-sm text-gray-900">
+                {post.postId}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium uppercase text-gray-500">
+                Source ID
+              </dt>
+              <dd className="mt-1 break-all font-mono text-sm text-gray-900">
+                {post.sourceId}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium uppercase text-gray-500">
+                View Count
+              </dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                {post.viewCount} views
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium uppercase text-gray-500">
+                Created
+              </dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                {new Date(post.createdAt).toLocaleString()}
+              </dd>
+            </div>
+            <div className="sm:col-span-2">
+              <dt className="text-xs font-medium uppercase text-gray-500">
+                Updated
+              </dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                {new Date(post.updatedAt).toLocaleString()}
+              </dd>
+            </div>
           </dl>
-        </>
+        </article>
       ) : null}
     </main>
   );

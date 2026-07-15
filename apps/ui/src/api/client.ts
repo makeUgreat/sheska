@@ -42,7 +42,6 @@ export interface ListPostsResponse {
 
 export interface PublishPostRequest {
   sourceId: string;
-  title: string;
 }
 
 export interface PublishPostResponse {
