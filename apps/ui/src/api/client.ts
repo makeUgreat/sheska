@@ -62,6 +62,19 @@ export interface GetPostResponse {
   updatedAt: string;
 }
 
+export interface UpdatePostRequest {
+  title: string;
+}
+
+export interface UpdatePostResponse {
+  postId: string;
+  sourceId: string;
+  title: string;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface GetSourceResponse {
   sourceId: string;
   externalSourceId: string;
@@ -97,5 +110,9 @@ export class SheskaApiClient {
 
   publishPost(req: PublishPostRequest): Promise<PublishPostResponse> {
     return this.http.post<PublishPostResponse>('/posts', req);
+  }
+
+  updatePost(id: string, req: UpdatePostRequest): Promise<UpdatePostResponse> {
+    return this.http.patch<UpdatePostResponse>(`/posts/${id}`, req);
   }
 }

@@ -64,4 +64,58 @@ describe('Post', () => {
       expect(post.getProps().viewCount.unpack()).toBe(6);
     });
   });
+
+  describe('updateTitle', () => {
+    it('title을 새 값으로 변경한다', () => {
+      const post = Post.restore({
+        id: 'post-1',
+        sourceId: 'source-1',
+        title: '기존 제목',
+        viewCount: 0,
+      });
+
+      post.updateTitle('새 제목');
+
+      expect(post.getProps().title.unpack()).toBe('새 제목');
+    });
+
+    it('앞뒤 공백을 제거한 값으로 변경한다', () => {
+      const post = Post.restore({
+        id: 'post-1',
+        sourceId: 'source-1',
+        title: '기존 제목',
+        viewCount: 0,
+      });
+
+      post.updateTitle('  새 제목  ');
+
+      expect(post.getProps().title.unpack()).toBe('새 제목');
+    });
+
+    it('빈 문자열이면 throw한다', () => {
+      const post = Post.restore({
+        id: 'post-1',
+        sourceId: 'source-1',
+        title: '기존 제목',
+        viewCount: 0,
+      });
+
+      expect(() => post.updateTitle('   ')).toThrow(
+        'Post title must be between 1 and 200 characters',
+      );
+    });
+
+    it('200자를 초과하면 throw한다', () => {
+      const post = Post.restore({
+        id: 'post-1',
+        sourceId: 'source-1',
+        title: '기존 제목',
+        viewCount: 0,
+      });
+
+      expect(() => post.updateTitle('a'.repeat(201))).toThrow(
+        'Post title must be between 1 and 200 characters',
+      );
+    });
+  });
 });

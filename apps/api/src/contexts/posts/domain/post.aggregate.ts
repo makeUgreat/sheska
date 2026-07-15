@@ -51,5 +51,9 @@ export class Post extends AggregateRoot<PostProps> {
     this.props.viewCount = this.props.viewCount.increment();
   }
 
+  updateTitle(title: string): void {
+    this.props.title = PostTitle.of(title);
+  }
+
   public validate(): void {}
 }
