@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   buildSource,
   sourceContentByteSize,
-} from '../../../../../../../test/domains/fixtures/source.fixture';
-import { buildSourceRow } from '../../../../../../../test/postgres/sources/fixtures/source-row.fixture';
+} from '../../../../../../../test/support/domains/fixtures/source.fixture';
+import { buildSourceRow } from '../../../../../../../test/adapters/postgres/sources/fixtures/source-row.fixture';
 import { SourcePgDrizzleMapper } from '../source.pg-drizzle.mapper';
 
 describe('SourcePgDrizzleMapper', () => {
