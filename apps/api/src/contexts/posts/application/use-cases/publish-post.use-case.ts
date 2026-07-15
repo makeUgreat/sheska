@@ -9,10 +9,10 @@ import {
   SOURCE_LOOKUP,
 } from '@contexts/posts/posts.di-tokens';
 import { type SourceLookup } from '@contexts/posts/application/ports';
+import { extractFrontmatterTitle } from '../extract-frontmatter-title';
 
 export interface PublishPostCommand {
   readonly sourceId: string;
-  readonly title: string;
 }
 
 export interface PublishPostResult {
@@ -34,9 +34,9 @@ export class PublishPostUseCase {
   ) {}
 
   async execute(command: PublishPostCommand): Promise<PublishPostResult> {
-    const sourceExists = await this.sourceLookup.exists(command.sourceId);
+    const sourceInfo = await this.sourceLookup.find(command.sourceId);
 
-    if (!sourceExists) {
+    if (!sourceInfo) {
       throw new ApplicationException({
         kind: APPLICATION_ERROR_KIND.NOT_FOUND,
         code: 'posts.source_not_found',
@@ -56,9 +56,13 @@ export class PublishPostUseCase {
       });
     }
 
+    const derivedTitle =
+      extractFrontmatterTitle(sourceInfo.content) ??
+      sourceInfo.externalSourceId;
+
     const post = Post.create({
       sourceId: command.sourceId,
-      title: command.title,
+      title: derivedTitle,
     });
 
     const saved = await this.posts.save(post);

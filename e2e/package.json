@@ -1,0 +1,25 @@
+{
+  "name": "@sheska/e2e",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "typecheck": "tsc --noEmit",
+    "lint:check": "eslint --config eslint/config.mjs \"{support,tests}/**/*.ts\" \"*.ts\"",
+    "lint": "eslint --config eslint/config.mjs \"{support,tests}/**/*.ts\" \"*.ts\" --fix",
+    "harness:static": "pnpm typecheck && pnpm lint:check"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^22.0.0",
+    "eslint": "^9.18.0",
+    "eslint-plugin-prettier": "^5.2.2",
+    "eslint-plugin-unused-imports": "^4.4.1",
+    "globals": "^16.0.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
+  }
+}

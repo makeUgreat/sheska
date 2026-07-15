@@ -48,7 +48,6 @@ export class PostsHttpController {
   ): Promise<PublishPostHttpResponse> {
     const result = await this.publishPostUseCase.execute({
       sourceId: request.sourceId,
-      title: request.title,
     });
 
     return {

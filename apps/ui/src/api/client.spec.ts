@@ -104,6 +104,96 @@ describe('SheskaApiClient', () => {
     });
   });
 
+  describe('publishPost', () => {
+    it('POST /posts를 호출하고 post를 반환한다', async () => {
+      const now = '2026-01-01T00:00:00.000Z';
+      const response = {
+        postId: 'post-1',
+        sourceId: 'source-1',
+        title: '테스트 포스트',
+        viewCount: 0,
+        createdAt: now,
+        updatedAt: now,
+      };
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(response),
+        }),
+      );
+
+      const result = await client.publishPost({
+        sourceId: 'source-1',
+      });
+
+      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceId: 'source-1' }),
+      });
+      expect(result).toEqual(response);
+    });
+
+    it('응답이 ok가 아니면 throw한다', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 409,
+          statusText: 'Conflict',
+        }),
+      );
+
+      await expect(
+        client.publishPost({ sourceId: 'source-1' }),
+      ).rejects.toThrow('HTTP error: 409 Conflict');
+    });
+  });
+
+  describe('getPost', () => {
+    it('GET /posts/:id를 호출하고 post detail을 반환한다', async () => {
+      const now = '2026-01-01T00:00:00.000Z';
+      const response = {
+        postId: 'post-1',
+        sourceId: 'source-1',
+        title: '테스트 포스트',
+        viewCount: 5,
+        createdAt: now,
+        updatedAt: now,
+      };
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(response),
+        }),
+      );
+
+      const result = await client.getPost('post-1');
+
+      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/posts/post-1', {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      expect(result).toEqual(response);
+    });
+
+    it('post가 없으면 throw한다', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 404,
+          statusText: 'Not Found',
+        }),
+      );
+
+      await expect(client.getPost('non-existent')).rejects.toThrow(
+        'HTTP error: 404 Not Found',
+      );
+    });
+  });
+
   describe('getSource', () => {
     it('GET /sources/:id를 호출하고 source detail을 반환한다', async () => {
       const now = '2026-01-01T00:00:00.000Z';

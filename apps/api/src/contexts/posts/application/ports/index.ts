@@ -1,1 +1,1 @@
-export { type SourceLookup } from './source-lookup.port';
+export { type SourceInfo, type SourceLookup } from './source-lookup.port';

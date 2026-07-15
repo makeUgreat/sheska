@@ -16,7 +16,11 @@
     "test:integration:api-client": "vitest run --project api-client",
     "test:watch": "vitest --project unit",
     "harness:static": "pnpm typecheck && pnpm lint:check",
-    "harness:build": "pnpm build"
+    "harness:build": "pnpm build",
+    "test:runtime:start": "tsx test/runtime/start.ts",
+    "test:runtime:wait": "tsx test/runtime/wait.ts",
+    "test:runtime:url": "tsx test/runtime/url.ts",
+    "test:runtime:stop": "tsx test/runtime/stop.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.2",

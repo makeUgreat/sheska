@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useListPosts } from '@/api/queries';
 
 export function PostListPage() {
@@ -24,7 +25,12 @@ export function PostListPage() {
               key={p.postId}
               className="flex items-center justify-between px-4 py-3"
             >
-              <span className="font-medium text-gray-900">{p.title}</span>
+              <Link
+                to={`/posts/${p.postId}`}
+                className="font-medium text-gray-900 hover:text-blue-600"
+              >
+                {p.title}
+              </Link>
               <div className="flex items-center gap-3">
                 <span className="text-sm text-gray-500">
                   {p.viewCount} views

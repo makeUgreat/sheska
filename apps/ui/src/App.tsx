@@ -2,6 +2,7 @@ import { Link, Route, Routes, useLocation } from 'react-router-dom';
 import { SourceListPage } from '@/pages/SourceListPage';
 import { SourceDetailPage } from '@/pages/SourceDetailPage';
 import { PostListPage } from '@/pages/PostListPage';
+import { PostDetailPage } from '@/pages/PostDetailPage';
 
 function Nav() {
   const { pathname } = useLocation();
@@ -37,6 +38,7 @@ export function App() {
         <Route path="/sources" element={<SourceListPage />} />
         <Route path="/sources/:id" element={<SourceDetailPage />} />
         <Route path="/posts" element={<PostListPage />} />
+        <Route path="/posts/:id" element={<PostDetailPage />} />
       </Routes>
     </>
   );

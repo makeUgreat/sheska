@@ -1,5 +1,8 @@
 import { type PostRepository } from '@contexts/posts/domain';
-import { type SourceLookup } from '@contexts/posts/application/ports';
+import {
+  type SourceInfo,
+  type SourceLookup,
+} from '@contexts/posts/application/ports';
 import { APPLICATION_ERROR_KIND } from '@kernels/application';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { PublishPostUseCase } from '../publish-post.use-case';
@@ -13,19 +16,28 @@ type PostRepositoryMock = {
 };
 
 type SourceLookupMock = {
-  exists: MockedFunction<SourceLookup['exists']>;
+  find: MockedFunction<SourceLookup['find']>;
+};
+
+const sourceInfoWithFrontmatter: SourceInfo = {
+  content: '---\ntitle: 테스트 포스트\n---\n본문',
+  externalSourceId: 'Notes/test.md',
+};
+
+const sourceInfoWithoutFrontmatter: SourceInfo = {
+  content: '# 프론트매터 없는 마크다운',
+  externalSourceId: 'Notes/test.md',
 };
 
 describe('PublishPostUseCase', () => {
-  it('source가 존재하고 post가 없으면 post를 생성하고 저장한다', async () => {
+  it('source가 존재하고 post가 없으면 프론트매터 title로 post를 생성하고 저장한다', async () => {
     const posts = createPostRepositoryMock();
-    const sourceLookup = createSourceLookupMock({ exists: true });
+    const sourceLookup = createSourceLookupMock({
+      sourceInfo: sourceInfoWithFrontmatter,
+    });
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
-    const result = await useCase.execute({
-      sourceId: 'source-1',
-      title: '테스트 포스트',
-    });
+    const result = await useCase.execute({ sourceId: 'source-1' });
 
     expect(result).toMatchObject({
       sourceId: 'source-1',
@@ -33,18 +45,30 @@ describe('PublishPostUseCase', () => {
       viewCount: 0,
     });
     expect(result.postId.length).toBeGreaterThan(0);
-    expect(sourceLookup.exists).toHaveBeenCalledWith('source-1');
+    expect(sourceLookup.find).toHaveBeenCalledWith('source-1');
     expect(posts.findBySourceId).toHaveBeenCalledWith('source-1');
     expect(posts.save).toHaveBeenCalledOnce();
   });
 
+  it('프론트매터 title이 없으면 externalSourceId를 title로 사용한다', async () => {
+    const posts = createPostRepositoryMock();
+    const sourceLookup = createSourceLookupMock({
+      sourceInfo: sourceInfoWithoutFrontmatter,
+    });
+    const useCase = new PublishPostUseCase(posts, sourceLookup);
+
+    const result = await useCase.execute({ sourceId: 'source-1' });
+
+    expect(result.title).toBe('Notes/test.md');
+  });
+
   it('source가 없으면 NOT_FOUND exception을 throw한다', async () => {
     const posts = createPostRepositoryMock();
-    const sourceLookup = createSourceLookupMock({ exists: false });
+    const sourceLookup = createSourceLookupMock({ sourceInfo: null });
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
     await expect(
-      useCase.execute({ sourceId: 'non-existent', title: '테스트 포스트' }),
+      useCase.execute({ sourceId: 'non-existent' }),
     ).rejects.toMatchObject({
       kind: APPLICATION_ERROR_KIND.NOT_FOUND,
       code: 'posts.source_not_found',
@@ -57,11 +81,13 @@ describe('PublishPostUseCase', () => {
     const existingPost = buildPost({ sourceId: 'source-1' });
     const posts = createPostRepositoryMock();
     posts.findBySourceId.mockResolvedValue(existingPost);
-    const sourceLookup = createSourceLookupMock({ exists: true });
+    const sourceLookup = createSourceLookupMock({
+      sourceInfo: sourceInfoWithFrontmatter,
+    });
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
     await expect(
-      useCase.execute({ sourceId: 'source-1', title: '테스트 포스트' }),
+      useCase.execute({ sourceId: 'source-1' }),
     ).rejects.toMatchObject({
       kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
       code: 'posts.source_already_published',
@@ -72,13 +98,15 @@ describe('PublishPostUseCase', () => {
   it('sourceLookup exception을 전파한다', async () => {
     const lookupFailure = new Error('Source lookup failed');
     const posts = createPostRepositoryMock();
-    const sourceLookup = createSourceLookupMock({ exists: true });
-    sourceLookup.exists.mockRejectedValue(lookupFailure);
+    const sourceLookup = createSourceLookupMock({
+      sourceInfo: sourceInfoWithFrontmatter,
+    });
+    sourceLookup.find.mockRejectedValue(lookupFailure);
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
-    await expect(
-      useCase.execute({ sourceId: 'source-1', title: '테스트 포스트' }),
-    ).rejects.toBe(lookupFailure);
+    await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(
+      lookupFailure,
+    );
     expect(posts.save).not.toHaveBeenCalled();
   });
 
@@ -86,12 +114,14 @@ describe('PublishPostUseCase', () => {
     const findFailure = new Error('Post Repository operation failed');
     const posts = createPostRepositoryMock();
     posts.findBySourceId.mockRejectedValue(findFailure);
-    const sourceLookup = createSourceLookupMock({ exists: true });
+    const sourceLookup = createSourceLookupMock({
+      sourceInfo: sourceInfoWithFrontmatter,
+    });
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
-    await expect(
-      useCase.execute({ sourceId: 'source-1', title: '테스트 포스트' }),
-    ).rejects.toBe(findFailure);
+    await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(
+      findFailure,
+    );
     expect(posts.save).not.toHaveBeenCalled();
   });
 
@@ -99,12 +129,14 @@ describe('PublishPostUseCase', () => {
     const saveFailure = new Error('Post Repository operation failed');
     const posts = createPostRepositoryMock();
     posts.save.mockRejectedValue(saveFailure);
-    const sourceLookup = createSourceLookupMock({ exists: true });
+    const sourceLookup = createSourceLookupMock({
+      sourceInfo: sourceInfoWithFrontmatter,
+    });
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
-    await expect(
-      useCase.execute({ sourceId: 'source-1', title: '테스트 포스트' }),
-    ).rejects.toBe(saveFailure);
+    await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(
+      saveFailure,
+    );
   });
 });
 
@@ -122,11 +154,11 @@ function createPostRepositoryMock(): PostRepositoryMock {
 }
 
 function createSourceLookupMock({
-  exists,
+  sourceInfo,
 }: {
-  exists: boolean;
+  sourceInfo: SourceInfo | null;
 }): SourceLookupMock {
   return {
-    exists: vi.fn<SourceLookup['exists']>().mockResolvedValue(exists),
+    find: vi.fn<SourceLookup['find']>().mockResolvedValue(sourceInfo),
   };
 }
