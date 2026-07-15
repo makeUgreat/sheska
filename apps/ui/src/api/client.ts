@@ -27,6 +27,19 @@ export interface EmbeddingInfo {
   updatedAt: string;
 }
 
+export interface PostSummary {
+  postId: string;
+  sourceId: string;
+  title: string;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListPostsResponse {
+  posts: PostSummary[];
+}
+
 export interface GetSourceResponse {
   sourceId: string;
   externalSourceId: string;
@@ -50,5 +63,9 @@ export class SheskaApiClient {
 
   getSource(id: string): Promise<GetSourceResponse> {
     return this.http.get<GetSourceResponse>(`/sources/${id}`);
+  }
+
+  listPosts(): Promise<ListPostsResponse> {
+    return this.http.get<ListPostsResponse>('/posts');
   }
 }

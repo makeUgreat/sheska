@@ -17,3 +17,11 @@ export function useSource(id: string | undefined) {
     enabled: !!id,
   });
 }
+
+export function useListPosts() {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: ['posts'],
+    queryFn: () => client.listPosts(),
+  });
+}
