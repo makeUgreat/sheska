@@ -39,14 +39,15 @@ function buildMockClient(
   return {
     listSources: vi.fn().mockResolvedValue({ sources: [SOURCE_SUMMARY] }),
     getSource: vi.fn().mockResolvedValue(SOURCE_DETAIL),
+    listPosts: vi.fn().mockResolvedValue({ posts: [] }),
     get: vi.fn(),
     ...overrides,
   } as unknown as SheskaApiClient;
 }
 
-function renderApp(client: SheskaApiClient) {
+function renderApp(client: SheskaApiClient, initialEntry = '/sources') {
   return render(
-    <MemoryRouter initialEntries={['/']}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <QueryClientProvider client={createTestQueryClient()}>
         <ApiClientProvider client={client}>
           <App />
@@ -74,6 +75,47 @@ describe('App', () => {
         screen.getByRole('heading', { name: 'Notes/source.md' }),
       ).toBeDefined();
       expect(screen.getByText('# Source note')).toBeDefined();
+    });
+  });
+
+  it('상세 화면에서 Back to sources 링크로 목록으로 돌아온다', async () => {
+    const user = userEvent.setup();
+    const client = buildMockClient();
+
+    renderApp(client, '/sources/source-1');
+
+    await user.click(
+      await screen.findByRole('link', { name: '← Back to sources' }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Sources' })).toBeDefined();
+    });
+  });
+
+  it('nav의 Posts 링크를 클릭하면 Posts 페이지로 이동한다', async () => {
+    const user = userEvent.setup();
+    const client = buildMockClient();
+
+    renderApp(client);
+
+    await user.click(screen.getByRole('link', { name: 'Posts' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Posts' })).toBeDefined();
+    });
+  });
+
+  it('nav의 Sources 링크를 클릭하면 Sources 페이지로 이동한다', async () => {
+    const user = userEvent.setup();
+    const client = buildMockClient();
+
+    renderApp(client, '/posts');
+
+    await user.click(screen.getByRole('link', { name: 'Sources' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Sources' })).toBeDefined();
     });
   });
 });

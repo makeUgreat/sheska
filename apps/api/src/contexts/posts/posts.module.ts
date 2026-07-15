@@ -3,6 +3,7 @@ import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKENS } from '@kernels/infrastructure';
 import { PublishPostUseCase } from '@contexts/posts/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/posts/application/use-cases/get-post.use-case';
+import { ListPostsUseCase } from '@contexts/posts/application/use-cases/list-posts.use-case';
 import { PostPgDrizzleRepository } from '@contexts/posts/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.repository';
 import * as postsSchema from '@contexts/posts/infrastructure/persistence/postgres-drizzle/schema';
 import { SourceSourcesContextLookup } from '@contexts/posts/infrastructure/sources/source.sources-context.lookup';
@@ -38,8 +39,9 @@ export class PostsModule {
         },
         PublishPostUseCase,
         GetPostUseCase,
+        ListPostsUseCase,
       ],
-      exports: [PublishPostUseCase, GetPostUseCase],
+      exports: [PublishPostUseCase, GetPostUseCase, ListPostsUseCase],
     };
   }
 }
