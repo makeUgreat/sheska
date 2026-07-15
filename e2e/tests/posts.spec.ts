@@ -1,6 +1,37 @@
 import { randomUUID } from 'node:crypto';
 import { expect, test } from '../support/fixtures';
 
+test('source 상세 페이지에서 게시하기 버튼으로 포스트를 만들고 목록에서 확인할 수 있다', async ({
+  page,
+  apiBaseUrl,
+}) => {
+  const externalSourceId = `e2e-${randomUUID()}`;
+
+  const sourceRes = await fetch(`${apiBaseUrl}/sources`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      externalSourceId,
+      content: `E2E 테스트 내용 ${randomUUID()}`,
+    }),
+  });
+  expect(sourceRes.status).toBe(201);
+  const { sourceId } = (await sourceRes.json()) as { sourceId: string };
+
+  await page.goto(`/sources/${sourceId}`);
+
+  const title = `E2E 포스트 ${randomUUID()}`;
+  await page.getByPlaceholder('포스트 제목').fill(title);
+  await page.getByRole('button', { name: '게시하기' }).click();
+
+  await expect(page.getByText(/포스트가 게시되었습니다/)).toBeVisible();
+
+  await page.getByRole('link', { name: '포스트 목록 보기' }).click();
+
+  await expect(page).toHaveURL('/posts');
+  await expect(page.getByText(title)).toBeVisible();
+});
+
 test('발행된 포스트가 목록에 제목과 함께 표시된다', async ({
   page,
   apiBaseUrl,

@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useApiClient } from './client-context';
+import { type PublishPostRequest } from './client';
 
 export function useListSources() {
   const client = useApiClient();
@@ -23,5 +24,16 @@ export function useListPosts() {
   return useQuery({
     queryKey: ['posts'],
     queryFn: () => client.listPosts(),
+  });
+}
+
+export function usePublishPost() {
+  const client = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (req: PublishPostRequest) => client.publishPost(req),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
   });
 }

@@ -13,4 +13,19 @@ export class HttpClient {
 
     return res.json() as Promise<T>;
   }
+
+  async post<T>(path: string, body: unknown): Promise<T> {
+    const url = `${this.baseUrl}${path}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error: ${res.status} ${res.statusText}`);
+    }
+
+    return res.json() as Promise<T>;
+  }
 }
