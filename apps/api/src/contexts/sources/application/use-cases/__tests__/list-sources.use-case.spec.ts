@@ -4,7 +4,7 @@ import {
 } from '@contexts/sources/domain';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { ListSourcesUseCase } from '../list-sources.use-case';
-import { buildSource } from '../../../../../../test/domains/fixtures/source.fixture';
+import { buildSource } from '../../../../../../test/support/domains/fixtures/source.fixture';
 
 type SourceRepositoryMock = {
   list: MockedFunction<SourceRepository['list']>;

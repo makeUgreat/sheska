@@ -10,7 +10,7 @@ import {
   type UploadSourceContentSnapshotCalculator,
   UploadSourceUseCase,
 } from '../upload-source.use-case';
-import { sourceContentByteSize } from '../../../../../../test/domains/fixtures/source.fixture';
+import { sourceContentByteSize } from '../../../../../../test/support/domains/fixtures/source.fixture';
 import type { SourceEmbeddingLookup } from '@contexts/sources/application/ports';
 
 type ContentSnapshotCalculatorMock = {
