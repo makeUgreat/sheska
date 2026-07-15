@@ -95,6 +95,41 @@ describe('SheskaApiClient', () => {
     );
   });
 
+  it('publishPost 응답 계약이 실제 API와 일치한다', async () => {
+    const baseUrl =
+      process.env.SHESKA_API_CLIENT_INTEGRATION_BASE_URL ??
+      (await readFile(BASE_URL_FILE, 'utf8')).trim();
+    const client = new SheskaApiClient(new HttpClient(baseUrl));
+
+    const uploadResponse = await fetch(`${baseUrl}/sources`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        externalSourceId: `ui-api-client-${randomUUID()}`,
+        content: `API client integration test content ${randomUUID()}`,
+      }),
+    });
+    expect(uploadResponse.status).toBe(201);
+    const uploaded = (await uploadResponse.json()) as { sourceId: string };
+
+    const title = `통합 테스트 포스트 ${randomUUID()}`;
+    const result = await client.publishPost({
+      sourceId: uploaded.sourceId,
+      title,
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        postId: expect.any(String),
+        sourceId: uploaded.sourceId,
+        title,
+        viewCount: 0,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      }),
+    );
+  });
+
   it('listPosts 응답 계약이 실제 API와 일치한다', async () => {
     const baseUrl =
       process.env.SHESKA_API_CLIENT_INTEGRATION_BASE_URL ??

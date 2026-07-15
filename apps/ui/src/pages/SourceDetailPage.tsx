@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { useSource } from '@/api/queries';
+import { useSource, usePublishPost } from '@/api/queries';
 import { type SyncJobSummary, type EmbeddingInfo } from '@/api/client';
 
 function SyncJobSection({ syncJob }: { syncJob: SyncJobSummary | null }) {
@@ -66,6 +67,12 @@ function EmbeddingSection({ embedding }: { embedding: EmbeddingInfo | null }) {
 export function SourceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: source, isLoading, error } = useSource(id);
+  const publishPost = usePublishPost();
+  const [title, setTitle] = useState('');
+
+  function handlePublish(sourceId: string) {
+    publishPost.mutate({ sourceId, title });
+  }
 
   return (
     <main>
@@ -91,6 +98,30 @@ export function SourceDetailPage() {
             <SyncJobSection syncJob={source.latestSyncJob} />
             <EmbeddingSection embedding={source.embedding} />
           </dl>
+          <section>
+            <h2>게시하기</h2>
+            <input
+              type="text"
+              placeholder="포스트 제목"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <button
+              onClick={() => handlePublish(source.sourceId)}
+              disabled={publishPost.isPending || !title.trim()}
+            >
+              {publishPost.isPending ? '게시 중...' : '게시하기'}
+            </button>
+            {publishPost.isSuccess && (
+              <p>
+                포스트가 게시되었습니다.{' '}
+                <Link to="/posts">포스트 목록 보기</Link>
+              </p>
+            )}
+            {publishPost.isError && (
+              <p role="alert">오류: {publishPost.error.message}</p>
+            )}
+          </section>
           <pre>{source.content}</pre>
         </>
       ) : null}

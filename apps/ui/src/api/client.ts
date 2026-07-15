@@ -40,6 +40,20 @@ export interface ListPostsResponse {
   posts: PostSummary[];
 }
 
+export interface PublishPostRequest {
+  sourceId: string;
+  title: string;
+}
+
+export interface PublishPostResponse {
+  postId: string;
+  sourceId: string;
+  title: string;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface GetSourceResponse {
   sourceId: string;
   externalSourceId: string;
@@ -67,5 +81,9 @@ export class SheskaApiClient {
 
   listPosts(): Promise<ListPostsResponse> {
     return this.http.get<ListPostsResponse>('/posts');
+  }
+
+  publishPost(req: PublishPostRequest): Promise<PublishPostResponse> {
+    return this.http.post<PublishPostResponse>('/posts', req);
   }
 }
