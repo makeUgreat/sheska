@@ -58,7 +58,7 @@ test('포스트 목록에서 제목 클릭 시 상세 페이지로 이동하고 
   await page.getByRole('link', { name: title }).click();
 
   await expect(page).toHaveURL(`/posts/${postId}`);
-  await expect(page.getByRole('heading', { name: title })).toBeVisible();
+  await expect(page.locator('h1', { hasText: title })).toBeVisible();
   await expect(page.getByText(postId)).toBeVisible();
   await expect(page.getByText(sourceId)).toBeVisible();
 
@@ -127,6 +127,39 @@ test('포스트 상세 페이지에서 소스 내용이 표시된다', async ({
   await page.goto(`/posts/${postId}`);
 
   await expect(page.getByText(content)).toBeVisible();
+});
+
+test('포스트 상세 페이지에서 마크다운이 HTML 요소로 렌더링된다', async ({
+  page,
+  apiBaseUrl,
+}) => {
+  const sourceRes = await fetch(`${apiBaseUrl}/sources`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      externalSourceId: `e2e-${randomUUID()}`,
+      content: '# 마크다운 제목\n\n**굵은 텍스트**\n\n- 항목 하나\n- 항목 둘',
+    }),
+  });
+  expect(sourceRes.status).toBe(201);
+  const { sourceId } = (await sourceRes.json()) as { sourceId: string };
+
+  const postRes = await fetch(`${apiBaseUrl}/posts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sourceId }),
+  });
+  expect(postRes.status).toBe(201);
+  const { postId } = (await postRes.json()) as { postId: string };
+
+  await page.goto(`/posts/${postId}`);
+
+  await expect(page.locator('h1', { hasText: '마크다운 제목' })).toBeVisible();
+  await expect(
+    page.locator('strong', { hasText: '굵은 텍스트' }),
+  ).toBeVisible();
+  await expect(page.locator('li', { hasText: '항목 하나' })).toBeVisible();
+  await expect(page.locator('li', { hasText: '항목 둘' })).toBeVisible();
 });
 
 test('발행된 포스트가 목록에 제목과 함께 표시된다', async ({
