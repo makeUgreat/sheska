@@ -6,5 +6,5 @@ export interface EmbeddingInfo {
 }
 
 export interface SourceEmbeddingLookup {
-  findBySourceId(criteria: { sourceId: string }): Promise<EmbeddingInfo | null>;
+  find(criteria: { sourceId: string }): Promise<EmbeddingInfo | null>;
 }

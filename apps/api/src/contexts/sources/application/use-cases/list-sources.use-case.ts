@@ -49,7 +49,7 @@ export class ListSourcesUseCase {
       sources.map(async (source) => {
         const props = source.getProps();
         const snapshot = props.contentSnapshot.unpack();
-        const latestJob = await this.syncJobs.findLatestBySourceId({
+        const latestJob = await this.syncJobs.findLatest({
           sourceId: source.id,
         });
 

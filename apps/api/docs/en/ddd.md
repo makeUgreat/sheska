@@ -8,6 +8,7 @@ translation: ../ko/ddd.md
 related:
   - ./architecture.md
   - ./context-integration.md
+  - ./repository-methods.md
 ---
 
 # API DDD Convention
@@ -82,11 +83,13 @@ DDD building blocks are chosen by the domain role they play, not by where a clas
 - `save` persists an aggregate through the repository contract. Use it for create and update unless the context has a meaningful separate command.
 - `find` looks up one aggregate or read model by a unique lookup and returns `null` when it is absent.
 - `find` should express lookup meaning through object parameter field names. Example: `find({ id })`, `find({ externalSourceId })`.
-- `get` means the caller expects the resource to exist. Use it only when absence is exceptional in that contract; otherwise prefer `find`.
+- `get` means the caller expects the resource to exist. Its return type MUST be `Promise<T>`, never `Promise<T | null>`. When the resource is absent, the implementation throws `InfrastructureException(NOT_FOUND)`. Use `get` only when absence is exceptional in that contract; otherwise prefer `find`.
 - `get` uses the same object parameter naming as `find`. Example: `get({ id })`.
+- `find` and `get` criteria MUST be object types. Primitive parameters such as `find(id: string)` or `get(sourceId: string)` are not allowed; use `find({ id })` or `get({ id })` instead.
 - `list` returns multiple aggregates or read models. It SHOULD accept an explicit criteria object when filtering is needed.
 - `find` and `get` criteria objects should express only unique lookups that identify one resource. Use `list` for filtering that can return multiple results.
-- Avoid repository method names that expose storage mechanics, query implementation, or table shape.
+- Avoid repository method names that expose storage mechanics, query implementation, or table shape. In particular, do not encode field names into method names; express them through criteria object fields instead. Example: prefer `find({ sourceId })` over `findBySourceId(sourceId)`.
+- For call-site guidance on when to use each method, see [Repository Method Usage Guide](./repository-methods.md).
 
 ## Domain Encapsulation
 

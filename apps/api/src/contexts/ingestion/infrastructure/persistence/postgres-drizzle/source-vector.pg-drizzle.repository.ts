@@ -16,9 +16,7 @@ const ADAPTER = 'source-vector.pg-drizzle';
 export class SourceVectorPgDrizzleRepository implements SourceVectorRepository {
   constructor(private readonly db: NodePgDatabase<typeof schema>) {}
 
-  async findBySourceId(criteria: {
-    sourceId: string;
-  }): Promise<SourceVector | null> {
+  async find(criteria: { sourceId: string }): Promise<SourceVector | null> {
     const row = await this.db
       .select()
       .from(schema.sourceVectors)
@@ -50,7 +48,7 @@ export class SourceVectorPgDrizzleRepository implements SourceVectorRepository {
         code: 'source_vector.save_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source vector upsert operation failed',
-        details: {},
+        details: { sourceId: insert.sourceId },
         cause: error,
       });
     }

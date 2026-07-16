@@ -5,7 +5,7 @@ import { buildPost } from '../../../../../../test/support/domains/fixtures/post.
 
 type PostRepositoryMock = {
   get: MockedFunction<PostRepository['get']>;
-  findBySourceId: MockedFunction<PostRepository['findBySourceId']>;
+  find: MockedFunction<PostRepository['find']>;
   list: MockedFunction<PostRepository['list']>;
   save: MockedFunction<PostRepository['save']>;
 };
@@ -58,10 +58,8 @@ describe('ListPostsUseCase', () => {
 
 function createPostRepositoryMock(): PostRepositoryMock {
   return {
-    get: vi.fn<PostRepository['get']>().mockResolvedValue(null),
-    findBySourceId: vi
-      .fn<PostRepository['findBySourceId']>()
-      .mockResolvedValue(null),
+    get: vi.fn<PostRepository['get']>().mockResolvedValue(buildPost()),
+    find: vi.fn<PostRepository['find']>().mockResolvedValue(null),
     list: vi.fn<PostRepository['list']>().mockResolvedValue([]),
     save: vi
       .fn<PostRepository['save']>()

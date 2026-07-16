@@ -78,6 +78,7 @@ export class PostsHttpController {
       viewCount: result.viewCount,
       createdAt: result.createdAt.toISOString(),
       updatedAt: result.updatedAt.toISOString(),
+      sourceContent: result.sourceContent,
     };
   }
 

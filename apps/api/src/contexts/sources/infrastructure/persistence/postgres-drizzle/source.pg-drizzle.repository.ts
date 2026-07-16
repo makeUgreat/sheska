@@ -22,10 +22,14 @@ export class SourcePgDrizzleRepository implements SourceRepository {
     let row: schema.SourceRow | undefined;
 
     try {
+      const condition =
+        'id' in criteria
+          ? eq(schema.sources.id, criteria.id)
+          : eq(schema.sources.externalSourceId, criteria.externalSourceId);
       [row] = await this.db
         .select()
         .from(schema.sources)
-        .where(eq(schema.sources.externalSourceId, criteria.externalSourceId))
+        .where(condition)
         .limit(1);
     } catch (error: unknown) {
       throw new InfrastructureException({
@@ -33,7 +37,7 @@ export class SourcePgDrizzleRepository implements SourceRepository {
         code: 'source.find_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source find operation failed',
-        details: {},
+        details: criteria,
         cause: error,
       });
     }
@@ -45,7 +49,7 @@ export class SourcePgDrizzleRepository implements SourceRepository {
     return SourcePgDrizzleMapper.toDomain(row);
   }
 
-  async get(criteria: SourceRepositoryGetCriteria): Promise<Source | null> {
+  async get(criteria: SourceRepositoryGetCriteria): Promise<Source> {
     let row: schema.SourceRow | undefined;
 
     try {
@@ -60,13 +64,19 @@ export class SourcePgDrizzleRepository implements SourceRepository {
         code: 'source.get_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source get operation failed',
-        details: {},
+        details: { id: criteria.id },
         cause: error,
       });
     }
 
     if (row === undefined) {
-      return null;
+      throw new InfrastructureException({
+        kind: 'not_found',
+        code: 'source.get_failed',
+        source: { boundary: 'persistence', adapter: ADAPTER },
+        message: 'Source not found',
+        details: { id: criteria.id },
+      });
     }
 
     return SourcePgDrizzleMapper.toDomain(row);
@@ -119,7 +129,7 @@ export class SourcePgDrizzleRepository implements SourceRepository {
         code: 'source.save_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source save operation failed',
-        details: {},
+        details: { id: sourceInsert.id },
         cause: error,
       });
     }

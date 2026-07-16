@@ -13,6 +13,8 @@ export const INFRASTRUCTURE_ERROR_KIND = {
   RESTORE_FAILED: 'restore_failed',
   // An external dependency returned a response that cannot be used.
   BAD_RESPONSE: 'bad_response',
+  // The requested resource does not exist in the infrastructure dependency.
+  NOT_FOUND: 'not_found',
   // The error cannot be meaningfully classified at the infrastructure boundary.
   UNEXPECTED: 'unexpected',
 } as const;

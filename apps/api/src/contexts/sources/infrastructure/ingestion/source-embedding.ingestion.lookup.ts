@@ -7,12 +7,12 @@ import {
 export class SourceEmbeddingIngestionLookup implements SourceEmbeddingLookup {
   constructor(private readonly sourceVectors: SourceVectorRepository) {}
 
-  async findBySourceId({
+  async find({
     sourceId,
   }: {
     sourceId: string;
   }): Promise<EmbeddingInfo | null> {
-    const vector = await this.sourceVectors.findBySourceId({ sourceId });
+    const vector = await this.sourceVectors.find({ sourceId });
     if (!vector) return null;
     const props = vector.getProps();
     return {

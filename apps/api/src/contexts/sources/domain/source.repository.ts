@@ -1,8 +1,8 @@
 import { type Source } from './source.aggregate';
 
-export type SourceRepositoryFindCriteria = {
-  readonly externalSourceId: string;
-};
+export type SourceRepositoryFindCriteria =
+  | { readonly id: string }
+  | { readonly externalSourceId: string };
 
 export type SourceRepositoryGetCriteria = {
   readonly id: string;
@@ -10,7 +10,7 @@ export type SourceRepositoryGetCriteria = {
 
 export interface SourceRepository {
   find(criteria: SourceRepositoryFindCriteria): Promise<Source | null>;
-  get(criteria: SourceRepositoryGetCriteria): Promise<Source | null>;
+  get(criteria: SourceRepositoryGetCriteria): Promise<Source>;
   list(): Promise<Source[]>;
   save(source: Source): Promise<Source>;
 }
