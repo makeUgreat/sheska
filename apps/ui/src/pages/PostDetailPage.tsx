@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
 import { usePost, useUpdatePost } from '@/api/queries';
 
 export function PostDetailPage() {
@@ -177,9 +178,9 @@ export function PostDetailPage() {
               <h2 className="mb-3 text-xs font-semibold uppercase text-gray-500">
                 Content
               </h2>
-              <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-gray-200 bg-gray-50 p-5 font-mono text-sm leading-relaxed text-gray-800">
-                {post.sourceContent}
-              </pre>
+              <div className="prose prose-gray max-w-none rounded-lg border border-gray-200 bg-white p-5">
+                <ReactMarkdown>{post.sourceContent}</ReactMarkdown>
+              </div>
             </section>
           )}
         </article>
