@@ -106,6 +106,7 @@ describe('INFRASTRUCTURE_ERROR_KIND', () => {
     ['INVALID_DATA', 'invalid_data'],
     ['RESTORE_FAILED', 'restore_failed'],
     ['BAD_RESPONSE', 'bad_response'],
+    ['NOT_FOUND', 'not_found'],
     ['UNEXPECTED', 'unexpected'],
   ] as const)('%s의 값은 %s다', (key, expectedValue) => {
     expect(INFRASTRUCTURE_ERROR_KIND[key]).toBe(expectedValue);

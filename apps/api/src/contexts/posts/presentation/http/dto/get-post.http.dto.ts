@@ -5,4 +5,5 @@ export interface GetPostHttpResponse {
   readonly viewCount: number;
   readonly createdAt: string;
   readonly updatedAt: string;
+  readonly sourceContent: string;
 }

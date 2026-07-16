@@ -5,11 +5,16 @@ import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { PublishPostUseCase } from '@contexts/posts/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/posts/application/use-cases/get-post.use-case';
 import { ListPostsUseCase } from '@contexts/posts/application/use-cases/list-posts.use-case';
+import { UpdatePostTitleUseCase } from '@contexts/posts/application/use-cases/update-post-title.use-case';
 import {
   ApplicationException,
   APPLICATION_ERROR_KIND,
   LOGGER,
 } from '@kernels/application';
+import {
+  InfrastructureException,
+  INFRASTRUCTURE_ERROR_KIND,
+} from '@kernels/infrastructure';
 import { PostsHttpController } from '@contexts/posts/presentation/http/posts-http.controller';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
 import { ZodValidationPipe } from '@platform/nest/pipes/zod-validation.pipe';
@@ -36,17 +41,25 @@ type ListPostsUseCaseMock = {
   execute: MockedFunction<ListPostsUseCase['execute']>;
 };
 
+type UpdatePostTitleUseCaseMock = {
+  execute: MockedFunction<UpdatePostTitleUseCase['execute']>;
+};
+
 describe('PostsHttpController', () => {
   let app: INestApplication;
   let httpServer: Server;
   let publishPostUseCase: PublishPostUseCaseMock;
   let getPostUseCase: GetPostUseCaseMock;
   let listPostsUseCase: ListPostsUseCaseMock;
+  let updatePostTitleUseCase: UpdatePostTitleUseCaseMock;
 
   beforeEach(async () => {
     publishPostUseCase = { execute: vi.fn<PublishPostUseCase['execute']>() };
     getPostUseCase = { execute: vi.fn<GetPostUseCase['execute']>() };
     listPostsUseCase = { execute: vi.fn<ListPostsUseCase['execute']>() };
+    updatePostTitleUseCase = {
+      execute: vi.fn<UpdatePostTitleUseCase['execute']>(),
+    };
 
     const testingModule = await Test.createTestingModule({
       controllers: [PostsHttpController],
@@ -54,6 +67,7 @@ describe('PostsHttpController', () => {
         { provide: PublishPostUseCase, useValue: publishPostUseCase },
         { provide: GetPostUseCase, useValue: getPostUseCase },
         { provide: ListPostsUseCase, useValue: listPostsUseCase },
+        { provide: UpdatePostTitleUseCase, useValue: updatePostTitleUseCase },
         { provide: APP_PIPE, useClass: ZodValidationPipe },
         {
           provide: LOGGER,
@@ -122,9 +136,10 @@ describe('PostsHttpController', () => {
 
     it('source가 없으면 404 응답을 반환한다', async () => {
       publishPostUseCase.execute.mockRejectedValue(
-        new ApplicationException({
-          kind: APPLICATION_ERROR_KIND.NOT_FOUND,
-          code: 'posts.source_not_found',
+        new InfrastructureException({
+          kind: INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
+          code: 'source.get_failed',
+          source: { boundary: 'persistence', adapter: 'source.pg-drizzle' },
           message: 'Source not found',
           details: {},
         }),
@@ -137,7 +152,7 @@ describe('PostsHttpController', () => {
 
       expect(response.body).toEqual({
         statusCode: 404,
-        code: 'posts.source_not_found',
+        code: 'source.get_failed',
         message: 'Source not found',
         details: {},
       });
@@ -195,6 +210,7 @@ describe('PostsHttpController', () => {
         viewCount: 1,
         createdAt: now,
         updatedAt: now,
+        sourceContent: '테스트 본문',
       });
 
       const response = await request(httpServer)
@@ -208,6 +224,7 @@ describe('PostsHttpController', () => {
         viewCount: 1,
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
+        sourceContent: '테스트 본문',
       });
       expect(getPostUseCase.execute).toHaveBeenCalledWith({ postId: 'post-1' });
     });

@@ -75,7 +75,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
     await new Promise((resolve) => setTimeout(resolve, 5));
     await repository.save(second);
 
-    const result = await repository.findLatestBySourceId({
+    const result = await repository.findLatest({
       sourceId: source.id,
     });
 
@@ -83,7 +83,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
   });
 
   it('sync job이 없으면 null을 반환한다', async () => {
-    const result = await repository.findLatestBySourceId({
+    const result = await repository.findLatest({
       sourceId: 'non-existent-source',
     });
 

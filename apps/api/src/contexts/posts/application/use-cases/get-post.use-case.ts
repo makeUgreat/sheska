@@ -1,10 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  APPLICATION_ERROR_KIND,
-  ApplicationException,
-} from '@kernels/application';
 import { type PostRepository } from '@contexts/posts/domain';
-import { POST_REPOSITORY } from '@contexts/posts/posts.di-tokens';
+import { type PostQuery } from '@contexts/posts/application/ports';
+import { POST_QUERY, POST_REPOSITORY } from '@contexts/posts/posts.di-tokens';
 
 export interface GetPostCommand {
   readonly postId: string;
@@ -17,6 +14,7 @@ export interface GetPostResult {
   readonly viewCount: number;
   readonly createdAt: Date;
   readonly updatedAt: Date;
+  readonly sourceContent: string;
 }
 
 @Injectable()
@@ -24,31 +22,14 @@ export class GetPostUseCase {
   constructor(
     @Inject(POST_REPOSITORY)
     private readonly posts: PostRepository,
+    @Inject(POST_QUERY)
+    private readonly postQuery: PostQuery,
   ) {}
-
+  // todo: view increment 로직 부하테스트 후 개선
   async execute(command: GetPostCommand): Promise<GetPostResult> {
     const post = await this.posts.get({ id: command.postId });
-
-    if (!post) {
-      throw new ApplicationException({
-        kind: APPLICATION_ERROR_KIND.NOT_FOUND,
-        code: 'posts.post_not_found',
-        message: 'Post not found',
-        details: {},
-      });
-    }
-
     post.incrementViewCount();
     const saved = await this.posts.save(post);
-    const props = saved.getProps();
-
-    return {
-      postId: saved.id,
-      sourceId: props.sourceId,
-      title: props.title.unpack(),
-      viewCount: props.viewCount.unpack(),
-      createdAt: saved.createdAt,
-      updatedAt: saved.updatedAt,
-    };
+    return this.postQuery.get({ id: saved.id });
   }
 }

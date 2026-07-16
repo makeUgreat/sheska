@@ -34,18 +34,9 @@ export class PublishPostUseCase {
   ) {}
 
   async execute(command: PublishPostCommand): Promise<PublishPostResult> {
-    const sourceInfo = await this.sourceLookup.find(command.sourceId);
+    const sourceInfo = await this.sourceLookup.get(command.sourceId);
 
-    if (!sourceInfo) {
-      throw new ApplicationException({
-        kind: APPLICATION_ERROR_KIND.NOT_FOUND,
-        code: 'posts.source_not_found',
-        message: 'Source not found',
-        details: {},
-      });
-    }
-
-    const existing = await this.posts.findBySourceId(command.sourceId);
+    const existing = await this.posts.find({ sourceId: command.sourceId });
 
     if (existing) {
       throw new ApplicationException({

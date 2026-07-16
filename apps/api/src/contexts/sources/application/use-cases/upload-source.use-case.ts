@@ -69,7 +69,7 @@ export class UploadSourceUseCase {
 
     const { changed } = source.syncContentSnapshot(snapshot);
     if (!changed) {
-      const embedding = await this.embeddingLookup.findBySourceId({
+      const embedding = await this.embeddingLookup.find({
         sourceId: source.id,
       });
       if (embedding) return this.completeUpload(source);

@@ -10,12 +10,13 @@ import { buildPost } from '../../../../../../test/support/domains/fixtures/post.
 
 type PostRepositoryMock = {
   get: MockedFunction<PostRepository['get']>;
-  findBySourceId: MockedFunction<PostRepository['findBySourceId']>;
+  find: MockedFunction<PostRepository['find']>;
   list: MockedFunction<PostRepository['list']>;
   save: MockedFunction<PostRepository['save']>;
 };
 
 type SourceLookupMock = {
+  get: MockedFunction<SourceLookup['get']>;
   find: MockedFunction<SourceLookup['find']>;
 };
 
@@ -45,8 +46,8 @@ describe('PublishPostUseCase', () => {
       viewCount: 0,
     });
     expect(result.postId.length).toBeGreaterThan(0);
-    expect(sourceLookup.find).toHaveBeenCalledWith('source-1');
-    expect(posts.findBySourceId).toHaveBeenCalledWith('source-1');
+    expect(sourceLookup.get).toHaveBeenCalledWith('source-1');
+    expect(posts.find).toHaveBeenCalledWith({ sourceId: 'source-1' });
     expect(posts.save).toHaveBeenCalledOnce();
   });
 
@@ -62,25 +63,26 @@ describe('PublishPostUseCase', () => {
     expect(result.title).toBe('Notes/test.md');
   });
 
-  it('source가 없으면 NOT_FOUND exception을 throw한다', async () => {
+  it('source가 없으면 sourceLookup.get이 throw한 exception을 전파한다', async () => {
+    const notFoundError = new Error('Source not found');
     const posts = createPostRepositoryMock();
-    const sourceLookup = createSourceLookupMock({ sourceInfo: null });
+    const sourceLookup = createSourceLookupMock({
+      sourceInfo: sourceInfoWithFrontmatter,
+    });
+    sourceLookup.get.mockRejectedValue(notFoundError);
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
-    await expect(
-      useCase.execute({ sourceId: 'non-existent' }),
-    ).rejects.toMatchObject({
-      kind: APPLICATION_ERROR_KIND.NOT_FOUND,
-      code: 'posts.source_not_found',
-    });
-    expect(posts.findBySourceId).not.toHaveBeenCalled();
+    await expect(useCase.execute({ sourceId: 'non-existent' })).rejects.toBe(
+      notFoundError,
+    );
+    expect(posts.find).not.toHaveBeenCalled();
     expect(posts.save).not.toHaveBeenCalled();
   });
 
   it('같은 sourceId로 이미 post가 있으면 STATE_CONFLICT exception을 throw한다', async () => {
     const existingPost = buildPost({ sourceId: 'source-1' });
     const posts = createPostRepositoryMock();
-    posts.findBySourceId.mockResolvedValue(existingPost);
+    posts.find.mockResolvedValue(existingPost);
     const sourceLookup = createSourceLookupMock({
       sourceInfo: sourceInfoWithFrontmatter,
     });
@@ -101,7 +103,7 @@ describe('PublishPostUseCase', () => {
     const sourceLookup = createSourceLookupMock({
       sourceInfo: sourceInfoWithFrontmatter,
     });
-    sourceLookup.find.mockRejectedValue(lookupFailure);
+    sourceLookup.get.mockRejectedValue(lookupFailure);
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
     await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(
@@ -113,7 +115,7 @@ describe('PublishPostUseCase', () => {
   it('post 조회 exception을 전파한다', async () => {
     const findFailure = new Error('Post Repository operation failed');
     const posts = createPostRepositoryMock();
-    posts.findBySourceId.mockRejectedValue(findFailure);
+    posts.find.mockRejectedValue(findFailure);
     const sourceLookup = createSourceLookupMock({
       sourceInfo: sourceInfoWithFrontmatter,
     });
@@ -142,10 +144,8 @@ describe('PublishPostUseCase', () => {
 
 function createPostRepositoryMock(): PostRepositoryMock {
   return {
-    get: vi.fn<PostRepository['get']>().mockResolvedValue(null),
-    findBySourceId: vi
-      .fn<PostRepository['findBySourceId']>()
-      .mockResolvedValue(null),
+    get: vi.fn<PostRepository['get']>().mockResolvedValue(buildPost()),
+    find: vi.fn<PostRepository['find']>().mockResolvedValue(null),
     list: vi.fn<PostRepository['list']>().mockResolvedValue([]),
     save: vi
       .fn<PostRepository['save']>()
@@ -156,9 +156,10 @@ function createPostRepositoryMock(): PostRepositoryMock {
 function createSourceLookupMock({
   sourceInfo,
 }: {
-  sourceInfo: SourceInfo | null;
+  sourceInfo: SourceInfo;
 }): SourceLookupMock {
   return {
+    get: vi.fn<SourceLookup['get']>().mockResolvedValue(sourceInfo),
     find: vi.fn<SourceLookup['find']>().mockResolvedValue(sourceInfo),
   };
 }
