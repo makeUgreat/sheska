@@ -60,6 +60,7 @@ export interface GetPostResponse {
   viewCount: number;
   createdAt: string;
   updatedAt: string;
+  sourceContent: string;
 }
 
 export interface UpdatePostRequest {
