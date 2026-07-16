@@ -3,6 +3,7 @@ import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   type Post,
   type PostRepository,
+  type PostRepositoryFindCriteria,
   type PostRepositoryGetCriteria,
 } from '@contexts/posts/domain';
 import {
@@ -17,7 +18,7 @@ const ADAPTER = 'post.pg-drizzle';
 export class PostPgDrizzleRepository implements PostRepository {
   constructor(private readonly db: NodePgDatabase<typeof schema>) {}
 
-  async get(criteria: PostRepositoryGetCriteria): Promise<Post | null> {
+  async get(criteria: PostRepositoryGetCriteria): Promise<Post> {
     let row: schema.PostRow | undefined;
 
     try {
@@ -32,34 +33,40 @@ export class PostPgDrizzleRepository implements PostRepository {
         code: 'post.get_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Post get operation failed',
-        details: {},
+        details: { id: criteria.id },
         cause: error,
       });
     }
 
     if (row === undefined) {
-      return null;
+      throw new InfrastructureException({
+        kind: 'not_found',
+        code: 'post.get_failed',
+        source: { boundary: 'persistence', adapter: ADAPTER },
+        message: 'Post not found',
+        details: { id: criteria.id },
+      });
     }
 
     return PostPgDrizzleMapper.toDomain(row);
   }
 
-  async findBySourceId(sourceId: string): Promise<Post | null> {
+  async find(criteria: PostRepositoryFindCriteria): Promise<Post | null> {
     let row: schema.PostRow | undefined;
 
     try {
       [row] = await this.db
         .select()
         .from(schema.posts)
-        .where(eq(schema.posts.sourceId, sourceId))
+        .where(eq(schema.posts.sourceId, criteria.sourceId))
         .limit(1);
     } catch (error: unknown) {
       throw new InfrastructureException({
         kind: classifyPostgresError(error),
-        code: 'post.find_by_source_id_failed',
+        code: 'post.find_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
-        message: 'Post findBySourceId operation failed',
-        details: {},
+        message: 'Post find operation failed',
+        details: { sourceId: criteria.sourceId },
         cause: error,
       });
     }
@@ -116,7 +123,7 @@ export class PostPgDrizzleRepository implements PostRepository {
         code: 'post.save_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Post save operation failed',
-        details: {},
+        details: { id: postInsert.id },
         cause: error,
       });
     }

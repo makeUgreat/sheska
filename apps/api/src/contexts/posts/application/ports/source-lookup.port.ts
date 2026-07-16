@@ -4,5 +4,6 @@ export interface SourceInfo {
 }
 
 export interface SourceLookup {
+  get(sourceId: string): Promise<SourceInfo>;
   find(sourceId: string): Promise<SourceInfo | null>;
 }

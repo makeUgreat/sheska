@@ -9,6 +9,7 @@ last_synced: 2026-06-30
 related:
   - ./architecture.md
   - ./context-integration.md
+  - ./repository-methods.md
 ---
 
 # API DDD 컨벤션
@@ -83,11 +84,13 @@ DDD 구성 요소는 class가 위치한 곳이 아니라 domain에서 맡는 역
 - `save`는 repository contract를 통해 aggregate를 저장한다. Context에 의미 있는 별도 command가 없다면 create와 update에 모두 사용한다.
 - `find`는 하나의 aggregate 또는 read model을 unique lookup으로 조회하고, 없으면 `null`을 반환한다.
 - `find`의 lookup 의미는 object parameter의 field name으로 전달한다. 예: `find({ id })`, `find({ externalSourceId })`.
-- `get`은 caller가 resource가 존재한다고 기대한다는 의미다. 해당 contract에서 부재가 exceptional일 때만 사용하고, 그렇지 않으면 `find`를 선호한다.
+- `get`은 caller가 resource가 존재한다고 기대한다는 의미다. 반환 타입은 반드시 `Promise<T>`여야 하며, `Promise<T | null>`은 허용하지 않는다. Resource가 없으면 구현체가 `InfrastructureException(NOT_FOUND)`을 throw한다. 해당 contract에서 부재가 exceptional일 때만 사용하고, 그렇지 않으면 `find`를 선호한다.
 - `get`도 `find`와 같은 object parameter naming을 사용한다. 예: `get({ id })`.
+- `find`와 `get`의 criteria는 반드시 object 타입이어야 한다. `find(id: string)`이나 `get(sourceId: string)`처럼 primitive를 직접 받는 것은 허용하지 않는다. `find({ id })`, `get({ id })` 형태로 사용한다.
 - `list`는 여러 aggregate 또는 read model을 반환한다. Filtering이 필요하면 explicit criteria object를 받는 것이 좋다.
 - `find`와 `get`의 criteria object는 하나의 resource를 식별하는 unique lookup만 표현해야 한다. 여러 결과가 가능한 filtering은 `list`로 표현한다.
-- Storage mechanics, query implementation, table shape를 노출하는 repository method name은 피한다.
+- Storage mechanics, query implementation, table shape를 노출하는 repository method name은 피한다. 특히 field name을 method name에 포함하지 않고 criteria object의 field로 표현한다. 예: `findBySourceId(sourceId)` 대신 `find({ sourceId })`.
+- 각 method를 호출 지점에서 언제 사용할지에 대한 가이드는 [Repository Method 사용 가이드](./repository-methods.md)를 참조한다.
 
 ## Domain 캡슐화
 

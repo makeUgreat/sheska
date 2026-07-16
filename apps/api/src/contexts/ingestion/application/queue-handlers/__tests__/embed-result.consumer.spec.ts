@@ -35,7 +35,7 @@ describe('EmbedResultConsumer', () => {
       const eventEmitter = new EventEmitter2();
       const emit = vi.spyOn(eventEmitter, 'emit');
       const consumer = new EmbedResultConsumer(
-        { save, findBySourceId: vi.fn() },
+        { save, find: vi.fn() },
         eventEmitter,
         buildMockLogger(),
       );
@@ -54,7 +54,7 @@ describe('EmbedResultConsumer', () => {
       const eventEmitter = new EventEmitter2();
       const emit = vi.spyOn(eventEmitter, 'emit');
       const consumer = new EmbedResultConsumer(
-        { save: vi.fn().mockResolvedValue(undefined), findBySourceId: vi.fn() },
+        { save: vi.fn().mockResolvedValue(undefined), find: vi.fn() },
         eventEmitter,
         buildMockLogger(),
       );
@@ -71,7 +71,7 @@ describe('EmbedResultConsumer', () => {
       const eventEmitter = new EventEmitter2();
       const emit = vi.spyOn(eventEmitter, 'emit');
       const consumer = new EmbedResultConsumer(
-        { save: vi.fn(), findBySourceId: vi.fn() },
+        { save: vi.fn(), find: vi.fn() },
         eventEmitter,
         buildMockLogger(),
       );
@@ -89,7 +89,7 @@ describe('EmbedResultConsumer', () => {
       const eventEmitter = new EventEmitter2();
       const emit = vi.spyOn(eventEmitter, 'emit');
       const consumer = new EmbedResultConsumer(
-        { save: vi.fn(), findBySourceId: vi.fn() },
+        { save: vi.fn(), find: vi.fn() },
         eventEmitter,
         buildMockLogger(),
       );

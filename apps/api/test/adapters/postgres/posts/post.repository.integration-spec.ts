@@ -37,10 +37,10 @@ describe('PostPgDrizzleRepository', () => {
     await posts.save(post);
     const result = await posts.get({ id: post.id });
 
-    expect(result?.id).toBe(post.id);
-    expect(result?.getProps().title.unpack()).toBe('조회 테스트');
-    expect(result?.getProps().sourceId).toBe(source.id);
-    expect(result?.getProps().viewCount.unpack()).toBe(0);
+    expect(result.id).toBe(post.id);
+    expect(result.getProps().title.unpack()).toBe('조회 테스트');
+    expect(result.getProps().sourceId).toBe(source.id);
+    expect(result.getProps().viewCount.unpack()).toBe(0);
   });
 
   it('post를 갱신한다', async () => {
@@ -54,13 +54,14 @@ describe('PostPgDrizzleRepository', () => {
     await posts.save(post);
     const result = await posts.get({ id: post.id });
 
-    expect(result?.getProps().viewCount.unpack()).toBe(1);
+    expect(result.getProps().viewCount.unpack()).toBe(1);
   });
 
-  it('존재하지 않는 id는 null을 반환한다', async () => {
-    const result = await posts.get({ id: 'non-existent-id' });
-
-    expect(result).toBeNull();
+  it('존재하지 않는 id는 NOT_FOUND exception을 throw한다', async () => {
+    await expect(posts.get({ id: 'non-existent-id' })).rejects.toMatchObject({
+      kind: 'not_found',
+      code: 'post.get_failed',
+    });
   });
 
   it('sourceId로 post를 조회한다', async () => {
@@ -70,14 +71,14 @@ describe('PostPgDrizzleRepository', () => {
     const post = buildPost({ sourceId: source.id });
     await posts.save(post);
 
-    const result = await posts.findBySourceId(source.id);
+    const result = await posts.find({ sourceId: source.id });
 
     expect(result?.id).toBe(post.id);
     expect(result?.getProps().sourceId).toBe(source.id);
   });
 
   it('게시되지 않은 sourceId는 null을 반환한다', async () => {
-    const result = await posts.findBySourceId('non-existent-source-id');
+    const result = await posts.find({ sourceId: 'non-existent-source-id' });
 
     expect(result).toBeNull();
   });

@@ -27,7 +27,7 @@ export class SourceSyncJobPgDrizzleRepository implements SourceSyncJobRepository
     return row ? SourceSyncJobPgDrizzleMapper.toDomain(row) : null;
   }
 
-  async findLatestBySourceId(criteria: {
+  async findLatest(criteria: {
     sourceId: string;
   }): Promise<SourceSyncJob | null> {
     const row = await this.db
@@ -60,7 +60,7 @@ export class SourceSyncJobPgDrizzleRepository implements SourceSyncJobRepository
         code: 'source_sync_job.save_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source sync job save operation failed',
-        details: {},
+        details: { id: insert.id },
         cause: error,
       });
     }

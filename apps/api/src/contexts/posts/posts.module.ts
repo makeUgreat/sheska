@@ -6,6 +6,7 @@ import { GetPostUseCase } from '@contexts/posts/application/use-cases/get-post.u
 import { ListPostsUseCase } from '@contexts/posts/application/use-cases/list-posts.use-case';
 import { UpdatePostTitleUseCase } from '@contexts/posts/application/use-cases/update-post-title.use-case';
 import { PostPgDrizzleRepository } from '@contexts/posts/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.repository';
+import { PostPgDrizzleQuery } from '@contexts/posts/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.query';
 import * as postsSchema from '@contexts/posts/infrastructure/persistence/postgres-drizzle/schema';
 import { SourceSourcesContextLookup } from '@contexts/posts/infrastructure/sources/source.sources-context.lookup';
 import { PostsHttpController } from '@contexts/posts/presentation/http/posts-http.controller';
@@ -14,7 +15,7 @@ import {
   SOURCE_REPOSITORY,
 } from '@contexts/sources/sources.di-tokens';
 import { SourcesModule } from '@contexts/sources/sources.module';
-import { POST_REPOSITORY, SOURCE_LOOKUP } from './posts.di-tokens';
+import { POST_QUERY, POST_REPOSITORY, SOURCE_LOOKUP } from './posts.di-tokens';
 
 export type PostsModuleOptions = Record<string, never>;
 
@@ -30,6 +31,12 @@ export class PostsModule {
           provide: POST_REPOSITORY,
           useFactory: (db: NodePgDatabase<typeof postsSchema>) =>
             new PostPgDrizzleRepository(db),
+          inject: [DATABASE_TOKENS.drizzleDatabase],
+        },
+        {
+          provide: POST_QUERY,
+          useFactory: (db: NodePgDatabase<typeof postsSchema>) =>
+            new PostPgDrizzleQuery(db),
           inject: [DATABASE_TOKENS.drizzleDatabase],
         },
         {

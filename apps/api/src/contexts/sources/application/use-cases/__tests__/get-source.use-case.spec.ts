@@ -3,7 +3,6 @@ import {
   type SourceSyncJobRepository,
 } from '@contexts/sources/domain';
 import { type SourceEmbeddingLookup } from '@contexts/sources/application/ports';
-import { APPLICATION_ERROR_KIND } from '@kernels/application';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { GetSourceUseCase } from '../get-source.use-case';
 import { buildSource } from '../../../../../../test/support/domains/fixtures/source.fixture';
@@ -13,13 +12,11 @@ type SourceRepositoryMock = {
 };
 
 type SourceSyncJobRepositoryMock = {
-  findLatestBySourceId: MockedFunction<
-    SourceSyncJobRepository['findLatestBySourceId']
-  >;
+  findLatest: MockedFunction<SourceSyncJobRepository['findLatest']>;
 };
 
 type SourceEmbeddingLookupMock = {
-  findBySourceId: MockedFunction<SourceEmbeddingLookup['findBySourceId']>;
+  find: MockedFunction<SourceEmbeddingLookup['find']>;
 };
 
 describe('GetSourceUseCase', () => {
@@ -50,25 +47,6 @@ describe('GetSourceUseCase', () => {
     expect(sources.get).toHaveBeenCalledWith({ id: source.id });
   });
 
-  it('source가 없으면 NOT_FOUND exception을 throw한다', async () => {
-    const sources = createSourceRepositoryMock();
-    const syncJobs = createSyncJobRepositoryMock();
-    const embeddingLookup = createEmbeddingLookupMock();
-    sources.get.mockResolvedValue(null);
-    const useCase = new GetSourceUseCase(
-      sources as unknown as SourceRepository,
-      syncJobs as unknown as SourceSyncJobRepository,
-      embeddingLookup,
-    );
-
-    await expect(
-      useCase.execute({ sourceId: 'non-existent' }),
-    ).rejects.toMatchObject({
-      kind: APPLICATION_ERROR_KIND.NOT_FOUND,
-      code: 'sources.source_not_found',
-    });
-  });
-
   it('repository get exception을 전파한다', async () => {
     const getFailure = new Error('Source Repository operation failed');
     const sources = createSourceRepositoryMock();
@@ -89,22 +67,22 @@ describe('GetSourceUseCase', () => {
 
 function createSourceRepositoryMock(): SourceRepositoryMock {
   return {
-    get: vi.fn<SourceRepository['get']>().mockResolvedValue(null),
+    get: vi
+      .fn<SourceRepository['get']>()
+      .mockResolvedValue(buildSource({ externalSourceId: 'Notes/source.md' })),
   };
 }
 
 function createSyncJobRepositoryMock(): SourceSyncJobRepositoryMock {
   return {
-    findLatestBySourceId: vi
-      .fn<SourceSyncJobRepository['findLatestBySourceId']>()
+    findLatest: vi
+      .fn<SourceSyncJobRepository['findLatest']>()
       .mockResolvedValue(null),
   };
 }
 
 function createEmbeddingLookupMock(): SourceEmbeddingLookupMock {
   return {
-    findBySourceId: vi
-      .fn<SourceEmbeddingLookup['findBySourceId']>()
-      .mockResolvedValue(null),
+    find: vi.fn<SourceEmbeddingLookup['find']>().mockResolvedValue(null),
   };
 }

@@ -17,6 +17,7 @@ related:
   - ./runtime-wiring.md
   - ./context-integration.md
   - ./test.md
+  - ./repository-methods.md
 ---
 
 # API 컨벤션 인덱스
@@ -43,3 +44,4 @@ related:
 - NestJS DI, provider registration, module wiring, platform startup flow, port binding 작업: [API Runtime Wiring 컨벤션](./runtime-wiring.md)을 읽는다.
 - 크로스 컨텍스트 데이터 통합, 컨슈머 소유 포트/어댑터 배치, Pull vs Push 전략 결정 작업: [API 컨텍스트 통합 컨벤션](./context-integration.md)을 읽는다.
 - `apps/api` test file, test structure, test command 선택 작업: [API 테스트 컨벤션](./test.md)을 읽는다.
+- Repository method 호출 지점 결정 (`get` vs `find`, `save` vs `insert`/`update`): [Repository Method 사용 가이드](./repository-methods.md)를 읽는다.

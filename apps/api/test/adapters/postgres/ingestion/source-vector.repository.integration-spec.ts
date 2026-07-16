@@ -72,7 +72,7 @@ describe('SourceVectorDrizzleRepository', () => {
     const sourceVector = buildSourceVector({ sourceId: source.id });
     await repository.save(sourceVector);
 
-    const result = await repository.findBySourceId({ sourceId: source.id });
+    const result = await repository.find({ sourceId: source.id });
 
     expect(result).not.toBeNull();
     expect(result?.id).toBe(source.id);
@@ -80,7 +80,7 @@ describe('SourceVectorDrizzleRepository', () => {
   });
 
   it('source vector가 없으면 null을 반환한다', async () => {
-    const result = await repository.findBySourceId({
+    const result = await repository.find({
       sourceId: 'non-existent-source',
     });
 

@@ -1,12 +1,11 @@
 import { type PostRepository } from '@contexts/posts/domain';
-import { APPLICATION_ERROR_KIND } from '@kernels/application';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { UpdatePostTitleUseCase } from '../update-post-title.use-case';
 import { buildPost } from '../../../../../../test/support/domains/fixtures/post.fixture';
 
 type PostRepositoryMock = {
   get: MockedFunction<PostRepository['get']>;
-  findBySourceId: MockedFunction<PostRepository['findBySourceId']>;
+  find: MockedFunction<PostRepository['find']>;
   list: MockedFunction<PostRepository['list']>;
   save: MockedFunction<PostRepository['save']>;
 };
@@ -27,20 +26,6 @@ describe('UpdatePostTitleUseCase', () => {
     });
     expect(posts.get).toHaveBeenCalledWith({ id: post.id });
     expect(posts.save).toHaveBeenCalledOnce();
-  });
-
-  it('post가 없으면 NOT_FOUND exception을 throw한다', async () => {
-    const posts = createPostRepositoryMock();
-    posts.get.mockResolvedValue(null);
-    const useCase = new UpdatePostTitleUseCase(posts);
-
-    await expect(
-      useCase.execute({ postId: 'non-existent', title: '새 제목' }),
-    ).rejects.toMatchObject({
-      kind: APPLICATION_ERROR_KIND.NOT_FOUND,
-      code: 'posts.post_not_found',
-    });
-    expect(posts.save).not.toHaveBeenCalled();
   });
 
   it('repository get exception을 전파한다', async () => {
@@ -71,10 +56,8 @@ describe('UpdatePostTitleUseCase', () => {
 
 function createPostRepositoryMock(): PostRepositoryMock {
   return {
-    get: vi.fn<PostRepository['get']>().mockResolvedValue(null),
-    findBySourceId: vi
-      .fn<PostRepository['findBySourceId']>()
-      .mockResolvedValue(null),
+    get: vi.fn<PostRepository['get']>().mockResolvedValue(buildPost()),
+    find: vi.fn<PostRepository['find']>().mockResolvedValue(null),
     list: vi.fn<PostRepository['list']>().mockResolvedValue([]),
     save: vi
       .fn<PostRepository['save']>()

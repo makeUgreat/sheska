@@ -10,7 +10,10 @@ import {
   type UploadSourceContentSnapshotCalculator,
   UploadSourceUseCase,
 } from '../upload-source.use-case';
-import { sourceContentByteSize } from '../../../../../../test/support/domains/fixtures/source.fixture';
+import {
+  buildSource,
+  sourceContentByteSize,
+} from '../../../../../../test/support/domains/fixtures/source.fixture';
 import type { SourceEmbeddingLookup } from '@contexts/sources/application/ports';
 
 type ContentSnapshotCalculatorMock = {
@@ -26,9 +29,7 @@ type SourceRepositoryMock = {
 
 type SourceSyncJobRepositoryMock = {
   find: MockedFunction<SourceSyncJobRepository['find']>;
-  findLatestBySourceId: MockedFunction<
-    SourceSyncJobRepository['findLatestBySourceId']
-  >;
+  findLatest: MockedFunction<SourceSyncJobRepository['findLatest']>;
   save: MockedFunction<SourceSyncJobRepository['save']>;
 };
 
@@ -38,7 +39,7 @@ type EventEmitterMock = {
 };
 
 type SourceEmbeddingLookupMock = {
-  findBySourceId: MockedFunction<SourceEmbeddingLookup['findBySourceId']>;
+  find: MockedFunction<SourceEmbeddingLookup['find']>;
 };
 
 function buildMockLogger() {
@@ -384,7 +385,7 @@ function createContentSnapshotCalculatorMock(
 function createSourceRepositoryMock(): SourceRepositoryMock {
   return {
     find: vi.fn<SourceRepository['find']>().mockResolvedValue(null),
-    get: vi.fn<SourceRepository['get']>().mockResolvedValue(null),
+    get: vi.fn<SourceRepository['get']>().mockResolvedValue(buildSource()),
     list: vi.fn<SourceRepository['list']>().mockResolvedValue([]),
     save: vi
       .fn<SourceRepository['save']>()
@@ -395,8 +396,8 @@ function createSourceRepositoryMock(): SourceRepositoryMock {
 function createSourceSyncJobRepositoryMock(): SourceSyncJobRepositoryMock {
   return {
     find: vi.fn<SourceSyncJobRepository['find']>().mockResolvedValue(null),
-    findLatestBySourceId: vi
-      .fn<SourceSyncJobRepository['findLatestBySourceId']>()
+    findLatest: vi
+      .fn<SourceSyncJobRepository['findLatest']>()
       .mockResolvedValue(null),
     save: vi
       .fn<SourceSyncJobRepository['save']>()
@@ -422,8 +423,8 @@ function createEmbeddingLookupMock(
   { hasEmbedding } = { hasEmbedding: false },
 ): SourceEmbeddingLookupMock {
   return {
-    findBySourceId: vi
-      .fn<SourceEmbeddingLookup['findBySourceId']>()
+    find: vi
+      .fn<SourceEmbeddingLookup['find']>()
       .mockResolvedValue(hasEmbedding ? STUB_EMBEDDING_INFO : null),
   };
 }

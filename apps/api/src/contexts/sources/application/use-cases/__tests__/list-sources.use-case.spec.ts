@@ -11,9 +11,7 @@ type SourceRepositoryMock = {
 };
 
 type SourceSyncJobRepositoryMock = {
-  findLatestBySourceId: MockedFunction<
-    SourceSyncJobRepository['findLatestBySourceId']
-  >;
+  findLatest: MockedFunction<SourceSyncJobRepository['findLatest']>;
 };
 
 describe('ListSourcesUseCase', () => {
@@ -103,8 +101,8 @@ function createSourceRepositoryMock(): SourceRepositoryMock {
 
 function createSyncJobRepositoryMock(): SourceSyncJobRepositoryMock {
   return {
-    findLatestBySourceId: vi
-      .fn<SourceSyncJobRepository['findLatestBySourceId']>()
+    findLatest: vi
+      .fn<SourceSyncJobRepository['findLatest']>()
       .mockResolvedValue(null),
   };
 }

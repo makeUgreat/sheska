@@ -64,10 +64,12 @@ describe('SourceDrizzleRepository', () => {
   });
 
   it('id로 source를 조회한다', async () => {
-    const source = buildSource({ externalSourceId: 'Notes/get-source.md' });
+    const source = buildSource({
+      externalSourceId: 'Notes/find-source-by-id.md',
+    });
     await repository.save(source);
 
-    const result = await repository.get({ id: source.id });
+    const result = await repository.find({ id: source.id });
 
     expect(result?.id).toBe(source.id);
     expect(result?.getProps().contentSnapshot.unpack()).toEqual({
@@ -78,9 +80,18 @@ describe('SourceDrizzleRepository', () => {
   });
 
   it('존재하지 않는 id는 null을 반환한다', async () => {
-    const result = await repository.get({ id: 'non-existent-id' });
+    const result = await repository.find({ id: 'non-existent-id' });
 
     expect(result).toBeNull();
+  });
+
+  it('존재하지 않는 id는 NOT_FOUND exception을 throw한다', async () => {
+    await expect(
+      repository.get({ id: 'non-existent-id' }),
+    ).rejects.toMatchObject({
+      kind: 'not_found',
+      code: 'source.get_failed',
+    });
   });
 
   it('source 목록을 반환한다', async () => {

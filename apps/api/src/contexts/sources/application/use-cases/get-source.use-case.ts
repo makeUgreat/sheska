@@ -4,10 +4,6 @@ import {
   type SourceSyncJobRepository,
 } from '@contexts/sources/domain';
 import {
-  APPLICATION_ERROR_KIND,
-  ApplicationException,
-} from '@kernels/application';
-import {
   SOURCE_REPOSITORY,
   SOURCE_SYNC_JOB_REPOSITORY,
   SOURCE_EMBEDDING_LOOKUP,
@@ -50,22 +46,12 @@ export class GetSourceUseCase {
 
   async execute(command: GetSourceCommand): Promise<GetSourceResult> {
     const source = await this.sources.get({ id: command.sourceId });
-
-    if (!source) {
-      throw new ApplicationException({
-        kind: APPLICATION_ERROR_KIND.NOT_FOUND,
-        code: 'sources.source_not_found',
-        message: 'Source not found',
-        details: {},
-      });
-    }
-
     const props = source.getProps();
     const snapshot = props.contentSnapshot.unpack();
 
     const [latestJob, embedding] = await Promise.all([
-      this.syncJobs.findLatestBySourceId({ sourceId: source.id }),
-      this.embeddingLookup.findBySourceId({ sourceId: source.id }),
+      this.syncJobs.findLatest({ sourceId: source.id }),
+      this.embeddingLookup.find({ sourceId: source.id }),
     ]);
 
     return {
