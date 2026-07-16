@@ -171,6 +171,17 @@ export function PostDetailPage() {
               </dd>
             </div>
           </dl>
+
+          {post.sourceContent && (
+            <section className="mt-8">
+              <h2 className="mb-3 text-xs font-semibold uppercase text-gray-500">
+                Content
+              </h2>
+              <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-gray-200 bg-gray-50 p-5 font-mono text-sm leading-relaxed text-gray-800">
+                {post.sourceContent}
+              </pre>
+            </section>
+          )}
         </article>
       ) : null}
     </main>
