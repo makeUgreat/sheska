@@ -1,10 +1,13 @@
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, lt, or } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   type Post,
   type PostRepository,
+  type PostRepositoryCursor,
   type PostRepositoryFindCriteria,
   type PostRepositoryGetCriteria,
+  type PostRepositoryListOptions,
+  type PostRepositoryListResult,
 } from '@contexts/posts/domain';
 import {
   classifyPostgresError,
@@ -78,14 +81,32 @@ export class PostPgDrizzleRepository implements PostRepository {
     return PostPgDrizzleMapper.toDomain(row);
   }
 
-  async list(): Promise<Post[]> {
+  // TODO: Add a (created_at DESC, id DESC) composite index and verify with
+  // EXPLAIN ANALYZE whether this cursor predicate uses an index scan.
+  async list(
+    options?: PostRepositoryListOptions,
+  ): Promise<PostRepositoryListResult> {
+    const limit = options?.limit ?? 20;
     let rows: schema.PostRow[];
 
     try {
-      rows = await this.db
+      const baseQuery = this.db
         .select()
         .from(schema.posts)
-        .orderBy(desc(schema.posts.createdAt));
+        .orderBy(desc(schema.posts.createdAt), desc(schema.posts.id))
+        .limit(limit + 1);
+
+      rows = options?.cursor
+        ? await baseQuery.where(
+            or(
+              lt(schema.posts.createdAt, options.cursor.createdAt),
+              and(
+                eq(schema.posts.createdAt, options.cursor.createdAt),
+                lt(schema.posts.id, options.cursor.id),
+              ),
+            ),
+          )
+        : await baseQuery;
     } catch (error: unknown) {
       throw new InfrastructureException({
         kind: classifyPostgresError(error),
@@ -97,7 +118,18 @@ export class PostPgDrizzleRepository implements PostRepository {
       });
     }
 
-    return rows.map((row) => PostPgDrizzleMapper.toDomain(row));
+    const hasNext = rows.length > limit;
+    const data = hasNext ? rows.slice(0, limit) : rows;
+    const lastRow = data[data.length - 1];
+    const nextCursor: PostRepositoryCursor | null =
+      hasNext && lastRow
+        ? { createdAt: lastRow.createdAt, id: lastRow.id }
+        : null;
+
+    return {
+      posts: data.map((row) => PostPgDrizzleMapper.toDomain(row)),
+      nextCursor,
+    };
   }
 
   async save(post: Post): Promise<Post> {

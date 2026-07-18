@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useApiClient } from './client-context';
 import { type PublishPostRequest, type UpdatePostRequest } from './client';
 
@@ -33,6 +38,16 @@ export function useListPosts() {
   return useQuery({
     queryKey: ['posts'],
     queryFn: () => client.listPosts(),
+  });
+}
+
+export function useInfiniteListPosts(limit?: number) {
+  const client = useApiClient();
+  return useInfiniteQuery({
+    queryKey: ['posts', 'infinite', limit],
+    queryFn: ({ pageParam }) => client.listPosts({ cursor: pageParam, limit }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
 }
 

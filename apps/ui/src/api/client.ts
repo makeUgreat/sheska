@@ -36,8 +36,14 @@ export interface PostSummary {
   updatedAt: string;
 }
 
+export interface ListPostsParams {
+  cursor?: string;
+  limit?: number;
+}
+
 export interface ListPostsResponse {
   posts: PostSummary[];
+  nextCursor: string | null;
 }
 
 export interface PublishPostRequest {
@@ -101,8 +107,14 @@ export class SheskaApiClient {
     return this.http.get<GetSourceResponse>(`/sources/${id}`);
   }
 
-  listPosts(): Promise<ListPostsResponse> {
-    return this.http.get<ListPostsResponse>('/posts');
+  listPosts(params?: ListPostsParams): Promise<ListPostsResponse> {
+    const qs = new URLSearchParams();
+    if (params?.cursor) qs.set('cursor', params.cursor);
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const query = qs.toString();
+    return this.http.get<ListPostsResponse>(
+      `/posts${query ? `?${query}` : ''}`,
+    );
   }
 
   getPost(id: string): Promise<GetPostResponse> {
