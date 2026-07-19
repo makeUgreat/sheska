@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/ddd.md
-last_synced: 2026-06-30
+last_synced: 2026-07-20
 related:
   - ./architecture.md
   - ./context-integration.md
@@ -61,7 +61,7 @@ DDD 구성 요소는 class가 위치한 곳이 아니라 domain에서 맡는 역
 | Aggregate Root | Aggregate 외부에서 접근 가능한 유일한 진입점이며 aggregate invariant를 보호한다. |
 | Domain Method | Entity 또는 aggregate가 domain rule에 따라 자기 상태를 바꾸는 behavior. |
 | Domain Service | 하나의 entity, value object, aggregate root에 자연스럽게 속하지 않는 business rule. |
-| Repository | Aggregate를 저장하고 다시 가져오는 domain collection-like abstraction이며 database query helper가 아니다. |
+| Repository | Aggregate를 저장하고 다시 가져오는 domain collection-like abstraction이며 database query helper가 아니다. Repository를 통한 읽기는 **read-for-write**다: domain method를 호출하거나 쓰기 전 전제 조건을 검증하기 위해 aggregate를 로드한다. |
 | Factory | 복잡한 domain object 생성 규칙을 캡슐화한다. |
 | Domain Event | Domain 안에서 이미 발생한 의미 있는 business fact. |
 | Specification | 재사용 가능한 domain condition 또는 판정 rule. |
@@ -87,7 +87,7 @@ DDD 구성 요소는 class가 위치한 곳이 아니라 domain에서 맡는 역
 - `get`은 caller가 resource가 존재한다고 기대한다는 의미다. 반환 타입은 반드시 `Promise<T>`여야 하며, `Promise<T | null>`은 허용하지 않는다. Resource가 없으면 구현체가 `InfrastructureException(NOT_FOUND)`을 throw한다. 해당 contract에서 부재가 exceptional일 때만 사용하고, 그렇지 않으면 `find`를 선호한다.
 - `get`도 `find`와 같은 object parameter naming을 사용한다. 예: `get({ id })`.
 - `find`와 `get`의 criteria는 반드시 object 타입이어야 한다. `find(id: string)`이나 `get(sourceId: string)`처럼 primitive를 직접 받는 것은 허용하지 않는다. `find({ id })`, `get({ id })` 형태로 사용한다.
-- `list`는 여러 aggregate 또는 read model을 반환한다. Filtering이 필요하면 explicit criteria object를 받는 것이 좋다.
+- `list`는 페이지네이션 없이 여러 aggregate를 반환한다. Filtering이 필요하면 explicit criteria object를 받는 것이 좋다. Caller가 domain behavior를 호출하기 위해 full aggregate가 필요할 때 repository에 `list`를 사용한다. 결과가 화면 표시용 flat read-model projection이라면(특히 cursor pagination과 함께 사용될 때) application Query port에 `paginate` 또는 `search`로 정의한다.
 - `find`와 `get`의 criteria object는 하나의 resource를 식별하는 unique lookup만 표현해야 한다. 여러 결과가 가능한 filtering은 `list`로 표현한다.
 - Storage mechanics, query implementation, table shape를 노출하는 repository method name은 피한다. 특히 field name을 method name에 포함하지 않고 criteria object의 field로 표현한다. 예: `findBySourceId(sourceId)` 대신 `find({ sourceId })`.
 - 각 method를 호출 지점에서 언제 사용할지에 대한 가이드는 [Repository Method 사용 가이드](./repository-methods.md)를 참조한다.

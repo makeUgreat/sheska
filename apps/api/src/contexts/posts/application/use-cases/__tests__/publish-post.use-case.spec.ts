@@ -11,7 +11,6 @@ import { buildPost } from '../../../../../../test/support/domains/fixtures/post.
 type PostRepositoryMock = {
   get: MockedFunction<PostRepository['get']>;
   find: MockedFunction<PostRepository['find']>;
-  list: MockedFunction<PostRepository['list']>;
   save: MockedFunction<PostRepository['save']>;
 };
 
@@ -146,9 +145,6 @@ function createPostRepositoryMock(): PostRepositoryMock {
   return {
     get: vi.fn<PostRepository['get']>().mockResolvedValue(buildPost()),
     find: vi.fn<PostRepository['find']>().mockResolvedValue(null),
-    list: vi
-      .fn<PostRepository['list']>()
-      .mockResolvedValue({ posts: [], nextCursor: null }),
     save: vi
       .fn<PostRepository['save']>()
       .mockImplementation((post) => Promise.resolve(post)),

@@ -59,7 +59,7 @@ export function useInfiniteSearchPosts(query: string, limit?: number) {
       client.searchPosts({ query, cursor: pageParam, limit }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    enabled: query.length >= 2,
+    enabled: query.length >= 1,
   });
 }
 

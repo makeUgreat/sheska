@@ -371,10 +371,10 @@ describe('PostsHttpController', () => {
       expect(searchPostsUseCase.execute).not.toHaveBeenCalled();
     });
 
-    it('q가 1자이면 400 응답을 반환하고 use case를 호출하지 않는다', async () => {
+    it('q가 공백이면 400 응답을 반환하고 use case를 호출하지 않는다', async () => {
       const response = await request(httpServer)
         .get('/posts/search')
-        .query({ q: 'a' })
+        .query({ q: '   ' })
         .expect(400);
 
       expect(response.body).toMatchObject({
@@ -382,6 +382,24 @@ describe('PostsHttpController', () => {
         code: 'request.validation_failed',
       });
       expect(searchPostsUseCase.execute).not.toHaveBeenCalled();
+    });
+
+    it('q가 1자이면 검색 use case에 전달한다', async () => {
+      searchPostsUseCase.execute.mockResolvedValue({
+        posts: [],
+        nextCursor: null,
+      });
+
+      await request(httpServer)
+        .get('/posts/search')
+        .query({ q: 'a' })
+        .expect(200);
+
+      expect(searchPostsUseCase.execute).toHaveBeenCalledWith({
+        query: 'a',
+        cursor: undefined,
+        limit: undefined,
+      });
     });
 
     it('예기치 못한 오류는 500 응답으로 마스킹한다', async () => {

@@ -1,1 +1,1 @@
-export { type Embedder } from './embedder.port';
+export { type Embedder } from './embedder';

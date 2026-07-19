@@ -10,6 +10,7 @@ import * as sourcesSchema from '@contexts/sources/infrastructure/persistence/pos
 import { SourcePgDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
 import { SourceSyncJobPgDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source-sync-job.pg-drizzle.repository';
 import { SourceEmbeddingIngestionLookup } from '@contexts/sources/infrastructure/ingestion/source-embedding.ingestion.lookup';
+import { SourcePgDrizzleQuery } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.query';
 import { SourcesHttpController } from '@contexts/sources/presentation/http/sources-http.controller';
 import { HandleIngestionResultHandler } from '@contexts/sources/application/event-handlers/handle-ingestion-result.handler';
 import {
@@ -22,6 +23,7 @@ import {
   SOURCE_REPOSITORY,
   SOURCE_SYNC_JOB_REPOSITORY,
   SOURCE_EMBEDDING_LOOKUP,
+  SOURCE_QUERY,
 } from './sources.di-tokens';
 
 export type SourcesModuleOptions = Record<string, never>;
@@ -56,6 +58,12 @@ export class SourcesModule {
           useFactory: (vectorRepo: SourceVectorRepository) =>
             new SourceEmbeddingIngestionLookup(vectorRepo),
           inject: [SOURCE_VECTOR_REPOSITORY],
+        },
+        {
+          provide: SOURCE_QUERY,
+          useFactory: (db: NodePgDatabase<typeof sourcesSchema>) =>
+            new SourcePgDrizzleQuery(db),
+          inject: [DATABASE_TOKENS.drizzleDatabase],
         },
         ListSourcesUseCase,
         GetSourceUseCase,

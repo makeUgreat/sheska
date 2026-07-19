@@ -35,10 +35,11 @@ export function PostListPage() {
   const limit = limitParam ? Number(limitParam) : undefined;
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);
-  const isSearching = debouncedQuery.length >= 2;
+  const normalizedQuery = debouncedQuery.trim();
+  const isSearching = normalizedQuery.length >= 1;
 
   const listResult = useInfiniteListPosts(limit);
-  const searchResult = useInfiniteSearchPosts(debouncedQuery, limit);
+  const searchResult = useInfiniteSearchPosts(normalizedQuery, limit);
   const result = isSearching ? searchResult : listResult;
   const {
     data,
@@ -89,14 +90,14 @@ export function PostListPage() {
       ) : posts.length === 0 ? (
         <p className="text-gray-500">
           {isSearching
-            ? `No results for "${debouncedQuery}".`
+            ? `No results for "${normalizedQuery}".`
             : 'No posts yet.'}
         </p>
       ) : (
         <>
           <PostList
             posts={posts}
-            highlight={isSearching ? debouncedQuery : ''}
+            highlight={isSearching ? normalizedQuery : ''}
           />
           <div ref={sentinelRef} />
           {isFetchingNextPage && (
