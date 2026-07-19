@@ -18,9 +18,31 @@ Persistence-specific rules are in the [API Persistence Policy](./persistence.md)
 
 ## Scope
 
-- Use this document when naming, placing, or structuring infrastructure adapter files.
+- Use this document when naming, placing, or structuring application contract files or infrastructure adapter files.
 - Use the persistence policy for database schema, ORM, migration, repository mapper, and storage constraint rules.
 - Use the source dependency convention for import direction and layer boundary rules.
+
+## Contract File Naming
+
+Application contract files (interfaces that define ports — repository contracts, query ports, lookup ports, etc.) follow the pattern:
+
+```
+{domain-name}.{semantic-role}.ts
+```
+
+- **domain-name**: the aggregate, entity, or concept the contract is for (e.g. `post`, `source`)
+- **semantic-role**: what the contract **does**, expressed as a domain or technical term (e.g. `query`, `lookup`, `repository`). Never use `port` here — it names the architectural pattern, not the contract's purpose.
+
+Examples:
+
+| File | Interface |
+| --- | --- |
+| `post.query.ts` | `PostQuery` |
+| `source.query.ts` | `SourceQuery` |
+| `source.lookup.ts` | `SourceLookup` |
+| `embedder.ts` | `Embedder` (concept and role are the same word) |
+
+The `.port.ts` suffix is **not allowed**. It encodes the hexagonal architecture term "port" into the filename, which adds no information beyond what the role already conveys.
 
 ## Adapter File Naming
 

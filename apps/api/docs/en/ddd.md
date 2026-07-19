@@ -60,7 +60,7 @@ DDD building blocks are chosen by the domain role they play, not by where a clas
 | Aggregate Root | Only externally reachable entry point into an aggregate; it protects aggregate invariants. |
 | Domain Method | Behavior on an entity or aggregate that changes its state according to domain rules. |
 | Domain Service | Business rule that does not naturally belong to a single entity, value object, or aggregate root. |
-| Repository | Domain collection-like abstraction for saving and retrieving aggregates; it is not a database query helper. |
+| Repository | Domain collection-like abstraction for saving and retrieving aggregates; it is not a database query helper. Repository reads are **read-for-write**: aggregates are loaded to call domain methods on them or to verify preconditions before a write. |
 | Factory | Encapsulation of complex domain object creation rules. |
 | Domain Event | Meaningful business fact that already happened inside the domain. |
 | Specification | Reusable domain condition or decision rule. |
@@ -86,7 +86,7 @@ DDD building blocks are chosen by the domain role they play, not by where a clas
 - `get` means the caller expects the resource to exist. Its return type MUST be `Promise<T>`, never `Promise<T | null>`. When the resource is absent, the implementation throws `InfrastructureException(NOT_FOUND)`. Use `get` only when absence is exceptional in that contract; otherwise prefer `find`.
 - `get` uses the same object parameter naming as `find`. Example: `get({ id })`.
 - `find` and `get` criteria MUST be object types. Primitive parameters such as `find(id: string)` or `get(sourceId: string)` are not allowed; use `find({ id })` or `get({ id })` instead.
-- `list` returns multiple aggregates or read models. It SHOULD accept an explicit criteria object when filtering is needed.
+- `list` returns multiple aggregates without pagination. It SHOULD accept an explicit criteria object when filtering is needed. Use `list` on a repository when callers need full aggregate objects to invoke domain behavior. When the result is a flat read-model projection for display (especially with cursor pagination), define the operation on an application Query port using `paginate` or `search` instead.
 - `find` and `get` criteria objects should express only unique lookups that identify one resource. Use `list` for filtering that can return multiple results.
 - Avoid repository method names that expose storage mechanics, query implementation, or table shape. In particular, do not encode field names into method names; express them through criteria object fields instead. Example: prefer `find({ sourceId })` over `findBySourceId(sourceId)`.
 - For call-site guidance on when to use each method, see [Repository Method Usage Guide](./repository-methods.md).

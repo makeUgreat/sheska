@@ -10,13 +10,14 @@ import { buildPost } from '../../../../../../test/support/domains/fixtures/post.
 type PostRepositoryMock = {
   get: MockedFunction<PostRepository['get']>;
   find: MockedFunction<PostRepository['find']>;
-  list: MockedFunction<PostRepository['list']>;
   save: MockedFunction<PostRepository['save']>;
 };
 
 type PostQueryMock = {
   get: MockedFunction<PostQuery['get']>;
   find: MockedFunction<PostQuery['find']>;
+  paginate: MockedFunction<PostQuery['paginate']>;
+  search: MockedFunction<PostQuery['search']>;
 };
 
 function buildPostQueryResult(
@@ -109,9 +110,6 @@ function createPostRepositoryMock(): PostRepositoryMock {
   return {
     get: vi.fn<PostRepository['get']>().mockResolvedValue(buildPost()),
     find: vi.fn<PostRepository['find']>().mockResolvedValue(null),
-    list: vi
-      .fn<PostRepository['list']>()
-      .mockResolvedValue({ posts: [], nextCursor: null }),
     save: vi
       .fn<PostRepository['save']>()
       .mockImplementation((post) => Promise.resolve(post)),
@@ -122,5 +120,11 @@ function createPostQueryMock(): PostQueryMock {
   return {
     get: vi.fn<PostQuery['get']>().mockResolvedValue(null as never),
     find: vi.fn<PostQuery['find']>().mockResolvedValue(null),
+    paginate: vi
+      .fn<PostQuery['paginate']>()
+      .mockResolvedValue({ posts: [], nextCursor: null }),
+    search: vi
+      .fn<PostQuery['search']>()
+      .mockResolvedValue({ posts: [], nextCursor: null }),
   };
 }

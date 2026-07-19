@@ -1,44 +1,29 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
-  type PostRepository,
-  type PostRepositoryCursor,
-} from '@contexts/posts/domain';
-import { POST_REPOSITORY } from '@contexts/posts/posts.di-tokens';
-import { type ListPostsResult } from './list-posts.use-case';
+  type PostQuery,
+  type PostQueryCursor,
+  type PostQueryPaginateResult,
+} from '@contexts/posts/application/ports';
+import { POST_QUERY } from '@contexts/posts/posts.di-tokens';
 
 export type SearchPostsCommand = {
   readonly query: string;
-  readonly cursor?: PostRepositoryCursor;
+  readonly cursor?: PostQueryCursor;
   readonly limit?: number;
 };
 
 @Injectable()
 export class SearchPostsUseCase {
   constructor(
-    @Inject(POST_REPOSITORY)
-    private readonly posts: PostRepository,
+    @Inject(POST_QUERY)
+    private readonly postQuery: PostQuery,
   ) {}
 
-  async execute(command: SearchPostsCommand): Promise<ListPostsResult> {
-    const { posts, nextCursor } = await this.posts.list({
+  async execute(command: SearchPostsCommand): Promise<PostQueryPaginateResult> {
+    return this.postQuery.search({
       query: command.query,
       cursor: command.cursor,
       limit: command.limit ?? 20,
     });
-
-    return {
-      posts: posts.map((post) => {
-        const props = post.getProps();
-        return {
-          postId: post.id,
-          sourceId: props.sourceId,
-          title: props.title.unpack(),
-          viewCount: props.viewCount.unpack(),
-          createdAt: post.createdAt,
-          updatedAt: post.updatedAt,
-        };
-      }),
-      nextCursor,
-    };
   }
 }

@@ -3,7 +3,7 @@ import { decodeCursor } from '@kernels/application';
 
 export const searchPostsHttpRequestSchema = z
   .object({
-    q: z.string().min(2),
+    q: z.string().trim().min(1),
     cursor: z
       .string()
       .refine(isValidCursor, { message: 'Invalid cursor' })
