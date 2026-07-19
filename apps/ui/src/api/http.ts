@@ -1,8 +1,9 @@
 export class HttpClient {
   constructor(private readonly baseUrl: string) {}
 
-  async get<T>(path: string): Promise<T> {
-    const url = `${this.baseUrl}${path}`;
+  async get<T>(path: string, params?: Record<string, string>): Promise<T> {
+    const search = params ? '?' + new URLSearchParams(params).toString() : '';
+    const url = `${this.baseUrl}${path}${search}`;
     const res = await fetch(url, {
       headers: { 'Content-Type': 'application/json' },
     });
