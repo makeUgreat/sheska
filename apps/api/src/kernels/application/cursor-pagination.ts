@@ -1,6 +1,7 @@
 export type CursorValue = {
   readonly createdAt: Date;
   readonly id: string;
+  readonly score?: number;
 };
 
 export type CursorListOptions = {
@@ -18,6 +19,7 @@ export function encodeCursor(cursor: CursorValue): string {
     JSON.stringify({
       createdAt: cursor.createdAt.toISOString(),
       id: cursor.id,
+      ...(cursor.score === undefined ? {} : { score: cursor.score }),
     }),
   ).toString('base64url');
 }
@@ -34,7 +36,8 @@ export function decodeCursor(encoded: string): CursorValue {
     !('id' in parsed) ||
     typeof parsed.createdAt !== 'string' ||
     typeof parsed.id !== 'string' ||
-    parsed.id.length === 0
+    parsed.id.length === 0 ||
+    ('score' in parsed && typeof parsed.score !== 'number')
   ) {
     throw new Error('Invalid cursor');
   }
@@ -45,5 +48,14 @@ export function decodeCursor(encoded: string): CursorValue {
     throw new Error('Invalid cursor');
   }
 
-  return { createdAt, id: parsed.id };
+  const score =
+    'score' in parsed && typeof parsed.score === 'number'
+      ? parsed.score
+      : undefined;
+
+  return {
+    createdAt,
+    id: parsed.id,
+    ...(score === undefined ? {} : { score }),
+  };
 }

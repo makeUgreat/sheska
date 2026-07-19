@@ -41,6 +41,10 @@ export interface ListPostsParams {
   limit?: number;
 }
 
+export interface SearchPostsParams extends ListPostsParams {
+  query: string;
+}
+
 export interface ListPostsResponse {
   posts: PostSummary[];
   nextCursor: string | null;
@@ -115,6 +119,13 @@ export class SheskaApiClient {
     return this.http.get<ListPostsResponse>(
       `/posts${query ? `?${query}` : ''}`,
     );
+  }
+
+  searchPosts(params: SearchPostsParams): Promise<ListPostsResponse> {
+    const queryParams: Record<string, string> = { q: params.query };
+    if (params.cursor) queryParams.cursor = params.cursor;
+    if (params.limit) queryParams.limit = String(params.limit);
+    return this.http.get<ListPostsResponse>('/posts/search', queryParams);
   }
 
   getPost(id: string): Promise<GetPostResponse> {

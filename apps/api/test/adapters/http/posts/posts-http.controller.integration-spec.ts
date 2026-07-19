@@ -5,6 +5,7 @@ import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { PublishPostUseCase } from '@contexts/posts/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/posts/application/use-cases/get-post.use-case';
 import { ListPostsUseCase } from '@contexts/posts/application/use-cases/list-posts.use-case';
+import { SearchPostsUseCase } from '@contexts/posts/application/use-cases/search-posts.use-case';
 import { UpdatePostTitleUseCase } from '@contexts/posts/application/use-cases/update-post-title.use-case';
 import {
   ApplicationException,
@@ -41,6 +42,10 @@ type ListPostsUseCaseMock = {
   execute: MockedFunction<ListPostsUseCase['execute']>;
 };
 
+type SearchPostsUseCaseMock = {
+  execute: MockedFunction<SearchPostsUseCase['execute']>;
+};
+
 type UpdatePostTitleUseCaseMock = {
   execute: MockedFunction<UpdatePostTitleUseCase['execute']>;
 };
@@ -51,12 +56,14 @@ describe('PostsHttpController', () => {
   let publishPostUseCase: PublishPostUseCaseMock;
   let getPostUseCase: GetPostUseCaseMock;
   let listPostsUseCase: ListPostsUseCaseMock;
+  let searchPostsUseCase: SearchPostsUseCaseMock;
   let updatePostTitleUseCase: UpdatePostTitleUseCaseMock;
 
   beforeEach(async () => {
     publishPostUseCase = { execute: vi.fn<PublishPostUseCase['execute']>() };
     getPostUseCase = { execute: vi.fn<GetPostUseCase['execute']>() };
     listPostsUseCase = { execute: vi.fn<ListPostsUseCase['execute']>() };
+    searchPostsUseCase = { execute: vi.fn<SearchPostsUseCase['execute']>() };
     updatePostTitleUseCase = {
       execute: vi.fn<UpdatePostTitleUseCase['execute']>(),
     };
@@ -67,6 +74,7 @@ describe('PostsHttpController', () => {
         { provide: PublishPostUseCase, useValue: publishPostUseCase },
         { provide: GetPostUseCase, useValue: getPostUseCase },
         { provide: ListPostsUseCase, useValue: listPostsUseCase },
+        { provide: SearchPostsUseCase, useValue: searchPostsUseCase },
         { provide: UpdatePostTitleUseCase, useValue: updatePostTitleUseCase },
         { provide: APP_PIPE, useClass: ZodValidationPipe },
         {
@@ -280,6 +288,118 @@ describe('PostsHttpController', () => {
         code: 'request.validation_failed',
       });
       expect(listPostsUseCase.execute).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('GET /posts/search', () => {
+    it('query와 일치하는 post 목록과 nextCursor를 200으로 반환한다', async () => {
+      const now = new Date('2026-01-01T00:00:00.000Z');
+      const cursorValue = { createdAt: now, id: 'post-1', score: 1 };
+      searchPostsUseCase.execute.mockResolvedValue({
+        posts: [
+          {
+            postId: 'post-1',
+            sourceId: 'source-1',
+            title: 'TypeScript 입문',
+            viewCount: 0,
+            createdAt: now,
+            updatedAt: now,
+          },
+        ],
+        nextCursor: cursorValue,
+      });
+
+      const response = await request(httpServer)
+        .get('/posts/search')
+        .query({ q: 'TypeScript' })
+        .expect(200);
+      const body = response.body as { posts: unknown[]; nextCursor: unknown };
+
+      expect(body.posts).toEqual([
+        {
+          postId: 'post-1',
+          sourceId: 'source-1',
+          title: 'TypeScript 입문',
+          viewCount: 0,
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        },
+      ]);
+      expect(typeof body.nextCursor).toBe('string');
+      expect(searchPostsUseCase.execute).toHaveBeenCalledWith({
+        query: 'TypeScript',
+        cursor: undefined,
+        limit: undefined,
+      });
+    });
+
+    it('cursor와 limit 쿼리 파라미터를 디코딩하여 use case에 전달한다', async () => {
+      const now = new Date('2026-01-01T00:00:00.000Z');
+      const encodedCursor = Buffer.from(
+        JSON.stringify({
+          createdAt: now.toISOString(),
+          id: 'post-1',
+          score: 0.8,
+        }),
+      ).toString('base64url');
+      searchPostsUseCase.execute.mockResolvedValue({
+        posts: [],
+        nextCursor: null,
+      });
+
+      await request(httpServer)
+        .get('/posts/search')
+        .query({ q: 'TypeScript', cursor: encodedCursor, limit: 5 })
+        .expect(200);
+
+      expect(searchPostsUseCase.execute).toHaveBeenCalledWith({
+        query: 'TypeScript',
+        cursor: { createdAt: now, id: 'post-1', score: 0.8 },
+        limit: 5,
+      });
+    });
+
+    it('q가 없으면 400 응답을 반환하고 use case를 호출하지 않는다', async () => {
+      const response = await request(httpServer)
+        .get('/posts/search')
+        .expect(400);
+
+      expect(response.body).toMatchObject({
+        statusCode: 400,
+        code: 'request.validation_failed',
+      });
+      expect(searchPostsUseCase.execute).not.toHaveBeenCalled();
+    });
+
+    it('q가 1자이면 400 응답을 반환하고 use case를 호출하지 않는다', async () => {
+      const response = await request(httpServer)
+        .get('/posts/search')
+        .query({ q: 'a' })
+        .expect(400);
+
+      expect(response.body).toMatchObject({
+        statusCode: 400,
+        code: 'request.validation_failed',
+      });
+      expect(searchPostsUseCase.execute).not.toHaveBeenCalled();
+    });
+
+    it('예기치 못한 오류는 500 응답으로 마스킹한다', async () => {
+      searchPostsUseCase.execute.mockRejectedValue(
+        new Error('DB connection lost'),
+      );
+
+      const response = await request(httpServer)
+        .get('/posts/search')
+        .query({ q: 'TypeScript' })
+        .expect(500);
+
+      expect(response.body).toEqual({
+        statusCode: 500,
+        code: 'internal.unexpected',
+        message: 'Internal server error',
+        details: {},
+      });
     });
   });
 

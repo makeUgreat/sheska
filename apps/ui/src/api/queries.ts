@@ -51,6 +51,18 @@ export function useInfiniteListPosts(limit?: number) {
   });
 }
 
+export function useInfiniteSearchPosts(query: string, limit?: number) {
+  const client = useApiClient();
+  return useInfiniteQuery({
+    queryKey: ['posts', 'search', query, limit],
+    queryFn: ({ pageParam }) =>
+      client.searchPosts({ query, cursor: pageParam, limit }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: query.length >= 2,
+  });
+}
+
 export function usePublishPost() {
   const client = useApiClient();
   const queryClient = useQueryClient();

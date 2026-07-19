@@ -4,6 +4,7 @@ import { DATABASE_TOKENS } from '@kernels/infrastructure';
 import { PublishPostUseCase } from '@contexts/posts/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/posts/application/use-cases/get-post.use-case';
 import { ListPostsUseCase } from '@contexts/posts/application/use-cases/list-posts.use-case';
+import { SearchPostsUseCase } from '@contexts/posts/application/use-cases/search-posts.use-case';
 import { UpdatePostTitleUseCase } from '@contexts/posts/application/use-cases/update-post-title.use-case';
 import { PostPgDrizzleRepository } from '@contexts/posts/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.repository';
 import { PostPgDrizzleQuery } from '@contexts/posts/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.query';
@@ -48,12 +49,14 @@ export class PostsModule {
         PublishPostUseCase,
         GetPostUseCase,
         ListPostsUseCase,
+        SearchPostsUseCase,
         UpdatePostTitleUseCase,
       ],
       exports: [
         PublishPostUseCase,
         GetPostUseCase,
         ListPostsUseCase,
+        SearchPostsUseCase,
         UpdatePostTitleUseCase,
       ],
     };

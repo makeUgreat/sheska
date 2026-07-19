@@ -11,11 +11,13 @@ export type PostRepositoryFindCriteria = {
 export type PostRepositoryCursor = {
   readonly createdAt: Date;
   readonly id: string;
+  readonly score?: number;
 };
 
 export type PostRepositoryListOptions = {
   readonly limit: number;
   readonly cursor?: PostRepositoryCursor;
+  readonly query?: string;
 };
 
 export type PostRepositoryListResult = {
