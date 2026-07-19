@@ -1,10 +1,11 @@
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   type Post,
   type PostRepository,
   type PostRepositoryFindCriteria,
   type PostRepositoryGetCriteria,
+  type PostRepositoryListCriteria,
 } from '@contexts/posts/domain';
 import {
   classifyPostgresError,
@@ -78,14 +79,24 @@ export class PostPgDrizzleRepository implements PostRepository {
     return PostPgDrizzleMapper.toDomain(row);
   }
 
-  async list(): Promise<Post[]> {
+  async list(criteria?: PostRepositoryListCriteria): Promise<Post[]> {
     let rows: schema.PostRow[];
 
     try {
-      rows = await this.db
-        .select()
-        .from(schema.posts)
-        .orderBy(desc(schema.posts.createdAt));
+      if (criteria?.query !== undefined) {
+        rows = await this.db
+          .select()
+          .from(schema.posts)
+          .where(sql`${schema.posts.title} % ${criteria.query}`)
+          .orderBy(
+            sql`similarity(${schema.posts.title}, ${criteria.query}) DESC`,
+          );
+      } else {
+        rows = await this.db
+          .select()
+          .from(schema.posts)
+          .orderBy(desc(schema.posts.createdAt));
+      }
     } catch (error: unknown) {
       throw new InfrastructureException({
         kind: classifyPostgresError(error),

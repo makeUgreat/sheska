@@ -5,4 +5,5 @@ export {
   type PostRepository,
   type PostRepositoryFindCriteria,
   type PostRepositoryGetCriteria,
+  type PostRepositoryListCriteria,
 } from './post.repository';
