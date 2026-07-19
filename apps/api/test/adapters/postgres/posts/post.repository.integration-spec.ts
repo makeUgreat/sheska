@@ -102,6 +102,53 @@ describe('PostPgDrizzleRepository', () => {
     expect(ids).toContain(post2.id);
   });
 
+  it('trigram 검색으로 유사한 title을 가진 post를 반환한다', async () => {
+    const source1 = await sources.save(
+      buildSource({ externalSourceId: 'Notes/post-repo-trgm-match.md' }),
+    );
+    const source2 = await sources.save(
+      buildSource({ externalSourceId: 'Notes/post-repo-trgm-nomatch.md' }),
+    );
+    const matchingPost = buildPost({
+      sourceId: source1.id,
+      title: 'TypeScript 입문 가이드',
+    });
+    const unrelatedPost = buildPost({
+      sourceId: source2.id,
+      title: '파이썬 데이터 분석',
+    });
+    await posts.save(matchingPost);
+    await posts.save(unrelatedPost);
+
+    const result = await posts.list({ query: 'TypeScript' });
+
+    const ids = result.map((p) => p.id);
+    expect(ids).toContain(matchingPost.id);
+    expect(ids).not.toContain(unrelatedPost.id);
+  });
+
+  it('오타가 포함된 query로도 유사한 title을 가진 post를 반환한다', async () => {
+    const source = await sources.save(
+      buildSource({ externalSourceId: 'Notes/post-repo-trgm-typo.md' }),
+    );
+    const post = buildPost({
+      sourceId: source.id,
+      title: 'TypeScript 입문 가이드',
+    });
+    await posts.save(post);
+
+    const result = await posts.list({ query: 'TypeScirpt' });
+
+    const ids = result.map((p) => p.id);
+    expect(ids).toContain(post.id);
+  });
+
+  it('trigram 검색에 일치하는 post가 없으면 빈 배열을 반환한다', async () => {
+    const result = await posts.list({ query: '일치하지않는쿼리xyz' });
+
+    expect(result).toHaveLength(0);
+  });
+
   it('같은 sourceId로 두 번 저장하면 conflict exception을 발생시킨다', async () => {
     const source = await sources.save(
       buildSource({ externalSourceId: 'Notes/post-repo-conflict.md' }),

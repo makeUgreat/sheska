@@ -18,6 +18,7 @@ const MOCK_POST: GetPostResponse = {
   viewCount: 7,
   createdAt: NOW,
   updatedAt: NOW,
+  sourceContent: '---\ntitle: 테스트 포스트\n---\n본문 내용입니다.',
 };
 
 function buildMockClient(

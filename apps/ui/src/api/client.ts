@@ -60,6 +60,7 @@ export interface GetPostResponse {
   viewCount: number;
   createdAt: string;
   updatedAt: string;
+  sourceContent: string;
 }
 
 export interface UpdatePostRequest {
@@ -102,6 +103,10 @@ export class SheskaApiClient {
 
   listPosts(): Promise<ListPostsResponse> {
     return this.http.get<ListPostsResponse>('/posts');
+  }
+
+  searchPosts(query: string): Promise<ListPostsResponse> {
+    return this.http.get<ListPostsResponse>('/posts/search', { q: query });
   }
 
   getPost(id: string): Promise<GetPostResponse> {
