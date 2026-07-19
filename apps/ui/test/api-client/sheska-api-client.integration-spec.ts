@@ -134,22 +134,22 @@ describe('SheskaApiClient', () => {
       (await readFile(BASE_URL_FILE, 'utf8')).trim();
     const client = new SheskaApiClient(new HttpClient(baseUrl));
 
+    const title = `통합 테스트 포스트 ${randomUUID()}`;
     const uploadResponse = await fetch(`${baseUrl}/sources`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         externalSourceId: `ui-api-client-${randomUUID()}`,
-        content: `API client integration test content ${randomUUID()}`,
+        content: `---\ntitle: ${title}\n---\nAPI client integration test content ${randomUUID()}`,
       }),
     });
     expect(uploadResponse.status).toBe(201);
     const uploaded = (await uploadResponse.json()) as { sourceId: string };
 
-    const title = `통합 테스트 포스트 ${randomUUID()}`;
     const publishResponse = await fetch(`${baseUrl}/posts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sourceId: uploaded.sourceId, title }),
+      body: JSON.stringify({ sourceId: uploaded.sourceId }),
     });
     expect(publishResponse.status).toBe(201);
     const published = (await publishResponse.json()) as { postId: string };
@@ -185,12 +185,13 @@ describe('SheskaApiClient', () => {
       (await readFile(BASE_URL_FILE, 'utf8')).trim();
     const client = new SheskaApiClient(new HttpClient(baseUrl));
 
+    const title = `통합 테스트 포스트 ${randomUUID()}`;
     const uploadResponse = await fetch(`${baseUrl}/sources`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         externalSourceId: `ui-api-client-${randomUUID()}`,
-        content: `API client integration test content ${randomUUID()}`,
+        content: `---\ntitle: ${title}\n---\nAPI client integration test content ${randomUUID()}`,
       }),
     });
     expect(uploadResponse.status).toBe(201);
@@ -199,10 +200,7 @@ describe('SheskaApiClient', () => {
     const publishResponse = await fetch(`${baseUrl}/posts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sourceId: uploaded.sourceId,
-        title: `통합 테스트 포스트 ${randomUUID()}`,
-      }),
+      body: JSON.stringify({ sourceId: uploaded.sourceId }),
     });
     expect(publishResponse.status).toBe(201);
     const published = (await publishResponse.json()) as {

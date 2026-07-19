@@ -36,8 +36,18 @@ export interface PostSummary {
   updatedAt: string;
 }
 
+export interface ListPostsParams {
+  cursor?: string;
+  limit?: number;
+}
+
+export interface SearchPostsParams extends ListPostsParams {
+  query: string;
+}
+
 export interface ListPostsResponse {
   posts: PostSummary[];
+  nextCursor: string | null;
 }
 
 export interface PublishPostRequest {
@@ -101,12 +111,21 @@ export class SheskaApiClient {
     return this.http.get<GetSourceResponse>(`/sources/${id}`);
   }
 
-  listPosts(): Promise<ListPostsResponse> {
-    return this.http.get<ListPostsResponse>('/posts');
+  listPosts(params?: ListPostsParams): Promise<ListPostsResponse> {
+    const qs = new URLSearchParams();
+    if (params?.cursor) qs.set('cursor', params.cursor);
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const query = qs.toString();
+    return this.http.get<ListPostsResponse>(
+      `/posts${query ? `?${query}` : ''}`,
+    );
   }
 
-  searchPosts(query: string): Promise<ListPostsResponse> {
-    return this.http.get<ListPostsResponse>('/posts/search', { q: query });
+  searchPosts(params: SearchPostsParams): Promise<ListPostsResponse> {
+    const queryParams: Record<string, string> = { q: params.query };
+    if (params.cursor) queryParams.cursor = params.cursor;
+    if (params.limit) queryParams.limit = String(params.limit);
+    return this.http.get<ListPostsResponse>('/posts/search', queryParams);
   }
 
   getPost(id: string): Promise<GetPostResponse> {

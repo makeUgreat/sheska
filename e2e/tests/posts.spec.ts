@@ -257,3 +257,50 @@ test('발행된 포스트가 목록에 제목과 함께 표시된다', async ({
 
   await expect(page.getByText(title)).toBeVisible();
 });
+
+test('포스트 목록에서 무한 스크롤로 다음 페이지를 로드한다', async ({
+  page,
+  apiBaseUrl,
+}) => {
+  const createPost = async (title: string) => {
+    const sourceRes = await fetch(`${apiBaseUrl}/sources`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        externalSourceId: `e2e-${randomUUID()}`,
+        content: `---\ntitle: ${title}\n---\nE2E 테스트 내용`,
+      }),
+    });
+    expect(sourceRes.status).toBe(201);
+    const { sourceId } = (await sourceRes.json()) as { sourceId: string };
+
+    const postRes = await fetch(`${apiBaseUrl}/posts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sourceId }),
+    });
+    expect(postRes.status).toBe(201);
+  };
+
+  const prefix = `무한스크롤-${randomUUID()}`;
+  const title1 = `${prefix}-1`;
+  const title2 = `${prefix}-2`;
+  const title3 = `${prefix}-3`;
+
+  // Create 3 posts sequentially to ensure stable ordering
+  await createPost(title1);
+  await createPost(title2);
+  await createPost(title3);
+
+  // limit=2 so first page shows 2 posts, second page shows the remaining one
+  await page.goto('/posts?limit=2');
+
+  // At least 2 of the 3 posts should be visible on first page
+  await expect(page.getByRole('link', { name: title3 })).toBeVisible();
+
+  // Scroll sentinel into view to trigger infinite scroll
+  await page.locator('div').last().scrollIntoViewIfNeeded();
+
+  // After scroll, all 3 posts should eventually be visible
+  await expect(page.getByRole('link', { name: title1 })).toBeVisible();
+});

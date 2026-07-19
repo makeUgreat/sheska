@@ -146,7 +146,9 @@ function createPostRepositoryMock(): PostRepositoryMock {
   return {
     get: vi.fn<PostRepository['get']>().mockResolvedValue(buildPost()),
     find: vi.fn<PostRepository['find']>().mockResolvedValue(null),
-    list: vi.fn<PostRepository['list']>().mockResolvedValue([]),
+    list: vi
+      .fn<PostRepository['list']>()
+      .mockResolvedValue({ posts: [], nextCursor: null }),
     save: vi
       .fn<PostRepository['save']>()
       .mockImplementation((post) => Promise.resolve(post)),

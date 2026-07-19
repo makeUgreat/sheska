@@ -19,7 +19,11 @@ import {
   type PublishPostHttpResponse,
 } from './dto/publish-post.http.dto';
 import { type GetPostHttpResponse } from './dto/get-post.http.dto';
-import { type ListPostsHttpResponse } from './dto/list-posts.http.dto';
+import {
+  ListPostsHttpRequest,
+  type ListPostsHttpResponse,
+} from './dto/list-posts.http.dto';
+import { decodeCursor, encodeCursor } from '@kernels/application';
 import { SearchPostsHttpRequest } from './dto/search-posts.http.dto';
 import {
   UpdatePostHttpRequest,
@@ -37,8 +41,13 @@ export class PostsHttpController {
   ) {}
 
   @Get()
-  async list(): Promise<ListPostsHttpResponse> {
-    const result = await this.listPostsUseCase.execute();
+  async list(
+    @Query() query: ListPostsHttpRequest,
+  ): Promise<ListPostsHttpResponse> {
+    const result = await this.listPostsUseCase.execute({
+      cursor: query.cursor ? decodeCursor(query.cursor) : undefined,
+      limit: query.limit,
+    });
 
     return {
       posts: result.posts.map((post) => ({
@@ -49,6 +58,7 @@ export class PostsHttpController {
         createdAt: post.createdAt.toISOString(),
         updatedAt: post.updatedAt.toISOString(),
       })),
+      nextCursor: result.nextCursor ? encodeCursor(result.nextCursor) : null,
     };
   }
 
@@ -75,7 +85,11 @@ export class PostsHttpController {
   async search(
     @Query() request: SearchPostsHttpRequest,
   ): Promise<ListPostsHttpResponse> {
-    const result = await this.searchPostsUseCase.execute({ query: request.q });
+    const result = await this.searchPostsUseCase.execute({
+      query: request.q,
+      cursor: request.cursor ? decodeCursor(request.cursor) : undefined,
+      limit: request.limit,
+    });
 
     return {
       posts: result.posts.map((post) => ({
@@ -86,6 +100,7 @@ export class PostsHttpController {
         createdAt: post.createdAt.toISOString(),
         updatedAt: post.updatedAt.toISOString(),
       })),
+      nextCursor: result.nextCursor ? encodeCursor(result.nextCursor) : null,
     };
   }
 

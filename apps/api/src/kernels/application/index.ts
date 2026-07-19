@@ -1,4 +1,11 @@
 export { ApplicationException } from './application.exception';
+export {
+  type CursorValue,
+  type CursorListOptions,
+  type CursorListResult,
+  encodeCursor,
+  decodeCursor,
+} from './cursor-pagination';
 export { toErrorLogContext } from './error-log-context';
 export {
   APPLICATION_ERROR_KIND,

@@ -95,98 +95,251 @@ describe('PostPgDrizzleRepository', () => {
     await posts.save(post1);
     await posts.save(post2);
 
-    const result = await posts.list();
+    const { posts: result } = await posts.list();
 
     const ids = result.map((p) => p.id);
     expect(ids).toContain(post1.id);
     expect(ids).toContain(post2.id);
   });
 
-  it('trigram 검색으로 유사한 title을 가진 post를 반환한다', async () => {
-    const source1 = await sources.save(
-      buildSource({ externalSourceId: 'Notes/post-repo-trgm-match.md' }),
-    );
-    const source2 = await sources.save(
-      buildSource({ externalSourceId: 'Notes/post-repo-trgm-nomatch.md' }),
-    );
-    const matchingPost = buildPost({
-      sourceId: source1.id,
-      title: 'TypeScript 입문 가이드',
-    });
-    const unrelatedPost = buildPost({
-      sourceId: source2.id,
-      title: '파이썬 데이터 분석',
-    });
-    await posts.save(matchingPost);
-    await posts.save(unrelatedPost);
+  describe('list — cursor pagination', () => {
+    it('limit보다 많은 포스트가 있으면 nextCursor를 반환한다', async () => {
+      const s1 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/cursor-1.md' }),
+      );
+      const s2 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/cursor-2.md' }),
+      );
+      const s3 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/cursor-3.md' }),
+      );
+      await posts.save(buildPost({ sourceId: s1.id }));
+      await posts.save(buildPost({ sourceId: s2.id }));
+      await posts.save(buildPost({ sourceId: s3.id }));
 
-    const result = await posts.list({ query: 'TypeScript' });
+      const { posts: result, nextCursor } = await posts.list({ limit: 2 });
 
-    const ids = result.map((p) => p.id);
-    expect(ids).toContain(matchingPost.id);
-    expect(ids).not.toContain(unrelatedPost.id);
+      expect(result).toHaveLength(2);
+      expect(nextCursor).not.toBeNull();
+    });
+
+    it('nextCursor로 다음 페이지를 가져온다', async () => {
+      const s1 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/cursor-page-1.md' }),
+      );
+      const s2 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/cursor-page-2.md' }),
+      );
+      const s3 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/cursor-page-3.md' }),
+      );
+      const post1 = buildPost({ sourceId: s1.id });
+      const post2 = buildPost({ sourceId: s2.id });
+      const post3 = buildPost({ sourceId: s3.id });
+      await posts.save(post1);
+      await posts.save(post2);
+      await posts.save(post3);
+
+      const firstPage = await posts.list({ limit: 2 });
+      const secondPage = await posts.list({
+        limit: 2,
+        cursor: firstPage.nextCursor!,
+      });
+
+      const firstIds = firstPage.posts.map((p) => p.id);
+      const secondIds = secondPage.posts.map((p) => p.id);
+      expect(firstIds).toHaveLength(2);
+      expect(secondIds.length).toBeGreaterThanOrEqual(1);
+      expect(firstIds.some((id) => secondIds.includes(id))).toBe(false);
+    });
+
+    it('마지막 포스트 이후의 cursor로 조회하면 nextCursor가 null이다', async () => {
+      const s1 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/cursor-last-1.md' }),
+      );
+      const post1 = buildPost({ sourceId: s1.id });
+      await posts.save(post1);
+
+      const veryOldCursor = {
+        createdAt: new Date('2000-01-01T00:00:00.000Z'),
+        id: 'z',
+      };
+      const { posts: result, nextCursor } = await posts.list({
+        limit: 10,
+        cursor: veryOldCursor,
+      });
+
+      expect(result).toHaveLength(0);
+      expect(nextCursor).toBeNull();
+    });
+
+    it('cursor와 동일한 createdAt + id를 가진 포스트는 결과에서 제외된다', async () => {
+      const s1 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/cursor-tie-1.md' }),
+      );
+      const post1 = buildPost({ sourceId: s1.id });
+      await posts.save(post1);
+
+      const { posts: saved } = await posts.list({ limit: 100 });
+      const savedPost1 = saved.find((p) => p.id === post1.id)!;
+      const cursor = { createdAt: savedPost1.createdAt, id: savedPost1.id };
+
+      const { posts: result } = await posts.list({ limit: 10, cursor });
+
+      const ids = result.map((p) => p.id);
+      expect(ids).not.toContain(post1.id);
+    });
+
+    it('cursor 없이 호출하면 최신순으로 첫 페이지를 반환한다', async () => {
+      const s1 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/cursor-order-1.md' }),
+      );
+      const s2 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/cursor-order-2.md' }),
+      );
+      const post1 = buildPost({ sourceId: s1.id });
+      const post2 = buildPost({ sourceId: s2.id });
+      await posts.save(post1);
+      await posts.save(post2);
+
+      const { posts: result } = await posts.list({ limit: 2 });
+
+      const ids = result.map((p) => p.id);
+      expect(ids).toContain(post1.id);
+      expect(ids).toContain(post2.id);
+    });
   });
 
-  it('오타가 포함된 query로도 유사한 title을 가진 post를 반환한다', async () => {
-    const source = await sources.save(
-      buildSource({ externalSourceId: 'Notes/post-repo-trgm-typo.md' }),
-    );
-    const post = buildPost({
-      sourceId: source.id,
-      title: 'TypeScript 입문 가이드',
+  describe('list — search', () => {
+    it('trigram 검색으로 유사한 title을 가진 post를 반환한다', async () => {
+      const source1 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/post-repo-trgm-match.md' }),
+      );
+      const source2 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/post-repo-trgm-nomatch.md' }),
+      );
+      const matchingPost = buildPost({
+        sourceId: source1.id,
+        title: 'TypeScript 입문 가이드',
+      });
+      const unrelatedPost = buildPost({
+        sourceId: source2.id,
+        title: '파이썬 데이터 분석',
+      });
+      await posts.save(matchingPost);
+      await posts.save(unrelatedPost);
+
+      const { posts: result } = await posts.list({
+        query: 'TypeScript',
+        limit: 20,
+      });
+
+      const ids = result.map((p) => p.id);
+      expect(ids).toContain(matchingPost.id);
+      expect(ids).not.toContain(unrelatedPost.id);
     });
-    await posts.save(post);
 
-    const result = await posts.list({ query: 'TypeScirpt' });
+    it('오타가 포함된 query로도 유사한 title을 가진 post를 반환한다', async () => {
+      const source = await sources.save(
+        buildSource({ externalSourceId: 'Notes/post-repo-trgm-typo.md' }),
+      );
+      const post = buildPost({
+        sourceId: source.id,
+        title: 'TypeScript 입문 가이드',
+      });
+      await posts.save(post);
 
-    const ids = result.map((p) => p.id);
-    expect(ids).toContain(post.id);
-  });
+      const { posts: result } = await posts.list({
+        query: 'TypeScirpt',
+        limit: 20,
+      });
 
-  it('짧은 query가 긴 title의 일부 단어와 일치하면 post를 반환한다', async () => {
-    const source = await sources.save(
-      buildSource({ externalSourceId: 'Notes/post-repo-trgm-word.md' }),
-    );
-    const post = buildPost({
-      sourceId: source.id,
-      title: '소켓은 애플리케이션 계층과 전송계층간의 인터페이스이다',
+      const ids = result.map((p) => p.id);
+      expect(ids).toContain(post.id);
     });
-    await posts.save(post);
 
-    const result = await posts.list({ query: '소켓' });
+    it('짧은 query가 긴 title의 일부 단어와 일치하면 post를 반환한다', async () => {
+      const source = await sources.save(
+        buildSource({ externalSourceId: 'Notes/post-repo-trgm-word.md' }),
+      );
+      const post = buildPost({
+        sourceId: source.id,
+        title: '소켓은 애플리케이션 계층과 전송계층간의 인터페이스이다',
+      });
+      await posts.save(post);
 
-    const ids = result.map((p) => p.id);
-    expect(ids).toContain(post.id);
-  });
+      const { posts: result } = await posts.list({ query: '소켓', limit: 20 });
 
-  it('유사도 높은 순서로 결과를 반환한다', async () => {
-    const source1 = await sources.save(
-      buildSource({ externalSourceId: 'Notes/post-repo-trgm-order-1.md' }),
-    );
-    const source2 = await sources.save(
-      buildSource({ externalSourceId: 'Notes/post-repo-trgm-order-2.md' }),
-    );
-    const exactPost = buildPost({
-      sourceId: source1.id,
-      title: 'TypeScript',
+      const ids = result.map((p) => p.id);
+      expect(ids).toContain(post.id);
     });
-    const partialPost = buildPost({
-      sourceId: source2.id,
-      title: 'TypeScript 입문 가이드 완벽 정리',
+
+    it('유사도 높은 순서로 결과를 반환한다', async () => {
+      const source1 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/post-repo-trgm-order-1.md' }),
+      );
+      const source2 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/post-repo-trgm-order-2.md' }),
+      );
+      const exactPost = buildPost({
+        sourceId: source1.id,
+        title: 'TypeScript',
+      });
+      const partialPost = buildPost({
+        sourceId: source2.id,
+        title: 'TypeScript 입문 가이드 완벽 정리',
+      });
+      await posts.save(exactPost);
+      await posts.save(partialPost);
+
+      const { posts: result } = await posts.list({
+        query: 'TypeScript',
+        limit: 20,
+      });
+
+      const ids = result.map((p) => p.id);
+      expect(ids.indexOf(exactPost.id)).toBeLessThan(
+        ids.indexOf(partialPost.id),
+      );
     });
-    await posts.save(exactPost);
-    await posts.save(partialPost);
 
-    const result = await posts.list({ query: 'TypeScript' });
+    it('검색 결과를 nextCursor로 다음 페이지 조회한다', async () => {
+      const s1 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/search-cursor-1.md' }),
+      );
+      const s2 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/search-cursor-2.md' }),
+      );
+      const s3 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/search-cursor-3.md' }),
+      );
+      await posts.save(buildPost({ sourceId: s1.id, title: 'TypeScript A' }));
+      await posts.save(buildPost({ sourceId: s2.id, title: 'TypeScript B' }));
+      await posts.save(buildPost({ sourceId: s3.id, title: 'TypeScript C' }));
 
-    const ids = result.map((p) => p.id);
-    expect(ids.indexOf(exactPost.id)).toBeLessThan(ids.indexOf(partialPost.id));
-  });
+      const firstPage = await posts.list({ query: 'TypeScript', limit: 2 });
+      const secondPage = await posts.list({
+        query: 'TypeScript',
+        limit: 2,
+        cursor: firstPage.nextCursor!,
+      });
 
-  it('trigram 검색에 일치하는 post가 없으면 빈 배열을 반환한다', async () => {
-    const result = await posts.list({ query: '일치하지않는쿼리xyz' });
+      const firstIds = firstPage.posts.map((p) => p.id);
+      const secondIds = secondPage.posts.map((p) => p.id);
+      expect(firstPage.nextCursor?.score).toEqual(expect.any(Number));
+      expect(firstIds).toHaveLength(2);
+      expect(secondIds.length).toBeGreaterThanOrEqual(1);
+      expect(firstIds.some((id) => secondIds.includes(id))).toBe(false);
+    });
 
-    expect(result).toHaveLength(0);
+    it('trigram 검색에 일치하는 post가 없으면 빈 배열을 반환한다', async () => {
+      const { posts: result } = await posts.list({
+        query: '일치하지않는쿼리xyz',
+        limit: 20,
+      });
+
+      expect(result).toHaveLength(0);
+    });
   });
 
   it('같은 sourceId로 두 번 저장하면 conflict exception을 발생시킨다', async () => {

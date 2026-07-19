@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useListPosts, useSearchPosts } from '@/api/queries';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useInfiniteListPosts, useInfiniteSearchPosts } from '@/api/queries';
 import { type PostSummary } from '@/api/client';
 
 function useDebounce(value: string, delay: number): string {
@@ -30,14 +30,42 @@ function HighlightedTitle({ title, query }: { title: string; query: string }) {
 }
 
 export function PostListPage() {
+  const [searchParams] = useSearchParams();
+  const limitParam = searchParams.get('limit');
+  const limit = limitParam ? Number(limitParam) : undefined;
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);
   const isSearching = debouncedQuery.length >= 2;
 
-  const listResult = useListPosts();
-  const searchResult = useSearchPosts(debouncedQuery);
+  const listResult = useInfiniteListPosts(limit);
+  const searchResult = useInfiniteSearchPosts(debouncedQuery, limit);
+  const result = isSearching ? searchResult : listResult;
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = result;
 
-  const { data, isLoading, error } = isSearching ? searchResult : listResult;
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        void fetchNextPage();
+      }
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const posts = data?.pages.flatMap((page) => page.posts) ?? [];
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
@@ -58,14 +86,23 @@ export function PostListPage() {
         >
           Error: {error.message}
         </p>
-      ) : data?.posts.length === 0 ? (
+      ) : posts.length === 0 ? (
         <p className="text-gray-500">
           {isSearching
             ? `No results for "${debouncedQuery}".`
             : 'No posts yet.'}
         </p>
       ) : (
-        <PostList posts={data?.posts ?? []} highlight={debouncedQuery} />
+        <>
+          <PostList
+            posts={posts}
+            highlight={isSearching ? debouncedQuery : ''}
+          />
+          <div ref={sentinelRef} />
+          {isFetchingNextPage && (
+            <p className="mt-4 text-center text-sm text-gray-500">Loading...</p>
+          )}
+        </>
       )}
     </main>
   );

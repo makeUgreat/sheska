@@ -1,6 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { type PostRepository } from '@contexts/posts/domain';
+import {
+  type PostRepository,
+  type PostRepositoryCursor,
+} from '@contexts/posts/domain';
 import { POST_REPOSITORY } from '@contexts/posts/posts.di-tokens';
+
+export interface ListPostsCommand {
+  readonly cursor?: PostRepositoryCursor;
+  readonly limit?: number;
+}
 
 export interface ListPostsResult {
   readonly posts: ReadonlyArray<{
@@ -11,6 +19,7 @@ export interface ListPostsResult {
     readonly createdAt: Date;
     readonly updatedAt: Date;
   }>;
+  readonly nextCursor: PostRepositoryCursor | null;
 }
 
 @Injectable()
@@ -20,8 +29,11 @@ export class ListPostsUseCase {
     private readonly posts: PostRepository,
   ) {}
 
-  async execute(): Promise<ListPostsResult> {
-    const posts = await this.posts.list();
+  async execute(command: ListPostsCommand = {}): Promise<ListPostsResult> {
+    const { posts, nextCursor } = await this.posts.list({
+      limit: command.limit ?? 20,
+      cursor: command.cursor,
+    });
 
     return {
       posts: posts.map((post) => {
@@ -35,6 +47,7 @@ export class ListPostsUseCase {
           updatedAt: post.updatedAt,
         };
       }),
+      nextCursor,
     };
   }
 }
