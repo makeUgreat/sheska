@@ -143,6 +143,46 @@ describe('PostPgDrizzleRepository', () => {
     expect(ids).toContain(post.id);
   });
 
+  it('짧은 query가 긴 title의 일부 단어와 일치하면 post를 반환한다', async () => {
+    const source = await sources.save(
+      buildSource({ externalSourceId: 'Notes/post-repo-trgm-word.md' }),
+    );
+    const post = buildPost({
+      sourceId: source.id,
+      title: '소켓은 애플리케이션 계층과 전송계층간의 인터페이스이다',
+    });
+    await posts.save(post);
+
+    const result = await posts.list({ query: '소켓' });
+
+    const ids = result.map((p) => p.id);
+    expect(ids).toContain(post.id);
+  });
+
+  it('유사도 높은 순서로 결과를 반환한다', async () => {
+    const source1 = await sources.save(
+      buildSource({ externalSourceId: 'Notes/post-repo-trgm-order-1.md' }),
+    );
+    const source2 = await sources.save(
+      buildSource({ externalSourceId: 'Notes/post-repo-trgm-order-2.md' }),
+    );
+    const exactPost = buildPost({
+      sourceId: source1.id,
+      title: 'TypeScript',
+    });
+    const partialPost = buildPost({
+      sourceId: source2.id,
+      title: 'TypeScript 입문 가이드 완벽 정리',
+    });
+    await posts.save(exactPost);
+    await posts.save(partialPost);
+
+    const result = await posts.list({ query: 'TypeScript' });
+
+    const ids = result.map((p) => p.id);
+    expect(ids.indexOf(exactPost.id)).toBeLessThan(ids.indexOf(partialPost.id));
+  });
+
   it('trigram 검색에 일치하는 post가 없으면 빈 배열을 반환한다', async () => {
     const result = await posts.list({ query: '일치하지않는쿼리xyz' });
 

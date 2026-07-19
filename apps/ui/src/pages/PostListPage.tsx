@@ -12,6 +12,23 @@ function useDebounce(value: string, delay: number): string {
   return debounced;
 }
 
+function HighlightedTitle({ title, query }: { title: string; query: string }) {
+  if (!query) return <>{title}</>;
+
+  const index = title.toLowerCase().indexOf(query.toLowerCase());
+  if (index === -1) return <>{title}</>;
+
+  return (
+    <>
+      {title.slice(0, index)}
+      <mark className="bg-yellow-200 text-gray-900">
+        {title.slice(index, index + query.length)}
+      </mark>
+      {title.slice(index + query.length)}
+    </>
+  );
+}
+
 export function PostListPage() {
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);
@@ -48,13 +65,19 @@ export function PostListPage() {
             : 'No posts yet.'}
         </p>
       ) : (
-        <PostList posts={data?.posts ?? []} />
+        <PostList posts={data?.posts ?? []} highlight={debouncedQuery} />
       )}
     </main>
   );
 }
 
-function PostList({ posts }: { posts: PostSummary[] }) {
+function PostList({
+  posts,
+  highlight,
+}: {
+  posts: PostSummary[];
+  highlight: string;
+}) {
   return (
     <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200">
       {posts.map((p) => (
@@ -66,7 +89,7 @@ function PostList({ posts }: { posts: PostSummary[] }) {
             to={`/posts/${p.postId}`}
             className="font-medium text-gray-900 hover:text-blue-600"
           >
-            {p.title}
+            <HighlightedTitle title={p.title} query={highlight} />
           </Link>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-500">{p.viewCount} views</span>

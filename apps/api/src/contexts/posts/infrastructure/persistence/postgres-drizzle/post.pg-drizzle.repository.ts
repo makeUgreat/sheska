@@ -87,9 +87,19 @@ export class PostPgDrizzleRepository implements PostRepository {
         rows = await this.db
           .select()
           .from(schema.posts)
-          .where(sql`${schema.posts.title} % ${criteria.query}`)
+          .where(
+            sql`
+            ${schema.posts.title} % ${criteria.query}
+            OR ${criteria.query} <% ${schema.posts.title}
+          `,
+          )
           .orderBy(
-            sql`similarity(${schema.posts.title}, ${criteria.query}) DESC`,
+            sql`
+              GREATEST(
+                similarity(${schema.posts.title}, ${criteria.query}),
+                word_similarity(${criteria.query}, ${schema.posts.title})
+              ) DESC
+            `,
           );
       } else {
         rows = await this.db
