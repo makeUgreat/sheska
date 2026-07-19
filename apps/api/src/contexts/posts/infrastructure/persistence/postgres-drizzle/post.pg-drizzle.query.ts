@@ -1,9 +1,14 @@
-import { sql } from 'drizzle-orm';
+import { and, desc, eq, lt, or, sql } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   type PostQuery,
   type PostQueryFindCriteria,
   type PostQueryResult,
+  type PostQueryCursor,
+  type PostQueryPaginateOptions,
+  type PostQueryPaginateResult,
+  type PostQueryListItem,
+  type PostQuerySearchOptions,
 } from '@contexts/posts/application/ports';
 import {
   classifyPostgresError,
@@ -23,6 +28,10 @@ type PostWithSourceRow = {
   created_at: Date;
   updated_at: Date;
   source_content: string;
+};
+
+type SearchPostRow = postsSchema.PostRow & {
+  searchScore: number;
 };
 
 export class PostPgDrizzleQuery implements PostQuery {
@@ -85,6 +94,143 @@ export class PostPgDrizzleQuery implements PostQuery {
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
       sourceContent: row.source_content,
+    };
+  }
+
+  async paginate(
+    options?: PostQueryPaginateOptions,
+  ): Promise<PostQueryPaginateResult> {
+    const limit = options?.limit ?? 20;
+
+    try {
+      const baseQuery = this.db
+        .select()
+        .from(postsSchema.posts)
+        .orderBy(desc(postsSchema.posts.createdAt), desc(postsSchema.posts.id))
+        .limit(limit + 1);
+
+      const rows = options?.cursor
+        ? await baseQuery.where(
+            or(
+              lt(postsSchema.posts.createdAt, options.cursor.createdAt),
+              and(
+                eq(postsSchema.posts.createdAt, options.cursor.createdAt),
+                lt(postsSchema.posts.id, options.cursor.id),
+              ),
+            ),
+          )
+        : await baseQuery;
+
+      return this.toPaginateResult(rows, limit);
+    } catch (error: unknown) {
+      throw new InfrastructureException({
+        kind: classifyPostgresError(error),
+        code: 'post.paginate_failed',
+        source: { boundary: 'persistence', adapter: ADAPTER },
+        message: 'Post paginate operation failed',
+        details: {},
+        cause: error,
+      });
+    }
+  }
+
+  async search(
+    options: PostQuerySearchOptions,
+  ): Promise<PostQueryPaginateResult> {
+    const limit = options.limit ?? 20;
+
+    try {
+      const score = sql<number>`
+        CASE
+          WHEN lower(${postsSchema.posts.title}) = lower(${options.query}) THEN 1
+          ELSE 0
+        END + GREATEST(
+          similarity(${postsSchema.posts.title}, ${options.query}),
+          word_similarity(${options.query}, ${postsSchema.posts.title})
+        )
+      `;
+      const cursorScore = options.cursor?.score;
+      const searchWhere = sql`
+        ${postsSchema.posts.title} % ${options.query}
+        OR ${options.query} <% ${postsSchema.posts.title}
+      `;
+      const cursorWhere =
+        options.cursor && cursorScore !== undefined
+          ? or(
+              sql`${score} < ${cursorScore}`,
+              and(
+                sql`${score} = ${cursorScore}`,
+                or(
+                  lt(postsSchema.posts.createdAt, options.cursor.createdAt),
+                  and(
+                    eq(postsSchema.posts.createdAt, options.cursor.createdAt),
+                    lt(postsSchema.posts.id, options.cursor.id),
+                  ),
+                ),
+              ),
+            )
+          : undefined;
+
+      const rows = await this.db
+        .select({
+          id: postsSchema.posts.id,
+          sourceId: postsSchema.posts.sourceId,
+          title: postsSchema.posts.title,
+          viewCount: postsSchema.posts.viewCount,
+          createdAt: postsSchema.posts.createdAt,
+          updatedAt: postsSchema.posts.updatedAt,
+          searchScore: score,
+        })
+        .from(postsSchema.posts)
+        .where(cursorWhere ? and(searchWhere, cursorWhere) : searchWhere)
+        .orderBy(
+          desc(score),
+          desc(postsSchema.posts.createdAt),
+          desc(postsSchema.posts.id),
+        )
+        .limit(limit + 1);
+
+      return this.toPaginateResult(rows, limit);
+    } catch (error: unknown) {
+      throw new InfrastructureException({
+        kind: classifyPostgresError(error),
+        code: 'post.search_failed',
+        source: { boundary: 'persistence', adapter: ADAPTER },
+        message: 'Post search operation failed',
+        details: { query: options.query },
+        cause: error,
+      });
+    }
+  }
+
+  private toPaginateResult(
+    rows: Array<postsSchema.PostRow | SearchPostRow>,
+    limit: number,
+  ): PostQueryPaginateResult {
+    const hasNext = rows.length > limit;
+    const data = hasNext ? rows.slice(0, limit) : rows;
+    const lastRow = data[data.length - 1];
+    const nextCursor: PostQueryCursor | null =
+      hasNext && lastRow
+        ? {
+            createdAt: lastRow.createdAt,
+            id: lastRow.id,
+            ...('searchScore' in lastRow ? { score: lastRow.searchScore } : {}),
+          }
+        : null;
+
+    return {
+      posts: data.map(
+        (row): PostQueryListItem => ({
+          postId: row.id,
+          sourceId: row.sourceId,
+          title: row.title,
+          viewCount: row.viewCount,
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+        }),
+      ),
+      nextCursor,
     };
   }
 }

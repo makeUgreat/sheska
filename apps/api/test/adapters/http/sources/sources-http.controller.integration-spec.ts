@@ -117,6 +117,7 @@ describe('SourcesHttpController', () => {
             },
           },
         ],
+        nextCursor: null,
       });
 
       const response = await request(httpServer).get('/sources').expect(200);
@@ -142,7 +143,10 @@ describe('SourcesHttpController', () => {
     });
 
     it('source가 없으면 빈 배열을 반환한다', async () => {
-      listSourcesUseCase.execute.mockResolvedValue({ sources: [] });
+      listSourcesUseCase.execute.mockResolvedValue({
+        sources: [],
+        nextCursor: null,
+      });
 
       const response = await request(httpServer).get('/sources').expect(200);
 

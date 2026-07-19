@@ -66,3 +66,43 @@ if (!source) throw new ApplicationException({ kind: NOT_FOUND, ... });
 // ✓ use get — it throws NOT_FOUND automatically
 const source = await this.sources.get({ id });
 ```
+
+## Repository vs Query Port
+
+### Read-for-write vs Read-for-display
+
+Every multi-aggregate retrieval falls into one of two categories:
+
+| Category | Definition | Where to implement |
+|---|---|---|
+| **Read-for-write** | Load the aggregate so you can call domain methods on it or verify its existence as a precondition before a write | Repository (`list`) |
+| **Read-for-display** | Fetch data to present to a caller without invoking domain behavior afterward | Application Query port (`paginate`, `search`) |
+
+Use `repository.list()` when the caller needs full aggregate objects:
+- To invoke domain methods (`post.incrementViewCount()`, `source.syncContentSnapshot(...)`)
+- To check domain invariants before a state change
+
+Use `query.paginate()` / `query.search()` when the caller just needs flat data for display:
+- Paginated lists with cursor
+- Read models that combine fields from multiple aggregates
+- Any retrieval where the use case calls no domain methods on the returned objects
+
+### JOIN policy
+
+| Layer | Allowed JOINs |
+|---|---|
+| **Repository** | Intra-aggregate only. A repository JOIN reconstructs a single aggregate from its tables (root + child entities + embedded value objects). It MUST NOT JOIN outside the aggregate boundary to pull in data from another aggregate or context. |
+| **Query Port** | Cross-aggregate and cross-context JOINs are allowed. A query port implementation may JOIN any tables needed to build the read-model projection. This is its main advantage over a repository read. |
+
+### Standard Query port method names
+
+| Method | Semantics |
+|---|---|
+| `get` | Return one item; throw when absent |
+| `find` | Return one item or `null` when absent |
+| `paginate` | Return a page of items with a cursor for the next page |
+| `search` | Return a relevance-ranked page of items matching a query string |
+| `count` | Return the number of matching items |
+| `exists` | Return `true`/`false` whether at least one matching item exists |
+
+Define only the methods your context actually needs. Do not add methods speculatively.

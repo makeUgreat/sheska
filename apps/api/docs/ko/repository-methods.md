@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/repository-methods.md
-last_synced: 2026-07-16
+last_synced: 2026-07-20
 related:
   - ./ddd.md
 ---
@@ -67,3 +67,43 @@ if (!source) throw new ApplicationException({ kind: NOT_FOUND, ... });
 // ✓ get을 사용한다 — NOT_FOUND를 자동으로 throw한다
 const source = await this.sources.get({ id });
 ```
+
+## Repository vs Query Port
+
+### Read-for-write vs Read-for-display
+
+여러 결과를 반환하는 모든 읽기 연산은 두 범주 중 하나에 속한다:
+
+| 범주 | 정의 | 구현 위치 |
+|---|---|---|
+| **Read-for-write** | Domain method를 호출하거나 쓰기 전 전제 조건을 검증하기 위해 aggregate를 로드한다 | Repository (`list`) |
+| **Read-for-display** | Domain behavior를 호출하지 않고 caller에게 데이터를 표시하기 위해 가져온다 | Application Query port (`paginate`, `search`) |
+
+`repository.list()`는 caller가 full aggregate object가 필요할 때 사용한다:
+- Domain method를 호출하기 위해 (`post.incrementViewCount()`, `source.syncContentSnapshot(...)`)
+- 상태 변경 전 domain invariant를 확인하기 위해
+
+`query.paginate()` / `query.search()`는 caller가 화면 표시용으로만 flat 데이터가 필요할 때 사용한다:
+- Cursor가 있는 페이지네이션 목록
+- 여러 aggregate의 field를 조합한 read model
+- Use case가 반환된 객체에 domain method를 호출하지 않는 모든 조회
+
+### JOIN 정책
+
+| 레이어 | 허용되는 JOIN |
+|---|---|
+| **Repository** | Aggregate 내부 JOIN만 허용한다. Repository JOIN은 단일 aggregate를 테이블에서 재구성한다(root + child entity + embedded value object). Aggregate 경계를 넘어 다른 aggregate 또는 context의 데이터를 가져오는 JOIN은 해서는 안 된다. |
+| **Query Port** | Aggregate 간, context 간 JOIN을 허용한다. Query port 구현체는 read-model projection을 구성하는 데 필요한 모든 테이블을 JOIN할 수 있다. 이것이 repository 읽기 대비 Query port의 핵심 장점이다. |
+
+### Query port 표준 메서드 이름
+
+| 메서드 | 의미 |
+|---|---|
+| `get` | 하나를 반환하며, 없으면 throw한다 |
+| `find` | 하나를 반환하거나 없으면 `null`을 반환한다 |
+| `paginate` | 다음 페이지를 위한 cursor와 함께 항목 페이지를 반환한다 |
+| `search` | query string에 매칭되는 항목을 관련도 순으로 반환한다 |
+| `count` | 조건에 맞는 항목 수를 반환한다 |
+| `exists` | 조건에 맞는 항목이 하나라도 있으면 `true`, 없으면 `false`를 반환한다 |
+
+실제로 필요한 메서드만 정의한다. 미래를 위해 추측으로 메서드를 추가하지 않는다.
