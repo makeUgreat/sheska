@@ -36,6 +36,15 @@ export function useListPosts() {
   });
 }
 
+export function useSearchPosts(query: string) {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: ['posts', 'search', query],
+    queryFn: () => client.searchPosts(query),
+    enabled: query.length >= 2,
+  });
+}
+
 export function usePublishPost() {
   const client = useApiClient();
   const queryClient = useQueryClient();

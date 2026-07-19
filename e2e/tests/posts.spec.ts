@@ -162,6 +162,74 @@ test('포스트 상세 페이지에서 마크다운이 HTML 요소로 렌더링�
   await expect(page.locator('li', { hasText: '항목 둘' })).toBeVisible();
 });
 
+test('포스트 목록에서 검색어를 입력하면 일치하는 포스트만 표시된다', async ({
+  page,
+  apiBaseUrl,
+}) => {
+  const matchingTitle = `TypeScript 입문 ${randomUUID()}`;
+  const otherTitle = `파이썬 데이터 분석 ${randomUUID()}`;
+
+  for (const title of [matchingTitle, otherTitle]) {
+    const sourceRes = await fetch(`${apiBaseUrl}/sources`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        externalSourceId: `e2e-${randomUUID()}`,
+        content: `---\ntitle: ${title}\n---\nE2E 테스트 내용`,
+      }),
+    });
+    expect(sourceRes.status).toBe(201);
+    const { sourceId } = (await sourceRes.json()) as { sourceId: string };
+
+    const postRes = await fetch(`${apiBaseUrl}/posts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sourceId }),
+    });
+    expect(postRes.status).toBe(201);
+  }
+
+  await page.goto('/posts');
+
+  await page.getByRole('searchbox').fill('TypeScript');
+
+  await expect(page.getByText(matchingTitle)).toBeVisible();
+  await expect(page.getByText(otherTitle)).not.toBeVisible();
+});
+
+test('포스트 목록에서 검색어를 지우면 전체 목록으로 돌아온다', async ({
+  page,
+  apiBaseUrl,
+}) => {
+  const title = `E2E 검색 복귀 테스트 ${randomUUID()}`;
+  const sourceRes = await fetch(`${apiBaseUrl}/sources`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      externalSourceId: `e2e-${randomUUID()}`,
+      content: `---\ntitle: ${title}\n---\nE2E 테스트 내용`,
+    }),
+  });
+  expect(sourceRes.status).toBe(201);
+  const { sourceId } = (await sourceRes.json()) as { sourceId: string };
+
+  const postRes = await fetch(`${apiBaseUrl}/posts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sourceId }),
+  });
+  expect(postRes.status).toBe(201);
+
+  await page.goto('/posts');
+  await expect(page.getByText(title)).toBeVisible();
+
+  await page.getByRole('searchbox').fill('일치하지않는검색어xyz');
+  await expect(page.getByText(title)).not.toBeVisible();
+
+  await page.getByRole('searchbox').clear();
+  await expect(page.getByText(title)).toBeVisible();
+});
+
 test('발행된 포스트가 목록에 제목과 함께 표시된다', async ({
   page,
   apiBaseUrl,

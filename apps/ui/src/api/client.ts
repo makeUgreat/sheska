@@ -105,6 +105,10 @@ export class SheskaApiClient {
     return this.http.get<ListPostsResponse>('/posts');
   }
 
+  searchPosts(query: string): Promise<ListPostsResponse> {
+    return this.http.get<ListPostsResponse>('/posts/search', { q: query });
+  }
+
   getPost(id: string): Promise<GetPostResponse> {
     return this.http.get<GetPostResponse>(`/posts/${id}`);
   }
