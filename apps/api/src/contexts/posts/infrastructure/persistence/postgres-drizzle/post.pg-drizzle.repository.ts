@@ -1,11 +1,13 @@
-import { desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, lt, or, sql } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   type Post,
   type PostRepository,
+  type PostRepositoryCursor,
   type PostRepositoryFindCriteria,
   type PostRepositoryGetCriteria,
-  type PostRepositoryListCriteria,
+  type PostRepositoryListOptions,
+  type PostRepositoryListResult,
 } from '@contexts/posts/domain';
 import {
   classifyPostgresError,
@@ -15,6 +17,10 @@ import * as schema from './schema';
 import { PostPgDrizzleMapper } from './post.pg-drizzle.mapper';
 
 const ADAPTER = 'post.pg-drizzle';
+
+type SearchPostRow = schema.PostRow & {
+  searchScore: number;
+};
 
 export class PostPgDrizzleRepository implements PostRepository {
   constructor(private readonly db: NodePgDatabase<typeof schema>) {}
@@ -79,34 +85,19 @@ export class PostPgDrizzleRepository implements PostRepository {
     return PostPgDrizzleMapper.toDomain(row);
   }
 
-  async list(criteria?: PostRepositoryListCriteria): Promise<Post[]> {
-    let rows: schema.PostRow[];
+  // TODO: Add composite indexes for cursor predicates and verify with
+  // EXPLAIN ANALYZE whether these queries use index scans.
+  async list(
+    options?: PostRepositoryListOptions,
+  ): Promise<PostRepositoryListResult> {
+    const limit = options?.limit ?? 20;
 
     try {
-      if (criteria?.query !== undefined) {
-        rows = await this.db
-          .select()
-          .from(schema.posts)
-          .where(
-            sql`
-            ${schema.posts.title} % ${criteria.query}
-            OR ${criteria.query} <% ${schema.posts.title}
-          `,
-          )
-          .orderBy(
-            sql`
-              GREATEST(
-                similarity(${schema.posts.title}, ${criteria.query}),
-                word_similarity(${criteria.query}, ${schema.posts.title})
-              ) DESC
-            `,
-          );
-      } else {
-        rows = await this.db
-          .select()
-          .from(schema.posts)
-          .orderBy(desc(schema.posts.createdAt));
+      if (options?.query !== undefined) {
+        return this.searchList(options, limit);
       }
+
+      return this.defaultList(options, limit);
     } catch (error: unknown) {
       throw new InfrastructureException({
         kind: classifyPostgresError(error),
@@ -117,8 +108,6 @@ export class PostPgDrizzleRepository implements PostRepository {
         cause: error,
       });
     }
-
-    return rows.map((row) => PostPgDrizzleMapper.toDomain(row));
   }
 
   async save(post: Post): Promise<Post> {
@@ -150,5 +139,105 @@ export class PostPgDrizzleRepository implements PostRepository {
     }
 
     return PostPgDrizzleMapper.toDomain(row);
+  }
+
+  private async defaultList(
+    options: PostRepositoryListOptions | undefined,
+    limit: number,
+  ): Promise<PostRepositoryListResult> {
+    const baseQuery = this.db
+      .select()
+      .from(schema.posts)
+      .orderBy(desc(schema.posts.createdAt), desc(schema.posts.id))
+      .limit(limit + 1);
+
+    const rows = options?.cursor
+      ? await baseQuery.where(
+          or(
+            lt(schema.posts.createdAt, options.cursor.createdAt),
+            and(
+              eq(schema.posts.createdAt, options.cursor.createdAt),
+              lt(schema.posts.id, options.cursor.id),
+            ),
+          ),
+        )
+      : await baseQuery;
+
+    return this.toListResult(rows, limit);
+  }
+
+  private async searchList(
+    options: PostRepositoryListOptions,
+    limit: number,
+  ): Promise<PostRepositoryListResult> {
+    const score = sql<number>`
+      CASE
+        WHEN lower(${schema.posts.title}) = lower(${options.query}) THEN 1
+        ELSE 0
+      END + GREATEST(
+        similarity(${schema.posts.title}, ${options.query}),
+        word_similarity(${options.query}, ${schema.posts.title})
+      )
+    `;
+    const cursorScore = options.cursor?.score;
+    const searchWhere = sql`
+      ${schema.posts.title} % ${options.query}
+      OR ${options.query} <% ${schema.posts.title}
+    `;
+    const cursorWhere =
+      options.cursor && cursorScore !== undefined
+        ? or(
+            sql`${score} < ${cursorScore}`,
+            and(
+              sql`${score} = ${cursorScore}`,
+              or(
+                lt(schema.posts.createdAt, options.cursor.createdAt),
+                and(
+                  eq(schema.posts.createdAt, options.cursor.createdAt),
+                  lt(schema.posts.id, options.cursor.id),
+                ),
+              ),
+            ),
+          )
+        : undefined;
+
+    const rows = await this.db
+      .select({
+        id: schema.posts.id,
+        sourceId: schema.posts.sourceId,
+        title: schema.posts.title,
+        viewCount: schema.posts.viewCount,
+        createdAt: schema.posts.createdAt,
+        updatedAt: schema.posts.updatedAt,
+        searchScore: score,
+      })
+      .from(schema.posts)
+      .where(cursorWhere ? and(searchWhere, cursorWhere) : searchWhere)
+      .orderBy(desc(score), desc(schema.posts.createdAt), desc(schema.posts.id))
+      .limit(limit + 1);
+
+    return this.toListResult(rows, limit);
+  }
+
+  private toListResult(
+    rows: Array<schema.PostRow | SearchPostRow>,
+    limit: number,
+  ): PostRepositoryListResult {
+    const hasNext = rows.length > limit;
+    const data = hasNext ? rows.slice(0, limit) : rows;
+    const lastRow = data[data.length - 1];
+    const nextCursor: PostRepositoryCursor | null =
+      hasNext && lastRow
+        ? {
+            createdAt: lastRow.createdAt,
+            id: lastRow.id,
+            ...('searchScore' in lastRow ? { score: lastRow.searchScore } : {}),
+          }
+        : null;
+
+    return {
+      posts: data.map((row) => PostPgDrizzleMapper.toDomain(row)),
+      nextCursor,
+    };
   }
 }

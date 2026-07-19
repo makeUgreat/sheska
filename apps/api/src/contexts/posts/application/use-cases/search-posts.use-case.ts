@@ -1,10 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { type PostRepository } from '@contexts/posts/domain';
+import {
+  type PostRepository,
+  type PostRepositoryCursor,
+} from '@contexts/posts/domain';
 import { POST_REPOSITORY } from '@contexts/posts/posts.di-tokens';
 import { type ListPostsResult } from './list-posts.use-case';
 
 export type SearchPostsCommand = {
   readonly query: string;
+  readonly cursor?: PostRepositoryCursor;
+  readonly limit?: number;
 };
 
 @Injectable()
@@ -15,7 +20,11 @@ export class SearchPostsUseCase {
   ) {}
 
   async execute(command: SearchPostsCommand): Promise<ListPostsResult> {
-    const posts = await this.posts.list({ query: command.query });
+    const { posts, nextCursor } = await this.posts.list({
+      query: command.query,
+      cursor: command.cursor,
+      limit: command.limit ?? 20,
+    });
 
     return {
       posts: posts.map((post) => {
@@ -29,6 +38,7 @@ export class SearchPostsUseCase {
           updatedAt: post.updatedAt,
         };
       }),
+      nextCursor,
     };
   }
 }

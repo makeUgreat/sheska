@@ -15,7 +15,7 @@ describe('SearchPostsUseCase', () => {
     const post1 = buildPost({ sourceId: 'source-1', title: 'TypeScript 입문' });
     const post2 = buildPost({ sourceId: 'source-2', title: 'TypeScript 심화' });
     const posts = createPostRepositoryMock();
-    posts.list.mockResolvedValue([post1, post2]);
+    posts.list.mockResolvedValue({ posts: [post1, post2], nextCursor: null });
     const useCase = new SearchPostsUseCase(posts);
 
     const result = await useCase.execute({ query: 'TypeScript' });
@@ -27,12 +27,16 @@ describe('SearchPostsUseCase', () => {
       title: 'TypeScript 입문',
       viewCount: 0,
     });
-    expect(posts.list).toHaveBeenCalledWith({ query: 'TypeScript' });
+    expect(posts.list).toHaveBeenCalledWith({
+      query: 'TypeScript',
+      cursor: undefined,
+      limit: 20,
+    });
   });
 
   it('일치하는 post가 없으면 빈 배열을 반환한다', async () => {
     const posts = createPostRepositoryMock();
-    posts.list.mockResolvedValue([]);
+    posts.list.mockResolvedValue({ posts: [], nextCursor: null });
     const useCase = new SearchPostsUseCase(posts);
 
     const result = await useCase.execute({ query: 'nothing' });
@@ -56,7 +60,9 @@ function createPostRepositoryMock(): PostRepositoryMock {
   return {
     get: vi.fn<PostRepository['get']>().mockResolvedValue(buildPost()),
     find: vi.fn<PostRepository['find']>().mockResolvedValue(null),
-    list: vi.fn<PostRepository['list']>().mockResolvedValue([]),
+    list: vi
+      .fn<PostRepository['list']>()
+      .mockResolvedValue({ posts: [], nextCursor: null }),
     save: vi
       .fn<PostRepository['save']>()
       .mockImplementation((post) => Promise.resolve(post)),
