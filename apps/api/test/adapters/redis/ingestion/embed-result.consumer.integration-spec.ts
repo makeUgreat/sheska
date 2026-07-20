@@ -19,6 +19,10 @@ import { VALID_EMBEDDING } from '../../../support/domains/fixtures/source-vector
 
 const REDIS_CONNECTION = { host: '127.0.0.1', port: 56379 };
 
+const defaultChunks: EmbedResultPayload['chunks'] = [
+  { chunkIndex: 0, chunkContent: 'chunk content', embedding: VALID_EMBEDDING },
+];
+
 describe('EmbedResultConsumer', () => {
   let app: INestApplication;
   let embedResultsQueue: Queue<EmbedResultPayload>;
@@ -73,8 +77,8 @@ describe('EmbedResultConsumer', () => {
     const job = await embedResultsQueue.add('embed-result', {
       sourceId: 'source-1',
       syncJobId: 'sync-job-1',
-      embedding: VALID_EMBEDDING,
       model: 'qwen3-embedding:0.6b',
+      chunks: defaultChunks,
     });
 
     await job.waitUntilFinished(queueEvents);
@@ -101,8 +105,8 @@ describe('EmbedResultConsumer', () => {
       {
         sourceId: 'source-1',
         syncJobId: 'sync-job-1',
-        embedding: VALID_EMBEDDING,
         model: 'qwen3-embedding:0.6b',
+        chunks: defaultChunks,
       },
       { attempts: 1 },
     );

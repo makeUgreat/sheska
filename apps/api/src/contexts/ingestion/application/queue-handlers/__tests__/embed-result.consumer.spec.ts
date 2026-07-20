@@ -4,6 +4,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   IngestionCompletedDomainEvent,
   IngestionFailedDomainEvent,
+  SourceVector,
 } from '@contexts/ingestion/domain';
 import { VALID_EMBEDDING } from '../../../../../../test/support/domains/fixtures/source-vector.fixture';
 import {
@@ -22,8 +23,14 @@ function buildJob(
     data: {
       sourceId: data.sourceId ?? 'source-1',
       syncJobId: data.syncJobId ?? 'sync-job-1',
-      embedding: data.embedding ?? VALID_EMBEDDING,
       model: data.model ?? 'qwen3-embedding:0.6b',
+      chunks: data.chunks ?? [
+        {
+          chunkIndex: 0,
+          chunkContent: 'chunk content',
+          embedding: VALID_EMBEDDING,
+        },
+      ],
     },
   } as Job<EmbedResultPayload>;
 }
@@ -63,6 +70,36 @@ describe('EmbedResultConsumer', () => {
 
       const event = emit.mock.calls[0][1] as IngestionCompletedDomainEvent;
       expect(event.syncJobId).toBe('sync-job-42');
+    });
+
+    it('복수 청크가 담긴 payload로 SourceVector를 저장한다', async () => {
+      const save = vi.fn().mockResolvedValue(undefined);
+      const consumer = new EmbedResultConsumer(
+        { save, find: vi.fn() },
+        new EventEmitter2(),
+        buildMockLogger(),
+      );
+
+      await consumer.process(
+        buildJob({
+          chunks: [
+            {
+              chunkIndex: 0,
+              chunkContent: 'first',
+              embedding: VALID_EMBEDDING,
+            },
+            {
+              chunkIndex: 1,
+              chunkContent: 'second',
+              embedding: VALID_EMBEDDING,
+            },
+          ],
+        }),
+      );
+
+      expect(save).toHaveBeenCalledOnce();
+      const savedVector = save.mock.calls[0][0] as SourceVector;
+      expect(savedVector.getProps().chunks).toHaveLength(2);
     });
   });
 

@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   classifyPostgresError,
@@ -17,38 +17,33 @@ export class SourceVectorPgDrizzleRepository implements SourceVectorRepository {
   constructor(private readonly db: NodePgDatabase<typeof schema>) {}
 
   async find(criteria: { sourceId: string }): Promise<SourceVector | null> {
-    const row = await this.db
+    const rows = await this.db
       .select()
       .from(schema.sourceVectors)
       .where(eq(schema.sourceVectors.sourceId, criteria.sourceId))
-      .limit(1)
-      .then((rows) => rows[0] ?? null);
+      .orderBy(asc(schema.sourceVectors.chunkIndex));
 
-    return row ? SourceVectorPgDrizzleMapper.toDomain(row) : null;
+    return rows.length > 0 ? SourceVectorPgDrizzleMapper.toDomain(rows) : null;
   }
 
   async save(sourceVector: SourceVector): Promise<void> {
-    const insert = SourceVectorPgDrizzleMapper.toInsert(sourceVector);
+    const inserts = SourceVectorPgDrizzleMapper.toInserts(sourceVector);
+    const { sourceId } = inserts[0];
 
     try {
-      await this.db
-        .insert(schema.sourceVectors)
-        .values(insert)
-        .onConflictDoUpdate({
-          target: schema.sourceVectors.sourceId,
-          set: {
-            embedding: insert.embedding,
-            model: insert.model,
-            updatedAt: new Date(),
-          },
-        });
+      await this.db.transaction(async (tx) => {
+        await tx
+          .delete(schema.sourceVectors)
+          .where(eq(schema.sourceVectors.sourceId, sourceId));
+        await tx.insert(schema.sourceVectors).values(inserts);
+      });
     } catch (error: unknown) {
       throw new InfrastructureException({
         kind: classifyPostgresError(error),
         code: 'source_vector.save_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
-        message: 'Source vector upsert operation failed',
-        details: { sourceId: insert.sourceId },
+        message: 'Source vector save operation failed',
+        details: { sourceId },
         cause: error,
       });
     }
