@@ -6,7 +6,7 @@
   "scripts": {
     "deps:check": "depcruise apps --config .dependency-cruiser.cjs",
     "harness:static": "pnpm deps:check && pnpm -r --if-present harness:static",
-    "harness:build": "pnpm -r --if-present harness:build && docker build -f apps/api/Dockerfile -t sheska-api:local . && docker run --rm sheska-api:local node -e \"['dist/main.js','dist/database/migrate.js'].forEach(f=>{require('fs').statSync(f);console.log(f+' OK')})\""
+    "harness:build": "pnpm -r --if-present harness:build && pnpm --filter @sheska/api test:runtime:start && pnpm --filter @sheska/api test:runtime:stop"
   },
   "devDependencies": {
     "dependency-cruiser": "^17.4.2"

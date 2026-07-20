@@ -39,7 +39,10 @@ export class IngestionModule {
           provide: EMBEDDER,
           useClass: OllamaHttpEmbedder,
         },
-        RecursiveCharacterChunker,
+        {
+          provide: RecursiveCharacterChunker,
+          useFactory: () => new RecursiveCharacterChunker(),
+        },
         IngestSourceHandler,
         EmbedRequestConsumer,
         EmbedResultConsumer,
