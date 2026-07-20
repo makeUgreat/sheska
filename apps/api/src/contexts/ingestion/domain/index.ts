@@ -1,3 +1,4 @@
+export { ChunkVector } from './chunk-vector.vo';
 export { EmbeddingModel } from './embedding-model.vo';
 export { EmbeddingVector } from './embedding-vector.vo';
 export { SourceVector } from './source-vector.aggregate';

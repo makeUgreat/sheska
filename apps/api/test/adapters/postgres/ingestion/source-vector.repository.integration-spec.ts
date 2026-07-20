@@ -37,14 +37,12 @@ describe('SourceVectorDrizzleRepository', () => {
         externalSourceId: 'Notes/source-vector-source.md',
       }),
     );
-    const sourceVector = buildSourceVector({
-      sourceId: source.id,
-    });
+    const sourceVector = buildSourceVector({ sourceId: source.id });
 
     await expect(repository.save(sourceVector)).resolves.not.toThrow();
   });
 
-  it('같은 sourceId로 다시 저장하면 embedding을 덮어쓴다', async () => {
+  it('같은 sourceId로 다시 저장하면 청크를 교체한다', async () => {
     const source = await sourceRepository.save(
       buildSource({
         externalSourceId: 'Notes/source-vector-upsert.md',
@@ -57,10 +55,44 @@ describe('SourceVectorDrizzleRepository', () => {
       repository.save(
         buildSourceVector({
           sourceId: source.id,
-          embedding: updatedEmbedding,
+          chunks: [
+            {
+              chunkIndex: 0,
+              chunkContent: 'updated',
+              embedding: updatedEmbedding,
+            },
+          ],
         }),
       ),
     ).resolves.not.toThrow();
+  });
+
+  it('복수 청크를 저장하고 chunkIndex 오름차순으로 반환한다', async () => {
+    const source = await sourceRepository.save(
+      buildSource({
+        externalSourceId: 'Notes/source-vector-multi-chunk.md',
+      }),
+    );
+    const sourceVector = buildSourceVector({
+      sourceId: source.id,
+      chunks: [
+        { chunkIndex: 0, chunkContent: 'first chunk' },
+        { chunkIndex: 1, chunkContent: 'second chunk' },
+        { chunkIndex: 2, chunkContent: 'third chunk' },
+      ],
+    });
+    await repository.save(sourceVector);
+
+    const result = await repository.find({ sourceId: source.id });
+
+    expect(result).not.toBeNull();
+    expect(result?.getProps().chunks).toHaveLength(3);
+    expect(result?.getProps().chunks[0].unpack().chunkContent).toBe(
+      'first chunk',
+    );
+    expect(result?.getProps().chunks[2].unpack().chunkContent).toBe(
+      'third chunk',
+    );
   });
 
   it('sourceId로 source vector를 반환한다', async () => {

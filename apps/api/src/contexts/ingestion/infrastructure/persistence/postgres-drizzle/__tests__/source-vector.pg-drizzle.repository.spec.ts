@@ -7,7 +7,7 @@ import { buildSourceVector } from '../../../../../../../test/support/domains/fix
 import { SourceVectorPgDrizzleRepository } from '../source-vector.pg-drizzle.repository';
 
 describe('SourceVectorPgDrizzleRepository', () => {
-  it('Postgres conflict는 CONFLICT exception으로 전파한다', async () => {
+  it('Postgres error는 CONFLICT exception으로 전파한다', async () => {
     const repository = new SourceVectorPgDrizzleRepository(
       createSaveRejectingDb(createPostgresError('23505')),
     );
@@ -40,11 +40,11 @@ function createSaveRejectingDb(
   error: Error,
 ): ConstructorParameters<typeof SourceVectorPgDrizzleRepository>[0] {
   return {
-    insert: () => ({
-      values: () => ({
-        onConflictDoUpdate: () => Promise.reject(error),
+    transaction: (fn: (tx: unknown) => Promise<void>) =>
+      fn({
+        delete: () => ({ where: () => Promise.resolve() }),
+        insert: () => ({ values: () => Promise.reject(error) }),
       }),
-    }),
   } as unknown as ConstructorParameters<
     typeof SourceVectorPgDrizzleRepository
   >[0];

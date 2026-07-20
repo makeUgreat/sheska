@@ -8,6 +8,8 @@ export function buildSourceVectorRow(
 ): SourceVectorRow {
   return {
     sourceId: params.sourceId ?? 'source-1',
+    chunkIndex: params.chunkIndex ?? 0,
+    chunkContent: params.chunkContent ?? 'default chunk content',
     embedding: params.embedding ?? VALID_EMBEDDING,
     model: params.model ?? 'qwen3-embedding:0.6b',
     createdAt: params.createdAt ?? persistedAt,

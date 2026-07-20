@@ -131,6 +131,8 @@ describe('UploadSourceUseCase', () => {
 
     await database.insert(ingestionSchema.sourceVectors).values({
       sourceId: firstResult.sourceId,
+      chunkIndex: 0,
+      chunkContent: 'existing chunk',
       embedding: VALID_EMBEDDING,
       model: 'qwen3-embedding:0.6b',
     });
