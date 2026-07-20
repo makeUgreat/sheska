@@ -15,6 +15,7 @@ import {
 import { IngestionFailedDomainEvent } from '@contexts/ingestion/domain';
 import { type Embedder } from '@contexts/ingestion/application/ports';
 import { EMBEDDER } from '@contexts/ingestion/ingestion.di-tokens';
+import { RecursiveCharacterChunker } from '@contexts/ingestion/application/services/recursive-character.chunker';
 import {
   EMBED_RESULTS_QUEUE,
   type EmbedResultPayload,
@@ -39,6 +40,7 @@ export class EmbedRequestConsumer extends WorkerHost {
     private readonly eventEmitter: EventEmitter2,
     @Inject(LOGGER)
     private readonly logger: LoggerPort,
+    private readonly chunker: RecursiveCharacterChunker,
   ) {
     super();
   }
@@ -46,12 +48,24 @@ export class EmbedRequestConsumer extends WorkerHost {
   // TODO: add retry logic for Ollama call failures
   async process(job: Job<EmbedRequestPayload>): Promise<void> {
     const { sourceId, syncJobId, content } = job.data;
-    const { embedding, model } = await this.embedder.embed(content);
+
+    const chunks = this.chunker.chunk(content);
+    const results = await Promise.all(
+      chunks.map((chunk) => this.embedder.embed(chunk.content)),
+    );
+
+    const model = results[0].model;
+    const embedChunks = chunks.map((chunk, i) => ({
+      chunkIndex: chunk.index,
+      chunkContent: chunk.content,
+      embedding: results[i].embedding,
+    }));
+
     await this.resultsQueue.add('embed-result', {
       sourceId,
       syncJobId,
-      embedding,
       model,
+      chunks: embedChunks,
     } satisfies EmbedResultPayload);
   }
 

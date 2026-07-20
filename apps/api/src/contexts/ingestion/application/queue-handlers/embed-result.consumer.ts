@@ -13,11 +13,17 @@ import { SOURCE_VECTOR_REPOSITORY } from '@contexts/ingestion/ingestion.di-token
 
 export const EMBED_RESULTS_QUEUE = 'embed-results';
 
+export interface EmbedResultChunk {
+  readonly chunkIndex: number;
+  readonly chunkContent: string;
+  readonly embedding: number[];
+}
+
 export interface EmbedResultPayload {
   readonly sourceId: string;
   readonly syncJobId: string;
-  readonly embedding: number[];
   readonly model: string;
+  readonly chunks: EmbedResultChunk[];
 }
 
 @Processor(EMBED_RESULTS_QUEUE)
@@ -34,8 +40,8 @@ export class EmbedResultConsumer extends WorkerHost {
   }
 
   async process(job: Job<EmbedResultPayload>): Promise<void> {
-    const { sourceId, syncJobId, embedding, model } = job.data;
-    const sourceVector = SourceVector.create({ sourceId, embedding, model });
+    const { sourceId, syncJobId, model, chunks } = job.data;
+    const sourceVector = SourceVector.create({ sourceId, model, chunks });
     await this.sourceVectors.save(sourceVector);
     const event = new IngestionCompletedDomainEvent({
       aggregateId: syncJobId,

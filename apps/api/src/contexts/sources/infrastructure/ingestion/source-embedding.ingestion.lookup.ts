@@ -17,7 +17,7 @@ export class SourceEmbeddingIngestionLookup implements SourceEmbeddingLookup {
     const props = vector.getProps();
     return {
       model: props.model.unpack(),
-      dimensions: props.embedding.unpack().dimensions,
+      dimensions: props.model.expectedDimensions,
       createdAt: vector.createdAt,
       updatedAt: vector.updatedAt,
     };
