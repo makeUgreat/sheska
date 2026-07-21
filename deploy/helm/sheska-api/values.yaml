@@ -4,7 +4,7 @@ secret:
 image:
   repository: willom2c/sheska-api
   pullPolicy: IfNotPresent
-  tag: "sha-782de2ccebf1e201ce26be9317fc9847c5e81be8"
+  tag: "sha-4ebbdba783fc7bb0b7fed330453afd7267f3ec7e"
 service:
   type: ClusterIP
   port: 3000
