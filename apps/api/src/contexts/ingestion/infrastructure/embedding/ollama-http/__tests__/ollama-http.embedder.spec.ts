@@ -36,6 +36,20 @@ describe('OllamaHttpEmbedder', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model, prompt: 'hello world' }),
+      signal: expect.any(AbortSignal) as AbortSignal,
+    });
+  });
+
+  it('요청이 타임아웃되면 TIMEOUT InfrastructureException을 던진다', async () => {
+    const timeoutError = Object.assign(new Error('The operation timed out'), {
+      name: 'TimeoutError',
+    });
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(timeoutError));
+
+    await expect(client.embed('hello')).rejects.toMatchObject({
+      kind: 'timeout',
+      code: 'ollama.request_timeout',
+      cause: timeoutError,
     });
   });
 

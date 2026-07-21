@@ -23,6 +23,8 @@ const MOCK_SOURCE: GetSourceResponse = {
   latestSyncJob: {
     syncJobId: 'sync-job-1',
     status: 'completed',
+    totalChunks: 4,
+    processedChunks: 4,
     createdAt: NOW,
   },
   embedding: {
@@ -99,6 +101,30 @@ describe('SourceDetailPage', () => {
       expect(screen.getByText('sync-job-1')).toBeDefined();
       expect(screen.getByText('text-embedding-3-small')).toBeDefined();
       expect(screen.getByText('1536')).toBeDefined();
+    });
+  });
+
+  it('sync job이 processing 상태이면 진행률을 렌더링한다', async () => {
+    const client = buildMockClient({
+      getSource: vi.fn().mockResolvedValue({
+        ...MOCK_SOURCE,
+        latestSyncJob: {
+          syncJobId: 'sync-job-1',
+          status: 'processing',
+          totalChunks: 10,
+          processedChunks: 3,
+          createdAt: NOW,
+        },
+      }),
+    });
+
+    renderPage(client);
+
+    await waitFor(() => {
+      expect(screen.getByText('processing')).toBeDefined();
+      expect(screen.getByText('3/10 (30%)')).toBeDefined();
+      const progressbar = screen.getByRole('progressbar');
+      expect(progressbar.getAttribute('aria-valuenow')).toBe('30');
     });
   });
 

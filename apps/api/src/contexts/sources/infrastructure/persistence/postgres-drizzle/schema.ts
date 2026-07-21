@@ -21,6 +21,8 @@ export const sourceSyncJobs = pgTable('source_sync_jobs', {
     .references(() => sources.id),
   fingerprint: text('fingerprint').notNull(),
   status: text('status').notNull(),
+  totalChunks: integer('total_chunks'),
+  processedChunks: integer('processed_chunks').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),

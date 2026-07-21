@@ -12,12 +12,17 @@ import {
   type LoggerPort,
   toErrorLogContext,
 } from '@kernels/application';
-import { IngestionFailedDomainEvent } from '@contexts/ingestion/domain';
+import {
+  IngestionFailedDomainEvent,
+  IngestionProgressDomainEvent,
+  IngestionStartedDomainEvent,
+} from '@contexts/ingestion/domain';
 import { type Embedder } from '@contexts/ingestion/application/ports';
 import { EMBEDDER } from '@contexts/ingestion/ingestion.di-tokens';
 import { RecursiveCharacterChunker } from '@contexts/ingestion/application/services/recursive-character.chunker';
 import {
   EMBED_RESULTS_QUEUE,
+  type EmbedResultChunk,
   type EmbedResultPayload,
 } from './embed-result.consumer';
 
@@ -50,16 +55,36 @@ export class EmbedRequestConsumer extends WorkerHost {
     const { sourceId, syncJobId, content } = job.data;
 
     const chunks = this.chunker.chunk(content);
-    const results = await Promise.all(
-      chunks.map((chunk) => this.embedder.embed(chunk.content)),
-    );
+    const startedEvent = new IngestionStartedDomainEvent({
+      aggregateId: syncJobId,
+      syncJobId,
+      totalChunks: chunks.length,
+    });
+    this.eventEmitter.emit(startedEvent.eventName, startedEvent);
 
-    const model = results[0].model;
-    const embedChunks = chunks.map((chunk, i) => ({
-      chunkIndex: chunk.index,
-      chunkContent: chunk.content,
-      embedding: results[i].embedding,
-    }));
+    // Chunks are embedded one at a time (not in parallel) because the embedding
+    // server runs on a single CPU inference slot; concurrent requests would only
+    // queue up on the server and compound toward the client timeout.
+    const embedChunks: EmbedResultChunk[] = [];
+    let model = '';
+
+    for (const chunk of chunks) {
+      const result = await this.embedder.embed(chunk.content);
+      model = result.model;
+      embedChunks.push({
+        chunkIndex: chunk.index,
+        chunkContent: chunk.content,
+        embedding: result.embedding,
+      });
+
+      const progressEvent = new IngestionProgressDomainEvent({
+        aggregateId: syncJobId,
+        syncJobId,
+        processedChunks: embedChunks.length,
+        totalChunks: chunks.length,
+      });
+      this.eventEmitter.emit(progressEvent.eventName, progressEvent);
+    }
 
     await this.resultsQueue.add('embed-result', {
       sourceId,

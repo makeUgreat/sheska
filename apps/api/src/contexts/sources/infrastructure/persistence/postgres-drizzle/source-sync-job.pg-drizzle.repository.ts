@@ -51,7 +51,11 @@ export class SourceSyncJobPgDrizzleRepository implements SourceSyncJobRepository
         .values(insert)
         .onConflictDoUpdate({
           target: schema.sourceSyncJobs.id,
-          set: { status: insert.status },
+          set: {
+            status: insert.status,
+            totalChunks: insert.totalChunks,
+            processedChunks: insert.processedChunks,
+          },
         })
         .returning();
     } catch (error: unknown) {
