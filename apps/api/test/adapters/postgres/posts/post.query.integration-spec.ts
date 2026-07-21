@@ -151,10 +151,7 @@ describe('PostPgDrizzleQuery', () => {
       );
       await posts.save(buildPost({ sourceId: s1.id }));
 
-      const veryOldCursor = {
-        createdAt: new Date('2000-01-01T00:00:00.000Z'),
-        id: 'z',
-      };
+      const veryOldCursor = { id: '00000000-0000-0000-0000-000000000000' };
       const { posts: result, nextCursor } = await postQuery.paginate({
         limit: 10,
         cursor: veryOldCursor,
@@ -164,7 +161,7 @@ describe('PostPgDrizzleQuery', () => {
       expect(nextCursor).toBeNull();
     });
 
-    it('cursor와 동일한 createdAt + id를 가진 포스트는 결과에서 제외된다', async () => {
+    it('cursor와 동일한 id를 가진 포스트는 결과에서 제외된다', async () => {
       const s1 = await sources.save(
         buildSource({ externalSourceId: 'Notes/pq-cursor-tie-1.md' }),
       );
@@ -173,7 +170,7 @@ describe('PostPgDrizzleQuery', () => {
 
       const { posts: saved } = await postQuery.paginate({ limit: 100 });
       const savedPost1 = saved.find((p) => p.postId === post1.id)!;
-      const cursor = { createdAt: savedPost1.createdAt, id: savedPost1.postId };
+      const cursor = { id: savedPost1.postId };
 
       const { posts: result } = await postQuery.paginate({ limit: 10, cursor });
 

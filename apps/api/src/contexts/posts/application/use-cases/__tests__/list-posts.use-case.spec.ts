@@ -78,10 +78,7 @@ describe('ListPostsUseCase', () => {
   });
 
   it('nextCursor가 있으면 그대로 반환한다', async () => {
-    const cursor = {
-      createdAt: new Date('2026-01-01T00:00:00.000Z'),
-      id: 'post-cursor-id',
-    };
+    const cursor = { id: 'post-cursor-id' };
     const postQuery = createPostQueryMock();
     postQuery.paginate.mockResolvedValue(
       buildPaginateResult({

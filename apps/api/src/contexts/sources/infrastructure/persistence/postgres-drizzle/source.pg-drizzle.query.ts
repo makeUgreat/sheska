@@ -42,8 +42,7 @@ export class SourcePgDrizzleQuery implements SourceQuery {
 
     try {
       const cursorCondition = options?.cursor
-        ? sql`AND (s.created_at < ${options.cursor.createdAt}
-            OR (s.created_at = ${options.cursor.createdAt} AND s.id < ${options.cursor.id}))`
+        ? sql`AND s.id < ${options.cursor.id}`
         : sql``;
 
       const result = await this.db.execute<SourceWithLatestJobRow>(sql`
@@ -70,7 +69,7 @@ export class SourcePgDrizzleQuery implements SourceQuery {
         ) ssj ON true
         LEFT JOIN posts p ON p.source_id = s.id
         WHERE true ${cursorCondition}
-        ORDER BY s.created_at DESC, s.id DESC
+        ORDER BY s.id DESC
         LIMIT ${limit + 1}
       `);
 
@@ -113,9 +112,7 @@ export class SourcePgDrizzleQuery implements SourceQuery {
     const data = hasNext ? rows.slice(0, limit) : rows;
     const lastRow = data[data.length - 1];
     const nextCursor: SourceQueryCursor | null =
-      hasNext && lastRow
-        ? { createdAt: new Date(lastRow.created_at), id: lastRow.id }
-        : null;
+      hasNext && lastRow ? { id: lastRow.id } : null;
 
     return {
       sources: data.map(
