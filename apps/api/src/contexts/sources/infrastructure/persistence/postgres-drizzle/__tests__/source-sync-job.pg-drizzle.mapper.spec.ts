@@ -43,6 +43,8 @@ describe('SourceSyncJobPgDrizzleMapper', () => {
       sourceId: 'source-1',
       fingerprint: 'fingerprint-1',
       status: 'pending',
+      totalChunks: null,
+      processedChunks: 0,
     });
   });
 });

@@ -8,6 +8,8 @@ export class SourceSyncJobPgDrizzleMapper {
       sourceId: row.sourceId,
       fingerprint: row.fingerprint,
       status: row.status,
+      totalChunks: row.totalChunks,
+      processedChunks: row.processedChunks,
       createdAt: row.createdAt,
     });
   }
@@ -20,6 +22,8 @@ export class SourceSyncJobPgDrizzleMapper {
       sourceId: props.sourceId,
       fingerprint: props.fingerprint.unpack(),
       status: props.status,
+      totalChunks: props.totalChunks,
+      processedChunks: props.processedChunks,
     };
   }
 }

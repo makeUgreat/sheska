@@ -11,6 +11,8 @@ export type SourceQueryPaginateOptions = {
 export type SourceQuerySyncJobSummary = {
   readonly syncJobId: string;
   readonly status: string;
+  readonly totalChunks: number | null;
+  readonly processedChunks: number;
   readonly createdAt: Date;
 };
 

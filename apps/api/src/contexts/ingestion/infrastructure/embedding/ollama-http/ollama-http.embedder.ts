@@ -6,9 +6,18 @@ import {
   InfrastructureException,
 } from '@kernels/infrastructure';
 import type { Embedder } from '@contexts/ingestion/application/ports';
+import { DEFAULT_CHUNK_SIZE } from '@contexts/ingestion/application/services/recursive-character.chunker';
 import { parseOllamaConfig } from './ollama.config';
 
 const ADAPTER = 'ollama.embedder';
+
+// Scale the request timeout with the chunker's max chunk size, rather than a flat
+// constant, so it stays correct if chunking parameters change. This replaces
+// reliance on undici's implicit 5-minute default, which fires mid-request and
+// looks like a server-side failure instead of a client timeout.
+// 30ms/char is a deliberately generous rate for CPU-only embedding inference.
+const CONSERVATIVE_MS_PER_CHAR = 30;
+const EMBED_REQUEST_TIMEOUT_MS = DEFAULT_CHUNK_SIZE * CONSERVATIVE_MS_PER_CHAR;
 
 const OllamaEmbeddingsResponse = z.object({
   embedding: z.array(z.number()),
@@ -35,8 +44,19 @@ export class OllamaHttpEmbedder implements Embedder {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ model: this.model, prompt: text }),
+        signal: AbortSignal.timeout(EMBED_REQUEST_TIMEOUT_MS),
       });
     } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'TimeoutError') {
+        throw new InfrastructureException({
+          kind: INFRASTRUCTURE_ERROR_KIND.TIMEOUT,
+          code: 'ollama.request_timeout',
+          source: { boundary: 'http-client', adapter: ADAPTER },
+          message: `Ollama did not respond within ${EMBED_REQUEST_TIMEOUT_MS}ms`,
+          details: {},
+          cause: error,
+        });
+      }
       throw new InfrastructureException({
         kind: INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
         code: 'ollama.request_failed',
