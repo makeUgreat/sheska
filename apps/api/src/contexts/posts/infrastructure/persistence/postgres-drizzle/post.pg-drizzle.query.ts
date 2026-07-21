@@ -1,4 +1,4 @@
-import { and, desc, eq, lt, or, sql } from 'drizzle-orm';
+import { and, desc, lt, or, sql } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   type PostQuery,
@@ -106,19 +106,11 @@ export class PostPgDrizzleQuery implements PostQuery {
       const baseQuery = this.db
         .select()
         .from(postsSchema.posts)
-        .orderBy(desc(postsSchema.posts.createdAt), desc(postsSchema.posts.id))
+        .orderBy(desc(postsSchema.posts.id))
         .limit(limit + 1);
 
       const rows = options?.cursor
-        ? await baseQuery.where(
-            or(
-              lt(postsSchema.posts.createdAt, options.cursor.createdAt),
-              and(
-                eq(postsSchema.posts.createdAt, options.cursor.createdAt),
-                lt(postsSchema.posts.id, options.cursor.id),
-              ),
-            ),
-          )
+        ? await baseQuery.where(lt(postsSchema.posts.id, options.cursor.id))
         : await baseQuery;
 
       return this.toPaginateResult(rows, limit);
@@ -160,13 +152,7 @@ export class PostPgDrizzleQuery implements PostQuery {
               sql`${score} < ${cursorScore}`,
               and(
                 sql`${score} = ${cursorScore}`,
-                or(
-                  lt(postsSchema.posts.createdAt, options.cursor.createdAt),
-                  and(
-                    eq(postsSchema.posts.createdAt, options.cursor.createdAt),
-                    lt(postsSchema.posts.id, options.cursor.id),
-                  ),
-                ),
+                lt(postsSchema.posts.id, options.cursor.id),
               ),
             )
           : undefined;
@@ -183,11 +169,7 @@ export class PostPgDrizzleQuery implements PostQuery {
         })
         .from(postsSchema.posts)
         .where(cursorWhere ? and(searchWhere, cursorWhere) : searchWhere)
-        .orderBy(
-          desc(score),
-          desc(postsSchema.posts.createdAt),
-          desc(postsSchema.posts.id),
-        )
+        .orderBy(desc(score), desc(postsSchema.posts.id))
         .limit(limit + 1);
 
       return this.toPaginateResult(rows, limit);
@@ -213,7 +195,6 @@ export class PostPgDrizzleQuery implements PostQuery {
     const nextCursor: PostQueryCursor | null =
       hasNext && lastRow
         ? {
-            createdAt: lastRow.createdAt,
             id: lastRow.id,
             ...('searchScore' in lastRow ? { score: lastRow.searchScore } : {}),
           }

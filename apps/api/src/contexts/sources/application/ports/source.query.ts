@@ -1,5 +1,4 @@
 export type SourceQueryCursor = {
-  readonly createdAt: Date;
   readonly id: string;
 };
 

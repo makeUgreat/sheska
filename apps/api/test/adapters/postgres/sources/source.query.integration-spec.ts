@@ -186,10 +186,7 @@ describe('SourcePgDrizzleQuery', () => {
     });
 
     it('마지막 source 이후의 cursor로 조회하면 nextCursor가 null이다', async () => {
-      const veryOldCursor = {
-        createdAt: new Date('2000-01-01T00:00:00.000Z'),
-        id: 'z',
-      };
+      const veryOldCursor = { id: '00000000-0000-0000-0000-000000000000' };
 
       const { sources: result, nextCursor } = await sourceQuery.paginate({
         limit: 10,
@@ -200,17 +197,14 @@ describe('SourcePgDrizzleQuery', () => {
       expect(nextCursor).toBeNull();
     });
 
-    it('cursor와 동일한 createdAt + id를 가진 source는 결과에서 제외된다', async () => {
+    it('cursor와 동일한 id를 가진 source는 결과에서 제외된다', async () => {
       const source = await sources.save(
         buildSource({ externalSourceId: 'Notes/sq-cursor-tie.md' }),
       );
 
       const { sources: saved } = await sourceQuery.paginate({ limit: 100 });
       const savedSource = saved.find((s) => s.sourceId === source.id)!;
-      const cursor = {
-        createdAt: savedSource.createdAt,
-        id: savedSource.sourceId,
-      };
+      const cursor = { id: savedSource.sourceId };
 
       const { sources: result } = await sourceQuery.paginate({
         limit: 10,

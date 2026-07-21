@@ -13,7 +13,6 @@ export type PostQueryFindCriteria = {
 };
 
 export type PostQueryCursor = {
-  readonly createdAt: Date;
   readonly id: string;
   readonly score?: number;
 };
