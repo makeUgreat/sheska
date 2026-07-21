@@ -123,4 +123,31 @@ describe('SourceSyncJob', () => {
       );
     });
   });
+
+  describe('isCompleted', () => {
+    it('status가 completed면 true를 반환한다', () => {
+      const syncJob = SourceSyncJob.create({
+        sourceId: 'source-1',
+        content: '# Source note',
+        fingerprint: 'fingerprint-1',
+      });
+      syncJob.markCompleted();
+
+      expect(syncJob.isCompleted()).toBe(true);
+    });
+
+    it.each(['pending', 'processing', 'failed'] as const)(
+      'status가 %s면 false를 반환한다',
+      (status) => {
+        const syncJob = SourceSyncJob.restore({
+          id: 'source-sync-job-1',
+          sourceId: 'source-1',
+          fingerprint: 'fingerprint-1',
+          status,
+        });
+
+        expect(syncJob.isCompleted()).toBe(false);
+      },
+    );
+  });
 });
