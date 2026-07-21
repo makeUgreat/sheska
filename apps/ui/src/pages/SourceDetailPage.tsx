@@ -172,20 +172,35 @@ export function SourceDetailPage() {
               <h2 className="text-base font-semibold text-gray-950">
                 게시하기
               </h2>
-              <div className="mt-4">
-                <button
-                  onClick={() => handlePublish(source.sourceId)}
-                  disabled={publishPost.isPending}
-                  className="w-full rounded-md bg-gray-950 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300"
-                >
-                  {publishPost.isPending ? '게시 중...' : '게시하기'}
-                </button>
-              </div>
+              {source.publishedPostId ? (
+                <p className="mt-4 text-sm text-gray-700">
+                  이미 게시되었습니다.{' '}
+                  <Link
+                    to={`/posts/${source.publishedPostId}`}
+                    className="font-medium text-blue-600 underline"
+                  >
+                    게시된 포스트 보기
+                  </Link>
+                </p>
+              ) : (
+                <div className="mt-4">
+                  <button
+                    onClick={() => handlePublish(source.sourceId)}
+                    disabled={publishPost.isPending}
+                    className="w-full rounded-md bg-gray-950 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300"
+                  >
+                    {publishPost.isPending ? '게시 중...' : '게시하기'}
+                  </button>
+                </div>
+              )}
               {publishPost.isSuccess && (
                 <p className="mt-4 text-sm text-green-700">
                   포스트가 게시되었습니다.{' '}
-                  <Link to="/posts" className="font-medium underline">
-                    포스트 목록 보기
+                  <Link
+                    to={`/posts/${publishPost.data.postId}`}
+                    className="font-medium underline"
+                  >
+                    게시된 포스트 보기
                   </Link>
                 </p>
               )}

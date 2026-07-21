@@ -24,6 +24,7 @@ export type SourceQueryListItem = {
   readonly createdAt: Date;
   readonly updatedAt: Date;
   readonly latestSyncJob: SourceQuerySyncJobSummary | null;
+  readonly publishedPostId: string | null;
 };
 
 export type SourceQueryPaginateResult = {
@@ -35,4 +36,5 @@ export interface SourceQuery {
   paginate(
     options?: SourceQueryPaginateOptions,
   ): Promise<SourceQueryPaginateResult>;
+  find(criteria: { sourceId: string }): Promise<string | null>;
 }

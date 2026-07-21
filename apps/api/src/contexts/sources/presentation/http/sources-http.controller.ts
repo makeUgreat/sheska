@@ -45,6 +45,7 @@ export class SourcesHttpController {
               createdAt: s.latestSyncJob.createdAt.toISOString(),
             }
           : null,
+        publishedPostId: s.publishedPostId,
       })),
     };
   }
@@ -78,6 +79,7 @@ export class SourcesHttpController {
             updatedAt: result.embedding.updatedAt.toISOString(),
           }
         : null,
+      publishedPostId: result.publishedPostId,
     };
   }
 

@@ -117,6 +117,7 @@ describe('SourcesHttpController', () => {
               processedChunks: 3,
               createdAt: now,
             },
+            publishedPostId: 'post-1',
           },
         ],
         nextCursor: null,
@@ -140,6 +141,7 @@ describe('SourcesHttpController', () => {
               processedChunks: 3,
               createdAt: now.toISOString(),
             },
+            publishedPostId: 'post-1',
           },
         ],
       });
@@ -197,6 +199,7 @@ describe('SourcesHttpController', () => {
           createdAt: now,
           updatedAt: now,
         },
+        publishedPostId: 'post-1',
       });
 
       const response = await request(httpServer)
@@ -222,6 +225,7 @@ describe('SourcesHttpController', () => {
           model: 'qwen3-embedding:0.6b',
           dimensions: 1024,
         },
+        publishedPostId: 'post-1',
       });
       expect(getSourceUseCase.execute).toHaveBeenCalledWith({
         sourceId: 'source-1',

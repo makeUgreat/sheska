@@ -16,6 +16,7 @@ export interface SourceSummary {
   createdAt: string;
   updatedAt: string;
   latestSyncJob: SyncJobSummary | null;
+  publishedPostId: string | null;
 }
 
 export interface ListSourcesResponse {
@@ -98,6 +99,7 @@ export interface GetSourceResponse {
   updatedAt: string;
   latestSyncJob: SyncJobSummary | null;
   embedding: EmbeddingInfo | null;
+  publishedPostId: string | null;
 }
 
 import { type HttpClient } from './http';
