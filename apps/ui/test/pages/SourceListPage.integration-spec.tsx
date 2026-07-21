@@ -69,6 +69,8 @@ describe('SourceListPage', () => {
       latestSyncJob: {
         syncJobId: 'sync-job-1',
         status: 'completed',
+        totalChunks: 4,
+        processedChunks: 4,
         createdAt: now,
       },
     };
@@ -86,6 +88,39 @@ describe('SourceListPage', () => {
       expect(link.getAttribute('href')).toBe('/sources/source-1');
       expect(screen.getByText('completed')).toBeDefined();
       expect(screen.getByText(/14 bytes/)).toBeDefined();
+    });
+  });
+
+  it('sync job이 processing 상태이면 진행률을 보여준다', async () => {
+    const now = '2026-01-01T00:00:00.000Z';
+    const source: SourceSummary = {
+      sourceId: 'source-1',
+      externalSourceId: 'Notes/source.md',
+      fingerprint: 'fingerprint-1',
+      sizeBytes: 14,
+      createdAt: now,
+      updatedAt: now,
+      latestSyncJob: {
+        syncJobId: 'sync-job-1',
+        status: 'processing',
+        totalChunks: 10,
+        processedChunks: 3,
+        createdAt: now,
+      },
+    };
+    const client = buildMockClient({
+      listSources: vi.fn().mockResolvedValue({
+        sources: [source],
+      }),
+    });
+
+    renderPage(client);
+
+    await waitFor(() => {
+      expect(screen.getByText('processing')).toBeDefined();
+      expect(screen.getByText('3/10 (30%)')).toBeDefined();
+      const progressbar = screen.getByRole('progressbar');
+      expect(progressbar.getAttribute('aria-valuenow')).toBe('30');
     });
   });
 

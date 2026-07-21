@@ -6,9 +6,11 @@ interface SourceSyncJobProps {
   sourceId: string;
   fingerprint: SourceFingerprint;
   status: SourceSyncJobStatus;
+  totalChunks: number | null;
+  processedChunks: number;
 }
 
-type SourceSyncJobStatus = 'pending' | 'completed' | 'failed';
+type SourceSyncJobStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
 interface SourceSyncJobCreateParams {
   sourceId: string;
@@ -21,6 +23,8 @@ interface SourceSyncJobRestoreParams {
   sourceId: string;
   fingerprint: string;
   status: string;
+  totalChunks?: number | null;
+  processedChunks?: number;
   createdAt?: Date;
 }
 
@@ -34,6 +38,8 @@ export class SourceSyncJob extends AggregateRoot<SourceSyncJobProps> {
         sourceId,
         fingerprint: SourceFingerprint.of(fingerprint),
         status: 'pending',
+        totalChunks: null,
+        processedChunks: 0,
       },
     });
 
@@ -58,9 +64,22 @@ export class SourceSyncJob extends AggregateRoot<SourceSyncJobProps> {
         sourceId,
         fingerprint: SourceFingerprint.of(fingerprint),
         status: status as SourceSyncJobStatus,
+        totalChunks: params.totalChunks ?? null,
+        processedChunks: params.processedChunks ?? 0,
       },
       createdAt,
     });
+  }
+
+  markProcessing(totalChunks: number): void {
+    this.props.status = 'processing';
+    this.props.totalChunks = totalChunks;
+    this.props.processedChunks = 0;
+  }
+
+  recordProgress(processedChunks: number): void {
+    this.props.processedChunks = processedChunks;
+    this.validate();
   }
 
   markCompleted(): void {
@@ -75,11 +94,25 @@ export class SourceSyncJob extends AggregateRoot<SourceSyncJobProps> {
     if (!SourceSyncJob.isStatus(this.props.status)) {
       throw new Error('Source sync job status is invalid');
     }
+    if (this.props.processedChunks < 0) {
+      throw new Error('Source sync job processed chunk count is invalid');
+    }
+    if (
+      this.props.totalChunks !== null &&
+      this.props.processedChunks > this.props.totalChunks
+    ) {
+      throw new Error(
+        'Source sync job processed chunk count exceeds total chunks',
+      );
+    }
   }
 
   private static isStatus(status: string): status is SourceSyncJobStatus {
     return (
-      status === 'pending' || status === 'completed' || status === 'failed'
+      status === 'pending' ||
+      status === 'processing' ||
+      status === 'completed' ||
+      status === 'failed'
     );
   }
 }

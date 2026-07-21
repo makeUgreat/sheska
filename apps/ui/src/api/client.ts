@@ -2,7 +2,9 @@
 
 export interface SyncJobSummary {
   syncJobId: string;
-  status: 'pending' | 'completed' | 'failed';
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  totalChunks: number | null;
+  processedChunks: number;
   createdAt: string;
 }
 

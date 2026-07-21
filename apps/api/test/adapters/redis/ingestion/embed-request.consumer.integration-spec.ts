@@ -16,6 +16,7 @@ import {
 import { LOGGER } from '@kernels/application';
 import { EMBEDDER } from '@contexts/ingestion/ingestion.di-tokens';
 import { IngestionFailedDomainEvent } from '@contexts/ingestion/domain';
+import { RecursiveCharacterChunker } from '@contexts/ingestion/application/services/recursive-character.chunker';
 
 const REDIS_CONNECTION = { host: '127.0.0.1', port: 56379 };
 
@@ -38,6 +39,10 @@ describe('EmbedRequestConsumer', () => {
       ],
       providers: [
         EmbedRequestConsumer,
+        {
+          provide: RecursiveCharacterChunker,
+          useFactory: () => new RecursiveCharacterChunker(),
+        },
         { provide: EMBEDDER, useValue: { embed } },
         {
           provide: LOGGER,
@@ -89,8 +94,14 @@ describe('EmbedRequestConsumer', () => {
     expect(resultJob.data).toMatchObject({
       sourceId: 'source-1',
       syncJobId: 'sync-job-1',
-      embedding: [0.1, 0.2, 0.3],
       model: 'qwen3-embedding:0.6b',
+      chunks: [
+        {
+          chunkIndex: 0,
+          chunkContent: '# Hello World',
+          embedding: [0.1, 0.2, 0.3],
+        },
+      ],
     });
   });
 

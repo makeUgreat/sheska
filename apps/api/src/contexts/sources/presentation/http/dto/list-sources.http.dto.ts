@@ -17,6 +17,8 @@ export class ListSourcesHttpRequest {
 export interface SyncJobSummaryHttpResponse {
   readonly syncJobId: string;
   readonly status: string;
+  readonly totalChunks: number | null;
+  readonly processedChunks: number;
   readonly createdAt: string;
 }
 

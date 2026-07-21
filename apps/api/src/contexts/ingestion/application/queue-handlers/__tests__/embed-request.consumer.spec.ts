@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { type Job, type Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { IngestionFailedDomainEvent } from '@contexts/ingestion/domain';
+import {
+  IngestionFailedDomainEvent,
+  IngestionProgressDomainEvent,
+  IngestionStartedDomainEvent,
+} from '@contexts/ingestion/domain';
 import { RecursiveCharacterChunker } from '@contexts/ingestion/application/services/recursive-character.chunker';
 import {
   EmbedRequestConsumer,
@@ -79,6 +83,61 @@ describe('EmbedRequestConsumer', () => {
       const payload = (add.mock.calls[0] as [string, EmbedResultPayload])[1];
       expect(payload.chunks).toHaveLength(3);
       expect(payload.chunks[0].chunkIndex).toBe(0);
+    });
+
+    it('시작 시 ingestion-started 이벤트를 totalChunks와 함께 emit한다', async () => {
+      const embed = vi
+        .fn()
+        .mockResolvedValue({ embedding: fakeEmbedding, model: fakeModel });
+      const eventEmitter = new EventEmitter2();
+      const emit = vi.spyOn(eventEmitter, 'emit');
+      const smallChunker = new RecursiveCharacterChunker(7, 0);
+      const consumer = new EmbedRequestConsumer(
+        { embed },
+        { add: vi.fn() } as unknown as Queue,
+        eventEmitter,
+        buildMockLogger(),
+        smallChunker,
+      );
+
+      await consumer.process(buildJob({ content: 'abc\n\ndef\n\nghi' }));
+
+      expect(emit).toHaveBeenCalledWith(
+        'source.ingestion.started',
+        expect.objectContaining<Partial<IngestionStartedDomainEvent>>({
+          syncJobId: 'sync-job-1',
+          totalChunks: 3,
+        }),
+      );
+    });
+
+    it('청크마다 ingestion-progress 이벤트를 순서대로 emit한다', async () => {
+      const embed = vi
+        .fn()
+        .mockResolvedValue({ embedding: fakeEmbedding, model: fakeModel });
+      const eventEmitter = new EventEmitter2();
+      const emit = vi.spyOn(eventEmitter, 'emit');
+      const smallChunker = new RecursiveCharacterChunker(7, 0);
+      const consumer = new EmbedRequestConsumer(
+        { embed },
+        { add: vi.fn() } as unknown as Queue,
+        eventEmitter,
+        buildMockLogger(),
+        smallChunker,
+      );
+
+      await consumer.process(buildJob({ content: 'abc\n\ndef\n\nghi' }));
+
+      const progressCalls = emit.mock.calls.filter(
+        ([eventName]) => eventName === 'source.ingestion.progress',
+      );
+      expect(progressCalls).toHaveLength(3);
+      expect(
+        progressCalls.map(
+          ([, event]) =>
+            (event as IngestionProgressDomainEvent).processedChunks,
+        ),
+      ).toEqual([1, 2, 3]);
     });
   });
 

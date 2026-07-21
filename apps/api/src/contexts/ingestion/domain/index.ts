@@ -4,6 +4,8 @@ export { EmbeddingVector } from './embedding-vector.vo';
 export { SourceVector } from './source-vector.aggregate';
 export { type SourceVectorRepository } from './source-vector.repository';
 export {
+  IngestionStartedDomainEvent,
+  IngestionProgressDomainEvent,
   IngestionCompletedDomainEvent,
   IngestionFailedDomainEvent,
 } from './ingestion.event';

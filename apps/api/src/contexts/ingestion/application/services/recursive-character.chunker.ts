@@ -5,6 +5,8 @@ export interface Chunk {
   readonly index: number;
 }
 
+export const DEFAULT_CHUNK_SIZE = 6000;
+
 const DEFAULT_SEPARATORS = ['\n\n', '\n', ' ', ''];
 const CHAR_SPLIT_SENTINEL = [''];
 const isNonEmpty = (s: string) => s.length > 0;
@@ -12,7 +14,7 @@ const isNonEmpty = (s: string) => s.length > 0;
 @Injectable()
 export class RecursiveCharacterChunker {
   constructor(
-    private readonly chunkSize: number = 6000,
+    private readonly chunkSize: number = DEFAULT_CHUNK_SIZE,
     private readonly chunkOverlap: number = 600,
     private readonly separators: string[] = DEFAULT_SEPARATORS,
   ) {}

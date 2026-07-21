@@ -113,6 +113,8 @@ describe('SourcesHttpController', () => {
             latestSyncJob: {
               syncJobId: 'sync-job-1',
               status: 'completed',
+              totalChunks: 3,
+              processedChunks: 3,
               createdAt: now,
             },
           },
@@ -134,6 +136,8 @@ describe('SourcesHttpController', () => {
             latestSyncJob: {
               syncJobId: 'sync-job-1',
               status: 'completed',
+              totalChunks: 3,
+              processedChunks: 3,
               createdAt: now.toISOString(),
             },
           },
@@ -183,6 +187,8 @@ describe('SourcesHttpController', () => {
         latestSyncJob: {
           syncJobId: 'sync-job-1',
           status: 'completed',
+          totalChunks: 3,
+          processedChunks: 3,
           createdAt: now,
         },
         embedding: {
@@ -208,6 +214,8 @@ describe('SourcesHttpController', () => {
         latestSyncJob: {
           syncJobId: 'sync-job-1',
           status: 'completed',
+          totalChunks: 3,
+          processedChunks: 3,
           createdAt: now.toISOString(),
         },
         embedding: {

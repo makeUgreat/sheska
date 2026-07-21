@@ -14,6 +14,8 @@ describe('SourceSyncJob', () => {
       expect(props).toMatchObject({
         sourceId: 'source-1',
         status: 'pending',
+        totalChunks: null,
+        processedChunks: 0,
       });
       expect(props.id.length).toBeGreaterThan(0);
       expect(props.fingerprint.unpack()).toBe('fingerprint-1');
@@ -73,6 +75,52 @@ describe('SourceSyncJob', () => {
           status: 'unknown_status',
         }),
       ).toThrow('Source sync job status is invalid');
+    });
+  });
+
+  describe('markProcessing', () => {
+    it('processing 상태로 전환하고 totalChunks를 기록한다', () => {
+      const syncJob = SourceSyncJob.create({
+        sourceId: 'source-1',
+        content: '# Source note',
+        fingerprint: 'fingerprint-1',
+      });
+
+      syncJob.markProcessing(10);
+
+      expect(syncJob.getProps()).toMatchObject({
+        status: 'processing',
+        totalChunks: 10,
+        processedChunks: 0,
+      });
+    });
+  });
+
+  describe('recordProgress', () => {
+    it('processedChunks를 갱신한다', () => {
+      const syncJob = SourceSyncJob.create({
+        sourceId: 'source-1',
+        content: '# Source note',
+        fingerprint: 'fingerprint-1',
+      });
+      syncJob.markProcessing(10);
+
+      syncJob.recordProgress(3);
+
+      expect(syncJob.getProps().processedChunks).toBe(3);
+    });
+
+    it('processedChunks가 totalChunks를 초과하면 throw한다', () => {
+      const syncJob = SourceSyncJob.create({
+        sourceId: 'source-1',
+        content: '# Source note',
+        fingerprint: 'fingerprint-1',
+      });
+      syncJob.markProcessing(2);
+
+      expect(() => syncJob.recordProgress(3)).toThrow(
+        'Source sync job processed chunk count exceeds total chunks',
+      );
     });
   });
 });

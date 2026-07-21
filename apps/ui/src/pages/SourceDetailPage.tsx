@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { useSource, usePublishPost } from '@/api/queries';
 import { type SyncJobSummary, type EmbeddingInfo } from '@/api/client';
+import { SyncJobBadge, SyncJobProgress } from '@/components/sync-job-status';
 
 function SyncJobSection({ syncJob }: { syncJob: SyncJobSummary | null }) {
   if (!syncJob) {
@@ -14,28 +15,21 @@ function SyncJobSection({ syncJob }: { syncJob: SyncJobSummary | null }) {
     );
   }
 
-  const styles = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    completed: 'bg-green-100 text-green-800',
-    failed: 'bg-red-100 text-red-800',
-  } as const;
-
-  const style = styles[syncJob.status] ?? 'bg-gray-100 text-gray-700';
-
   return (
     <>
       <dt className="text-xs font-medium uppercase text-gray-500">
         Embedding Status
       </dt>
       <dd className="text-sm text-gray-900">
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs font-medium ${style}`}
-        >
-          {syncJob.status}
-        </span>
-        <span className="ml-2 text-sm text-gray-500">
-          {new Date(syncJob.createdAt).toLocaleString()}
-        </span>
+        <div className="flex items-center gap-2">
+          <SyncJobBadge status={syncJob.status} />
+          <span className="text-sm text-gray-500">
+            {new Date(syncJob.createdAt).toLocaleString()}
+          </span>
+        </div>
+        <div className="mt-2">
+          <SyncJobProgress syncJob={syncJob} />
+        </div>
       </dd>
       <dt className="text-xs font-medium uppercase text-gray-500">
         Sync Job ID
