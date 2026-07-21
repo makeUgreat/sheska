@@ -15,9 +15,7 @@ import {
 import {
   SOURCE_REPOSITORY,
   SOURCE_SYNC_JOB_REPOSITORY,
-  SOURCE_EMBEDDING_LOOKUP,
 } from '@contexts/sources/sources.di-tokens';
-import type { SourceEmbeddingLookup } from '@contexts/sources/application/ports';
 
 export interface UploadSourceCommand {
   readonly externalSourceId: string;
@@ -47,8 +45,6 @@ export class UploadSourceUseCase {
     private readonly eventEmitter: EventEmitter2,
     @Inject(LOGGER)
     private readonly logger: LoggerPort,
-    @Inject(SOURCE_EMBEDDING_LOOKUP)
-    private readonly embeddingLookup: SourceEmbeddingLookup,
   ) {}
 
   async execute(command: UploadSourceCommand): Promise<UploadSourceResult> {
@@ -69,10 +65,10 @@ export class UploadSourceUseCase {
 
     const { changed } = source.syncContentSnapshot(snapshot);
     if (!changed) {
-      const embedding = await this.embeddingLookup.find({
+      const latestSyncJob = await this.syncJobs.findLatest({
         sourceId: source.id,
       });
-      if (embedding) return this.completeUpload(source);
+      if (latestSyncJob?.isCompleted()) return this.completeUpload(source);
     }
 
     return this.persistChange(source, command.content);

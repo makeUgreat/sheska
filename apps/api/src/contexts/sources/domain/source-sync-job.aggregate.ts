@@ -90,6 +90,10 @@ export class SourceSyncJob extends AggregateRoot<SourceSyncJobProps> {
     this.props.status = 'failed';
   }
 
+  isCompleted(): boolean {
+    return this.props.status === 'completed';
+  }
+
   public validate(): void {
     if (!SourceSyncJob.isStatus(this.props.status)) {
       throw new Error('Source sync job status is invalid');
