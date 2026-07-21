@@ -7,7 +7,10 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { type Queue } from 'bullmq';
 import { DATABASE_TOKENS } from '@kernels/infrastructure';
 import { type SourceFingerprinter } from '@contexts/sources/application/ports';
-import { type SourceRepository } from '@contexts/sources/domain';
+import {
+  type SourceRepository,
+  type SourceSyncJobRepository,
+} from '@contexts/sources/domain';
 import { EMBED_REQUESTS_QUEUE } from '@contexts/ingestion/application/queue-handlers/embed-request.consumer';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
 import * as schema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
@@ -15,6 +18,7 @@ import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence
 import {
   SOURCE_FINGERPRINTER,
   SOURCE_REPOSITORY,
+  SOURCE_SYNC_JOB_REPOSITORY,
 } from '@contexts/sources/sources.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
 import { sourceContentByteSize } from '../../../support/domains/fixtures/source.fixture';
@@ -24,6 +28,7 @@ describe('UploadSourceUseCase', () => {
   let app: INestApplication;
   let database: NodePgDatabase<typeof schema>;
   let sources: SourceRepository;
+  let syncJobs: SourceSyncJobRepository;
   let useCase: UploadSourceUseCase;
   let embedRequestsQueue: Queue;
   const fingerprints = new Map<string, string>();
@@ -54,6 +59,7 @@ describe('UploadSourceUseCase', () => {
       DATABASE_TOKENS.drizzleDatabase,
     );
     sources = app.get<SourceRepository>(SOURCE_REPOSITORY);
+    syncJobs = app.get<SourceSyncJobRepository>(SOURCE_SYNC_JOB_REPOSITORY);
     useCase = app.get(UploadSourceUseCase);
   });
 
@@ -136,6 +142,11 @@ describe('UploadSourceUseCase', () => {
       embedding: VALID_EMBEDDING,
       model: 'qwen3-embedding:0.6b',
     });
+    const firstSyncJob = await syncJobs.findLatest({
+      sourceId: firstResult.sourceId,
+    });
+    firstSyncJob!.markCompleted();
+    await syncJobs.save(firstSyncJob!);
 
     const secondResult = await useCase.execute({ externalSourceId, content });
 

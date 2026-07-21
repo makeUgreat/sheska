@@ -7,10 +7,12 @@ import {
   SOURCE_REPOSITORY,
   SOURCE_SYNC_JOB_REPOSITORY,
   SOURCE_EMBEDDING_LOOKUP,
+  SOURCE_QUERY,
 } from '@contexts/sources/sources.di-tokens';
 import {
   type SourceEmbeddingLookup,
   type EmbeddingInfo,
+  type SourceQuery,
 } from '@contexts/sources/application/ports';
 
 export interface GetSourceCommand {
@@ -33,6 +35,7 @@ export interface GetSourceResult {
     readonly createdAt: Date;
   } | null;
   readonly embedding: EmbeddingInfo | null;
+  readonly publishedPostId: string | null;
 }
 
 @Injectable()
@@ -44,6 +47,8 @@ export class GetSourceUseCase {
     private readonly syncJobs: SourceSyncJobRepository,
     @Inject(SOURCE_EMBEDDING_LOOKUP)
     private readonly embeddingLookup: SourceEmbeddingLookup,
+    @Inject(SOURCE_QUERY)
+    private readonly sourceQuery: SourceQuery,
   ) {}
 
   async execute(command: GetSourceCommand): Promise<GetSourceResult> {
@@ -51,9 +56,10 @@ export class GetSourceUseCase {
     const props = source.getProps();
     const snapshot = props.contentSnapshot.unpack();
 
-    const [latestJob, embedding] = await Promise.all([
+    const [latestJob, embedding, publishedPostId] = await Promise.all([
       this.syncJobs.findLatest({ sourceId: source.id }),
       this.embeddingLookup.find({ sourceId: source.id }),
+      this.sourceQuery.find({ sourceId: source.id }),
     ]);
 
     return {
@@ -74,6 +80,7 @@ export class GetSourceUseCase {
           }
         : null,
       embedding,
+      publishedPostId,
     };
   }
 }

@@ -7,6 +7,7 @@ import { ListSourcesUseCase } from '../list-sources.use-case';
 
 type SourceQueryMock = {
   paginate: MockedFunction<SourceQuery['paginate']>;
+  find: MockedFunction<SourceQuery['find']>;
 };
 
 function buildPaginateResult(
@@ -45,6 +46,7 @@ describe('ListSourcesUseCase', () => {
             createdAt: now,
             updatedAt: now,
             latestSyncJob: null,
+            publishedPostId: null,
           },
           {
             sourceId: 'source-2',
@@ -54,6 +56,7 @@ describe('ListSourcesUseCase', () => {
             createdAt: now,
             updatedAt: now,
             latestSyncJob: null,
+            publishedPostId: null,
           },
         ],
       }),
@@ -89,6 +92,7 @@ describe('ListSourcesUseCase', () => {
             createdAt: now,
             updatedAt: now,
             latestSyncJob: null,
+            publishedPostId: null,
           },
         ],
       }),
@@ -115,5 +119,6 @@ function createSourceQueryMock(): SourceQueryMock {
     paginate: vi
       .fn<SourceQuery['paginate']>()
       .mockResolvedValue(buildPaginateResult()),
+    find: vi.fn<SourceQuery['find']>().mockResolvedValue(null),
   };
 }

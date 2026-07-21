@@ -33,6 +33,7 @@ const MOCK_SOURCE: GetSourceResponse = {
     createdAt: NOW,
     updatedAt: NOW,
   },
+  publishedPostId: null,
 };
 
 const MOCK_POST = {
@@ -216,7 +217,7 @@ describe('SourceDetailPage', () => {
       });
     });
 
-    it('게시 성공 시 성공 메시지와 포스트 목록 링크가 표시된다', async () => {
+    it('게시 성공 시 성공 메시지와 게시된 포스트 링크가 표시된다', async () => {
       const user = userEvent.setup();
       const client = buildMockClient();
 
@@ -228,9 +229,27 @@ describe('SourceDetailPage', () => {
 
       await waitFor(() => {
         expect(screen.getByText(/포스트가 게시되었습니다/)).toBeDefined();
-        expect(
-          screen.getByRole('link', { name: '포스트 목록 보기' }),
-        ).toBeDefined();
+        const link = screen.getByRole('link', { name: '게시된 포스트 보기' });
+        expect(link).toBeDefined();
+        expect(link.getAttribute('href')).toBe('/posts/post-1');
+      });
+    });
+
+    it('이미 게시된 source는 게시하기 버튼 대신 게시된 포스트 링크를 보여준다', async () => {
+      const client = buildMockClient({
+        getSource: vi.fn().mockResolvedValue({
+          ...MOCK_SOURCE,
+          publishedPostId: 'post-1',
+        }),
+      });
+
+      renderPage(client);
+
+      await waitFor(() => {
+        const link = screen.getByRole('link', { name: '게시된 포스트 보기' });
+        expect(link).toBeDefined();
+        expect(link.getAttribute('href')).toBe('/posts/post-1');
+        expect(screen.queryByRole('button', { name: '게시하기' })).toBeNull();
       });
     });
 

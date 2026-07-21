@@ -16,6 +16,14 @@ function SourceSyncJobStatus({ syncJob }: { syncJob: SyncJobSummary | null }) {
   );
 }
 
+function PublishedBadge() {
+  return (
+    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+      게시됨
+    </span>
+  );
+}
+
 export function SourceListPage() {
   const { data, isLoading, error } = useListSources();
 
@@ -47,6 +55,7 @@ export function SourceListPage() {
                 {s.externalSourceId}
               </Link>
               <div className="flex items-center gap-3">
+                {s.publishedPostId && <PublishedBadge />}
                 <SourceSyncJobStatus syncJob={s.latestSyncJob} />
                 <span className="text-sm text-gray-500">
                   {s.sizeBytes} bytes · {new Date(s.updatedAt).toLocaleString()}

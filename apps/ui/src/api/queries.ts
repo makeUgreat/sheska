@@ -87,6 +87,7 @@ export function usePublishPost() {
     mutationFn: (req: PublishPostRequest) => client.publishPost(req),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['posts'] });
+      void queryClient.invalidateQueries({ queryKey: ['sources'] });
     },
   });
 }
