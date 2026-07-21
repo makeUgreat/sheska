@@ -25,6 +25,7 @@ const SOURCE_SUMMARY: SourceSummary = {
   createdAt: NOW,
   updatedAt: NOW,
   latestSyncJob: null,
+  publishedPostId: null,
 };
 
 const SOURCE_DETAIL: GetSourceResponse = {

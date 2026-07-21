@@ -29,6 +29,7 @@ type SourceWithLatestJobRow = {
   sync_job_total_chunks: number | null;
   sync_job_processed_chunks: number | null;
   sync_job_created_at: Date | null;
+  published_post_id: string | null;
 };
 
 export class SourcePgDrizzleQuery implements SourceQuery {
@@ -57,7 +58,8 @@ export class SourcePgDrizzleQuery implements SourceQuery {
           ssj.status            AS sync_job_status,
           ssj.total_chunks      AS sync_job_total_chunks,
           ssj.processed_chunks  AS sync_job_processed_chunks,
-          ssj.created_at        AS sync_job_created_at
+          ssj.created_at        AS sync_job_created_at,
+          p.id                  AS published_post_id
         FROM sources s
         LEFT JOIN LATERAL (
           SELECT id, status, total_chunks, processed_chunks, created_at
@@ -66,6 +68,7 @@ export class SourcePgDrizzleQuery implements SourceQuery {
           ORDER BY created_at DESC
           LIMIT 1
         ) ssj ON true
+        LEFT JOIN posts p ON p.source_id = s.id
         WHERE true ${cursorCondition}
         ORDER BY s.created_at DESC, s.id DESC
         LIMIT ${limit + 1}
@@ -79,6 +82,24 @@ export class SourcePgDrizzleQuery implements SourceQuery {
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source paginate operation failed',
         details: {},
+        cause: error,
+      });
+    }
+  }
+
+  async find(criteria: { sourceId: string }): Promise<string | null> {
+    try {
+      const result = await this.db.execute<{ id: string }>(sql`
+        SELECT id FROM posts WHERE source_id = ${criteria.sourceId} LIMIT 1
+      `);
+      return result.rows[0]?.id ?? null;
+    } catch (error: unknown) {
+      throw new InfrastructureException({
+        kind: classifyPostgresError(error),
+        code: 'source.find_published_post_failed',
+        source: { boundary: 'persistence', adapter: ADAPTER },
+        message: 'Source find published post operation failed',
+        details: { sourceId: criteria.sourceId },
         cause: error,
       });
     }
@@ -115,6 +136,7 @@ export class SourcePgDrizzleQuery implements SourceQuery {
                   createdAt: new Date(row.sync_job_created_at),
                 }
               : null,
+          publishedPostId: row.published_post_id,
         }),
       ),
       nextCursor,

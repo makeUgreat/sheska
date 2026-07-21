@@ -23,4 +23,5 @@ export interface GetSourceHttpResponse {
   readonly updatedAt: string;
   readonly latestSyncJob: SyncJobHttpResponse | null;
   readonly embedding: EmbeddingHttpResponse | null;
+  readonly publishedPostId: string | null;
 }

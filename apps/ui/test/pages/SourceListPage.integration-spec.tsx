@@ -73,6 +73,7 @@ describe('SourceListPage', () => {
         processedChunks: 4,
         createdAt: now,
       },
+      publishedPostId: null,
     };
     const client = buildMockClient({
       listSources: vi.fn().mockResolvedValue({
@@ -107,6 +108,7 @@ describe('SourceListPage', () => {
         processedChunks: 3,
         createdAt: now,
       },
+      publishedPostId: null,
     };
     const client = buildMockClient({
       listSources: vi.fn().mockResolvedValue({
@@ -122,6 +124,59 @@ describe('SourceListPage', () => {
       const progressbar = screen.getByRole('progressbar');
       expect(progressbar.getAttribute('aria-valuenow')).toBe('30');
     });
+  });
+
+  it('게시된 source는 게시됨 배지를 보여준다', async () => {
+    const now = '2026-01-01T00:00:00.000Z';
+    const source: SourceSummary = {
+      sourceId: 'source-1',
+      externalSourceId: 'Notes/source.md',
+      fingerprint: 'fingerprint-1',
+      sizeBytes: 14,
+      createdAt: now,
+      updatedAt: now,
+      latestSyncJob: null,
+      publishedPostId: 'post-1',
+    };
+    const client = buildMockClient({
+      listSources: vi.fn().mockResolvedValue({
+        sources: [source],
+      }),
+    });
+
+    renderPage(client);
+
+    await waitFor(() => {
+      expect(screen.getByText('게시됨')).toBeDefined();
+    });
+  });
+
+  it('게시되지 않은 source는 게시됨 배지를 보여주지 않는다', async () => {
+    const now = '2026-01-01T00:00:00.000Z';
+    const source: SourceSummary = {
+      sourceId: 'source-1',
+      externalSourceId: 'Notes/source.md',
+      fingerprint: 'fingerprint-1',
+      sizeBytes: 14,
+      createdAt: now,
+      updatedAt: now,
+      latestSyncJob: null,
+      publishedPostId: null,
+    };
+    const client = buildMockClient({
+      listSources: vi.fn().mockResolvedValue({
+        sources: [source],
+      }),
+    });
+
+    renderPage(client);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('link', { name: 'Notes/source.md' }),
+      ).toBeDefined();
+    });
+    expect(screen.queryByText('게시됨')).toBeNull();
   });
 
   it('에러가 발생하면 에러 메시지를 보여준다', async () => {

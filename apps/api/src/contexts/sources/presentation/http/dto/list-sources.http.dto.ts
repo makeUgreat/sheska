@@ -30,6 +30,7 @@ export interface SourceSummaryHttpResponse {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly latestSyncJob: SyncJobSummaryHttpResponse | null;
+  readonly publishedPostId: string | null;
 }
 
 export interface ListSourcesHttpResponse {
