@@ -211,7 +211,7 @@ describe('PostsHttpController', () => {
   describe('GET /posts', () => {
     it('포스트 목록과 nextCursor를 200 응답으로 반환한다', async () => {
       const now = new Date('2026-01-01T00:00:00.000Z');
-      const cursorValue = { createdAt: now, id: 'post-1' };
+      const cursorValue = { id: 'post-1' };
       listPostsUseCase.execute.mockResolvedValue({
         posts: [
           {
@@ -247,9 +247,8 @@ describe('PostsHttpController', () => {
     });
 
     it('cursor 쿼리 파라미터를 디코딩하여 use case에 전달한다', async () => {
-      const now = new Date('2026-01-01T00:00:00.000Z');
       const encodedCursor = Buffer.from(
-        JSON.stringify({ createdAt: now.toISOString(), id: 'post-1' }),
+        JSON.stringify({ id: 'post-1' }),
       ).toString('base64url');
       listPostsUseCase.execute.mockResolvedValue({
         posts: [],
@@ -261,7 +260,7 @@ describe('PostsHttpController', () => {
         .expect(200);
 
       expect(listPostsUseCase.execute).toHaveBeenCalledWith({
-        cursor: { createdAt: now, id: 'post-1' },
+        cursor: { id: 'post-1' },
         limit: 5,
       });
     });
@@ -294,7 +293,7 @@ describe('PostsHttpController', () => {
   describe('GET /posts/search', () => {
     it('query와 일치하는 post 목록과 nextCursor를 200으로 반환한다', async () => {
       const now = new Date('2026-01-01T00:00:00.000Z');
-      const cursorValue = { createdAt: now, id: 'post-1', score: 1 };
+      const cursorValue = { id: 'post-1', score: 1 };
       searchPostsUseCase.execute.mockResolvedValue({
         posts: [
           {
@@ -334,13 +333,8 @@ describe('PostsHttpController', () => {
     });
 
     it('cursor와 limit 쿼리 파라미터를 디코딩하여 use case에 전달한다', async () => {
-      const now = new Date('2026-01-01T00:00:00.000Z');
       const encodedCursor = Buffer.from(
-        JSON.stringify({
-          createdAt: now.toISOString(),
-          id: 'post-1',
-          score: 0.8,
-        }),
+        JSON.stringify({ id: 'post-1', score: 0.8 }),
       ).toString('base64url');
       searchPostsUseCase.execute.mockResolvedValue({
         posts: [],
@@ -354,7 +348,7 @@ describe('PostsHttpController', () => {
 
       expect(searchPostsUseCase.execute).toHaveBeenCalledWith({
         query: 'TypeScript',
-        cursor: { createdAt: now, id: 'post-1', score: 0.8 },
+        cursor: { id: 'post-1', score: 0.8 },
         limit: 5,
       });
     });
