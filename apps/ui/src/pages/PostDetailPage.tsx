@@ -38,26 +38,28 @@ export function PostDetailPage() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
+    <main className="mx-auto min-h-screen max-w-[800px] bg-white px-4 py-14">
       <Link
         to="/posts"
-        className="mb-6 inline-block text-sm font-medium text-gray-500 hover:text-gray-900"
+        className="mb-8 inline-block font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f] hover:text-[#e06c75]"
       >
         ← Back to posts
       </Link>
       {isLoading ? (
-        <p className="text-gray-500">Loading...</p>
+        <p className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#dcc0c0]">
+          Loading...
+        </p>
       ) : error ? (
         <p
           role="alert"
-          className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700"
+          className="rounded bg-[#93000a] px-4 py-3 font-['JetBrains_Mono'] text-sm text-[#ffdad6]"
         >
           Error: {error.message}
         </p>
       ) : post ? (
         <article>
-          <header className="mb-8 border-b border-gray-200 pb-6">
-            <p className="mb-2 text-xs font-semibold uppercase text-blue-600">
+          <header className="mb-10 border-b border-[#5642421a] pb-8">
+            <p className="mb-3 font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#e06c75]">
               Post
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -70,10 +72,10 @@ export function PostDetailPage() {
                       onChange={(e) => setDraftTitle(e.target.value)}
                       onKeyDown={handleKeyDown}
                       maxLength={200}
-                      className="w-full rounded-md border border-blue-400 px-3 py-2 text-2xl font-bold text-gray-950 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded border border-[#3e4451] bg-[#121418] px-3 py-2 text-2xl font-bold text-white focus:border-[#e06c75] focus:outline-none"
                     />
                     {updatePost.error && (
-                      <p className="text-sm text-red-600">
+                      <p className="text-sm text-[#93000a]">
                         {updatePost.error.message}
                       </p>
                     )}
@@ -81,14 +83,14 @@ export function PostDetailPage() {
                       <button
                         onClick={handleSave}
                         disabled={updatePost.isPending}
-                        className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                        className="rounded bg-[#e06c75] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#a13c46] disabled:opacity-50"
                       >
                         {updatePost.isPending ? 'Saving…' : 'Save'}
                       </button>
                       <button
                         onClick={handleCancel}
                         disabled={updatePost.isPending}
-                        className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                        className="rounded border border-[#e06c75] px-3 py-1.5 text-sm font-medium text-[#e06c75] hover:bg-[#e06c75] hover:text-white disabled:opacity-50"
                       >
                         Cancel
                       </button>
@@ -96,13 +98,13 @@ export function PostDetailPage() {
                   </div>
                 ) : (
                   <div className="group flex items-start gap-2">
-                    <h1 className="break-words text-3xl font-bold text-gray-950">
+                    <h1 className="break-words text-4xl font-bold leading-tight tracking-tight text-[#101319]">
                       {post.title}
                     </h1>
                     <button
                       onClick={handleEditStart}
                       aria-label="Edit title"
-                      className="mt-1 shrink-0 rounded p-1 text-gray-400 opacity-0 transition-opacity hover:bg-gray-100 hover:text-gray-700 group-hover:opacity-100"
+                      className="mt-1 shrink-0 rounded p-1 text-[#43474f] opacity-0 transition-opacity hover:bg-[#282c34] hover:text-[#e06c75] group-hover:opacity-100"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -116,58 +118,58 @@ export function PostDetailPage() {
                   </div>
                 )}
               </div>
-              <div className="shrink-0 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-center">
-                <div className="text-2xl font-semibold text-gray-950">
+              <div className="shrink-0 rounded border border-[#5642421a] bg-[#0b0e14] px-4 py-3 text-center">
+                <div className="text-2xl font-semibold text-white">
                   {post.viewCount}
                 </div>
-                <div className="text-xs font-medium uppercase text-gray-500">
+                <div className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#abb2bf]">
                   views
                 </div>
               </div>
             </div>
-            <p className="mt-3 text-sm text-gray-500">
+            <p className="mt-4 font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f]">
               Updated {new Date(post.updatedAt).toLocaleString()}
             </p>
           </header>
 
-          <dl className="grid gap-4 rounded-lg border border-gray-200 bg-white p-5 sm:grid-cols-2">
+          <dl className="grid gap-4 rounded border border-[#5642421a] bg-white p-5 sm:grid-cols-2">
             <div>
-              <dt className="text-xs font-medium uppercase text-gray-500">
+              <dt className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f]">
                 Post ID
               </dt>
-              <dd className="mt-1 break-all font-mono text-sm text-gray-900">
+              <dd className="mt-1 break-all font-mono text-sm text-[#101319]">
                 {post.postId}
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium uppercase text-gray-500">
+              <dt className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f]">
                 Source ID
               </dt>
-              <dd className="mt-1 break-all font-mono text-sm text-gray-900">
+              <dd className="mt-1 break-all font-mono text-sm text-[#101319]">
                 {post.sourceId}
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium uppercase text-gray-500">
+              <dt className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f]">
                 View Count
               </dt>
-              <dd className="mt-1 text-sm text-gray-900">
+              <dd className="mt-1 text-sm text-[#101319]">
                 {post.viewCount} views
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium uppercase text-gray-500">
+              <dt className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f]">
                 Created
               </dt>
-              <dd className="mt-1 text-sm text-gray-900">
+              <dd className="mt-1 text-sm text-[#101319]">
                 {new Date(post.createdAt).toLocaleString()}
               </dd>
             </div>
             <div className="sm:col-span-2">
-              <dt className="text-xs font-medium uppercase text-gray-500">
+              <dt className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f]">
                 Updated
               </dt>
-              <dd className="mt-1 text-sm text-gray-900">
+              <dd className="mt-1 text-sm text-[#101319]">
                 {new Date(post.updatedAt).toLocaleString()}
               </dd>
             </div>
@@ -175,10 +177,10 @@ export function PostDetailPage() {
 
           {post.sourceContent && (
             <section className="mt-8">
-              <h2 className="mb-3 text-xs font-semibold uppercase text-gray-500">
+              <h2 className="mb-3 font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f]">
                 Content
               </h2>
-              <div className="prose prose-gray max-w-none rounded-lg border border-gray-200 bg-white p-5">
+              <div className="prose prose-neutral max-w-none rounded border border-[#5642421a] bg-white p-5">
                 <ReactMarkdown>{post.sourceContent}</ReactMarkdown>
               </div>
             </section>

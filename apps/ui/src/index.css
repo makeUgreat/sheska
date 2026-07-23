@@ -1,2 +1,31 @@
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+:root {
+  color: #101319;
+  background: #ffffff;
+  font-family: "Geist", Arial, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}

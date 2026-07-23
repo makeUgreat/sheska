@@ -1,17 +1,19 @@
 import { type SyncJobSummary } from '@/api/client';
 
 const STATUS_STYLES: Record<SyncJobSummary['status'], string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  processing: 'bg-blue-100 text-blue-800',
-  completed: 'bg-green-100 text-green-800',
-  failed: 'bg-red-100 text-red-800',
+  pending: 'bg-[#282c34] text-[#abb2bf]',
+  processing: 'bg-[#282c34] text-[#ffb3b6]',
+  completed: 'bg-[#e06c75] text-white',
+  failed: 'bg-[#93000a] text-[#ffdad6]',
 };
 
 export function SyncJobBadge({ status }: { status: SyncJobSummary['status'] }) {
   const style = STATUS_STYLES[status] ?? 'bg-gray-100 text-gray-700';
 
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${style}`}>
+    <span
+      className={`rounded px-2 py-0.5 font-['JetBrains_Mono'] text-xs font-medium ${style}`}
+    >
       {status}
     </span>
   );
@@ -38,14 +40,14 @@ export function SyncJobProgress({ syncJob }: { syncJob: SyncJobSummary }) {
         aria-valuenow={percent}
         aria-valuemin={0}
         aria-valuemax={100}
-        className="h-1.5 w-20 overflow-hidden rounded-full bg-gray-200"
+        className="h-1.5 w-20 overflow-hidden rounded-full bg-[#32353b]"
       >
         <div
-          className="h-full rounded-full bg-blue-500 transition-all"
+          className="h-full rounded-full bg-[#e06c75] transition-all"
           style={{ width: `${percent}%` }}
         />
       </div>
-      <span className="text-xs text-gray-500">
+      <span className="font-['JetBrains_Mono'] text-xs text-[#43474f]">
         {syncJob.processedChunks}/{syncJob.totalChunks} ({percent}%)
       </span>
     </div>

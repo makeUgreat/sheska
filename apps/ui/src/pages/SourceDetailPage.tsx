@@ -107,8 +107,8 @@ export function SourceDetailPage() {
         </p>
       ) : source ? (
         <>
-          <header className="mb-8 border-b border-gray-200 pb-6">
-            <p className="mb-2 text-xs font-semibold uppercase text-blue-600">
+          <header className="mb-8 border-b border-[#5642421a] pb-6">
+            <p className="mb-2 font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#e06c75]">
               Source
             </p>
             <h1 className="break-words text-3xl font-bold text-gray-950">
@@ -177,7 +177,7 @@ export function SourceDetailPage() {
                   이미 게시되었습니다.{' '}
                   <Link
                     to={`/posts/${source.publishedPostId}`}
-                    className="font-medium text-blue-600 underline"
+                    className="font-medium text-[#e06c75] underline"
                   >
                     게시된 포스트 보기
                   </Link>
@@ -194,7 +194,7 @@ export function SourceDetailPage() {
                 </div>
               )}
               {publishPost.isSuccess && (
-                <p className="mt-4 text-sm text-green-700">
+                <p className="mt-4 text-sm text-[#e06c75]">
                   포스트가 게시되었습니다.{' '}
                   <Link
                     to={`/posts/${publishPost.data.postId}`}

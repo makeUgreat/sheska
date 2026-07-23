@@ -87,12 +87,16 @@ E2E tests MUST NOT duplicate them.
 | HTTP response shape and status codes | API HTTP integration tests |
 | API client deserialization and parsing | UI API client integration tests |
 | Component rendering with controlled props | UI unit tests |
+| Stitch visual fidelity, screenshot baselines, and pixel diffs | UI visual regression tests |
 | Business logic and domain invariants | API unit tests |
 | Real adapter behavior (database, queue, embedder) | API adapter integration tests |
 | External actor application behavior | That actor app's own tests |
 
 Duplicating these concerns in E2E tests adds test cost and brittleness without adding confidence.
 When a failure in this layer surfaces in an E2E test, treat it as a signal to add or fix coverage at the responsible lower layer, not to expand E2E coverage.
+
+UI visual regression tests may also use Playwright, but they are not owned by this workspace.
+They protect design fidelity with deterministic fixtures and screenshot baselines, while this E2E workspace protects complete user journeys against a running system.
 
 ## Decision Rules
 
