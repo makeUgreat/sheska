@@ -11,6 +11,8 @@
     "lint": "eslint --config eslint/config.mjs \"{src,test}/**/*.{ts,tsx}\" --fix",
     "lint:check": "eslint --config eslint/config.mjs \"{src,test}/**/*.{ts,tsx}\"",
     "test": "pnpm test:unit && pnpm test:integration",
+    "test:visual": "playwright test --config playwright.visual.config.ts",
+    "test:visual:update": "playwright test --config playwright.visual.config.ts --update-snapshots",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:integration:api-client": "vitest run --project api-client",
@@ -34,6 +36,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
+    "@playwright/test": "^1.61.1",
     "@testing-library/react": "^16.0.0",
     "@testing-library/user-event": "^14.5.2",
     "@types/react": "^18.3.12",

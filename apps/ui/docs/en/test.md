@@ -7,6 +7,7 @@ applies_to:
 translation: ../ko/test.md
 related:
   - ./index.md
+  - ./visual-regression.md
 ---
 
 # UI Test Convention
@@ -17,7 +18,8 @@ Write tests at the cheapest layer that can prove the behavior reliably.
 ## Scope
 
 - Use this document when choosing UI test type, test file naming, test setup shape, or UI test commands.
-- Browser end-to-end tests and real Vite server tests are outside this policy until a dedicated E2E policy is introduced.
+- Browser-rendered visual regression tests are covered by [UI Visual Regression Convention](./visual-regression.md).
+- Business-flow browser E2E tests are covered by the `e2e` workspace conventions.
 
 ## Test Tooling
 
@@ -44,6 +46,17 @@ Write tests at the cheapest layer that can prove the behavior reliably.
 - In integration tests, use test doubles only for collaborators outside the UI boundary being verified. The router, React Query, and provider wiring that the integration test exists to prove should remain real.
 
 ## Test Layers
+
+### Visual Design Checks
+
+Vitest with `jsdom` is for behavior, accessibility-oriented structure, data states, and routing.
+It cannot prove pixel-level or perceptual alignment with Stitch because it does not run a real layout and rendering engine.
+
+When a change claims to implement a Stitch design, keep automated `jsdom` tests focused on observable behavior such as loading, empty, error, navigation, form interaction, and accessible labels.
+Verify visual alignment through browser-based review as described in [UI Style Convention](./ui-style.md).
+
+Do not add screenshot or pixel-diff assertions to the Vitest `jsdom` suites.
+Use the UI visual regression policy when screenshot or pixel-diff coverage is needed.
 
 ### Unit Tests
 
