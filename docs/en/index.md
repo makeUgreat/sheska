@@ -1,5 +1,5 @@
 ---
-title: Repository Convention Index
+title: Root Convention Index
 lang: en
 audience: both
 applies_to:
@@ -10,7 +10,7 @@ related:
   - ./monorepo.md
 ---
 
-# Repository Convention Index
+# Root Convention Index
 
 ## Synchronization Policy
 
