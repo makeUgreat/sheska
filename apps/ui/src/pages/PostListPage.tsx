@@ -143,7 +143,7 @@ export function PostListPage() {
 
         <a
           href="#posts"
-          className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-on-secondary/30"
+          className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-on-secondary/30 animate-bounce"
         >
           <span className="font-mono text-xs font-medium uppercase tracking-widest">
             Scroll to explore

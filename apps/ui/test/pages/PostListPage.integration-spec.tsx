@@ -114,6 +114,17 @@ describe('PostListPage', () => {
     });
   });
 
+  it('scroll to explore 인디케이터에 bounce 애니메이션이 적용되어 있다', () => {
+    const client = buildMockClient({
+      listPosts: vi.fn().mockResolvedValue({ posts: [] }),
+    });
+
+    renderPage(client);
+
+    const indicator = screen.getByText('Scroll to explore').closest('a');
+    expect(indicator?.className).toContain('animate-bounce');
+  });
+
   it('에러가 발생하면 에러 메시지를 보여준다', async () => {
     const client = buildMockClient({
       listPosts: vi.fn().mockRejectedValue(new Error('API unavailable')),
