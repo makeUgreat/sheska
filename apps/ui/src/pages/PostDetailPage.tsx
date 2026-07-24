@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { usePost, useUpdatePost } from '@/api/queries';
+import { ActionLink } from '@/components/ui/action-link';
+import { StatusMessage } from '@/components/ui/status-message';
+import { Tag } from '@/components/ui/tag';
 
 export function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -39,29 +42,17 @@ export function PostDetailPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-[800px] bg-page-background px-4 py-14">
-      <Link
-        to="/posts"
-        className="mb-8 inline-block font-mono text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-[#e06c75]"
-      >
-        ← Back to posts
-      </Link>
+      <ActionLink to="/posts" className="mb-8">
+        Back to posts
+      </ActionLink>
       {isLoading ? (
-        <p className="font-mono text-xs font-medium uppercase tracking-widest text-text-muted">
-          Loading...
-        </p>
+        <StatusMessage tone="loading">Loading...</StatusMessage>
       ) : error ? (
-        <p
-          role="alert"
-          className="rounded bg-error-container px-4 py-3 font-mono text-sm text-on-error-container"
-        >
-          Error: {error.message}
-        </p>
+        <StatusMessage tone="error">Error: {error.message}</StatusMessage>
       ) : post ? (
         <article>
           <header className="mb-10 border-b border-outline-variant/10 pb-8">
-            <p className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-[#e06c75]">
-              Post
-            </p>
+            <Tag className="mb-3 inline-block">Post</Tag>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex-1">
                 {editing ? (
@@ -72,10 +63,10 @@ export function PostDetailPage() {
                       onChange={(e) => setDraftTitle(e.target.value)}
                       onKeyDown={handleKeyDown}
                       maxLength={200}
-                      className="w-full rounded border border-[#3e4451] bg-[#121418] px-3 py-2 text-2xl font-bold text-white focus:border-[#e06c75] focus:outline-none"
+                      className="w-full rounded border border-border-subtle bg-surface-container-lowest px-3 py-2 text-2xl font-bold text-text-primary focus:border-accent focus:outline-none"
                     />
                     {updatePost.error && (
-                      <p className="text-sm text-error-container">
+                      <p className="text-sm text-error">
                         {updatePost.error.message}
                       </p>
                     )}
@@ -83,14 +74,14 @@ export function PostDetailPage() {
                       <button
                         onClick={handleSave}
                         disabled={updatePost.isPending}
-                        className="rounded bg-[#e06c75] px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
+                        className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
                       >
                         {updatePost.isPending ? 'Saving…' : 'Save'}
                       </button>
                       <button
                         onClick={handleCancel}
                         disabled={updatePost.isPending}
-                        className="rounded border border-[#e06c75] px-3 py-1.5 text-sm font-medium text-[#e06c75] hover:bg-[#e06c75] hover:text-white disabled:opacity-50"
+                        className="rounded border border-accent px-3 py-1.5 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-white disabled:opacity-50"
                       >
                         Cancel
                       </button>
@@ -104,7 +95,7 @@ export function PostDetailPage() {
                     <button
                       onClick={handleEditStart}
                       aria-label="Edit title"
-                      className="mt-1 shrink-0 rounded p-1 text-text-secondary opacity-0 transition-opacity hover:bg-[#282c34] hover:text-[#e06c75] group-hover:opacity-100"
+                      className="mt-1 shrink-0 rounded p-1 text-text-secondary opacity-0 transition-opacity hover:bg-surface-container-lowest hover:text-accent group-hover:opacity-100"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -122,7 +113,7 @@ export function PostDetailPage() {
                 <div className="text-2xl font-semibold text-white">
                   {post.viewCount}
                 </div>
-                <div className="font-mono text-xs font-medium uppercase tracking-widest text-[#abb2bf]">
+                <div className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
                   views
                 </div>
               </div>

@@ -67,6 +67,17 @@ In this design system, objects closer to the user are lighter in tone. The base 
 
 To define boundaries, use 1px solid borders in `#3e4451`. Avoid drop shadows entirely to maintain a flat, technical appearance. When an element is active or focused, the border color shifts to the primary Rose Red (`#e06c75`) to create a "glow-less" highlight.
 
+## Effects & Motion
+
+There are currently no custom effect or motion tokens. Hover and motion interactions copy Stitch's literal Tailwind utility classes directly instead of going through a token, for example:
+
+- **Garden card hover**: `duration-300` background tint change on the card, no border or shadow change.
+- **Thumbnail hover**: `duration-500` `scale-105` on the image.
+- **Action link hover**: `translate-x-1` on the trailing arrow only.
+- **Text link hover**: plain color transition to the accent color.
+
+Before adding a new effect or motion token, verify the exact class and value against the active Stitch project's exported code — do not introduce a token from an assumption, an old export, or a value that "feels right" for the brand. A token that cannot be pointed at a specific line in the current Stitch export must not claim Stitch as its source.
+
 ## Shapes
 
 The shape language is disciplined and professional. We use **Soft** roundedness (0.25rem/4px) for small components like buttons and input fields. This provides a subtle hint of approachability without sacrificing the precision of a grid-based, rectangular layout. Larger containers like cards may use the `rounded-lg` (8px) token to further distinguish them from the background.

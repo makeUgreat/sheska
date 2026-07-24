@@ -82,6 +82,12 @@
   --text-code-snippet: 14px;
   --text-code-snippet--line-height: 1.5;
   --text-code-snippet--font-weight: 400;
+  --text-display-terminal: 24px;
+  --text-display-terminal--line-height: 1.333;
+  --text-display-terminal--font-weight: 500;
+  --text-display-terminal-mobile: 18px;
+  --text-display-terminal-mobile--line-height: 1.6;
+  --text-display-terminal-mobile--font-weight: 500;
 
   --radius-sm: 0.125rem;
   --radius-default: 0.25rem;
