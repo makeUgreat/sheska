@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { type PostSummary } from '@/api/client';
 import { ActionLink } from '@/components/ui/action-link';
 import { PostMeta } from '@/components/post/post-meta';
@@ -40,11 +39,15 @@ export function PostCard({
       >
         <div className="flex flex-col gap-2">
           <PostMeta updatedAt={post.updatedAt} viewCount={post.viewCount} />
-          <Link to={`/posts/${post.postId}`}>
-            <h3 className="text-2xl font-semibold leading-snug text-text-primary transition-colors group-hover:text-accent">
+          <h3 className="font-sans text-headline-md text-text-primary transition-colors group-hover:text-accent">
+            <ActionLink
+              to={`/posts/${post.postId}`}
+              className="block font-sans text-headline-md normal-case tracking-normal text-current"
+              hideArrow
+            >
               <HighlightedTitle title={post.title} query={highlight} />
-            </h3>
-          </Link>
+            </ActionLink>
+          </h3>
           <p className="line-clamp-2 text-base leading-relaxed text-text-secondary">
             A saved note from the garden index, ready for focused reading and
             revision.

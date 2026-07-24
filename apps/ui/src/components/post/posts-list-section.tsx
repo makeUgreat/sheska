@@ -1,7 +1,6 @@
 import { forwardRef, type Ref } from 'react';
 import { type PostSummary } from '@/api/client';
 import { PostCard } from '@/components/post/post-card';
-import { PostSectionHeader } from '@/components/post/post-section-header';
 import { EndOfPosts, PostsLoading } from '@/components/post/posts-loading';
 import { StatusMessage } from '@/components/ui/status-message';
 
@@ -43,32 +42,44 @@ export const PostsListSection = forwardRef<
     <section
       id="posts"
       ref={ref}
-      className="min-h-screen scroll-mt-0 border-t border-outline-variant/10 bg-page-background px-4 py-20 outline-none"
+      className="min-h-screen scroll-mt-0 bg-white px-4 py-20 outline-none"
       tabIndex={-1}
     >
-      <div className="mx-auto max-w-[800px]">
+      <div className="mx-auto max-w-[720px]">
         <div className="mb-6 flex justify-end">
           <button
             type="button"
             onClick={onResetToTop}
-            className="font-mono text-xs font-medium uppercase tracking-widest text-text-muted transition-colors hover:text-accent"
+            className="shrink-0 font-mono text-xs font-medium uppercase tracking-widest text-text-muted transition-colors hover:text-accent"
           >
             Back to top
           </button>
         </div>
-        <PostSectionHeader title="Latest Notes & Essays">
-          A collection of evolving thoughts on software, design systems, and the
-          intersection of code and creativity.
-        </PostSectionHeader>
-        <div className="mb-12 border-b border-outline-variant/20 pb-4">
-          <input
-            type="search"
-            aria-label="Search posts"
-            placeholder="What's new in the garden?"
-            value={query}
-            onChange={(e) => onQueryChange(e.target.value)}
-            className="w-full bg-transparent font-mono text-base text-text-primary caret-accent outline-none placeholder:text-text-muted"
-          />
+        <div className="group mb-12">
+          <div className="flex items-center gap-2 border-b border-accent/30 pb-2 transition-colors focus-within:border-accent">
+            <label
+              htmlFor="posts-archive-search"
+              className="shrink-0 font-mono text-xs font-bold uppercase tracking-widest text-accent"
+            >
+              [SEARCH]:
+            </label>
+            <input
+              id="posts-archive-search"
+              type="search"
+              aria-label="Search posts"
+              placeholder=". . ."
+              value={query}
+              onChange={(e) => onQueryChange(e.target.value)}
+              className="w-full border-0 bg-transparent p-0 font-mono text-sm text-accent caret-accent outline-none placeholder:text-accent/40 focus:ring-0"
+            />
+            <span className="h-4 w-2 shrink-0 animate-pulse bg-accent" />
+            <span
+              aria-hidden="true"
+              className="shrink-0 font-mono text-xs font-bold uppercase text-accent/40 transition-colors group-focus-within:text-accent"
+            >
+              find
+            </span>
+          </div>
         </div>
 
         {isLoading ? (

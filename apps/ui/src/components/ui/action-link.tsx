@@ -1,6 +1,11 @@
 import { Link, type LinkProps } from 'react-router-dom';
 
-export function ActionLink({ children, className = '', ...props }: LinkProps) {
+export function ActionLink({
+  children,
+  className = '',
+  hideArrow = false,
+  ...props
+}: LinkProps & { hideArrow?: boolean }) {
   return (
     <Link
       {...props}
@@ -12,12 +17,14 @@ export function ActionLink({ children, className = '', ...props }: LinkProps) {
         .join(' ')}
     >
       <span>{children}</span>
-      <span
-        aria-hidden="true"
-        className="transition-transform group-hover/action:translate-x-1"
-      >
-        -&gt;
-      </span>
+      {!hideArrow && (
+        <span
+          aria-hidden="true"
+          className="transition-transform group-hover/action:translate-x-1"
+        >
+          -&gt;
+        </span>
+      )}
     </Link>
   );
 }
