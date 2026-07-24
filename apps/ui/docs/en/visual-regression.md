@@ -79,6 +79,9 @@ The agent should receive:
 The agent should evaluate perceptual alignment, not exact implementation identity.
 It should call out differences in layout hierarchy, spacing, typography, color treatment, component shape, visual effects, responsive behavior, missing elements, overflow, clipping, and text overlap.
 
+Because the app screenshot freezes animations for determinism, it cannot show whether a motion effect (bounce, pulse, transition) present in the Stitch reference was implemented at all.
+The agent must cross-check motion effects against the Stitch reference's generated code or live preview rather than the screenshot, and flag a missing motion class as a mismatch.
+
 The agent should classify findings as:
 
 - Blocking mismatch: the implementation does not preserve the Stitch design intent.
@@ -103,6 +106,9 @@ Each visual test should:
 
 For page-level Stitch implementations, cover at least one desktop viewport and one mobile-sized viewport.
 Add more viewports only when the design has meaningful breakpoints that are likely to regress.
+
+Freezing animation and transition durations to keep a screenshot deterministic also makes the screenshot blind to whether a motion effect exists at all: a static frame looks the same whether or not the element carries an animation utility class.
+When a Stitch reference includes a motion effect (a bounce, pulse, or transition), protect its presence with a cheap `jsdom` assertion on the element's class list or animation property in addition to the visual test, since the screenshot alone cannot catch its regression.
 
 ## Assertions
 
