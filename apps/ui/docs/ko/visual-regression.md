@@ -6,7 +6,9 @@ applies_to:
   - apps/ui
 source: ../en/visual-regression.md
 related:
-  - ./ui-style.md
+  - ./design.md
+  - ./design-token.md
+  - ./design-component.md
   - ./test.md
 read_when: Playwright screenshot, pixel-diff, Stitch visual fidelity, visual baseline, browser-rendered design regression check를 결정하거나 작성하거나 리뷰하거나 갱신할 때
 ---
@@ -44,11 +46,13 @@ Visual regression test는 화면을 deterministic하게 만들기 위해 control
 
 기대 시각 기준에는 Stitch export를 우선 사용한다.
 
-- Design-system token과 style intent는 `DESIGN.md`를 사용한다.
+- Design-system style intent는 `design.md`를 사용한다.
+- Design-system token은 `design-token.md`를 사용한다.
+- Design-system component guidance는 `design-component.md`를 사용한다.
 - Screen-level comparison에는 exported Stitch screenshot을 사용한다.
 - Component structure나 layout behavior를 명확히 해야 할 때는 exported Stitch generated code를 사용한다.
 
-활성 Stitch project와 screen ID는 [UI 스타일 컨벤션](./ui-style.md)을 따른다.
+활성 Stitch project와 screen ID는 [디자인 시스템](./design.md)을 따른다.
 Reference를 갱신할 때는 사용자가 최신으로 제공한 Stitch Instructions를 사용하고 hosted artifact를 `curl -L`로 다운로드한다.
 활성 Stitch source와 충돌한다면 오래된 chat screenshot, stale local export, baseline screenshot을 source of truth로 보지 않는다.
 
@@ -69,7 +73,7 @@ Agent에는 다음을 제공한다.
 
 - 사용할 수 있다면 대상 screen과 viewport의 Stitch screenshot.
 - 같은 route와 viewport에 대해 Playwright가 생성한 app screenshot.
-- 의도한 design을 명확히 하는 `DESIGN.md`와 exported Stitch generated code.
+- 의도한 design을 명확히 하는 `design.md`, `design-token.md`, `design-component.md`, exported Stitch generated code.
 - Route, viewport, state, fixture data, 의도적으로 허용한 차이.
 
 Agent는 정확한 구현 동일성이 아니라 perceptual alignment를 평가한다.

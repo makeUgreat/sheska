@@ -38,28 +38,28 @@ export function PostDetailPage() {
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-[800px] bg-white px-4 py-14">
+    <main className="mx-auto min-h-screen max-w-[800px] bg-page-background px-4 py-14">
       <Link
         to="/posts"
-        className="mb-8 inline-block font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f] hover:text-[#e06c75]"
+        className="mb-8 inline-block font-mono text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-[#e06c75]"
       >
         ← Back to posts
       </Link>
       {isLoading ? (
-        <p className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#dcc0c0]">
+        <p className="font-mono text-xs font-medium uppercase tracking-widest text-text-muted">
           Loading...
         </p>
       ) : error ? (
         <p
           role="alert"
-          className="rounded bg-[#93000a] px-4 py-3 font-['JetBrains_Mono'] text-sm text-[#ffdad6]"
+          className="rounded bg-error-container px-4 py-3 font-mono text-sm text-on-error-container"
         >
           Error: {error.message}
         </p>
       ) : post ? (
         <article>
-          <header className="mb-10 border-b border-[#5642421a] pb-8">
-            <p className="mb-3 font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#e06c75]">
+          <header className="mb-10 border-b border-outline-variant/10 pb-8">
+            <p className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-[#e06c75]">
               Post
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -75,7 +75,7 @@ export function PostDetailPage() {
                       className="w-full rounded border border-[#3e4451] bg-[#121418] px-3 py-2 text-2xl font-bold text-white focus:border-[#e06c75] focus:outline-none"
                     />
                     {updatePost.error && (
-                      <p className="text-sm text-[#93000a]">
+                      <p className="text-sm text-error-container">
                         {updatePost.error.message}
                       </p>
                     )}
@@ -83,7 +83,7 @@ export function PostDetailPage() {
                       <button
                         onClick={handleSave}
                         disabled={updatePost.isPending}
-                        className="rounded bg-[#e06c75] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#a13c46] disabled:opacity-50"
+                        className="rounded bg-[#e06c75] px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
                       >
                         {updatePost.isPending ? 'Saving…' : 'Save'}
                       </button>
@@ -98,13 +98,13 @@ export function PostDetailPage() {
                   </div>
                 ) : (
                   <div className="group flex items-start gap-2">
-                    <h1 className="break-words text-4xl font-bold leading-tight tracking-tight text-[#101319]">
+                    <h1 className="break-words text-4xl font-bold leading-tight tracking-tight text-text-primary">
                       {post.title}
                     </h1>
                     <button
                       onClick={handleEditStart}
                       aria-label="Edit title"
-                      className="mt-1 shrink-0 rounded p-1 text-[#43474f] opacity-0 transition-opacity hover:bg-[#282c34] hover:text-[#e06c75] group-hover:opacity-100"
+                      className="mt-1 shrink-0 rounded p-1 text-text-secondary opacity-0 transition-opacity hover:bg-[#282c34] hover:text-[#e06c75] group-hover:opacity-100"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -118,58 +118,58 @@ export function PostDetailPage() {
                   </div>
                 )}
               </div>
-              <div className="shrink-0 rounded border border-[#5642421a] bg-[#0b0e14] px-4 py-3 text-center">
+              <div className="shrink-0 rounded border border-outline-variant/10 bg-surface-container-lowest px-4 py-3 text-center">
                 <div className="text-2xl font-semibold text-white">
                   {post.viewCount}
                 </div>
-                <div className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#abb2bf]">
+                <div className="font-mono text-xs font-medium uppercase tracking-widest text-[#abb2bf]">
                   views
                 </div>
               </div>
             </div>
-            <p className="mt-4 font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f]">
+            <p className="mt-4 font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
               Updated {new Date(post.updatedAt).toLocaleString()}
             </p>
           </header>
 
-          <dl className="grid gap-4 rounded border border-[#5642421a] bg-white p-5 sm:grid-cols-2">
+          <dl className="grid gap-4 rounded border border-outline-variant/10 bg-page-background p-5 sm:grid-cols-2">
             <div>
-              <dt className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f]">
+              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
                 Post ID
               </dt>
-              <dd className="mt-1 break-all font-mono text-sm text-[#101319]">
+              <dd className="mt-1 break-all font-mono text-sm text-text-primary">
                 {post.postId}
               </dd>
             </div>
             <div>
-              <dt className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f]">
+              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
                 Source ID
               </dt>
-              <dd className="mt-1 break-all font-mono text-sm text-[#101319]">
+              <dd className="mt-1 break-all font-mono text-sm text-text-primary">
                 {post.sourceId}
               </dd>
             </div>
             <div>
-              <dt className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f]">
+              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
                 View Count
               </dt>
-              <dd className="mt-1 text-sm text-[#101319]">
+              <dd className="mt-1 text-sm text-text-primary">
                 {post.viewCount} views
               </dd>
             </div>
             <div>
-              <dt className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f]">
+              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
                 Created
               </dt>
-              <dd className="mt-1 text-sm text-[#101319]">
+              <dd className="mt-1 text-sm text-text-primary">
                 {new Date(post.createdAt).toLocaleString()}
               </dd>
             </div>
             <div className="sm:col-span-2">
-              <dt className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f]">
+              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
                 Updated
               </dt>
-              <dd className="mt-1 text-sm text-[#101319]">
+              <dd className="mt-1 text-sm text-text-primary">
                 {new Date(post.updatedAt).toLocaleString()}
               </dd>
             </div>
@@ -177,10 +177,10 @@ export function PostDetailPage() {
 
           {post.sourceContent && (
             <section className="mt-8">
-              <h2 className="mb-3 font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f]">
+              <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
                 Content
               </h2>
-              <div className="prose prose-neutral max-w-none rounded border border-[#5642421a] bg-white p-5">
+              <div className="prose prose-neutral max-w-none rounded border border-outline-variant/10 bg-page-background p-5">
                 <ReactMarkdown>{post.sourceContent}</ReactMarkdown>
               </div>
             </section>

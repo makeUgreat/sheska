@@ -6,7 +6,9 @@ applies_to:
   - apps/ui
 translation: ../ko/visual-regression.md
 related:
-  - ./ui-style.md
+  - ./design.md
+  - ./design-token.md
+  - ./design-component.md
   - ./test.md
 read_when: Deciding, writing, reviewing, or updating Playwright screenshot, pixel-diff, Stitch visual fidelity, visual baseline, or browser-rendered design regression checks
 ---
@@ -44,11 +46,13 @@ The two suites have different failure meanings, setup needs, and maintenance wor
 
 Use Stitch exports as the primary reference for expected visuals:
 
-- `DESIGN.md` for design-system tokens and style intent.
+- `design.md` for design-system style intent.
+- `design-token.md` for design-system tokens.
+- `design-component.md` for design-system component guidance.
 - Exported Stitch screenshots for screen-level comparison.
 - Exported Stitch generated code when component structure or layout behavior needs clarification.
 
-For the active Stitch project and screen IDs, use [UI Style Convention](./ui-style.md).
+For the active Stitch project and screen IDs, use [Design System](./design.md).
 When refreshing references, use the latest user-provided Stitch Instructions and download the hosted artifacts with `curl -L`.
 Do not treat an old chat screenshot, stale local export, or baseline screenshot as the source of truth when it conflicts with the active Stitch source.
 
@@ -69,7 +73,7 @@ The agent should receive:
 
 - The Stitch screenshot for the target screen and viewport when available.
 - The app screenshot produced by Playwright for the same route and viewport.
-- `DESIGN.md` and any exported Stitch generated code that clarifies the intended design.
+- `design.md`, `design-token.md`, `design-component.md`, and any exported Stitch generated code that clarifies the intended design.
 - The route, viewport, state, fixture data, and any intentionally accepted differences.
 
 The agent should evaluate perceptual alignment, not exact implementation identity.
