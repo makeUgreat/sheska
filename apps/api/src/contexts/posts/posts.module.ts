@@ -5,6 +5,7 @@ import { PublishPostUseCase } from '@contexts/posts/application/use-cases/publis
 import { GetPostUseCase } from '@contexts/posts/application/use-cases/get-post.use-case';
 import { ListPostsUseCase } from '@contexts/posts/application/use-cases/list-posts.use-case';
 import { SearchPostsUseCase } from '@contexts/posts/application/use-cases/search-posts.use-case';
+import { CountPostsUseCase } from '@contexts/posts/application/use-cases/count-posts.use-case';
 import { UpdatePostTitleUseCase } from '@contexts/posts/application/use-cases/update-post-title.use-case';
 import { PostPgDrizzleRepository } from '@contexts/posts/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.repository';
 import { PostPgDrizzleQuery } from '@contexts/posts/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.query';
@@ -50,6 +51,7 @@ export class PostsModule {
         GetPostUseCase,
         ListPostsUseCase,
         SearchPostsUseCase,
+        CountPostsUseCase,
         UpdatePostTitleUseCase,
       ],
       exports: [
@@ -57,6 +59,7 @@ export class PostsModule {
         GetPostUseCase,
         ListPostsUseCase,
         SearchPostsUseCase,
+        CountPostsUseCase,
         UpdatePostTitleUseCase,
       ],
     };

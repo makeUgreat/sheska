@@ -185,6 +185,24 @@ export class PostPgDrizzleQuery implements PostQuery {
     }
   }
 
+  async count(): Promise<number> {
+    try {
+      const result = await this.db.execute<{ count: number }>(sql`
+        SELECT count(*)::int AS count FROM posts
+      `);
+      return result.rows[0]?.count ?? 0;
+    } catch (error: unknown) {
+      throw new InfrastructureException({
+        kind: classifyPostgresError(error),
+        code: 'post.count_failed',
+        source: { boundary: 'persistence', adapter: ADAPTER },
+        message: 'Post count operation failed',
+        details: {},
+        cause: error,
+      });
+    }
+  }
+
   private toPaginateResult(
     rows: Array<postsSchema.PostRow | SearchPostRow>,
     limit: number,
