@@ -40,7 +40,9 @@ function buildMockClient(
   return {
     listSources: vi.fn().mockResolvedValue({ sources: [SOURCE_SUMMARY] }),
     getSource: vi.fn().mockResolvedValue(SOURCE_DETAIL),
-    listPosts: vi.fn().mockResolvedValue({ posts: [] }),
+    listPosts: vi.fn().mockResolvedValue({ posts: [], nextCursor: null }),
+    countPosts: vi.fn().mockResolvedValue({ count: 0 }),
+    searchPosts: vi.fn().mockResolvedValue({ posts: [], nextCursor: null }),
     get: vi.fn(),
     ...overrides,
   } as unknown as SheskaApiClient;
@@ -103,7 +105,9 @@ describe('App', () => {
     await user.click(screen.getByRole('link', { name: 'Posts' }));
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Posts' })).toBeDefined();
+      expect(
+        screen.getByRole('searchbox', { name: 'Search posts' }),
+      ).toBeDefined();
     });
   });
 
@@ -111,7 +115,7 @@ describe('App', () => {
     const user = userEvent.setup();
     const client = buildMockClient();
 
-    renderApp(client, '/posts');
+    renderApp(client, '/sources/source-1');
 
     await user.click(screen.getByRole('link', { name: 'Sources' }));
 

@@ -53,6 +53,10 @@ export interface ListPostsResponse {
   nextCursor: string | null;
 }
 
+export interface CountPostsResponse {
+  count: number;
+}
+
 export interface PublishPostRequest {
   sourceId: string;
 }
@@ -123,6 +127,10 @@ export class SheskaApiClient {
     return this.http.get<ListPostsResponse>(
       `/posts${query ? `?${query}` : ''}`,
     );
+  }
+
+  countPosts(): Promise<CountPostsResponse> {
+    return this.http.get<CountPostsResponse>('/posts/count');
   }
 
   searchPosts(params: SearchPostsParams): Promise<ListPostsResponse> {
