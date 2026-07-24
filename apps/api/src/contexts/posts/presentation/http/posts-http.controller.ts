@@ -13,6 +13,7 @@ import { PublishPostUseCase } from '@contexts/posts/application/use-cases/publis
 import { GetPostUseCase } from '@contexts/posts/application/use-cases/get-post.use-case';
 import { ListPostsUseCase } from '@contexts/posts/application/use-cases/list-posts.use-case';
 import { SearchPostsUseCase } from '@contexts/posts/application/use-cases/search-posts.use-case';
+import { CountPostsUseCase } from '@contexts/posts/application/use-cases/count-posts.use-case';
 import { UpdatePostTitleUseCase } from '@contexts/posts/application/use-cases/update-post-title.use-case';
 import {
   PublishPostHttpRequest,
@@ -25,6 +26,7 @@ import {
 } from './dto/list-posts.http.dto';
 import { decodeCursor, encodeCursor } from '@kernels/application';
 import { SearchPostsHttpRequest } from './dto/search-posts.http.dto';
+import { type CountPostsHttpResponse } from './dto/count-posts.http.dto';
 import {
   UpdatePostHttpRequest,
   type UpdatePostHttpResponse,
@@ -37,6 +39,7 @@ export class PostsHttpController {
     private readonly getPostUseCase: GetPostUseCase,
     private readonly listPostsUseCase: ListPostsUseCase,
     private readonly searchPostsUseCase: SearchPostsUseCase,
+    private readonly countPostsUseCase: CountPostsUseCase,
     private readonly updatePostTitleUseCase: UpdatePostTitleUseCase,
   ) {}
 
@@ -102,6 +105,13 @@ export class PostsHttpController {
       })),
       nextCursor: result.nextCursor ? encodeCursor(result.nextCursor) : null,
     };
+  }
+
+  @Get('count')
+  async count(): Promise<CountPostsHttpResponse> {
+    const count = await this.countPostsUseCase.execute();
+
+    return { count };
   }
 
   @Get(':id')

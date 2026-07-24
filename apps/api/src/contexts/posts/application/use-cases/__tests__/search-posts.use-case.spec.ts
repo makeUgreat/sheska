@@ -10,6 +10,7 @@ type PostQueryMock = {
   find: MockedFunction<PostQuery['find']>;
   paginate: MockedFunction<PostQuery['paginate']>;
   search: MockedFunction<PostQuery['search']>;
+  count: MockedFunction<PostQuery['count']>;
 };
 
 function buildPaginateResult(
@@ -97,5 +98,6 @@ function createPostQueryMock(): PostQueryMock {
     search: vi
       .fn<PostQuery['search']>()
       .mockResolvedValue(buildPaginateResult()),
+    count: vi.fn<PostQuery['count']>().mockResolvedValue(0),
   };
 }

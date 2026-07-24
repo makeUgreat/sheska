@@ -49,4 +49,5 @@ export interface PostQuery {
     options?: PostQueryPaginateOptions,
   ): Promise<PostQueryPaginateResult>;
   search(options: PostQuerySearchOptions): Promise<PostQueryPaginateResult>;
+  count(): Promise<number>;
 }

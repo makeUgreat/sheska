@@ -6,6 +6,7 @@ import { PublishPostUseCase } from '@contexts/posts/application/use-cases/publis
 import { GetPostUseCase } from '@contexts/posts/application/use-cases/get-post.use-case';
 import { ListPostsUseCase } from '@contexts/posts/application/use-cases/list-posts.use-case';
 import { SearchPostsUseCase } from '@contexts/posts/application/use-cases/search-posts.use-case';
+import { CountPostsUseCase } from '@contexts/posts/application/use-cases/count-posts.use-case';
 import { UpdatePostTitleUseCase } from '@contexts/posts/application/use-cases/update-post-title.use-case';
 import {
   ApplicationException,
@@ -46,6 +47,10 @@ type SearchPostsUseCaseMock = {
   execute: MockedFunction<SearchPostsUseCase['execute']>;
 };
 
+type CountPostsUseCaseMock = {
+  execute: MockedFunction<CountPostsUseCase['execute']>;
+};
+
 type UpdatePostTitleUseCaseMock = {
   execute: MockedFunction<UpdatePostTitleUseCase['execute']>;
 };
@@ -57,6 +62,7 @@ describe('PostsHttpController', () => {
   let getPostUseCase: GetPostUseCaseMock;
   let listPostsUseCase: ListPostsUseCaseMock;
   let searchPostsUseCase: SearchPostsUseCaseMock;
+  let countPostsUseCase: CountPostsUseCaseMock;
   let updatePostTitleUseCase: UpdatePostTitleUseCaseMock;
 
   beforeEach(async () => {
@@ -64,6 +70,7 @@ describe('PostsHttpController', () => {
     getPostUseCase = { execute: vi.fn<GetPostUseCase['execute']>() };
     listPostsUseCase = { execute: vi.fn<ListPostsUseCase['execute']>() };
     searchPostsUseCase = { execute: vi.fn<SearchPostsUseCase['execute']>() };
+    countPostsUseCase = { execute: vi.fn<CountPostsUseCase['execute']>() };
     updatePostTitleUseCase = {
       execute: vi.fn<UpdatePostTitleUseCase['execute']>(),
     };
@@ -75,6 +82,7 @@ describe('PostsHttpController', () => {
         { provide: GetPostUseCase, useValue: getPostUseCase },
         { provide: ListPostsUseCase, useValue: listPostsUseCase },
         { provide: SearchPostsUseCase, useValue: searchPostsUseCase },
+        { provide: CountPostsUseCase, useValue: countPostsUseCase },
         { provide: UpdatePostTitleUseCase, useValue: updatePostTitleUseCase },
         { provide: APP_PIPE, useClass: ZodValidationPipe },
         {
@@ -404,6 +412,36 @@ describe('PostsHttpController', () => {
       const response = await request(httpServer)
         .get('/posts/search')
         .query({ q: 'TypeScript' })
+        .expect(500);
+
+      expect(response.body).toEqual({
+        statusCode: 500,
+        code: 'internal.unexpected',
+        message: 'Internal server error',
+        details: {},
+      });
+    });
+  });
+
+  describe('GET /posts/count', () => {
+    it('post의 전체 갯수를 200 응답으로 반환한다', async () => {
+      countPostsUseCase.execute.mockResolvedValue(42);
+
+      const response = await request(httpServer)
+        .get('/posts/count')
+        .expect(200);
+
+      expect(response.body).toEqual({ count: 42 });
+      expect(countPostsUseCase.execute).toHaveBeenCalledOnce();
+    });
+
+    it('예기치 못한 오류는 500 응답으로 마스킹한다', async () => {
+      countPostsUseCase.execute.mockRejectedValue(
+        new Error('DB connection lost'),
+      );
+
+      const response = await request(httpServer)
+        .get('/posts/count')
         .expect(500);
 
       expect(response.body).toEqual({
