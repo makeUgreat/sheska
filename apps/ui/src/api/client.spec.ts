@@ -104,6 +104,26 @@ describe('SheskaApiClient', () => {
     });
   });
 
+  describe('countPosts', () => {
+    it('GET /posts/count를 호출하고 post count를 반환한다', async () => {
+      const response = { count: 7 };
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(response),
+        }),
+      );
+
+      const result = await client.countPosts();
+
+      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/posts/count', {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      expect(result).toEqual(response);
+    });
+  });
+
   describe('publishPost', () => {
     it('POST /posts를 호출하고 post를 반환한다', async () => {
       const now = '2026-01-01T00:00:00.000Z';

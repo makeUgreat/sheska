@@ -1,5 +1,5 @@
 ---
-title: 저장소 컨벤션 인덱스
+title: 루트 컨벤션 인덱스
 lang: ko
 audience: both
 applies_to:
@@ -11,7 +11,7 @@ related:
   - ./monorepo.md
 ---
 
-# 저장소 컨벤션 인덱스
+# 루트 컨벤션 인덱스
 
 ## 동기화 정책
 
@@ -32,4 +32,4 @@ related:
 ## 유지보수
 
 이 인덱스는 짧게 유지한다.
-명확한 작업 trigger가 있는 저장소 컨벤션 문서만 라우팅한다.
+명확한 작업 trigger가 있는 루트 컨벤션 문서만 라우팅한다.

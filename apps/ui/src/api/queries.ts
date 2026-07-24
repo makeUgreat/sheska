@@ -58,17 +58,30 @@ export function useListPosts() {
   });
 }
 
-export function useInfiniteListPosts(limit?: number) {
+export function useCountPosts() {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: ['posts', 'count'],
+    queryFn: () => client.countPosts(),
+  });
+}
+
+export function useInfiniteListPosts(limit?: number, enabled = true) {
   const client = useApiClient();
   return useInfiniteQuery({
     queryKey: ['posts', 'infinite', limit],
     queryFn: ({ pageParam }) => client.listPosts({ cursor: pageParam, limit }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled,
   });
 }
 
-export function useInfiniteSearchPosts(query: string, limit?: number) {
+export function useInfiniteSearchPosts(
+  query: string,
+  limit?: number,
+  enabled = true,
+) {
   const client = useApiClient();
   return useInfiniteQuery({
     queryKey: ['posts', 'search', query, limit],
@@ -76,7 +89,7 @@ export function useInfiniteSearchPosts(query: string, limit?: number) {
       client.searchPosts({ query, cursor: pageParam, limit }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    enabled: query.length >= 1,
+    enabled: enabled && query.length >= 1,
   });
 }
 

@@ -1,45 +1,25 @@
-import { Link, Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
+import { Footer } from '@/components/layout/footer';
 import { SourceListPage } from '@/pages/SourceListPage';
 import { SourceDetailPage } from '@/pages/SourceDetailPage';
-import { PostListPage } from '@/pages/PostListPage';
+import { MainPage } from '@/pages/MainPage';
 import { PostDetailPage } from '@/pages/PostDetailPage';
 
-function Nav() {
-  const { pathname } = useLocation();
-
-  const link = (to: string, label: string) => (
-    <Link
-      to={to}
-      className={`text-sm font-medium ${
-        pathname.startsWith(to)
-          ? 'text-blue-600'
-          : 'text-gray-600 hover:text-gray-900'
-      }`}
-    >
-      {label}
-    </Link>
-  );
-
-  return (
-    <nav className="border-b border-gray-200 px-4 py-3">
-      <div className="mx-auto flex max-w-3xl gap-6">
-        {link('/sources', 'Sources')}
-        {link('/posts', 'Posts')}
-      </div>
-    </nav>
-  );
-}
-
 export function App() {
+  const location = useLocation();
+  const isMainRoute =
+    location.pathname === '/' || location.pathname === '/posts';
+
   return (
-    <>
-      <Nav />
+    <div className="min-h-screen bg-page-background text-text-primary">
       <Routes>
+        <Route path="/" element={<MainPage />} />
         <Route path="/sources" element={<SourceListPage />} />
         <Route path="/sources/:id" element={<SourceDetailPage />} />
-        <Route path="/posts" element={<PostListPage />} />
+        <Route path="/posts" element={<MainPage />} />
         <Route path="/posts/:id" element={<PostDetailPage />} />
       </Routes>
-    </>
+      {!isMainRoute && <Footer />}
+    </div>
   );
 }

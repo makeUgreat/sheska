@@ -1,3 +1,5 @@
+[English](README.md) | [한국어](README.ko.md)
+
 # Sheska
 
 Sheska는 pnpm monorepo로 구성되어 있다.
@@ -10,6 +12,7 @@ Sheska는 pnpm monorepo로 구성되어 있다.
 
 ## Documentation
 
-- Repository conventions: `docs/en/index.md`, `docs/ko/index.md`
+- Root conventions: `docs/en/index.md`, `docs/ko/index.md`
 - Monorepo policy: `docs/en/monorepo.md`, `docs/ko/monorepo.md`
 - API conventions: `apps/api/docs/en/index.md`, `apps/api/docs/ko/index.md`
+- UI conventions: `apps/ui/docs/en/index.md`, `apps/ui/docs/ko/index.md`

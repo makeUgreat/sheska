@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { usePost, useUpdatePost } from '@/api/queries';
+import { ActionLink } from '@/components/ui/action-link';
+import { StatusMessage } from '@/components/ui/status-message';
+import { Tag } from '@/components/ui/tag';
 
 export function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -38,28 +41,18 @@ export function PostDetailPage() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
-      <Link
-        to="/posts"
-        className="mb-6 inline-block text-sm font-medium text-gray-500 hover:text-gray-900"
-      >
-        ← Back to posts
-      </Link>
+    <main className="mx-auto min-h-screen max-w-[800px] bg-page-background px-4 py-14">
+      <ActionLink to="/posts" className="mb-8">
+        Back to posts
+      </ActionLink>
       {isLoading ? (
-        <p className="text-gray-500">Loading...</p>
+        <StatusMessage tone="loading">Loading...</StatusMessage>
       ) : error ? (
-        <p
-          role="alert"
-          className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700"
-        >
-          Error: {error.message}
-        </p>
+        <StatusMessage tone="error">Error: {error.message}</StatusMessage>
       ) : post ? (
         <article>
-          <header className="mb-8 border-b border-gray-200 pb-6">
-            <p className="mb-2 text-xs font-semibold uppercase text-blue-600">
-              Post
-            </p>
+          <header className="mb-10 border-b border-outline-variant/10 pb-8">
+            <Tag className="mb-3 inline-block">Post</Tag>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex-1">
                 {editing ? (
@@ -70,10 +63,10 @@ export function PostDetailPage() {
                       onChange={(e) => setDraftTitle(e.target.value)}
                       onKeyDown={handleKeyDown}
                       maxLength={200}
-                      className="w-full rounded-md border border-blue-400 px-3 py-2 text-2xl font-bold text-gray-950 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded border border-border-subtle bg-surface-container-lowest px-3 py-2 text-2xl font-bold text-text-primary focus:border-accent focus:outline-none"
                     />
                     {updatePost.error && (
-                      <p className="text-sm text-red-600">
+                      <p className="text-sm text-error">
                         {updatePost.error.message}
                       </p>
                     )}
@@ -81,14 +74,14 @@ export function PostDetailPage() {
                       <button
                         onClick={handleSave}
                         disabled={updatePost.isPending}
-                        className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                        className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
                       >
                         {updatePost.isPending ? 'Saving…' : 'Save'}
                       </button>
                       <button
                         onClick={handleCancel}
                         disabled={updatePost.isPending}
-                        className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                        className="rounded border border-accent px-3 py-1.5 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-white disabled:opacity-50"
                       >
                         Cancel
                       </button>
@@ -96,13 +89,13 @@ export function PostDetailPage() {
                   </div>
                 ) : (
                   <div className="group flex items-start gap-2">
-                    <h1 className="break-words text-3xl font-bold text-gray-950">
+                    <h1 className="break-words text-4xl font-bold leading-tight tracking-tight text-text-primary">
                       {post.title}
                     </h1>
                     <button
                       onClick={handleEditStart}
                       aria-label="Edit title"
-                      className="mt-1 shrink-0 rounded p-1 text-gray-400 opacity-0 transition-opacity hover:bg-gray-100 hover:text-gray-700 group-hover:opacity-100"
+                      className="mt-1 shrink-0 rounded p-1 text-text-secondary opacity-0 transition-opacity hover:bg-surface-container-lowest hover:text-accent group-hover:opacity-100"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -116,58 +109,58 @@ export function PostDetailPage() {
                   </div>
                 )}
               </div>
-              <div className="shrink-0 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-center">
-                <div className="text-2xl font-semibold text-gray-950">
+              <div className="shrink-0 rounded border border-outline-variant/10 bg-surface-container-lowest px-4 py-3 text-center">
+                <div className="text-2xl font-semibold text-white">
                   {post.viewCount}
                 </div>
-                <div className="text-xs font-medium uppercase text-gray-500">
+                <div className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
                   views
                 </div>
               </div>
             </div>
-            <p className="mt-3 text-sm text-gray-500">
+            <p className="mt-4 font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
               Updated {new Date(post.updatedAt).toLocaleString()}
             </p>
           </header>
 
-          <dl className="grid gap-4 rounded-lg border border-gray-200 bg-white p-5 sm:grid-cols-2">
+          <dl className="grid gap-4 rounded border border-outline-variant/10 bg-page-background p-5 sm:grid-cols-2">
             <div>
-              <dt className="text-xs font-medium uppercase text-gray-500">
+              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
                 Post ID
               </dt>
-              <dd className="mt-1 break-all font-mono text-sm text-gray-900">
+              <dd className="mt-1 break-all font-mono text-sm text-text-primary">
                 {post.postId}
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium uppercase text-gray-500">
+              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
                 Source ID
               </dt>
-              <dd className="mt-1 break-all font-mono text-sm text-gray-900">
+              <dd className="mt-1 break-all font-mono text-sm text-text-primary">
                 {post.sourceId}
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium uppercase text-gray-500">
+              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
                 View Count
               </dt>
-              <dd className="mt-1 text-sm text-gray-900">
+              <dd className="mt-1 text-sm text-text-primary">
                 {post.viewCount} views
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium uppercase text-gray-500">
+              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
                 Created
               </dt>
-              <dd className="mt-1 text-sm text-gray-900">
+              <dd className="mt-1 text-sm text-text-primary">
                 {new Date(post.createdAt).toLocaleString()}
               </dd>
             </div>
             <div className="sm:col-span-2">
-              <dt className="text-xs font-medium uppercase text-gray-500">
+              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
                 Updated
               </dt>
-              <dd className="mt-1 text-sm text-gray-900">
+              <dd className="mt-1 text-sm text-text-primary">
                 {new Date(post.updatedAt).toLocaleString()}
               </dd>
             </div>
@@ -175,10 +168,10 @@ export function PostDetailPage() {
 
           {post.sourceContent && (
             <section className="mt-8">
-              <h2 className="mb-3 text-xs font-semibold uppercase text-gray-500">
+              <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
                 Content
               </h2>
-              <div className="prose prose-gray max-w-none rounded-lg border border-gray-200 bg-white p-5">
+              <div className="prose prose-neutral max-w-none rounded border border-outline-variant/10 bg-page-background p-5">
                 <ReactMarkdown>{post.sourceContent}</ReactMarkdown>
               </div>
             </section>

@@ -7,6 +7,7 @@ applies_to:
 source: ../en/test.md
 related:
   - ./index.md
+  - ./visual-regression.md
 ---
 
 # UI 테스트 컨벤션
@@ -17,7 +18,8 @@ UI 앱은 `jsdom` 기반 Vitest를 사용하며 단위 테스트와 통합 테�
 ## 적용 범위
 
 - UI test type, test file naming, test setup shape, UI test command를 선택할 때 이 문서를 사용한다.
-- Browser end-to-end test와 실제 Vite server test는 전용 E2E 정책이 도입되기 전까지 이 정책의 범위 밖이다.
+- Browser-rendered visual regression test는 [UI Visual Regression 컨벤션](./visual-regression.md)에서 다룬다.
+- Business-flow browser E2E test는 `e2e` workspace 컨벤션에서 다룬다.
 
 ## 테스트 도구
 
@@ -44,6 +46,17 @@ UI 앱은 `jsdom` 기반 Vitest를 사용하며 단위 테스트와 통합 테�
 - 통합 테스트에서는 검증하려는 UI boundary 바깥의 collaborator에만 test double을 사용한다. 통합 테스트가 증명하려는 router, React Query, provider wiring은 실제로 유지해야 한다.
 
 ## 테스트 계층
+
+### Visual Design Check
+
+`jsdom` 기반 Vitest는 behavior, accessibility-oriented structure, data state, routing을 검증하기 위한 도구다.
+실제 layout/rendering engine을 실행하지 않기 때문에 Stitch와 pixel-level 또는 perceptual alignment가 맞는지는 증명할 수 없다.
+
+변경이 Stitch design 구현을 목표로 한다면 automated `jsdom` test는 loading, empty, error, navigation, form interaction, accessible label 같은 관찰 가능한 동작에 집중한다.
+Visual alignment는 [디자인 시스템](./design.md)에 설명된 browser 기반 review로 확인한다.
+
+Vitest `jsdom` suite에는 screenshot 또는 pixel-diff assertion을 추가하지 않는다.
+Screenshot 또는 pixel-diff coverage가 필요하면 UI visual regression 정책을 사용한다.
 
 ### 단위 테스트
 

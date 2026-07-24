@@ -88,12 +88,16 @@ E2E 테스트는 이를 중복해서는 안 된다.
 | HTTP 응답 shape와 상태 코드 | API HTTP 통합 테스트 |
 | API client 역직렬화와 파싱 | UI API client 통합 테스트 |
 | 주어진 props로 컴포넌트 렌더링 | UI 단위 테스트 |
+| Stitch visual fidelity, screenshot baseline, pixel diff | UI visual regression test |
 | 비즈니스 로직과 도메인 불변식 | API 단위 테스트 |
 | 실제 어댑터 동작 (DB, 큐, 임베더) | API 어댑터 통합 테스트 |
 | 외부 액터 앱의 동작 | 해당 액터 앱의 자체 테스트 |
 
 이 항목들을 E2E 테스트에서 중복하면 테스트 비용과 불안정성만 높아지고 신뢰도는 늘지 않는다.
 이 레이어의 실패가 E2E 테스트에서 드러난다면, E2E 커버리지를 확장하는 대신 해당 책임이 있는 하위 레이어의 커버리지를 추가하거나 수정하는 신호로 받아들인다.
+
+UI visual regression test도 Playwright를 사용할 수 있지만 이 workspace의 소유가 아니다.
+Visual regression test는 deterministic fixture와 screenshot baseline으로 design fidelity를 보호하고, 이 E2E workspace는 실행 중인 시스템을 대상으로 complete user journey를 보호한다.
 
 ## 결정 규칙
 

@@ -16,7 +16,7 @@ export default tseslint.config(
   ...tseslint.configs.recommendedTypeChecked,
   eslintPluginPrettierRecommended,
   {
-    files: ['{src,test}/**/*.{ts,tsx}'],
+    files: ['{src,test,scripts}/**/*.{ts,tsx}'],
     languageOptions: {
       globals: {
         ...globals.browser,
@@ -44,7 +44,11 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/**/*.spec.{ts,tsx}', 'test/**/*.integration-spec.{ts,tsx}'],
+    files: [
+      'src/**/*.spec.{ts,tsx}',
+      'scripts/**/*.spec.{ts,tsx}',
+      'test/**/*.integration-spec.{ts,tsx}',
+    ],
     rules: {
       '@typescript-eslint/unbound-method': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',

@@ -335,4 +335,18 @@ describe('PostPgDrizzleQuery', () => {
       expect(result).toHaveLength(0);
     });
   });
+
+  describe('count', () => {
+    it('post를 저장하면 전체 갯수가 증가한다', async () => {
+      const before = await postQuery.count();
+      const source = await sources.save(
+        buildSource({ externalSourceId: 'Notes/post-query-count.md' }),
+      );
+      await posts.save(buildPost({ sourceId: source.id }));
+
+      const after = await postQuery.count();
+
+      expect(after).toBe(before + 1);
+    });
+  });
 });

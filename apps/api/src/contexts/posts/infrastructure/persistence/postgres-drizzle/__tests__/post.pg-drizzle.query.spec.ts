@@ -47,4 +47,14 @@ describe('PostPgDrizzleQuery', () => {
       source: { boundary: 'persistence', adapter: 'post.pg-drizzle' },
     });
   });
+
+  it('count DB 오류를 InfrastructureException으로 래핑한다', async () => {
+    const db = createFailingDb();
+    const query = new PostPgDrizzleQuery(db as never);
+
+    await expect(query.count()).rejects.toMatchObject({
+      code: 'post.count_failed',
+      source: { boundary: 'persistence', adapter: 'post.pg-drizzle' },
+    });
+  });
 });
