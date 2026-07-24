@@ -68,7 +68,7 @@ export function PostListPage() {
           </h1>
         </div>
 
-        <div className="z-10 w-full max-w-[1000px] px-0 sm:px-6">
+        <div className="z-10 w-full max-w-container-terminal px-0 sm:px-6">
           <TerminalWindow
             prompt={
               <>

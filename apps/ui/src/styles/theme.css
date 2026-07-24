@@ -82,10 +82,10 @@
   --text-code-snippet: 14px;
   --text-code-snippet--line-height: 1.5;
   --text-code-snippet--font-weight: 400;
-  --text-display-terminal: 24px;
-  --text-display-terminal--line-height: 1.333;
+  --text-display-terminal: 18px;
+  --text-display-terminal--line-height: 1.6;
   --text-display-terminal--font-weight: 500;
-  --text-display-terminal-mobile: 18px;
+  --text-display-terminal-mobile: 14px;
   --text-display-terminal-mobile--line-height: 1.6;
   --text-display-terminal-mobile--font-weight: 500;
 
@@ -101,4 +101,5 @@
   --spacing-margin-mobile: 16px;
   --spacing-margin-desktop: 64px;
   --container-content: 1280px;
+  --spacing-container-terminal: 1100px;
 }

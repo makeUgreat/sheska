@@ -462,21 +462,21 @@
       }
     },
     "display-terminal": {
-      "$description": "Terminal prompt/body text. Matches the Stitch export's own \"display-terminal\" font-size key.",
-      "$type": "typography",
-      "$value": {
-        "fontFamily": "{typography.font-family.mono}",
-        "fontSize": "24px",
-        "fontWeight": "500",
-        "lineHeight": "1.333"
-      }
-    },
-    "display-terminal-mobile": {
-      "$description": "Terminal prompt/body text on mobile viewports. Stitch only exports a desktop size; scaled down for small viewports.",
+      "$description": "Terminal prompt/body text. Intentionally smaller than the current Stitch export (24px); Stitch has not been updated to match.",
       "$type": "typography",
       "$value": {
         "fontFamily": "{typography.font-family.mono}",
         "fontSize": "18px",
+        "fontWeight": "500",
+        "lineHeight": "1.6"
+      }
+    },
+    "display-terminal-mobile": {
+      "$description": "Terminal prompt/body text on mobile viewports.",
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.font-family.mono}",
+        "fontSize": "14px",
         "fontWeight": "500",
         "lineHeight": "1.6"
       }
@@ -519,6 +519,10 @@
     },
     "container-max": {
       "$value": "1280px"
+    },
+    "container-terminal": {
+      "$description": "Terminal hero container max width. Intentionally wider than the current Stitch export (1000px); Stitch has not been updated to match.",
+      "$value": "1100px"
     }
   }
 }
