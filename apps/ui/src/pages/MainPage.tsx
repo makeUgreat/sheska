@@ -1,11 +1,6 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { flushSync } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import {
   useCountPosts,
@@ -16,10 +11,11 @@ import { Footer } from '@/components/layout/footer';
 import { PostsLandingView } from '@/components/post/posts-landing-view';
 import { PostsListSection } from '@/components/post/posts-list-section';
 
-const POSTS_ENTRY_MIN_LOADING_MS = 720;
+const POSTS_ENTRY_MIN_LOADING_MS = 300;
 const POSTS_ENTRY_CATCH_DELAY_MS = 620;
 const POSTS_ENTRY_SCROLL_THRESHOLD = 560;
 const POSTS_ENTRY_SCROLL_RESET_MS = 260;
+const POSTS_ENTRY_REVEAL_SCROLL_MS = 700;
 
 function useDebounce(value: string, delay: number): string {
   const [debounced, setDebounced] = useState(value);
@@ -42,9 +38,11 @@ export function MainPage() {
   const [isPostsEntryArmed, setIsPostsEntryArmed] = useState(false);
   const [isCatchingPostsEntry, setIsCatchingPostsEntry] = useState(false);
   const [isPreparingPosts, setIsPreparingPosts] = useState(false);
+  const [isRevealingPosts, setIsRevealingPosts] = useState(false);
   const [entryMinWaitComplete, setEntryMinWaitComplete] = useState(false);
   const [hasEnteredPosts, setHasEnteredPosts] = useState(false);
-  const shouldLoadPosts = isPreparingPosts || hasEnteredPosts;
+  const shouldLoadPosts =
+    isPreparingPosts || isRevealingPosts || hasEnteredPosts;
 
   const countResult = useCountPosts();
   const listResult = useInfiniteListPosts(limit, shouldLoadPosts);
@@ -69,6 +67,7 @@ export function MainPage() {
   const entryScrollDistanceRef = useRef(0);
   const entryScrollResetTimerRef = useRef<number | undefined>(undefined);
   const entryCatchTimerRef = useRef<number | undefined>(undefined);
+  const entryRevealTimerRef = useRef<number | undefined>(undefined);
   const entryScrollClampFrameRef = useRef<number | undefined>(undefined);
   const entryTouchYRef = useRef<number | undefined>(undefined);
 
@@ -96,7 +95,14 @@ export function MainPage() {
   );
 
   const startPostsEntryCatch = useCallback(() => {
-    if (hasEnteredPosts || isCatchingPostsEntry || isPreparingPosts) return;
+    if (
+      hasEnteredPosts ||
+      isCatchingPostsEntry ||
+      isPreparingPosts ||
+      isRevealingPosts
+    ) {
+      return;
+    }
 
     startEntryScrollClamp(window.scrollY);
     setIsPostsEntryArmed(false);
@@ -116,6 +122,7 @@ export function MainPage() {
     hasEnteredPosts,
     isCatchingPostsEntry,
     isPreparingPosts,
+    isRevealingPosts,
     startEntryScrollClamp,
     stopEntryScrollClamp,
   ]);
@@ -220,6 +227,9 @@ export function MainPage() {
       if (entryCatchTimerRef.current) {
         window.clearTimeout(entryCatchTimerRef.current);
       }
+      if (entryRevealTimerRef.current) {
+        window.clearTimeout(entryRevealTimerRef.current);
+      }
       stopEntryScrollClamp();
     };
   }, [stopEntryScrollClamp]);
@@ -235,11 +245,84 @@ export function MainPage() {
   }, [hasEnteredPosts, isPreparingPosts]);
 
   useEffect(() => {
+    if (!isPreparingPosts || isRevealingPosts || hasEnteredPosts) return;
+
+    const lockedScrollY = window.scrollY;
+    let lockFrame: number | undefined;
+    const preventDefault = (event: Event) => {
+      event.preventDefault();
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        [
+          ' ',
+          'ArrowDown',
+          'ArrowUp',
+          'End',
+          'Home',
+          'PageDown',
+          'PageUp',
+        ].includes(event.key)
+      ) {
+        event.preventDefault();
+      }
+    };
+    const clampScrollPosition = () => {
+      if (window.scrollY !== lockedScrollY) {
+        window.scrollTo({ top: lockedScrollY, behavior: 'instant' });
+      }
+      lockFrame = window.requestAnimationFrame(clampScrollPosition);
+    };
+
+    lockFrame = window.requestAnimationFrame(clampScrollPosition);
+    window.addEventListener('wheel', preventDefault, { passive: false });
+    window.addEventListener('touchmove', preventDefault, { passive: false });
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      if (lockFrame) {
+        window.cancelAnimationFrame(lockFrame);
+      }
+      window.removeEventListener('wheel', preventDefault);
+      window.removeEventListener('touchmove', preventDefault);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [hasEnteredPosts, isPreparingPosts, isRevealingPosts]);
+
+  useEffect(() => {
     if (!isPreparingPosts || hasEnteredPosts || !entryMinWaitComplete) return;
     if (isLoading) return;
 
     setIsPreparingPosts(false);
-    setHasEnteredPosts(true);
+    setIsRevealingPosts(true);
+
+    window.requestAnimationFrame(() => {
+      postsSectionRef.current?.scrollIntoView({
+        block: 'start',
+        behavior: 'smooth',
+      });
+    });
+
+    if (entryRevealTimerRef.current) {
+      window.clearTimeout(entryRevealTimerRef.current);
+    }
+    entryRevealTimerRef.current = window.setTimeout(() => {
+      const section = postsSectionRef.current;
+      const topBefore = section?.getBoundingClientRect().top;
+
+      flushSync(() => {
+        setHasEnteredPosts(true);
+        setIsRevealingPosts(false);
+      });
+
+      if (section && topBefore !== undefined) {
+        const topAfter = section.getBoundingClientRect().top;
+        window.scrollBy({
+          top: topAfter - topBefore,
+          behavior: 'instant',
+        });
+      }
+    }, POSTS_ENTRY_REVEAL_SCROLL_MS);
   }, [entryMinWaitComplete, hasEnteredPosts, isLoading, isPreparingPosts]);
 
   useEffect(() => {
@@ -260,27 +343,23 @@ export function MainPage() {
     return () => observer.disconnect();
   }, [hasEnteredPosts, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  useLayoutEffect(() => {
-    if (!hasEnteredPosts) return;
-
-    const section = postsSectionRef.current;
-    if (!section) return;
-
-    section.scrollIntoView({ block: 'start', behavior: 'smooth' });
-    section.focus({ preventScroll: true });
-  }, [hasEnteredPosts]);
-
   const posts = data?.pages.flatMap((page) => page.posts) ?? [];
   const totalPostCount = countResult.data?.count ?? 0;
+  const shouldRenderPosts =
+    isPreparingPosts || isRevealingPosts || hasEnteredPosts;
 
   const resetToTop = () => {
     if (entryCatchTimerRef.current) {
       window.clearTimeout(entryCatchTimerRef.current);
     }
+    if (entryRevealTimerRef.current) {
+      window.clearTimeout(entryRevealTimerRef.current);
+    }
     stopEntryScrollClamp();
     setIsCatchingPostsEntry(false);
     setIsPostsEntryArmed(false);
     setIsPreparingPosts(false);
+    setIsRevealingPosts(false);
     setEntryMinWaitComplete(false);
     setHasEnteredPosts(false);
     entryScrollDistanceRef.current = 0;
@@ -304,7 +383,7 @@ export function MainPage() {
         />
       )}
 
-      {hasEnteredPosts && (
+      {shouldRenderPosts && (
         <>
           <PostsListSection
             ref={postsSectionRef}
@@ -320,7 +399,7 @@ export function MainPage() {
             sentinelRef={sentinelRef}
             onResetToTop={resetToTop}
           />
-          <Footer />
+          {hasEnteredPosts && <Footer />}
         </>
       )}
     </main>
