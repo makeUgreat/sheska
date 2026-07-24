@@ -2,9 +2,9 @@ import { type SyncJobSummary } from '@/api/client';
 
 const STATUS_STYLES: Record<SyncJobSummary['status'], string> = {
   pending: 'bg-[#282c34] text-[#abb2bf]',
-  processing: 'bg-[#282c34] text-[#ffb3b6]',
+  processing: 'bg-[#282c34] text-primary',
   completed: 'bg-[#e06c75] text-white',
-  failed: 'bg-[#93000a] text-[#ffdad6]',
+  failed: 'bg-error-container text-on-error-container',
 };
 
 export function SyncJobBadge({ status }: { status: SyncJobSummary['status'] }) {
@@ -12,7 +12,7 @@ export function SyncJobBadge({ status }: { status: SyncJobSummary['status'] }) {
 
   return (
     <span
-      className={`rounded px-2 py-0.5 font-['JetBrains_Mono'] text-xs font-medium ${style}`}
+      className={`rounded px-2 py-0.5 font-mono text-xs font-medium ${style}`}
     >
       {status}
     </span>
@@ -40,14 +40,14 @@ export function SyncJobProgress({ syncJob }: { syncJob: SyncJobSummary }) {
         aria-valuenow={percent}
         aria-valuemin={0}
         aria-valuemax={100}
-        className="h-1.5 w-20 overflow-hidden rounded-full bg-[#32353b]"
+        className="h-1.5 w-20 overflow-hidden rounded-full bg-surface-variant"
       >
         <div
           className="h-full rounded-full bg-[#e06c75] transition-all"
           style={{ width: `${percent}%` }}
         />
       </div>
-      <span className="font-['JetBrains_Mono'] text-xs text-[#43474f]">
+      <span className="font-mono text-xs text-text-secondary">
         {syncJob.processedChunks}/{syncJob.totalChunks} ({percent}%)
       </span>
     </div>

@@ -53,7 +53,7 @@ Vitest with `jsdom` is for behavior, accessibility-oriented structure, data stat
 It cannot prove pixel-level or perceptual alignment with Stitch because it does not run a real layout and rendering engine.
 
 When a change claims to implement a Stitch design, keep automated `jsdom` tests focused on observable behavior such as loading, empty, error, navigation, form interaction, and accessible labels.
-Verify visual alignment through browser-based review as described in [UI Style Convention](./ui-style.md).
+Verify visual alignment through browser-based review as described in [Design System](./design.md).
 
 Do not add screenshot or pixel-diff assertions to the Vitest `jsdom` suites.
 Use the UI visual regression policy when screenshot or pixel-diff coverage is needed.

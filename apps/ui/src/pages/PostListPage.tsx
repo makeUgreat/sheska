@@ -81,7 +81,7 @@ export function PostListPage() {
 
   return (
     <main>
-      <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white px-4 pb-24 pt-12">
+      <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-page-background px-4 pb-24 pt-12">
         <div className="mb-12">
           <h1 className="select-none bg-gradient-to-r from-[#374151] to-black bg-clip-text text-[88px] font-bold leading-none tracking-tighter text-transparent sm:text-[120px] md:text-[180px]">
             HASH
@@ -89,23 +89,23 @@ export function PostListPage() {
         </div>
 
         <div className="z-10 w-full max-w-[1000px] px-0 sm:px-6">
-          <div className="overflow-hidden rounded-lg border border-white/5 bg-[#101319] shadow-2xl">
+          <div className="overflow-hidden rounded-lg border border-white/5 bg-surface shadow-2xl">
             <div className="flex items-center gap-2 border-b border-white/5 bg-[#1a1f26] px-4 py-3">
-              <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
-              <span className="h-3 w-3 rounded-full bg-[#ffbd2e]" />
-              <span className="h-3 w-3 rounded-full bg-[#27c93f]" />
-              <span className="ml-4 font-['JetBrains_Mono'] text-[13px] leading-[18px] text-white/40">
+              <span className="h-3 w-3 rounded-full bg-terminal-red" />
+              <span className="h-3 w-3 rounded-full bg-terminal-yellow" />
+              <span className="h-3 w-3 rounded-full bg-terminal-green" />
+              <span className="ml-4 font-mono text-[13px] leading-[18px] text-white/40">
                 zsh - 80x24
               </span>
             </div>
-            <div className="min-h-[450px] p-6 font-['JetBrains_Mono'] text-[18px] font-medium leading-relaxed text-[#e06c75] sm:text-[24px] sm:leading-8">
+            <div className="min-h-[450px] p-6 font-mono text-[18px] font-medium leading-relaxed text-[#e06c75] sm:text-[24px] sm:leading-8">
               <div className="mb-4">
-                <span className="text-[#c3c6d1]">visitor@garden:~$</span>{' '}
+                <span className="text-secondary">visitor@garden:~$</span>{' '}
                 <span className="text-white">
                   garden-cli init --mode=explorative
                 </span>
               </div>
-              <div className="mb-4 text-[#c0c7d4] opacity-80">
+              <div className="mb-4 text-tertiary opacity-80">
                 Initializing Digital Garden context...
                 <br />
                 Loading semantic nodes...
@@ -113,7 +113,7 @@ export function PostListPage() {
                 Ready for input.
               </div>
               <div className="mb-4">
-                <span className="text-[#c3c6d1]">visitor@garden:~$</span>{' '}
+                <span className="text-secondary">visitor@garden:~$</span>{' '}
                 <input
                   type="search"
                   aria-label="Search posts"
@@ -133,7 +133,7 @@ export function PostListPage() {
                 Shall I display the latest entries? (Y/n)
               </div>
               <div className="mt-2 flex items-center">
-                <span className="text-[#c3c6d1]">visitor@garden:~$</span>
+                <span className="text-secondary">visitor@garden:~$</span>
                 <span className="ml-2 text-white">Y</span>
                 <span className="ml-1 h-5 w-2 animate-pulse bg-[#e06c75]" />
               </div>
@@ -143,9 +143,9 @@ export function PostListPage() {
 
         <a
           href="#posts"
-          className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-[#2c30394d]"
+          className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-on-secondary/30"
         >
-          <span className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest">
+          <span className="font-mono text-xs font-medium uppercase tracking-widest">
             Scroll to explore
           </span>
           <span className="text-xl leading-none">v</span>
@@ -154,33 +154,33 @@ export function PostListPage() {
 
       <section
         id="posts"
-        className="border-t border-[#5642421a] bg-white px-4 py-20"
+        className="border-t border-outline-variant/10 bg-page-background px-4 py-20"
       >
         <div className="mx-auto max-w-[800px]">
           <header className="mb-16">
             <h2 className="sr-only">Posts</h2>
-            <h2 className="mb-4 text-4xl font-bold leading-tight tracking-tight text-[#101319] sm:text-5xl">
+            <h2 className="mb-4 text-4xl font-bold leading-tight tracking-tight text-text-primary sm:text-5xl">
               Latest Notes &amp; Essays
             </h2>
-            <p className="text-lg leading-relaxed text-[#43474f]">
+            <p className="text-lg leading-relaxed text-text-secondary">
               A collection of evolving thoughts on software, design systems, and
               the intersection of code and creativity.
             </p>
           </header>
 
           {isLoading ? (
-            <p className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#dcc0c0]">
+            <p className="font-mono text-xs font-medium uppercase tracking-widest text-text-muted">
               Loading...
             </p>
           ) : error ? (
             <p
               role="alert"
-              className="rounded bg-[#93000a] px-4 py-3 font-['JetBrains_Mono'] text-sm text-[#ffdad6]"
+              className="rounded bg-error-container px-4 py-3 font-mono text-sm text-on-error-container"
             >
               Error: {error.message}
             </p>
           ) : posts.length === 0 ? (
-            <p className="text-base leading-relaxed text-[#43474f]">
+            <p className="text-base leading-relaxed text-text-secondary">
               {isSearching
                 ? `No results for "${normalizedQuery}".`
                 : 'No posts yet.'}
@@ -206,13 +206,13 @@ export function PostListPage() {
 
 function LoadingMore({ label = 'Loading more posts...' }: { label?: string }) {
   return (
-    <div className="mt-24 flex flex-col items-center gap-4 border-t border-[#5642421a] pt-12">
+    <div className="mt-24 flex flex-col items-center gap-4 border-t border-outline-variant/10 pt-12">
       <div className="flex gap-1.5">
         <span className="h-2 w-2 animate-bounce rounded-full bg-[#e06c75] [animation-delay:-0.3s]" />
         <span className="h-2 w-2 animate-bounce rounded-full bg-[#e06c75] [animation-delay:-0.15s]" />
         <span className="h-2 w-2 animate-bounce rounded-full bg-[#e06c75]" />
       </div>
-      <span className="font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#dcc0c0] opacity-60">
+      <span className="font-mono text-xs font-medium uppercase tracking-widest text-text-muted opacity-60">
         {label}
       </span>
     </div>
@@ -230,7 +230,7 @@ function PostList({
     <ul className="space-y-12">
       {posts.map((p, index) => (
         <li key={p.postId}>
-          <article className="group -mx-6 rounded-lg p-6 transition-all duration-300 hover:bg-[#0b0e14]">
+          <article className="group -mx-6 rounded-lg p-6 transition-all duration-300 hover:bg-surface-container-lowest">
             <div
               className={
                 index % 3 === 2
@@ -239,27 +239,27 @@ function PostList({
               }
             >
               <div className="flex flex-col gap-2">
-                <div className="flex flex-wrap items-center gap-4 font-['JetBrains_Mono'] text-xs font-medium uppercase tracking-widest text-[#43474f]">
+                <div className="flex flex-wrap items-center gap-4 font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
                   <span className="font-bold">{formatDate(p.updatedAt)}</span>
-                  <span className="h-1 w-1 rounded-full bg-[#564242]" />
+                  <span className="h-1 w-1 rounded-full bg-outline-variant" />
                   <span>{p.viewCount} views</span>
-                  <span className="h-1 w-1 rounded-full bg-[#564242]" />
-                  <span className="rounded bg-[#e06c75] px-2 py-0.5 font-['JetBrains_Mono'] text-[13px] normal-case leading-[18px] text-white">
+                  <span className="h-1 w-1 rounded-full bg-outline-variant" />
+                  <span className="rounded bg-[#e06c75] px-2 py-0.5 font-mono text-[13px] normal-case leading-[18px] text-white">
                     #POST
                   </span>
                 </div>
                 <Link to={`/posts/${p.postId}`}>
-                  <h3 className="text-2xl font-semibold leading-snug text-[#101319] transition-colors group-hover:text-[#e06c75]">
+                  <h3 className="text-2xl font-semibold leading-snug text-text-primary transition-colors group-hover:text-[#e06c75]">
                     <HighlightedTitle title={p.title} query={highlight} />
                   </h3>
                 </Link>
-                <p className="line-clamp-2 text-base leading-relaxed text-[#43474f]">
+                <p className="line-clamp-2 text-base leading-relaxed text-text-secondary">
                   A saved note from the garden index, ready for focused reading
                   and revision.
                 </p>
                 <Link
                   to={`/posts/${p.postId}`}
-                  className="mt-2 inline-flex items-center gap-2 font-['JetBrains_Mono'] text-xs font-bold uppercase tracking-widest text-[#e06c75]"
+                  className="mt-2 inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-[#e06c75]"
                 >
                   Read Note
                   <span className="transition-transform group-hover:translate-x-1">
@@ -270,7 +270,7 @@ function PostList({
 
               {index % 3 === 2 && (
                 <div className="hidden md:block">
-                  <div className="aspect-square w-full overflow-hidden rounded bg-[#191c22]">
+                  <div className="aspect-square w-full overflow-hidden rounded bg-surface-container-low">
                     <img
                       alt=""
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
