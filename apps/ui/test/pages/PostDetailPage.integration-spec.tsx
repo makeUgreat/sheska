@@ -56,7 +56,7 @@ describe('PostDetailPage', () => {
 
     renderPage(client);
 
-    expect(screen.getByRole('link', { name: '← Back to posts' })).toBeDefined();
+    expect(screen.getByRole('link', { name: 'Back to posts' })).toBeDefined();
     expect(screen.getByText('Loading...')).toBeDefined();
   });
 
@@ -104,7 +104,7 @@ describe('PostDetailPage', () => {
 
     renderPage(client);
 
-    const link = screen.getByRole('link', { name: '← Back to posts' });
+    const link = screen.getByRole('link', { name: 'Back to posts' });
     expect((link as HTMLAnchorElement).href).toContain('/posts');
   });
 });

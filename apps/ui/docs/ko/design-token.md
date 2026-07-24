@@ -67,6 +67,17 @@ Depth는 전통적인 shadow가 아니라 **Tonal Layers**와 **Low-Contrast Out
 
 Boundary를 정의할 때는 `#3e4451`의 1px solid border를 사용한다. Flat하고 technical한 외형을 유지하기 위해 drop shadow는 피한다. Active 또는 focused element는 border color를 primary Rose Red (`#e06c75`)로 바꿔 "glow-less" highlight를 만든다.
 
+## Effects & Motion
+
+현재 custom effect/motion token은 없다. Hover와 motion interaction은 token을 거치지 않고 Stitch의 실제 Tailwind utility class를 그대로 사용한다. 예:
+
+- **Garden card hover**: 카드 배경만 `duration-300`으로 tint 변경, border나 shadow 변화 없음.
+- **Thumbnail hover**: 이미지에 `duration-500` `scale-105`.
+- **Action link hover**: 화살표에만 `translate-x-1`.
+- **Text link hover**: accent color로의 단순 color transition.
+
+새 effect나 motion token을 추가하기 전에는 활성 Stitch project의 exported code에서 정확한 class와 값을 확인한다. 추측, 오래된 export, 또는 브랜드에 "어울릴 것 같은" 값으로 token을 만들지 않는다. 현재 Stitch export의 특정 줄을 가리킬 수 없는 token은 Stitch를 출처로 주장해서는 안 된다.
+
 ## 형태
 
 Shape language는 절제되고 professional하다. Button과 input field 같은 작은 component에는 **Soft** roundedness (0.25rem/4px)를 사용한다. 이는 grid 기반의 rectangular layout precision을 해치지 않으면서 약간의 친근함을 더한다. Card 같은 큰 container는 background와 더 구분되도록 `rounded-lg` (8px) token을 사용할 수 있다.

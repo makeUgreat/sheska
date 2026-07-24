@@ -460,6 +460,26 @@
         "fontWeight": "400",
         "lineHeight": "1.5"
       }
+    },
+    "display-terminal": {
+      "$description": "Terminal prompt/body text. Matches the Stitch export's own \"display-terminal\" font-size key.",
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.font-family.mono}",
+        "fontSize": "24px",
+        "fontWeight": "500",
+        "lineHeight": "1.333"
+      }
+    },
+    "display-terminal-mobile": {
+      "$description": "Terminal prompt/body text on mobile viewports. Stitch only exports a desktop size; scaled down for small viewports.",
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.font-family.mono}",
+        "fontSize": "18px",
+        "fontWeight": "500",
+        "lineHeight": "1.6"
+      }
     }
   },
   "radius": {
