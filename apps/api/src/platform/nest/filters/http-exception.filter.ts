@@ -96,11 +96,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (isInfrastructureException(exception)) {
       const errorResponse = this.toInfrastructureErrorResponse(exception);
       this.logger.error('Infrastructure failure', toErrorLogContext(exception));
+      response.err = exception;
       response.status(errorResponse.statusCode).json(errorResponse);
       return;
     }
 
     this.logger.error('Unexpected system error', toErrorLogContext(exception));
+    response.err = toError(exception);
     response
       .status(HttpStatus.INTERNAL_SERVER_ERROR)
       .json(INTERNAL_ERROR_RESPONSE);
@@ -154,6 +156,10 @@ function isInfrastructureException(
   value: unknown,
 ): value is InfrastructureException {
   return value instanceof InfrastructureException;
+}
+
+function toError(exception: unknown): Error {
+  return exception instanceof Error ? exception : new Error(String(exception));
 }
 
 function isHttpErrorResponse(value: unknown): value is HttpErrorEnvelope {
