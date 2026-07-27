@@ -1,7 +1,10 @@
 import { Link, useParams } from 'react-router-dom';
 import { useSource, usePublishPost } from '@/api/queries';
 import { type SyncJobSummary, type EmbeddingInfo } from '@/api/client';
-import { SyncJobBadge, SyncJobProgress } from '@/components/sync-job-status';
+import {
+  SyncJobBadge,
+  SyncJobProgress,
+} from '@/features/sources/components/sync-job-status';
 
 function SyncJobSection({ syncJob }: { syncJob: SyncJobSummary | null }) {
   if (!syncJob) {

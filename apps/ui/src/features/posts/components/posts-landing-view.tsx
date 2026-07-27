@@ -1,6 +1,6 @@
 import { type Ref } from 'react';
-import { TerminalWindow } from '@/components/post/terminal-window';
-import { PostsLoading } from '@/components/post/posts-loading';
+import { TerminalWindow } from '@/features/posts/components/terminal-window';
+import { PostsLoading } from '@/features/posts/components/posts-loading';
 
 export function PostsLandingView({
   query,

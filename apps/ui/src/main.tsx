@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiClientProvider } from '@/api/client-context';
 import { HttpClient } from '@/api/http';
 import { SheskaApiClient } from '@/api/client';
-import { App } from './App';
+import { App } from './app/App';
 
 const apiBaseUrl =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';

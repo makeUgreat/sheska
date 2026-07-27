@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { usePost, useUpdatePost } from '@/api/queries';
-import { ActionLink } from '@/components/ui/action-link';
-import { StatusMessage } from '@/components/ui/status-message';
-import { Tag } from '@/components/ui/tag';
+import { ActionLink } from '@/shared/ui/action-link';
+import { StatusMessage } from '@/shared/ui/status-message';
+import { Tag } from '@/shared/ui/tag';
 
 export function PostDetailPage() {
   const { id } = useParams<{ id: string }>();

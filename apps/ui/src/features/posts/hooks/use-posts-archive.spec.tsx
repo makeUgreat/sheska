@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { ApiClientProvider } from '@/api/client-context';
 import { type PostSummary, type SheskaApiClient } from '@/api/client';
-import { usePostsArchive } from '@/hooks/use-posts-archive';
+import { usePostsArchive } from '@/features/posts/hooks/use-posts-archive';
 
 function createTestQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });

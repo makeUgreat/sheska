@@ -1,4 +1,4 @@
-import { LoadingDots } from '@/components/ui/loading-dots';
+import { LoadingDots } from '@/shared/ui/loading-dots';
 
 export function PostsLoading({
   label = 'Loading more posts...',

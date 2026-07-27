@@ -1,8 +1,11 @@
 import { forwardRef, type Ref } from 'react';
 import { type PostSummary } from '@/api/client';
-import { PostCard } from '@/components/post/post-card';
-import { EndOfPosts, PostsLoading } from '@/components/post/posts-loading';
-import { StatusMessage } from '@/components/ui/status-message';
+import { PostCard } from '@/features/posts/components/post-card';
+import {
+  EndOfPosts,
+  PostsLoading,
+} from '@/features/posts/components/posts-loading';
+import { StatusMessage } from '@/shared/ui/status-message';
 
 const FEATURED_IMAGE_URL =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuBmfuDAS_7r95iDVqY4IEj-VUVoDfutREwgjxIQQKPSqxxSd-VlK1V2bVlvvGSYHFtq5NgwGZUIpzh-pPqOdzxOWjIuEmgNbZn0mqlpScuHk8Z4mDk5yZjZYvAOzGjKGG1F67WKXB2J05BmnG7OEwgdzGoZIJtDpHVRPBoyijB8n6ADBul5bZ-GQLw5WjSoXDR98pkpFMAIcpCE8rcwEXwi-hL0XrOgwVf2CkCFTp1pa7RfKdLdqrQPQFlC67ukxJK7WgRSaOPhwY2Q';

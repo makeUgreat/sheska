@@ -1,12 +1,12 @@
-import { Footer } from '@/components/layout/footer';
-import { PostsLandingView } from '@/components/post/posts-landing-view';
-import { PostsListSection } from '@/components/post/posts-list-section';
-import { useInfinitePostsScroll } from '@/hooks/use-infinite-posts-scroll';
-import { usePostsArchive } from '@/hooks/use-posts-archive';
+import { Footer } from '@/shared/layout/footer';
+import { PostsLandingView } from '@/features/posts/components/posts-landing-view';
+import { PostsListSection } from '@/features/posts/components/posts-list-section';
+import { useInfinitePostsScroll } from '@/features/posts/hooks/use-infinite-posts-scroll';
+import { usePostsArchive } from '@/features/posts/hooks/use-posts-archive';
 import {
   usePostsEntryTransitionEffects,
   usePostsEntryTransitionState,
-} from '@/hooks/use-posts-entry-transition';
+} from '@/features/posts/hooks/use-posts-entry-transition';
 
 export function MainPage() {
   const entryTransition = usePostsEntryTransitionState();

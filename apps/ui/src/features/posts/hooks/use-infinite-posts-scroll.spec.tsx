@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useInfinitePostsScroll } from '@/hooks/use-infinite-posts-scroll';
+import { useInfinitePostsScroll } from '@/features/posts/hooks/use-infinite-posts-scroll';
 
 type IntersectionCallback = IntersectionObserverCallback;
 

@@ -9,7 +9,7 @@ import {
   type SheskaApiClient,
   type SourceSummary,
 } from '@/api/client';
-import { App } from '@/App';
+import { App } from '@/app/App';
 
 function createTestQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });

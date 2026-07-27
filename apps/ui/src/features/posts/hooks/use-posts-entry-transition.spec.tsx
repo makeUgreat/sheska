@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   usePostsEntryTransitionEffects,
   usePostsEntryTransitionState,
-} from '@/hooks/use-posts-entry-transition';
+} from '@/features/posts/hooks/use-posts-entry-transition';
 
 type IntersectionCallback = IntersectionObserverCallback;
 
