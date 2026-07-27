@@ -10,6 +10,7 @@ describe('toErrorLogContext', () => {
     expect(toErrorLogContext(error)).toEqual({
       errorName: 'TypeError',
       error: 'Unexpected value',
+      failure: { stack: expect.any(String) as string },
     });
   });
 
@@ -27,6 +28,7 @@ describe('toErrorLogContext', () => {
       kind: APPLICATION_ERROR_KIND.NOT_FOUND,
       code: 'source.not_found',
       details: { sourceId: 'source-1' },
+      failure: { stack: expect.any(String) as string },
     });
   });
 
@@ -49,6 +51,7 @@ describe('toErrorLogContext', () => {
       kind: 'unavailable',
       code: 'service.request_failed',
       details: {},
+      failure: { stack: expect.any(String) as string },
       cause: {
         name: 'TypeError',
         message: 'fetch failed',
@@ -70,6 +73,39 @@ describe('toErrorLogContext', () => {
 
     expect(toErrorLogContext(exception)).toMatchObject({
       error: 'Source not found',
+    });
+  });
+
+  describe('failure.stack', () => {
+    it('예외 자신의 stack을 포함한다', () => {
+      const error = new Error('boom');
+
+      const context = toErrorLogContext(error);
+      const err = context.failure as { stack: string };
+
+      expect(err.stack).toContain('Error: boom');
+    });
+
+    it('cause 체인의 stack까지 이어붙인다', () => {
+      const rootCause = new Error('connection refused');
+      const error = new Error('query failed', { cause: rootCause });
+
+      const context = toErrorLogContext(error);
+      const err = context.failure as { stack: string };
+
+      expect(err.stack).toContain('Error: query failed');
+      expect(err.stack).toContain('caused by:');
+      expect(err.stack).toContain('Error: connection refused');
+    });
+
+    it('순환 참조가 있어도 무한루프 없이 종료한다', () => {
+      const error = new Error('circular');
+      Object.assign(error, { cause: error });
+
+      const context = toErrorLogContext(error);
+      const err = context.failure as { stack: string };
+
+      expect(err.stack).toContain('Error: circular');
     });
   });
 });
