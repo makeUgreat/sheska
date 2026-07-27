@@ -15,6 +15,7 @@
 
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -51,70 +52,4 @@ select {
   100% {
     transform: translateY(0);
   }
-}
-
-@keyframes posts-trigger-wave {
-  0%,
-  100% {
-    opacity: 0.2;
-    transform: translateY(10px);
-  }
-  50% {
-    opacity: 0.36;
-    transform: translateY(0);
-  }
-}
-
-@keyframes posts-trigger-wave-catch {
-  0% {
-    opacity: 0.24;
-    transform: translateY(18px);
-  }
-  48% {
-    opacity: 0.58;
-    transform: translateY(-4px);
-  }
-  100% {
-    opacity: 0.4;
-    transform: translateY(0);
-  }
-}
-
-@keyframes posts-trigger-wave-exit {
-  from {
-    opacity: 0.34;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-}
-
-.posts-trigger-wave {
-  pointer-events: none;
-  position: fixed;
-  left: -18vw;
-  right: -18vw;
-  bottom: -4vh;
-  z-index: 20;
-  height: 28vh;
-  background:
-    radial-gradient(
-      ellipse at bottom,
-      rgb(225 109 118 / 0.18) 0%,
-      rgb(225 109 118 / 0.09) 34%,
-      rgb(225 109 118 / 0.04) 62%,
-      transparent 76%
-    ),
-    linear-gradient(to top, rgb(225 109 118 / 0.08), transparent 80%);
-  animation: posts-trigger-wave 2200ms ease-in-out infinite;
-}
-
-.posts-trigger-wave-catch {
-  animation: posts-trigger-wave-catch 420ms ease-out both;
-}
-
-.posts-trigger-wave-exit {
-  animation: posts-trigger-wave-exit 360ms ease-out both;
 }

@@ -1,6 +1,6 @@
 import { type Ref } from 'react';
-import { TerminalWindow } from '@/components/post/terminal-window';
-import { PostsLoading } from '@/components/post/posts-loading';
+import { TerminalWindow } from '@/features/posts/components/terminal-window';
+import { PostsLoading } from '@/features/posts/components/posts-loading';
 
 export function PostsLandingView({
   query,
@@ -21,7 +21,7 @@ export function PostsLandingView({
 
   return (
     <div className={isCatchingPostsEntry ? 'posts-entry-catch' : undefined}>
-      <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-page-background px-4 pb-24 pt-12">
+      <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white px-4 pb-24 pt-12">
         <div className="mb-12">
           <h1 className="select-none bg-gradient-to-r from-[#374151] to-black bg-clip-text text-[88px] font-bold leading-none tracking-tighter text-transparent sm:text-[120px] md:text-[180px]">
             HASH
@@ -96,7 +96,7 @@ export function PostsLandingView({
             .join(' ')}
         >
           <span className="font-mono text-xs font-medium uppercase tracking-widest">
-            Scroll to explore
+            Scroll For Articles
           </span>
           <span className="text-xl leading-none">v</span>
         </a>
@@ -104,7 +104,7 @@ export function PostsLandingView({
 
       <div
         className={[
-          'relative flex bg-page-background transition-[min-height] duration-500 ease-out',
+          'relative flex bg-white transition-[min-height] duration-500 ease-out',
           isPreparingPosts ? 'h-2' : 'h-10 items-center justify-center',
         ]
           .filter(Boolean)
@@ -120,18 +120,6 @@ export function PostsLandingView({
           />
         )}
       </div>
-      {(isCatchingPostsEntry || isPreparingPosts) && (
-        <div
-          className={[
-            'posts-trigger-wave',
-            isCatchingPostsEntry ? 'posts-trigger-wave-catch' : '',
-            isPreparingPosts ? 'posts-trigger-wave-exit' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-          aria-hidden="true"
-        />
-      )}
     </div>
   );
 }

@@ -84,7 +84,7 @@ Props:
 Example:
 
 ```tsx
-<Tag tone="accent">#POST</Tag>
+<Tag tone="accent">New</Tag>
 ```
 
 ### `ActionLink`
@@ -149,13 +149,12 @@ Example:
 
 ### `PostMeta`
 
-Renders the date, view count, and tag as a mono metadata row.
+Renders the date and view count as a mono metadata row.
 
 Props:
 
 - `updatedAt`: ISO timestamp string.
 - `viewCount`: numeric post views.
-- `tag`: optional label, default `#POST`.
 
 ### `PostCard`
 

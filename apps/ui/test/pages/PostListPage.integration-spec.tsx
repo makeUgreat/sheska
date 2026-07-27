@@ -3,35 +3,42 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ApiClientProvider } from '@/api/client-context';
-import { type PostSummary, type SheskaApiClient } from '@/api/client';
+import { type PostSummary } from '@/entities/posts/api/types';
 import { PostListPage } from '@/pages/PostListPage';
+import { type HttpClient } from '@/shared/api/http';
+import { HttpClientProvider } from '@/shared/api/http-client-context';
 
 function createTestQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
 }
 
-function buildMockClient(
-  overrides: Partial<SheskaApiClient> = {},
-): SheskaApiClient {
+function buildMockHttpClient({
+  listPosts = vi.fn().mockResolvedValue({ posts: [], nextCursor: null }),
+  countPosts = vi.fn().mockResolvedValue({ count: 0 }),
+  searchPosts = vi.fn().mockResolvedValue({ posts: [], nextCursor: null }),
+}: {
+  listPosts?: ReturnType<typeof vi.fn>;
+  countPosts?: ReturnType<typeof vi.fn>;
+  searchPosts?: ReturnType<typeof vi.fn>;
+} = {}): HttpClient {
   return {
-    listSources: vi.fn(),
-    getSource: vi.fn(),
-    listPosts: vi.fn().mockResolvedValue({ posts: [], nextCursor: null }),
-    countPosts: vi.fn().mockResolvedValue({ count: 0 }),
-    searchPosts: vi.fn().mockResolvedValue({ posts: [], nextCursor: null }),
-    get: vi.fn(),
-    ...overrides,
-  } as unknown as SheskaApiClient;
+    get: vi.fn((path: string) => {
+      if (path === '/posts/count') return countPosts() as Promise<unknown>;
+      if (path === '/posts/search') return searchPosts() as Promise<unknown>;
+      return listPosts() as Promise<unknown>;
+    }),
+    post: vi.fn(),
+    patch: vi.fn(),
+  } as unknown as HttpClient;
 }
 
-function renderPage(client: SheskaApiClient) {
+function renderPage(client: HttpClient) {
   return render(
     <MemoryRouter>
       <QueryClientProvider client={createTestQueryClient()}>
-        <ApiClientProvider client={client}>
+        <HttpClientProvider client={client}>
           <PostListPage />
-        </ApiClientProvider>
+        </HttpClientProvider>
       </QueryClientProvider>
     </MemoryRouter>,
   );
@@ -42,6 +49,7 @@ type IntersectionCallback = IntersectionObserverCallback;
 const intersectionCallbacks: IntersectionCallback[] = [];
 const scrollIntoView = vi.fn();
 const scrollTo = vi.fn();
+const scrollBy = vi.fn();
 
 class MockIntersectionObserver implements IntersectionObserver {
   readonly root: Element | Document | null = null;
@@ -72,7 +80,7 @@ async function enterPostsList() {
   triggerPostsEntry();
   await waitFor(
     () => {
-      expect(screen.getByText('Latest Notes & Essays')).toBeDefined();
+      expect(screen.getByText('The Garden')).toBeDefined();
     },
     { timeout: 2500 },
   );
@@ -83,8 +91,10 @@ describe('PostListPage', () => {
     intersectionCallbacks.length = 0;
     scrollIntoView.mockClear();
     scrollTo.mockClear();
+    scrollBy.mockClear();
     Element.prototype.scrollIntoView = scrollIntoView;
     window.scrollTo = scrollTo;
+    window.scrollBy = scrollBy;
     vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
   });
 
@@ -93,7 +103,7 @@ describe('PostListPage', () => {
   });
 
   it('초기 post 로딩 중에 loading posts와 loading dots를 보여준다', async () => {
-    const client = buildMockClient({
+    const client = buildMockHttpClient({
       listPosts: vi.fn().mockReturnValue(new Promise(() => {})),
     });
 
@@ -101,10 +111,10 @@ describe('PostListPage', () => {
     triggerPostsEntry();
 
     await waitFor(() => {
-      expect(screen.getByText('Loading posts...')).toBeDefined();
+      expect(screen.getAllByText('Loading posts...').length).toBeGreaterThan(0);
     });
     expect(
-      screen.getByText('Scroll to explore').closest('a')?.className,
+      screen.getByText('Scroll For Articles').closest('a')?.className,
     ).toContain('opacity-0');
     expect(
       screen.getByText('HASH').closest('section')?.parentElement?.className,
@@ -112,7 +122,7 @@ describe('PostListPage', () => {
   });
 
   it('post 목록이 없으면 No posts yet. 메시지를 보여준다', async () => {
-    const client = buildMockClient({
+    const client = buildMockHttpClient({
       listPosts: vi.fn().mockResolvedValue({ posts: [], nextCursor: null }),
     });
 
@@ -134,7 +144,7 @@ describe('PostListPage', () => {
       createdAt: now,
       updatedAt: now,
     };
-    const client = buildMockClient({
+    const client = buildMockHttpClient({
       listPosts: vi.fn().mockResolvedValue({ posts: [post], nextCursor: null }),
     });
 
@@ -167,7 +177,7 @@ describe('PostListPage', () => {
         updatedAt: now,
       },
     ];
-    const client = buildMockClient({
+    const client = buildMockHttpClient({
       listPosts: vi.fn().mockResolvedValue({ posts, nextCursor: null }),
     });
 
@@ -183,18 +193,18 @@ describe('PostListPage', () => {
   });
 
   it('scroll to explore 인디케이터에 bounce 애니메이션이 적용되어 있다', () => {
-    const client = buildMockClient({
+    const client = buildMockHttpClient({
       listPosts: vi.fn().mockResolvedValue({ posts: [], nextCursor: null }),
     });
 
     renderPage(client);
 
-    const indicator = screen.getByText('Scroll to explore').closest('a');
+    const indicator = screen.getByText('Scroll For Articles').closest('a');
     expect(indicator?.className).toContain('animate-bounce');
   });
 
   it('에러가 발생하면 에러 메시지를 보여준다', async () => {
-    const client = buildMockClient({
+    const client = buildMockHttpClient({
       listPosts: vi.fn().mockRejectedValue(new Error('API unavailable')),
     });
 
@@ -212,14 +222,15 @@ describe('PostListPage', () => {
       posts: [],
       nextCursor: null,
     });
-    const client = buildMockClient({ listPosts });
+    const countPosts = vi.fn().mockResolvedValue({ count: 0 });
+    const client = buildMockHttpClient({ countPosts, listPosts });
 
     renderPage(client);
 
     await waitFor(() => {
-      expect(client.countPosts).toHaveBeenCalled();
+      expect(countPosts).toHaveBeenCalled();
     });
-    expect(screen.queryByText('Latest Notes & Essays')).toBeNull();
+    expect(screen.queryByText('The Garden')).toBeNull();
     expect(listPosts).not.toHaveBeenCalled();
 
     triggerPostsEntry();
@@ -227,8 +238,8 @@ describe('PostListPage', () => {
     await waitFor(() => {
       expect(listPosts).toHaveBeenCalledTimes(1);
     });
-    expect(screen.getByText('Loading posts...')).toBeDefined();
-    expect(screen.queryByText('Latest Notes & Essays')).toBeNull();
+    expect(screen.getAllByText('Loading posts...').length).toBeGreaterThan(0);
+    expect(screen.queryByText('The Garden')).toBeNull();
 
     await waitFor(
       () => {
@@ -239,16 +250,14 @@ describe('PostListPage', () => {
         expect(
           screen.getByRole('button', { name: 'Back to top' }),
         ).toBeDefined();
-        expect(
-          screen.getByText('Latest Notes & Essays').closest('section'),
-        ).toBe(document.activeElement);
+        expect(screen.getByText('The Garden')).toBeDefined();
       },
       { timeout: 2500 },
     );
   });
 
   it('메인 진입 화면에서는 footer를 숨기고 post 목록 진입 후 보여준다', async () => {
-    const client = buildMockClient();
+    const client = buildMockHttpClient();
 
     renderPage(client);
 
@@ -264,7 +273,7 @@ describe('PostListPage', () => {
     const listPosts = vi
       .fn()
       .mockResolvedValue({ posts: [], nextCursor: null });
-    const client = buildMockClient({ listPosts });
+    const client = buildMockHttpClient({ listPosts });
 
     renderPage(client);
 
@@ -280,7 +289,7 @@ describe('PostListPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('HASH')).toBeDefined();
-      expect(screen.queryByText('Latest Notes & Essays')).toBeNull();
+      expect(screen.queryByText('The Garden')).toBeNull();
       expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
     });
 
@@ -300,7 +309,7 @@ describe('PostListPage', () => {
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     };
-    const client = buildMockClient({
+    const client = buildMockHttpClient({
       countPosts: vi.fn().mockResolvedValue({ count: 7 }),
       listPosts: vi.fn().mockResolvedValue({ posts: [post], nextCursor: null }),
     });

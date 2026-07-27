@@ -1,4 +1,4 @@
-import { type SyncJobSummary } from '@/api/client';
+import { type SyncJobSummary } from '@/entities/sources/api/types';
 
 const STATUS_STYLES: Record<SyncJobSummary['status'], string> = {
   pending: 'bg-[#282c34] text-[#abb2bf]',

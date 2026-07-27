@@ -9,6 +9,7 @@ related:
   - ./design.md
   - ./design-token.md
   - ./design-component.md
+  - ./structure.md
   - ./visual-regression.md
   - ./test.md
   - ./deployment.md
@@ -29,6 +30,7 @@ When changing public project Markdown documents, also read the repository docume
 ## Routing
 
 - `apps/ui` visual design, CSS structure, design tokens, typography, colors, spacing, or component styling decisions: read [Design System](./design.md), [Design Tokens](./design-token.md), and [Design Components](./design-component.md).
+- `apps/ui` source directories, feature boundaries, import direction, or reusable UI placement decisions: read [UI Structure Convention](./structure.md).
 - Playwright screenshot, pixel-diff, Stitch visual fidelity, visual baseline, or browser-rendered design regression decisions for `apps/ui`: read [UI Visual Regression Convention](./visual-regression.md).
 - `apps/ui` test files, test structure, or test command selection: read [UI Test Convention](./test.md).
 - Dockerfile, Cloudflare Pages config, or vite build settings: read [UI Deployment](./deployment.md).

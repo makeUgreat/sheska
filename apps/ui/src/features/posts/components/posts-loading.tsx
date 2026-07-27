@@ -1,4 +1,4 @@
-import { LoadingDots } from '@/components/ui/loading-dots';
+import { LoadingDots } from '@/shared/ui/loading-dots';
 
 export function PostsLoading({
   label = 'Loading more posts...',
@@ -9,10 +9,7 @@ export function PostsLoading({
 }) {
   return (
     <div
-      className={[
-        'mt-24 flex flex-col items-center gap-4 border-t border-outline-variant/10 pt-12',
-        className,
-      ]
+      className={['mt-24 flex flex-col items-center gap-4 pt-12', className]
         .filter(Boolean)
         .join(' ')}
     >
@@ -26,7 +23,7 @@ export function PostsLoading({
 
 export function EndOfPosts() {
   return (
-    <div className="mt-24 flex flex-col items-center gap-4 border-t border-outline-variant/10 pt-12">
+    <div className="mt-24 flex flex-col items-center gap-4 pt-12">
       <span className="font-mono text-xs font-medium uppercase tracking-widest text-text-muted opacity-60">
         End of posts
       </span>

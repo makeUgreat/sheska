@@ -10,10 +10,55 @@ const API_CONTAINER_PORT = '3000';
 const RUNTIME_PROJECT_NAME = buildRuntimeProjectName(
   process.env.SHESKA_TEST_RUNTIME_ID,
 );
+const RUNTIME_PROJECT_PATTERN = /^sheska-api-test-runtime-e2e-(\d+)$/;
 
 export async function startRuntime(): Promise<void> {
+  await reapStaleRuntimes();
   await execDockerCompose(['down', '-v']);
   await execDockerCompose(['up', '-d', '--build']);
+}
+
+// A prior run's globalTeardown never fires if its process is killed (Ctrl+C,
+// CI cancellation, machine sleep), leaving its containers running forever
+// under a PID nothing will ever reference again. Reap any such runtime
+// whose PID is no longer alive before starting a new one.
+async function reapStaleRuntimes(): Promise<void> {
+  const { stdout } = await execFileAsync('docker', [
+    'compose',
+    'ls',
+    '-a',
+    '--format',
+    'json',
+  ]);
+  const projects = JSON.parse(stdout || '[]') as {
+    Name: string;
+    ConfigFiles: string;
+  }[];
+
+  for (const project of projects) {
+    const match = RUNTIME_PROJECT_PATTERN.exec(project.Name);
+
+    if (!match || isProcessAlive(Number(match[1]))) continue;
+
+    await execFileAsync('docker', [
+      'compose',
+      '-p',
+      project.Name,
+      '-f',
+      project.ConfigFiles,
+      'down',
+      '-v',
+    ]);
+  }
+}
+
+function isProcessAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === 'EPERM';
+  }
 }
 
 export async function stopRuntime(): Promise<void> {
