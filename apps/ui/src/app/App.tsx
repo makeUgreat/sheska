@@ -1,5 +1,5 @@
 import { Route, Routes, useLocation } from 'react-router-dom';
-import { Footer } from '@/components/layout/footer';
+import { Footer } from '@/shared/layout/footer';
 import { SourceListPage } from '@/pages/SourceListPage';
 import { SourceDetailPage } from '@/pages/SourceDetailPage';
 import { MainPage } from '@/pages/MainPage';

@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
-import { useListSources } from '@/api/queries';
-import { type SyncJobSummary } from '@/api/client';
-import { SyncJobBadge, SyncJobProgress } from '@/components/sync-job-status';
+import { useListSources } from '@/entities/sources/api/queries';
+import { type SyncJobSummary } from '@/entities/sources/api/types';
+import {
+  SyncJobBadge,
+  SyncJobProgress,
+} from '@/features/sources/components/sync-job-status';
 
 function SourceSyncJobStatus({ syncJob }: { syncJob: SyncJobSummary | null }) {
   if (!syncJob) {

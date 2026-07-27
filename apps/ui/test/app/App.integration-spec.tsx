@@ -3,13 +3,19 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ApiClientProvider } from '@/api/client-context';
 import {
   type GetSourceResponse,
-  type SheskaApiClient,
   type SourceSummary,
-} from '@/api/client';
-import { App } from '@/App';
+} from '@/entities/sources/api/types';
+import { App } from '@/app/App';
+import { type HttpClient } from '@/shared/api/http';
+import { HttpClientProvider } from '@/shared/api/http-client-context';
+
+type MockHttpClientOverrides = {
+  get?: ReturnType<typeof vi.fn>;
+  post?: ReturnType<typeof vi.fn>;
+  patch?: ReturnType<typeof vi.fn>;
+};
 
 function createTestQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -34,27 +40,35 @@ const SOURCE_DETAIL: GetSourceResponse = {
   embedding: null,
 };
 
-function buildMockClient(
-  overrides: Partial<SheskaApiClient> = {},
-): SheskaApiClient {
+function buildMockHttpClient(
+  overrides: MockHttpClientOverrides = {},
+): HttpClient {
   return {
-    listSources: vi.fn().mockResolvedValue({ sources: [SOURCE_SUMMARY] }),
-    getSource: vi.fn().mockResolvedValue(SOURCE_DETAIL),
-    listPosts: vi.fn().mockResolvedValue({ posts: [], nextCursor: null }),
-    countPosts: vi.fn().mockResolvedValue({ count: 0 }),
-    searchPosts: vi.fn().mockResolvedValue({ posts: [], nextCursor: null }),
-    get: vi.fn(),
+    get: vi.fn((path: string) => {
+      if (path === '/sources') {
+        return Promise.resolve({ sources: [SOURCE_SUMMARY] });
+      }
+      if (path === '/posts/count') {
+        return Promise.resolve({ count: 0 });
+      }
+      if (path === '/posts' || path === '/posts/search') {
+        return Promise.resolve({ posts: [], nextCursor: null });
+      }
+      return Promise.resolve(SOURCE_DETAIL);
+    }),
+    post: vi.fn(),
+    patch: vi.fn(),
     ...overrides,
-  } as unknown as SheskaApiClient;
+  } as unknown as HttpClient;
 }
 
-function renderApp(client: SheskaApiClient, initialEntry = '/sources') {
+function renderApp(client: HttpClient, initialEntry = '/sources') {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <QueryClientProvider client={createTestQueryClient()}>
-        <ApiClientProvider client={client}>
+        <HttpClientProvider client={client}>
           <App />
-        </ApiClientProvider>
+        </HttpClientProvider>
       </QueryClientProvider>
     </MemoryRouter>,
   );
@@ -64,7 +78,14 @@ describe('App', () => {
   it('source 목록에서 상세 화면으로 이동한다', async () => {
     const user = userEvent.setup();
     const getSource = vi.fn().mockResolvedValue(SOURCE_DETAIL);
-    const client = buildMockClient({ getSource });
+    const client = buildMockHttpClient({
+      get: vi.fn((path: string) => {
+        if (path === '/sources') {
+          return Promise.resolve({ sources: [SOURCE_SUMMARY] });
+        }
+        return getSource(path) as Promise<unknown>;
+      }),
+    });
 
     renderApp(client);
 
@@ -73,7 +94,7 @@ describe('App', () => {
     );
 
     await waitFor(() => {
-      expect(getSource).toHaveBeenCalledWith('source-1');
+      expect(getSource).toHaveBeenCalledWith('/sources/source-1');
       expect(
         screen.getByRole('heading', { name: 'Notes/source.md' }),
       ).toBeDefined();
@@ -83,7 +104,7 @@ describe('App', () => {
 
   it('상세 화면에서 Back to sources 링크로 목록으로 돌아온다', async () => {
     const user = userEvent.setup();
-    const client = buildMockClient();
+    const client = buildMockHttpClient();
 
     renderApp(client, '/sources/source-1');
 
@@ -98,7 +119,7 @@ describe('App', () => {
 
   it('nav의 Posts 링크를 클릭하면 Posts 페이지로 이동한다', async () => {
     const user = userEvent.setup();
-    const client = buildMockClient();
+    const client = buildMockHttpClient();
 
     renderApp(client);
 
@@ -113,7 +134,7 @@ describe('App', () => {
 
   it('nav의 Sources 링크를 클릭하면 Sources 페이지로 이동한다', async () => {
     const user = userEvent.setup();
-    const client = buildMockClient();
+    const client = buildMockHttpClient();
 
     renderApp(client, '/sources/source-1');
 

@@ -44,6 +44,72 @@ export default tseslint.config(
     },
   },
   {
+    files: ['src/shared/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/app/*', '@/pages/*', '@/features/*', '@/entities/*'],
+              message:
+                'shared code must stay domain-free and must not depend on upper FSD layers.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/entities/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/app/*', '@/pages/*', '@/features/*'],
+              message:
+                'entities may depend on shared code, but not on app, pages, or features.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/features/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/app/*', '@/pages/*'],
+              message: 'features must not depend on app or page composition.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/pages/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/app/*'],
+              message: 'pages must not depend on app bootstrap or providers.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: [
       'src/**/*.spec.{ts,tsx}',
       'scripts/**/*.spec.{ts,tsx}',
