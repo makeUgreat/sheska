@@ -9,6 +9,18 @@ function serializeCause(value: unknown): unknown {
   };
 }
 
+function stackWithCauses(error: Error, seen = new Set<Error>()): string {
+  const stack = error.stack ?? '';
+  if (seen.has(error)) {
+    return stack;
+  }
+  seen.add(error);
+
+  return error.cause instanceof Error
+    ? `${stack}\ncaused by: ${stackWithCauses(error.cause, seen)}`
+    : stack;
+}
+
 export function toErrorLogContext(error: unknown): Record<string, unknown> {
   if (!(error instanceof Error)) {
     return { error: String(error) };
@@ -27,9 +39,14 @@ export function toErrorLogContext(error: unknown): Record<string, unknown> {
       errorName: error.name,
       error: message,
       ...rest,
+      failure: { stack: stackWithCauses(error) },
       ...(error.cause !== undefined && { cause: serializeCause(error.cause) }),
     };
   }
 
-  return { errorName: error.name, error: error.message };
+  return {
+    errorName: error.name,
+    error: error.message,
+    failure: { stack: stackWithCauses(error) },
+  };
 }

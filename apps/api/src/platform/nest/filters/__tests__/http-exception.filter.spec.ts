@@ -25,15 +25,19 @@ function buildMockHost(): {
   host: ArgumentsHost;
   status: ReturnType<typeof vi.fn>;
   json: ReturnType<typeof vi.fn>;
+  response: { status: ReturnType<typeof vi.fn>; err?: Error };
 } {
   const json = vi.fn();
   const status = vi.fn().mockReturnValue({ json });
+  const response: { status: ReturnType<typeof vi.fn>; err?: Error } = {
+    status,
+  };
   const host = {
     switchToHttp: vi.fn().mockReturnValue({
-      getResponse: vi.fn().mockReturnValue({ status }),
+      getResponse: vi.fn().mockReturnValue(response),
     }),
   } as unknown as ArgumentsHost;
-  return { host, status, json };
+  return { host, status, json, response };
 }
 
 function buildMockLogger() {
@@ -480,6 +484,62 @@ describe('HttpExceptionFilter', () => {
       );
 
       expect(logger.error).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('res.err (access-log용 원본 에러 전달)', () => {
+    it('InfrastructureException을 response.err에 그대로 담는다', () => {
+      const { host, response } = buildMockHost();
+      const filter = new HttpExceptionFilter(buildMockLogger());
+      const exception = new InfrastructureException({
+        kind: INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
+        code: 'post.paginate_failed',
+        source: { boundary: 'persistence', adapter: 'post.pg-drizzle' },
+        message: 'Post paginate operation failed',
+        details: {},
+        cause: new Error('relation "posts" does not exist'),
+      });
+
+      filter.catch(exception, host);
+
+      expect(response.err).toBe(exception);
+    });
+
+    it('Error 인스턴스인 알 수 없는 예외를 response.err에 그대로 담는다', () => {
+      const { host, response } = buildMockHost();
+      const filter = new HttpExceptionFilter(buildMockLogger());
+      const exception = new Error('unexpected');
+
+      filter.catch(exception, host);
+
+      expect(response.err).toBe(exception);
+    });
+
+    it('Error가 아닌 값을 throw해도 response.err는 Error 인스턴스로 변환된다', () => {
+      const { host, response } = buildMockHost();
+      const filter = new HttpExceptionFilter(buildMockLogger());
+
+      filter.catch('raw string rejection', host);
+
+      expect(response.err).toBeInstanceOf(Error);
+      expect(response.err?.message).toBe('raw string rejection');
+    });
+
+    it('ApplicationException은 response.err를 설정하지 않는다', () => {
+      const { host, response } = buildMockHost();
+      const filter = new HttpExceptionFilter(buildMockLogger());
+
+      filter.catch(
+        new ApplicationException({
+          kind: APPLICATION_ERROR_KIND.NOT_FOUND,
+          code: 'source.not_found',
+          message: 'Source not found',
+          details: undefined,
+        }),
+        host,
+      );
+
+      expect(response.err).toBeUndefined();
     });
   });
 });
