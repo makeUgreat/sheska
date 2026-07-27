@@ -2,9 +2,16 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, type Mock, vi } from 'vitest';
-import { ApiClientProvider } from '@/api/client-context';
-import { type PostSummary, type SheskaApiClient } from '@/api/client';
+import { type PostSummary } from '@/entities/posts/api/types';
 import { usePostsArchive } from '@/features/posts/hooks/use-posts-archive';
+import { type HttpClient } from '@/shared/api/http';
+import { HttpClientProvider } from '@/shared/api/http-client-context';
+
+type MockHttpClientOverrides = {
+  get?: ReturnType<typeof vi.fn>;
+  post?: ReturnType<typeof vi.fn>;
+  patch?: ReturnType<typeof vi.fn>;
+};
 
 function createTestQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -21,26 +28,28 @@ function buildPost(postId: string, title: string): PostSummary {
   };
 }
 
-function buildMockClient(
-  overrides: Partial<SheskaApiClient> = {},
-): SheskaApiClient {
+function buildMockHttpClient(
+  overrides: MockHttpClientOverrides = {},
+): HttpClient {
   return {
-    listSources: vi.fn(),
-    getSource: vi.fn(),
-    listPosts: vi.fn().mockResolvedValue({ posts: [], nextCursor: null }),
-    countPosts: vi.fn().mockResolvedValue({ count: 0 }),
-    searchPosts: vi.fn().mockResolvedValue({ posts: [], nextCursor: null }),
-    get: vi.fn(),
+    get: vi.fn((path: string) => {
+      if (path === '/posts/count') {
+        return Promise.resolve({ count: 0 });
+      }
+      return Promise.resolve({ posts: [], nextCursor: null });
+    }),
+    post: vi.fn(),
+    patch: vi.fn(),
     ...overrides,
-  } as unknown as SheskaApiClient;
+  } as unknown as HttpClient;
 }
 
 function renderUsePostsArchive({
-  client = buildMockClient(),
+  client = buildMockHttpClient(),
   initialEntry = '/',
   shouldLoadPosts,
 }: {
-  client?: SheskaApiClient;
+  client?: HttpClient;
   initialEntry?: string;
   shouldLoadPosts: boolean;
 }) {
@@ -48,7 +57,7 @@ function renderUsePostsArchive({
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     <MemoryRouter initialEntries={[initialEntry]}>
       <QueryClientProvider client={queryClient}>
-        <ApiClientProvider client={client}>{children}</ApiClientProvider>
+        <HttpClientProvider client={client}>{children}</HttpClientProvider>
       </QueryClientProvider>
     </MemoryRouter>
   );
@@ -65,22 +74,30 @@ describe('usePostsArchive', () => {
   });
 
   it('shouldLoadPosts가 false면 count만 조회하고 post 목록은 조회하지 않는다', async () => {
-    const client = buildMockClient();
+    const client = buildMockHttpClient();
 
     renderUsePostsArchive({ client, shouldLoadPosts: false });
 
     await waitFor(() => {
-      expect(client.countPosts).toHaveBeenCalledTimes(1);
+      expect(client.get).toHaveBeenCalledWith('/posts/count');
     });
-    expect(client.listPosts).not.toHaveBeenCalled();
-    expect(client.searchPosts).not.toHaveBeenCalled();
+    expect(client.get).not.toHaveBeenCalledWith('/posts', expect.anything());
+    expect(client.get).not.toHaveBeenCalledWith(
+      '/posts/search',
+      expect.anything(),
+    );
   });
 
   it('limit query param을 listPosts 요청에 전달한다', async () => {
-    const client = buildMockClient({
-      listPosts: vi.fn().mockResolvedValue({
-        posts: [buildPost('1', '목록 포스트')],
-        nextCursor: null,
+    const client = buildMockHttpClient({
+      get: vi.fn((path: string) => {
+        if (path === '/posts/count') {
+          return Promise.resolve({ count: 0 });
+        }
+        return Promise.resolve({
+          posts: [buildPost('1', '목록 포스트')],
+          nextCursor: null,
+        });
       }),
     });
 
@@ -91,24 +108,28 @@ describe('usePostsArchive', () => {
     });
 
     await waitFor(() => {
-      expect(client.listPosts).toHaveBeenCalledWith({
-        cursor: undefined,
-        limit: 5,
-      });
+      expect(client.get).toHaveBeenCalledWith('/posts', { limit: '5' });
       expect(result.current.posts).toHaveLength(1);
     });
   });
 
   it('검색어를 trim한 뒤 searchPosts 결과를 선택한다', async () => {
     const searchPost = buildPost('search-1', '검색 결과');
-    const client = buildMockClient({
-      listPosts: vi.fn().mockResolvedValue({
-        posts: [buildPost('list-1', '목록 결과')],
-        nextCursor: null,
-      }),
-      searchPosts: vi.fn().mockResolvedValue({
-        posts: [searchPost],
-        nextCursor: null,
+    const client = buildMockHttpClient({
+      get: vi.fn((path: string) => {
+        if (path === '/posts/count') {
+          return Promise.resolve({ count: 0 });
+        }
+        if (path === '/posts/search') {
+          return Promise.resolve({
+            posts: [searchPost],
+            nextCursor: null,
+          });
+        }
+        return Promise.resolve({
+          posts: [buildPost('list-1', '목록 결과')],
+          nextCursor: null,
+        });
       }),
     });
 
@@ -125,10 +146,9 @@ describe('usePostsArchive', () => {
 
     await waitFor(() => {
       expect(result.current.normalizedQuery).toBe('garden');
-      expect(client.searchPosts).toHaveBeenCalledWith({
-        query: 'garden',
-        cursor: undefined,
-        limit: 3,
+      expect(client.get).toHaveBeenCalledWith('/posts/search', {
+        q: 'garden',
+        limit: '3',
       });
       expect(result.current.isSearching).toBe(true);
       expect(result.current.posts).toEqual([searchPost]);
@@ -152,21 +172,29 @@ describe('usePostsArchive', () => {
   });
 
   it('search query가 선택되면 fetchNextPage도 search query를 따른다', async () => {
-    const client = buildMockClient({
-      listPosts: vi.fn().mockResolvedValue({
-        posts: [],
-        nextCursor: 'list-next',
+    const searchPosts = vi
+      .fn()
+      .mockResolvedValueOnce({
+        posts: [buildPost('search-1', '첫 검색 결과')],
+        nextCursor: 'search-next',
+      })
+      .mockResolvedValueOnce({
+        posts: [buildPost('search-2', '다음 검색 결과')],
+        nextCursor: null,
+      });
+    const client = buildMockHttpClient({
+      get: vi.fn((path: string) => {
+        if (path === '/posts/count') {
+          return Promise.resolve({ count: 0 });
+        }
+        if (path === '/posts/search') {
+          return searchPosts() as Promise<unknown>;
+        }
+        return Promise.resolve({
+          posts: [],
+          nextCursor: 'list-next',
+        });
       }),
-      searchPosts: vi
-        .fn()
-        .mockResolvedValueOnce({
-          posts: [buildPost('search-1', '첫 검색 결과')],
-          nextCursor: 'search-next',
-        })
-        .mockResolvedValueOnce({
-          posts: [buildPost('search-2', '다음 검색 결과')],
-          nextCursor: null,
-        }),
     });
     const { result } = renderUsePostsArchive({
       client,
@@ -184,10 +212,9 @@ describe('usePostsArchive', () => {
       await result.current.fetchNextPage();
     });
 
-    expect(client.searchPosts as Mock).toHaveBeenLastCalledWith({
-      query: 'term',
+    expect(client.get as Mock).toHaveBeenLastCalledWith('/posts/search', {
+      q: 'term',
       cursor: 'search-next',
-      limit: undefined,
     });
   });
 });

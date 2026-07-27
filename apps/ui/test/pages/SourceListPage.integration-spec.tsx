@@ -2,32 +2,39 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ApiClientProvider } from '@/api/client-context';
-import { type SheskaApiClient, type SourceSummary } from '@/api/client';
+import { type SourceSummary } from '@/entities/sources/api/types';
 import { SourceListPage } from '@/pages/SourceListPage';
+import { type HttpClient } from '@/shared/api/http';
+import { HttpClientProvider } from '@/shared/api/http-client-context';
+
+type MockHttpClientOverrides = {
+  get?: ReturnType<typeof vi.fn>;
+  post?: ReturnType<typeof vi.fn>;
+  patch?: ReturnType<typeof vi.fn>;
+};
 
 function createTestQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
 }
 
-function buildMockClient(
-  overrides: Partial<SheskaApiClient> = {},
-): SheskaApiClient {
+function buildMockHttpClient(
+  overrides: MockHttpClientOverrides = {},
+): HttpClient {
   return {
-    listSources: vi.fn().mockResolvedValue({ sources: [] }),
-    getSource: vi.fn(),
-    get: vi.fn(),
+    get: vi.fn().mockResolvedValue({ sources: [] }),
+    post: vi.fn(),
+    patch: vi.fn(),
     ...overrides,
-  } as unknown as SheskaApiClient;
+  } as unknown as HttpClient;
 }
 
-function renderPage(client: SheskaApiClient) {
+function renderPage(client: HttpClient) {
   return render(
     <MemoryRouter>
       <QueryClientProvider client={createTestQueryClient()}>
-        <ApiClientProvider client={client}>
+        <HttpClientProvider client={client}>
           <SourceListPage />
-        </ApiClientProvider>
+        </HttpClientProvider>
       </QueryClientProvider>
     </MemoryRouter>,
   );
@@ -35,8 +42,8 @@ function renderPage(client: SheskaApiClient) {
 
 describe('SourceListPage', () => {
   it('로딩 중에 Loading... 텍스트를 보여준다', () => {
-    const client = buildMockClient({
-      listSources: vi.fn().mockReturnValue(new Promise(() => {})),
+    const client = buildMockHttpClient({
+      get: vi.fn().mockReturnValue(new Promise(() => {})),
     });
 
     renderPage(client);
@@ -46,8 +53,8 @@ describe('SourceListPage', () => {
   });
 
   it('source 목록이 없으면 No sources yet. 메시지를 보여준다', async () => {
-    const client = buildMockClient({
-      listSources: vi.fn().mockResolvedValue({ sources: [] }),
+    const client = buildMockHttpClient({
+      get: vi.fn().mockResolvedValue({ sources: [] }),
     });
 
     renderPage(client);
@@ -75,8 +82,8 @@ describe('SourceListPage', () => {
       },
       publishedPostId: null,
     };
-    const client = buildMockClient({
-      listSources: vi.fn().mockResolvedValue({
+    const client = buildMockHttpClient({
+      get: vi.fn().mockResolvedValue({
         sources: [source],
       }),
     });
@@ -110,8 +117,8 @@ describe('SourceListPage', () => {
       },
       publishedPostId: null,
     };
-    const client = buildMockClient({
-      listSources: vi.fn().mockResolvedValue({
+    const client = buildMockHttpClient({
+      get: vi.fn().mockResolvedValue({
         sources: [source],
       }),
     });
@@ -138,8 +145,8 @@ describe('SourceListPage', () => {
       latestSyncJob: null,
       publishedPostId: 'post-1',
     };
-    const client = buildMockClient({
-      listSources: vi.fn().mockResolvedValue({
+    const client = buildMockHttpClient({
+      get: vi.fn().mockResolvedValue({
         sources: [source],
       }),
     });
@@ -163,8 +170,8 @@ describe('SourceListPage', () => {
       latestSyncJob: null,
       publishedPostId: null,
     };
-    const client = buildMockClient({
-      listSources: vi.fn().mockResolvedValue({
+    const client = buildMockHttpClient({
+      get: vi.fn().mockResolvedValue({
         sources: [source],
       }),
     });
@@ -180,8 +187,8 @@ describe('SourceListPage', () => {
   });
 
   it('에러가 발생하면 에러 메시지를 보여준다', async () => {
-    const client = buildMockClient({
-      listSources: vi.fn().mockRejectedValue(new Error('API unavailable')),
+    const client = buildMockHttpClient({
+      get: vi.fn().mockRejectedValue(new Error('API unavailable')),
     });
 
     renderPage(client);

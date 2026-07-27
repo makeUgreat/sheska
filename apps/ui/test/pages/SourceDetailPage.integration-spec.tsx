@@ -3,9 +3,16 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ApiClientProvider } from '@/api/client-context';
-import { type GetSourceResponse, type SheskaApiClient } from '@/api/client';
+import { type GetSourceResponse } from '@/entities/sources/api/types';
 import { SourceDetailPage } from '@/pages/SourceDetailPage';
+import { type HttpClient } from '@/shared/api/http';
+import { HttpClientProvider } from '@/shared/api/http-client-context';
+
+type MockHttpClientOverrides = {
+  get?: ReturnType<typeof vi.fn>;
+  post?: ReturnType<typeof vi.fn>;
+  patch?: ReturnType<typeof vi.fn>;
+};
 
 function createTestQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -45,28 +52,26 @@ const MOCK_POST = {
   updatedAt: NOW,
 };
 
-function buildMockClient(
-  overrides: Partial<SheskaApiClient> = {},
-): SheskaApiClient {
+function buildMockHttpClient(
+  overrides: MockHttpClientOverrides = {},
+): HttpClient {
   return {
-    listSources: vi.fn(),
-    getSource: vi.fn().mockResolvedValue(MOCK_SOURCE),
-    listPosts: vi.fn().mockResolvedValue({ posts: [] }),
-    publishPost: vi.fn().mockResolvedValue(MOCK_POST),
-    get: vi.fn(),
+    get: vi.fn().mockResolvedValue(MOCK_SOURCE),
+    post: vi.fn().mockResolvedValue(MOCK_POST),
+    patch: vi.fn(),
     ...overrides,
-  } as unknown as SheskaApiClient;
+  } as unknown as HttpClient;
 }
 
-function renderPage(client: SheskaApiClient, sourceId = 'source-1') {
+function renderPage(client: HttpClient, sourceId = 'source-1') {
   return render(
     <MemoryRouter initialEntries={[`/sources/${sourceId}`]}>
       <QueryClientProvider client={createTestQueryClient()}>
-        <ApiClientProvider client={client}>
+        <HttpClientProvider client={client}>
           <Routes>
             <Route path="/sources/:id" element={<SourceDetailPage />} />
           </Routes>
-        </ApiClientProvider>
+        </HttpClientProvider>
       </QueryClientProvider>
     </MemoryRouter>,
   );
@@ -74,8 +79,8 @@ function renderPage(client: SheskaApiClient, sourceId = 'source-1') {
 
 describe('SourceDetailPage', () => {
   it('로딩 중에 Loading... 텍스트를 보여준다', () => {
-    const client = buildMockClient({
-      getSource: vi.fn().mockReturnValue(new Promise(() => {})),
+    const client = buildMockHttpClient({
+      get: vi.fn().mockReturnValue(new Promise(() => {})),
     });
 
     renderPage(client);
@@ -87,7 +92,7 @@ describe('SourceDetailPage', () => {
   });
 
   it('source 상세 정보를 렌더링한다', async () => {
-    const client = buildMockClient();
+    const client = buildMockHttpClient();
 
     renderPage(client);
 
@@ -106,8 +111,8 @@ describe('SourceDetailPage', () => {
   });
 
   it('sync job이 processing 상태이면 진행률을 렌더링한다', async () => {
-    const client = buildMockClient({
-      getSource: vi.fn().mockResolvedValue({
+    const client = buildMockHttpClient({
+      get: vi.fn().mockResolvedValue({
         ...MOCK_SOURCE,
         latestSyncJob: {
           syncJobId: 'sync-job-1',
@@ -130,8 +135,8 @@ describe('SourceDetailPage', () => {
   });
 
   it('embedding과 sync job이 없으면 빈 상태를 렌더링한다', async () => {
-    const client = buildMockClient({
-      getSource: vi.fn().mockResolvedValue({
+    const client = buildMockHttpClient({
+      get: vi.fn().mockResolvedValue({
         ...MOCK_SOURCE,
         latestSyncJob: null,
         embedding: null,
@@ -147,8 +152,8 @@ describe('SourceDetailPage', () => {
   });
 
   it('에러가 발생하면 에러 메시지를 보여준다', async () => {
-    const client = buildMockClient({
-      getSource: vi.fn().mockRejectedValue(new Error('Source not found')),
+    const client = buildMockHttpClient({
+      get: vi.fn().mockRejectedValue(new Error('Source not found')),
     });
 
     renderPage(client);
@@ -161,18 +166,18 @@ describe('SourceDetailPage', () => {
 
   it('getSource를 올바른 id로 호출한다', async () => {
     const getSource = vi.fn().mockResolvedValue(MOCK_SOURCE);
-    const client = buildMockClient({ getSource });
+    const client = buildMockHttpClient({ get: getSource });
 
     renderPage(client, 'source-1');
 
     await waitFor(() => {
-      expect(getSource).toHaveBeenCalledWith('source-1');
+      expect(getSource).toHaveBeenCalledWith('/sources/source-1');
     });
   });
 
   describe('게시하기', () => {
     it('게시하기 버튼이 렌더링된다', async () => {
-      const client = buildMockClient();
+      const client = buildMockHttpClient();
 
       renderPage(client);
 
@@ -184,8 +189,8 @@ describe('SourceDetailPage', () => {
 
     it('게시 중이면 게시하기 버튼이 비활성화된다', async () => {
       const user = userEvent.setup();
-      const client = buildMockClient({
-        publishPost: vi.fn().mockReturnValue(new Promise(() => {})),
+      const client = buildMockHttpClient({
+        post: vi.fn().mockReturnValue(new Promise(() => {})),
       });
 
       renderPage(client);
@@ -202,7 +207,7 @@ describe('SourceDetailPage', () => {
     it('게시하기 클릭 시 publishPost가 sourceId로 호출된다', async () => {
       const user = userEvent.setup();
       const publishPost = vi.fn().mockResolvedValue(MOCK_POST);
-      const client = buildMockClient({ publishPost });
+      const client = buildMockHttpClient({ post: publishPost });
 
       renderPage(client);
 
@@ -211,7 +216,7 @@ describe('SourceDetailPage', () => {
       await user.click(screen.getByRole('button', { name: '게시하기' }));
 
       await waitFor(() => {
-        expect(publishPost).toHaveBeenCalledWith({
+        expect(publishPost).toHaveBeenCalledWith('/posts', {
           sourceId: 'source-1',
         });
       });
@@ -219,7 +224,7 @@ describe('SourceDetailPage', () => {
 
     it('게시 성공 시 성공 메시지와 게시된 포스트 링크가 표시된다', async () => {
       const user = userEvent.setup();
-      const client = buildMockClient();
+      const client = buildMockHttpClient();
 
       renderPage(client);
 
@@ -236,8 +241,8 @@ describe('SourceDetailPage', () => {
     });
 
     it('이미 게시된 source는 게시하기 버튼 대신 게시된 포스트 링크를 보여준다', async () => {
-      const client = buildMockClient({
-        getSource: vi.fn().mockResolvedValue({
+      const client = buildMockHttpClient({
+        get: vi.fn().mockResolvedValue({
           ...MOCK_SOURCE,
           publishedPostId: 'post-1',
         }),
@@ -255,8 +260,8 @@ describe('SourceDetailPage', () => {
 
     it('게시 실패 시 에러 메시지가 표시된다', async () => {
       const user = userEvent.setup();
-      const client = buildMockClient({
-        publishPost: vi
+      const client = buildMockHttpClient({
+        post: vi
           .fn()
           .mockRejectedValue(new Error('이미 게시된 포스트가 있습니다')),
       });

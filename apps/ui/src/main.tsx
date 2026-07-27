@@ -3,9 +3,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ApiClientProvider } from '@/api/client-context';
-import { HttpClient } from '@/api/http';
-import { SheskaApiClient } from '@/api/client';
+import { HttpClient } from '@/shared/api/http';
+import { HttpClientProvider } from '@/shared/api/http-client-context';
 import { App } from './app/App';
 
 const apiBaseUrl =
@@ -17,11 +16,9 @@ createRoot(rootEl).render(
   <StrictMode>
     <BrowserRouter>
       <QueryClientProvider client={new QueryClient()}>
-        <ApiClientProvider
-          client={new SheskaApiClient(new HttpClient(apiBaseUrl))}
-        >
+        <HttpClientProvider client={new HttpClient(apiBaseUrl)}>
           <App />
-        </ApiClientProvider>
+        </HttpClientProvider>
       </QueryClientProvider>
     </BrowserRouter>
   </StrictMode>,

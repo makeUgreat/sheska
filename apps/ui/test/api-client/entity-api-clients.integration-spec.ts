@@ -1,17 +1,18 @@
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { SheskaApiClient } from '@/api/client';
-import { HttpClient } from '@/api/http';
+import { getPost, listPosts, publishPost } from '@/entities/posts/api/client';
+import { getSource, listSources } from '@/entities/sources/api/client';
+import { HttpClient } from '@/shared/api/http';
 
 const BASE_URL_FILE = '/tmp/sheska-ui-api-client-runtime/base-url';
 
-describe('SheskaApiClient', () => {
+describe('entity API clients', () => {
   it('listSources 응답 계약이 실제 API와 일치한다', async () => {
     const baseUrl =
       process.env.SHESKA_API_CLIENT_INTEGRATION_BASE_URL ??
       (await readFile(BASE_URL_FILE, 'utf8')).trim();
-    const client = new SheskaApiClient(new HttpClient(baseUrl));
+    const http = new HttpClient(baseUrl);
     const externalSourceId = `ui-api-client-${randomUUID()}`;
     const content = `API client integration test content ${randomUUID()}`;
 
@@ -30,7 +31,7 @@ describe('SheskaApiClient', () => {
     };
     expect(uploaded.externalSourceId).toBe(externalSourceId);
 
-    const response = await client.listSources();
+    const response = await listSources(http);
 
     expect(Array.isArray(response.sources)).toBe(true);
     expect(response.sources).toEqual(
@@ -51,7 +52,7 @@ describe('SheskaApiClient', () => {
     const baseUrl =
       process.env.SHESKA_API_CLIENT_INTEGRATION_BASE_URL ??
       (await readFile(BASE_URL_FILE, 'utf8')).trim();
-    const client = new SheskaApiClient(new HttpClient(baseUrl));
+    const http = new HttpClient(baseUrl);
     const externalSourceId = `ui-api-client-${randomUUID()}`;
     const content = `API client integration test content ${randomUUID()}`;
 
@@ -69,7 +70,7 @@ describe('SheskaApiClient', () => {
       syncJobId?: string;
     };
 
-    const source = await client.getSource(uploaded.sourceId);
+    const source = await getSource(http, uploaded.sourceId);
 
     expect(source).toEqual(
       expect.objectContaining({
@@ -88,9 +89,9 @@ describe('SheskaApiClient', () => {
     const baseUrl =
       process.env.SHESKA_API_CLIENT_INTEGRATION_BASE_URL ??
       (await readFile(BASE_URL_FILE, 'utf8')).trim();
-    const client = new SheskaApiClient(new HttpClient(baseUrl));
+    const http = new HttpClient(baseUrl);
 
-    await expect(client.getSource('non-existent-source')).rejects.toThrow(
+    await expect(getSource(http, 'non-existent-source')).rejects.toThrow(
       'HTTP error: 404 Not Found',
     );
   });
@@ -99,7 +100,7 @@ describe('SheskaApiClient', () => {
     const baseUrl =
       process.env.SHESKA_API_CLIENT_INTEGRATION_BASE_URL ??
       (await readFile(BASE_URL_FILE, 'utf8')).trim();
-    const client = new SheskaApiClient(new HttpClient(baseUrl));
+    const http = new HttpClient(baseUrl);
 
     const uploadResponse = await fetch(`${baseUrl}/sources`, {
       method: 'POST',
@@ -112,7 +113,7 @@ describe('SheskaApiClient', () => {
     expect(uploadResponse.status).toBe(201);
     const uploaded = (await uploadResponse.json()) as { sourceId: string };
 
-    const result = await client.publishPost({
+    const result = await publishPost(http, {
       sourceId: uploaded.sourceId,
     });
 
@@ -132,7 +133,7 @@ describe('SheskaApiClient', () => {
     const baseUrl =
       process.env.SHESKA_API_CLIENT_INTEGRATION_BASE_URL ??
       (await readFile(BASE_URL_FILE, 'utf8')).trim();
-    const client = new SheskaApiClient(new HttpClient(baseUrl));
+    const http = new HttpClient(baseUrl);
 
     const title = `통합 테스트 포스트 ${randomUUID()}`;
     const uploadResponse = await fetch(`${baseUrl}/sources`, {
@@ -154,7 +155,7 @@ describe('SheskaApiClient', () => {
     expect(publishResponse.status).toBe(201);
     const published = (await publishResponse.json()) as { postId: string };
 
-    const post = await client.getPost(published.postId);
+    const post = await getPost(http, published.postId);
 
     expect(post).toEqual(
       expect.objectContaining({
@@ -172,9 +173,9 @@ describe('SheskaApiClient', () => {
     const baseUrl =
       process.env.SHESKA_API_CLIENT_INTEGRATION_BASE_URL ??
       (await readFile(BASE_URL_FILE, 'utf8')).trim();
-    const client = new SheskaApiClient(new HttpClient(baseUrl));
+    const http = new HttpClient(baseUrl);
 
-    await expect(client.getPost('non-existent-post')).rejects.toThrow(
+    await expect(getPost(http, 'non-existent-post')).rejects.toThrow(
       'HTTP error: 404 Not Found',
     );
   });
@@ -183,7 +184,7 @@ describe('SheskaApiClient', () => {
     const baseUrl =
       process.env.SHESKA_API_CLIENT_INTEGRATION_BASE_URL ??
       (await readFile(BASE_URL_FILE, 'utf8')).trim();
-    const client = new SheskaApiClient(new HttpClient(baseUrl));
+    const http = new HttpClient(baseUrl);
 
     const title = `통합 테스트 포스트 ${randomUUID()}`;
     const uploadResponse = await fetch(`${baseUrl}/sources`, {
@@ -209,7 +210,7 @@ describe('SheskaApiClient', () => {
       title: string;
     };
 
-    const response = await client.listPosts();
+    const response = await listPosts(http);
 
     expect(Array.isArray(response.posts)).toBe(true);
     expect(response.posts).toEqual(

@@ -2,9 +2,16 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ApiClientProvider } from '@/api/client-context';
-import { type GetPostResponse, type SheskaApiClient } from '@/api/client';
+import { HttpClientProvider } from '@/shared/api/http-client-context';
+import { type GetPostResponse } from '@/entities/posts/api/types';
 import { PostDetailPage } from '@/pages/PostDetailPage';
+import { type HttpClient } from '@/shared/api/http';
+
+type MockHttpClientOverrides = {
+  get?: ReturnType<typeof vi.fn>;
+  post?: ReturnType<typeof vi.fn>;
+  patch?: ReturnType<typeof vi.fn>;
+};
 
 function createTestQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -21,28 +28,26 @@ const MOCK_POST: GetPostResponse = {
   sourceContent: '---\ntitle: 테스트 포스트\n---\n본문 내용입니다.',
 };
 
-function buildMockClient(
-  overrides: Partial<SheskaApiClient> = {},
-): SheskaApiClient {
+function buildMockHttpClient(
+  overrides: MockHttpClientOverrides = {},
+): HttpClient {
   return {
-    listSources: vi.fn(),
-    getSource: vi.fn(),
-    listPosts: vi.fn(),
-    getPost: vi.fn().mockResolvedValue(MOCK_POST),
-    publishPost: vi.fn(),
+    get: vi.fn().mockResolvedValue(MOCK_POST),
+    post: vi.fn(),
+    patch: vi.fn(),
     ...overrides,
-  } as unknown as SheskaApiClient;
+  } as unknown as HttpClient;
 }
 
-function renderPage(client: SheskaApiClient, postId = 'post-1') {
+function renderPage(client: HttpClient, postId = 'post-1') {
   return render(
     <MemoryRouter initialEntries={[`/posts/${postId}`]}>
       <QueryClientProvider client={createTestQueryClient()}>
-        <ApiClientProvider client={client}>
+        <HttpClientProvider client={client}>
           <Routes>
             <Route path="/posts/:id" element={<PostDetailPage />} />
           </Routes>
-        </ApiClientProvider>
+        </HttpClientProvider>
       </QueryClientProvider>
     </MemoryRouter>,
   );
@@ -50,8 +55,8 @@ function renderPage(client: SheskaApiClient, postId = 'post-1') {
 
 describe('PostDetailPage', () => {
   it('로딩 중에 Loading... 텍스트를 보여준다', () => {
-    const client = buildMockClient({
-      getPost: vi.fn().mockReturnValue(new Promise(() => {})),
+    const client = buildMockHttpClient({
+      get: vi.fn().mockReturnValue(new Promise(() => {})),
     });
 
     renderPage(client);
@@ -61,7 +66,7 @@ describe('PostDetailPage', () => {
   });
 
   it('post 상세 정보를 렌더링한다', async () => {
-    const client = buildMockClient();
+    const client = buildMockHttpClient();
 
     renderPage(client);
 
@@ -76,8 +81,8 @@ describe('PostDetailPage', () => {
   });
 
   it('에러가 발생하면 에러 메시지를 보여준다', async () => {
-    const client = buildMockClient({
-      getPost: vi.fn().mockRejectedValue(new Error('Post not found')),
+    const client = buildMockHttpClient({
+      get: vi.fn().mockRejectedValue(new Error('Post not found')),
     });
 
     renderPage(client);
@@ -90,17 +95,17 @@ describe('PostDetailPage', () => {
 
   it('getPost를 올바른 id로 호출한다', async () => {
     const getPost = vi.fn().mockResolvedValue(MOCK_POST);
-    const client = buildMockClient({ getPost });
+    const client = buildMockHttpClient({ get: getPost });
 
     renderPage(client, 'post-1');
 
     await waitFor(() => {
-      expect(getPost).toHaveBeenCalledWith('post-1');
+      expect(getPost).toHaveBeenCalledWith('/posts/post-1');
     });
   });
 
   it('Back to posts 링크가 /posts로 연결된다', () => {
-    const client = buildMockClient();
+    const client = buildMockHttpClient();
 
     renderPage(client);
 

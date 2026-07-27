@@ -1,6 +1,10 @@
 import { Link, useParams } from 'react-router-dom';
-import { useSource, usePublishPost } from '@/api/queries';
-import { type SyncJobSummary, type EmbeddingInfo } from '@/api/client';
+import { usePublishPost } from '@/entities/posts/api/queries';
+import { useSource } from '@/entities/sources/api/queries';
+import {
+  type EmbeddingInfo,
+  type SyncJobSummary,
+} from '@/entities/sources/api/types';
 import {
   SyncJobBadge,
   SyncJobProgress,

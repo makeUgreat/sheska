@@ -5,7 +5,7 @@ import {
   useCountPosts,
   useInfiniteListPosts,
   useInfiniteSearchPosts,
-} from '@/api/queries';
+} from '@/entities/posts/api/queries';
 import { useDebouncedValue } from '@/shared/hooks/use-debounced-value';
 
 const POSTS_SEARCH_DEBOUNCE_MS = 300;

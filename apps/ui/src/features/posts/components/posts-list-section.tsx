@@ -1,5 +1,5 @@
 import { forwardRef, type Ref } from 'react';
-import { type PostSummary } from '@/api/client';
+import { type PostSummary } from '@/entities/posts/api/types';
 import { PostCard } from '@/features/posts/components/post-card';
 import {
   EndOfPosts,
