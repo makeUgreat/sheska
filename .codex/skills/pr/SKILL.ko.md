@@ -16,6 +16,7 @@ PR은 하나의 일관된 결정으로 review 가능해야 합니다. 변경이 
 - PR 제목과 설명은 영어로 작성합니다. 기본값은 draft PR입니다.
 - PR을 준비하거나 열거나 업데이트하라는 명시적 요청은 커밋 준비, 브랜치/stack 설정, push, draft PR 생성까지 전체 흐름을 추가 확인 없이 끝까지 진행해도 된다는 승인으로 봅니다(아래 blocker가 적용되는 경우 제외).
 - working tree에 커밋되지 않은 변경이 있거나 PR 경계가 불명확하면 먼저 `cm`을 사용합니다.
+- 지금 하려는 작업과 무관한 버그 때문에 PR 생성/merge 게이트 자체가 막혀 있다면(예: `main` 자체에서 build/harness 체크가 실패), 원래 요청보다 그 fix를 완료해서 `main`에 먼저 merge하는 걸 우선순위로 둡니다 — 다른 PR을 열거나 이어가기 전에요. fix 자체가 리뷰가 필요해서 바로 진행할 수 없을 때만 merge 안 된 fix 위에 다른 branch를 stack하는 방식(Stacked PR 참고)으로 대체합니다 — fix를 먼저 merge하면 이 우회 자체가 필요 없어집니다.
 - 현재 브랜치에 이미 열린 PR이 있다면, 진행 전에 연관성을 먼저 판단합니다(PR 단위: 단일 vs Stacked 참고): 기존 PR의 의도를 이어가는 작업이면 업데이트입니다 — push하고 본문을 갱신합니다. 연관성이 떨어지는 작업이면 기존 PR에 합치지 말고 그 위에 새로운 stacked PR을 엽니다.
 - 합리적인 PR 또는 stack 형태가 둘 이상이면 history 의미가 가장 명확한 것을 고르고 이유를 보고합니다. 멈춰서 묻지 않습니다.
 - 검증 결과를 지어내지 않습니다 — 실행/생략 여부와 이유를 보고합니다.
@@ -63,7 +64,8 @@ stacked PR은 각 PR의 base branch를 수동으로 설정하거나 merge 후 �
 - `<trunk>`은 브랜치 계층을 따릅니다: 해당 feature의 하위 브랜치 layer를 stack으로 만들 때는 통합 브랜치(`feature/{name}`), 통합 브랜치가 없는 stack(default 브랜치 계층)이면 `main`입니다.
 - 커밋을 준비하면서 만듭니다: trunk 바로 위 첫 branch에서 `gh stack init --base <trunk> <branch-1>`을 실행하고, 이후 각 layer마다 `gh stack add -m "<msg>" <branch-N>`을 실행합니다.
 - 이미 PR이 열려 있지만 아직 stack으로 추적되지 않는 브랜치 위에 새 작업을 쌓으려면, 먼저 그 브랜치를 tracking에 편입합니다: `gh stack init --base <trunk> <existing-branch>`를 실행한 뒤, 그 위에 새 branch로 `gh stack add`를 실행합니다.
-- 서로 무관한 여러 branch가 아직 merge되지 않은 같은 trunk를 공유해야 할 때(예: 저장소의 PR 생성 게이트가 깨져 있고 merge 안 된 fix branch만 그 게이트를 통과할 때), 의도한 merge 순서대로 **한 번의** `gh stack init --base <trunk> <branch-1> <branch-2> <branch-3>` 호출로 모든 branch를 한 번에 편입시킵니다 — branch마다 따로 `gh stack init`을 실행하지 않습니다. 같은 외부 trunk에 대해 `init`을 따로 실행하면 GitHub에 각각 별도의 Stack 객체가 생기고, 이를 나중에 `gh stack link`로 하나로 합치는 건 신뢰할 수 없습니다(trunk branch가 이미 삭제된 상태에서 GitHub가 422를 반환하는 사례 확인, 이미 열려 있던 PR의 base가 조용히 깨질 수 있음). 각 PR의 `Stack Context`에는 이 의존관계가 product/review 의존이 아니라 build-gate 우회를 위한 부수적인 것임을 명시합니다.
+- 이 방식은 우연히 같은 merge 안 된 trunk를 공유해야 하는 **진짜로 서로 무관한** branch들을 위한 것입니다(먼저 그 trunk fix를 merge해서 이 상황 자체를 피하는 걸 우선하세요 — 핵심 동작 참고). 이건 integration branch 패턴(브랜치 구조 & Merge 전략 참고)이 아닙니다 — schema → backend → ui처럼 하나의 기능을 이루는 실제 product layer들이라면 integration branch를 쓰세요; 그냥 무관한 작업들을 같이 묶어두려고 공유 trunk stack을 쓰지 않습니다.
+  서로 무관한 여러 branch가 아직 merge되지 않은 같은 trunk를 공유해야 할 때(예: 저장소의 PR 생성 게이트가 깨져 있고 merge 안 된 fix branch만 그 게이트를 통과하는데, 그 fix를 바로 진행할 수 없을 때), 의도한 merge 순서대로 **한 번의** `gh stack init --base <trunk> <branch-1> <branch-2> <branch-3>` 호출로 모든 branch를 한 번에 편입시킵니다 — branch마다 따로 `gh stack init`을 실행하지 않습니다. 같은 외부 trunk에 대해 `init`을 따로 실행하면 GitHub에 각각 별도의 Stack 객체가 생기고, 이를 나중에 `gh stack link`로 하나로 합치는 건 신뢰할 수 없습니다(trunk branch가 이미 삭제된 상태에서 GitHub가 422를 반환하는 사례 확인, 이미 열려 있던 PR의 base가 조용히 깨질 수 있음). 각 PR의 `Stack Context`에는 이 의존관계가 product/review 의존이 아니라 build-gate 우회를 위한 부수적인 것임을 명시합니다.
 - `gh stack submit`으로 전체 stack을 한 번에 push하고 엽니다. 기본값은 draft이며(사용자가 ready-for-review를 요청했을 때만 `--open` 사용), base branch는 자동으로 설정됩니다 — 각 PR은 바로 아래 branch를 대상으로 합니다.
 - `gh stack view`(`-s`/`--json`)로 PR을 열기 전에 branch 순서, PR 링크, 커밋을 확인합니다.
 - `gh stack merge [<stack-number>|<pr-number>] --squash [-y]`로 최하단부터 merge합니다. 이 프로젝트에서 stack이 쓰이는 모든 계층(하위 브랜치 → 통합 브랜치, 또는 default 브랜치 → main)은 squash로 merge합니다. 유일한 `--no-ff` 단계인 통합 브랜치 → main은 항상 단일 PR이며 stack으로 만들지 않습니다. GitHub이 merge된 PR 위에 남은 PR들을 자동으로 다음 base로 retarget/rebase합니다 — 수동으로 하지 않습니다.

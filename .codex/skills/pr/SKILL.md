@@ -31,6 +31,13 @@ for how to build and open one.
   title) when a creation path is available.
 - Use `cm` first when the working tree has uncommitted changes or the PR
   boundary is unclear.
+- If a PR-creation or PR-merge gate is broken by a bug unrelated to the
+  work at hand (e.g. a build/harness check fails against `main` itself),
+  treat fixing and merging it as higher priority than the original request:
+  finish and merge that fix to `main` first, before opening or continuing any
+  other PR. Only fall back to stacking other branches on the unmerged fix
+  (see Stacked PRs) when the fix itself needs review and can't be fast-tracked
+  — merging it first avoids that workaround entirely.
 - If the current branch already has an open PR, decide relatedness before
   acting (see PR Unit: Single vs. Stacked): a continuation of that PR's
   intent is an update — push and refresh the body; a separable concern
@@ -127,9 +134,17 @@ commands (`rebase`, `modify`, `sync`), never by hand.
   tracked as a stack yet, first bring it under tracking:
   `gh stack init --base <trunk> <existing-branch>`, then `gh stack add` the
   new branch on top.
-- When several otherwise-independent branches must all sit on the same
+- This is for genuinely independent branches that only need to share an
+  unmerged trunk incidentally (see Core Behavior: prefer merging that trunk
+  fix first and avoiding this entirely). It is not the integration-branch
+  pattern (see Branch Structure & Merge Strategy) — use an integration
+  branch instead when the branches are actual product layers of one feature
+  (e.g. schema → backend → ui) that belong together as a reviewable set;
+  don't reach for a shared-trunk stack just to keep unrelated work batched.
+  When several otherwise-independent branches must all sit on the same
   not-yet-merged trunk (e.g. a repo's PR-creation gate is broken and only an
-  unmerged fix branch passes it), adopt every branch into **one**
+  unmerged fix branch passes it, and that fix can't be fast-tracked), adopt
+  every branch into **one**
   `gh stack init --base <trunk> <branch-1> <branch-2> <branch-3>` call up
   front, in the intended merge order — not one `gh stack init` per branch.
   Separate `init` calls against the same external trunk each create their
