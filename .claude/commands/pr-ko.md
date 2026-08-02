@@ -59,15 +59,17 @@ stack layer가 명확한 review 단위라면 그 자체로 일시적으로 실�
 
 ## Stacked PR (gh stack)
 
-stacked PR은 각 PR의 base branch를 수동으로 설정하거나 merge 후 수동으로 retarget하는 대신, `gh-stack` CLI extension을 사용하는 GitHub 네이티브 stacked pull request 기능으로 만들고 엽니다.
+stacked PR은 각 PR의 base branch를 수동으로 설정하거나 merge 후 수동으로 retarget하는 대신, `gh-stack` CLI extension을 사용하는 GitHub 네이티브 stacked pull request 기능으로 만들고 엽니다. GitHub는 네이티브 stack에 속한 PR의 base branch 수정을 막습니다 — `gh pr edit --base`는 실패하거나 PR을 불일치 상태로 남기므로, 재구성은 반드시 `gh stack` 명령(`rebase`, `modify`, `sync`)으로만 합니다.
 
 - 사전 준비: `gh extension list`로 확인하고, 없으면 `gh extension install github/gh-stack`으로 설치합니다.
 - `<trunk>`은 브랜치 계층을 따릅니다: 해당 feature의 하위 브랜치 layer를 stack으로 만들 때는 통합 브랜치(`feature/{name}`), 통합 브랜치가 없는 stack(default 브랜치 계층)이면 `main`입니다.
 - 커밋을 준비하면서 만듭니다: trunk 바로 위 첫 branch에서 `gh stack init --base <trunk> <branch-1>`을 실행하고, 이후 각 layer마다 `gh stack add -m "<msg>" <branch-N>`을 실행합니다.
 - 이미 PR이 열려 있지만 아직 stack으로 추적되지 않는 브랜치 위에 새 작업을 쌓으려면, 먼저 그 브랜치를 tracking에 편입합니다: `gh stack init --base <trunk> <existing-branch>`를 실행한 뒤, 그 위에 새 branch로 `gh stack add`를 실행합니다.
+- 서로 무관한 여러 branch가 아직 merge되지 않은 같은 trunk를 공유해야 할 때(예: 저장소의 PR 생성 게이트가 깨져 있고 merge 안 된 fix branch만 그 게이트를 통과할 때), 의도한 merge 순서대로 **한 번의** `gh stack init --base <trunk> <branch-1> <branch-2> <branch-3>` 호출로 모든 branch를 한 번에 편입시킵니다 — branch마다 따로 `gh stack init`을 실행하지 않습니다. 같은 외부 trunk에 대해 `init`을 따로 실행하면 GitHub에 각각 별도의 Stack 객체가 생기고, 이를 나중에 `gh stack link`로 하나로 합치는 건 신뢰할 수 없습니다(trunk branch가 이미 삭제된 상태에서 GitHub가 422를 반환하는 사례 확인, 이미 열려 있던 PR의 base가 조용히 깨질 수 있음). 각 PR의 `Stack Context`에는 이 의존관계가 product/review 의존이 아니라 build-gate 우회를 위한 부수적인 것임을 명시합니다.
 - `gh stack submit`으로 전체 stack을 한 번에 push하고 엽니다. 기본값은 draft이며(사용자가 ready-for-review를 요청했을 때만 `--open` 사용), base branch는 자동으로 설정됩니다 — 각 PR은 바로 아래 branch를 대상으로 합니다.
 - `gh stack view`(`-s`/`--json`)로 PR을 열기 전에 branch 순서, PR 링크, 커밋을 확인합니다.
 - `gh stack merge [<stack-number>|<pr-number>] --squash [-y]`로 최하단부터 merge합니다. 이 프로젝트에서 stack이 쓰이는 모든 계층(하위 브랜치 → 통합 브랜치, 또는 default 브랜치 → main)은 squash로 merge합니다. 유일한 `--no-ff` 단계인 통합 브랜치 → main은 항상 단일 PR이며 stack으로 만들지 않습니다. GitHub이 merge된 PR 위에 남은 PR들을 자동으로 다음 base로 retarget/rebase합니다 — 수동으로 하지 않습니다.
+- stack 구성원 하나가 merge되는 즉시(`gh stack merge`든 GitHub에서 직접 하든) 다른 stack 명령보다 먼저 `gh stack sync`부터 실행합니다. squash merge는 대상 branch에 새 커밋을 만들기 때문에, merge된 branch 위에 남은 branch들은 rebase되기 전까지 merge 이전 커밋을 중복으로 갖고 있게 됩니다 — sync보다 먼저 `link`, `submit`, 수동 base 수정을 실행하면 깔끔한 retarget이 아니라 base branch 손상으로 이어집니다.
 - upstream/trunk 변경 후에는 `gh stack sync [--prune]`으로 전체 stack을 재동기화합니다.
 - stack의 모든 branch는 같은 저장소에 있어야 합니다(cross-fork 불가).
 - 최종 사용자 보고에 merge 순서를 적습니다(최하단부터). GitHub의 live stack map이 이미 보여주므로 모든 PR 본문에 정적 텍스트로 중복 기재하지 않습니다.

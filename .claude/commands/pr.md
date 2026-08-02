@@ -104,7 +104,10 @@ Stacked PRs for bringing an already-open branch under stack tracking.
 
 Build and open stacked PRs with GitHub's native stacked pull request feature
 via the `gh-stack` CLI extension — never by manually setting each PR's base
-branch or manually retargeting after a merge.
+branch or manually retargeting after a merge. GitHub locks base-branch edits
+on any PR that's part of a native stack; `gh pr edit --base` fails or leaves
+the PR inconsistent once linked, so restructure only through `gh stack`
+commands (`rebase`, `modify`, `sync`), never by hand.
 
 - Prerequisite: `gh extension list`; install with
   `gh extension install github/gh-stack` if missing.
@@ -118,6 +121,17 @@ branch or manually retargeting after a merge.
   tracked as a stack yet, first bring it under tracking:
   `gh stack init --base <trunk> <existing-branch>`, then `gh stack add` the
   new branch on top.
+- When several otherwise-independent branches must all sit on the same
+  not-yet-merged trunk (e.g. a repo's PR-creation gate is broken and only an
+  unmerged fix branch passes it), adopt every branch into **one**
+  `gh stack init --base <trunk> <branch-1> <branch-2> <branch-3>` call up
+  front, in the intended merge order — not one `gh stack init` per branch.
+  Separate `init` calls against the same external trunk each create their
+  own Stack object on GitHub; reconciling them into one later via
+  `gh stack link` is unreliable (observed 422s from GitHub when the trunk
+  branch had since been deleted) and can silently corrupt an already-open
+  PR's base. Note in each PR's `Stack Context` that the dependency is
+  incidental (a build-gate workaround), not a product/review dependency.
 - `gh stack submit` pushes and opens the whole stack in one step, as drafts
   by default (add `--open` only if the user asked for ready-for-review).
   Base branches are set automatically — each PR targets the branch below it.
@@ -129,6 +143,12 @@ branch or manually retargeting after a merge.
   step, integration branch → main, is always a single PR and is never
   stacked. GitHub auto-retargets and rebases the remaining PRs above the
   merged one onto the next base — never do that by hand.
+- The instant any stack member merges (via `gh stack merge` or directly on
+  GitHub), run `gh stack sync` before any other stack command. Squash merge
+  creates a new commit on the target branch, so branches still above the
+  merged one carry the pre-merge commit as a stale duplicate until rebased;
+  running `link`, `submit`, or a manual base edit before syncing compounds
+  into base-branch corruption rather than a clean retarget.
 - `gh stack sync [--prune]` resyncs the whole stack after upstream/trunk
   changes.
 - All stack branches must live in the same repository (no cross-fork).
