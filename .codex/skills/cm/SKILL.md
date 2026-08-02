@@ -195,20 +195,6 @@ Checking before insertion gives the API a stable validation error instead of
 exposing a database constraint failure.
 ```
 
-## Sub-branch to Integration Branch Merge
-
-When merging a sub-branch into its integration branch, use squash merge to
-collapse wip commits into one logical-unit commit:
-
-```bash
-git checkout feature/{name}
-git merge --squash feature/{name}/{layer}
-git commit -m "feat({scope}): <imperative summary>"
-```
-
-The squash commit message must follow Conventional Commits and include a `Why:`
-body. This commit is what gets preserved in main history.
-
 ## Workflow
 
 1. Detect the branch context (sub-branch, integration branch, or default
