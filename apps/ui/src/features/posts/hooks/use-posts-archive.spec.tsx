@@ -47,12 +47,10 @@ function buildMockHttpClient(
 function renderUsePostsArchive({
   client = buildMockHttpClient(),
   initialEntry = '/',
-  shouldLoadPosts,
 }: {
   client?: HttpClient;
   initialEntry?: string;
-  shouldLoadPosts: boolean;
-}) {
+} = {}) {
   const queryClient = createTestQueryClient();
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     <MemoryRouter initialEntries={[initialEntry]}>
@@ -64,28 +62,13 @@ function renderUsePostsArchive({
 
   return {
     queryClient,
-    ...renderHook(() => usePostsArchive(shouldLoadPosts), { wrapper }),
+    ...renderHook(() => usePostsArchive(), { wrapper }),
   };
 }
 
 describe('usePostsArchive', () => {
   afterEach(() => {
     vi.useRealTimers();
-  });
-
-  it('shouldLoadPosts가 false면 count만 조회하고 post 목록은 조회하지 않는다', async () => {
-    const client = buildMockHttpClient();
-
-    renderUsePostsArchive({ client, shouldLoadPosts: false });
-
-    await waitFor(() => {
-      expect(client.get).toHaveBeenCalledWith('/posts/count');
-    });
-    expect(client.get).not.toHaveBeenCalledWith('/posts', expect.anything());
-    expect(client.get).not.toHaveBeenCalledWith(
-      '/posts/search',
-      expect.anything(),
-    );
   });
 
   it('limit query param을 listPosts 요청에 전달한다', async () => {
@@ -104,7 +87,6 @@ describe('usePostsArchive', () => {
     const { result } = renderUsePostsArchive({
       client,
       initialEntry: '/?limit=5',
-      shouldLoadPosts: true,
     });
 
     await waitFor(() => {
@@ -136,7 +118,6 @@ describe('usePostsArchive', () => {
     const { result } = renderUsePostsArchive({
       client,
       initialEntry: '/?limit=3',
-      shouldLoadPosts: true,
     });
 
     act(() => {
@@ -152,22 +133,6 @@ describe('usePostsArchive', () => {
       });
       expect(result.current.isSearching).toBe(true);
       expect(result.current.posts).toEqual([searchPost]);
-    });
-  });
-
-  it('resetPostsCache는 infinite와 search post query cache를 제거한다', () => {
-    const { queryClient, result } = renderUsePostsArchive({
-      shouldLoadPosts: false,
-    });
-    const removeQueries = vi.spyOn(queryClient, 'removeQueries');
-
-    result.current.resetPostsCache();
-
-    expect(removeQueries).toHaveBeenCalledWith({
-      queryKey: ['posts', 'infinite'],
-    });
-    expect(removeQueries).toHaveBeenCalledWith({
-      queryKey: ['posts', 'search'],
     });
   });
 
@@ -198,7 +163,6 @@ describe('usePostsArchive', () => {
     });
     const { result } = renderUsePostsArchive({
       client,
-      shouldLoadPosts: true,
     });
 
     act(() => {
