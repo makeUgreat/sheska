@@ -12,7 +12,7 @@ import { serializeAccessLogError } from './access-log-error.serializer';
     PinoLoggerModule.forRootAsync({
       useFactory: () => {
         const { level } = parseLoggerConfig(process.env);
-        const isProduction = process.env.NODE_ENV === 'production';
+        const isDevelopment = process.env.NODE_ENV === 'development';
         return {
           pinoHttp: {
             level,
@@ -24,9 +24,8 @@ import { serializeAccessLogError } from './access-log-error.serializer';
               req: serializeRequest,
               err: serializeAccessLogError,
             },
-            transport: isProduction
-              ? undefined
-              : {
+            transport: isDevelopment
+              ? {
                   target: 'pino-pretty',
                   options: {
                     singleLine: true,
@@ -34,7 +33,8 @@ import { serializeAccessLogError } from './access-log-error.serializer';
                     ignore: 'pid,hostname',
                     errorLikeObjectKeys: ['err', 'error', 'failure'],
                   },
-                },
+                }
+              : undefined,
           },
         };
       },
