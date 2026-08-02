@@ -83,7 +83,6 @@ src/components/ui/*
 -> src/shared/ui/*
 
 src/hooks/use-posts-archive.ts
-src/hooks/use-posts-entry-transition.ts
 src/hooks/use-infinite-posts-scroll.ts
 src/components/post/*
 -> src/features/posts/*

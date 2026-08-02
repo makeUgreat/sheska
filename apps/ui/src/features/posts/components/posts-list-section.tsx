@@ -1,4 +1,4 @@
-import { forwardRef, type Ref } from 'react';
+import { type Ref } from 'react';
 import { type PostSummary } from '@/entities/posts/api/types';
 import { PostCard } from '@/features/posts/components/post-card';
 import {
@@ -10,41 +10,32 @@ import { StatusMessage } from '@/shared/ui/status-message';
 const FEATURED_IMAGE_URL =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuBmfuDAS_7r95iDVqY4IEj-VUVoDfutREwgjxIQQKPSqxxSd-VlK1V2bVlvvGSYHFtq5NgwGZUIpzh-pPqOdzxOWjIuEmgNbZn0mqlpScuHk8Z4mDk5yZjZYvAOzGjKGG1F67WKXB2J05BmnG7OEwgdzGoZIJtDpHVRPBoyijB8n6ADBul5bZ-GQLw5WjSoXDR98pkpFMAIcpCE8rcwEXwi-hL0XrOgwVf2CkCFTp1pa7RfKdLdqrQPQFlC67ukxJK7WgRSaOPhwY2Q';
 
-export const PostsListSection = forwardRef<
-  HTMLElement,
-  {
-    query: string;
-    onQueryChange: (query: string) => void;
-    isLoading: boolean;
-    error: Error | null;
-    posts: PostSummary[];
-    isSearching: boolean;
-    normalizedQuery: string;
-    hasNextPage: boolean;
-    isFetchingNextPage: boolean;
-    sentinelRef: Ref<HTMLDivElement>;
-    onResetToTop: () => void;
-  }
->(function PostsListSection(
-  {
-    query,
-    onQueryChange,
-    isLoading,
-    error,
-    posts,
-    isSearching,
-    normalizedQuery,
-    hasNextPage,
-    isFetchingNextPage,
-    sentinelRef,
-    onResetToTop,
-  },
-  ref,
-) {
+export function PostsListSection({
+  query,
+  onQueryChange,
+  isLoading,
+  error,
+  posts,
+  isSearching,
+  normalizedQuery,
+  hasNextPage,
+  isFetchingNextPage,
+  sentinelRef,
+}: {
+  query: string;
+  onQueryChange: (query: string) => void;
+  isLoading: boolean;
+  error: Error | null;
+  posts: PostSummary[];
+  isSearching: boolean;
+  normalizedQuery: string;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  sentinelRef: Ref<HTMLDivElement>;
+}) {
   return (
     <section
       id="posts"
-      ref={ref}
       className="min-h-screen scroll-mt-0 bg-white px-4 py-20 outline-none"
       tabIndex={-1}
     >
@@ -52,7 +43,7 @@ export const PostsListSection = forwardRef<
         <div className="mb-6 flex justify-end">
           <button
             type="button"
-            onClick={onResetToTop}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="shrink-0 font-mono text-xs font-medium uppercase tracking-widest text-text-muted transition-colors hover:text-accent"
           >
             Back to top
@@ -109,7 +100,7 @@ export const PostsListSection = forwardRef<
       </div>
     </section>
   );
-});
+}
 
 function PostList({
   posts,

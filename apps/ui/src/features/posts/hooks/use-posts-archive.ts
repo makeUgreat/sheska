@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import {
   useCountPosts,
@@ -10,8 +9,7 @@ import { useDebouncedValue } from '@/shared/hooks/use-debounced-value';
 
 const POSTS_SEARCH_DEBOUNCE_MS = 300;
 
-export function usePostsArchive(shouldLoadPosts: boolean) {
-  const queryClient = useQueryClient();
+export function usePostsArchive() {
   const [searchParams] = useSearchParams();
   const limitParam = searchParams.get('limit');
   const limit = limitParam ? Number(limitParam) : undefined;
@@ -21,12 +19,8 @@ export function usePostsArchive(shouldLoadPosts: boolean) {
   const isSearching = normalizedQuery.length >= 1;
 
   const countResult = useCountPosts();
-  const listResult = useInfiniteListPosts(limit, shouldLoadPosts);
-  const searchResult = useInfiniteSearchPosts(
-    normalizedQuery,
-    limit,
-    shouldLoadPosts,
-  );
+  const listResult = useInfiniteListPosts(limit);
+  const searchResult = useInfiniteSearchPosts(normalizedQuery, limit);
   const result = isSearching ? searchResult : listResult;
   const {
     data,
@@ -49,9 +43,5 @@ export function usePostsArchive(shouldLoadPosts: boolean) {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    resetPostsCache: () => {
-      queryClient.removeQueries({ queryKey: ['posts', 'infinite'] });
-      queryClient.removeQueries({ queryKey: ['posts', 'search'] });
-    },
   };
 }
