@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type PostSummary } from '@/entities/posts/api/types';
-import { PostListPage } from '@/pages/PostListPage';
+import { MainPage } from '@/pages/MainPage';
 import { type HttpClient } from '@/shared/api/http';
 import { HttpClientProvider } from '@/shared/api/http-client-context';
 
@@ -37,7 +37,7 @@ function renderPage(client: HttpClient) {
     <MemoryRouter>
       <QueryClientProvider client={createTestQueryClient()}>
         <HttpClientProvider client={client}>
-          <PostListPage />
+          <MainPage />
         </HttpClientProvider>
       </QueryClientProvider>
     </MemoryRouter>,
@@ -86,7 +86,7 @@ async function enterPostsList() {
   );
 }
 
-describe('PostListPage', () => {
+describe('MainPage', () => {
   beforeEach(() => {
     intersectionCallbacks.length = 0;
     scrollIntoView.mockClear();

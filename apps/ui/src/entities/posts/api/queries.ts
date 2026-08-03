@@ -24,14 +24,6 @@ export function usePost(id: string | undefined) {
   });
 }
 
-export function useListPosts() {
-  const http = useHttpClient();
-  return useQuery({
-    queryKey: ['posts'],
-    queryFn: () => listPosts(http),
-  });
-}
-
 export function useCountPosts() {
   const http = useHttpClient();
   return useQuery({
