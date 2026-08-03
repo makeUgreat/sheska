@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -44,81 +44,24 @@ function renderPage(client: HttpClient) {
   );
 }
 
-type IntersectionCallback = IntersectionObserverCallback;
-
-const intersectionCallbacks: IntersectionCallback[] = [];
-const scrollIntoView = vi.fn();
-const scrollTo = vi.fn();
-const scrollBy = vi.fn();
-
-class MockIntersectionObserver implements IntersectionObserver {
-  readonly root: Element | Document | null = null;
-  readonly rootMargin = '0px';
-  readonly thresholds: ReadonlyArray<number> = [];
-
-  constructor(callback: IntersectionCallback) {
-    intersectionCallbacks.push(callback);
-  }
-
-  disconnect = vi.fn();
-  observe = vi.fn();
-  takeRecords = vi.fn((): IntersectionObserverEntry[] => []);
-  unobserve = vi.fn();
-}
-
-function triggerPostsEntry() {
-  act(() => {
-    window.dispatchEvent(new WheelEvent('wheel', { deltaY: 700 }));
-    intersectionCallbacks[0]?.(
-      [{ isIntersecting: true } as IntersectionObserverEntry],
-      {} as IntersectionObserver,
-    );
-  });
-}
-
-async function enterPostsList() {
-  triggerPostsEntry();
-  await waitFor(
-    () => {
-      expect(screen.getByText('The Garden')).toBeDefined();
-    },
-    { timeout: 2500 },
-  );
-}
-
 describe('MainPage', () => {
+  const scrollTo = vi.fn();
+
   beforeEach(() => {
-    intersectionCallbacks.length = 0;
-    scrollIntoView.mockClear();
     scrollTo.mockClear();
-    scrollBy.mockClear();
-    Element.prototype.scrollIntoView = scrollIntoView;
     window.scrollTo = scrollTo;
-    window.scrollBy = scrollBy;
-    vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
   });
 
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it('초기 post 로딩 중에 loading posts와 loading dots를 보여준다', async () => {
+  it('렌더링 즉시 post 목록을 로딩하며 loading posts를 보여준다', async () => {
     const client = buildMockHttpClient({
       listPosts: vi.fn().mockReturnValue(new Promise(() => {})),
     });
 
     renderPage(client);
-    triggerPostsEntry();
 
     await waitFor(() => {
       expect(screen.getAllByText('Loading posts...').length).toBeGreaterThan(0);
     });
-    expect(
-      screen.getByText('Scroll For Articles').closest('a')?.className,
-    ).toContain('opacity-0');
-    expect(
-      screen.getByText('HASH').closest('section')?.parentElement?.className,
-    ).not.toContain('posts-entry-settle');
   });
 
   it('post 목록이 없으면 No posts yet. 메시지를 보여준다', async () => {
@@ -127,7 +70,6 @@ describe('MainPage', () => {
     });
 
     renderPage(client);
-    await enterPostsList();
 
     await waitFor(() => {
       expect(screen.getByText('No posts yet.')).toBeDefined();
@@ -149,7 +91,6 @@ describe('MainPage', () => {
     });
 
     renderPage(client);
-    await enterPostsList();
 
     await waitFor(() => {
       expect(screen.getByText('테스트 포스트')).toBeDefined();
@@ -182,7 +123,6 @@ describe('MainPage', () => {
     });
 
     renderPage(client);
-    await enterPostsList();
 
     await waitFor(() => {
       expect(screen.getByText('첫 번째 포스트')).toBeDefined();
@@ -193,9 +133,7 @@ describe('MainPage', () => {
   });
 
   it('scroll to explore 인디케이터에 bounce 애니메이션이 적용되어 있다', () => {
-    const client = buildMockHttpClient({
-      listPosts: vi.fn().mockResolvedValue({ posts: [], nextCursor: null }),
-    });
+    const client = buildMockHttpClient();
 
     renderPage(client);
 
@@ -209,7 +147,6 @@ describe('MainPage', () => {
     });
 
     renderPage(client);
-    await enterPostsList();
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeDefined();
@@ -217,59 +154,7 @@ describe('MainPage', () => {
     });
   });
 
-  it('posts 섹션 진입 전에는 post 목록 API를 호출하지 않는다', async () => {
-    const listPosts = vi.fn().mockResolvedValue({
-      posts: [],
-      nextCursor: null,
-    });
-    const countPosts = vi.fn().mockResolvedValue({ count: 0 });
-    const client = buildMockHttpClient({ countPosts, listPosts });
-
-    renderPage(client);
-
-    await waitFor(() => {
-      expect(countPosts).toHaveBeenCalled();
-    });
-    expect(screen.queryByText('The Garden')).toBeNull();
-    expect(listPosts).not.toHaveBeenCalled();
-
-    triggerPostsEntry();
-
-    await waitFor(() => {
-      expect(listPosts).toHaveBeenCalledTimes(1);
-    });
-    expect(screen.getAllByText('Loading posts...').length).toBeGreaterThan(0);
-    expect(screen.queryByText('The Garden')).toBeNull();
-
-    await waitFor(
-      () => {
-        expect(scrollIntoView).toHaveBeenCalledWith({
-          block: 'start',
-          behavior: 'smooth',
-        });
-        expect(
-          screen.getByRole('button', { name: 'Back to top' }),
-        ).toBeDefined();
-        expect(screen.getByText('The Garden')).toBeDefined();
-      },
-      { timeout: 2500 },
-    );
-  });
-
-  it('메인 진입 화면에서는 footer를 숨기고 post 목록 진입 후 보여준다', async () => {
-    const client = buildMockHttpClient();
-
-    renderPage(client);
-
-    expect(screen.queryByText('The Garden')).toBeNull();
-
-    await enterPostsList();
-
-    expect(screen.getByText('The Garden')).toBeDefined();
-  });
-
-  it('Back to top으로만 초기 view로 돌아가고 다시 진입하면 post 목록을 재조회한다', async () => {
-    const user = userEvent.setup();
+  it('렌더링 즉시 post 목록 API를 호출한다', async () => {
     const listPosts = vi
       .fn()
       .mockResolvedValue({ posts: [], nextCursor: null });
@@ -277,27 +162,29 @@ describe('MainPage', () => {
 
     renderPage(client);
 
-    expect(screen.getByText('HASH')).toBeDefined();
-    await enterPostsList();
-
     await waitFor(() => {
       expect(listPosts).toHaveBeenCalledTimes(1);
     });
-    expect(screen.queryByText('HASH')).toBeNull();
+  });
+
+  it('footer가 항상 렌더링되어 있다', () => {
+    const client = buildMockHttpClient();
+
+    renderPage(client);
+
+    expect(screen.getByText('The Garden')).toBeDefined();
+    expect(screen.getByText('HASH')).toBeDefined();
+  });
+
+  it('Back to top 버튼을 클릭하면 최상단으로 스크롤한다', async () => {
+    const user = userEvent.setup();
+    const client = buildMockHttpClient();
+
+    renderPage(client);
 
     await user.click(screen.getByRole('button', { name: 'Back to top' }));
 
-    await waitFor(() => {
-      expect(screen.getByText('HASH')).toBeDefined();
-      expect(screen.queryByText('The Garden')).toBeNull();
-      expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
-    });
-
-    await enterPostsList();
-
-    await waitFor(() => {
-      expect(listPosts).toHaveBeenCalledTimes(2);
-    });
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
   });
 
   it('terminal note count는 count API 응답으로 보여준다', async () => {
