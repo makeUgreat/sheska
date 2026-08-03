@@ -126,9 +126,7 @@ describe('App', () => {
     await user.click(screen.getByRole('link', { name: 'Posts' }));
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('searchbox', { name: 'Search posts' }),
-      ).toBeDefined();
+      expect(screen.getByRole('heading', { name: 'HASH' })).toBeDefined();
     });
   });
 
