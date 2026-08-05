@@ -2,3 +2,6 @@
 .vite/
 vite.config.ts.timestamp-*
 vite.config.*.timestamp-*
+
+# Storybook
+storybook-static/

@@ -27,6 +27,7 @@ Write tests at the cheapest layer that can prove the behavior reliably.
 - Keep Vitest configuration centralized in `apps/ui/vite.config.ts` with named `test.projects`.
 - Use `jsdom` for both unit and integration tests.
 - Use React Testing Library for React rendering and user-observable assertions.
+- Use Storybook for isolated component states, UI review, and component documentation. Storybook stories are not a replacement for automated assertions.
 
 ## Test Case Design
 
@@ -46,6 +47,17 @@ Write tests at the cheapest layer that can prove the behavior reliably.
 - In integration tests, use test doubles only for collaborators outside the UI boundary being verified. The router, React Query, and provider wiring that the integration test exists to prove should remain real.
 
 ## Test Layers
+
+### Storybook Stories
+
+Storybook is the preferred place to make reusable component states visible outside the full app shell.
+Use stories as UI state fixtures that help reviewers inspect rendering, discover missing states, and provide stable inputs for future browser-based visual checks.
+
+- Co-locate `*.stories.tsx` files with the component they document by default.
+- Prefer stories for `shared/ui` primitives and feature components that have meaningful visual states such as loading, empty, error, success, long content, or disabled variants.
+- Keep route-level and provider-heavy user flows in integration tests or browser tests unless a presentational component can be isolated with simple props.
+- Do not treat a story as proof of behavior. Add Vitest coverage for observable behavior and accessibility contracts that matter.
+- When a UI component story changes, run `pnpm --filter @sheska/ui build-storybook` to verify Storybook can render the story set.
 
 ### Visual Design Checks
 
@@ -94,6 +106,8 @@ pnpm --filter @sheska/ui test:integration   # Vitest/jsdom UI integration tests
 pnpm --filter @sheska/ui test:integration:api-client # API client integration tests against the API test runtime
 pnpm --filter @sheska/ui test               # Unit tests, then integration tests
 pnpm --filter @sheska/ui test:watch         # Vitest watch mode for unit tests
+pnpm --filter @sheska/ui storybook          # Storybook dev server for component review
+pnpm --filter @sheska/ui build-storybook    # Storybook production build check
 ```
 
 Before opening a PR, run the checks that match the scope of the change.
