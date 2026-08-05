@@ -27,6 +27,7 @@ UI 앱은 `jsdom` 기반 Vitest를 사용하며 단위 테스트와 통합 테�
 - Vitest 설정은 named `test.projects`를 사용하는 `apps/ui/vite.config.ts`에 모아둔다.
 - 단위 테스트와 통합 테스트 모두 `jsdom`을 사용한다.
 - React rendering과 user-observable assertion에는 React Testing Library를 사용한다.
+- 격리된 component state, UI review, component documentation에는 Storybook을 사용한다. Storybook story는 automated assertion을 대체하지 않는다.
 
 ## 테스트 케이스 설계
 
@@ -46,6 +47,17 @@ UI 앱은 `jsdom` 기반 Vitest를 사용하며 단위 테스트와 통합 테�
 - 통합 테스트에서는 검증하려는 UI boundary 바깥의 collaborator에만 test double을 사용한다. 통합 테스트가 증명하려는 router, React Query, provider wiring은 실제로 유지해야 한다.
 
 ## 테스트 계층
+
+### Storybook Story
+
+Storybook은 재사용 component state를 full app shell 밖에서 볼 수 있게 만드는 기본 위치다.
+Story는 rendering을 검토하고, 누락된 state를 발견하고, 향후 browser 기반 visual check에 안정적인 입력을 제공하는 UI state fixture로 사용한다.
+
+- `*.stories.tsx` 파일은 기본적으로 문서화하는 component 옆에 둔다.
+- `shared/ui` primitive와 loading, empty, error, success, long content, disabled variant처럼 의미 있는 visual state가 있는 feature component에는 story를 작성하는 것을 선호한다.
+- Route-level 또는 provider가 많이 필요한 user flow는 단순 props로 presentational component를 격리할 수 있는 경우가 아니라면 통합 테스트나 browser test에 둔다.
+- Story를 behavior 증명으로 취급하지 않는다. 중요한 관찰 가능한 동작과 accessibility contract는 Vitest coverage를 추가한다.
+- UI component story가 변경됐다면 `pnpm --filter @sheska/ui build-storybook`을 실행해 Storybook이 story set을 render할 수 있는지 확인한다.
 
 ### Visual Design Check
 
@@ -94,6 +106,8 @@ pnpm --filter @sheska/ui test:integration   # Vitest/jsdom UI 통합 테스트
 pnpm --filter @sheska/ui test:integration:api-client # API test runtime을 대상으로 하는 API client 통합 테스트
 pnpm --filter @sheska/ui test               # 단위 테스트, 그 다음 통합 테스트
 pnpm --filter @sheska/ui test:watch         # 단위 테스트용 Vitest watch mode
+pnpm --filter @sheska/ui storybook          # Component review용 Storybook dev server
+pnpm --filter @sheska/ui build-storybook    # Storybook production build check
 ```
 
 PR을 열기 전에 변경 범위에 맞는 검사를 실행한다.
