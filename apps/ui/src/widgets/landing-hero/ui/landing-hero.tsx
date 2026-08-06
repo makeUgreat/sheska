@@ -1,15 +1,15 @@
 import { TerminalWindow } from './terminal-window';
 
-export function PostsLandingView({
+export function LandingHero({
   query,
   onQueryChange,
   totalPostCount,
-  articlesHref = '#posts',
+  articlesHref,
 }: {
   query: string;
   onQueryChange: (query: string) => void;
   totalPostCount: number;
-  articlesHref?: string;
+  articlesHref: string;
 }) {
   return (
     <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white px-4 pb-24 pt-12">

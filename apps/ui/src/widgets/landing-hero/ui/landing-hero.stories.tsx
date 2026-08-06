@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { PostsLandingView } from './posts-landing-view';
+import { LandingHero } from './landing-hero';
 
 const meta = {
-  title: 'Features/Posts/PostsLandingView',
-  component: PostsLandingView,
+  title: 'Widgets/LandingHero',
+  component: LandingHero,
   tags: ['autodocs'],
   parameters: {
     layout: 'fullscreen',
@@ -12,16 +12,15 @@ const meta = {
   render: (args) => {
     const [query, setQuery] = useState(args.query);
 
-    return (
-      <PostsLandingView {...args} query={query} onQueryChange={setQuery} />
-    );
+    return <LandingHero {...args} query={query} onQueryChange={setQuery} />;
   },
   args: {
     query: '',
     onQueryChange: () => undefined,
     totalPostCount: 42,
+    articlesHref: '/posts',
   },
-} satisfies Meta<typeof PostsLandingView>;
+} satisfies Meta<typeof LandingHero>;
 
 export default meta;
 
