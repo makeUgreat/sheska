@@ -1,17 +1,15 @@
 import { Footer } from '@/shared/layout/footer';
-import { PostsLandingView } from '@/features/posts/components/posts-landing-view';
 import { PostsListSection } from '@/features/posts/components/posts-list-section';
 import { useInfinitePostsScroll } from '@/features/posts/hooks/use-infinite-posts-scroll';
 import { usePostsArchive } from '@/features/posts/hooks/use-posts-archive';
 
-export function MainPage() {
+export function PostsPage() {
   const {
     query,
     setQuery,
     normalizedQuery,
     isSearching,
     posts,
-    totalPostCount,
     isLoading,
     error,
     fetchNextPage,
@@ -27,11 +25,6 @@ export function MainPage() {
 
   return (
     <main>
-      <PostsLandingView
-        query={query}
-        onQueryChange={setQuery}
-        totalPostCount={totalPostCount}
-      />
       <PostsListSection
         query={query}
         onQueryChange={setQuery}
