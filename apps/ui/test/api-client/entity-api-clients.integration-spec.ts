@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { getPost, listPosts, publishPost } from '@/entities/posts/api/client';
-import { getSource, listSources } from '@/entities/sources/api/client';
-import { HttpClient } from '@/shared/api/http';
+import { getPost, listPosts, publishPost } from '@/entities/post';
+import { getSource, listSources } from '@/entities/source';
+import { HttpClient } from '@/shared/api';
 
 const BASE_URL_FILE = '/tmp/sheska-ui-api-client-runtime/base-url';
 

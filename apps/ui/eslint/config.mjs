@@ -5,8 +5,14 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import globals from 'globals';
 import unusedImports from 'eslint-plugin-unused-imports';
 import tseslint from 'typescript-eslint';
+import fsdBoundaries from './rules/fsd-boundaries.mjs';
 
 const tsconfigRootDir = fileURLToPath(new URL('..', import.meta.url));
+const uiLocalRules = {
+  rules: {
+    'fsd-boundaries': fsdBoundaries,
+  },
+};
 
 export default tseslint.config(
   {
@@ -41,6 +47,16 @@ export default tseslint.config(
           varsIgnorePattern: '^_',
         },
       ],
+    },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/**/*.spec.{ts,tsx}', 'src/**/*.stories.{ts,tsx}'],
+    plugins: {
+      'ui-local': uiLocalRules,
+    },
+    rules: {
+      'ui-local/fsd-boundaries': 'error',
     },
   },
   {

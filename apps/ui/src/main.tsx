@@ -3,9 +3,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { HttpClient } from '@/shared/api/http';
-import { HttpClientProvider } from '@/shared/api/http-client-context';
-import { App } from './app/App';
+import { App } from '@/app/shell';
+import { HttpClient, HttpClientProvider } from '@/shared/api';
 
 const apiBaseUrl =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';

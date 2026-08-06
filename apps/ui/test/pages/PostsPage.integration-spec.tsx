@@ -3,10 +3,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { type PostSummary } from '@/entities/posts/api/types';
-import { PostsPage } from '@/pages/PostsPage';
-import { type HttpClient } from '@/shared/api/http';
-import { HttpClientProvider } from '@/shared/api/http-client-context';
+import { type PostSummary } from '@/entities/post';
+import { PostsPage } from '@/pages/posts';
+import {
+  HttpClientProvider,
+  type HttpClientType as HttpClient,
+} from '@/shared/api';
 
 function createTestQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
