@@ -29,11 +29,15 @@ const POSTS = [
   },
 ];
 
-async function prepareMainPage(page: Page) {
+async function prepareLandingPage(page: Page) {
   await page.route('**/api/posts**', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify({ posts: POSTS, nextCursor: null }),
+      body: JSON.stringify(
+        route.request().url().includes('/count')
+          ? { count: POSTS.length }
+          : { posts: POSTS, nextCursor: null },
+      ),
     });
   });
 
@@ -52,7 +56,7 @@ async function prepareMainPage(page: Page) {
 
   await page.goto('/');
   await page.getByRole('heading', { name: 'HASH' }).waitFor();
-  await page.getByText('Latest Notes & Essays').waitFor();
+  await page.getByText(`- ${POSTS.length} notes found in /posts`).waitFor();
   await page.evaluate(() => document.fonts.ready);
   await page.addStyleTag({
     content: `
@@ -66,13 +70,13 @@ async function prepareMainPage(page: Page) {
   });
 }
 
-test.describe('Main page visual fidelity', () => {
-  test('Stitch main page layout matches the design reference', async ({
+test.describe('Landing page visual fidelity', () => {
+  test('Stitch landing page layout matches the design reference', async ({
     page,
   }) => {
-    await prepareMainPage(page);
+    await prepareLandingPage(page);
 
-    await expect(page).toHaveScreenshot('main-page.png', {
+    await expect(page).toHaveScreenshot('landing-page.png', {
       fullPage: true,
     });
   });

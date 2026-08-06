@@ -4,10 +4,12 @@ export function PostsLandingView({
   query,
   onQueryChange,
   totalPostCount,
+  articlesHref = '#posts',
 }: {
   query: string;
   onQueryChange: (query: string) => void;
   totalPostCount: number;
+  articlesHref?: string;
 }) {
   return (
     <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white px-4 pb-24 pt-12">
@@ -68,7 +70,7 @@ export function PostsLandingView({
       </div>
 
       <a
-        href="#posts"
+        href={articlesHref}
         className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-on-secondary/30 transition-opacity duration-300 ease-out animate-bounce opacity-100"
       >
         <span className="font-mono text-xs font-medium uppercase tracking-widest">

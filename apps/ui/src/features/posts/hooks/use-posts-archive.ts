@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  useCountPosts,
   useInfiniteListPosts,
   useInfiniteSearchPosts,
 } from '@/entities/posts/api/queries';
@@ -18,7 +17,6 @@ export function usePostsArchive() {
   const normalizedQuery = debouncedQuery.trim();
   const isSearching = normalizedQuery.length >= 1;
 
-  const countResult = useCountPosts();
   const listResult = useInfiniteListPosts(limit);
   const searchResult = useInfiniteSearchPosts(normalizedQuery, limit);
   const result = isSearching ? searchResult : listResult;
@@ -37,7 +35,6 @@ export function usePostsArchive() {
     normalizedQuery,
     isSearching,
     posts: data?.pages.flatMap((page) => page.posts) ?? [],
-    totalPostCount: countResult.data?.count ?? 0,
     isLoading,
     error,
     fetchNextPage,

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type PostSummary } from '@/entities/posts/api/types';
-import { MainPage } from '@/pages/MainPage';
+import { PostsPage } from '@/pages/PostsPage';
 import { type HttpClient } from '@/shared/api/http';
 import { HttpClientProvider } from '@/shared/api/http-client-context';
 
@@ -37,14 +37,14 @@ function renderPage(client: HttpClient) {
     <MemoryRouter>
       <QueryClientProvider client={createTestQueryClient()}>
         <HttpClientProvider client={client}>
-          <MainPage />
+          <PostsPage />
         </HttpClientProvider>
       </QueryClientProvider>
     </MemoryRouter>,
   );
 }
 
-describe('MainPage', () => {
+describe('PostsPage', () => {
   const scrollTo = vi.fn();
 
   beforeEach(() => {
@@ -132,15 +132,6 @@ describe('MainPage', () => {
     });
   });
 
-  it('scroll to explore 인디케이터에 bounce 애니메이션이 적용되어 있다', () => {
-    const client = buildMockHttpClient();
-
-    renderPage(client);
-
-    const indicator = screen.getByText('Scroll For Articles').closest('a');
-    expect(indicator?.className).toContain('animate-bounce');
-  });
-
   it('에러가 발생하면 에러 메시지를 보여준다', async () => {
     const client = buildMockHttpClient({
       listPosts: vi.fn().mockRejectedValue(new Error('API unavailable')),
@@ -173,7 +164,6 @@ describe('MainPage', () => {
     renderPage(client);
 
     expect(screen.getByText('The Garden')).toBeDefined();
-    expect(screen.getByText('HASH')).toBeDefined();
   });
 
   it('Back to top 버튼을 클릭하면 최상단으로 스크롤한다', async () => {
@@ -185,26 +175,5 @@ describe('MainPage', () => {
     await user.click(screen.getByRole('button', { name: 'Back to top' }));
 
     expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
-  });
-
-  it('terminal note count는 count API 응답으로 보여준다', async () => {
-    const post: PostSummary = {
-      postId: 'post-1',
-      sourceId: 'source-1',
-      title: '테스트 포스트',
-      viewCount: 5,
-      createdAt: '2026-01-01T00:00:00.000Z',
-      updatedAt: '2026-01-01T00:00:00.000Z',
-    };
-    const client = buildMockHttpClient({
-      countPosts: vi.fn().mockResolvedValue({ count: 7 }),
-      listPosts: vi.fn().mockResolvedValue({ posts: [post], nextCursor: null }),
-    });
-
-    renderPage(client);
-
-    await waitFor(() => {
-      expect(screen.getByText(/- 7 notes found in \/posts/)).toBeDefined();
-    });
   });
 });
