@@ -2,9 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { LandingPage } from '@/pages/LandingPage';
-import { type HttpClient } from '@/shared/api/http';
-import { HttpClientProvider } from '@/shared/api/http-client-context';
+import { LandingPage } from '@/pages/landing';
+import {
+  HttpClientProvider,
+  type HttpClientType as HttpClient,
+} from '@/shared/api';
 
 function createTestQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });

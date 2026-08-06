@@ -16,76 +16,73 @@ related:
 
 Use this document when creating, moving, or reviewing `apps/ui` source directories, feature boundaries, import direction, or reusable UI placement.
 
-The UI app follows a light Feature-Sliced Design direction. The structure should make ownership and dependency direction clear without forcing every FSD layer or segment before the code needs it.
+The UI app follows strict Feature-Sliced Design so code location stays predictable and dependencies flow in one direction.
 
 ## Layer Model
 
-Prefer these top-level source areas as the app grows:
+Use these top-level source layers:
 
 ```txt
 src/
   app/
   pages/
+  widgets/
   features/
   entities/
   shared/
   styles/
 ```
 
-`app` owns bootstrap wiring such as providers, router setup, and application shell composition.
+Dependencies point downward only:
 
-`pages` owns route-level composition. Pages may compose features, entities, and shared UI, but should avoid owning reusable domain behavior.
+```txt
+app -> pages -> widgets -> features -> entities -> shared
+```
 
-`features` owns user-facing domain behavior, such as a posts archive, posts search, publishing flow, or source synchronization flow.
+`app` owns application bootstrap and shell wiring such as router setup and providers.
 
-`entities` owns domain objects and their reusable contracts, API query hooks, mappers, and small entity UI when those pieces are shared by multiple features or pages.
+`pages` owns route-level composition. Page slices should compose lower layers and avoid owning reusable domain behavior.
 
-`shared` owns domain-free building blocks such as primitive UI, generic hooks, formatting helpers, HTTP infrastructure, and test utilities.
+`widgets` owns complete UI blocks that combine features, entities, and shared UI.
+
+`features` owns user interactions and workflow state, such as archive search state, post title updates, or source publishing.
+
+`entities` owns domain contracts, API clients, query hooks, and minimal reusable entity UI.
+
+`shared` owns domain-free primitives, API infrastructure, hooks, helpers, and configuration.
 
 `styles` owns global styles, generated theme CSS, and design-token artifacts.
 
-## Light FSD Policy
+## Slices And Segments
 
-Do not create empty FSD folders only to satisfy the pattern.
+Every layer except `app` and `shared` is split into slices by business concept or route concept. Slices in the same layer MUST NOT import each other; shared needs should move to a lower layer.
 
-Prefer moving code into `features`, `entities`, or `shared` when there is a real ownership boundary:
+Slices expose a public API from their root `index.ts`. Production code outside the slice MUST import through that public API, for example `@/entities/post` or `@/widgets/posts-archive`, not through `api/`, `ui/`, or `model/` internals.
 
-- A hook or component tied to one user workflow belongs under that feature.
-- A hook, helper, or UI primitive that has no domain knowledge belongs under `shared`.
-- Domain contracts or reusable domain-specific query hooks belong under `entities` once multiple features or pages need them.
-- Route files belong under `pages` and should primarily compose lower layers.
+Use these standard segments inside slices:
 
-Small features may keep `components/`, `hooks/`, or `api/` names instead of forcing `ui/`, `model/`, and `api/` segments immediately. Introduce FSD segment names when they reduce ambiguity for that slice.
+- `ui`: components and presentation code.
+- `model`: state, hooks, selectors, schemas, and workflow logic.
+- `api`: backend calls, query hooks, DTOs, and mappers.
+- `lib`: slice-local helpers.
+- `config`: slice-local configuration.
 
-## Import Direction
+`app` and `shared` have segments directly under the layer instead of slices. Use segment public APIs such as `@/app/shell`, `@/shared/ui`, `@/shared/api`, and `@/shared/lib`; do not add layer-root barrels such as `@/features` or `@/app`.
 
-Dependencies should point downward:
+## Static Enforcement
 
-```txt
-app -> pages -> features -> entities -> shared
-```
+ESLint enforces production `src` FSD boundaries:
 
-A lower layer must not import an upper layer. For example, `shared` must not import `features` or `pages`, and `features` must not import `pages` or `app`.
+- no upward layer imports;
+- no direct imports between slices in the same layer;
+- no cross-slice imports into another slice's internal segment.
 
-The ESLint configuration enforces the most important layer direction rules for new FSD directories. Keep the documentation and lint rules aligned when the structure changes.
+Specs, stories, and `test/**` may import the unit they directly verify or document. The static rule itself is covered by `pnpm test:static` and included in `pnpm harness:static`.
 
-## Migration Guidance
+## Review Checks
 
-Prefer incremental moves that preserve behavior and keep reviews small.
-
-Good first moves are:
-
-```txt
-src/hooks/use-debounced-value.ts
--> src/shared/hooks/use-debounced-value.ts
-
-src/components/ui/*
--> src/shared/ui/*
-
-src/hooks/use-posts-archive.ts
-src/hooks/use-infinite-posts-scroll.ts
-src/components/post/*
--> src/features/posts/*
-```
-
-When moving files, update imports and nearby tests in the same change. Do not combine structural migration with unrelated behavior changes unless the behavior change is required to preserve the move.
+- New reusable domain UI belongs in an entity or widget slice, not in a page.
+- New user interaction state belongs in a feature slice.
+- New route composition belongs in a page slice.
+- New domain-free primitive code belongs in `shared`.
+- Public API exports should stay narrow and intentional.

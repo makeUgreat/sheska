@@ -16,76 +16,73 @@ related:
 
 `apps/ui`의 source directory, feature boundary, import direction, reusable UI 위치를 만들거나 옮기거나 검토할 때 이 문서를 사용한다.
 
-UI 앱은 가벼운 Feature-Sliced Design 방향을 따른다. 구조는 모든 FSD layer나 segment를 미리 강제하기보다, ownership과 dependency direction을 명확히 하는 데 집중한다.
+UI 앱은 코드 위치를 예측 가능하게 만들고 의존성이 한 방향으로 흐르도록 strict Feature-Sliced Design을 따른다.
 
 ## 레이어 모델
 
-앱이 커질수록 다음 top-level source area를 선호한다.
+다음 top-level source layer를 사용한다.
 
 ```txt
 src/
   app/
   pages/
+  widgets/
   features/
   entities/
   shared/
   styles/
 ```
 
-`app`은 provider, router setup, application shell composition 같은 bootstrap wiring을 소유한다.
+의존성은 아래 방향으로만 흐른다.
 
-`pages`는 route-level composition을 소유한다. Page는 feature, entity, shared UI를 조합할 수 있지만 reusable domain behavior를 소유하는 것은 피한다.
+```txt
+app -> pages -> widgets -> features -> entities -> shared
+```
 
-`features`는 posts archive, posts search, publishing flow, source synchronization flow 같은 user-facing domain behavior를 소유한다.
+`app`은 router setup, provider 같은 application bootstrap과 shell wiring을 소유한다.
 
-`entities`는 여러 feature나 page에서 공유되는 domain object와 reusable contract, API query hook, mapper, 작은 entity UI를 소유한다.
+`pages`는 route-level composition을 소유한다. Page slice는 하위 layer를 조합하고 reusable domain behavior를 소유하지 않는 것이 좋다.
 
-`shared`는 primitive UI, generic hook, formatting helper, HTTP infrastructure, test utility처럼 domain-free building block을 소유한다.
+`widgets`는 feature, entity, shared UI를 조합한 완결된 UI block을 소유한다.
+
+`features`는 archive search state, post title update, source publishing 같은 user interaction과 workflow state를 소유한다.
+
+`entities`는 domain contract, API client, query hook, 최소 reusable entity UI를 소유한다.
+
+`shared`는 domain-free primitive, API infrastructure, hook, helper, configuration을 소유한다.
 
 `styles`는 global style, generated theme CSS, design-token artifact를 소유한다.
 
-## 라이트 FSD 정책
+## 슬라이스와 세그먼트
 
-패턴을 만족시키기 위해 빈 FSD folder를 만들지 않는다.
+`app`과 `shared`를 제외한 모든 layer는 business concept 또는 route concept 기준의 slice로 나눈다. 같은 layer의 slice끼리는 서로 import해서는 안 된다. 공유가 필요하면 하위 layer로 내려야 한다.
 
-실제 ownership boundary가 있을 때 `features`, `entities`, `shared`로 코드를 옮기는 것을 선호한다.
+Slice는 root `index.ts`에서 public API를 노출한다. Slice 외부의 production code는 `api/`, `ui/`, `model/` 내부 경로가 아니라 `@/entities/post`, `@/widgets/posts-archive` 같은 public API로 import해야 한다.
 
-- 하나의 user workflow에 묶인 hook이나 component는 해당 feature 아래에 둔다.
-- domain knowledge가 없는 hook, helper, UI primitive는 `shared` 아래에 둔다.
-- 여러 feature나 page가 필요로 하는 domain contract 또는 reusable domain-specific query hook은 `entities` 아래에 둔다.
-- Route file은 `pages` 아래에 두고, 주로 하위 layer를 조합하는 역할을 맡긴다.
+Slice 내부에는 다음 표준 segment를 사용한다.
 
-작은 feature는 처음부터 `ui/`, `model/`, `api/` segment를 강제하지 않고 `components/`, `hooks/`, `api/` 이름을 유지할 수 있다. 해당 slice에서 모호함을 줄일 때 FSD segment 이름을 도입한다.
+- `ui`: component와 presentation code.
+- `model`: state, hook, selector, schema, workflow logic.
+- `api`: backend call, query hook, DTO, mapper.
+- `lib`: slice-local helper.
+- `config`: slice-local configuration.
 
-## Import 방향
+`app`과 `shared`는 slice 없이 layer 바로 아래에 segment를 둔다. `@/app/shell`, `@/shared/ui`, `@/shared/api`, `@/shared/lib` 같은 segment public API를 사용하며, `@/features`나 `@/app` 같은 layer-root barrel은 추가하지 않는다.
 
-의존성은 아래 방향을 향해야 한다.
+## 정적 검사
 
-```txt
-app -> pages -> features -> entities -> shared
-```
+ESLint는 production `src` FSD boundary를 검사한다.
 
-하위 layer는 상위 layer를 import하지 않는다. 예를 들어 `shared`는 `features`나 `pages`를 import하지 않고, `features`는 `pages`나 `app`을 import하지 않는다.
+- 위쪽 layer import 금지;
+- 같은 layer의 slice 간 직접 import 금지;
+- 다른 slice의 internal segment로 들어가는 cross-slice import 금지.
 
-ESLint 설정은 새 FSD directory에 대해 가장 중요한 layer direction rule을 검사한다. 구조가 바뀌면 문서와 lint rule을 함께 맞춘다.
+Spec, story, `test/**`는 직접 검증하거나 문서화하는 unit을 import할 수 있다. 이 static rule 자체는 `pnpm test:static`으로 검증하며 `pnpm harness:static`에 포함된다.
 
-## 마이그레이션 가이드
+## 리뷰 체크
 
-동작을 유지하면서 review size를 작게 유지하는 점진적 이동을 선호한다.
-
-좋은 첫 이동은 다음과 같다.
-
-```txt
-src/hooks/use-debounced-value.ts
--> src/shared/hooks/use-debounced-value.ts
-
-src/components/ui/*
--> src/shared/ui/*
-
-src/hooks/use-posts-archive.ts
-src/hooks/use-infinite-posts-scroll.ts
-src/components/post/*
--> src/features/posts/*
-```
-
-파일을 옮길 때는 import와 가까운 test를 같은 변경에서 함께 수정한다. 이동을 보존하기 위해 필요한 경우가 아니라면 structural migration과 unrelated behavior change를 한 변경에 섞지 않는다.
+- 새 reusable domain UI는 page가 아니라 entity 또는 widget slice에 둔다.
+- 새 user interaction state는 feature slice에 둔다.
+- 새 route composition은 page slice에 둔다.
+- 새 domain-free primitive code는 `shared`에 둔다.
+- Public API export는 좁고 의도적으로 유지한다.

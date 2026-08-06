@@ -101,6 +101,7 @@ Screenshot 또는 pixel-diff coverage가 필요하면 UI visual regression 정�
 ```bash
 pnpm --filter @sheska/ui lint:check         # ESLint 검사
 pnpm --filter @sheska/ui typecheck          # TypeScript type checking
+pnpm --filter @sheska/ui test:static        # Static rule regression test
 pnpm --filter @sheska/ui test:unit          # 단위 테스트
 pnpm --filter @sheska/ui test:integration   # Vitest/jsdom UI 통합 테스트
 pnpm --filter @sheska/ui test:integration:api-client # API test runtime을 대상으로 하는 API client 통합 테스트
@@ -111,4 +112,5 @@ pnpm --filter @sheska/ui build-storybook    # Storybook production build check
 ```
 
 PR을 열기 전에 변경 범위에 맞는 검사를 실행한다.
+`pnpm --filter @sheska/ui harness:static`은 token, type, lint, static rule regression check를 포함한다.
 UI behavior가 변경됐다면 static check에 더해 `pnpm --filter @sheska/ui test`를 실행한다.

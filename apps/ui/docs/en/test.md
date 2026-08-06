@@ -101,6 +101,7 @@ Use the UI visual regression policy when screenshot or pixel-diff coverage is ne
 ```bash
 pnpm --filter @sheska/ui lint:check         # ESLint checks
 pnpm --filter @sheska/ui typecheck          # TypeScript type checking
+pnpm --filter @sheska/ui test:static        # Static rule regression tests
 pnpm --filter @sheska/ui test:unit          # Unit tests
 pnpm --filter @sheska/ui test:integration   # Vitest/jsdom UI integration tests
 pnpm --filter @sheska/ui test:integration:api-client # API client integration tests against the API test runtime
@@ -111,4 +112,5 @@ pnpm --filter @sheska/ui build-storybook    # Storybook production build check
 ```
 
 Before opening a PR, run the checks that match the scope of the change.
+`pnpm --filter @sheska/ui harness:static` includes token, type, lint, and static rule regression checks.
 If UI behavior changed, run `pnpm --filter @sheska/ui test` in addition to static checks.

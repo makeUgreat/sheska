@@ -2,10 +2,12 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { type SourceSummary } from '@/entities/sources/api/types';
-import { SourceListPage } from '@/pages/SourceListPage';
-import { type HttpClient } from '@/shared/api/http';
-import { HttpClientProvider } from '@/shared/api/http-client-context';
+import { type SourceSummary } from '@/entities/source';
+import { SourceListPage } from '@/pages/source-list';
+import {
+  HttpClientProvider,
+  type HttpClientType as HttpClient,
+} from '@/shared/api';
 
 type MockHttpClientOverrides = {
   get?: ReturnType<typeof vi.fn>;
