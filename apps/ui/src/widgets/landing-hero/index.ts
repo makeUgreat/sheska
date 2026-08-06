@@ -1,1 +1,1 @@
-export { PostsLandingView as LandingHero } from './ui/posts-landing-view';
+export { LandingHero } from './ui/landing-hero';
