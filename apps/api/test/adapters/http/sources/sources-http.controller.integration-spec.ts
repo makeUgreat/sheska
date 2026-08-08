@@ -144,8 +144,12 @@ describe('SourcesHttpController', () => {
             publishedPostId: 'post-1',
           },
         ],
+        nextCursor: null,
       });
-      expect(listSourcesUseCase.execute).toHaveBeenCalledOnce();
+      expect(listSourcesUseCase.execute).toHaveBeenCalledWith({
+        cursor: null,
+        limit: 20,
+      });
     });
 
     it('source가 없으면 빈 배열을 반환한다', async () => {
@@ -156,7 +160,62 @@ describe('SourcesHttpController', () => {
 
       const response = await request(httpServer).get('/sources').expect(200);
 
-      expect(response.body).toEqual({ sources: [] });
+      expect(response.body).toEqual({ sources: [], nextCursor: null });
+    });
+
+    it('cursor와 limit 쿼리 파라미터를 디코딩하여 use case에 전달한다', async () => {
+      const encodedCursor = Buffer.from(
+        JSON.stringify({ id: 'source-1' }),
+      ).toString('base64url');
+      listSourcesUseCase.execute.mockResolvedValue({
+        sources: [],
+        nextCursor: null,
+      });
+
+      await request(httpServer)
+        .get(`/sources?cursor=${encodedCursor}&limit=5`)
+        .expect(200);
+
+      expect(listSourcesUseCase.execute).toHaveBeenCalledWith({
+        cursor: { id: 'source-1' },
+        limit: 5,
+      });
+    });
+
+    it('유효하지 않은 limit이면 400 응답을 반환한다', async () => {
+      const response = await request(httpServer)
+        .get('/sources?limit=-1')
+        .expect(400);
+
+      expect(response.body).toMatchObject({
+        statusCode: 400,
+        code: 'request.validation_failed',
+      });
+      expect(listSourcesUseCase.execute).not.toHaveBeenCalled();
+    });
+
+    it('limit이 100을 초과하면 400 응답을 반환한다', async () => {
+      const response = await request(httpServer)
+        .get('/sources?limit=101')
+        .expect(400);
+
+      expect(response.body).toMatchObject({
+        statusCode: 400,
+        code: 'request.validation_failed',
+      });
+      expect(listSourcesUseCase.execute).not.toHaveBeenCalled();
+    });
+
+    it('유효하지 않은 cursor이면 400 응답을 반환한다', async () => {
+      const response = await request(httpServer)
+        .get('/sources?cursor=not-a-cursor')
+        .expect(400);
+
+      expect(response.body).toMatchObject({
+        statusCode: 400,
+        code: 'request.validation_failed',
+      });
+      expect(listSourcesUseCase.execute).not.toHaveBeenCalled();
     });
 
     it('exception이 발생하면 500 응답으로 마스킹한다', async () => {
