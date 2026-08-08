@@ -32,7 +32,9 @@ describe('PostPgDrizzleQuery', () => {
     const db = createFailingSelectDb();
     const query = new PostPgDrizzleQuery(db as never);
 
-    await expect(query.paginate()).rejects.toMatchObject({
+    await expect(
+      query.paginate({ limit: 20, cursor: null }),
+    ).rejects.toMatchObject({
       code: 'post.paginate_failed',
       source: { boundary: 'persistence', adapter: 'post.pg-drizzle' },
     });
@@ -42,7 +44,9 @@ describe('PostPgDrizzleQuery', () => {
     const db = createFailingSelectDb();
     const query = new PostPgDrizzleQuery(db as never);
 
-    await expect(query.search({ query: 'TypeScript' })).rejects.toMatchObject({
+    await expect(
+      query.search({ query: 'TypeScript', limit: 20, cursor: null }),
+    ).rejects.toMatchObject({
       code: 'post.search_failed',
       source: { boundary: 'persistence', adapter: 'post.pg-drizzle' },
     });

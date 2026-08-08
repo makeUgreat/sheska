@@ -1,3 +1,9 @@
+export {
+  type PageCursor,
+  type RankedPageCursor,
+  type CursorPageResult,
+  sliceForCursor,
+} from './cursor.paginator';
 export { DATABASE_TOKENS } from './database.tokens';
 export {
   INFRASTRUCTURE_ERROR_KIND,

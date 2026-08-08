@@ -7,7 +7,7 @@ export const listPostsHttpRequestSchema = z
       .string()
       .refine(isValidCursor, { message: 'Invalid cursor' })
       .optional(),
-    limit: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().max(100).default(20),
   })
   .strict();
 
@@ -15,7 +15,7 @@ export class ListPostsHttpRequest {
   static readonly zodSchema = listPostsHttpRequestSchema;
 
   readonly cursor?: string;
-  readonly limit?: number;
+  readonly limit!: number;
 }
 
 export interface ListPostsHttpResponseItem {

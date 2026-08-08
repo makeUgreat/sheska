@@ -14,18 +14,21 @@ export type PostQueryFindCriteria = {
 
 export type PostQueryCursor = {
   readonly id: string;
-  readonly score?: number;
+};
+
+export type PostQuerySearchCursor = PostQueryCursor & {
+  readonly score: number;
 };
 
 export type PostQueryPaginateOptions = {
-  readonly limit?: number;
-  readonly cursor?: PostQueryCursor;
+  readonly limit: number;
+  readonly cursor: PostQueryCursor | null;
 };
 
 export type PostQuerySearchOptions = {
   readonly query: string;
-  readonly limit?: number;
-  readonly cursor?: PostQueryCursor;
+  readonly limit: number;
+  readonly cursor: PostQuerySearchCursor | null;
 };
 
 export type PostQueryListItem = {
@@ -42,12 +45,15 @@ export type PostQueryPaginateResult = {
   readonly nextCursor: PostQueryCursor | null;
 };
 
+export type PostQuerySearchResult = {
+  readonly posts: ReadonlyArray<PostQueryListItem>;
+  readonly nextCursor: PostQuerySearchCursor | null;
+};
+
 export interface PostQuery {
   get(criteria: PostQueryFindCriteria): Promise<PostQueryResult>;
   find(criteria: PostQueryFindCriteria): Promise<PostQueryResult | null>;
-  paginate(
-    options?: PostQueryPaginateOptions,
-  ): Promise<PostQueryPaginateResult>;
-  search(options: PostQuerySearchOptions): Promise<PostQueryPaginateResult>;
+  paginate(options: PostQueryPaginateOptions): Promise<PostQueryPaginateResult>;
+  search(options: PostQuerySearchOptions): Promise<PostQuerySearchResult>;
   count(): Promise<number>;
 }
