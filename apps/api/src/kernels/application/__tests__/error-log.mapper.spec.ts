@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { APPLICATION_ERROR_KIND } from '../error.base';
 import { ApplicationException } from '../application.exception';
-import { toErrorLogContext } from '../error-log-context';
+import { toErrorLogContext } from '../error-log.mapper';
 
 describe('toErrorLogContext', () => {
   it('일반 Error의 이름과 메시지를 로그 context로 변환한다', () => {

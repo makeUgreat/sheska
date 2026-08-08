@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/infrastructure.md
-last_synced: 2026-07-20
+last_synced: 2026-08-09
 related:
   - ./architecture.md
   - ./persistence.md
@@ -69,6 +69,31 @@ Infrastructure adapter file name은 다음 패턴을 따른다:
 | `source.sha256.fingerprinter.ts` | `SourceSha256Fingerprinter` |
 
 Class name은 동일한 순서를 따른다: `{DomainName}{AdapterOrPurpose}{Role}`.
+
+## Kernel 유틸리티 파일 명명
+
+Kernel 디렉토리(`kernels/domain`, `kernels/application`, `kernels/infrastructure`, `kernels/presentation`)에는 contract도 adapter도 아닌 파일들도 있다 — 공유 base class, generator, codec, mapper 같은 작은 policy module들이다. 이 파일들도 contract 파일과 동일한 2단 패턴을 따른다:
+
+```
+{name}.{role}.ts
+```
+
+- **name**: 파일이 다루는 개념 (예: `cursor`, `id`, `error-log`)
+- **role**: 파일이 하는 일을 role 단어로 표현한다 (예: `codec`, `generator`, `mapper`, `paginator`, `base`, `exception`, `tokens`, `classifier`)
+
+개념과 role이 같은 단어일 때는 위 `embedder.ts`처럼 단어 하나만 사용한다.
+
+`.port.ts` 금지 규칙은 여기에도, 그리고 코드베이스 전체에 동일하게 적용된다 — contract 파일에만 국한되지 않는다.
+
+예시:
+
+| 파일 | Export |
+| --- | --- |
+| `cursor.codec.ts` | `encodeCursor`, `decodeCursor` |
+| `cursor.paginator.ts` | `sliceForCursor` |
+| `id.generator.ts` | `newId` |
+| `error-log.mapper.ts` | `toErrorLogContext` |
+| `logger.ts` | `LoggerPort` (개념과 role이 같은 단어인 경우) |
 
 ## 디렉토리 구조
 

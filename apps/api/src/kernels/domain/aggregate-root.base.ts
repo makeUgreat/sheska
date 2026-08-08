@@ -1,6 +1,6 @@
 import { type DomainEvent } from './domain-event.base';
 import { Entity } from './entity.base';
-import { type LoggerPort } from './logger.port';
+import { type LoggerPort } from './logger';
 
 interface DomainEventPublisher {
   emitAsync(eventName: string, event: DomainEvent): Promise<unknown>;
