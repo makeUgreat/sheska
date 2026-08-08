@@ -2,7 +2,6 @@ import { sql } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   type SourceQuery,
-  type SourceQueryCursor,
   type SourceQueryListItem,
   type SourceQueryPaginateOptions,
   type SourceQueryPaginateResult,
@@ -10,6 +9,7 @@ import {
 import {
   classifyPostgresError,
   InfrastructureException,
+  sliceForCursor,
 } from '@kernels/infrastructure';
 import * as schema from './schema';
 
@@ -35,15 +35,16 @@ type SourceWithLatestJobRow = {
 export class SourcePgDrizzleQuery implements SourceQuery {
   constructor(private readonly db: NodePgDatabase<QuerySchema>) {}
 
-  async paginate(
-    options?: SourceQueryPaginateOptions,
-  ): Promise<SourceQueryPaginateResult> {
-    const limit = options?.limit ?? 20;
+  async paginate({
+    limit,
+    cursor,
+  }: SourceQueryPaginateOptions): Promise<SourceQueryPaginateResult> {
+    const isFirstPage = cursor === null;
 
     try {
-      const cursorCondition = options?.cursor
-        ? sql`AND s.id < ${options.cursor.id}`
-        : sql``;
+      const cursorCondition = isFirstPage
+        ? sql``
+        : sql`AND s.id < ${cursor.id}`;
 
       const result = await this.db.execute<SourceWithLatestJobRow>(sql`
         SELECT
@@ -108,11 +109,9 @@ export class SourcePgDrizzleQuery implements SourceQuery {
     rows: SourceWithLatestJobRow[],
     limit: number,
   ): SourceQueryPaginateResult {
-    const hasNext = rows.length > limit;
-    const data = hasNext ? rows.slice(0, limit) : rows;
-    const lastRow = data[data.length - 1];
-    const nextCursor: SourceQueryCursor | null =
-      hasNext && lastRow ? { id: lastRow.id } : null;
+    const { data, nextCursor } = sliceForCursor(rows, limit, (row) => ({
+      id: row.id,
+    }));
 
     return {
       sources: data.map(

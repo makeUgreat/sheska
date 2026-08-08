@@ -3,8 +3,8 @@ export type SourceQueryCursor = {
 };
 
 export type SourceQueryPaginateOptions = {
-  readonly limit?: number;
-  readonly cursor?: SourceQueryCursor;
+  readonly limit: number;
+  readonly cursor: SourceQueryCursor | null;
 };
 
 export type SourceQuerySyncJobSummary = {
@@ -33,7 +33,7 @@ export type SourceQueryPaginateResult = {
 
 export interface SourceQuery {
   paginate(
-    options?: SourceQueryPaginateOptions,
+    options: SourceQueryPaginateOptions,
   ): Promise<SourceQueryPaginateResult>;
   find(criteria: { sourceId: string }): Promise<string | null>;
 }
