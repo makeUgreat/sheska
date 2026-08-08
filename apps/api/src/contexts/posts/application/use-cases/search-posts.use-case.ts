@@ -1,15 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   type PostQuery,
-  type PostQueryCursor,
-  type PostQueryPaginateResult,
+  type PostQuerySearchCursor,
+  type PostQuerySearchResult,
 } from '@contexts/posts/application/ports';
 import { POST_QUERY } from '@contexts/posts/posts.di-tokens';
 
 export type SearchPostsCommand = {
   readonly query: string;
-  readonly cursor?: PostQueryCursor;
-  readonly limit?: number;
+  readonly cursor: PostQuerySearchCursor | null;
+  readonly limit: number;
 };
 
 @Injectable()
@@ -19,11 +19,11 @@ export class SearchPostsUseCase {
     private readonly postQuery: PostQuery,
   ) {}
 
-  async execute(command: SearchPostsCommand): Promise<PostQueryPaginateResult> {
+  async execute(command: SearchPostsCommand): Promise<PostQuerySearchResult> {
     return this.postQuery.search({
       query: command.query,
       cursor: command.cursor,
-      limit: command.limit ?? 20,
+      limit: command.limit,
     });
   }
 }
