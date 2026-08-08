@@ -69,6 +69,31 @@ Examples:
 
 Class names follow the same order: `{DomainName}{AdapterOrPurpose}{Role}`.
 
+## Kernel Utility File Naming
+
+Kernel directories (`kernels/domain`, `kernels/application`, `kernels/infrastructure`, `kernels/presentation`) also hold files that are neither contracts nor adapters — shared base classes, generators, codecs, mappers, and other small policy modules. These follow the same two-part pattern as contract files:
+
+```
+{name}.{role}.ts
+```
+
+- **name**: the concept the file is about (e.g. `cursor`, `id`, `error-log`)
+- **role**: what the file does, expressed as a role word (e.g. `codec`, `generator`, `mapper`, `paginator`, `base`, `exception`, `tokens`, `classifier`)
+
+When the concept and the role are the same word, use the single word alone, as with `embedder.ts` above.
+
+The `.port.ts` ban applies here too, and everywhere else in the codebase — not only to contract files.
+
+Examples:
+
+| File | Exports |
+| --- | --- |
+| `cursor.codec.ts` | `encodeCursor`, `decodeCursor` |
+| `cursor.paginator.ts` | `sliceForCursor` |
+| `id.generator.ts` | `newId` |
+| `error-log.mapper.ts` | `toErrorLogContext` |
+| `logger.ts` | `LoggerPort` (concept and role are the same word) |
+
 ## Directory Structure
 
 Organize infrastructure code by adapter category and technology:
