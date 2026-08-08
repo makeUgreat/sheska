@@ -49,7 +49,10 @@ describe('SourcePgDrizzleQuery', () => {
       buildSource({ externalSourceId: 'Notes/sq-list-2.md' }),
     );
 
-    const { sources: result } = await sourceQuery.paginate();
+    const { sources: result } = await sourceQuery.paginate({
+      limit: 20,
+      cursor: null,
+    });
 
     const ids = result.map((s) => s.sourceId);
     expect(ids).toContain(source1.id);
@@ -66,7 +69,10 @@ describe('SourcePgDrizzleQuery', () => {
     });
     await syncJobs.save(syncJob);
 
-    const { sources: result } = await sourceQuery.paginate();
+    const { sources: result } = await sourceQuery.paginate({
+      limit: 20,
+      cursor: null,
+    });
 
     const found = result.find((s) => s.sourceId === source.id);
     expect(found).toBeDefined();
@@ -81,7 +87,10 @@ describe('SourcePgDrizzleQuery', () => {
       buildSource({ externalSourceId: 'Notes/sq-no-sync-job.md' }),
     );
 
-    const { sources: result } = await sourceQuery.paginate();
+    const { sources: result } = await sourceQuery.paginate({
+      limit: 20,
+      cursor: null,
+    });
 
     const found = result.find((s) => s.sourceId === source.id);
     expect(found).toBeDefined();
@@ -95,7 +104,10 @@ describe('SourcePgDrizzleQuery', () => {
     const post = buildPost({ sourceId: source.id });
     await posts.save(post);
 
-    const { sources: result } = await sourceQuery.paginate();
+    const { sources: result } = await sourceQuery.paginate({
+      limit: 20,
+      cursor: null,
+    });
 
     const found = result.find((s) => s.sourceId === source.id);
     expect(found?.publishedPostId).toBe(post.id);
@@ -106,7 +118,10 @@ describe('SourcePgDrizzleQuery', () => {
       buildSource({ externalSourceId: 'Notes/sq-not-published.md' }),
     );
 
-    const { sources: result } = await sourceQuery.paginate();
+    const { sources: result } = await sourceQuery.paginate({
+      limit: 20,
+      cursor: null,
+    });
 
     const found = result.find((s) => s.sourceId === source.id);
     expect(found?.publishedPostId).toBeNull();
@@ -150,6 +165,7 @@ describe('SourcePgDrizzleQuery', () => {
 
       const { sources: result, nextCursor } = await sourceQuery.paginate({
         limit: 2,
+        cursor: null,
       });
 
       expect(result).toHaveLength(2);
@@ -167,7 +183,10 @@ describe('SourcePgDrizzleQuery', () => {
         buildSource({ externalSourceId: 'Notes/sq-cursor-page-3.md' }),
       );
 
-      const firstPage = await sourceQuery.paginate({ limit: 2 });
+      const firstPage = await sourceQuery.paginate({
+        limit: 2,
+        cursor: null,
+      });
       const secondPage = await sourceQuery.paginate({
         limit: 2,
         cursor: firstPage.nextCursor!,
@@ -202,7 +221,10 @@ describe('SourcePgDrizzleQuery', () => {
         buildSource({ externalSourceId: 'Notes/sq-cursor-tie.md' }),
       );
 
-      const { sources: saved } = await sourceQuery.paginate({ limit: 100 });
+      const { sources: saved } = await sourceQuery.paginate({
+        limit: 100,
+        cursor: null,
+      });
       const savedSource = saved.find((s) => s.sourceId === source.id)!;
       const cursor = { id: savedSource.sourceId };
 

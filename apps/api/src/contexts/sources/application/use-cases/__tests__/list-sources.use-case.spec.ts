@@ -26,7 +26,7 @@ describe('ListSourcesUseCase', () => {
     sourceQuery.paginate.mockResolvedValue(buildPaginateResult());
     const useCase = new ListSourcesUseCase(sourceQuery);
 
-    const result = await useCase.execute();
+    const result = await useCase.execute({ limit: 20, cursor: null });
 
     expect(result.sources).toEqual([]);
     expect(sourceQuery.paginate).toHaveBeenCalledOnce();
@@ -63,7 +63,7 @@ describe('ListSourcesUseCase', () => {
     );
     const useCase = new ListSourcesUseCase(sourceQuery);
 
-    const result = await useCase.execute();
+    const result = await useCase.execute({ limit: 20, cursor: null });
 
     expect(result.sources).toHaveLength(2);
     expect(result.sources[0]).toMatchObject({
@@ -99,7 +99,7 @@ describe('ListSourcesUseCase', () => {
     );
     const useCase = new ListSourcesUseCase(sourceQuery);
 
-    const result = await useCase.execute();
+    const result = await useCase.execute({ limit: 20, cursor: null });
 
     expect(result.sources[0]).not.toHaveProperty('content');
   });
@@ -110,7 +110,9 @@ describe('ListSourcesUseCase', () => {
     sourceQuery.paginate.mockRejectedValue(paginateFailure);
     const useCase = new ListSourcesUseCase(sourceQuery);
 
-    await expect(useCase.execute()).rejects.toBe(paginateFailure);
+    await expect(useCase.execute({ limit: 20, cursor: null })).rejects.toBe(
+      paginateFailure,
+    );
   });
 });
 

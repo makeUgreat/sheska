@@ -1,17 +1,30 @@
 import { z } from 'zod';
+import { decodeCursor } from '@kernels/application';
 
 export const listSourcesHttpRequestSchema = z
   .object({
-    page: z.coerce.number().int().positive().optional(),
-    limit: z.coerce.number().int().positive().optional(),
+    cursor: z
+      .string()
+      .refine(isValidCursor, { message: 'Invalid cursor' })
+      .optional(),
+    limit: z.coerce.number().int().positive().max(100).default(20),
   })
   .strict();
 
 export class ListSourcesHttpRequest {
   static readonly zodSchema = listSourcesHttpRequestSchema;
 
-  readonly page?: number;
-  readonly limit?: number;
+  readonly cursor?: string;
+  readonly limit!: number;
+}
+
+function isValidCursor(cursor: string): boolean {
+  try {
+    decodeCursor(cursor);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export interface SyncJobSummaryHttpResponse {
@@ -35,4 +48,5 @@ export interface SourceSummaryHttpResponse {
 
 export interface ListSourcesHttpResponse {
   readonly sources: SourceSummaryHttpResponse[];
+  readonly nextCursor: string | null;
 }
