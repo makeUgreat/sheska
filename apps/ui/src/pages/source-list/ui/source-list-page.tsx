@@ -3,7 +3,7 @@ import {
   SyncJobBadge,
   SyncJobProgress,
   type SyncJobSummary,
-  useListSources,
+  useInfiniteListSources,
 } from '@/entities/source';
 
 function SourceSyncJobStatus({ syncJob }: { syncJob: SyncJobSummary | null }) {
@@ -30,7 +30,15 @@ function PublishedBadge() {
 }
 
 export function SourceListPage() {
-  const { data, isLoading, error } = useListSources();
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteListSources();
+  const sources = data?.pages.flatMap((page) => page.sources) ?? [];
 
   return (
     <main className="min-h-screen bg-page-background px-4 py-20">
@@ -58,36 +66,50 @@ export function SourceListPage() {
           >
             Error: {error.message}
           </p>
-        ) : data?.sources.length === 0 ? (
+        ) : sources.length === 0 ? (
           <p className="text-base leading-relaxed text-text-secondary">
             No sources yet.
           </p>
         ) : (
-          <ul className="divide-y divide-outline-variant/10 border-y border-outline-variant/10">
-            {data?.sources.map((s) => (
-              <li
-                key={s.sourceId}
-                className="group relative py-6 pl-5 before:absolute before:left-0 before:top-6 before:h-[calc(100%-48px)] before:w-0.5 before:bg-transparent hover:before:bg-[#e06c75]"
-              >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <Link
-                    to={`/sources/${s.sourceId}`}
-                    className="break-words text-2xl font-semibold leading-snug text-text-primary transition-colors group-hover:text-[#e06c75]"
-                  >
-                    {s.externalSourceId}
-                  </Link>
-                  <div className="flex flex-wrap items-center gap-3">
-                    {s.publishedPostId && <PublishedBadge />}
-                    <SourceSyncJobStatus syncJob={s.latestSyncJob} />
-                    <span className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
-                      {s.sizeBytes} bytes ·{' '}
-                      {new Date(s.updatedAt).toLocaleString()}
-                    </span>
+          <>
+            <ul className="divide-y divide-outline-variant/10 border-y border-outline-variant/10">
+              {sources.map((s) => (
+                <li
+                  key={s.sourceId}
+                  className="group relative py-6 pl-5 before:absolute before:left-0 before:top-6 before:h-[calc(100%-48px)] before:w-0.5 before:bg-transparent hover:before:bg-[#e06c75]"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <Link
+                      to={`/sources/${s.sourceId}`}
+                      className="break-words text-2xl font-semibold leading-snug text-text-primary transition-colors group-hover:text-[#e06c75]"
+                    >
+                      {s.externalSourceId}
+                    </Link>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {s.publishedPostId && <PublishedBadge />}
+                      <SourceSyncJobStatus syncJob={s.latestSyncJob} />
+                      <span className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+                        {s.sizeBytes} bytes ·{' '}
+                        {new Date(s.updatedAt).toLocaleString()}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+            {hasNextPage && (
+              <div className="mt-8 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => void fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="font-mono text-xs font-medium uppercase tracking-widest text-[#e06c75] transition-colors disabled:text-text-muted"
+                >
+                  {isFetchingNextPage ? 'Loading more...' : 'Load more'}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </main>

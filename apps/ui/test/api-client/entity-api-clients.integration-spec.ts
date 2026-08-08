@@ -34,6 +34,9 @@ describe('entity API clients', () => {
     const response = await listSources(http);
 
     expect(Array.isArray(response.sources)).toBe(true);
+    expect(
+      response.nextCursor === null || typeof response.nextCursor === 'string',
+    ).toBe(true);
     expect(response.sources).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

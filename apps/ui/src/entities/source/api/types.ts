@@ -17,8 +17,14 @@ export interface SourceSummary {
   publishedPostId: string | null;
 }
 
+export interface ListSourcesParams {
+  cursor?: string;
+  limit?: number;
+}
+
 export interface ListSourcesResponse {
   sources: SourceSummary[];
+  nextCursor: string | null;
 }
 
 export interface EmbeddingInfo {

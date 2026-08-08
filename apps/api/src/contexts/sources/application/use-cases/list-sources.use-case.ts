@@ -7,8 +7,8 @@ import {
 import { SOURCE_QUERY } from '@contexts/sources/sources.di-tokens';
 
 export interface ListSourcesCommand {
-  readonly cursor?: SourceQueryCursor;
-  readonly limit?: number;
+  readonly cursor: SourceQueryCursor | null;
+  readonly limit: number;
 }
 
 @Injectable()
@@ -19,7 +19,7 @@ export class ListSourcesUseCase {
   ) {}
 
   async execute(
-    command: ListSourcesCommand = {},
+    command: ListSourcesCommand,
   ): Promise<SourceQueryPaginateResult> {
     return this.sourceQuery.paginate({
       cursor: command.cursor,

@@ -85,7 +85,10 @@ describe('PostPgDrizzleQuery', () => {
     await posts.save(post1);
     await posts.save(post2);
 
-    const { posts: result } = await postQuery.paginate();
+    const { posts: result } = await postQuery.paginate({
+      limit: 20,
+      cursor: null,
+    });
 
     const ids = result.map((p) => p.postId);
     expect(ids).toContain(post1.id);
@@ -109,6 +112,7 @@ describe('PostPgDrizzleQuery', () => {
 
       const { posts: result, nextCursor } = await postQuery.paginate({
         limit: 2,
+        cursor: null,
       });
 
       expect(result).toHaveLength(2);
@@ -132,7 +136,7 @@ describe('PostPgDrizzleQuery', () => {
       await posts.save(post2);
       await posts.save(post3);
 
-      const firstPage = await postQuery.paginate({ limit: 2 });
+      const firstPage = await postQuery.paginate({ limit: 2, cursor: null });
       const secondPage = await postQuery.paginate({
         limit: 2,
         cursor: firstPage.nextCursor!,
@@ -168,7 +172,10 @@ describe('PostPgDrizzleQuery', () => {
       const post1 = buildPost({ sourceId: s1.id });
       await posts.save(post1);
 
-      const { posts: saved } = await postQuery.paginate({ limit: 100 });
+      const { posts: saved } = await postQuery.paginate({
+        limit: 100,
+        cursor: null,
+      });
       const savedPost1 = saved.find((p) => p.postId === post1.id)!;
       const cursor = { id: savedPost1.postId };
 
@@ -190,7 +197,10 @@ describe('PostPgDrizzleQuery', () => {
       await posts.save(post1);
       await posts.save(post2);
 
-      const { posts: result } = await postQuery.paginate({ limit: 2 });
+      const { posts: result } = await postQuery.paginate({
+        limit: 2,
+        cursor: null,
+      });
 
       const ids = result.map((p) => p.postId);
       expect(ids).toContain(post1.id);
@@ -220,6 +230,7 @@ describe('PostPgDrizzleQuery', () => {
       const { posts: result } = await postQuery.search({
         query: 'TypeScript',
         limit: 20,
+        cursor: null,
       });
 
       const ids = result.map((p) => p.postId);
@@ -240,6 +251,7 @@ describe('PostPgDrizzleQuery', () => {
       const { posts: result } = await postQuery.search({
         query: 'TypeScirpt',
         limit: 20,
+        cursor: null,
       });
 
       const ids = result.map((p) => p.postId);
@@ -259,6 +271,7 @@ describe('PostPgDrizzleQuery', () => {
       const { posts: result } = await postQuery.search({
         query: '소켓',
         limit: 20,
+        cursor: null,
       });
 
       const ids = result.map((p) => p.postId);
@@ -286,6 +299,7 @@ describe('PostPgDrizzleQuery', () => {
       const { posts: result } = await postQuery.search({
         query: 'TypeScript',
         limit: 20,
+        cursor: null,
       });
 
       const ids = result.map((p) => p.postId);
@@ -311,6 +325,7 @@ describe('PostPgDrizzleQuery', () => {
       const firstPage = await postQuery.search({
         query: 'TypeScript',
         limit: 2,
+        cursor: null,
       });
       const secondPage = await postQuery.search({
         query: 'TypeScript',
@@ -330,6 +345,7 @@ describe('PostPgDrizzleQuery', () => {
       const { posts: result } = await postQuery.search({
         query: '일치하지않는쿼리xyz',
         limit: 20,
+        cursor: null,
       });
 
       expect(result).toHaveLength(0);

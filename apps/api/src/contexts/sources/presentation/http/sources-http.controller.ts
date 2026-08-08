@@ -6,7 +6,9 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
 } from '@nestjs/common';
+import { decodeCursor, encodeCursor } from '@kernels/application';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
 import { ListSourcesUseCase } from '@contexts/sources/application/use-cases/list-sources.use-case';
 import { GetSourceUseCase } from '@contexts/sources/application/use-cases/get-source.use-case';
@@ -14,7 +16,10 @@ import {
   UploadSourceHttpRequest,
   type UploadSourceHttpResponse,
 } from './dto/upload-source.http.dto';
-import { type ListSourcesHttpResponse } from './dto/list-sources.http.dto';
+import {
+  ListSourcesHttpRequest,
+  type ListSourcesHttpResponse,
+} from './dto/list-sources.http.dto';
 import { type GetSourceHttpResponse } from './dto/get-source.http.dto';
 
 @Controller('sources')
@@ -26,8 +31,13 @@ export class SourcesHttpController {
   ) {}
 
   @Get()
-  async list(): Promise<ListSourcesHttpResponse> {
-    const result = await this.listSourcesUseCase.execute();
+  async list(
+    @Query() query: ListSourcesHttpRequest,
+  ): Promise<ListSourcesHttpResponse> {
+    const result = await this.listSourcesUseCase.execute({
+      cursor: query.cursor ? decodeCursor(query.cursor) : null,
+      limit: query.limit,
+    });
     return {
       sources: result.sources.map((s) => ({
         sourceId: s.sourceId,
@@ -47,6 +57,7 @@ export class SourcesHttpController {
           : null,
         publishedPostId: s.publishedPostId,
       })),
+      nextCursor: result.nextCursor ? encodeCursor(result.nextCursor) : null,
     };
   }
 

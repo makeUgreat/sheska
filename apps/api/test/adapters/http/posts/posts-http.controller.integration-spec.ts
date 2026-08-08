@@ -249,8 +249,8 @@ describe('PostsHttpController', () => {
       ]);
       expect(typeof body.nextCursor).toBe('string');
       expect(listPostsUseCase.execute).toHaveBeenCalledWith({
-        cursor: undefined,
-        limit: undefined,
+        cursor: null,
+        limit: 20,
       });
     });
 
@@ -276,6 +276,18 @@ describe('PostsHttpController', () => {
     it('유효하지 않은 limit이면 400 응답을 반환한다', async () => {
       const response = await request(httpServer)
         .get('/posts?limit=-1')
+        .expect(400);
+
+      expect(response.body).toMatchObject({
+        statusCode: 400,
+        code: 'request.validation_failed',
+      });
+      expect(listPostsUseCase.execute).not.toHaveBeenCalled();
+    });
+
+    it('limit이 100을 초과하면 400 응답을 반환한다', async () => {
+      const response = await request(httpServer)
+        .get('/posts?limit=101')
         .expect(400);
 
       expect(response.body).toMatchObject({
@@ -335,8 +347,8 @@ describe('PostsHttpController', () => {
       expect(typeof body.nextCursor).toBe('string');
       expect(searchPostsUseCase.execute).toHaveBeenCalledWith({
         query: 'TypeScript',
-        cursor: undefined,
-        limit: undefined,
+        cursor: null,
+        limit: 20,
       });
     });
 
@@ -359,6 +371,23 @@ describe('PostsHttpController', () => {
         cursor: { id: 'post-1', score: 0.8 },
         limit: 5,
       });
+    });
+
+    it('score가 없는 cursor이면 400 응답을 반환한다', async () => {
+      const cursorWithoutScore = Buffer.from(
+        JSON.stringify({ id: 'post-1' }),
+      ).toString('base64url');
+
+      const response = await request(httpServer)
+        .get('/posts/search')
+        .query({ q: 'TypeScript', cursor: cursorWithoutScore })
+        .expect(400);
+
+      expect(response.body).toMatchObject({
+        statusCode: 400,
+        code: 'request.validation_failed',
+      });
+      expect(searchPostsUseCase.execute).not.toHaveBeenCalled();
     });
 
     it('q가 없으면 400 응답을 반환하고 use case를 호출하지 않는다', async () => {
@@ -399,8 +428,8 @@ describe('PostsHttpController', () => {
 
       expect(searchPostsUseCase.execute).toHaveBeenCalledWith({
         query: 'a',
-        cursor: undefined,
-        limit: undefined,
+        cursor: null,
+        limit: 20,
       });
     });
 

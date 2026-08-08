@@ -1,6 +1,7 @@
 import {
   type PostQuery,
   type PostQueryPaginateResult,
+  type PostQuerySearchResult,
 } from '@contexts/posts/application/ports';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { SearchPostsUseCase } from '../search-posts.use-case';
@@ -23,11 +24,21 @@ function buildPaginateResult(
   };
 }
 
+function buildSearchResult(
+  overrides: Partial<PostQuerySearchResult> = {},
+): PostQuerySearchResult {
+  return {
+    posts: [],
+    nextCursor: null,
+    ...overrides,
+  };
+}
+
 describe('SearchPostsUseCase', () => {
   it('query와 유사한 title을 가진 post 목록을 반환한다', async () => {
     const postQuery = createPostQueryMock();
     postQuery.search.mockResolvedValue(
-      buildPaginateResult({
+      buildSearchResult({
         posts: [
           {
             postId: 'post-1',
@@ -50,7 +61,11 @@ describe('SearchPostsUseCase', () => {
     );
     const useCase = new SearchPostsUseCase(postQuery);
 
-    const result = await useCase.execute({ query: 'TypeScript' });
+    const result = await useCase.execute({
+      query: 'TypeScript',
+      cursor: null,
+      limit: 20,
+    });
 
     expect(result.posts).toHaveLength(2);
     expect(result.posts[0]).toMatchObject({
@@ -61,17 +76,21 @@ describe('SearchPostsUseCase', () => {
     });
     expect(postQuery.search).toHaveBeenCalledWith({
       query: 'TypeScript',
-      cursor: undefined,
+      cursor: null,
       limit: 20,
     });
   });
 
   it('일치하는 post가 없으면 빈 배열을 반환한다', async () => {
     const postQuery = createPostQueryMock();
-    postQuery.search.mockResolvedValue(buildPaginateResult());
+    postQuery.search.mockResolvedValue(buildSearchResult());
     const useCase = new SearchPostsUseCase(postQuery);
 
-    const result = await useCase.execute({ query: 'nothing' });
+    const result = await useCase.execute({
+      query: 'nothing',
+      cursor: null,
+      limit: 20,
+    });
 
     expect(result.posts).toHaveLength(0);
   });
@@ -82,9 +101,9 @@ describe('SearchPostsUseCase', () => {
     postQuery.search.mockRejectedValue(searchFailure);
     const useCase = new SearchPostsUseCase(postQuery);
 
-    await expect(useCase.execute({ query: 'TypeScript' })).rejects.toBe(
-      searchFailure,
-    );
+    await expect(
+      useCase.execute({ query: 'TypeScript', cursor: null, limit: 20 }),
+    ).rejects.toBe(searchFailure);
   });
 });
 
@@ -95,9 +114,7 @@ function createPostQueryMock(): PostQueryMock {
     paginate: vi
       .fn<PostQuery['paginate']>()
       .mockResolvedValue(buildPaginateResult()),
-    search: vi
-      .fn<PostQuery['search']>()
-      .mockResolvedValue(buildPaginateResult()),
+    search: vi.fn<PostQuery['search']>().mockResolvedValue(buildSearchResult()),
     count: vi.fn<PostQuery['count']>().mockResolvedValue(0),
   };
 }
