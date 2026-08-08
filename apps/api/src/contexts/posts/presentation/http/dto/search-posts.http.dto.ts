@@ -8,7 +8,7 @@ export const searchPostsHttpRequestSchema = z
       .string()
       .refine(isValidCursor, { message: 'Invalid cursor' })
       .optional(),
-    limit: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().max(100).default(20),
   })
   .strict();
 
@@ -17,13 +17,12 @@ export class SearchPostsHttpRequest {
 
   readonly q!: string;
   readonly cursor?: string;
-  readonly limit?: number;
+  readonly limit!: number;
 }
 
 function isValidCursor(cursor: string): boolean {
   try {
-    decodeCursor(cursor);
-    return true;
+    return decodeCursor(cursor).score !== undefined;
   } catch {
     return false;
   }

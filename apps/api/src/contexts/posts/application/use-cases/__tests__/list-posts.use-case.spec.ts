@@ -50,7 +50,7 @@ describe('ListPostsUseCase', () => {
     );
     const useCase = new ListPostsUseCase(postQuery);
 
-    const result = await useCase.execute();
+    const result = await useCase.execute({ limit: 20, cursor: null });
 
     expect(result.posts).toHaveLength(2);
     expect(result.posts[0]).toMatchObject({
@@ -73,7 +73,7 @@ describe('ListPostsUseCase', () => {
     postQuery.paginate.mockResolvedValue(buildPaginateResult());
     const useCase = new ListPostsUseCase(postQuery);
 
-    const result = await useCase.execute();
+    const result = await useCase.execute({ limit: 20, cursor: null });
 
     expect(result.posts).toHaveLength(0);
   });
@@ -98,7 +98,7 @@ describe('ListPostsUseCase', () => {
     );
     const useCase = new ListPostsUseCase(postQuery);
 
-    const result = await useCase.execute();
+    const result = await useCase.execute({ limit: 20, cursor: null });
 
     expect(result.nextCursor).toEqual(cursor);
   });
@@ -110,21 +110,22 @@ describe('ListPostsUseCase', () => {
     );
     const useCase = new ListPostsUseCase(postQuery);
 
-    const result = await useCase.execute();
+    const result = await useCase.execute({ limit: 20, cursor: null });
 
     expect(result.nextCursor).toBeNull();
   });
 
-  it('기본 limit 20으로 paginate를 호출한다', async () => {
+  it('command의 limit/cursor를 그대로 paginate에 전달한다', async () => {
+    const cursor = { id: 'post-cursor-id' };
     const postQuery = createPostQueryMock();
     postQuery.paginate.mockResolvedValue(buildPaginateResult());
     const useCase = new ListPostsUseCase(postQuery);
 
-    await useCase.execute();
+    await useCase.execute({ limit: 10, cursor });
 
     expect(postQuery.paginate).toHaveBeenCalledWith({
-      limit: 20,
-      cursor: undefined,
+      limit: 10,
+      cursor,
     });
   });
 
@@ -134,7 +135,9 @@ describe('ListPostsUseCase', () => {
     postQuery.paginate.mockRejectedValue(paginateFailure);
     const useCase = new ListPostsUseCase(postQuery);
 
-    await expect(useCase.execute()).rejects.toBe(paginateFailure);
+    await expect(useCase.execute({ limit: 20, cursor: null })).rejects.toBe(
+      paginateFailure,
+    );
   });
 });
 
@@ -147,7 +150,7 @@ function createPostQueryMock(): PostQueryMock {
       .mockResolvedValue(buildPaginateResult()),
     search: vi
       .fn<PostQuery['search']>()
-      .mockResolvedValue(buildPaginateResult()),
+      .mockResolvedValue({ posts: [], nextCursor: null }),
     count: vi.fn<PostQuery['count']>().mockResolvedValue(0),
   };
 }

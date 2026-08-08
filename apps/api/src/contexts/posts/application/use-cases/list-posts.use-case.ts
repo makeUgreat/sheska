@@ -7,8 +7,8 @@ import {
 import { POST_QUERY } from '@contexts/posts/posts.di-tokens';
 
 export interface ListPostsCommand {
-  readonly cursor?: PostQueryCursor;
-  readonly limit?: number;
+  readonly cursor: PostQueryCursor | null;
+  readonly limit: number;
 }
 
 @Injectable()
@@ -18,11 +18,9 @@ export class ListPostsUseCase {
     private readonly postQuery: PostQuery,
   ) {}
 
-  async execute(
-    command: ListPostsCommand = {},
-  ): Promise<PostQueryPaginateResult> {
+  async execute(command: ListPostsCommand): Promise<PostQueryPaginateResult> {
     return this.postQuery.paginate({
-      limit: command.limit ?? 20,
+      limit: command.limit,
       cursor: command.cursor,
     });
   }

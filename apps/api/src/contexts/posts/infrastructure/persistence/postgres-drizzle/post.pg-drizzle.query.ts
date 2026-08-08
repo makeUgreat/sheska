@@ -1,4 +1,4 @@
-import { and, desc, lt, or, sql } from 'drizzle-orm';
+import { and, count, desc, eq, lt, or, sql } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   type PostQuery,
@@ -9,10 +9,12 @@ import {
   type PostQueryPaginateResult,
   type PostQueryListItem,
   type PostQuerySearchOptions,
+  type PostQuerySearchResult,
 } from '@contexts/posts/application/ports';
 import {
   classifyPostgresError,
   InfrastructureException,
+  sliceForCursor,
 } from '@kernels/infrastructure';
 import * as postsSchema from './schema';
 
@@ -97,10 +99,11 @@ export class PostPgDrizzleQuery implements PostQuery {
     };
   }
 
-  async paginate(
-    options?: PostQueryPaginateOptions,
-  ): Promise<PostQueryPaginateResult> {
-    const limit = options?.limit ?? 20;
+  async paginate({
+    limit,
+    cursor,
+  }: PostQueryPaginateOptions): Promise<PostQueryPaginateResult> {
+    const isFirstPage = cursor === null;
 
     try {
       const baseQuery = this.db
@@ -109,11 +112,15 @@ export class PostPgDrizzleQuery implements PostQuery {
         .orderBy(desc(postsSchema.posts.id))
         .limit(limit + 1);
 
-      const rows = options?.cursor
-        ? await baseQuery.where(lt(postsSchema.posts.id, options.cursor.id))
-        : await baseQuery;
+      const rows = isFirstPage
+        ? await baseQuery
+        : await baseQuery.where(lt(postsSchema.posts.id, cursor.id));
 
-      return this.toPaginateResult(rows, limit);
+      const { data, nextCursor } = sliceForCursor(rows, limit, (row) => ({
+        id: row.id,
+      }));
+
+      return this.toResult(data, nextCursor);
     } catch (error: unknown) {
       throw new InfrastructureException({
         kind: classifyPostgresError(error),
@@ -126,36 +133,37 @@ export class PostPgDrizzleQuery implements PostQuery {
     }
   }
 
-  async search(
-    options: PostQuerySearchOptions,
-  ): Promise<PostQueryPaginateResult> {
-    const limit = options.limit ?? 20;
+  // todo: 추후에 score 계산 서브쿼리 최적화 필요성 부하테스트 후 검증
+  async search({
+    query,
+    limit,
+    cursor,
+  }: PostQuerySearchOptions): Promise<PostQuerySearchResult> {
+    const isFirstPage = cursor === null;
 
     try {
       const score = sql<number>`
         CASE
-          WHEN lower(${postsSchema.posts.title}) = lower(${options.query}) THEN 1
+          WHEN lower(${postsSchema.posts.title}) = lower(${query}) THEN 1
           ELSE 0
         END + GREATEST(
-          similarity(${postsSchema.posts.title}, ${options.query}),
-          word_similarity(${options.query}, ${postsSchema.posts.title})
+          similarity(${postsSchema.posts.title}, ${query}),
+          word_similarity(${query}, ${postsSchema.posts.title})
         )
       `;
-      const cursorScore = options.cursor?.score;
       const searchWhere = sql`
-        ${postsSchema.posts.title} % ${options.query}
-        OR ${options.query} <% ${postsSchema.posts.title}
+        ${postsSchema.posts.title} % ${query}
+        OR ${query} <% ${postsSchema.posts.title}
       `;
-      const cursorWhere =
-        options.cursor && cursorScore !== undefined
-          ? or(
-              sql`${score} < ${cursorScore}`,
-              and(
-                sql`${score} = ${cursorScore}`,
-                lt(postsSchema.posts.id, options.cursor.id),
-              ),
-            )
-          : undefined;
+      const where = isFirstPage
+        ? searchWhere
+        : and(
+            searchWhere,
+            or(
+              lt(score, cursor.score),
+              and(eq(score, cursor.score), lt(postsSchema.posts.id, cursor.id)),
+            ),
+          );
 
       const rows = await this.db
         .select({
@@ -168,18 +176,23 @@ export class PostPgDrizzleQuery implements PostQuery {
           searchScore: score,
         })
         .from(postsSchema.posts)
-        .where(cursorWhere ? and(searchWhere, cursorWhere) : searchWhere)
+        .where(where)
         .orderBy(desc(score), desc(postsSchema.posts.id))
         .limit(limit + 1);
 
-      return this.toPaginateResult(rows, limit);
+      const { data, nextCursor } = sliceForCursor(rows, limit, (row) => ({
+        id: row.id,
+        score: row.searchScore,
+      }));
+
+      return this.toResult(data, nextCursor);
     } catch (error: unknown) {
       throw new InfrastructureException({
         kind: classifyPostgresError(error),
         code: 'post.search_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Post search operation failed',
-        details: { query: options.query },
+        details: { query },
         cause: error,
       });
     }
@@ -187,10 +200,10 @@ export class PostPgDrizzleQuery implements PostQuery {
 
   async count(): Promise<number> {
     try {
-      const result = await this.db.execute<{ count: number }>(sql`
-        SELECT count(*)::int AS count FROM posts
-      `);
-      return result.rows[0]?.count ?? 0;
+      const [row] = await this.db
+        .select({ count: count() })
+        .from(postsSchema.posts);
+      return row?.count ?? 0;
     } catch (error: unknown) {
       throw new InfrastructureException({
         kind: classifyPostgresError(error),
@@ -203,21 +216,10 @@ export class PostPgDrizzleQuery implements PostQuery {
     }
   }
 
-  private toPaginateResult(
-    rows: Array<postsSchema.PostRow | SearchPostRow>,
-    limit: number,
-  ): PostQueryPaginateResult {
-    const hasNext = rows.length > limit;
-    const data = hasNext ? rows.slice(0, limit) : rows;
-    const lastRow = data[data.length - 1];
-    const nextCursor: PostQueryCursor | null =
-      hasNext && lastRow
-        ? {
-            id: lastRow.id,
-            ...('searchScore' in lastRow ? { score: lastRow.searchScore } : {}),
-          }
-        : null;
-
+  private toResult<TCursor extends PostQueryCursor>(
+    data: Array<postsSchema.PostRow | SearchPostRow>,
+    nextCursor: TCursor | null,
+  ): { posts: PostQueryListItem[]; nextCursor: TCursor | null } {
     return {
       posts: data.map(
         (row): PostQueryListItem => ({
