@@ -1,20 +1,24 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useHttpClient } from '@/shared/api';
 import { getSource, listSources } from './client';
 
 const SYNC_JOB_POLL_INTERVAL_MS = 2000;
 const ACTIVE_SYNC_JOB_STATUSES = new Set(['pending', 'processing']);
 
-export function useListSources() {
+export function useInfiniteListSources(limit?: number) {
   const http = useHttpClient();
-  return useQuery({
-    queryKey: ['sources'],
-    queryFn: () => listSources(http),
+  return useInfiniteQuery({
+    queryKey: ['sources', 'infinite', limit],
+    queryFn: ({ pageParam }) => listSources(http, { cursor: pageParam, limit }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     refetchInterval: (query) => {
-      const hasActiveSyncJob = query.state.data?.sources.some(
-        (source) =>
-          source.latestSyncJob &&
-          ACTIVE_SYNC_JOB_STATUSES.has(source.latestSyncJob.status),
+      const hasActiveSyncJob = query.state.data?.pages.some((page) =>
+        page.sources.some(
+          (source) =>
+            source.latestSyncJob &&
+            ACTIVE_SYNC_JOB_STATUSES.has(source.latestSyncJob.status),
+        ),
       );
       return hasActiveSyncJob ? SYNC_JOB_POLL_INTERVAL_MS : false;
     },

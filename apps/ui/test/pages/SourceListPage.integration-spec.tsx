@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type SourceSummary } from '@/entities/source';
@@ -23,7 +24,7 @@ function buildMockHttpClient(
   overrides: MockHttpClientOverrides = {},
 ): HttpClient {
   return {
-    get: vi.fn().mockResolvedValue({ sources: [] }),
+    get: vi.fn().mockResolvedValue({ sources: [], nextCursor: null }),
     post: vi.fn(),
     patch: vi.fn(),
     ...overrides,
@@ -87,6 +88,7 @@ describe('SourceListPage', () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockResolvedValue({
         sources: [source],
+        nextCursor: null,
       }),
     });
 
@@ -122,6 +124,7 @@ describe('SourceListPage', () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockResolvedValue({
         sources: [source],
+        nextCursor: null,
       }),
     });
 
@@ -150,6 +153,7 @@ describe('SourceListPage', () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockResolvedValue({
         sources: [source],
+        nextCursor: null,
       }),
     });
 
@@ -175,6 +179,7 @@ describe('SourceListPage', () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockResolvedValue({
         sources: [source],
+        nextCursor: null,
       }),
     });
 
@@ -198,6 +203,62 @@ describe('SourceListPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeDefined();
       expect(screen.getByText('Error: API unavailable')).toBeDefined();
+    });
+  });
+
+  it('다음 cursor가 있으면 추가 source를 불러온다', async () => {
+    const user = userEvent.setup();
+    const now = '2026-01-01T00:00:00.000Z';
+    const firstSource: SourceSummary = {
+      sourceId: 'source-1',
+      externalSourceId: 'Notes/first.md',
+      fingerprint: 'fingerprint-1',
+      sizeBytes: 14,
+      createdAt: now,
+      updatedAt: now,
+      latestSyncJob: null,
+      publishedPostId: null,
+    };
+    const secondSource: SourceSummary = {
+      sourceId: 'source-2',
+      externalSourceId: 'Notes/second.md',
+      fingerprint: 'fingerprint-2',
+      sizeBytes: 15,
+      createdAt: now,
+      updatedAt: now,
+      latestSyncJob: null,
+      publishedPostId: null,
+    };
+    const get = vi
+      .fn()
+      .mockResolvedValueOnce({
+        sources: [firstSource],
+        nextCursor: 'cursor-1',
+      })
+      .mockResolvedValueOnce({
+        sources: [secondSource],
+        nextCursor: null,
+      });
+    const client = buildMockHttpClient({ get });
+
+    renderPage(client);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('link', { name: 'Notes/first.md' }),
+      ).toBeDefined();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Load more' }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('link', { name: 'Notes/second.md' }),
+      ).toBeDefined();
+    });
+    expect(get).toHaveBeenNthCalledWith(1, '/sources', undefined);
+    expect(get).toHaveBeenNthCalledWith(2, '/sources', {
+      cursor: 'cursor-1',
     });
   });
 });
