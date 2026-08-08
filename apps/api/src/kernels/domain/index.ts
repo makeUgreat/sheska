@@ -1,5 +1,5 @@
 export { AggregateRoot } from './aggregate-root.base';
-export { type LoggerPort } from './logger.port';
+export { type LoggerPort } from './logger';
 export { DomainException } from './domain.exception';
 export { DomainEvent, type DomainEventParams } from './domain-event.base';
 export {
@@ -15,5 +15,5 @@ export {
   type DomainErrorKind,
   type DomainValidationDetails,
 } from './error.base';
-export { newId } from './id-generator';
+export { newId } from './id.generator';
 export { ValueObject, type DomainPrimitive } from './value-object.base';

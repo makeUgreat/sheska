@@ -3,13 +3,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { type GetSourceResponse, type SourceSummary } from '@/entities/source';
+import { App } from '@/app/shell';
 import {
-  type GetSourceResponse,
-  type SourceSummary,
-} from '@/entities/sources/api/types';
-import { App } from '@/app/App';
-import { type HttpClient } from '@/shared/api/http';
-import { HttpClientProvider } from '@/shared/api/http-client-context';
+  HttpClientProvider,
+  type HttpClientType as HttpClient,
+} from '@/shared/api';
 
 type MockHttpClientOverrides = {
   get?: ReturnType<typeof vi.fn>;
@@ -126,9 +125,7 @@ describe('App', () => {
     await user.click(screen.getByRole('link', { name: 'Posts' }));
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('searchbox', { name: 'Search posts' }),
-      ).toBeDefined();
+      expect(screen.getByRole('button', { name: 'Back to top' })).toBeDefined();
     });
   });
 

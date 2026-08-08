@@ -22,6 +22,7 @@
     "test/**/*.ts",
     "test/**/*.tsx",
     "scripts/**/*.ts",
-    "vite.config.ts"
+    "vite.config.ts",
+    ".storybook/**/*.ts"
   ]
 }

@@ -5,8 +5,8 @@ export {
   type CursorListResult,
   encodeCursor,
   decodeCursor,
-} from './cursor-pagination';
-export { toErrorLogContext } from './error-log-context';
+} from './cursor.codec';
+export { toErrorLogContext } from './error-log.mapper';
 export {
   APPLICATION_ERROR_KIND,
   type ApplicationErrorBase,
@@ -15,5 +15,5 @@ export {
   type ApplicationValidationDetails,
   type ApplicationValidationFieldDetail,
 } from './error.base';
-export { type LoggerPort } from './logger.port';
+export { type LoggerPort } from './logger';
 export { LOGGER } from './logger.tokens';

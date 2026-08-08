@@ -53,7 +53,19 @@ export default defineConfig({
             'test/**/*.integration-spec.ts',
             'test/**/*.integration-spec.tsx',
           ],
-          exclude: ['test/api-client/**/*.integration-spec.ts'],
+          exclude: [
+            'test/api-client/**/*.integration-spec.ts',
+            'test/static/**/*.integration-spec.ts',
+          ],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'static',
+          environment: 'node',
+          globals: true,
+          include: ['test/static/**/*.integration-spec.ts'],
         },
       },
       {

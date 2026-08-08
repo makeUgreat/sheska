@@ -146,18 +146,6 @@ Checking before insertion gives the API a stable validation error instead of
 exposing a database constraint failure.
 ```
 
-## 하위 브랜치 → 통합 브랜치 Merge
-
-하위 브랜치를 통합 브랜치에 merge할 때는 squash merge로 wip 커밋을 하나의 논리 단위 커밋으로 합칩니다.
-
-```bash
-git checkout feature/{name}
-git merge --squash feature/{name}/{layer}
-git commit -m "feat({scope}): <imperative summary>"
-```
-
-squash 커밋 메시지는 Conventional Commits 형식과 `Why:` 본문을 포함해야 합니다. 이 커밋이 main history에 남는 단위가 됩니다.
-
 ## 작업 흐름
 
 1. 브랜치 컨텍스트(하위 브랜치, 통합 브랜치, 기본 브랜치)를 파악합니다. 하위 브랜치 패턴이지만 통합 브랜치가 없으면, 작업을 중단하고 추론된 통합 브랜치 이름을 제안한 뒤 사용자 확인을 기다립니다.
