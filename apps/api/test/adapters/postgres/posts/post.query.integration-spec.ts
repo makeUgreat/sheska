@@ -209,7 +209,7 @@ describe('PostPgDrizzleQuery', () => {
   });
 
   describe('search', () => {
-    it('trigram 검색으로 유사한 title을 가진 post를 반환한다', async () => {
+    it('title이 일치하는 post를 반환한다', async () => {
       const source1 = await sources.save(
         buildSource({ externalSourceId: 'Notes/pq-trgm-match.md' }),
       );
@@ -341,7 +341,66 @@ describe('PostPgDrizzleQuery', () => {
       expect(firstIds.some((id) => secondIds.includes(id))).toBe(false);
     });
 
-    it('trigram 검색에 일치하는 post가 없으면 빈 배열을 반환한다', async () => {
+    it('content이 일치하는 post를 title 검색어 없이도 반환한다', async () => {
+      const source = await sources.save(
+        buildSource({
+          externalSourceId: 'Notes/pq-content-match.md',
+          content: '이 문서는 리액트훅에 대한 심화 설명을 담고 있다',
+        }),
+      );
+      const post = buildPost({
+        sourceId: source.id,
+        title: '프론트엔드 스터디 노트',
+      });
+      await posts.save(post);
+
+      const { posts: result } = await postQuery.search({
+        query: '리액트훅',
+        limit: 20,
+        cursor: null,
+      });
+
+      const ids = result.map((p) => p.postId);
+      expect(ids).toContain(post.id);
+    });
+
+    it('title 일치가 content 일치보다 높은 순위로 반환된다', async () => {
+      const titleSource = await sources.save(
+        buildSource({
+          externalSourceId: 'Notes/pq-weight-title.md',
+          content: '관련 없는 본문',
+        }),
+      );
+      const contentSource = await sources.save(
+        buildSource({
+          externalSourceId: 'Notes/pq-weight-content.md',
+          content: '쿠버네티스 클러스터 운영 경험을 공유합니다',
+        }),
+      );
+      const titleMatch = buildPost({
+        sourceId: titleSource.id,
+        title: '쿠버네티스',
+      });
+      const contentMatch = buildPost({
+        sourceId: contentSource.id,
+        title: '운영 회고',
+      });
+      await posts.save(titleMatch);
+      await posts.save(contentMatch);
+
+      const { posts: result } = await postQuery.search({
+        query: '쿠버네티스',
+        limit: 20,
+        cursor: null,
+      });
+
+      const ids = result.map((p) => p.postId);
+      expect(ids.indexOf(titleMatch.id)).toBeLessThan(
+        ids.indexOf(contentMatch.id),
+      );
+    });
+
+    it('검색어에 일치하는 post가 없으면 빈 배열을 반환한다', async () => {
       const { posts: result } = await postQuery.search({
         query: '일치하지않는쿼리xyz',
         limit: 20,

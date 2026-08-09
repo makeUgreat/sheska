@@ -1,4 +1,15 @@
-import { integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import {
+  customType,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+} from 'drizzle-orm/pg-core';
+
+const tsvector = customType<{ data: string }>({
+  dataType: () => 'tsvector',
+});
 
 export const sources = pgTable('sources', {
   id: text('id').primaryKey(),
@@ -6,6 +17,9 @@ export const sources = pgTable('sources', {
   content: text('content').notNull(),
   fingerprint: text('fingerprint').notNull(),
   sizeBytes: integer('size_bytes').notNull(),
+  contentSearchVector: tsvector('content_search_vector')
+    .notNull()
+    .generatedAlwaysAs(sql`to_tsvector('simple', bigram_tokens(content))`),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),
