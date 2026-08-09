@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { decodeCursor } from '@kernels/application';
+import {
+  type CursorValue,
+  cursorQueryParamSchema,
+} from '@kernels/presentation';
 
 export const listPostsHttpRequestSchema = z
   .object({
-    cursor: z
-      .string()
-      .refine(isValidCursor, { message: 'Invalid cursor' })
-      .optional(),
+    cursor: cursorQueryParamSchema.optional(),
     limit: z.coerce.number().int().positive().max(100).default(20),
   })
   .strict();
@@ -14,7 +14,7 @@ export const listPostsHttpRequestSchema = z
 export class ListPostsHttpRequest {
   static readonly zodSchema = listPostsHttpRequestSchema;
 
-  readonly cursor?: string;
+  readonly cursor?: CursorValue;
   readonly limit!: number;
 }
 
@@ -30,13 +30,4 @@ export interface ListPostsHttpResponseItem {
 export interface ListPostsHttpResponse {
   posts: ListPostsHttpResponseItem[];
   nextCursor: string | null;
-}
-
-function isValidCursor(cursor: string): boolean {
-  try {
-    decodeCursor(cursor);
-    return true;
-  } catch {
-    return false;
-  }
 }

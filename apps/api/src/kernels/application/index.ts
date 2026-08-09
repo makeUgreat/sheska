@@ -1,11 +1,4 @@
 export { ApplicationException } from './application.exception';
-export {
-  type CursorValue,
-  type CursorListOptions,
-  type CursorListResult,
-  encodeCursor,
-  decodeCursor,
-} from './cursor.codec';
 export { toErrorLogContext } from './error-log.mapper';
 export {
   APPLICATION_ERROR_KIND,
