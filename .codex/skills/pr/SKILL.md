@@ -31,10 +31,11 @@ for how to build and open one.
   title) when a creation path is available.
 - Use `cm` first when the working tree has uncommitted changes or the PR
   boundary is unclear.
-- If the current branch already has an open PR, decide relatedness before
-  acting (see PR Unit: Single vs. Stacked): a continuation of that PR's
-  intent is an update — push and refresh the body; a separable concern
-  becomes a new stacked PR on top of it, not a fold-in.
+- If the current branch already has an open PR, decide whether the new work is
+  a same-layer continuation or a new dependent review layer before acting (see
+  PR Unit: Single vs. Stacked). Same-layer continuation is an update — push and
+  refresh the body. Dependent layer work becomes a new stacked PR on top of the
+  existing PR, even when it shares the same feature intent.
 - When multiple valid PR or stack shapes exist, pick the clearest
   history-meaningful one and report the rationale; don't stop to ask.
 - Never fabricate verification — report what ran, what didn't, and why.
@@ -101,10 +102,26 @@ clear review unit — name the reason and the completing child PR in its body
 rather than forcing independent runnability by merging separable PRs together.
 
 The same test applies when a branch already has an open PR and more work
-lands on it: a continuation of that PR's intent stays in it — push and
-refresh the body's `Summary`/`Changes`/`Verification`. A separable concern
-becomes a new stacked PR on top of it instead of being folded in — see
-Stacked PRs for bringing an already-open branch under stack tracking.
+lands on it: same-layer continuation stays in it — push and refresh the body's
+`Summary`/`Changes`/`Verification`. Same-layer continuation means fixing that
+PR's implementation, adding tests for the same layer, correcting docs for the
+same decision, or addressing review feedback within the same review boundary.
+A change can share the same feature intent and still require a stacked PR when
+it introduces a dependent layer that reviewers may want to evaluate separately.
+Shared intent is not enough to fold the work into the existing PR.
+
+Use a stacked PR, not an update to the existing PR, when the new work depends on
+the open PR but changes a different product or implementation layer, such as:
+
+- database/schema/search semantics -> API behavior
+- API behavior -> UI affordance or E2E browser coverage
+- backend contract -> frontend adoption
+- infrastructure/runtime behavior -> operational UI or tests
+
+For example, API search behavior -> UI copy/E2E coverage is a dependent layer.
+Stack it by default on top of the API PR unless the UI change is only fixing a
+broken fixture or assertion inside the same API review boundary. See Stacked
+PRs for bringing an already-open branch under stack tracking.
 
 ## Stacked PRs (gh stack)
 
@@ -227,10 +244,11 @@ when they form one squash-merge history event.
    verifies the image runs. Fix and re-run on failure; do not push or open a
    PR if it fails.
 7. Push and open. Single PR: check `gh pr view` first. If one is already
-   open and the new work continues its intent, just push (refresh the body
-   if it changed); if the new work is a separable concern, stack it on top
-   instead (see Stacked PRs) rather than folding it in — use the GitHub
-   connector or `gh` for the single-PR push/open path. Stacked set:
+   open and the new work is a same-layer continuation, just push (refresh the
+   body if it changed); if the new work is a dependent layer or otherwise
+   separable concern, stack it on top instead (see Stacked PRs) rather than
+   folding it in — use the GitHub connector or `gh` for the single-PR
+   push/open path. Stacked set:
    `gh stack submit` creates or updates every PR in the stack in one step
    (drafts by default) — safe to re-run after more commits. Never set stack
    base branches manually.
