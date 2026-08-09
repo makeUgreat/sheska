@@ -8,6 +8,7 @@ export function buildPostRow(params: Partial<PostRow> = {}): PostRow {
     sourceId: params.sourceId ?? 'source-1',
     title: params.title ?? '테스트 포스트',
     viewCount: params.viewCount ?? 0,
+    titleSearchVector: params.titleSearchVector ?? '',
     createdAt: params.createdAt ?? persistedAt,
     updatedAt: params.updatedAt ?? persistedAt,
   };

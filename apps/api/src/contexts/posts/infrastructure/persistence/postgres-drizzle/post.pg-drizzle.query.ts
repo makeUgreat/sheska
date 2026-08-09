@@ -1,4 +1,4 @@
-import { and, count, desc, eq, lt, or, sql } from 'drizzle-orm';
+import { count, desc, lt, sql } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   type PostQuery,
@@ -21,6 +21,8 @@ import * as postsSchema from './schema';
 type QuerySchema = typeof postsSchema;
 
 const ADAPTER = 'post.pg-drizzle';
+const TITLE_SEARCH_WEIGHT = 1;
+const CONTENT_SEARCH_WEIGHT = 0.4;
 
 type PostWithSourceRow = {
   post_id: string;
@@ -32,7 +34,13 @@ type PostWithSourceRow = {
   source_content: string;
 };
 
-type SearchPostRow = postsSchema.PostRow & {
+type SearchPostRow = {
+  id: string;
+  sourceId: string;
+  title: string;
+  viewCount: number;
+  createdAt: Date;
+  updatedAt: Date;
   searchScore: number;
 };
 
@@ -142,43 +150,42 @@ export class PostPgDrizzleQuery implements PostQuery {
     const isFirstPage = cursor === null;
 
     try {
-      const score = sql<number>`
-        CASE
-          WHEN lower(${postsSchema.posts.title}) = lower(${query}) THEN 1
-          ELSE 0
-        END + GREATEST(
-          similarity(${postsSchema.posts.title}, ${query}),
-          word_similarity(${query}, ${postsSchema.posts.title})
-        )
+      const tsQuery = sql`bigram_tsquery(${query})`;
+      const score = sql`
+        ts_rank(p.title_search_vector, ${tsQuery}, 2) * ${TITLE_SEARCH_WEIGHT}
+        + ts_rank(s.content_search_vector, ${tsQuery}, 2) * ${CONTENT_SEARCH_WEIGHT}
       `;
-      const searchWhere = sql`
-        ${postsSchema.posts.title} % ${query}
-        OR ${query} <% ${postsSchema.posts.title}
-      `;
+      const matchWhere = sql`(
+        p.title_search_vector @@ ${tsQuery}
+        OR s.content_search_vector @@ ${tsQuery}
+      )`;
       const where = isFirstPage
-        ? searchWhere
-        : and(
-            searchWhere,
-            or(
-              lt(score, cursor.score),
-              and(eq(score, cursor.score), lt(postsSchema.posts.id, cursor.id)),
-            ),
-          );
+        ? matchWhere
+        : sql`${matchWhere} AND (
+            (${score}) < ${cursor.score}
+            OR ((${score}) = ${cursor.score} AND p.id < ${cursor.id})
+          )`;
 
-      const rows = await this.db
-        .select({
-          id: postsSchema.posts.id,
-          sourceId: postsSchema.posts.sourceId,
-          title: postsSchema.posts.title,
-          viewCount: postsSchema.posts.viewCount,
-          createdAt: postsSchema.posts.createdAt,
-          updatedAt: postsSchema.posts.updatedAt,
-          searchScore: score,
-        })
-        .from(postsSchema.posts)
-        .where(where)
-        .orderBy(desc(score), desc(postsSchema.posts.id))
-        .limit(limit + 1);
+      const result = await this.db.execute<SearchPostRow>(sql`
+        SELECT
+          p.id         AS "id",
+          p.source_id  AS "sourceId",
+          p.title      AS "title",
+          p.view_count AS "viewCount",
+          p.created_at AS "createdAt",
+          p.updated_at AS "updatedAt",
+          (${score})   AS "searchScore"
+        FROM posts p
+        INNER JOIN sources s ON p.source_id = s.id
+        WHERE ${where}
+        ORDER BY "searchScore" DESC, p.id DESC
+        LIMIT ${limit + 1}
+      `);
+      const rows = result.rows.map((row) => ({
+        ...row,
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+      }));
 
       const { data, nextCursor } = sliceForCursor(rows, limit, (row) => ({
         id: row.id,

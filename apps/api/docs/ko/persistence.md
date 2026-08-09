@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/persistence.md
-last_synced: 2026-06-30
+last_synced: 2026-08-10
 related:
   - ./architecture.md
   - ./ddd.md
@@ -41,6 +41,13 @@ Persistence policy는 database와 ORM adapter가 domain rule의 소유자가 되
 - Database-native enum type은 사용하지 않는다. Enum-like value는 scalar column에 저장하고, 허용 값의 의미는 그 값을 소유하는 domain 또는 application contract에 둔다.
 - Value object 또는 aggregate validation을 `CHECK` constraint, database enum restriction, trigger, 또는 이에 준하는 table-level validation으로 중복 구현하지 않는다.
 - Domain이 소유하는 규칙의 예시는 trim된 non-empty string, numeric range, lifecycle status transition, content-derived consistency check다.
+
+### Search Vector Column
+
+- `tsvector` column은 자신이 색인하는 field와 같은 테이블에 두고, application code가 값을 쓰거나 다른 aggregate의 테이블까지 넘어가는 trigger로 동기화하지 말고 `GENERATED ALWAYS AS (...) STORED` column으로 만든다.
+- 한 aggregate 테이블의 trigger로 다른 aggregate 테이블의 derived column을 갱신하지 않는다. 검색 쿼리가 두 값을 join해서 함께 랭킹을 매기더라도, post의 `title_search_vector`와 source의 `content_search_vector`는 이 이유로 각자 별도의 generated column으로 둔다.
+- `tsvector`를 만드는 tokenization function(예: CJK 텍스트용 bigram 분리 helper)은 순수하고 `IMMUTABLE`한 SQL/PL/pgSQL function으로 migration에 저장해서, 이를 필요로 하는 모든 generated column이 재사용하게 하고, 테이블마다 중복 구현하거나 application code에 다시 구현하지 않는다.
+- Search vector column은 business invariant가 아니라 storage integrity/read performance 관심사다. Business meaning을 강제하거나 파생시켜서는 안 되며, 자신이 색인하는 field와 동기화된 read-optimized projection을 유지하는 역할만 한다.
 
 ### Drizzle Schema
 

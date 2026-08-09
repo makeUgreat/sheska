@@ -41,6 +41,13 @@ Persistence policy decides how database and ORM adapters preserve stored data wi
 - Do not duplicate value object or aggregate validation as `CHECK` constraints, database enum restrictions, triggers, or equivalent table-level validation.
 - Examples of domain-owned rules include trimmed non-empty strings, numeric ranges, lifecycle status transitions, and content-derived consistency checks.
 
+### Search Vector Columns
+
+- A `tsvector` column belongs on the same table as the field it indexes and should be a `GENERATED ALWAYS AS (...) STORED` column, not a value written by application code or synchronized by a trigger that reaches into another aggregate's table.
+- Do not use a trigger on one aggregate's table to update a derived column on another aggregate's table. A post's `title_search_vector` and a source's `content_search_vector` are separate generated columns for this reason, even though a search query joins and ranks across both.
+- Keep the tokenization function used to build a `tsvector` (for example a bigram-splitting helper for CJK text) as a plain, `IMMUTABLE` SQL/PL/pgSQL function stored in a migration and reused by every generated column that needs it, not duplicated per table or reimplemented in application code.
+- Search vector columns are a storage-integrity and read-performance concern, not a business invariant. They must not enforce or derive business meaning; they only keep a read-optimized projection in sync with the field it indexes.
+
 ### Drizzle Schema
 
 - Drizzle table definitions should describe storage shape, relations, indexes, and structural constraints.
