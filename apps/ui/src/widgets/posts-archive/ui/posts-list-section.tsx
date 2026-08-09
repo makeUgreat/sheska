@@ -56,8 +56,8 @@ export function PostsListSection({
             <input
               id="posts-archive-search"
               type="search"
-              aria-label="Search posts"
-              placeholder=". . ."
+              aria-label="Search posts by title or content"
+              placeholder="Search title or content"
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
               className="w-full border-0 bg-transparent p-0 font-mono text-sm text-accent caret-accent outline-none placeholder:text-accent/40 focus:ring-0"

@@ -50,8 +50,8 @@ export function LandingHero({
             <span className="text-secondary">visitor@garden:~$</span>{' '}
             <input
               type="search"
-              aria-label="Search posts"
-              placeholder="What's new in the garden?"
+              aria-label="Search posts by title or content"
+              placeholder="Search title or content"
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
               className="w-[min(100%,34rem)] bg-transparent text-white caret-accent outline-none placeholder:text-white"
