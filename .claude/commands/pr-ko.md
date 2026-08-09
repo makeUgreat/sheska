@@ -16,7 +16,7 @@ PR은 하나의 일관된 결정으로 review 가능해야 합니다. 변경이 
 - PR 제목과 설명은 영어로 작성합니다. 기본값은 draft PR입니다.
 - 명시적인 `pr`/`$pr` 요청, 또는 PR을 열거나 업데이트하라는 명시적 요청은 커밋 준비, 브랜치/stack 설정, push, draft PR 생성까지 전체 흐름을 추가 확인 없이 끝까지 진행해도 된다는 승인으로 봅니다(아래 blocker가 적용되는 경우 제외). 생성 경로가 있는데 제목만 작성하고 멈추는 식으로 중간에 멈추지 않습니다.
 - working tree에 커밋되지 않은 변경이 있거나 PR 경계가 불명확하면 먼저 `cm`을 사용합니다.
-- 현재 브랜치에 이미 열린 PR이 있다면, 진행 전에 연관성을 먼저 판단합니다(PR 단위: 단일 vs Stacked 참고): 기존 PR의 의도를 이어가는 작업이면 업데이트입니다 — push하고 본문을 갱신합니다. 연관성이 떨어지는 작업이면 기존 PR에 합치지 말고 그 위에 새로운 stacked PR을 엽니다.
+- 현재 브랜치에 이미 열린 PR이 있다면, 진행 전에 새 작업이 같은 layer의 연속 작업인지 새로운 dependent review layer인지 먼저 판단합니다(PR 단위: 단일 vs Stacked 참고). 같은 layer의 연속 작업이면 업데이트입니다 — push하고 본문을 갱신합니다. dependent layer 작업이면 같은 feature intent를 공유하더라도 기존 PR 위에 새로운 stacked PR을 엽니다.
 - 합리적인 PR 또는 stack 형태가 둘 이상이면 history 의미가 가장 명확한 것을 고르고 이유를 보고합니다. 멈춰서 묻지 않습니다.
 - 검증 결과를 지어내지 않습니다 — 실행/생략 여부와 이유를 보고합니다.
 - 사용자가 명시적으로 지시하지 않는 한 사용자 변경사항을 되돌리거나 덮어쓰거나 삭제하지 않습니다.
@@ -55,7 +55,16 @@ PR은 하나의 squash-merge history event입니다 — 제목과 본문만으�
 
 stack layer가 명확한 review 단위라면 그 자체로 일시적으로 실행 불가능해도 괜찮습니다 — 분리 가능한 PR을 억지로 합쳐서 독립 실행 가능하게 만들기보다, 이유와 이를 완성하는 child PR을 본문에 적습니다.
 
-브랜치에 이미 열린 PR이 있고 추가 작업이 생겼을 때도 같은 기준을 적용합니다: 기존 PR의 의도를 이어가는 작업은 그 PR 안에 둡니다 — push하고 본문의 `Summary`/`Changes`/`Verification`을 갱신합니다. 연관성이 떨어지는 작업은 기존 PR에 합치지 말고 그 위에 새로운 stacked PR로 엽니다 — 이미 열린 브랜치를 stack tracking으로 편입하는 방법은 아래 Stacked PR 참고.
+브랜치에 이미 열린 PR이 있고 추가 작업이 생겼을 때도 같은 기준을 적용합니다: 같은 layer의 연속 작업은 그 PR 안에 둡니다 — push하고 본문의 `Summary`/`Changes`/`Verification`을 갱신합니다. 같은 layer의 연속 작업이란 해당 PR의 구현을 고치거나, 같은 layer의 테스트를 추가하거나, 같은 결정에 대한 문서를 보정하거나, 같은 review boundary 안에서 review feedback을 반영하는 작업을 뜻합니다. 같은 feature intent를 공유하더라도 reviewer가 별도로 평가할 dependent layer를 도입한다면 stacked PR이 필요합니다. feature intent가 같다는 이유만으로 기존 PR에 합치면 안 됩니다.
+
+새 작업이 열린 PR에 의존하지만 다른 product 또는 implementation layer를 바꾼다면, 기존 PR 업데이트가 아니라 stacked PR을 사용합니다. 예:
+
+- database/schema/search semantics -> API behavior
+- API behavior -> UI affordance 또는 E2E browser coverage
+- backend contract -> frontend adoption
+- infrastructure/runtime behavior -> operational UI 또는 tests
+
+예를 들어 API search behavior -> UI copy/E2E coverage는 dependent layer입니다. UI 변경이 같은 API review boundary 안의 깨진 fixture 또는 assertion만 고치는 경우가 아니라면, API PR 위에 기본적으로 stack으로 쌓습니다. 이미 열린 브랜치를 stack tracking으로 편입하는 방법은 아래 Stacked PR 참고.
 
 ## Stacked PR (gh stack)
 
@@ -117,5 +126,5 @@ commit-by-commit changelog, 일반 checklist filler, 실행하지 않은 테스�
 3. 위 PR 단위 정책으로 단일 PR인지 stacked PR 묶음인지 결정합니다.
 4. stack이라면 커밋을 준비하면서 `gh stack init`/`gh stack add`로 만들고, PR을 열기 전에 `gh stack view`로 순서를 확인합니다.
 5. 제목, 본문, (통합 브랜치 PR이면) `Merge Strategy`를 작성합니다.
-6. push하고 엽니다. 단일 PR: 먼저 `gh pr view`로 확인합니다 — 이미 열린 PR이 있고 새 작업이 그 의도를 이어간다면 push만 합니다(본문이 바뀌었다면 갱신). 새 작업이 연관성 떨어지는 작업이면 기존 PR에 합치지 말고 그 위에 stack으로 엽니다(Stacked PR 참고). stacked 묶음: `gh stack submit`이 stack의 모든 PR을 한 번에 생성하거나 업데이트합니다(기본 draft) — 커밋을 더 추가한 뒤 다시 실행해도 안전합니다. stack의 base branch는 수동으로 설정하지 않습니다.
+6. push하고 엽니다. 단일 PR: 먼저 `gh pr view`로 확인합니다 — 이미 열린 PR이 있고 새 작업이 같은 layer의 연속 작업이면 push만 합니다(본문이 바뀌었다면 갱신). 새 작업이 dependent layer이거나 그 밖의 분리 가능한 concern이면 기존 PR에 합치지 말고 그 위에 stack으로 엽니다(Stacked PR 참고). stacked 묶음: `gh stack submit`이 stack의 모든 PR을 한 번에 생성하거나 업데이트합니다(기본 draft) — 커밋을 더 추가한 뒤 다시 실행해도 안전합니다. stack의 base branch는 수동으로 설정하지 않습니다.
 7. 검증 gap과 merge 순서를 최종 응답에 보고합니다.
