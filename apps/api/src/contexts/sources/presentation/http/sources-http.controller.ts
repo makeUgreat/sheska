@@ -8,7 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { decodeCursor, encodeCursor } from '@kernels/application';
+import { encodeCursor } from '@kernels/presentation';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
 import { ListSourcesUseCase } from '@contexts/sources/application/use-cases/list-sources.use-case';
 import { GetSourceUseCase } from '@contexts/sources/application/use-cases/get-source.use-case';
@@ -35,7 +35,7 @@ export class SourcesHttpController {
     @Query() query: ListSourcesHttpRequest,
   ): Promise<ListSourcesHttpResponse> {
     const result = await this.listSourcesUseCase.execute({
-      cursor: query.cursor ? decodeCursor(query.cursor) : null,
+      cursor: query.cursor ?? null,
       limit: query.limit,
     });
     return {
