@@ -15,7 +15,6 @@ import { ListPostsUseCase } from '@contexts/posts/application/use-cases/list-pos
 import { SearchPostsUseCase } from '@contexts/posts/application/use-cases/search-posts.use-case';
 import { CountPostsUseCase } from '@contexts/posts/application/use-cases/count-posts.use-case';
 import { UpdatePostTitleUseCase } from '@contexts/posts/application/use-cases/update-post-title.use-case';
-import { type PostQuerySearchCursor } from '@contexts/posts/application/ports';
 import {
   PublishPostHttpRequest,
   type PublishPostHttpResponse,
@@ -25,11 +24,7 @@ import {
   ListPostsHttpRequest,
   type ListPostsHttpResponse,
 } from './dto/list-posts.http.dto';
-import { decodeCursor, encodeCursor } from '@kernels/application';
-import {
-  PresentationException,
-  PRESENTATION_ERROR_KIND,
-} from '@kernels/presentation';
+import { encodeCursor } from '@kernels/presentation';
 import { SearchPostsHttpRequest } from './dto/search-posts.http.dto';
 import { type CountPostsHttpResponse } from './dto/count-posts.http.dto';
 import {
@@ -53,7 +48,7 @@ export class PostsHttpController {
     @Query() query: ListPostsHttpRequest,
   ): Promise<ListPostsHttpResponse> {
     const result = await this.listPostsUseCase.execute({
-      cursor: query.cursor ? decodeCursor(query.cursor) : null,
+      cursor: query.cursor ?? null,
       limit: query.limit,
     });
 
@@ -95,7 +90,7 @@ export class PostsHttpController {
   ): Promise<ListPostsHttpResponse> {
     const result = await this.searchPostsUseCase.execute({
       query: request.q,
-      cursor: request.cursor ? this.decodeSearchCursor(request.cursor) : null,
+      cursor: request.cursor ?? null,
       limit: request.limit,
     });
 
@@ -152,20 +147,5 @@ export class PostsHttpController {
       createdAt: result.createdAt.toISOString(),
       updatedAt: result.updatedAt.toISOString(),
     };
-  }
-
-  private decodeSearchCursor(cursor: string): PostQuerySearchCursor {
-    const decoded = decodeCursor(cursor);
-    if (decoded.score === undefined) {
-      throw new PresentationException({
-        kind: PRESENTATION_ERROR_KIND.VALIDATION_FAILED,
-        code: 'post.search_cursor_missing_score',
-        message: 'Invalid request',
-        details: {
-          fields: [{ path: 'cursor', messages: ['Invalid cursor'] }],
-        },
-      });
-    }
-    return { id: decoded.id, score: decoded.score };
   }
 }
