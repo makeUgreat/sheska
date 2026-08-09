@@ -174,20 +174,29 @@ test('포스트 상세 페이지에서 마크다운이 HTML 요소로 렌더링�
   await expect(page.locator('li', { hasText: '항목 둘' })).toBeVisible();
 });
 
-test('포스트 목록에서 검색어를 입력하면 일치하는 포스트만 표시된다', async ({
+test('포스트 목록에서 제목이나 본문 검색어를 입력하면 일치하는 포스트만 표시된다', async ({
   page,
   apiBaseUrl,
 }) => {
   const matchingTitle = `TypeScript 입문 ${randomUUID()}`;
+  const contentOnlyTitle = `본문 검색 대상 ${randomUUID()}`;
+  const contentKeyword = `SemanticGarden ${randomUUID()}`;
   const otherTitle = `파이썬 데이터 분석 ${randomUUID()}`;
 
-  for (const title of [matchingTitle, otherTitle]) {
+  for (const { title, body } of [
+    { title: matchingTitle, body: 'E2E 테스트 내용' },
+    {
+      title: contentOnlyTitle,
+      body: `본문에만 있는 검색어 ${contentKeyword} 입니다.`,
+    },
+    { title: otherTitle, body: 'E2E 테스트 내용' },
+  ]) {
     const sourceRes = await fetch(`${apiBaseUrl}/sources`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         externalSourceId: `e2e-${randomUUID()}`,
-        content: `---\ntitle: ${title}\n---\nE2E 테스트 내용`,
+        content: `---\ntitle: ${title}\n---\n${body}`,
       }),
     });
     expect(sourceRes.status).toBe(201);
@@ -202,12 +211,19 @@ test('포스트 목록에서 검색어를 입력하면 일치하는 포스트만
   }
 
   await page.goto('/posts');
-  await enterPostsList(page);
+  const searchbox = page.getByRole('searchbox', {
+    name: /search posts by title or content/i,
+  });
+  await expect(searchbox).toBeVisible();
 
-  await page.getByRole('searchbox').fill('TypeScript');
+  await searchbox.fill('TypeScript');
 
   await expect(page.getByText(matchingTitle)).toBeVisible();
   await expect(page.getByText(otherTitle)).not.toBeVisible();
+
+  await searchbox.fill(contentKeyword);
+
+  await expect(page.getByText(contentOnlyTitle)).toBeVisible();
 });
 
 test('포스트 목록에서 검색어를 지우면 전체 목록으로 돌아온다', async ({
