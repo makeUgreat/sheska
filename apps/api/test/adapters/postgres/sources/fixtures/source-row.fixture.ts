@@ -12,6 +12,7 @@ export function buildSourceRow(params: Partial<SourceRow> = {}): SourceRow {
     content,
     fingerprint: params.fingerprint ?? 'fingerprint-1',
     sizeBytes: params.sizeBytes ?? sourceContentByteSize(content),
+    contentSearchVector: params.contentSearchVector ?? '',
     createdAt: params.createdAt ?? persistedAt,
     updatedAt: params.updatedAt ?? persistedAt,
   };
