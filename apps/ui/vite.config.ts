@@ -3,12 +3,23 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'node:url';
 
+const sourceLayerAliases = {
+  '@/app': './src/01_app',
+  '@/pages': './src/02_pages',
+  '@/widgets': './src/03_widgets',
+  '@/features': './src/04_features',
+  '@/entities': './src/05_entities',
+  '@/shared': './src/06_shared',
+  '@': './src',
+};
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
+    alias: Object.entries(sourceLayerAliases).map(([alias, target]) => ({
+      find: alias,
+      replacement: fileURLToPath(new URL(target, import.meta.url)),
+    })),
   },
   server: {
     proxy: {

@@ -60,7 +60,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/shared/**/*.{ts,tsx}'],
+    files: ['src/06_shared/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -77,7 +77,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/entities/**/*.{ts,tsx}'],
+    files: ['src/05_entities/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -94,7 +94,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/features/**/*.{ts,tsx}'],
+    files: ['src/04_features/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -110,7 +110,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/pages/**/*.{ts,tsx}'],
+    files: ['src/02_pages/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',

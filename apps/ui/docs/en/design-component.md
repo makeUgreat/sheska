@@ -158,14 +158,13 @@ Props:
 
 ### `PostCard`
 
-Renders a post preview with metadata, title, summary, action link, optional
-thumbnail, and optional title highlighting for search results.
+Renders a post preview with metadata, title, summary, action link, and optional
+title highlighting for search results.
 
 Props:
 
 - `post`: `PostSummary`.
 - `highlight`: optional search query text to mark in the title.
-- `thumbnailUrl`: optional image URL.
 
 ### `PostSectionHeader`
 

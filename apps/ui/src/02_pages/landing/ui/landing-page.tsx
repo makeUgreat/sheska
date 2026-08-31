@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useCountPosts } from '@/entities/post';
-import { Footer } from '@/widgets/footer';
 import { LandingHero } from '@/widgets/landing-hero';
 
 export function LandingPage() {
@@ -15,7 +14,6 @@ export function LandingPage() {
         totalPostCount={data?.count ?? 0}
         articlesHref="/posts"
       />
-      <Footer />
     </main>
   );
 }

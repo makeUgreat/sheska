@@ -24,14 +24,18 @@ UI 앱은 코드 위치를 예측 가능하게 만들고 의존성이 한 방향
 
 ```txt
 src/
-  app/
-  pages/
-  widgets/
-  features/
-  entities/
-  shared/
+  01_app/
+  02_pages/
+  03_widgets/
+  04_features/
+  05_entities/
+  06_shared/
   styles/
 ```
+
+숫자 prefix는 filesystem과 IDE 목록에서 FSD layer 순서를 유지하기 위해 사용한다.
+Public import는 `@/pages/posts`, `@/widgets/posts-archive`, `@/shared/ui`처럼
+prefix 없는 FSD layer 이름을 계속 사용한다.
 
 의존성은 아래 방향으로만 흐른다.
 

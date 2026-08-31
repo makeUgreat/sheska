@@ -51,10 +51,3 @@ export const LongTitle: Story = {
     },
   },
 };
-
-export const WithThumbnail: Story = {
-  args: {
-    thumbnailUrl:
-      'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80',
-  },
-};

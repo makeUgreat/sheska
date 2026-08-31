@@ -46,16 +46,19 @@ const meta = {
     layout: 'fullscreen',
   },
   args: {
-    query: '',
-    onQueryChange: () => undefined,
-    isLoading: false,
-    error: null,
-    posts: samplePosts,
-    isSearching: false,
-    normalizedQuery: '',
-    hasNextPage: false,
-    isFetchingNextPage: false,
-    sentinelRef: null,
+    search: {
+      query: '',
+      onQueryChange: () => undefined,
+      normalizedQuery: '',
+      mode: null,
+    },
+    state: {
+      status: 'success',
+      posts: samplePosts,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      sentinelRef: null,
+    },
   },
 } satisfies Meta<typeof PostsListSection>;
 
@@ -67,36 +70,73 @@ export const Populated: Story = {};
 
 export const Loading: Story = {
   args: {
-    isLoading: true,
-    posts: [],
+    state: {
+      status: 'loading',
+    },
   },
 };
 
 export const Empty: Story = {
   args: {
-    posts: [],
+    state: {
+      status: 'empty',
+    },
   },
 };
 
 export const NoSearchResults: Story = {
   args: {
-    query: 'missing',
-    posts: [],
-    isSearching: true,
-    normalizedQuery: 'missing',
+    search: {
+      query: 'missing',
+      onQueryChange: () => undefined,
+      normalizedQuery: 'missing',
+      mode: 'smart',
+    },
+    state: {
+      status: 'empty',
+    },
+  },
+};
+
+export const SmartSearch: Story = {
+  args: {
+    search: {
+      query: 'storybook',
+      onQueryChange: () => undefined,
+      normalizedQuery: 'storybook',
+      mode: 'smart',
+    },
+  },
+};
+
+export const BasicSearchFallback: Story = {
+  args: {
+    search: {
+      query: 'storybook',
+      onQueryChange: () => undefined,
+      normalizedQuery: 'storybook',
+      mode: 'basic',
+    },
   },
 };
 
 export const ErrorState: Story = {
   args: {
-    error: new Error('Failed to load posts.'),
-    posts: [],
+    state: {
+      status: 'error',
+      error: new Error('Failed to load posts.'),
+    },
   },
 };
 
 export const FetchingNextPage: Story = {
   args: {
-    hasNextPage: true,
-    isFetchingNextPage: true,
+    state: {
+      status: 'success',
+      posts: samplePosts,
+      hasNextPage: true,
+      isFetchingNextPage: true,
+      sentinelRef: null,
+    },
   },
 };
