@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SourceVector } from '../source-vector.aggregate';
+import { SourceEmbedding } from '../source-embedding.aggregate';
 
 const validEmbedding = Array.from({ length: 1024 }, (_, i) => i * 0.001);
 
@@ -8,17 +8,17 @@ const validChunks = [
   { chunkIndex: 1, chunkContent: 'second chunk', embedding: validEmbedding },
 ];
 
-describe('SourceVector', () => {
+describe('SourceEmbedding', () => {
   describe('create', () => {
-    it('유효한 파라미터로 SourceVector를 생성한다', () => {
-      const sourceVector = SourceVector.create({
+    it('유효한 파라미터로 SourceEmbedding을 생성한다', () => {
+      const sourceEmbedding = SourceEmbedding.create({
         sourceId: 'source-1',
         model: 'qwen3-embedding:0.6b',
         chunks: validChunks,
       });
-      const props = sourceVector.getProps();
+      const props = sourceEmbedding.getProps();
 
-      expect(sourceVector.id).toBe('source-1');
+      expect(sourceEmbedding.id).toBe('source-1');
       expect(props.model.unpack()).toBe('qwen3-embedding:0.6b');
       expect(props.chunks).toHaveLength(2);
       expect(props.chunks[0].unpack().chunkIndex).toBe(0);
@@ -27,7 +27,7 @@ describe('SourceVector', () => {
 
     it('지원하지 않는 모델이면 throw한다', () => {
       expect(() =>
-        SourceVector.create({
+        SourceEmbedding.create({
           sourceId: 'source-1',
           model: 'unknown-model',
           chunks: validChunks,
@@ -37,7 +37,7 @@ describe('SourceVector', () => {
 
     it('dimension이 모델 spec과 다르면 throw한다', () => {
       expect(() =>
-        SourceVector.create({
+        SourceEmbedding.create({
           sourceId: 'source-1',
           model: 'qwen3-embedding:0.6b',
           chunks: [
@@ -50,23 +50,23 @@ describe('SourceVector', () => {
 
   describe('restore', () => {
     it('저장된 sourceId를 id로 복원한다', () => {
-      const sourceVector = SourceVector.restore({
+      const sourceEmbedding = SourceEmbedding.restore({
         sourceId: 'source-1',
         model: 'qwen3-embedding:0.6b',
         chunks: validChunks,
       });
 
-      expect(sourceVector.id).toBe('source-1');
+      expect(sourceEmbedding.id).toBe('source-1');
     });
 
     it('모든 청크를 포함하여 복원한다', () => {
-      const sourceVector = SourceVector.restore({
+      const sourceEmbedding = SourceEmbedding.restore({
         sourceId: 'source-1',
         model: 'qwen3-embedding:0.6b',
         chunks: validChunks,
       });
 
-      expect(sourceVector.getProps().chunks).toHaveLength(2);
+      expect(sourceEmbedding.getProps().chunks).toHaveLength(2);
     });
   });
 });

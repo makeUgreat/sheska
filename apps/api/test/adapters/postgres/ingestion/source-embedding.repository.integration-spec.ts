@@ -1,21 +1,21 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { type SourceVectorRepository } from '@contexts/ingestion/domain';
-import { SOURCE_VECTOR_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
+import { type SourceEmbeddingRepository } from '@contexts/ingestion/domain';
+import { SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
 import { type SourceRepository } from '@contexts/sources/domain';
 import { SOURCE_REPOSITORY } from '@contexts/sources/sources.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
 import {
-  buildSourceVector,
+  buildSourceEmbedding,
   VALID_EMBEDDING,
-} from '../../../support/domains/fixtures/source-vector.fixture';
+} from '../../../support/domains/fixtures/source-embedding.fixture';
 import { buildSource } from '../../../support/domains/fixtures/source.fixture';
 
-describe('SourceVectorDrizzleRepository', () => {
+describe('SourceEmbeddingDrizzleRepository', () => {
   let app: INestApplication;
   let sourceRepository: SourceRepository;
-  let repository: SourceVectorRepository;
+  let repository: SourceEmbeddingRepository;
 
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
@@ -24,36 +24,38 @@ describe('SourceVectorDrizzleRepository', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
     sourceRepository = app.get<SourceRepository>(SOURCE_REPOSITORY);
-    repository = app.get<SourceVectorRepository>(SOURCE_VECTOR_REPOSITORY);
+    repository = app.get<SourceEmbeddingRepository>(
+      SOURCE_EMBEDDING_REPOSITORY,
+    );
   });
 
   afterAll(async () => {
     await app.close();
   });
 
-  it('source vector를 저장한다', async () => {
+  it('source embedding을 저장한다', async () => {
     const source = await sourceRepository.save(
       buildSource({
-        externalSourceId: 'Notes/source-vector-source.md',
+        externalSourceId: 'Notes/source-embedding-source.md',
       }),
     );
-    const sourceVector = buildSourceVector({ sourceId: source.id });
+    const sourceEmbedding = buildSourceEmbedding({ sourceId: source.id });
 
-    await expect(repository.save(sourceVector)).resolves.not.toThrow();
+    await expect(repository.save(sourceEmbedding)).resolves.not.toThrow();
   });
 
   it('같은 sourceId로 다시 저장하면 청크를 교체한다', async () => {
     const source = await sourceRepository.save(
       buildSource({
-        externalSourceId: 'Notes/source-vector-upsert.md',
+        externalSourceId: 'Notes/source-embedding-upsert.md',
       }),
     );
     const updatedEmbedding = VALID_EMBEDDING.map((v) => v + 0.001);
 
-    await repository.save(buildSourceVector({ sourceId: source.id }));
+    await repository.save(buildSourceEmbedding({ sourceId: source.id }));
     await expect(
       repository.save(
-        buildSourceVector({
+        buildSourceEmbedding({
           sourceId: source.id,
           chunks: [
             {
@@ -70,10 +72,10 @@ describe('SourceVectorDrizzleRepository', () => {
   it('복수 청크를 저장하고 chunkIndex 오름차순으로 반환한다', async () => {
     const source = await sourceRepository.save(
       buildSource({
-        externalSourceId: 'Notes/source-vector-multi-chunk.md',
+        externalSourceId: 'Notes/source-embedding-multi-chunk.md',
       }),
     );
-    const sourceVector = buildSourceVector({
+    const sourceEmbedding = buildSourceEmbedding({
       sourceId: source.id,
       chunks: [
         { chunkIndex: 0, chunkContent: 'first chunk' },
@@ -81,7 +83,7 @@ describe('SourceVectorDrizzleRepository', () => {
         { chunkIndex: 2, chunkContent: 'third chunk' },
       ],
     });
-    await repository.save(sourceVector);
+    await repository.save(sourceEmbedding);
 
     const result = await repository.find({ sourceId: source.id });
 
@@ -95,14 +97,14 @@ describe('SourceVectorDrizzleRepository', () => {
     );
   });
 
-  it('sourceId로 source vector를 반환한다', async () => {
+  it('sourceId로 source embedding을 반환한다', async () => {
     const source = await sourceRepository.save(
       buildSource({
-        externalSourceId: 'Notes/source-vector-find.md',
+        externalSourceId: 'Notes/source-embedding-find.md',
       }),
     );
-    const sourceVector = buildSourceVector({ sourceId: source.id });
-    await repository.save(sourceVector);
+    const sourceEmbedding = buildSourceEmbedding({ sourceId: source.id });
+    await repository.save(sourceEmbedding);
 
     const result = await repository.find({ sourceId: source.id });
 
@@ -111,7 +113,7 @@ describe('SourceVectorDrizzleRepository', () => {
     expect(result?.getProps().model.unpack()).toBe('qwen3-embedding:0.6b');
   });
 
-  it('source vector가 없으면 null을 반환한다', async () => {
+  it('source embedding이 없으면 null을 반환한다', async () => {
     const result = await repository.find({
       sourceId: 'non-existent-source',
     });
