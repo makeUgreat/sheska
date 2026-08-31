@@ -6,15 +6,24 @@ import { type PostRepository } from '@contexts/posts/domain';
 import { type SourceRepository } from '@contexts/sources/domain';
 import { POST_QUERY, POST_REPOSITORY } from '@contexts/posts/posts.di-tokens';
 import { SOURCE_REPOSITORY } from '@contexts/sources/sources.di-tokens';
+import {
+  type SourceVectorRepository,
+  SOURCE_VECTOR_REPOSITORY,
+} from '@contexts/ingestion/ingestion.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
 import { buildPost } from '../../../support/domains/fixtures/post.fixture';
 import { buildSource } from '../../../support/domains/fixtures/source.fixture';
+import {
+  buildSourceVector,
+  VALID_EMBEDDING,
+} from '../../../support/domains/fixtures/source-vector.fixture';
 
 describe('PostPgDrizzleQuery', () => {
   let app: INestApplication;
   let postQuery: PostQuery;
   let posts: PostRepository;
   let sources: SourceRepository;
+  let sourceVectors: SourceVectorRepository;
 
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
@@ -25,6 +34,7 @@ describe('PostPgDrizzleQuery', () => {
     postQuery = app.get<PostQuery>(POST_QUERY);
     posts = app.get<PostRepository>(POST_REPOSITORY);
     sources = app.get<SourceRepository>(SOURCE_REPOSITORY);
+    sourceVectors = app.get<SourceVectorRepository>(SOURCE_VECTOR_REPOSITORY);
   });
 
   afterAll(async () => {
@@ -231,6 +241,7 @@ describe('PostPgDrizzleQuery', () => {
         query: 'TypeScript',
         limit: 20,
         cursor: null,
+        queryEmbedding: null,
       });
 
       const ids = result.map((p) => p.postId);
@@ -252,6 +263,7 @@ describe('PostPgDrizzleQuery', () => {
         query: 'TypeScirpt',
         limit: 20,
         cursor: null,
+        queryEmbedding: null,
       });
 
       const ids = result.map((p) => p.postId);
@@ -272,6 +284,7 @@ describe('PostPgDrizzleQuery', () => {
         query: '소켓',
         limit: 20,
         cursor: null,
+        queryEmbedding: null,
       });
 
       const ids = result.map((p) => p.postId);
@@ -300,6 +313,7 @@ describe('PostPgDrizzleQuery', () => {
         query: 'TypeScript',
         limit: 20,
         cursor: null,
+        queryEmbedding: null,
       });
 
       const ids = result.map((p) => p.postId);
@@ -326,11 +340,13 @@ describe('PostPgDrizzleQuery', () => {
         query: 'TypeScript',
         limit: 2,
         cursor: null,
+        queryEmbedding: null,
       });
       const secondPage = await postQuery.search({
         query: 'TypeScript',
         limit: 2,
         cursor: firstPage.nextCursor!,
+        queryEmbedding: null,
       });
 
       const firstIds = firstPage.posts.map((p) => p.postId);
@@ -358,6 +374,7 @@ describe('PostPgDrizzleQuery', () => {
         query: '리액트훅',
         limit: 20,
         cursor: null,
+        queryEmbedding: null,
       });
 
       const ids = result.map((p) => p.postId);
@@ -392,6 +409,7 @@ describe('PostPgDrizzleQuery', () => {
         query: '쿠버네티스',
         limit: 20,
         cursor: null,
+        queryEmbedding: null,
       });
 
       const ids = result.map((p) => p.postId);
@@ -405,9 +423,157 @@ describe('PostPgDrizzleQuery', () => {
         query: '일치하지않는쿼리xyz',
         limit: 20,
         cursor: null,
+        queryEmbedding: null,
       });
 
       expect(result).toHaveLength(0);
+    });
+
+    it('제목만 키워드 매치하고 임베딩이 없어도 하이브리드 쿼리에서 반환된다', async () => {
+      const source = await sources.save(
+        buildSource({ externalSourceId: 'Notes/pq-hybrid-fts-only.md' }),
+      );
+      const post = buildPost({
+        sourceId: source.id,
+        title: 'RustLang 동시성 모델',
+      });
+      await posts.save(post);
+
+      const { posts: result } = await postQuery.search({
+        query: 'RustLang',
+        limit: 20,
+        cursor: null,
+        queryEmbedding: VALID_EMBEDDING,
+      });
+
+      const ids = result.map((p) => p.postId);
+      expect(ids).toContain(post.id);
+    });
+
+    it('키워드 겹침 없이 임베딩만 근접해도 하이브리드 쿼리에서 반환된다', async () => {
+      const source = await sources.save(
+        buildSource({ externalSourceId: 'Notes/pq-hybrid-vector-only.md' }),
+      );
+      const post = buildPost({
+        sourceId: source.id,
+        title: '완전히 무관한 제목',
+      });
+      await posts.save(post);
+      const queryEmbedding = Array.from({ length: 1024 }, () => 1);
+      await sourceVectors.save(
+        buildSourceVector({
+          sourceId: source.id,
+          chunks: [
+            {
+              chunkIndex: 0,
+              chunkContent: 'chunk content',
+              embedding: Array.from({ length: 1024 }, () => 1),
+            },
+          ],
+        }),
+      );
+
+      const { posts: result } = await postQuery.search({
+        query: '없는키워드zzz',
+        limit: 20,
+        cursor: null,
+        queryEmbedding,
+      });
+
+      const ids = result.map((p) => p.postId);
+      expect(ids).toContain(post.id);
+    });
+
+    it('FTS와 벡터 둘 다 강한 post가 하나만 강한 post보다 상위 순위로 반환된다', async () => {
+      const bothSource = await sources.save(
+        buildSource({ externalSourceId: 'Notes/pq-hybrid-rrf-both.md' }),
+      );
+      const ftsOnlySource = await sources.save(
+        buildSource({ externalSourceId: 'Notes/pq-hybrid-rrf-fts-only.md' }),
+      );
+      const bothPost = buildPost({
+        sourceId: bothSource.id,
+        title: 'GraphQL 스키마 설계',
+      });
+      const ftsOnlyPost = buildPost({
+        sourceId: ftsOnlySource.id,
+        title: 'GraphQL 스키마 설계',
+      });
+      await posts.save(bothPost);
+      await posts.save(ftsOnlyPost);
+      const queryEmbedding = Array.from({ length: 1024 }, () => 1);
+      await sourceVectors.save(
+        buildSourceVector({
+          sourceId: bothSource.id,
+          chunks: [
+            {
+              chunkIndex: 0,
+              chunkContent: 'chunk content',
+              embedding: Array.from({ length: 1024 }, () => 1),
+            },
+          ],
+        }),
+      );
+      await sourceVectors.save(
+        buildSourceVector({
+          sourceId: ftsOnlySource.id,
+          chunks: [
+            {
+              chunkIndex: 0,
+              chunkContent: 'chunk content',
+              embedding: Array.from({ length: 1024 }, () => -1),
+            },
+          ],
+        }),
+      );
+
+      const { posts: result } = await postQuery.search({
+        query: 'GraphQL',
+        limit: 20,
+        cursor: null,
+        queryEmbedding,
+      });
+
+      const ids = result.map((p) => p.postId);
+      expect(ids.indexOf(bothPost.id)).toBeLessThan(
+        ids.indexOf(ftsOnlyPost.id),
+      );
+    });
+
+    it('하이브리드 검색 결과를 nextCursor로 다음 페이지 조회한다', async () => {
+      const hs1 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/pq-hybrid-cursor-1.md' }),
+      );
+      const hs2 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/pq-hybrid-cursor-2.md' }),
+      );
+      const hs3 = await sources.save(
+        buildSource({ externalSourceId: 'Notes/pq-hybrid-cursor-3.md' }),
+      );
+      await posts.save(buildPost({ sourceId: hs1.id, title: 'Kotlin A' }));
+      await posts.save(buildPost({ sourceId: hs2.id, title: 'Kotlin B' }));
+      await posts.save(buildPost({ sourceId: hs3.id, title: 'Kotlin C' }));
+      const queryEmbedding = Array.from({ length: 1024 }, () => 1);
+
+      const firstPage = await postQuery.search({
+        query: 'Kotlin',
+        limit: 2,
+        cursor: null,
+        queryEmbedding,
+      });
+      const secondPage = await postQuery.search({
+        query: 'Kotlin',
+        limit: 2,
+        cursor: firstPage.nextCursor!,
+        queryEmbedding,
+      });
+
+      const firstIds = firstPage.posts.map((p) => p.postId);
+      const secondIds = secondPage.posts.map((p) => p.postId);
+      expect(firstPage.nextCursor?.score).toEqual(expect.any(Number));
+      expect(firstIds).toHaveLength(2);
+      expect(secondIds.length).toBeGreaterThanOrEqual(1);
+      expect(firstIds.some((id) => secondIds.includes(id))).toBe(false);
     });
   });
 

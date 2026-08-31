@@ -45,7 +45,12 @@ describe('PostPgDrizzleQuery', () => {
     const query = new PostPgDrizzleQuery(db as never);
 
     await expect(
-      query.search({ query: 'TypeScript', limit: 20, cursor: null }),
+      query.search({
+        query: 'TypeScript',
+        limit: 20,
+        cursor: null,
+        queryEmbedding: null,
+      }),
     ).rejects.toMatchObject({
       code: 'post.search_failed',
       source: { boundary: 'persistence', adapter: 'post.pg-drizzle' },

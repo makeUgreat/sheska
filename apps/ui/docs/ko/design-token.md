@@ -72,7 +72,6 @@ Boundary를 정의할 때는 `#3e4451`의 1px solid border를 사용한다. Flat
 현재 custom effect/motion token은 없다. Hover와 motion interaction은 token을 거치지 않고 Stitch의 실제 Tailwind utility class를 그대로 사용한다. 예:
 
 - **Garden card hover**: 카드 배경만 `duration-300`으로 tint 변경, border나 shadow 변화 없음.
-- **Thumbnail hover**: 이미지에 `duration-500` `scale-105`.
 - **Action link hover**: 화살표에만 `translate-x-1`.
 - **Text link hover**: accent color로의 단순 color transition.
 

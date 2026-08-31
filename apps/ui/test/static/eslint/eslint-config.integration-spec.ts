@@ -52,7 +52,7 @@ describe('eslint/config.mjs', () => {
   });
 
   it('production source file에 FSD boundary rule을 적용한다', async () => {
-    const config = await calculateConfigForFile('src/pages/posts/index.ts');
+    const config = await calculateConfigForFile('src/02_pages/posts/index.ts');
     const rules = getConfiguredRules(config);
 
     expect(rules['ui-local/fsd-boundaries']).toBeDefined();
@@ -60,7 +60,7 @@ describe('eslint/config.mjs', () => {
 
   it('story file에는 FSD boundary rule을 적용하지 않는다', async () => {
     const config = await calculateConfigForFile(
-      'src/entities/post/ui/post-card.stories.tsx',
+      'src/05_entities/post/ui/post-card.stories.tsx',
     );
     const rules = getConfiguredRules(config);
 
@@ -75,7 +75,7 @@ describe('eslint/config.mjs', () => {
 
         console.log(PostCard, StatusMessage);
       `,
-      'src/widgets/posts-archive/ui/example.tsx',
+      'src/03_widgets/posts-archive/ui/example.tsx',
     );
 
     expect(findFsdBoundaryMessage(result)).toBeUndefined();
@@ -101,7 +101,7 @@ describe('eslint/config.mjs', () => {
 
         console.log(App);
       `,
-      'src/app/shell/ui/app.tsx',
+      'src/01_app/shell/ui/app.tsx',
     );
 
     expect(findFsdBoundaryMessage(result)).toContain(
@@ -116,7 +116,7 @@ describe('eslint/config.mjs', () => {
 
         console.log(PostsPage);
       `,
-      'src/features/posts-archive/model/use-posts-archive.ts',
+      'src/04_features/posts-archive/model/use-posts-archive.ts',
     );
 
     expect(findFsdBoundaryMessage(result)).toContain(
@@ -131,7 +131,7 @@ describe('eslint/config.mjs', () => {
 
         console.log(SourceListPage);
       `,
-      'src/pages/posts/ui/posts-page.tsx',
+      'src/02_pages/posts/ui/posts-page.tsx',
     );
 
     expect(findFsdBoundaryMessage(result)).toContain(
@@ -146,7 +146,7 @@ describe('eslint/config.mjs', () => {
 
         console.log(PostCard);
       `,
-      'src/widgets/posts-archive/ui/posts-list-section.tsx',
+      'src/03_widgets/posts-archive/ui/posts-list-section.tsx',
     );
 
     expect(findFsdBoundaryMessage(result)).toContain(

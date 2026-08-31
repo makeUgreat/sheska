@@ -7,6 +7,7 @@ import {
   type PublishPostRequest,
   type PublishPostResponse,
   type SearchPostsParams,
+  type SearchPostsResponse,
   type UpdatePostRequest,
   type UpdatePostResponse,
 } from './types';
@@ -32,12 +33,12 @@ export function countPosts(http: HttpClient): Promise<CountPostsResponse> {
 export function searchPosts(
   http: HttpClient,
   params: SearchPostsParams,
-): Promise<ListPostsResponse> {
+): Promise<SearchPostsResponse> {
   const queryParams: Record<string, string> = { q: params.query };
   if (params.cursor) queryParams.cursor = params.cursor;
   if (params.limit) queryParams.limit = String(params.limit);
 
-  return http.get<ListPostsResponse>('/posts/search', queryParams);
+  return http.get<SearchPostsResponse>('/posts/search', queryParams);
 }
 
 export function getPost(

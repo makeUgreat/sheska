@@ -155,14 +155,13 @@ Props:
 
 ### `PostCard`
 
-Metadata, title, summary, action link, optional thumbnail, search result title
-highlight를 가진 post preview를 렌더링한다.
+Metadata, title, summary, action link, optional search result title highlight를
+가진 post preview를 렌더링한다.
 
 Props:
 
 - `post`: `PostSummary`.
 - `highlight`: title 안에서 표시할 optional search query text.
-- `thumbnailUrl`: optional image URL.
 
 ### `PostSectionHeader`
 

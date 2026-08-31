@@ -72,7 +72,6 @@ To define boundaries, use 1px solid borders in `#3e4451`. Avoid drop shadows ent
 There are currently no custom effect or motion tokens. Hover and motion interactions copy Stitch's literal Tailwind utility classes directly instead of going through a token, for example:
 
 - **Garden card hover**: `duration-300` background tint change on the card, no border or shadow change.
-- **Thumbnail hover**: `duration-500` `scale-105` on the image.
 - **Action link hover**: `translate-x-1` on the trailing arrow only.
 - **Text link hover**: plain color transition to the accent color.
 

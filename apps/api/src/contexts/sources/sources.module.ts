@@ -9,7 +9,7 @@ import { SourceSha256Fingerprinter } from '@contexts/sources/infrastructure/fing
 import * as sourcesSchema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
 import { SourcePgDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
 import { SourceSyncJobPgDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source-sync-job.pg-drizzle.repository';
-import { SourceEmbeddingIngestionLookup } from '@contexts/sources/infrastructure/ingestion/source-embedding.ingestion.lookup';
+import { SourceEmbeddingFromIngestionLookup } from '@contexts/sources/infrastructure/ingestion/source-embedding.from-ingestion.lookup';
 import { SourcePgDrizzleQuery } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.query';
 import { SourcesHttpController } from '@contexts/sources/presentation/http/sources-http.controller';
 import { HandleIngestionResultHandler } from '@contexts/sources/application/event-handlers/handle-ingestion-result.handler';
@@ -56,7 +56,7 @@ export class SourcesModule {
         {
           provide: SOURCE_EMBEDDING_LOOKUP,
           useFactory: (vectorRepo: SourceVectorRepository) =>
-            new SourceEmbeddingIngestionLookup(vectorRepo),
+            new SourceEmbeddingFromIngestionLookup(vectorRepo),
           inject: [SOURCE_VECTOR_REPOSITORY],
         },
         {

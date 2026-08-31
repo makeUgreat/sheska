@@ -24,14 +24,18 @@ Use these top-level source layers:
 
 ```txt
 src/
-  app/
-  pages/
-  widgets/
-  features/
-  entities/
-  shared/
+  01_app/
+  02_pages/
+  03_widgets/
+  04_features/
+  05_entities/
+  06_shared/
   styles/
 ```
+
+The numeric prefixes keep filesystem and IDE listings in FSD layer order. Public
+imports still use the unprefixed FSD layer names, such as `@/pages/posts`,
+`@/widgets/posts-archive`, and `@/shared/ui`.
 
 Dependencies point downward only:
 

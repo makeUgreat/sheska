@@ -29,6 +29,7 @@ export type PostQuerySearchOptions = {
   readonly query: string;
   readonly limit: number;
   readonly cursor: PostQuerySearchCursor | null;
+  readonly queryEmbedding: number[] | null;
 };
 
 export type PostQueryListItem = {
