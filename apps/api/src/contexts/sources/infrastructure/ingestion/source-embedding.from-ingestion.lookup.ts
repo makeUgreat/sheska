@@ -4,7 +4,7 @@ import {
   type EmbeddingInfo,
 } from '@contexts/sources/application/ports';
 
-export class SourceEmbeddingIngestionLookup implements SourceEmbeddingLookup {
+export class SourceEmbeddingFromIngestionLookup implements SourceEmbeddingLookup {
   constructor(private readonly sourceVectors: SourceVectorRepository) {}
 
   async find({

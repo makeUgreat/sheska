@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/context-integration.md
-last_synced: 2026-07-13
+last_synced: 2026-09-01
 related:
   - ./ddd.md
   - ./source-dependency.md
@@ -58,7 +58,7 @@ related:
 ### Rule 2 — 어댑터는 컨슈머의 infrastructure 레이어에 둔다
 
 - 위치: `contexts/A/infrastructure/<B-name>/` (`<B-name>`은 프로듀서 컨텍스트 이름).
-- 파일과 클래스 명명은 [infrastructure adapter 컨벤션](./infrastructure.md)을 따른다.
+- 파일과 클래스 명명은 [infrastructure adapter 컨벤션](./infrastructure.md)의 `{domain-name}.{adapter-or-purpose}.{role}.ts` 패턴을 따른다. 크로스 컨텍스트 Pull 어댑터의 경우 `adapter-or-purpose` 자리에 `from-<B-name>`을 쓴다 (예: `source-embedding.from-ingestion.lookup.ts` → `SourceEmbeddingFromIngestionLookup`). `from-` 접두사를 붙이면 폴더 경로를 안 봐도 파일명만으로 크로스 컨텍스트 어댑터임을 알 수 있고, domain-name과 프로듀서 컨텍스트 이름이 어휘적으로 비슷할 때(예: `source` vs `sources`) 생기는 모호함도 피할 수 있다.
 - **A 전체에서 B를 import하는 파일은 이 어댑터 하나뿐이어야 한다.**
 - B의 domain object는 이 어댑터 파일 밖에서는 나타나지 않는다.
 
