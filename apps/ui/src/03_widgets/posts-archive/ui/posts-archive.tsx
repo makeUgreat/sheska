@@ -48,6 +48,7 @@ export function PostsArchive() {
   const {
     query,
     setQuery,
+    submitSearch,
     normalizedQuery,
     isSearching,
     semanticSearchApplied,
@@ -79,6 +80,7 @@ export function PostsArchive() {
       search={{
         query,
         onQueryChange: setQuery,
+        onQuerySubmit: submitSearch,
         normalizedQuery: isSearching ? normalizedQuery : '',
         mode: searchMode,
       }}

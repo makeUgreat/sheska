@@ -178,4 +178,77 @@ describe('PostsPage', () => {
 
     expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
   });
+
+  it('검색어 입력만으로는 searchPosts를 호출하지 않는다', async () => {
+    const user = userEvent.setup();
+    const searchPosts = vi
+      .fn()
+      .mockResolvedValue({ posts: [], nextCursor: null });
+    const client = buildMockHttpClient({ searchPosts });
+
+    renderPage(client);
+
+    await user.type(
+      screen.getByLabelText('Search by title or content:'),
+      'garden',
+    );
+
+    expect(searchPosts).not.toHaveBeenCalled();
+  });
+
+  it('Enter를 누르면 검색한다', async () => {
+    const user = userEvent.setup();
+    const now = '2026-01-01T00:00:00.000Z';
+    const post: PostSummary = {
+      postId: 'search-1',
+      sourceId: 'source-1',
+      title: 'Garden Search Result',
+      viewCount: 3,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const searchPosts = vi.fn().mockResolvedValue({
+      posts: [post],
+      nextCursor: null,
+      semanticSearchApplied: true,
+    });
+    const client = buildMockHttpClient({ searchPosts });
+
+    renderPage(client);
+
+    await user.type(
+      screen.getByLabelText('Search by title or content:'),
+      'garden{Enter}',
+    );
+
+    await waitFor(() => {
+      expect(searchPosts).toHaveBeenCalledTimes(1);
+      expect(
+        screen.getByRole('link', { name: /Garden Search Result/ }),
+      ).toBeDefined();
+    });
+  });
+
+  it('Search 버튼을 누르면 검색한다', async () => {
+    const user = userEvent.setup();
+    const searchPosts = vi.fn().mockResolvedValue({
+      posts: [],
+      nextCursor: null,
+      semanticSearchApplied: false,
+    });
+    const client = buildMockHttpClient({ searchPosts });
+
+    renderPage(client);
+
+    await user.type(
+      screen.getByLabelText('Search by title or content:'),
+      'fts',
+    );
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+
+    await waitFor(() => {
+      expect(searchPosts).toHaveBeenCalledTimes(1);
+      expect(screen.getByText('No results for "fts".')).toBeDefined();
+    });
+  });
 });
