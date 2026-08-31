@@ -1,6 +1,8 @@
 // Tokens used for Dependency Injection
-export const SOURCE_VECTOR_REPOSITORY = Symbol('SOURCE_VECTOR_REPOSITORY');
+export const SOURCE_EMBEDDING_REPOSITORY = Symbol(
+  'SOURCE_EMBEDDING_REPOSITORY',
+);
 export const EMBEDDER = Symbol('EMBEDDER');
 
-export type { SourceVectorRepository } from '@contexts/ingestion/domain';
+export type { SourceEmbeddingRepository } from '@contexts/ingestion/domain';
 export type { Embedder } from '@contexts/ingestion/application/ports';

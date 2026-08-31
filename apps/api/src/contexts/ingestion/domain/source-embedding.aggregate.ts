@@ -1,12 +1,12 @@
 import { AggregateRoot } from '@kernels/domain';
-import { ChunkVector } from './chunk-vector.vo';
+import { ChunkEmbedding } from './chunk-embedding.vo';
 import { EmbeddingModel } from './embedding-model.vo';
 import { EmbeddingVector } from './embedding-vector.vo';
 
-interface SourceVectorProps {
+interface SourceEmbeddingProps {
   sourceId: string;
   model: EmbeddingModel;
-  chunks: ChunkVector[];
+  chunks: ChunkEmbedding[];
 }
 
 interface ChunkParam {
@@ -15,13 +15,13 @@ interface ChunkParam {
   embedding: number[];
 }
 
-interface SourceVectorCreateParams {
+interface SourceEmbeddingCreateParams {
   sourceId: string;
   model: string;
   chunks: ChunkParam[];
 }
 
-interface SourceVectorRestoreParams {
+interface SourceEmbeddingRestoreParams {
   sourceId: string;
   model: string;
   chunks: ChunkParam[];
@@ -29,32 +29,32 @@ interface SourceVectorRestoreParams {
   updatedAt?: Date;
 }
 
-export class SourceVector extends AggregateRoot<SourceVectorProps> {
-  static create(params: SourceVectorCreateParams): SourceVector {
+export class SourceEmbedding extends AggregateRoot<SourceEmbeddingProps> {
+  static create(params: SourceEmbeddingCreateParams): SourceEmbedding {
     const model = EmbeddingModel.of(params.model);
     const chunks = params.chunks.map((c) =>
-      ChunkVector.of({
+      ChunkEmbedding.of({
         chunkIndex: c.chunkIndex,
         chunkContent: c.chunkContent,
         embedding: EmbeddingVector.of(c.embedding, model),
       }),
     );
-    return new SourceVector({
+    return new SourceEmbedding({
       id: params.sourceId,
       props: { sourceId: params.sourceId, model, chunks },
     });
   }
 
-  static restore(params: SourceVectorRestoreParams): SourceVector {
+  static restore(params: SourceEmbeddingRestoreParams): SourceEmbedding {
     const model = EmbeddingModel.of(params.model);
     const chunks = params.chunks.map((c) =>
-      ChunkVector.of({
+      ChunkEmbedding.of({
         chunkIndex: c.chunkIndex,
         chunkContent: c.chunkContent,
         embedding: EmbeddingVector.of(c.embedding, model),
       }),
     );
-    return new SourceVector({
+    return new SourceEmbedding({
       id: params.sourceId,
       props: { sourceId: params.sourceId, model, chunks },
       createdAt: params.createdAt,

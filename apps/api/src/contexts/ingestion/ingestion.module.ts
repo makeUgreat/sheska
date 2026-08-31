@@ -13,9 +13,9 @@ import {
 } from '@contexts/ingestion/application/queue-handlers/embed-result.consumer';
 import { OllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.embedder';
 import { RecursiveCharacterChunker } from '@contexts/ingestion/application/services/recursive-character.chunker';
-import { SourceVectorPgDrizzleRepository } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/source-vector.pg-drizzle.repository';
+import { SourceEmbeddingPgDrizzleRepository } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/source-embedding.pg-drizzle.repository';
 import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
-import { EMBEDDER, SOURCE_VECTOR_REPOSITORY } from './ingestion.di-tokens';
+import { EMBEDDER, SOURCE_EMBEDDING_REPOSITORY } from './ingestion.di-tokens';
 
 export type IngestionModuleOptions = Record<string, never>;
 
@@ -30,9 +30,9 @@ export class IngestionModule {
       ],
       providers: [
         {
-          provide: SOURCE_VECTOR_REPOSITORY,
+          provide: SOURCE_EMBEDDING_REPOSITORY,
           useFactory: (db: NodePgDatabase<typeof ingestionSchema>) =>
-            new SourceVectorPgDrizzleRepository(db),
+            new SourceEmbeddingPgDrizzleRepository(db),
           inject: [DATABASE_TOKENS.drizzleDatabase],
         },
         {
@@ -47,7 +47,7 @@ export class IngestionModule {
         EmbedRequestConsumer,
         EmbedResultConsumer,
       ],
-      exports: [SOURCE_VECTOR_REPOSITORY, EMBEDDER],
+      exports: [SOURCE_EMBEDDING_REPOSITORY, EMBEDDER],
     };
   }
 }

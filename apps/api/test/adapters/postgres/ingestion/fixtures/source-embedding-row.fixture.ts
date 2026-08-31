@@ -1,11 +1,11 @@
-import { type SourceVectorRow } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
-import { VALID_EMBEDDING } from '../../../../support/domains/fixtures/source-vector.fixture';
+import { type SourceEmbeddingRow } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
+import { VALID_EMBEDDING } from '../../../../support/domains/fixtures/source-embedding.fixture';
 
 const persistedAt = new Date('2026-01-01T00:00:00.000Z');
 
-export function buildSourceVectorRow(
-  params: Partial<SourceVectorRow> = {},
-): SourceVectorRow {
+export function buildSourceEmbeddingRow(
+  params: Partial<SourceEmbeddingRow> = {},
+): SourceEmbeddingRow {
   return {
     sourceId: params.sourceId ?? 'source-1',
     chunkIndex: params.chunkIndex ?? 0,

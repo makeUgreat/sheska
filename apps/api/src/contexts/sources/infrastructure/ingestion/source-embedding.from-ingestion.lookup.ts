@@ -1,25 +1,25 @@
-import { type SourceVectorRepository } from '@contexts/ingestion/ingestion.di-tokens';
+import { type SourceEmbeddingRepository } from '@contexts/ingestion/ingestion.di-tokens';
 import {
   type SourceEmbeddingLookup,
   type EmbeddingInfo,
 } from '@contexts/sources/application/ports';
 
 export class SourceEmbeddingFromIngestionLookup implements SourceEmbeddingLookup {
-  constructor(private readonly sourceVectors: SourceVectorRepository) {}
+  constructor(private readonly sourceEmbeddings: SourceEmbeddingRepository) {}
 
   async find({
     sourceId,
   }: {
     sourceId: string;
   }): Promise<EmbeddingInfo | null> {
-    const vector = await this.sourceVectors.find({ sourceId });
-    if (!vector) return null;
-    const props = vector.getProps();
+    const embedding = await this.sourceEmbeddings.find({ sourceId });
+    if (!embedding) return null;
+    const props = embedding.getProps();
     return {
       model: props.model.unpack(),
       dimensions: props.model.expectedDimensions,
-      createdAt: vector.createdAt,
-      updatedAt: vector.updatedAt,
+      createdAt: embedding.createdAt,
+      updatedAt: embedding.updatedAt,
     };
   }
 }

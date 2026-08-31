@@ -7,23 +7,23 @@ import { type SourceRepository } from '@contexts/sources/domain';
 import { POST_QUERY, POST_REPOSITORY } from '@contexts/posts/posts.di-tokens';
 import { SOURCE_REPOSITORY } from '@contexts/sources/sources.di-tokens';
 import {
-  type SourceVectorRepository,
-  SOURCE_VECTOR_REPOSITORY,
+  type SourceEmbeddingRepository,
+  SOURCE_EMBEDDING_REPOSITORY,
 } from '@contexts/ingestion/ingestion.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
 import { buildPost } from '../../../support/domains/fixtures/post.fixture';
 import { buildSource } from '../../../support/domains/fixtures/source.fixture';
 import {
-  buildSourceVector,
+  buildSourceEmbedding,
   VALID_EMBEDDING,
-} from '../../../support/domains/fixtures/source-vector.fixture';
+} from '../../../support/domains/fixtures/source-embedding.fixture';
 
 describe('PostPgDrizzleQuery', () => {
   let app: INestApplication;
   let postQuery: PostQuery;
   let posts: PostRepository;
   let sources: SourceRepository;
-  let sourceVectors: SourceVectorRepository;
+  let sourceEmbeddings: SourceEmbeddingRepository;
 
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
@@ -34,7 +34,9 @@ describe('PostPgDrizzleQuery', () => {
     postQuery = app.get<PostQuery>(POST_QUERY);
     posts = app.get<PostRepository>(POST_REPOSITORY);
     sources = app.get<SourceRepository>(SOURCE_REPOSITORY);
-    sourceVectors = app.get<SourceVectorRepository>(SOURCE_VECTOR_REPOSITORY);
+    sourceEmbeddings = app.get<SourceEmbeddingRepository>(
+      SOURCE_EMBEDDING_REPOSITORY,
+    );
   });
 
   afterAll(async () => {
@@ -460,8 +462,8 @@ describe('PostPgDrizzleQuery', () => {
       });
       await posts.save(post);
       const queryEmbedding = Array.from({ length: 1024 }, () => 1);
-      await sourceVectors.save(
-        buildSourceVector({
+      await sourceEmbeddings.save(
+        buildSourceEmbedding({
           sourceId: source.id,
           chunks: [
             {
@@ -502,8 +504,8 @@ describe('PostPgDrizzleQuery', () => {
       await posts.save(bothPost);
       await posts.save(ftsOnlyPost);
       const queryEmbedding = Array.from({ length: 1024 }, () => 1);
-      await sourceVectors.save(
-        buildSourceVector({
+      await sourceEmbeddings.save(
+        buildSourceEmbedding({
           sourceId: bothSource.id,
           chunks: [
             {
@@ -514,8 +516,8 @@ describe('PostPgDrizzleQuery', () => {
           ],
         }),
       );
-      await sourceVectors.save(
-        buildSourceVector({
+      await sourceEmbeddings.save(
+        buildSourceEmbedding({
           sourceId: ftsOnlySource.id,
           chunks: [
             {

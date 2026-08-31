@@ -3,42 +3,42 @@ import {
   InfrastructureException,
   INFRASTRUCTURE_ERROR_KIND,
 } from '@kernels/infrastructure';
-import { buildSourceVector } from '../../../../../../../test/support/domains/fixtures/source-vector.fixture';
-import { SourceVectorPgDrizzleRepository } from '../source-vector.pg-drizzle.repository';
+import { buildSourceEmbedding } from '../../../../../../../test/support/domains/fixtures/source-embedding.fixture';
+import { SourceEmbeddingPgDrizzleRepository } from '../source-embedding.pg-drizzle.repository';
 
-describe('SourceVectorPgDrizzleRepository', () => {
+describe('SourceEmbeddingPgDrizzleRepository', () => {
   it('Postgres error는 CONFLICT exception으로 전파한다', async () => {
-    const repository = new SourceVectorPgDrizzleRepository(
+    const repository = new SourceEmbeddingPgDrizzleRepository(
       createSaveRejectingDb(createPostgresError('23505')),
     );
 
-    const result = repository.save(buildSourceVector());
+    const result = repository.save(buildSourceEmbedding());
 
     await expect(result).rejects.toBeInstanceOf(InfrastructureException);
     await expect(result).rejects.toMatchObject({
       kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
-      code: 'source_vector.save_failed',
+      code: 'source_embedding.save_failed',
     });
   });
 
   it('unknown failure는 UNEXPECTED exception으로 전파한다', async () => {
-    const repository = new SourceVectorPgDrizzleRepository(
+    const repository = new SourceEmbeddingPgDrizzleRepository(
       createSaveRejectingDb(new Error('connection failed')),
     );
 
-    const result = repository.save(buildSourceVector());
+    const result = repository.save(buildSourceEmbedding());
 
     await expect(result).rejects.toBeInstanceOf(InfrastructureException);
     await expect(result).rejects.toMatchObject({
       kind: INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
-      code: 'source_vector.save_failed',
+      code: 'source_embedding.save_failed',
     });
   });
 });
 
 function createSaveRejectingDb(
   error: Error,
-): ConstructorParameters<typeof SourceVectorPgDrizzleRepository>[0] {
+): ConstructorParameters<typeof SourceEmbeddingPgDrizzleRepository>[0] {
   return {
     transaction: (fn: (tx: unknown) => Promise<void>) =>
       fn({
@@ -46,7 +46,7 @@ function createSaveRejectingDb(
         insert: () => ({ values: () => Promise.reject(error) }),
       }),
   } as unknown as ConstructorParameters<
-    typeof SourceVectorPgDrizzleRepository
+    typeof SourceEmbeddingPgDrizzleRepository
   >[0];
 }
 

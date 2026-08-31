@@ -10,12 +10,12 @@ import {
   type EmbedResultPayload,
 } from '@contexts/ingestion/application/queue-handlers/embed-result.consumer';
 import { LOGGER } from '@kernels/application';
-import { SOURCE_VECTOR_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
+import { SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
 import {
   IngestionCompletedDomainEvent,
   IngestionFailedDomainEvent,
 } from '@contexts/ingestion/domain';
-import { VALID_EMBEDDING } from '../../../support/domains/fixtures/source-vector.fixture';
+import { VALID_EMBEDDING } from '../../../support/domains/fixtures/source-embedding.fixture';
 
 const REDIS_CONNECTION = { host: '127.0.0.1', port: 56379 };
 
@@ -40,7 +40,7 @@ describe('EmbedResultConsumer', () => {
       ],
       providers: [
         EmbedResultConsumer,
-        { provide: SOURCE_VECTOR_REPOSITORY, useValue: { save } },
+        { provide: SOURCE_EMBEDDING_REPOSITORY, useValue: { save } },
         {
           provide: LOGGER,
           useValue: {

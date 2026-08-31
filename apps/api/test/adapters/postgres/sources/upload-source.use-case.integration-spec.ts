@@ -22,7 +22,7 @@ import {
 } from '@contexts/sources/sources.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
 import { sourceContentByteSize } from '../../../support/domains/fixtures/source.fixture';
-import { VALID_EMBEDDING } from '../../../support/domains/fixtures/source-vector.fixture';
+import { VALID_EMBEDDING } from '../../../support/domains/fixtures/source-embedding.fixture';
 
 describe('UploadSourceUseCase', () => {
   let app: INestApplication;
@@ -135,7 +135,7 @@ describe('UploadSourceUseCase', () => {
     );
     const firstResult = await useCase.execute({ externalSourceId, content });
 
-    await database.insert(ingestionSchema.sourceVectors).values({
+    await database.insert(ingestionSchema.sourceEmbeddings).values({
       sourceId: firstResult.sourceId,
       chunkIndex: 0,
       chunkContent: 'existing chunk',

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EmbeddingModel } from '../embedding-model.vo';
 import { EmbeddingVector } from '../embedding-vector.vo';
-import { ChunkVector } from '../chunk-vector.vo';
+import { ChunkEmbedding } from '../chunk-embedding.vo';
 
 const model = EmbeddingModel.of('qwen3-embedding:0.6b');
 const validEmbedding = EmbeddingVector.of(
@@ -9,9 +9,9 @@ const validEmbedding = EmbeddingVector.of(
   model,
 );
 
-describe('ChunkVector', () => {
-  it('유효한 파라미터로 ChunkVector를 생성한다', () => {
-    const chunk = ChunkVector.of({
+describe('ChunkEmbedding', () => {
+  it('유효한 파라미터로 ChunkEmbedding을 생성한다', () => {
+    const chunk = ChunkEmbedding.of({
       chunkIndex: 0,
       chunkContent: 'some text',
       embedding: validEmbedding,
@@ -23,7 +23,7 @@ describe('ChunkVector', () => {
 
   it('chunkIndex가 음수이면 throw한다', () => {
     expect(() =>
-      ChunkVector.of({
+      ChunkEmbedding.of({
         chunkIndex: -1,
         chunkContent: 'text',
         embedding: validEmbedding,
@@ -33,7 +33,7 @@ describe('ChunkVector', () => {
 
   it('chunkIndex가 소수이면 throw한다', () => {
     expect(() =>
-      ChunkVector.of({
+      ChunkEmbedding.of({
         chunkIndex: 1.5,
         chunkContent: 'text',
         embedding: validEmbedding,
@@ -43,7 +43,7 @@ describe('ChunkVector', () => {
 
   it('chunkIndex가 0이면 유효하다', () => {
     expect(() =>
-      ChunkVector.of({
+      ChunkEmbedding.of({
         chunkIndex: 0,
         chunkContent: 'text',
         embedding: validEmbedding,

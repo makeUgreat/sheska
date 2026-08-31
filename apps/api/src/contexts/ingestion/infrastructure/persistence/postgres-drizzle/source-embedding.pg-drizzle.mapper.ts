@@ -1,10 +1,10 @@
-import { SourceVector } from '@contexts/ingestion/domain';
-import { type SourceVectorInsert, type SourceVectorRow } from './schema';
+import { SourceEmbedding } from '@contexts/ingestion/domain';
+import { type SourceEmbeddingInsert, type SourceEmbeddingRow } from './schema';
 
-export class SourceVectorPgDrizzleMapper {
-  static toDomain(rows: SourceVectorRow[]): SourceVector {
+export class SourceEmbeddingPgDrizzleMapper {
+  static toDomain(rows: SourceEmbeddingRow[]): SourceEmbedding {
     const first = rows[0];
-    return SourceVector.restore({
+    return SourceEmbedding.restore({
       sourceId: first.sourceId,
       model: first.model,
       chunks: rows.map((row) => ({
@@ -17,8 +17,8 @@ export class SourceVectorPgDrizzleMapper {
     });
   }
 
-  static toInserts(sourceVector: SourceVector): SourceVectorInsert[] {
-    const props = sourceVector.getProps();
+  static toInserts(sourceEmbedding: SourceEmbedding): SourceEmbeddingInsert[] {
+    const props = sourceEmbedding.getProps();
     const model = props.model.unpack();
 
     return props.chunks.map((chunk) => {
