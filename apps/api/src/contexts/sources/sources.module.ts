@@ -14,8 +14,8 @@ import { SourcePgDrizzleQuery } from '@contexts/sources/infrastructure/persisten
 import { SourcesHttpController } from '@contexts/sources/presentation/http/sources-http.controller';
 import { HandleIngestionResultHandler } from '@contexts/sources/application/event-handlers/handle-ingestion-result.handler';
 import {
-  type SourceVectorRepository,
-  SOURCE_VECTOR_REPOSITORY,
+  type SourceEmbeddingRepository,
+  SOURCE_EMBEDDING_REPOSITORY,
 } from '@contexts/ingestion/ingestion.di-tokens';
 import { IngestionModule } from '@contexts/ingestion/ingestion.module';
 import {
@@ -55,9 +55,9 @@ export class SourcesModule {
         },
         {
           provide: SOURCE_EMBEDDING_LOOKUP,
-          useFactory: (vectorRepo: SourceVectorRepository) =>
-            new SourceEmbeddingFromIngestionLookup(vectorRepo),
-          inject: [SOURCE_VECTOR_REPOSITORY],
+          useFactory: (embeddingRepo: SourceEmbeddingRepository) =>
+            new SourceEmbeddingFromIngestionLookup(embeddingRepo),
+          inject: [SOURCE_EMBEDDING_REPOSITORY],
         },
         {
           provide: SOURCE_QUERY,

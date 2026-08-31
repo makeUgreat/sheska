@@ -247,7 +247,7 @@ export class PostPgDrizzleQuery implements PostQuery {
     )`;
     const rrfScore = sql`(
       COALESCE(1.0 / (${RRF_K} + f.fts_rank), 0)
-      + COALESCE(1.0 / (${RRF_K} + v.vec_rank), 0)
+      + COALESCE(1.0 / (${RRF_K} + e.embedding_rank), 0)
     )::double precision`;
     const cursorWhere =
       isFirstPage || cursor === null
@@ -268,29 +268,29 @@ export class PostPgDrizzleQuery implements PostQuery {
         ORDER BY fts_rank
         LIMIT ${CANDIDATE_POOL_SIZE}
       ),
-      vector_candidates AS (
+      embedding_candidates AS (
         SELECT
           p.id, p.source_id, p.title, p.view_count, p.created_at, p.updated_at,
           RANK() OVER (
-            ORDER BY MIN(sv.embedding <=> ${embeddingLiteral}::vector)
-          ) AS vec_rank
+            ORDER BY MIN(se.embedding <=> ${embeddingLiteral}::vector)
+          ) AS embedding_rank
         FROM posts p
-        INNER JOIN source_vectors sv ON sv.source_id = p.source_id
+        INNER JOIN source_embeddings se ON se.source_id = p.source_id
         GROUP BY p.id, p.source_id, p.title, p.view_count, p.created_at, p.updated_at
-        ORDER BY vec_rank
+        ORDER BY embedding_rank
         LIMIT ${CANDIDATE_POOL_SIZE}
       ),
       fused AS (
         SELECT
-          COALESCE(f.id, v.id)                 AS "id",
-          COALESCE(f.source_id, v.source_id)   AS "sourceId",
-          COALESCE(f.title, v.title)           AS "title",
-          COALESCE(f.view_count, v.view_count) AS "viewCount",
-          COALESCE(f.created_at, v.created_at) AS "createdAt",
-          COALESCE(f.updated_at, v.updated_at) AS "updatedAt",
+          COALESCE(f.id, e.id)                 AS "id",
+          COALESCE(f.source_id, e.source_id)   AS "sourceId",
+          COALESCE(f.title, e.title)           AS "title",
+          COALESCE(f.view_count, e.view_count) AS "viewCount",
+          COALESCE(f.created_at, e.created_at) AS "createdAt",
+          COALESCE(f.updated_at, e.updated_at) AS "updatedAt",
           (${rrfScore})                        AS "searchScore"
         FROM fts_candidates f
-        FULL OUTER JOIN vector_candidates v ON f.id = v.id
+        FULL OUTER JOIN embedding_candidates e ON f.id = e.id
       )
       SELECT * FROM fused
       ${cursorWhere}

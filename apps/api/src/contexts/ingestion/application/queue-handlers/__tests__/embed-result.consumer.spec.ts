@@ -4,9 +4,9 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   IngestionCompletedDomainEvent,
   IngestionFailedDomainEvent,
-  SourceVector,
+  SourceEmbedding,
 } from '@contexts/ingestion/domain';
-import { VALID_EMBEDDING } from '../../../../../../test/support/domains/fixtures/source-vector.fixture';
+import { VALID_EMBEDDING } from '../../../../../../test/support/domains/fixtures/source-embedding.fixture';
 import {
   EmbedResultConsumer,
   type EmbedResultPayload,
@@ -72,7 +72,7 @@ describe('EmbedResultConsumer', () => {
       expect(event.syncJobId).toBe('sync-job-42');
     });
 
-    it('복수 청크가 담긴 payload로 SourceVector를 저장한다', async () => {
+    it('복수 청크가 담긴 payload로 SourceEmbedding을 저장한다', async () => {
       const save = vi.fn().mockResolvedValue(undefined);
       const consumer = new EmbedResultConsumer(
         { save, find: vi.fn() },
@@ -98,8 +98,8 @@ describe('EmbedResultConsumer', () => {
       );
 
       expect(save).toHaveBeenCalledOnce();
-      const savedVector = save.mock.calls[0][0] as SourceVector;
-      expect(savedVector.getProps().chunks).toHaveLength(2);
+      const savedEmbedding = save.mock.calls[0][0] as SourceEmbedding;
+      expect(savedEmbedding.getProps().chunks).toHaveLength(2);
     });
   });
 

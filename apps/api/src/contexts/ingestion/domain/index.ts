@@ -1,8 +1,8 @@
-export { ChunkVector } from './chunk-vector.vo';
+export { ChunkEmbedding } from './chunk-embedding.vo';
 export { EmbeddingModel } from './embedding-model.vo';
 export { EmbeddingVector } from './embedding-vector.vo';
-export { SourceVector } from './source-vector.aggregate';
-export { type SourceVectorRepository } from './source-vector.repository';
+export { SourceEmbedding } from './source-embedding.aggregate';
+export { type SourceEmbeddingRepository } from './source-embedding.repository';
 export {
   IngestionStartedDomainEvent,
   IngestionProgressDomainEvent,

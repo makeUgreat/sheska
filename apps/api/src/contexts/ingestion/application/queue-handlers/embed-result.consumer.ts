@@ -6,10 +6,10 @@ import { LOGGER, type LoggerPort } from '@kernels/application';
 import {
   IngestionCompletedDomainEvent,
   IngestionFailedDomainEvent,
-  SourceVector,
-  type SourceVectorRepository,
+  SourceEmbedding,
+  type SourceEmbeddingRepository,
 } from '@contexts/ingestion/domain';
-import { SOURCE_VECTOR_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
+import { SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
 
 export const EMBED_RESULTS_QUEUE = 'embed-results';
 
@@ -30,8 +30,8 @@ export interface EmbedResultPayload {
 @Injectable()
 export class EmbedResultConsumer extends WorkerHost {
   constructor(
-    @Inject(SOURCE_VECTOR_REPOSITORY)
-    private readonly sourceVectors: SourceVectorRepository,
+    @Inject(SOURCE_EMBEDDING_REPOSITORY)
+    private readonly sourceEmbeddings: SourceEmbeddingRepository,
     private readonly eventEmitter: EventEmitter2,
     @Inject(LOGGER)
     private readonly logger: LoggerPort,
@@ -41,8 +41,8 @@ export class EmbedResultConsumer extends WorkerHost {
 
   async process(job: Job<EmbedResultPayload>): Promise<void> {
     const { sourceId, syncJobId, model, chunks } = job.data;
-    const sourceVector = SourceVector.create({ sourceId, model, chunks });
-    await this.sourceVectors.save(sourceVector);
+    const sourceEmbedding = SourceEmbedding.create({ sourceId, model, chunks });
+    await this.sourceEmbeddings.save(sourceEmbedding);
     const event = new IngestionCompletedDomainEvent({
       aggregateId: syncJobId,
       syncJobId,

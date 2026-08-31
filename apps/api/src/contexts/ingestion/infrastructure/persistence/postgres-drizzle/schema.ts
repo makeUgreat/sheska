@@ -20,8 +20,8 @@ const vector = (name: string, dimensions: number) =>
     },
   })(name);
 
-export const sourceVectors = pgTable(
-  'source_vectors',
+export const sourceEmbeddings = pgTable(
+  'source_embeddings',
   {
     sourceId: text('source_id').notNull(),
     chunkIndex: integer('chunk_index').notNull(),
@@ -38,5 +38,5 @@ export const sourceVectors = pgTable(
   (t) => [primaryKey({ columns: [t.sourceId, t.chunkIndex] })],
 );
 
-export type SourceVectorRow = typeof sourceVectors.$inferSelect;
-export type SourceVectorInsert = typeof sourceVectors.$inferInsert;
+export type SourceEmbeddingRow = typeof sourceEmbeddings.$inferSelect;
+export type SourceEmbeddingInsert = typeof sourceEmbeddings.$inferInsert;

@@ -1,8 +1,8 @@
-import { SourceVector } from '@contexts/ingestion/domain';
+import { SourceEmbedding } from '@contexts/ingestion/domain';
 
 const VALID_EMBEDDING = Array.from({ length: 1024 }, (_, i) => i * 0.001);
 
-interface BuildSourceVectorParams {
+interface BuildSourceEmbeddingParams {
   sourceId?: string;
   model?: string;
   chunks?: Array<{
@@ -12,9 +12,9 @@ interface BuildSourceVectorParams {
   }>;
 }
 
-export function buildSourceVector(
-  params: BuildSourceVectorParams = {},
-): SourceVector {
+export function buildSourceEmbedding(
+  params: BuildSourceEmbeddingParams = {},
+): SourceEmbedding {
   const chunks = params.chunks ?? [
     {
       chunkIndex: 0,
@@ -22,7 +22,7 @@ export function buildSourceVector(
       embedding: VALID_EMBEDDING,
     },
   ];
-  return SourceVector.create({
+  return SourceEmbedding.create({
     sourceId: params.sourceId ?? 'source-1',
     model: params.model ?? 'qwen3-embedding:0.6b',
     chunks: chunks.map((c, i) => ({
