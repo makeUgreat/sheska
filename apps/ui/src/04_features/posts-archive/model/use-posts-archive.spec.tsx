@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, describe, expect, it, type Mock, vi } from 'vitest';
+import { describe, expect, it, type Mock, vi } from 'vitest';
 import { type PostSummary } from '@/entities/post';
 import {
   HttpClientProvider,
@@ -69,10 +69,6 @@ function renderUsePostsArchive({
 }
 
 describe('usePostsArchive', () => {
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   it('limit query param을 listPosts 요청에 전달한다', async () => {
     const client = buildMockHttpClient({
       get: vi.fn((path: string) => {
@@ -97,7 +93,39 @@ describe('usePostsArchive', () => {
     });
   });
 
-  it('검색어를 trim한 뒤 searchPosts 결과를 선택한다', async () => {
+  it('검색어 입력만으로는 searchPosts를 호출하지 않는다', () => {
+    const searchPosts = vi.fn().mockResolvedValue({
+      posts: [buildPost('search-1', '검색 결과')],
+      nextCursor: null,
+      semanticSearchApplied: true,
+    });
+    const client = buildMockHttpClient({
+      get: vi.fn((path: string) => {
+        if (path === '/posts/count') {
+          return Promise.resolve({ count: 0 });
+        }
+        if (path === '/posts/search') {
+          return searchPosts() as Promise<unknown>;
+        }
+        return Promise.resolve({
+          posts: [buildPost('list-1', '목록 결과')],
+          nextCursor: null,
+        });
+      }),
+    });
+
+    const { result } = renderUsePostsArchive({ client });
+
+    act(() => {
+      result.current.setQuery('garden');
+    });
+
+    expect(result.current.normalizedQuery).toBe('');
+    expect(result.current.isSearching).toBe(false);
+    expect(searchPosts).not.toHaveBeenCalled();
+  });
+
+  it('검색어를 submit하면 trim한 뒤 searchPosts 결과를 선택한다', async () => {
     const searchPost = buildPost('search-1', '검색 결과');
     const client = buildMockHttpClient({
       get: vi.fn((path: string) => {
@@ -126,7 +154,9 @@ describe('usePostsArchive', () => {
     act(() => {
       result.current.setQuery('  garden  ');
     });
-    await act(() => new Promise((resolve) => setTimeout(resolve, 350)));
+    act(() => {
+      result.current.submitSearch();
+    });
 
     await waitFor(() => {
       expect(result.current.normalizedQuery).toBe('garden');
@@ -174,7 +204,9 @@ describe('usePostsArchive', () => {
     act(() => {
       result.current.setQuery('term');
     });
-    await act(() => new Promise((resolve) => setTimeout(resolve, 350)));
+    act(() => {
+      result.current.submitSearch();
+    });
     await waitFor(() => {
       expect(result.current.hasNextPage).toBe(true);
     });
@@ -212,10 +244,56 @@ describe('usePostsArchive', () => {
     act(() => {
       result.current.setQuery('fts');
     });
-    await act(() => new Promise((resolve) => setTimeout(resolve, 350)));
+    act(() => {
+      result.current.submitSearch();
+    });
 
     await waitFor(() => {
       expect(result.current.semanticSearchApplied).toBe(false);
+    });
+  });
+
+  it('빈 검색어를 submit하면 검색 상태를 해제한다', async () => {
+    const client = buildMockHttpClient({
+      get: vi.fn((path: string) => {
+        if (path === '/posts/count') {
+          return Promise.resolve({ count: 0 });
+        }
+        if (path === '/posts/search') {
+          return Promise.resolve({
+            posts: [buildPost('search-1', '검색 결과')],
+            nextCursor: null,
+            semanticSearchApplied: true,
+          });
+        }
+        return Promise.resolve({
+          posts: [buildPost('list-1', '목록 결과')],
+          nextCursor: null,
+        });
+      }),
+    });
+    const { result } = renderUsePostsArchive({ client });
+
+    act(() => {
+      result.current.setQuery('term');
+    });
+    act(() => {
+      result.current.submitSearch();
+    });
+    await waitFor(() => {
+      expect(result.current.isSearching).toBe(true);
+    });
+
+    act(() => {
+      result.current.setQuery('   ');
+    });
+    act(() => {
+      result.current.submitSearch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.normalizedQuery).toBe('');
+      expect(result.current.isSearching).toBe(false);
     });
   });
 });

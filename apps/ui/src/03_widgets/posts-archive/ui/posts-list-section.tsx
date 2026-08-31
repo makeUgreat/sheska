@@ -1,4 +1,4 @@
-import { type Ref } from 'react';
+import { type FormEvent, type Ref } from 'react';
 import { PostCard, type PostSummary } from '@/entities/post';
 import { StatusMessage } from '@/shared/ui';
 import { EndOfPosts, PostsLoading } from './posts-loading';
@@ -24,12 +24,18 @@ export function PostsListSection({
   search: {
     query: string;
     onQueryChange: (query: string) => void;
+    onQuerySubmit: () => void;
     normalizedQuery: string;
     mode: PostsSearchMode;
   };
   state: PostsListState;
 }) {
   const isSearching = search.normalizedQuery.length > 0;
+
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    search.onQuerySubmit();
+  }
 
   return (
     <section
@@ -47,7 +53,7 @@ export function PostsListSection({
             Back to top
           </button>
         </div>
-        <div className="group mb-12">
+        <form className="group mb-12" role="search" onSubmit={handleSubmit}>
           <div className="flex items-center gap-2 border-b border-accent/30 pb-2 transition-colors focus-within:border-accent">
             <label
               htmlFor="posts-archive-search"
@@ -64,12 +70,12 @@ export function PostsListSection({
               className="w-full border-0 bg-transparent p-0 font-mono text-sm text-accent caret-accent outline-none placeholder:text-accent/40 focus:ring-0"
             />
             <span className="h-4 w-2 shrink-0 animate-pulse bg-accent" />
-            <span
-              aria-hidden="true"
-              className="shrink-0 font-mono text-xs font-bold uppercase text-accent/40 transition-colors group-focus-within:text-accent"
+            <button
+              type="submit"
+              className="shrink-0 font-mono text-xs font-bold uppercase text-accent/70 transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
             >
-              find
-            </span>
+              Search
+            </button>
           </div>
           {isSearching && search.mode !== null && (
             <div className="mt-3 font-mono text-xs font-bold uppercase tracking-widest text-text-muted">
@@ -79,7 +85,7 @@ export function PostsListSection({
               </span>
             </div>
           )}
-        </div>
+        </form>
 
         {state.status === 'loading' ? (
           <PostsLoading label="Loading posts..." />
