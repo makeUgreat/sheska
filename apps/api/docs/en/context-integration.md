@@ -57,7 +57,7 @@ Consumer-owned contracts stay narrow because they express exactly what A needs, 
 ### Rule 2 — Adapter lives in the consumer's infrastructure layer
 
 - Location: `contexts/A/infrastructure/<B-name>/`, where `<B-name>` is the producer context name.
-- File and class naming follow the [infrastructure adapter convention](./infrastructure.md).
+- File and class naming follow the [infrastructure adapter convention](./infrastructure.md): `{domain-name}.{adapter-or-purpose}.{role}.ts`. For a cross-context Pull adapter, the `adapter-or-purpose` segment is `from-<B-name>` (e.g. `source-embedding.from-ingestion.lookup.ts` → `SourceEmbeddingFromIngestionLookup`). The `from-` prefix makes the file identifiable as a cross-context adapter by name alone, without depending on the folder path being visible, and avoids ambiguity when the domain-name and producer context name are lexically similar (e.g. `source` vs `sources`).
 - **This is the only file in A that may import from B.**
 - B's domain objects do not appear outside this adapter file.
 

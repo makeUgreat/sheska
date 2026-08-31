@@ -4,7 +4,7 @@ import {
   type SourceLookup,
 } from '@contexts/posts/application/ports';
 
-export class SourceSourcesContextLookup implements SourceLookup {
+export class SourceFromSourcesLookup implements SourceLookup {
   constructor(private readonly sources: SourceRepository) {}
 
   async get(sourceId: string): Promise<SourceInfo> {

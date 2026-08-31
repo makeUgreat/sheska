@@ -17,6 +17,10 @@ function buildMockLogger() {
   return { log: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
 }
 
+function buildMockEmbedder(embed = vi.fn()) {
+  return { embed };
+}
+
 function buildJob(
   data: Partial<EmbedRequestPayload> = {},
 ): Job<EmbedRequestPayload> {
@@ -41,7 +45,7 @@ describe('EmbedRequestConsumer', () => {
         .mockResolvedValue({ embedding: fakeEmbedding, model: fakeModel });
       const add = vi.fn().mockResolvedValue(undefined);
       const consumer = new EmbedRequestConsumer(
-        { embed },
+        buildMockEmbedder(embed),
         { add } as unknown as Queue,
         new EventEmitter2(),
         buildMockLogger(),
@@ -70,7 +74,7 @@ describe('EmbedRequestConsumer', () => {
       // chunkSize=7: 'abc\n\ndef\n\nghi'는 단락별로 3개 청크로 분리됨
       const smallChunker = new RecursiveCharacterChunker(7, 0);
       const consumer = new EmbedRequestConsumer(
-        { embed },
+        buildMockEmbedder(embed),
         { add } as unknown as Queue,
         new EventEmitter2(),
         buildMockLogger(),
@@ -93,7 +97,7 @@ describe('EmbedRequestConsumer', () => {
       const emit = vi.spyOn(eventEmitter, 'emit');
       const smallChunker = new RecursiveCharacterChunker(7, 0);
       const consumer = new EmbedRequestConsumer(
-        { embed },
+        buildMockEmbedder(embed),
         { add: vi.fn() } as unknown as Queue,
         eventEmitter,
         buildMockLogger(),
@@ -119,7 +123,7 @@ describe('EmbedRequestConsumer', () => {
       const emit = vi.spyOn(eventEmitter, 'emit');
       const smallChunker = new RecursiveCharacterChunker(7, 0);
       const consumer = new EmbedRequestConsumer(
-        { embed },
+        buildMockEmbedder(embed),
         { add: vi.fn() } as unknown as Queue,
         eventEmitter,
         buildMockLogger(),
@@ -146,7 +150,7 @@ describe('EmbedRequestConsumer', () => {
       const eventEmitter = new EventEmitter2();
       const emit = vi.spyOn(eventEmitter, 'emit');
       const consumer = new EmbedRequestConsumer(
-        { embed: vi.fn() },
+        buildMockEmbedder(),
         { add: vi.fn() } as unknown as Queue,
         eventEmitter,
         buildMockLogger(),
@@ -168,7 +172,7 @@ describe('EmbedRequestConsumer', () => {
     it('에러 메시지를 로그에 기록한다', () => {
       const logger = buildMockLogger();
       const consumer = new EmbedRequestConsumer(
-        { embed: vi.fn() },
+        buildMockEmbedder(),
         { add: vi.fn() } as unknown as Queue,
         new EventEmitter2(),
         logger,
@@ -186,7 +190,7 @@ describe('EmbedRequestConsumer', () => {
     it('구조화된 exception이면 kind와 code를 로그에 기록한다', () => {
       const logger = buildMockLogger();
       const consumer = new EmbedRequestConsumer(
-        { embed: vi.fn() },
+        buildMockEmbedder(),
         { add: vi.fn() } as unknown as Queue,
         new EventEmitter2(),
         logger,
@@ -213,7 +217,7 @@ describe('EmbedRequestConsumer', () => {
       const eventEmitter = new EventEmitter2();
       const emit = vi.spyOn(eventEmitter, 'emit');
       const consumer = new EmbedRequestConsumer(
-        { embed: vi.fn() },
+        buildMockEmbedder(),
         { add: vi.fn() } as unknown as Queue,
         eventEmitter,
         buildMockLogger(),

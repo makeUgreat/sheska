@@ -326,13 +326,18 @@ describe('PostsHttpController', () => {
           },
         ],
         nextCursor: cursorValue,
+        semanticSearchApplied: true,
       });
 
       const response = await request(httpServer)
         .get('/posts/search')
         .query({ q: 'TypeScript' })
         .expect(200);
-      const body = response.body as { posts: unknown[]; nextCursor: unknown };
+      const body = response.body as {
+        posts: unknown[];
+        nextCursor: unknown;
+        semanticSearchApplied: boolean;
+      };
 
       expect(body.posts).toEqual([
         {
@@ -345,6 +350,7 @@ describe('PostsHttpController', () => {
         },
       ]);
       expect(typeof body.nextCursor).toBe('string');
+      expect(body.semanticSearchApplied).toBe(true);
       expect(searchPostsUseCase.execute).toHaveBeenCalledWith({
         query: 'TypeScript',
         cursor: null,
@@ -359,6 +365,7 @@ describe('PostsHttpController', () => {
       searchPostsUseCase.execute.mockResolvedValue({
         posts: [],
         nextCursor: null,
+        semanticSearchApplied: false,
       });
 
       await request(httpServer)
@@ -419,6 +426,7 @@ describe('PostsHttpController', () => {
       searchPostsUseCase.execute.mockResolvedValue({
         posts: [],
         nextCursor: null,
+        semanticSearchApplied: false,
       });
 
       await request(httpServer)

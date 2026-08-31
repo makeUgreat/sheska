@@ -25,7 +25,10 @@ import {
   type ListPostsHttpResponse,
 } from './dto/list-posts.http.dto';
 import { encodeCursor } from '@kernels/presentation';
-import { SearchPostsHttpRequest } from './dto/search-posts.http.dto';
+import {
+  SearchPostsHttpRequest,
+  type SearchPostsHttpResponse,
+} from './dto/search-posts.http.dto';
 import { type CountPostsHttpResponse } from './dto/count-posts.http.dto';
 import {
   UpdatePostHttpRequest,
@@ -87,7 +90,7 @@ export class PostsHttpController {
   @Get('search')
   async search(
     @Query() request: SearchPostsHttpRequest,
-  ): Promise<ListPostsHttpResponse> {
+  ): Promise<SearchPostsHttpResponse> {
     const result = await this.searchPostsUseCase.execute({
       query: request.q,
       cursor: request.cursor ?? null,
@@ -104,6 +107,7 @@ export class PostsHttpController {
         updatedAt: post.updatedAt.toISOString(),
       })),
       nextCursor: result.nextCursor ? encodeCursor(result.nextCursor) : null,
+      semanticSearchApplied: result.semanticSearchApplied,
     };
   }
 
