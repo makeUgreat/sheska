@@ -3,32 +3,34 @@ import { PostCard, type PostSummary } from '@/entities/post';
 import { StatusMessage } from '@/shared/ui';
 import { EndOfPosts, PostsLoading } from './posts-loading';
 
-const FEATURED_IMAGE_URL =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuBmfuDAS_7r95iDVqY4IEj-VUVoDfutREwgjxIQQKPSqxxSd-VlK1V2bVlvvGSYHFtq5NgwGZUIpzh-pPqOdzxOWjIuEmgNbZn0mqlpScuHk8Z4mDk5yZjZYvAOzGjKGG1F67WKXB2J05BmnG7OEwgdzGoZIJtDpHVRPBoyijB8n6ADBul5bZ-GQLw5WjSoXDR98pkpFMAIcpCE8rcwEXwi-hL0XrOgwVf2CkCFTp1pa7RfKdLdqrQPQFlC67ukxJK7WgRSaOPhwY2Q';
+export type PostsSearchMode = 'smart' | 'basic' | null;
+
+export type PostsListState =
+  | { status: 'loading' }
+  | { status: 'error'; error: Error }
+  | { status: 'empty' }
+  | {
+      status: 'success';
+      posts: PostSummary[];
+      hasNextPage: boolean;
+      isFetchingNextPage: boolean;
+      sentinelRef: Ref<HTMLDivElement>;
+    };
 
 export function PostsListSection({
-  query,
-  onQueryChange,
-  isLoading,
-  error,
-  posts,
-  isSearching,
-  normalizedQuery,
-  hasNextPage,
-  isFetchingNextPage,
-  sentinelRef,
+  search,
+  state,
 }: {
-  query: string;
-  onQueryChange: (query: string) => void;
-  isLoading: boolean;
-  error: Error | null;
-  posts: PostSummary[];
-  isSearching: boolean;
-  normalizedQuery: string;
-  hasNextPage: boolean;
-  isFetchingNextPage: boolean;
-  sentinelRef: Ref<HTMLDivElement>;
+  search: {
+    query: string;
+    onQueryChange: (query: string) => void;
+    normalizedQuery: string;
+    mode: PostsSearchMode;
+  };
+  state: PostsListState;
 }) {
+  const isSearching = search.normalizedQuery.length > 0;
+
   return (
     <section
       id="posts"
@@ -51,15 +53,14 @@ export function PostsListSection({
               htmlFor="posts-archive-search"
               className="shrink-0 font-mono text-xs font-bold uppercase tracking-widest text-accent"
             >
-              [SEARCH]:
+              Search by title or content:
             </label>
             <input
               id="posts-archive-search"
               type="search"
-              aria-label="Search posts by title or content"
               placeholder="Search title or content"
-              value={query}
-              onChange={(e) => onQueryChange(e.target.value)}
+              value={search.query}
+              onChange={(e) => search.onQueryChange(e.target.value)}
               className="w-full border-0 bg-transparent p-0 font-mono text-sm text-accent caret-accent outline-none placeholder:text-accent/40 focus:ring-0"
             />
             <span className="h-4 w-2 shrink-0 animate-pulse bg-accent" />
@@ -70,27 +71,37 @@ export function PostsListSection({
               find
             </span>
           </div>
+          {isSearching && search.mode !== null && (
+            <div className="mt-3 font-mono text-xs font-bold uppercase tracking-widest text-text-muted">
+              Search mode:{' '}
+              <span className="text-accent">
+                {search.mode === 'smart' ? 'Smart' : 'Basic'}
+              </span>
+            </div>
+          )}
         </div>
 
-        {isLoading ? (
+        {state.status === 'loading' ? (
           <PostsLoading label="Loading posts..." />
-        ) : error ? (
-          <StatusMessage tone="error">Error: {error.message}</StatusMessage>
-        ) : posts.length === 0 ? (
+        ) : state.status === 'error' ? (
+          <StatusMessage tone="error">
+            Error: {state.error.message}
+          </StatusMessage>
+        ) : state.status === 'empty' ? (
           <StatusMessage tone="empty">
             {isSearching
-              ? `No results for "${normalizedQuery}".`
+              ? `No results for "${search.normalizedQuery}".`
               : 'No posts yet.'}
           </StatusMessage>
         ) : (
           <>
             <PostList
-              posts={posts}
-              highlight={isSearching ? normalizedQuery : ''}
+              posts={state.posts}
+              highlight={isSearching ? search.normalizedQuery : ''}
             />
-            <div ref={sentinelRef} className="h-px" />
-            {isFetchingNextPage && <PostsLoading />}
-            {!hasNextPage && posts.length > 0 && <EndOfPosts />}
+            <div ref={state.sentinelRef} className="h-px" aria-hidden="true" />
+            {state.isFetchingNextPage && <PostsLoading />}
+            {!state.hasNextPage && <EndOfPosts />}
           </>
         )}
       </div>
@@ -107,13 +118,9 @@ function PostList({
 }) {
   return (
     <ul className="space-y-12">
-      {posts.map((p, index) => (
+      {posts.map((p) => (
         <li key={p.postId}>
-          <PostCard
-            post={p}
-            highlight={highlight}
-            thumbnailUrl={index % 3 === 2 ? FEATURED_IMAGE_URL : undefined}
-          />
+          <PostCard post={p} highlight={highlight} />
         </li>
       ))}
     </ul>

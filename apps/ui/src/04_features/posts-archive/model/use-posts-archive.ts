@@ -17,6 +17,10 @@ export function usePostsArchive() {
   const listResult = useInfiniteListPosts(limit);
   const searchResult = useInfiniteSearchPosts(normalizedQuery, limit);
   const result = isSearching ? searchResult : listResult;
+  const firstSearchPage = searchResult.data?.pages[0];
+  const semanticSearchApplied = isSearching
+    ? (firstSearchPage?.semanticSearchApplied ?? null)
+    : null;
   const {
     data,
     isLoading,
@@ -31,6 +35,7 @@ export function usePostsArchive() {
     setQuery,
     normalizedQuery,
     isSearching,
+    semanticSearchApplied,
     posts: data?.pages.flatMap((page) => page.posts) ?? [],
     isLoading,
     error,

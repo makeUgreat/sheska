@@ -10,6 +10,14 @@ const SOURCE_LAYERS = new Map([
   ['pages', 5],
   ['app', 6],
 ]);
+const DIRECTORY_LAYER_NAMES = new Map([
+  ['01_app', 'app'],
+  ['02_pages', 'pages'],
+  ['03_widgets', 'widgets'],
+  ['04_features', 'features'],
+  ['05_entities', 'entities'],
+  ['06_shared', 'shared'],
+]);
 const SLICED_LAYERS = new Set(['entities', 'features', 'widgets', 'pages']);
 const SEGMENTED_LAYERS = new Set(['app', 'shared']);
 const SHARED_SEGMENTS = new Set(['api', 'config', 'lib', 'ui']);
@@ -37,7 +45,8 @@ function parseSourcePath(projectPath) {
 
   if (srcIndex === -1) return null;
 
-  const layer = parts[srcIndex + 1];
+  const directoryLayer = parts[srcIndex + 1];
+  const layer = DIRECTORY_LAYER_NAMES.get(directoryLayer) ?? directoryLayer;
   if (!SOURCE_LAYERS.has(layer)) return null;
 
   if (SLICED_LAYERS.has(layer)) {

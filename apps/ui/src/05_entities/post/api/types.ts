@@ -21,6 +21,10 @@ export interface ListPostsResponse {
   nextCursor: string | null;
 }
 
+export interface SearchPostsResponse extends ListPostsResponse {
+  semanticSearchApplied: boolean;
+}
+
 export interface CountPostsResponse {
   count: number;
 }

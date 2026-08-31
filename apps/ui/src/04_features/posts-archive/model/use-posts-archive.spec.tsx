@@ -108,6 +108,7 @@ describe('usePostsArchive', () => {
           return Promise.resolve({
             posts: [searchPost],
             nextCursor: null,
+            semanticSearchApplied: true,
           });
         }
         return Promise.resolve({
@@ -134,6 +135,7 @@ describe('usePostsArchive', () => {
         limit: '3',
       });
       expect(result.current.isSearching).toBe(true);
+      expect(result.current.semanticSearchApplied).toBe(true);
       expect(result.current.posts).toEqual([searchPost]);
     });
   });
@@ -144,10 +146,12 @@ describe('usePostsArchive', () => {
       .mockResolvedValueOnce({
         posts: [buildPost('search-1', '첫 검색 결과')],
         nextCursor: 'search-next',
+        semanticSearchApplied: true,
       })
       .mockResolvedValueOnce({
         posts: [buildPost('search-2', '다음 검색 결과')],
         nextCursor: null,
+        semanticSearchApplied: true,
       });
     const client = buildMockHttpClient({
       get: vi.fn((path: string) => {
@@ -181,6 +185,37 @@ describe('usePostsArchive', () => {
     expect(client.get as Mock).toHaveBeenLastCalledWith('/posts/search', {
       q: 'term',
       cursor: 'search-next',
+    });
+  });
+
+  it('semantic search가 적용되지 않은 검색 폴백 상태를 반환한다', async () => {
+    const client = buildMockHttpClient({
+      get: vi.fn((path: string) => {
+        if (path === '/posts/count') {
+          return Promise.resolve({ count: 0 });
+        }
+        if (path === '/posts/search') {
+          return Promise.resolve({
+            posts: [buildPost('search-1', 'FTS 검색 결과')],
+            nextCursor: null,
+            semanticSearchApplied: false,
+          });
+        }
+        return Promise.resolve({
+          posts: [],
+          nextCursor: null,
+        });
+      }),
+    });
+    const { result } = renderUsePostsArchive({ client });
+
+    act(() => {
+      result.current.setQuery('fts');
+    });
+    await act(() => new Promise((resolve) => setTimeout(resolve, 350)));
+
+    await waitFor(() => {
+      expect(result.current.semanticSearchApplied).toBe(false);
     });
   });
 });
