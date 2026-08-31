@@ -90,6 +90,75 @@ describe('OllamaHttpEmbedder', () => {
     });
   });
 
+  it('호출자가 signal을 넘기면 그 signal을 그대로 fetch에 전달한다', async () => {
+    const controller = new AbortController();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ embedding: [0.1] }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await client.embed('hello', { signal: controller.signal });
+
+    const [, options] = fetchMock.mock.calls[0] as [
+      string,
+      { signal: AbortSignal },
+    ];
+    expect(options.signal).toBe(controller.signal);
+  });
+
+  it('호출자가 넘긴 signal이 이미 abort된 상태면 그대로 fetch에 전달된다', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ embedding: [0.1] }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await client.embed('hello', { signal: controller.signal });
+
+    const [, options] = fetchMock.mock.calls[0] as [
+      string,
+      { signal: AbortSignal },
+    ];
+    expect(options.signal.aborted).toBe(true);
+  });
+
+  it('호출자가 넘긴 signal이 EMBED_REQUEST_TIMEOUT_MS보다 긴 타임아웃이어도 어댑터 기본값에 의해 줄어들지 않는다', async () => {
+    const longSignal = AbortSignal.timeout(24 * 60 * 60 * 1000);
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ embedding: [0.1] }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await client.embed('hello', { signal: longSignal });
+
+    const [, options] = fetchMock.mock.calls[0] as [
+      string,
+      { signal: AbortSignal },
+    ];
+    expect(options.signal).toBe(longSignal);
+  });
+
+  it('호출자가 signal을 넘기지 않으면 내부 타임아웃 signal만으로 fetch를 호출한다', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ embedding: [0.1] }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await client.embed('hello');
+
+    const [, options] = fetchMock.mock.calls[0] as [
+      string,
+      { signal: AbortSignal },
+    ];
+    expect(options.signal).toBeInstanceOf(AbortSignal);
+    expect(options.signal.aborted).toBe(false);
+  });
+
   it('Ollama가 에러 상태로 응답하면 BAD_RESPONSE InfrastructureException을 던진다', async () => {
     vi.stubGlobal(
       'fetch',
