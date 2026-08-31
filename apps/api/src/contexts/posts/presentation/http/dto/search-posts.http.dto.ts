@@ -22,3 +22,18 @@ export class SearchPostsHttpRequest {
   readonly cursor?: PostQuerySearchCursor;
   readonly limit!: number;
 }
+
+export interface SearchPostsHttpResponseItem {
+  postId: string;
+  sourceId: string;
+  title: string;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SearchPostsHttpResponse {
+  posts: SearchPostsHttpResponseItem[];
+  nextCursor: string | null;
+  semanticSearchApplied: boolean;
+}

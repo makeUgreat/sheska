@@ -2,6 +2,7 @@ import {
   type PostQuery,
   type PostQueryPaginateResult,
   type PostQuerySearchResult,
+  type SearchQueryEmbedder,
 } from '@contexts/posts/application/ports';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { SearchPostsUseCase } from '../search-posts.use-case';
@@ -12,6 +13,10 @@ type PostQueryMock = {
   paginate: MockedFunction<PostQuery['paginate']>;
   search: MockedFunction<PostQuery['search']>;
   count: MockedFunction<PostQuery['count']>;
+};
+
+type SearchQueryEmbedderMock = {
+  embed: MockedFunction<SearchQueryEmbedder['embed']>;
 };
 
 function buildPaginateResult(
@@ -59,7 +64,8 @@ describe('SearchPostsUseCase', () => {
         ],
       }),
     );
-    const useCase = new SearchPostsUseCase(postQuery);
+    const searchQueryEmbedder = createSearchQueryEmbedderMock();
+    const useCase = new SearchPostsUseCase(postQuery, searchQueryEmbedder);
 
     const result = await useCase.execute({
       query: 'TypeScript',
@@ -78,13 +84,15 @@ describe('SearchPostsUseCase', () => {
       query: 'TypeScript',
       cursor: null,
       limit: 20,
+      queryEmbedding: null,
     });
   });
 
   it('일치하는 post가 없으면 빈 배열을 반환한다', async () => {
     const postQuery = createPostQueryMock();
     postQuery.search.mockResolvedValue(buildSearchResult());
-    const useCase = new SearchPostsUseCase(postQuery);
+    const searchQueryEmbedder = createSearchQueryEmbedderMock();
+    const useCase = new SearchPostsUseCase(postQuery, searchQueryEmbedder);
 
     const result = await useCase.execute({
       query: 'nothing',
@@ -99,11 +107,57 @@ describe('SearchPostsUseCase', () => {
     const searchFailure = new Error('Post Query operation failed');
     const postQuery = createPostQueryMock();
     postQuery.search.mockRejectedValue(searchFailure);
-    const useCase = new SearchPostsUseCase(postQuery);
+    const searchQueryEmbedder = createSearchQueryEmbedderMock();
+    const useCase = new SearchPostsUseCase(postQuery, searchQueryEmbedder);
 
     await expect(
       useCase.execute({ query: 'TypeScript', cursor: null, limit: 20 }),
     ).rejects.toBe(searchFailure);
+  });
+
+  it('쿼리 임베딩이 성공하면 queryEmbedding을 전달하고 semanticSearchApplied를 true로 반환한다', async () => {
+    const postQuery = createPostQueryMock();
+    postQuery.search.mockResolvedValue(buildSearchResult());
+    const searchQueryEmbedder = createSearchQueryEmbedderMock();
+    const embedding = [0.1, 0.2, 0.3];
+    searchQueryEmbedder.embed.mockResolvedValue(embedding);
+    const useCase = new SearchPostsUseCase(postQuery, searchQueryEmbedder);
+
+    const result = await useCase.execute({
+      query: 'TypeScript',
+      cursor: null,
+      limit: 20,
+    });
+
+    expect(postQuery.search).toHaveBeenCalledWith({
+      query: 'TypeScript',
+      cursor: null,
+      limit: 20,
+      queryEmbedding: embedding,
+    });
+    expect(result.semanticSearchApplied).toBe(true);
+  });
+
+  it('쿼리 임베딩이 실패(null)하면 FTS-only로 폴백하고 semanticSearchApplied를 false로 반환한다', async () => {
+    const postQuery = createPostQueryMock();
+    postQuery.search.mockResolvedValue(buildSearchResult());
+    const searchQueryEmbedder = createSearchQueryEmbedderMock();
+    searchQueryEmbedder.embed.mockResolvedValue(null);
+    const useCase = new SearchPostsUseCase(postQuery, searchQueryEmbedder);
+
+    const result = await useCase.execute({
+      query: 'TypeScript',
+      cursor: null,
+      limit: 20,
+    });
+
+    expect(postQuery.search).toHaveBeenCalledWith({
+      query: 'TypeScript',
+      cursor: null,
+      limit: 20,
+      queryEmbedding: null,
+    });
+    expect(result.semanticSearchApplied).toBe(false);
   });
 });
 
@@ -116,5 +170,11 @@ function createPostQueryMock(): PostQueryMock {
       .mockResolvedValue(buildPaginateResult()),
     search: vi.fn<PostQuery['search']>().mockResolvedValue(buildSearchResult()),
     count: vi.fn<PostQuery['count']>().mockResolvedValue(0),
+  };
+}
+
+function createSearchQueryEmbedderMock(): SearchQueryEmbedderMock {
+  return {
+    embed: vi.fn<SearchQueryEmbedder['embed']>().mockResolvedValue(null),
   };
 }

@@ -1,4 +1,5 @@
 export { type SourceInfo, type SourceLookup } from './source.lookup';
+export { type SearchQueryEmbedder } from './search-query.embedder';
 export {
   type PostQueryResult,
   type PostQueryFindCriteria,

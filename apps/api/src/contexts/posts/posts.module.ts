@@ -10,14 +10,25 @@ import { UpdatePostTitleUseCase } from '@contexts/posts/application/use-cases/up
 import { PostPgDrizzleRepository } from '@contexts/posts/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.repository';
 import { PostPgDrizzleQuery } from '@contexts/posts/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.query';
 import * as postsSchema from '@contexts/posts/infrastructure/persistence/postgres-drizzle/schema';
-import { SourceSourcesContextLookup } from '@contexts/posts/infrastructure/sources/source.sources-context.lookup';
+import { SourceFromSourcesLookup } from '@contexts/posts/infrastructure/sources/source.from-sources.lookup';
+import { SearchQueryFromIngestionEmbedder } from '@contexts/posts/infrastructure/ingestion/search-query.from-ingestion.embedder';
 import { PostsHttpController } from '@contexts/posts/presentation/http/posts-http.controller';
 import {
   type SourceRepository,
   SOURCE_REPOSITORY,
 } from '@contexts/sources/sources.di-tokens';
 import { SourcesModule } from '@contexts/sources/sources.module';
-import { POST_QUERY, POST_REPOSITORY, SOURCE_LOOKUP } from './posts.di-tokens';
+import {
+  type Embedder,
+  EMBEDDER,
+} from '@contexts/ingestion/ingestion.di-tokens';
+import { IngestionModule } from '@contexts/ingestion/ingestion.module';
+import {
+  POST_QUERY,
+  POST_REPOSITORY,
+  SOURCE_LOOKUP,
+  SEARCH_QUERY_EMBEDDER,
+} from './posts.di-tokens';
 
 export type PostsModuleOptions = Record<string, never>;
 
@@ -26,7 +37,7 @@ export class PostsModule {
   static forRoot(_options: PostsModuleOptions = {}): DynamicModule {
     return {
       module: PostsModule,
-      imports: [SourcesModule.forRoot()],
+      imports: [SourcesModule.forRoot(), IngestionModule.forRoot()],
       controllers: [PostsHttpController],
       providers: [
         {
@@ -44,8 +55,14 @@ export class PostsModule {
         {
           provide: SOURCE_LOOKUP,
           useFactory: (sourceRepository: SourceRepository) =>
-            new SourceSourcesContextLookup(sourceRepository),
+            new SourceFromSourcesLookup(sourceRepository),
           inject: [SOURCE_REPOSITORY],
+        },
+        {
+          provide: SEARCH_QUERY_EMBEDDER,
+          useFactory: (embedder: Embedder) =>
+            new SearchQueryFromIngestionEmbedder(embedder),
+          inject: [EMBEDDER],
         },
         PublishPostUseCase,
         GetPostUseCase,
