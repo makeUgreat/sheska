@@ -47,8 +47,7 @@ export class SourcePgDrizzleQuery implements SourceQuery {
         : sql`AND s.id < ${cursor.id}`;
 
       const result = await this.db.execute<SourceWithLatestJobRow>(sql`
-        SELECT
-          s.id,
+        SELECT s.id,
           s.external_source_id,
           s.fingerprint,
           s.size_bytes,
