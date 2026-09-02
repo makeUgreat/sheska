@@ -5,11 +5,12 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/persistence.md
-last_synced: 2026-08-10
+last_synced: 2026-09-02
 related:
   - ./architecture.md
   - ./ddd.md
   - ./source-dependency.md
+  - ./observability.md
 ---
 
 # API Persistence 정책
@@ -68,6 +69,7 @@ Persistence policy는 database와 ORM adapter가 domain rule의 소유자가 되
 ### Persistence Mapper 정책
 
 - Repository implementation은 database call, query composition, adapter context가 유용할 때 vendor 또는 storage-only error를 감싸는 책임을 소유한다.
+- `db.execute`에 넘기는 raw `sql`...`` 쿼리에서는 앞머리 verb(`SELECT`, `WITH` 등)와 그 뒤 첫 토큰을 같은 줄에 둔다 — `SELECT\n  id, name`이 아니라 `SELECT id, name`처럼. `@opentelemetry/instrumentation-pg`는 쿼리의 operation name(span 이름 일부이자 Prometheus label로도 쓰임)을 쿼리 텍스트를 trim한 뒤 첫 공백(` `) 문자까지 잘라서 얻는데, 개행문자는 구분자로 안 쳐준다. verb가 줄 끝에 혼자 있으면 `"SELECT"`가 아니라 `"SELECT\n"`이 되어, 같은 operation인데 시계열이 둘로 조용히 쪼개진다. 이 label이 왜 존재하는지는 [API 옵저버빌리티 컨벤션](./observability.md)을 참고한다.
 - Persistence mapper는 복원 입력의 shape validation, persistence row에서 domain으로 복원하는 책임, domain object를 insert row로 변환하는 책임을 소유한다.
 - Persistence mapper의 restore method는 domain restoration exception을 그대로 전파하는 것이 좋다.
 - Row를 복원하는 중 발생했다는 이유만으로 domain restoration exception을 repository 또는 persistence error로 감싸지 않는다.
