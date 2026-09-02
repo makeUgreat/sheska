@@ -196,10 +196,10 @@ describe('EmbedRequestConsumer', () => {
         logger,
         chunker,
       );
-      const error = Object.assign(new Error('Ollama unavailable'), {
+      const error = Object.assign(new Error('TEI unavailable'), {
         kind: 'unavailable',
-        code: 'ollama.request_failed',
-        source: { boundary: 'http-client', adapter: 'ollama.embedder' },
+        code: 'tei.request_failed',
+        source: { boundary: 'http-client', adapter: 'tei.embedder' },
       });
 
       consumer.onFailed(buildJob(), error);
@@ -208,7 +208,7 @@ describe('EmbedRequestConsumer', () => {
         'Embed request failed',
         expect.objectContaining({
           kind: 'unavailable',
-          code: 'ollama.request_failed',
+          code: 'tei.request_failed',
         }),
       );
     });
