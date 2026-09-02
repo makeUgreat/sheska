@@ -54,6 +54,7 @@ describe('eslint/config.mjs', () => {
 
     expect(rules['unused-imports/no-unused-imports']).toBeDefined();
     expect(rules['api-local/import-path-style']).toBeDefined();
+    expect(rules['api-local/sql-verb-same-line']).toBeDefined();
   });
 
   it('test file에는 source import path style rule을 적용하지 않는다', async () => {
@@ -95,6 +96,37 @@ describe('eslint/config.mjs', () => {
     )?.message;
 
     expect(message).toContain('@platform/nest/app.module');
+  });
+
+  it('execute()에 넘기는 raw sql 쿼리는 verb 뒤에 같은 줄에 토큰이 있어야 한다', async () => {
+    const result = await lintTextWithProjectConfig(
+      `
+        db.execute(sql\`SELECT
+          id FROM posts\`);
+      `,
+      'src/main.ts',
+    );
+
+    const message = result.messages.find(
+      (lintMessage) => lintMessage.ruleId === 'api-local/sql-verb-same-line',
+    )?.message;
+
+    expect(message).toContain('"SELECT\\n"');
+  });
+
+  it('verb 뒤에 같은 줄에 토큰이 있는 raw sql 쿼리는 허용한다', async () => {
+    const result = await lintTextWithProjectConfig(
+      `
+        db.execute(sql\`SELECT id FROM posts\`);
+      `,
+      'src/main.ts',
+    );
+
+    expect(
+      result.messages.some(
+        (lintMessage) => lintMessage.ruleId === 'api-local/sql-verb-same-line',
+      ),
+    ).toBe(false);
   });
 
   it('application code에서 좁은 NestJS DI metadata import를 허용한다', async () => {
