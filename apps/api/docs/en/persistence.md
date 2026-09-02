@@ -9,6 +9,7 @@ related:
   - ./architecture.md
   - ./ddd.md
   - ./source-dependency.md
+  - ./observability.md
 ---
 
 # API Persistence Policy
@@ -67,6 +68,7 @@ Persistence policy decides how database and ORM adapters preserve stored data wi
 ### Persistence Mapper Policy
 
 - Repository implementations own database calls, query composition, and wrapping vendor or storage-only errors when adapter context is useful.
+- In a raw `sql`...`` query passed to `db.execute`, keep the leading verb (`SELECT`, `WITH`, ...) and at least one following token on the same line — write `SELECT id, name` rather than `SELECT\n  id, name`. `@opentelemetry/instrumentation-pg` derives the query's operation name (used as both a span name segment and a Prometheus label) by trimming the query text and slicing up to the first literal space character, without treating a newline as a delimiter; a verb alone on its own line produces `"SELECT\n"` instead of `"SELECT"`, silently splitting one logical operation into two time series. See [API Observability Convention](./observability.md) for why this label exists.
 - Persistence mappers own restoration input shape validation, persistence row to domain restoration, and domain object to insert row conversion.
 - Persistence mapper restoration methods should let domain restoration exceptions propagate unchanged.
 - Do not wrap domain restoration exceptions as repository or persistence errors only because the exception occurred while restoring a row.

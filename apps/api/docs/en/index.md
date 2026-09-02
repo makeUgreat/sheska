@@ -17,6 +17,7 @@ related:
   - ./context-integration.md
   - ./test.md
   - ./repository-methods.md
+  - ./observability.md
 ---
 
 # API Convention Index
@@ -44,3 +45,4 @@ When changing public project Markdown documents, also read the repository docume
 - Cross-context data integration, consumer-owned port or adapter placement, or Pull vs Push strategy decisions: read [API Context Integration Convention](./context-integration.md).
 - `apps/api` test files, test structure, or test command selection: read [API Test Convention](./test.md).
 - Repository method call-site decisions (`get` vs `find`, `save` vs `insert`/`update`): read [Repository Method Usage Guide](./repository-methods.md).
+- OpenTelemetry instrumentation, trace/log/metric export wiring, or resource attribute decisions: read [API Observability Convention](./observability.md).

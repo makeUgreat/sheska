@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/index.md
-last_synced: 2026-06-25
+last_synced: 2026-09-02
 related:
   - ./error.md
   - ./logging.md
@@ -18,6 +18,7 @@ related:
   - ./context-integration.md
   - ./test.md
   - ./repository-methods.md
+  - ./observability.md
 ---
 
 # API 컨벤션 인덱스
@@ -45,3 +46,4 @@ related:
 - 크로스 컨텍스트 데이터 통합, 컨슈머 소유 포트/어댑터 배치, Pull vs Push 전략 결정 작업: [API 컨텍스트 통합 컨벤션](./context-integration.md)을 읽는다.
 - `apps/api` test file, test structure, test command 선택 작업: [API 테스트 컨벤션](./test.md)을 읽는다.
 - Repository method 호출 지점 결정 (`get` vs `find`, `save` vs `insert`/`update`): [Repository Method 사용 가이드](./repository-methods.md)를 읽는다.
+- OpenTelemetry 계측, trace/log/metric export 배선, 리소스 속성 결정: [API 옵저버빌리티 컨벤션](./observability.md)을 읽는다.

@@ -68,8 +68,7 @@ export class PostPgDrizzleQuery implements PostQuery {
 
     try {
       const result = await this.db.execute<PostWithSourceRow>(sql`
-        SELECT
-          p.id          AS post_id,
+        SELECT p.id   AS post_id,
           p.source_id,
           p.title,
           p.view_count,
@@ -212,8 +211,7 @@ export class PostPgDrizzleQuery implements PostQuery {
           )`;
 
     return this.db.execute<SearchPostRow>(sql`
-      SELECT
-        p.id         AS "id",
+      SELECT p.id  AS "id",
         p.source_id  AS "sourceId",
         p.title      AS "title",
         p.view_count AS "viewCount",

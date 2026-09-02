@@ -49,6 +49,7 @@ const meta = {
     search: {
       query: '',
       onQueryChange: () => undefined,
+      onQuerySubmit: () => undefined,
       normalizedQuery: '',
       mode: null,
     },
@@ -89,6 +90,7 @@ export const NoSearchResults: Story = {
     search: {
       query: 'missing',
       onQueryChange: () => undefined,
+      onQuerySubmit: () => undefined,
       normalizedQuery: 'missing',
       mode: 'smart',
     },
@@ -103,6 +105,7 @@ export const SmartSearch: Story = {
     search: {
       query: 'storybook',
       onQueryChange: () => undefined,
+      onQuerySubmit: () => undefined,
       normalizedQuery: 'storybook',
       mode: 'smart',
     },
@@ -114,6 +117,7 @@ export const BasicSearchFallback: Story = {
     search: {
       query: 'storybook',
       onQueryChange: () => undefined,
+      onQuerySubmit: () => undefined,
       normalizedQuery: 'storybook',
       mode: 'basic',
     },

@@ -1,17 +1,14 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useInfiniteListPosts, useInfiniteSearchPosts } from '@/entities/post';
-import { useDebouncedValue } from '@/shared/lib';
-
-const POSTS_SEARCH_DEBOUNCE_MS = 300;
 
 export function usePostsArchive() {
   const [searchParams] = useSearchParams();
   const limitParam = searchParams.get('limit');
   const limit = limitParam ? Number(limitParam) : undefined;
   const [query, setQuery] = useState('');
-  const debouncedQuery = useDebouncedValue(query, POSTS_SEARCH_DEBOUNCE_MS);
-  const normalizedQuery = debouncedQuery.trim();
+  const [submittedQuery, setSubmittedQuery] = useState('');
+  const normalizedQuery = submittedQuery;
   const isSearching = normalizedQuery.length >= 1;
 
   const listResult = useInfiniteListPosts(limit);
@@ -30,9 +27,21 @@ export function usePostsArchive() {
     isFetchingNextPage,
   } = result;
 
+  function submitSearch() {
+    const nextQuery = query.trim();
+
+    if (nextQuery === normalizedQuery) {
+      if (nextQuery.length >= 1) void searchResult.refetch();
+      return;
+    }
+
+    setSubmittedQuery(nextQuery);
+  }
+
   return {
     query,
     setQuery,
+    submitSearch,
     normalizedQuery,
     isSearching,
     semanticSearchApplied,

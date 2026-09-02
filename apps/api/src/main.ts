@@ -1,3 +1,5 @@
+import '@platform/otel/otel.bootstrap';
+
 import { NestFactory } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from '@platform/nest/app.module';

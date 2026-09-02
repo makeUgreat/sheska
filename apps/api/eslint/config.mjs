@@ -6,11 +6,13 @@ import globals from 'globals';
 import unusedImports from 'eslint-plugin-unused-imports';
 import tseslint from 'typescript-eslint';
 import importPathStyle from './rules/import-path-style.mjs';
+import sqlVerbSameLine from './rules/sql-verb-same-line.mjs';
 
 const tsconfigRootDir = fileURLToPath(new URL('..', import.meta.url));
 const apiLocalRules = {
   rules: {
     'import-path-style': importPathStyle,
+    'sql-verb-same-line': sqlVerbSameLine,
   },
 };
 
@@ -57,6 +59,7 @@ export default tseslint.config(
     },
     rules: {
       'api-local/import-path-style': 'error',
+      'api-local/sql-verb-same-line': 'error',
     },
   },
   {
