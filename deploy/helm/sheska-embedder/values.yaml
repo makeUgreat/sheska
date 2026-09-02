@@ -1,0 +1,40 @@
+replicaCount: 2
+
+image:
+  repository: willom2c/sheska-embedder
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 3000
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 2Gi
+
+nodeSelector: {}
+tolerations: []
+
+# hash-n97-1 also hosts control-plane, Traefik, WireGuard, and
+# Prometheus/Grafana — avoid contending with those for CPU during inference.
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: NotIn
+              values:
+                - hash-n97-1
+
+# Spread the 2 replicas across different nodes so serialized single-node
+# request handling doesn't become a bottleneck under concurrent load.
+topologySpread:
+  enabled: true
+  maxSkew: 1
+  topologyKey: kubernetes.io/hostname
+  whenUnsatisfiable: DoNotSchedule
+  matchLabelKeys:
+    - pod-template-hash
