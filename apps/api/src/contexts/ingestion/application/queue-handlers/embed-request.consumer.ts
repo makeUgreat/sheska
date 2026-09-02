@@ -50,7 +50,7 @@ export class EmbedRequestConsumer extends WorkerHost {
     super();
   }
 
-  // TODO: add retry logic for Ollama call failures
+  // TODO: add retry logic for embedder call failures
   async process(job: Job<EmbedRequestPayload>): Promise<void> {
     const { sourceId, syncJobId, content } = job.data;
 
