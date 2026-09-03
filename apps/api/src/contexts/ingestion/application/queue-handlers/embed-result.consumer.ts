@@ -51,9 +51,9 @@ export class EmbedResultConsumer extends WorkerHost {
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job<EmbedResultPayload> | undefined): void {
+  onFailed(job: Job<EmbedResultPayload> | undefined, error: Error): void {
     if (!job) return;
-    this.logger.error('Embed result failed', {
+    this.logger.error('Embed result failed', error, {
       jobId: job.id,
       sourceId: job.data.sourceId,
       syncJobId: job.data.syncJobId,

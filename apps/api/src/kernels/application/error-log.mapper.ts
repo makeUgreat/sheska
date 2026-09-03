@@ -1,4 +1,4 @@
-import { isBaseError } from '@core/base-error';
+import { isSheskaError } from '@core/sheska-error';
 
 function serializeCause(value: unknown): unknown {
   if (!(value instanceof Error)) return value;
@@ -26,7 +26,7 @@ export function toErrorLogContext(error: unknown): Record<string, unknown> {
     return { error: String(error) };
   }
 
-  if (isBaseError(error)) {
+  if (isSheskaError(error)) {
     const {
       error: _error,
       name: _name,

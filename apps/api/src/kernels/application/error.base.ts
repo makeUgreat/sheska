@@ -1,4 +1,4 @@
-import { type BaseError } from '@core/base-error';
+import { type SheskaError } from '@core/sheska-error';
 
 export const APPLICATION_ERROR_KIND = {
   VALIDATION_FAILED: 'validation_failed',
@@ -23,7 +23,7 @@ export interface ApplicationErrorBase<
   Kind extends ApplicationErrorKind = ApplicationErrorKind,
   Code extends string = string,
   Details = unknown,
-> extends BaseError {
+> extends SheskaError {
   readonly kind: Kind;
   readonly code: Code;
   readonly message: string;

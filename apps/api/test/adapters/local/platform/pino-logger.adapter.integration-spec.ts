@@ -74,4 +74,23 @@ describe('PinoLoggerAdapter', () => {
     const output = lines().join('');
     expect(output).toContain('job-42');
   });
+
+  it('error()에 전달한 raw error를 로그 context로 변환한다', () => {
+    logger.error('some failure', new TypeError('connection refused'), {
+      jobId: 'job-42',
+    });
+
+    const output = lines().join('');
+    expect(output).toContain('job-42');
+    expect(output).toContain('TypeError');
+    expect(output).toContain('connection refused');
+  });
+
+  it('context 없이 전달한 raw error를 로그 context로 변환한다', () => {
+    logger.error('some failure', new TypeError('connection refused'));
+
+    const output = lines().join('');
+    expect(output).toContain('TypeError');
+    expect(output).toContain('connection refused');
+  });
 });

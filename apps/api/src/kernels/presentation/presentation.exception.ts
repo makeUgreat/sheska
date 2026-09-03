@@ -14,4 +14,8 @@ export class PresentationException<
     this.code = error.code;
     this.details = error.details;
   }
+
+  static is(value: unknown): value is PresentationException {
+    return value instanceof PresentationException;
+  }
 }
