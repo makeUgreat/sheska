@@ -3,7 +3,11 @@ replicaCount: 2
 image:
   repository: willom2c/sheska-embedder
   pullPolicy: IfNotPresent
-  tag: "latest"
+  # Placeholder — the deploy branch's copy of this file is what's actually
+  # live; embedder-deploy.yml overwrites it with the built commit's sha tag
+  # on every successful image publish. This value only matters if the
+  # deploy branch is ever recreated from master.
+  tag: "sha-4722b5a7bed5c2f924b4a84d67696cd14865b7d4"
 
 service:
   type: ClusterIP
