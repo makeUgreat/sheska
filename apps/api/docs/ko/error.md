@@ -27,7 +27,7 @@ Error는 API 제어 흐름과 외부 계약의 일부다.
 ### Exception과 Response 채널
 
 이 프로젝트는 exception을 기본 error 채널로 사용한다.
-구조화된 response envelope는 protocol-facing boundary에서만 사용한다.
+구조화된 failure response는 protocol-facing boundary에서만 사용한다.
 
 - Throw된 error, exception, rejected promise는 중단된 control flow다. Domain invariant 실패, technical adapter 실패, operational failure, programming error에 사용한다.
 - Request validation은 presentation boundary에서 처리하고, 구조화된 response body를 가진 protocol exception을 throw할 수 있다.
@@ -117,8 +117,8 @@ flowchart TB
 
 ## Protocol Error Response 형태
 
-Protocol-facing error response는 안정적인 envelope를 사용하는 것이 좋다.
-HTTP response에는 소유 protocol이 다르게 정할 이유가 없다면 `kernels/presentation`의 `HttpErrorEnvelope`를 사용한다.
+Protocol-facing error response는 안정적인 failure shape을 사용하는 것이 좋다.
+HTTP response에는 소유 protocol이 다르게 정할 이유가 없다면 `kernels/presentation`의 `HttpFailure`를 사용한다.
 
 - `statusCode`: 숫자 protocol status.
 - `code`: 사람과 기계가 response를 분류하는 안정적인 값이다. Caller는 `message`를 parsing하지 말고 `code`에 의존하는 것이 좋다.

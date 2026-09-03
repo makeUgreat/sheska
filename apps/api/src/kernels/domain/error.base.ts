@@ -1,4 +1,4 @@
-import { type BaseError } from '@core/base-error';
+import { type SheskaError } from '@core/sheska-error';
 
 export const DOMAIN_ERROR_KIND = {
   INVARIANT_VIOLATION: 'invariant_violation',
@@ -18,7 +18,7 @@ export interface DomainErrorBase<
   Kind extends DomainErrorKind = DomainErrorKind,
   Code extends string = string,
   Details = unknown,
-> extends BaseError {
+> extends SheskaError {
   readonly kind: Kind;
   readonly code: Code;
   readonly message: string;

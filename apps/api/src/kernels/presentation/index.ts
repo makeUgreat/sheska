@@ -14,5 +14,5 @@ export {
   type PresentationErrorKind,
   type PresentationValidationDetails,
   type PresentationValidationFieldDetail,
-  type HttpErrorEnvelope,
+  type HttpFailure,
 } from './error.base';

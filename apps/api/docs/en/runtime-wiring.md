@@ -117,6 +117,6 @@ flowchart TB
 ## Non-Port Contracts
 
 - Presentation DTOs and mappers are protocol adapter contracts, not ports.
-- Presentation error response envelopes are protocol adapter contracts, not ports.
+- Presentation failure responses are protocol adapter contracts, not ports.
 - Infrastructure exceptions and persistence mappers are adapter concerns, not ports.
 - If an outer layer contract must be consumed by application core, move the contract inward and model it as an application port or application-kernel contract.

@@ -11,7 +11,7 @@ import {
   PresentationException,
   PRESENTATION_ERROR_KIND,
   type PresentationErrorKind,
-  type HttpErrorEnvelope,
+  type HttpFailure,
 } from '@kernels/presentation';
 import {
   ApplicationException,
@@ -19,7 +19,6 @@ import {
   type ApplicationErrorKind,
   LOGGER,
   type LoggerPort,
-  toErrorLogContext,
 } from '@kernels/application';
 import {
   InfrastructureException,
@@ -32,7 +31,7 @@ const INTERNAL_ERROR_RESPONSE = {
   code: 'internal.unexpected',
   message: 'Internal server error',
   details: {},
-} satisfies HttpErrorEnvelope<'internal.unexpected', Record<string, never>>;
+} satisfies HttpFailure<'internal.unexpected', Record<string, never>>;
 
 const PRESENTATION_KIND_TO_HTTP_STATUS: Record<PresentationErrorKind, number> =
   {
@@ -75,33 +74,33 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       const exceptionResponse = exception.getResponse();
-      if (isHttpErrorResponse(exceptionResponse)) {
+      if (isHttpFailure(exceptionResponse)) {
         response.status(exception.getStatus()).json(exceptionResponse);
         return;
       }
     }
 
-    if (isPresentationException(exception)) {
+    if (PresentationException.is(exception)) {
       const errorResponse = this.toPresentationErrorResponse(exception);
       response.status(errorResponse.statusCode).json(errorResponse);
       return;
     }
 
-    if (isApplicationException(exception)) {
+    if (ApplicationException.is(exception)) {
       const errorResponse = this.toApplicationErrorResponse(exception);
       response.status(errorResponse.statusCode).json(errorResponse);
       return;
     }
 
-    if (isInfrastructureException(exception)) {
+    if (InfrastructureException.is(exception)) {
       const errorResponse = this.toInfrastructureErrorResponse(exception);
-      this.logger.error('Infrastructure failure', toErrorLogContext(exception));
+      this.logger.error('Infrastructure failure', exception);
       response.err = exception;
       response.status(errorResponse.statusCode).json(errorResponse);
       return;
     }
 
-    this.logger.error('Unexpected system error', toErrorLogContext(exception));
+    this.logger.error('Unexpected system error', exception);
     response.err = toError(exception);
     response
       .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -110,7 +109,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
   private toPresentationErrorResponse(
     exception: PresentationException,
-  ): HttpErrorEnvelope {
+  ): HttpFailure {
     return {
       statusCode: PRESENTATION_KIND_TO_HTTP_STATUS[exception.kind],
       code: exception.code,
@@ -121,7 +120,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
   private toApplicationErrorResponse(
     exception: ApplicationException,
-  ): HttpErrorEnvelope {
+  ): HttpFailure {
     return {
       statusCode: APPLICATION_KIND_TO_HTTP_STATUS[exception.kind],
       code: exception.code,
@@ -132,7 +131,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
   private toInfrastructureErrorResponse(
     exception: InfrastructureException,
-  ): HttpErrorEnvelope {
+  ): HttpFailure {
     return {
       statusCode: INFRASTRUCTURE_KIND_TO_HTTP_STATUS[exception.kind],
       code: exception.code,
@@ -142,32 +141,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
   }
 }
 
-function isPresentationException(
-  value: unknown,
-): value is PresentationException {
-  return value instanceof PresentationException;
-}
-
-function isApplicationException(value: unknown): value is ApplicationException {
-  return value instanceof ApplicationException;
-}
-
-function isInfrastructureException(
-  value: unknown,
-): value is InfrastructureException {
-  return value instanceof InfrastructureException;
-}
-
 function toError(exception: unknown): Error {
   return exception instanceof Error ? exception : new Error(String(exception));
 }
 
-function isHttpErrorResponse(value: unknown): value is HttpErrorEnvelope {
+function isHttpFailure(value: unknown): value is HttpFailure {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
 
-  const candidate = value as Partial<HttpErrorEnvelope>;
+  const candidate = value as Partial<HttpFailure>;
 
   return (
     typeof candidate.statusCode === 'number' &&

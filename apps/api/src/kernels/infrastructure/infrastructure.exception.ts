@@ -16,4 +16,8 @@ export class InfrastructureException<
     this.source = error.source;
     this.details = error.details;
   }
+
+  static is(value: unknown): value is InfrastructureException {
+    return value instanceof InfrastructureException;
+  }
 }

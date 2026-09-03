@@ -1,4 +1,4 @@
-import { type BaseError } from '@core/base-error';
+import { type SheskaError } from '@core/sheska-error';
 
 export const INFRASTRUCTURE_ERROR_KIND = {
   // A required infrastructure dependency is not available.
@@ -37,7 +37,7 @@ export interface InfrastructureErrorBase<
   Code extends string = string,
   Details extends Record<string, unknown> = InfrastructureErrorDetailsFor<Kind>,
   Source extends InfrastructureErrorSource = InfrastructureErrorSource,
-> extends BaseError {
+> extends SheskaError {
   readonly kind: Kind;
   readonly code: Code;
   readonly source: Source;
