@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
+import { BullMQOtel } from 'bullmq-otel';
+import { SERVICE_NAME } from '@platform/otel/otel.bootstrap';
 import { parseQueueConfig } from './queue.config';
 import { QUEUE_HEALTH_QUEUE, QueueHealthProbe } from './queue-health.probe';
 
@@ -17,6 +19,7 @@ import { QUEUE_HEALTH_QUEUE, QueueHealthProbe } from './queue-health.probe';
           connection: {
             url: config.redisUrl,
           },
+          telemetry: new BullMQOtel(SERVICE_NAME),
         };
       },
     }),

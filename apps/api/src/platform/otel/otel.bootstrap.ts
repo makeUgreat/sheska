@@ -16,7 +16,7 @@ import { parseOtelConfig } from './otel.config';
 
 // Fixed identity of this codebase, not a per-deployment setting — unlike
 // OTEL_EXPORTER_OTLP_ENDPOINT (differs dev vs. prod), this never changes.
-const SERVICE_NAME = 'sheska-api';
+export const SERVICE_NAME = 'sheska-api';
 const INSTRUMENTED_ENVIRONMENTS = ['production', 'development'];
 
 // This module is imported before Nest's ConfigModule (which normally owns
