@@ -209,7 +209,7 @@ describe('HttpExceptionFilter', () => {
   });
 
   describe('HttpException', () => {
-    describe('응답이 이미 HttpErrorEnvelope shape인 경우', () => {
+    describe('응답이 이미 HttpFailure shape인 경우', () => {
       it('응답 body를 그대로 사용한다', () => {
         const { host, json } = buildMockHost();
         const filter = new HttpExceptionFilter(buildMockLogger());
@@ -247,7 +247,7 @@ describe('HttpExceptionFilter', () => {
       });
     });
 
-    describe('응답이 HttpErrorEnvelope shape이 아닌 경우', () => {
+    describe('응답이 HttpFailure shape이 아닌 경우', () => {
       it('500으로 마스킹한다', () => {
         const { host, status } = buildMockHost();
         const filter = new HttpExceptionFilter(buildMockLogger());

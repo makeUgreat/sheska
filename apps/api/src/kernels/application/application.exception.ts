@@ -14,4 +14,8 @@ export class ApplicationException<
     this.code = error.code;
     this.details = error.details;
   }
+
+  static is(value: unknown): value is ApplicationException {
+    return value instanceof ApplicationException;
+  }
 }

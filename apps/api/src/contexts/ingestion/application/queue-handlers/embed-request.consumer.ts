@@ -7,11 +7,7 @@ import {
 } from '@nestjs/bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { type Job, type Queue } from 'bullmq';
-import {
-  LOGGER,
-  type LoggerPort,
-  toErrorLogContext,
-} from '@kernels/application';
+import { LOGGER, type LoggerPort } from '@kernels/application';
 import {
   IngestionFailedDomainEvent,
   IngestionProgressDomainEvent,
@@ -97,12 +93,11 @@ export class EmbedRequestConsumer extends WorkerHost {
   @OnWorkerEvent('failed')
   onFailed(job: Job<EmbedRequestPayload> | undefined, error: Error): void {
     if (!job) return;
-    this.logger.error('Embed request failed', {
+    this.logger.error('Embed request failed', error, {
       jobId: job.id,
       sourceId: job.data.sourceId,
       syncJobId: job.data.syncJobId,
       attemptsMade: job.attemptsMade,
-      ...toErrorLogContext(error),
     });
     const event = new IngestionFailedDomainEvent({
       aggregateId: job.data.syncJobId,

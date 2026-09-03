@@ -179,11 +179,19 @@ describe('EmbedRequestConsumer', () => {
         chunker,
       );
 
-      consumer.onFailed(buildJob(), new Error('connection refused'));
+      const error = new Error('connection refused');
+
+      consumer.onFailed(buildJob(), error);
 
       expect(logger.error).toHaveBeenCalledWith(
         'Embed request failed',
-        expect.objectContaining({ error: 'connection refused' }),
+        error,
+        expect.objectContaining({
+          jobId: undefined,
+          sourceId: 'source-1',
+          syncJobId: 'sync-job-1',
+          attemptsMade: undefined,
+        }),
       );
     });
 
@@ -206,9 +214,10 @@ describe('EmbedRequestConsumer', () => {
 
       expect(logger.error).toHaveBeenCalledWith(
         'Embed request failed',
+        error,
         expect.objectContaining({
-          kind: 'unavailable',
-          code: 'tei.request_failed',
+          sourceId: 'source-1',
+          syncJobId: 'sync-job-1',
         }),
       );
     });

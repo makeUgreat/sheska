@@ -1,4 +1,4 @@
-import { type BaseError } from '@core/base-error';
+import { type SheskaError } from '@core/sheska-error';
 
 export const PRESENTATION_ERROR_KIND = {
   VALIDATION_FAILED: 'validation_failed',
@@ -16,7 +16,7 @@ export interface PresentationErrorBase<
   Kind extends PresentationErrorKind = PresentationErrorKind,
   Code extends string = string,
   Details = unknown,
-> extends BaseError {
+> extends SheskaError {
   readonly kind: Kind;
   readonly code: Code;
   readonly message: string;
@@ -44,10 +44,7 @@ export type PresentationErrorDetailsFor<Kind extends PresentationErrorKind> =
     ? PresentationValidationDetails
     : unknown;
 
-export interface HttpErrorEnvelope<
-  Code extends string = string,
-  Details = unknown,
-> {
+export interface HttpFailure<Code extends string = string, Details = unknown> {
   readonly statusCode: number;
   readonly code: Code;
   readonly message: string;

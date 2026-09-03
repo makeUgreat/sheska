@@ -113,7 +113,10 @@ describe('EmbedResultConsumer', () => {
         buildMockLogger(),
       );
 
-      consumer.onFailed(buildJob({ syncJobId: 'sync-job-1' }));
+      consumer.onFailed(
+        buildJob({ syncJobId: 'sync-job-1' }),
+        new Error('save failed'),
+      );
 
       expect(emit).toHaveBeenCalledOnce();
       expect(emit).toHaveBeenCalledWith(
@@ -131,9 +134,32 @@ describe('EmbedResultConsumer', () => {
         buildMockLogger(),
       );
 
-      consumer.onFailed(undefined);
+      consumer.onFailed(undefined, new Error('irrelevant'));
 
       expect(emit).not.toHaveBeenCalled();
+    });
+
+    it('실패 원인 Error와 job context를 로그에 기록한다', () => {
+      const logger = buildMockLogger();
+      const consumer = new EmbedResultConsumer(
+        { save: vi.fn(), find: vi.fn() },
+        new EventEmitter2(),
+        logger,
+      );
+      const error = new Error('save failed');
+
+      consumer.onFailed(buildJob(), error);
+
+      expect(logger.error).toHaveBeenCalledWith(
+        'Embed result failed',
+        error,
+        expect.objectContaining({
+          jobId: undefined,
+          sourceId: 'source-1',
+          syncJobId: 'sync-job-1',
+          attemptsMade: undefined,
+        }),
+      );
     });
   });
 });

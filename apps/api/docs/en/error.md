@@ -26,7 +26,7 @@ Errors are part of API control flow and external contracts.
 ### Exception And Response Channels
 
 This project uses exceptions as the default error channel.
-Use a structured response envelope only at protocol-facing boundaries.
+Use a structured failure response only at protocol-facing boundaries.
 
 - A thrown error, exception, or rejected promise is interrupted control flow. Use it for domain invariant failures, technical adapter failures, operational failures, and programming errors.
 - Request validation is handled at the presentation boundary and may throw a protocol exception with a structured response body.
@@ -116,8 +116,8 @@ flowchart TB
 
 ## Protocol Error Response Shape
 
-Protocol-facing error responses should use a stable envelope.
-For HTTP responses, use `HttpErrorEnvelope` from `kernels/presentation` unless the owning protocol has a reason to differ.
+Protocol-facing error responses should use a stable failure shape.
+For HTTP responses, use `HttpFailure` from `kernels/presentation` unless the owning protocol has a reason to differ.
 
 - `statusCode`: numeric protocol status.
 - `code`: stable value for people and machines to classify the response. Callers should depend on `code` instead of parsing `message`.
