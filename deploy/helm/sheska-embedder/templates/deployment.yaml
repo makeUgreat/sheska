@@ -20,13 +20,18 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: 3000
+              containerPort: 80
               protocol: TCP
+          # Cold start (model load + CPU warmup pass) measured at ~2m10s on
+          # real hardware (hash-n100-1) — initialDelaySeconds needs real
+          # headroom above that, not the few-seconds default that's fine for
+          # a typical HTTP service. Too short here means the liveness probe
+          # kills the container mid-warmup, forever, before it ever finishes.
           livenessProbe:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 10
+            initialDelaySeconds: 180
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 6
@@ -34,9 +39,9 @@ spec:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            timeoutSeconds: 3
+            initialDelaySeconds: 150
+            periodSeconds: 10
+            timeoutSeconds: 5
             failureThreshold: 3
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
