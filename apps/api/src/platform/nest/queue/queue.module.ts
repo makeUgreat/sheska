@@ -19,10 +19,6 @@ import { QUEUE_HEALTH_QUEUE, QueueHealthProbe } from './queue-health.probe';
           connection: {
             url: config.redisUrl,
           },
-          // Applies to every queue/worker registered off this root config
-          // (embed-requests, embed-results, health-check): BullMQ wraps
-          // add()/process() in spans and carries the producer's trace
-          // context into the job so the worker span links back to it.
           telemetry: new BullMQOtel(SERVICE_NAME),
         };
       },
