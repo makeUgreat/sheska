@@ -60,7 +60,36 @@ services:
       - OLLAMA_HOST=http://ollama:11434
     restart: no
 
+  # Active embedding backend. Ollama above is kept running but unused by the
+  # app — EMBEDDER is wired to TeiHttpEmbedder — so it's a quick rollback if
+  # TEI needs to be reverted to.
+  tei:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.3
+    # HuggingFace only publishes amd64 for this image; emulate on arm64 hosts
+    # (e.g. Apple Silicon). Production nodes are amd64, so this only matters
+    # for local development — and even under Rosetta, model warmup has been
+    # observed to crash on Apple Silicon (see test/adapters/tei/support/
+    # global-setup.ts). Apple Silicon devs should point EMBEDDING_BASE_URL at
+    # a shared amd64 host instead of running this service locally.
+    platform: linux/amd64
+    container_name: sheska.development.tei
+    command: ['--model-id', 'Qwen/Qwen3-Embedding-0.6B']
+    # Host port 3001, not 3000 — the API dev server itself binds host 3000
+    # when run locally (outside this compose file).
+    ports:
+      - '3001:3000'
+    volumes:
+      - sheska_development_tei:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-sf', 'http://localhost:3000/health']
+      start_period: 15s
+      start_interval: 2s
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
 volumes:
   sheska_development_db:
   sheska_development_redis:
   sheska_development_ollama:
+  sheska_development_tei:

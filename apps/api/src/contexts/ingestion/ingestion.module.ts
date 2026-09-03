@@ -11,7 +11,7 @@ import {
   EmbedResultConsumer,
   EMBED_RESULTS_QUEUE,
 } from '@contexts/ingestion/application/queue-handlers/embed-result.consumer';
-import { OllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.embedder';
+import { TeiHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/tei-http/tei-http.embedder';
 import { RecursiveCharacterChunker } from '@contexts/ingestion/application/services/recursive-character.chunker';
 import { SourceEmbeddingPgDrizzleRepository } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/source-embedding.pg-drizzle.repository';
 import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
@@ -37,7 +37,7 @@ export class IngestionModule {
         },
         {
           provide: EMBEDDER,
-          useClass: OllamaHttpEmbedder,
+          useClass: TeiHttpEmbedder,
         },
         {
           provide: RecursiveCharacterChunker,
