@@ -1,13 +1,13 @@
 replicaCount: 2
 
 image:
-  repository: willom2c/sheska-ollama
+  repository: willom2c/sheska-embedder
   pullPolicy: IfNotPresent
   # Placeholder — the deploy branch's copy of this file is what's actually
-  # live; ollama-deploy.yml overwrites it with the built commit's sha tag on
-  # every successful image publish. This value only matters if the deploy
-  # branch is ever recreated from master.
-  tag: "latest"
+  # live; embedder-deploy.yml overwrites it with the built commit's sha tag
+  # on every successful image publish. This value only matters if the
+  # deploy branch is ever recreated from master.
+  tag: "sha-e0f009626c2bce5abe3a09236873d939e69eaae4"
 
 service:
   type: ClusterIP

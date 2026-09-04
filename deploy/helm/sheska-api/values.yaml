@@ -22,7 +22,7 @@ resources:
   requests:
     memory: 512Mi
 embedding:
-  baseUrl: http://sheska-ollama.sheska.svc.cluster.local:11434
+  baseUrl: http://sheska-embedder.sheska.svc.cluster.local:11434
 otel:
   exporterOtlpEndpoint: http://alloy.observability.svc.cluster.local:4318
 nodeSelector: {}

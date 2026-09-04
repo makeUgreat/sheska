@@ -1,8 +1,8 @@
-name: Ollama Deploy
+name: Embedder Deploy
 
 on:
   workflow_run:
-    workflows: ["Ollama Docker Publish"]
+    workflows: ["Embedder Docker Publish"]
     types: [completed]
     branches: [master]
   workflow_dispatch:
@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  IMAGE_NAME: sheska-ollama
+  IMAGE_NAME: sheska-embedder
   BOT_NAME: "sheska-deploy[bot]"
   BOT_EMAIL: "sheska-deploy[bot]@bot.com"
 
