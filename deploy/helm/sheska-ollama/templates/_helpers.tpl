@@ -1,8 +1,8 @@
-{{- define "sheska-embedder.name" -}}
+{{- define "sheska-ollama.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{- define "sheska-embedder.fullname" -}}
+{{- define "sheska-ollama.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -15,13 +15,13 @@
 {{- end }}
 {{- end }}
 
-{{- define "sheska-embedder.labels" -}}
+{{- define "sheska-ollama.labels" -}}
 helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
-{{ include "sheska-embedder.selectorLabels" . }}
+{{ include "sheska-ollama.selectorLabels" . }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
-{{- define "sheska-embedder.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "sheska-embedder.name" . }}
+{{- define "sheska-ollama.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "sheska-ollama.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
