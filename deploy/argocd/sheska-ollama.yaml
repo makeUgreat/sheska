@@ -1,13 +1,13 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: sheska-embedder
+  name: sheska-ollama
   namespace: argocd
 spec:
   project: sheska
   source:
     repoURL: https://github.com/makeUgreat/sheska.git
-    path: deploy/helm/sheska-embedder
+    path: deploy/helm/sheska-ollama
     targetRevision: deploy
   destination:
     server: https://kubernetes.default.svc

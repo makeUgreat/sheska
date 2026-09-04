@@ -1,6 +1,0 @@
-apiVersion: v2
-name: sheska-embedder
-description: Text Embeddings Inference (TEI) server for query/document embeddings
-type: application
-version: 0.1.0
-appVersion: "latest"

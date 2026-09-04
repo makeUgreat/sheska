@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "sheska-embedder.fullname" . }}
+  name: {{ include "sheska-ollama.fullname" . }}
   labels:
-    {{- include "sheska-embedder.labels" . | nindent 4 }}
+    {{- include "sheska-ollama.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "sheska-embedder.selectorLabels" . | nindent 6 }}
+      {{- include "sheska-ollama.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "sheska-embedder.selectorLabels" . | nindent 8 }}
+        {{- include "sheska-ollama.selectorLabels" . | nindent 8 }}
     spec:
       containers:
         - name: {{ .Chart.Name }}
@@ -20,29 +20,30 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: 80
+              containerPort: 11434
               protocol: TCP
-          # Cold start (model load + CPU warmup pass) measured at ~2m10s on
-          # real hardware (hash-n100-1) — initialDelaySeconds needs real
-          # headroom above that, not the few-seconds default that's fine for
-          # a typical HTTP service. Too short here means the liveness probe
-          # kills the container mid-warmup, forever, before it ever finishes.
+          # The model is baked into the image (see Dockerfile), so startup is
+          # just the Ollama daemon coming up, not a network pull or a
+          # TEI-style CPU attention-memory warmup pass — measured under 1s in
+          # local testing. Re-verify against real cluster hardware before
+          # trusting these numbers as tight; the values here already carry
+          # generous headroom above that measurement.
           livenessProbe:
             httpGet:
-              path: /health
+              path: /
               port: http
-            initialDelaySeconds: 180
+            initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 6
           readinessProbe:
             httpGet:
-              path: /health
+              path: /
               port: http
-            initialDelaySeconds: 150
-            periodSeconds: 10
+            initialDelaySeconds: 20
+            periodSeconds: 5
             timeoutSeconds: 5
-            failureThreshold: 3
+            failureThreshold: 6
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
@@ -61,7 +62,7 @@ spec:
           whenUnsatisfiable: {{ .whenUnsatisfiable }}
           labelSelector:
             matchLabels:
-              {{- include "sheska-embedder.selectorLabels" $ | nindent 14 }}
+              {{- include "sheska-ollama.selectorLabels" $ | nindent 14 }}
           {{- with .matchLabelKeys }}
           matchLabelKeys:
             {{- toYaml . | nindent 12 }}
