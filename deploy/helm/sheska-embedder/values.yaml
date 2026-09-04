@@ -1,5 +1,4 @@
 replicaCount: 2
-
 image:
   repository: willom2c/sheska-embedder
   pullPolicy: IfNotPresent
@@ -7,20 +6,16 @@ image:
   # live; embedder-deploy.yml overwrites it with the built commit's sha tag
   # on every successful image publish. This value only matters if the
   # deploy branch is ever recreated from master.
-  tag: "sha-e0f009626c2bce5abe3a09236873d939e69eaae4"
-
+  tag: "sha-9e3e98b5c614db3cd8c85e5228256ba168d8a180"
 service:
   type: ClusterIP
   port: 11434
-
 resources:
   requests:
     cpu: 500m
     memory: 2Gi
-
 nodeSelector: {}
 tolerations: []
-
 # hash-n97-1 also hosts control-plane, Traefik, WireGuard, and
 # Prometheus/Grafana — avoid contending with those for CPU during inference.
 affinity:
@@ -32,7 +27,6 @@ affinity:
               operator: NotIn
               values:
                 - hash-n97-1
-
 # Spread the 2 replicas across different nodes so serialized single-node
 # request handling doesn't become a bottleneck under concurrent load.
 topologySpread:
