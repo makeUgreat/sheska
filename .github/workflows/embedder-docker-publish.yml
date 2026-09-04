@@ -1,15 +1,15 @@
-name: Ollama Docker Publish
+name: Embedder Docker Publish
 
 on:
   push:
     branches:
       - master
     paths:
-      - 'deploy/helm/sheska-ollama/Dockerfile'
+      - 'deploy/helm/sheska-embedder/Dockerfile'
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: sheska-ollama
+  IMAGE_NAME: sheska-embedder
   DOCKER_HUB_USERNAME: willom2c
 
 jobs:
@@ -36,8 +36,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: deploy/helm/sheska-ollama
-          file: deploy/helm/sheska-ollama/Dockerfile
+          context: deploy/helm/sheska-embedder
+          file: deploy/helm/sheska-embedder/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

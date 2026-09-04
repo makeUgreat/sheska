@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "sheska-ollama.fullname" . }}
+  name: {{ include "sheska-embedder.fullname" . }}
   labels:
-    {{- include "sheska-ollama.labels" . | nindent 4 }}
+    {{- include "sheska-embedder.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "sheska-ollama.selectorLabels" . | nindent 6 }}
+      {{- include "sheska-embedder.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "sheska-ollama.selectorLabels" . | nindent 8 }}
+        {{- include "sheska-embedder.selectorLabels" . | nindent 8 }}
     spec:
       containers:
         - name: {{ .Chart.Name }}
@@ -62,7 +62,7 @@ spec:
           whenUnsatisfiable: {{ .whenUnsatisfiable }}
           labelSelector:
             matchLabels:
-              {{- include "sheska-ollama.selectorLabels" $ | nindent 14 }}
+              {{- include "sheska-embedder.selectorLabels" $ | nindent 14 }}
           {{- with .matchLabelKeys }}
           matchLabelKeys:
             {{- toYaml . | nindent 12 }}

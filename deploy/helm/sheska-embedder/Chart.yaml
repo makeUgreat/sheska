@@ -1,5 +1,5 @@
 apiVersion: v2
-name: sheska-ollama
+name: sheska-embedder
 description: Ollama server for query/document embeddings (Qwen3-Embedding-0.6B, Q8_0)
 type: application
 version: 0.1.0
