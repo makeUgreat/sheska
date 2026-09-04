@@ -1,38 +1,16 @@
-# Downloads the model in a separate stage using the official `hf` CLI, rather
-# than starting text-embeddings-router itself and waiting for /health — that
-# requires the full download-load-warmup sequence to finish, not just the
-# download, and the same load+warmup runs again anyway on every container
-# start via CMD below. Doing it at build time too was pure waste, and it's
-# the expensive part: measured as an ~11GB instantaneous memory spike that
-# OOM-killed a CI host outright.
-FROM python:3.12-slim AS model
-RUN pip install --no-cache-dir huggingface_hub
-RUN hf download Qwen/Qwen3-Embedding-0.6B --local-dir /model
+# Bakes the model into the image at build time instead of pulling it at
+# runtime (the old sheska-ollama chart's postStart-hook `ollama pull`, which
+# needed a node-pinned local-path PVC and blocked scaling replicas across
+# nodes — see 632c843 for the same rationale applied to sheska-embedder).
+FROM ollama/ollama:latest AS model
+RUN (ollama serve &) && \
+    until ollama list >/dev/null 2>&1; do sleep 1; done && \
+    ollama pull qwen3-embedding:0.6b
 
-# Bake the model into the final image instead of pulling it at runtime.
-# Kubernetes local-path storage ties a PVC to whichever node first bound it,
-# which blocks running replicas across multiple nodes — baking the model in
-# removes the need for a PVC (and the node pinning that came with it)
-# entirely.
-FROM ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.3
-COPY --from=model /model /model
+FROM ollama/ollama:latest
+COPY --from=model /root/.ollama /root/.ollama
 
-# The pods themselves OOMKilled in production too (confirmed via
-# `kubectl` — lastState.terminated.reason: OOMKilled — on both replicas,
-# repeatedly, despite both nodes having several GiB free), not just the CI
-# build. Same "Starting Qwen3 model on Cpu" -> "Warming up model" -> killed
-# pattern every time.
-#
-# --dtype float16: this repo has no ONNX export, so the backend falls back
-# to raw safetensors (fp32) weights.
-#
-# --max-batch-tokens / --max-concurrent-requests: defaults (16384 / 512) are
-# sized for generic high-throughput serving, not this workload. Our chunker
-# caps chunks at 6000 characters (recursive-character.chunker.ts,
-# DEFAULT_CHUNK_SIZE — originally tuned against Ollama's real per-request
-# behavior for this same model). Worst case for dense CJK tokenization that's
-# ~6000 tokens per chunk, so 8192 covers one worst-case chunk plus some
-# concurrent headroom without approaching the defaults. 32 concurrent
-# requests is a conservative cap sized to this workload rather than generic
-# high-throughput serving; raise it later if real traffic needs more.
-CMD ["--model-id", "/model", "--dtype", "float16", "--max-batch-tokens", "2048", "--max-concurrent-requests", "32", "--tokenization-workers", "1", "--json-output"]
+# Ollama's default 5-minute idle-unload was the original reason this backend
+# got replaced by TEI (632c843): a quiet period forced a 15-25s cold reload
+# on the next request. -1 keeps the model resident for the pod's lifetime.
+ENV OLLAMA_KEEP_ALIVE=-1
