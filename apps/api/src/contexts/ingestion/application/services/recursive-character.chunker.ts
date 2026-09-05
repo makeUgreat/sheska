@@ -6,18 +6,29 @@ export interface Chunk {
 }
 
 export const DEFAULT_CHUNK_SIZE = 6000;
+export const DEFAULT_CHUNK_OVERLAP = 600;
+export const DEFAULT_SEPARATORS = ['\n\n', '\n', ' ', ''];
 
-const DEFAULT_SEPARATORS = ['\n\n', '\n', ' ', ''];
 const CHAR_SPLIT_SENTINEL = [''];
 const isNonEmpty = (s: string) => s.length > 0;
 
+export interface RecursiveCharacterChunkerOptions {
+  chunkSize: number;
+  chunkOverlap: number;
+  separators: string[];
+}
+
 @Injectable()
 export class RecursiveCharacterChunker {
-  constructor(
-    private readonly chunkSize: number = DEFAULT_CHUNK_SIZE,
-    private readonly chunkOverlap: number = 600,
-    private readonly separators: string[] = DEFAULT_SEPARATORS,
-  ) {}
+  private readonly chunkSize: number;
+  private readonly chunkOverlap: number;
+  private readonly separators: string[];
+
+  constructor(options: RecursiveCharacterChunkerOptions) {
+    this.chunkSize = options.chunkSize;
+    this.chunkOverlap = options.chunkOverlap;
+    this.separators = options.separators;
+  }
 
   chunk(text: string): Chunk[] {
     const rawChunks = this.splitText(text, this.separators);

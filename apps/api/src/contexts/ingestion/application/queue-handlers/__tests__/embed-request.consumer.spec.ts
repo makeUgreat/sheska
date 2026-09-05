@@ -6,7 +6,12 @@ import {
   IngestionProgressDomainEvent,
   IngestionStartedDomainEvent,
 } from '@contexts/ingestion/domain';
-import { RecursiveCharacterChunker } from '@contexts/ingestion/application/services/recursive-character.chunker';
+import {
+  RecursiveCharacterChunker,
+  DEFAULT_CHUNK_SIZE,
+  DEFAULT_CHUNK_OVERLAP,
+  DEFAULT_SEPARATORS,
+} from '@contexts/ingestion/application/services/recursive-character.chunker';
 import {
   EmbedRequestConsumer,
   type EmbedRequestPayload,
@@ -35,7 +40,11 @@ function buildJob(
 
 const fakeEmbedding = Array.from({ length: 1024 }, () => 0.1);
 const fakeModel = 'qwen3-embedding:0.6b';
-const chunker = new RecursiveCharacterChunker();
+const chunker = new RecursiveCharacterChunker({
+  chunkSize: DEFAULT_CHUNK_SIZE,
+  chunkOverlap: DEFAULT_CHUNK_OVERLAP,
+  separators: DEFAULT_SEPARATORS,
+});
 
 describe('EmbedRequestConsumer', () => {
   describe('process', () => {
@@ -72,7 +81,11 @@ describe('EmbedRequestConsumer', () => {
         .mockResolvedValue({ embedding: fakeEmbedding, model: fakeModel });
       const add = vi.fn().mockResolvedValue(undefined);
       // chunkSize=7: 'abc\n\ndef\n\nghi'는 단락별로 3개 청크로 분리됨
-      const smallChunker = new RecursiveCharacterChunker(7, 0);
+      const smallChunker = new RecursiveCharacterChunker({
+        chunkSize: 7,
+        chunkOverlap: 0,
+        separators: DEFAULT_SEPARATORS,
+      });
       const consumer = new EmbedRequestConsumer(
         buildMockEmbedder(embed),
         { add } as unknown as Queue,
@@ -95,7 +108,11 @@ describe('EmbedRequestConsumer', () => {
         .mockResolvedValue({ embedding: fakeEmbedding, model: fakeModel });
       const eventEmitter = new EventEmitter2();
       const emit = vi.spyOn(eventEmitter, 'emit');
-      const smallChunker = new RecursiveCharacterChunker(7, 0);
+      const smallChunker = new RecursiveCharacterChunker({
+        chunkSize: 7,
+        chunkOverlap: 0,
+        separators: DEFAULT_SEPARATORS,
+      });
       const consumer = new EmbedRequestConsumer(
         buildMockEmbedder(embed),
         { add: vi.fn() } as unknown as Queue,
@@ -121,7 +138,11 @@ describe('EmbedRequestConsumer', () => {
         .mockResolvedValue({ embedding: fakeEmbedding, model: fakeModel });
       const eventEmitter = new EventEmitter2();
       const emit = vi.spyOn(eventEmitter, 'emit');
-      const smallChunker = new RecursiveCharacterChunker(7, 0);
+      const smallChunker = new RecursiveCharacterChunker({
+        chunkSize: 7,
+        chunkOverlap: 0,
+        separators: DEFAULT_SEPARATORS,
+      });
       const consumer = new EmbedRequestConsumer(
         buildMockEmbedder(embed),
         { add: vi.fn() } as unknown as Queue,

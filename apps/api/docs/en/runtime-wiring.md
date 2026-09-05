@@ -89,7 +89,7 @@ flowchart TB
 - Allowed values and defaults for runtime selectors belong in the typed config schema or mapper that owns them.
 - The owner of an environment variable SHOULD define its schema, defaults, typed config mapper, and owner-specific validation rules.
 - `platform` aggregates app-level and selection-level environment schemas and executes API runtime validation at process startup.
-- Adapter-specific required environment variables SHOULD be validated by the selected adapter when it creates its typed config.
+- An adapter's own directory owns the environment variable schema and typed config parser for that adapter (for example, a `*.config.ts` file next to the adapter file). The adapter class itself MUST NOT read `ConfigService` or `process.env` directly — it MUST receive an already-parsed, typed options object through its constructor.
 - Runtime wiring that must inspect raw `process.env`, such as conditional module registration, SHOULD call owner-provided selector helpers instead of duplicating string comparisons.
 - Production code SHOULD consume typed config providers or `ConfigService` values after validation, not read `process.env` directly.
 
@@ -103,6 +103,17 @@ flowchart TB
 - Do not make use case behavior depend on NestJS request objects, module references, container lookups, lifecycle callbacks, or other framework runtime APIs.
 - Bounded context root modules MAY compose that context's application, presentation, and infrastructure providers.
 - Prefer composing providers by bounded context or runtime boundary instead of mirroring every use case folder as a NestJS module.
+- `DynamicModule` factories such as `forRoot()`/`forFeature()` return a new module instance on every call. NestJS does not deduplicate them across import paths, so an import graph that reaches the same `forRoot()` from more than one path instantiates that module, and every listener, consumer, and controller it registers, once per path.
+- A bounded context root module that exposes both `forRoot()` and `forFeature()` MUST keep event listeners, queue consumers, schedulers, and controllers in `forRoot()` only.
+- `forFeature()` MUST contain only stateless providers, such as tokens and repositories, that are safe to construct more than once.
+- A provider's eligibility for `forFeature()` is decided by statelessness alone, not by whether a current external consumer uses it. Do not move a stateless provider out of `forFeature()` just because today's only consumer does not need it.
+- If `forFeature()`'s export surface grows costly because different consumers need different, non-overlapping subsets of it, address that by having the call site select providers explicitly (for example, `forFeature(tokens)`), not by continuing to manually curate which stateless providers stay in or out.
+- Import a context's `forRoot()` exactly once, from the module that owns the composition. Other modules that only need that context's providers MUST import `forFeature()`, not `forRoot()`.
+- The module that composes an adapter reads `ConfigService`, calls that adapter's own config parser, and constructs the adapter through `useFactory`. Do not inject `ConfigService` into the adapter class itself.
+- This composition ownership is not limited to adapters or `ConfigService`-sourced values. A class MUST NOT default a constructor parameter that represents tunable configuration; the module that composes the provider owns the concrete value — including a hardcoded constant — and passes it explicitly through `useFactory` or a plain constructor call.
+- An adapter constructed through `useFactory` does not need `@Injectable()`; NestJS still calls lifecycle hooks such as `OnModuleDestroy` on the resulting instance.
+- A DI token created only to pass one `useFactory`'s output into another `useFactory` within the same module MUST stay module-private (not exported) unless a different module genuinely needs to inject that same value.
+- Parsing an adapter's config and constructing the adapter MAY happen in a single `useFactory`. Split them into a separate options provider and a construction provider only when something else in the container needs the adapter instance itself tracked separately — for example, the adapter implements a lifecycle hook such as `OnModuleDestroy` and the token that's actually exported only exposes a derived value (not the instance), so NestJS would otherwise never see the instance to call the hook on it.
 
 ## Port Binding
 
