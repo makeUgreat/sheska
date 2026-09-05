@@ -10,7 +10,8 @@ interface AutoSyncServiceOptions {
   settings: SheskaSettings;
   syncCache: SyncCache;
   saveSyncCache(): Promise<void>;
-  onFileSynced?(path: string): void;
+  onSyncStart?(path: string): void;
+  onSyncFinished?(path: string): void;
 }
 
 export class AutoSyncService {
@@ -18,6 +19,7 @@ export class AutoSyncService {
   private settings: SheskaSettings;
   private syncCache: SyncCache;
   private readonly dirtyFiles = new Map<string, TFile>();
+  private readonly syncingFiles = new Set<string>();
   private isFlushing = false;
   private flushDebounced: Debouncer<[], void>;
 
@@ -73,6 +75,10 @@ export class AutoSyncService {
     return cached !== undefined && cached.mtime === file.stat.mtime;
   }
 
+  isSyncing(file: TFile): boolean {
+    return this.syncingFiles.has(file.path);
+  }
+
   private createFlushDebouncer(): Debouncer<[], void> {
     return debounce(
       () => {
@@ -101,12 +107,18 @@ export class AutoSyncService {
   }
 
   private async uploadFileCore(file: TFile): Promise<void> {
-    const mtimeAtRead = file.stat.mtime;
-    const content = await this.options.vault.read(file);
-    await this.api.uploadSource({ externalSourceId: file.path, content });
-    this.syncCache[file.path] = { mtime: mtimeAtRead, syncedAt: Date.now() };
-    await this.options.saveSyncCache();
-    this.options.onFileSynced?.(file.path);
+    this.syncingFiles.add(file.path);
+    this.options.onSyncStart?.(file.path);
+    try {
+      const mtimeAtRead = file.stat.mtime;
+      const content = await this.options.vault.read(file);
+      await this.api.uploadSource({ externalSourceId: file.path, content });
+      this.syncCache[file.path] = { mtime: mtimeAtRead, syncedAt: Date.now() };
+      await this.options.saveSyncCache();
+    } finally {
+      this.syncingFiles.delete(file.path);
+      this.options.onSyncFinished?.(file.path);
+    }
   }
 
   private async uploadIfChanged(file: TFile): Promise<void> {

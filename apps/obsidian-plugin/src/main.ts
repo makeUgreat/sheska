@@ -8,6 +8,8 @@ import type { SheskaSettings } from '@/settings';
 import { PluginDataStore } from '@/storage';
 import type { SyncCache } from '@/storage';
 
+type SyncStatus = 'synced' | 'not-synced' | 'syncing';
+
 export default class SheskaPlugin extends Plugin {
   declare settings: SheskaSettings;
   declare api: SheskaApiClient;
@@ -17,6 +19,7 @@ export default class SheskaPlugin extends Plugin {
   private autoSyncService!: AutoSyncService;
   private autoSyncSweepIntervalId: number | null = null;
   private syncStatusBarItem!: HTMLElement;
+  private readonly lastNotifiedStatus = new Map<string, SyncStatus>();
 
   async onload(): Promise<void> {
     await this.loadSettings();
@@ -122,7 +125,8 @@ export default class SheskaPlugin extends Plugin {
       settings: this.settings,
       syncCache: this.syncCache,
       saveSyncCache: async () => this.saveSyncCache(),
-      onFileSynced: (path) => this.refreshStatusBarIfActive(path),
+      onSyncStart: (path) => this.refreshStatusBarIfActive(path),
+      onSyncFinished: (path) => this.refreshStatusBarIfActive(path),
     });
   }
 
@@ -143,16 +147,37 @@ export default class SheskaPlugin extends Plugin {
     );
   }
 
+  private getSyncStatus(file: TFile): SyncStatus {
+    if (this.autoSyncService.isSyncing(file)) return 'syncing';
+    return this.autoSyncService.isSynced(file) ? 'synced' : 'not-synced';
+  }
+
   private updateSyncStatusBar(file: TFile | null): void {
     if (!file) {
       this.syncStatusBarItem.setText('');
       return;
     }
-    this.syncStatusBarItem.setText(
-      this.autoSyncService.isSynced(file)
-        ? 'Sheska: ✓ Synced'
-        : 'Sheska: ○ Not synced',
-    );
+    const status = this.getSyncStatus(file);
+    const text =
+      status === 'syncing'
+        ? 'Sheska: ⟳ Syncing...'
+        : status === 'synced'
+          ? 'Sheska: ✓ Synced'
+          : 'Sheska: ○ Not synced';
+    this.syncStatusBarItem.setText(text);
+    this.notifyStatusChange(file, status);
+  }
+
+  private notifyStatusChange(file: TFile, status: SyncStatus): void {
+    const previous = this.lastNotifiedStatus.get(file.path);
+    this.lastNotifiedStatus.set(file.path, status);
+    if (previous === undefined || previous === status) return;
+
+    if (status === 'synced') {
+      new Notice(`Sheska: "${file.basename ?? file.path}" synced.`);
+    } else if (status === 'not-synced' && previous === 'synced') {
+      new Notice(`Sheska: "${file.basename ?? file.path}" not synced.`);
+    }
   }
 
   private registerCommands(): void {
