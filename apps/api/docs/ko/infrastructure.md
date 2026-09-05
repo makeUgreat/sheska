@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/infrastructure.md
-last_synced: 2026-08-09
+last_synced: 2026-09-05
 related:
   - ./architecture.md
   - ./persistence.md
@@ -21,7 +21,8 @@ Persistence 관련 규칙은 [API Persistence 정책](./persistence.md)에 있�
 
 - Application contract file 또는 infrastructure adapter file을 명명하거나 배치하거나 구조를 잡을 때 이 문서를 사용한다.
 - Database schema, ORM, migration, repository mapper, storage constraint 규칙은 persistence 정책을 사용한다.
-- Import direction, layer boundary 규칙은 source dependency 컨벤션을 사용한다.
+- Import direction, layer boundary 규칙은 source dependency 컨벤션을 사용한다 — 어떤 기술-결합 adapter가 infrastructure(driven)이고 어떤 게 presentation(driving)인지는 source dependency 컨벤션의 Presentation Layer 섹션을 참고한다.
+- 아래 adapter 파일 명명 패턴(`{domain-name}.{adapter-or-purpose}.{role}.ts`)은 infrastructure adapter뿐 아니라 presentation의 non-protocol inbound adapter(예: 큐 consumer)에도 동일하게 적용된다 — 두 layer가 다르더라도 명명 스킴은 공유한다.
 
 ## Contract 파일 명명
 
