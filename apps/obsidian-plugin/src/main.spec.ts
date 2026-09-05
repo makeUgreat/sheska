@@ -445,6 +445,21 @@ describe('SheskaPlugin', () => {
       vi.useRealTimers();
     });
 
+    it('immediately shows Not synced when the active file is edited, without waiting for the debounced upload', async () => {
+      plugin = makePlugin({
+        syncCache: { 'a.md': { mtime: 100, syncedAt: 1 } },
+      });
+      const file = new TFile('a.md', { ctime: 0, mtime: 100, size: 1 });
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(file);
+      await plugin.onload();
+      expect(statusBarItems[0].text).toBe('Sheska: ✓ Synced');
+
+      file.stat.mtime = 200;
+      vaultEventHandlers['modify']!(file);
+
+      expect(statusBarItems[0].text).toBe('Sheska: ○ Not synced');
+    });
+
     it('does not refresh the status bar when a background sync affects a different file', async () => {
       vi.useFakeTimers();
       vi.stubGlobal(

@@ -1,4 +1,5 @@
 import { Notice, Plugin, TFile } from 'obsidian';
+import type { TAbstractFile } from 'obsidian';
 import { SheskaApiClient } from '@/api/client';
 import { AutoSyncService } from '@/auto-sync';
 import { HealthCheckScheduler } from '@/health-check';
@@ -121,11 +122,11 @@ export default class SheskaPlugin extends Plugin {
       settings: this.settings,
       syncCache: this.syncCache,
       saveSyncCache: async () => this.saveSyncCache(),
-      onFileSynced: (path) => this.onFileSynced(path),
+      onFileSynced: (path) => this.refreshStatusBarIfActive(path),
     });
   }
 
-  private onFileSynced(path: string): void {
+  private refreshStatusBarIfActive(path: string): void {
     const activeFile = this.app.workspace.getActiveFile();
     if (activeFile?.path === path) {
       this.updateSyncStatusBar(activeFile);
@@ -197,14 +198,17 @@ export default class SheskaPlugin extends Plugin {
 
   private registerAutoSyncEvents(): void {
     this.registerEvent(
-      this.app.vault.on('modify', (file) =>
-        this.autoSyncService.onVaultFileChanged(file),
-      ),
+      this.app.vault.on('modify', (file) => this.handleVaultFileChanged(file)),
     );
     this.registerEvent(
-      this.app.vault.on('create', (file) =>
-        this.autoSyncService.onVaultFileChanged(file),
-      ),
+      this.app.vault.on('create', (file) => this.handleVaultFileChanged(file)),
     );
+  }
+
+  private handleVaultFileChanged(file: TAbstractFile): void {
+    this.autoSyncService.onVaultFileChanged(file);
+    if (file instanceof TFile) {
+      this.refreshStatusBarIfActive(file.path);
+    }
   }
 }
