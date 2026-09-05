@@ -1,4 +1,3 @@
-import { ConfigService } from '@nestjs/config';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { InfrastructureException } from '@kernels/infrastructure';
 import { OllamaHttpEmbedder } from '../ollama-http.embedder';
@@ -9,14 +8,7 @@ describe('OllamaHttpEmbedder', () => {
   const model = 'qwen3-embedding:0.6b';
 
   beforeEach(() => {
-    const configService = {
-      get: (key: string) => {
-        if (key === 'EMBEDDING_BASE_URL') return baseUrl;
-        throw new Error(`Unknown config key: ${key}`);
-      },
-    } as unknown as ConfigService;
-
-    client = new OllamaHttpEmbedder(configService);
+    client = new OllamaHttpEmbedder({ baseUrl, model });
   });
 
   it('성공 시 임베딩과 모델을 반환한다', async () => {

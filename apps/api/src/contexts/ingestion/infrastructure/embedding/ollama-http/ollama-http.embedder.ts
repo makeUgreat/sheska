@@ -1,5 +1,3 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { z } from 'zod';
 import {
   INFRASTRUCTURE_ERROR_KIND,
@@ -7,7 +5,6 @@ import {
 } from '@kernels/infrastructure';
 import type { Embedder } from '@contexts/ingestion/application/ports';
 import { DEFAULT_CHUNK_SIZE } from '@contexts/ingestion/application/services/recursive-character.chunker';
-import { parseOllamaConfig } from './ollama-http.config';
 
 const ADAPTER = 'ollama.embedder';
 
@@ -28,17 +25,18 @@ const OllamaEmbeddingsResponse = z.object({
   embedding: z.array(z.number()),
 });
 
-@Injectable()
+export interface OllamaHttpEmbedderOptions {
+  baseUrl: string;
+  model: string;
+}
+
 export class OllamaHttpEmbedder implements Embedder {
   private readonly baseUrl: string;
   private readonly model: string;
 
-  constructor(private readonly configService: ConfigService) {
-    const config = parseOllamaConfig({
-      EMBEDDING_BASE_URL: this.configService.get('EMBEDDING_BASE_URL'),
-    });
-    this.baseUrl = config.baseUrl;
-    this.model = 'qwen3-embedding:0.6b';
+  constructor(options: OllamaHttpEmbedderOptions) {
+    this.baseUrl = options.baseUrl;
+    this.model = options.model;
   }
 
   async embed(
