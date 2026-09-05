@@ -11,7 +11,11 @@ storage:
 
 resources:
   requests:
+    cpu: 250m
     memory: 512Mi
+  limits:
+    cpu: 1500m
+    memory: 4Gi
 
 nodeSelector:
   kubernetes.io/hostname: hash-n150-1
