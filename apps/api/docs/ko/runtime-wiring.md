@@ -109,6 +109,7 @@ flowchart TB
 - `forFeature()`는 token, repository처럼 여러 번 생성돼도 안전한 stateless provider만 포함해야 한다.
 - Context의 `forRoot()`는 그 composition을 소유하는 module에서 한 번만 import한다. 해당 context의 provider만 필요한 다른 module은 `forRoot()`가 아니라 `forFeature()`를 import해야 한다.
 - Adapter를 조립하는 module이 `ConfigService`를 읽고, 그 adapter 소유의 config parser를 호출하고, `useFactory`로 adapter를 생성한다. Adapter class 자체에 `ConfigService`를 주입하지 않는다.
+- 이 조립 책임은 adapter나 `ConfigService`에서 오는 값에만 한정되지 않는다. Tunable configuration을 나타내는 constructor parameter에 default 값을 두면 안 되며, provider를 조립하는 module이 — 값이 하드코딩된 constant라 하더라도 — 그 값을 소유하고 `useFactory` 또는 plain constructor call로 명시적으로 전달해야 한다.
 - `useFactory`로 생성하는 adapter는 `@Injectable()`이 필요 없다 — NestJS는 factory가 만든 instance에도 `OnModuleDestroy` 같은 lifecycle hook을 그대로 호출한다.
 - 같은 module 안에서 한 `useFactory`의 출력을 다른 `useFactory`에 전달하기 위해서만 만든 DI token은, 다른 module이 그 값을 실제로 주입받아야 하는 경우가 아니라면 module 안에서만 쓰고 export하지 않는다.
 - Adapter의 config parsing과 adapter 생성은 하나의 `useFactory`로 합쳐도 된다. Options provider와 construction provider를 따로 나누는 건, container 안의 다른 무언가가 adapter instance 자체를 별도로 추적해야 할 때만 한다 — 예를 들어 adapter가 `OnModuleDestroy` 같은 lifecycle hook을 구현하는데 실제로 export하는 token은 instance가 아니라 거기서 파생된 값만 노출한다면, NestJS는 그 instance를 볼 방법이 없어 hook을 호출하지 못한다.

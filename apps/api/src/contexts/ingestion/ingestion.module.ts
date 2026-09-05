@@ -15,7 +15,12 @@ import {
 } from '@contexts/ingestion/application/queue-handlers/embed-result.consumer';
 import { OllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.embedder';
 import { parseOllamaConfig } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.config';
-import { RecursiveCharacterChunker } from '@contexts/ingestion/application/services/recursive-character.chunker';
+import {
+  RecursiveCharacterChunker,
+  DEFAULT_CHUNK_SIZE,
+  DEFAULT_CHUNK_OVERLAP,
+  DEFAULT_SEPARATORS,
+} from '@contexts/ingestion/application/services/recursive-character.chunker';
 import { SourceEmbeddingPgDrizzleRepository } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/source-embedding.pg-drizzle.repository';
 import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
 import { EMBEDDER, SOURCE_EMBEDDING_REPOSITORY } from './ingestion.di-tokens';
@@ -63,7 +68,12 @@ export class IngestionModule {
       providers: [
         {
           provide: RecursiveCharacterChunker,
-          useFactory: () => new RecursiveCharacterChunker(),
+          useFactory: () =>
+            new RecursiveCharacterChunker({
+              chunkSize: DEFAULT_CHUNK_SIZE,
+              chunkOverlap: DEFAULT_CHUNK_OVERLAP,
+              separators: DEFAULT_SEPARATORS,
+            }),
         },
         IngestSourceHandler,
         EmbedRequestConsumer,
