@@ -3,6 +3,7 @@ import {
   noticeMessages,
   fileMenuItems,
   fileMenuHandler,
+  vaultEventHandlers,
   TFile,
   Menu,
 } from '../__mocks__/obsidian';
@@ -80,15 +81,44 @@ describe('SheskaPlugin', () => {
       await plugin.saveSettings();
 
       expect(plugin.saveData).toHaveBeenCalledWith(
-        expect.objectContaining({ apiBaseUrl: 'http://staging:3001' }),
+        expect.objectContaining({
+          settings: expect.objectContaining({
+            apiBaseUrl: 'http://staging:3001',
+          }),
+        }),
       );
+    });
+  });
+
+  describe('loadSyncCache', () => {
+    it('defaults to an empty object when no cache is stored', async () => {
+      await plugin.loadSyncCache();
+
+      expect(
+        (plugin as unknown as { syncCache: Record<string, unknown> }).syncCache,
+      ).toEqual({});
+    });
+
+    it('loads a previously persisted cache', async () => {
+      plugin.loadData = vi.fn().mockResolvedValue({
+        syncCache: { 'a.md': { mtime: 1, syncedAt: 2 } },
+      });
+
+      await plugin.loadSyncCache();
+
+      expect(
+        (plugin as unknown as { syncCache: Record<string, unknown> }).syncCache,
+      ).toEqual({ 'a.md': { mtime: 1, syncedAt: 2 } });
     });
   });
 
   describe('health check interval', () => {
     it('starts an interval on load when healthCheckIntervalMinutes > 0', async () => {
       vi.useFakeTimers();
-      plugin = makePlugin({ healthCheckIntervalMinutes: 1 });
+      plugin = makePlugin({
+        healthCheckIntervalMinutes: 1,
+        autoSyncEnabled: false,
+      });
 
       await plugin.onload();
 
@@ -97,7 +127,10 @@ describe('SheskaPlugin', () => {
     });
 
     it('does not start an interval when healthCheckIntervalMinutes is 0', async () => {
-      plugin = makePlugin({ healthCheckIntervalMinutes: 0 });
+      plugin = makePlugin({
+        healthCheckIntervalMinutes: 0,
+        autoSyncEnabled: false,
+      });
 
       await plugin.onload();
 
@@ -106,7 +139,10 @@ describe('SheskaPlugin', () => {
 
     it('restarts the interval after saveSettings', async () => {
       vi.useFakeTimers();
-      plugin = makePlugin({ healthCheckIntervalMinutes: 1 });
+      plugin = makePlugin({
+        healthCheckIntervalMinutes: 1,
+        autoSyncEnabled: false,
+      });
       await plugin.onload();
       vi.mocked(plugin.registerInterval).mockClear();
 
@@ -118,7 +154,10 @@ describe('SheskaPlugin', () => {
 
     it('shows failure Notice when health check fires and API is unreachable', async () => {
       vi.useFakeTimers();
-      plugin = makePlugin({ healthCheckIntervalMinutes: 1 });
+      plugin = makePlugin({
+        healthCheckIntervalMinutes: 1,
+        autoSyncEnabled: false,
+      });
       vi.stubGlobal(
         'fetch',
         vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
@@ -207,7 +246,7 @@ describe('SheskaPlugin', () => {
     it('registers a file-menu event handler', async () => {
       await plugin.onload();
 
-      expect(plugin.registerEvent).toHaveBeenCalledOnce();
+      expect(plugin.registerEvent).toHaveBeenCalledTimes(3);
     });
 
     it('adds an Upload to Sheska item to the file menu', async () => {
@@ -299,6 +338,205 @@ describe('SheskaPlugin', () => {
       expect(noticeMessages).toContain(
         'Failed to reach Sheska API. Check settings.',
       );
+    });
+  });
+
+  describe('auto-sync', () => {
+    function stubUploadFetch(): { calls: string[] } {
+      const calls: string[] = [];
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockImplementation((_url: string, init?: RequestInit) => {
+          const body = JSON.parse((init?.body as string) ?? '{}') as {
+            externalSourceId: string;
+          };
+          calls.push(body.externalSourceId);
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                sourceId: '1',
+                externalSourceId: body.externalSourceId,
+                fingerprint: 'x',
+              }),
+          });
+        }),
+      );
+      return { calls };
+    }
+
+    it('registers modify and create vault event listeners', async () => {
+      await plugin.onload();
+
+      expect(vaultEventHandlers['modify']).toBeInstanceOf(Function);
+      expect(vaultEventHandlers['create']).toBeInstanceOf(Function);
+    });
+
+    it('coalesces edits to two different files inside one debounce window into a single flush that uploads both', async () => {
+      vi.useFakeTimers();
+      const { calls } = stubUploadFetch();
+      plugin = makePlugin({ autoSyncDebounceSeconds: 5 });
+      plugin.app.vault.read = vi.fn().mockResolvedValue('content');
+      await plugin.onload();
+
+      const fileA = new TFile('a.md', { ctime: 0, mtime: 100, size: 1 });
+      const fileB = new TFile('b.md', { ctime: 0, mtime: 200, size: 1 });
+      vaultEventHandlers['modify']!(fileA);
+      vaultEventHandlers['modify']!(fileB);
+
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(calls.sort()).toEqual(['a.md', 'b.md']);
+      vi.useRealTimers();
+    });
+
+    it('skips upload when the cached mtime matches the current file mtime', async () => {
+      vi.useFakeTimers();
+      const { calls } = stubUploadFetch();
+      plugin = makePlugin({
+        autoSyncDebounceSeconds: 5,
+        syncCache: { 'a.md': { mtime: 100, syncedAt: 1 } },
+      });
+      plugin.app.vault.read = vi.fn().mockResolvedValue('content');
+      await plugin.onload();
+
+      vaultEventHandlers['modify']!(
+        new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }),
+      );
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(calls).toEqual([]);
+      vi.useRealTimers();
+    });
+
+    it('does not cache a failed upload and still uploads the rest of the batch', async () => {
+      vi.useFakeTimers();
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockRejectedValueOnce(new Error('boom'))
+          .mockResolvedValueOnce({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                sourceId: '1',
+                externalSourceId: 'b.md',
+                fingerprint: 'x',
+              }),
+          }),
+      );
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      plugin = makePlugin({ autoSyncDebounceSeconds: 5 });
+      plugin.app.vault.read = vi.fn().mockResolvedValue('content');
+      await plugin.onload();
+
+      const fileA = new TFile('a.md', { ctime: 0, mtime: 100, size: 1 });
+      const fileB = new TFile('b.md', { ctime: 0, mtime: 200, size: 1 });
+      vaultEventHandlers['modify']!(fileA);
+      vaultEventHandlers['modify']!(fileB);
+      await vi.advanceTimersByTimeAsync(5000);
+
+      const lastCall = vi.mocked(plugin.saveData).mock.calls.at(-1)?.[0] as {
+        syncCache?: Record<string, unknown>;
+      };
+      expect(lastCall?.syncCache).toHaveProperty('b.md');
+      expect(lastCall?.syncCache).not.toHaveProperty('a.md');
+      expect(errorSpy).toHaveBeenCalled();
+      vi.useRealTimers();
+      errorSpy.mockRestore();
+    });
+
+    it('captures mtime before the network call, not after, so a concurrent edit is not lost', async () => {
+      vi.useFakeTimers();
+      const { calls } = stubUploadFetch();
+      plugin = makePlugin({ autoSyncDebounceSeconds: 5 });
+      const file = new TFile('a.md', { ctime: 0, mtime: 100, size: 1 });
+      plugin.app.vault.read = vi.fn().mockImplementation(() => {
+        // Simulate a newer edit landing while this upload is in flight.
+        file.stat.mtime = 999;
+        return Promise.resolve('content');
+      });
+      await plugin.onload();
+
+      vaultEventHandlers['modify']!(file);
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(calls).toEqual(['a.md']);
+      const lastCall = vi.mocked(plugin.saveData).mock.calls.at(-1)?.[0] as {
+        syncCache?: Record<string, { mtime: number }>;
+      };
+      expect(lastCall?.syncCache?.['a.md']?.mtime).toBe(100);
+      vi.useRealTimers();
+    });
+
+    it('does not upload on vault events when autoSyncEnabled is false', async () => {
+      vi.useFakeTimers();
+      const fetchMock = vi.fn();
+      vi.stubGlobal('fetch', fetchMock);
+      plugin = makePlugin({
+        autoSyncEnabled: false,
+        autoSyncDebounceSeconds: 1,
+      });
+      plugin.app.vault.read = vi.fn().mockResolvedValue('content');
+      await plugin.onload();
+
+      vaultEventHandlers['modify']!(
+        new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }),
+      );
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      vi.useRealTimers();
+    });
+
+    it('manual upload always uploads even when the cache says the file is unchanged', async () => {
+      const { calls } = stubUploadFetch();
+      const file = new TFile('a.md', { ctime: 0, mtime: 100, size: 1 });
+      plugin = makePlugin({
+        syncCache: { 'a.md': { mtime: 100, syncedAt: 1 } },
+      });
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(file);
+      plugin.app.vault.read = vi.fn().mockResolvedValue('content');
+      await plugin.onload();
+      const uploadCall = vi
+        .mocked(plugin.addCommand)
+        .mock.calls.find((c) => c[0].id === 'sheska-upload-note');
+      const callback = (
+        uploadCall![0] as unknown as { callback: () => Promise<void> }
+      ).callback;
+
+      await callback();
+
+      expect(calls).toEqual(['a.md']);
+    });
+
+    it('sweep uploads only files whose mtime changed since the cache', async () => {
+      const { calls } = stubUploadFetch();
+      const unchanged = new TFile('unchanged.md', {
+        ctime: 0,
+        mtime: 100,
+        size: 1,
+      });
+      const changed = new TFile('changed.md', {
+        ctime: 0,
+        mtime: 200,
+        size: 1,
+      });
+      plugin = makePlugin({
+        syncCache: { 'unchanged.md': { mtime: 100, syncedAt: 1 } },
+      });
+      plugin.app.vault.read = vi.fn().mockResolvedValue('content');
+      // getMarkdownFiles still returns [] here, so onload's own fire-and-forget
+      // initial sweep is a no-op and doesn't race with the explicit call below.
+      await plugin.onload();
+      plugin.app.vault.getMarkdownFiles = vi
+        .fn()
+        .mockReturnValue([unchanged, changed]);
+
+      await (plugin as unknown as { runSweep(): Promise<void> }).runSweep();
+
+      expect(calls).toEqual(['changed.md']);
     });
   });
 });
