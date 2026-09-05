@@ -9,6 +9,7 @@ last_synced: 2026-07-07
 related:
   - ./documentation-guidelines.md
   - ./monorepo.md
+  - ./adr.md
 ---
 
 # 루트 컨벤션 인덱스
@@ -26,6 +27,7 @@ related:
 ## 라우팅
 
 - 문서를 생성, 수정, 리뷰할 때: [문서 작성 가이드라인](./documentation-guidelines.md)을 읽는다.
+- 앱 단위든 레포지토리 단위든 ADR을 작성하거나 리뷰할 때: [ADR 작성 가이드](./adr.md)를 읽는다.
 - workspace layout, 루트 package script, 저장소 단위 명령어, static harness 동작을 변경할 때: [모노레포 정책](./monorepo.md)을 읽는다.
 - 개발 또는 테스트 중 외부 도구를 사용할 때(Playwright MCP, Obsidian MCP, Obsidian Local REST API): [개발 통합 도구](./dev-integrations.md)를 읽는다.
 

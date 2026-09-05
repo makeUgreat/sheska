@@ -4,15 +4,16 @@ lang: ko
 audience: both
 applies_to:
   - repository
-translation: ../en/dev-integrations.md
+source: ../en/dev-integrations.md
+last_synced: 2026-09-05
 ---
 
 # 개발 통합 도구
 
 개발 및 테스트 중 사용할 수 있는 외부 도구입니다. CI나 프로덕션에서는 사용하지 않습니다.
 
-통합 시크릿은 `.dev-integrations.env`에 저장합니다 (gitignored, 앱 환경변수 파일과 분리).
-`.dev-integrations.env.example`을 복사해서 시작합니다.
+- 통합 시크릿은 `.dev-integrations.env`에 저장합니다 (gitignored, 앱 환경변수 파일과 분리).
+  - `.dev-integrations.env.example`을 복사해서 시작합니다.
 
 ## 사용 가능한 통합
 

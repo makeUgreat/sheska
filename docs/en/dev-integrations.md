@@ -11,8 +11,8 @@ translation: ../ko/dev-integrations.md
 
 External tools available during development and testing. Not used in CI or production.
 
-Integration secrets are stored in `.dev-integrations.env` (gitignored, separate from app env files).
-Copy `.dev-integrations.env.example` to get started.
+- Integration secrets are stored in `.dev-integrations.env` (gitignored, separate from app env files).
+  - Copy `.dev-integrations.env.example` to get started.
 
 ## Available Integrations
 

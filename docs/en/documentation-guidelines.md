@@ -1,10 +1,12 @@
 ---
 title: Documentation Guidelines
 lang: en
-audience: human
+audience: both
 applies_to:
   - project Markdown documents
 translation: ../ko/documentation-guidelines.md
+related:
+  - ./adr.md
 ---
 
 # Documentation Guidelines
@@ -29,33 +31,38 @@ Paired documents should describe the same policy.
 ## Documentation Role
 
 - This project treats documentation as part of the engineering harness.
-- Documentation provides feedforward guidance: it should shape decisions before implementation by explaining intent, boundaries, mental models, tradeoffs, and review standards.
-- Static analysis, tests, type checks, generators, and CI are feedback controls and verification gates: they verify concrete, structured, and repeatable requirements during or after implementation.
+- Documentation provides feedforward guidance.
+  - It shapes decisions before implementation by explaining intent, boundaries, mental models, tradeoffs, and review standards.
+- Static analysis, tests, type checks, generators, and CI are feedback controls and verification gates.
+  - They verify concrete, structured, and repeatable requirements during or after implementation.
 - Documentation SHOULD guide judgment where automation cannot express context well.
 - Documentation SHOULD NOT duplicate long mechanical rule lists that are already enforced by feedback controls or verification gates.
-- When a mechanical requirement matters, documentation SHOULD explain why it exists, when it matters, and where enforcement lives instead of restating every enforced detail.
-- Use `MUST` in documentation only when a human or agent must make the decision before automated verification can help, or when violating the rule creates a policy, correctness, or maintenance risk.
+  - When a mechanical requirement matters, explain why it exists, when it matters, and where enforcement lives instead of restating every enforced detail.
+- Use `MUST` in English documentation only when a human or agent must make the decision before automated verification can help, or when violating the rule creates a policy, correctness, or maintenance risk.
 - Prefer flexible guidance for implementation choices that depend on context, provided automated checks or tests can catch the exact required shape later.
 
 ## Language Pairs
 
-- Use language-based directory names for translated documentation.
-- Use `en` for English documents and `ko` for Korean documents.
-- Durable convention documents under `docs/en/` MUST have matching Korean documents under `docs/ko/` with the same relative path and file name.
-- Durable app convention documents under `apps/*/docs/en/` MUST have matching Korean documents under `apps/*/docs/ko/` with the same relative path and file name.
-- Public Markdown files outside language directories SHOULD use English as the base file and Korean as `*.ko.md` when they are long-lived user-facing or maintainer-facing documents. Example: `README.md` and `README.ko.md`.
+- Use language-based directory names: `en` for English documents, `ko` for Korean documents.
+- A durable convention document MUST have a matching document in the other language, at the same relative path and file name.
+  - `docs/en/` pairs with `docs/ko/`.
+  - `apps/*/docs/en/` pairs with `apps/*/docs/ko/`.
+- Public Markdown files outside language directories SHOULD use English as the base file and Korean as `*.ko.md`, when they are long-lived user-facing or maintainer-facing documents.
+  - Example: `README.md` and `README.ko.md`.
 
 ## Synchronization
 
 - English and Korean documents MUST keep the same heading hierarchy and major section order.
-- Heading text MAY be translated. The hierarchy and order must match, but exact heading words do not need to match.
+  - Heading text MAY be translated; exact wording does not need to match.
 - Direct sentence-by-sentence translation is not required.
-- Rules, exceptions, commands, paths, code examples, API names, and type names must have the same meaning in both documents.
+  - A Korean document may use different examples, ordering, or added context than its English pair, per [Writing Style](#writing-style).
+- Rules, exceptions, commands, paths, API names, and type names must carry the same meaning in both documents.
 - When one language changes, update the paired language in the same PR or change unit.
 
 ## Metadata
 
 - Durable convention documents SHOULD include YAML frontmatter or equivalent metadata that identifies the title, language, audience or scope, and paired document.
+  - Identify the pair with `translation` in the English document and `source` plus `last_synced` in the Korean document.
 - Keep metadata keys consistent within a document family, but do not add keys that are not consumed by readers, tools, or maintenance workflow.
 - Include `read_when` only when a document is routed from an index and the trigger is useful at the document itself.
 - Include `related` only when there are clear documents that should be read together.
@@ -63,64 +70,64 @@ Paired documents should describe the same policy.
 
 ## Document Routing
 
-Documents should be organized by when they are read, not only by topic.
-Each document should have a clear task trigger that can be routed from `index.md`.
+- Organize documents by when they are read, not only by topic.
+- Give each document a clear task trigger that can be routed from `index.md`.
 
 ## Document Structure
 
-- Use one `#` heading for the document title.
-- Use `##` headings for major rule groups.
-- Use heading depth to represent the subject structure, not a fixed two-level template.
-- Use `###` and deeper headings when they keep related rules, rationale, exceptions, examples, and review checks together under one decision area.
-- Put scope and synchronization policy rules before task-specific rules.
-- Put default rules before exceptions.
-- Group related rules under explicit headings instead of using one long mixed list or repeated sibling sections.
-- Add new instructions to the existing section that owns the decision when one exists.
-- Place rationale, exceptions, and review heuristics close to the rule they qualify.
-- Prefer grouping by the decision a reader is making over grouping by artifact type, chronology, or the order in which rules were discovered.
-- Keep index and routing documents shallow; route to detailed documents instead of duplicating their policy.
-- Avoid sections whose only purpose is to hold unrelated leftover rules.
+- Use one `#` for the title and `##` for major rule groups.
+  - Go to `###` or deeper only when it keeps a rule, its rationale, exceptions, and examples together under one decision area.
+- Order sections by what the reader needs first.
+  - Scope and synchronization policy rules before task-specific rules.
+  - Default rules before exceptions.
+- Group by the decision a reader is making, not by artifact type, chronology, or discovery order.
+  - Never create a section just to hold unrelated leftover rules.
+- Keep index and routing documents shallow.
+  - Route to detailed documents instead of duplicating their policy.
 
 ## Rule Quality
 
-- Add documentation rules only when they express a reusable principle, long-term convention, review standard, or maintenance reason.
-- Add rules when they improve future decisions before automated checks run.
-- Before adding a rule, check whether an existing section already owns the same decision and update that section instead of repeating the policy elsewhere.
-- Avoid adding rules that only patch a temporary repository state, one-off migration gap, or unusual current situation.
-- Avoid documenting exact syntax, formatting, or structure only to mirror an automated check, unless the document adds intent, boundaries, or routing.
-- Keep temporary handling in work notes, PR descriptions, or the specific change context instead of promoting it to a convention document.
-- State durable desired behavior directly. Prefer `Use Y` over `Do not keep the previous X pattern; use Y` when the previous pattern only matters to the current change.
-- Mention current or past implementation details only when they explain a durable boundary, tradeoff, or migration rule.
+- Add a rule only for a reusable principle, long-term convention, review standard, or maintenance reason.
+  - Not to patch a temporary repository state, one-off migration gap, or unusual current situation.
+- Before adding a rule, check whether an existing section already owns the same decision.
+  - Update that section instead of repeating the policy elsewhere.
+- Keep temporary handling in work notes, PR descriptions, or the specific change context.
+  - Do not promote it to a convention document.
+- State durable desired behavior directly.
+  - Prefer `Use Y` over `Do not keep the previous X pattern; use Y` when the previous pattern only matters to the current change.
+  - Mention current or past implementation details only when they explain a durable boundary, tradeoff, or migration rule.
 
 ## Writing Style
 
 ### English Documents
 
-- Write English agent-facing documents in concise, directive prose.
-- Prefer concise rules, but include rationale when judgment, tradeoffs, or exceptions matter.
+- Write for an LLM agent reading in isolation, not for a human reading start to end.
+  - Sections get routed and read individually.
+  - Make each section self-contained: name the subject explicitly instead of leaning on context from earlier sections.
+- Write every rule as a `-` bullet, not a prose paragraph.
+  - Put the rule on the top-level bullet and its rationale on a bullet nested under it.
+  - A reader scanning bullets should see the decision before the reasoning.
+- Use the same term for the same concept every time.
+  - Do not vary vocabulary for elegance.
+  - An agent matching concepts benefits from consistent naming more than a human benefits from varied prose.
+- State a rule's scope and conditions explicitly instead of leaving them implied.
+- Avoid pronouns with a distant or ambiguous antecedent.
+  - Repeat the subject's name instead of "it" or "this" when a bullet might be read on its own.
 - Explain intent for rules covered by static checks, instead of repeating only what the check catches.
 
 ### Korean Documents
 
-- Translate prose and section headings in Korean documents.
-- Write Korean human-facing documents naturally, but keep the strength of requirements the same.
-- Translate requirement language into natural Korean wording.
+- Write for a human colleague reading as a developer, not as a translation of the English document.
+- Prioritize natural Korean sentence flow and word order over mirroring the English sentence structure.
+- Keep code, commands, file paths, URLs, frontmatter keys, API names, type names, package names, identifiers, and product names in their original form.
+  - Mixing them into Korean text is normal, not an exception to call out.
+- Use whatever example, order, or added context reads most naturally in Korean.
+  - The only constraint: it must convey the same policy as the English document.
 
 ### Shared Rules
 
-- Keep code, commands, file paths, URLs, frontmatter keys, API names, type names, package names, identifiers, and product names untranslated.
-- Use precise requirement language. Do not make one language stricter or looser than its pair.
-- Write documentation as guidance for capable implementers. Use direct language, but do not turn every preference into a prohibition.
+- Write documentation as guidance for capable implementers.
+  - Use direct language, but do not turn every preference into a prohibition.
 - Include nuance when a rule has tradeoffs, known exceptions, or depends on implementation context.
-
-## Requirement Language
-
-- Use `MUST` for rules that are mandatory and clearly reviewable.
-- Use `MUST NOT` for forbidden behavior.
-- Use `SHOULD` for default rules that allow justified exceptions.
-- Use `SHOULD NOT` for behavior to avoid unless there is a reason.
-- Use `MAY` for explicitly allowed behavior.
-- Use `Prefer` to mark priority between valid options.
-- Use `Avoid` to discourage a pattern without forbidding it.
-- In Korean documents, translate requirement keywords into natural Korean phrases while preserving requirement strength.
-- Do not overuse `MUST`; reserve it for policy violations, correctness risks, or rules that can be judged consistently.
+- Break a long bullet into nested bullets instead of stacking multiple clauses on one line.
+  - Each clause gets its own line, nested one level under the point it elaborates.

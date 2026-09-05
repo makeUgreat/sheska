@@ -8,6 +8,7 @@ translation: ../ko/index.md
 related:
   - ./documentation-guidelines.md
   - ./monorepo.md
+  - ./adr.md
 ---
 
 # Root Convention Index
@@ -25,6 +26,7 @@ Do not load every document by default.
 ## Routing
 
 - When creating, editing, or reviewing project Markdown documents: read [Documentation Guidelines](./documentation-guidelines.md).
+- When writing or reviewing an Architecture Decision Record (ADR), in any app or at the repository level: read [ADR Writing Guide](./adr.md).
 - When changing workspace layout, root package scripts, repository-level commands, or static harness behavior: read [Monorepo Policy](./monorepo.md).
 - When using external tools for development or testing (Playwright MCP, Obsidian MCP, Obsidian Local REST API): read [Development Integrations](./dev-integrations.md).
 
