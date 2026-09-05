@@ -30,11 +30,10 @@ export type SourcesModuleOptions = Record<string, never>;
 
 @Module({})
 export class SourcesModule {
-  static forRoot(_options: SourcesModuleOptions = {}): DynamicModule {
+  static forFeature(): DynamicModule {
     return {
       module: SourcesModule,
-      imports: [IngestionModule.forRoot()],
-      controllers: [SourcesHttpController],
+      imports: [IngestionModule.forFeature()],
       providers: [
         {
           provide: SOURCE_FINGERPRINTER,
@@ -68,14 +67,23 @@ export class SourcesModule {
         ListSourcesUseCase,
         GetSourceUseCase,
         UploadSourceUseCase,
-        HandleIngestionResultHandler,
       ],
       exports: [
         SOURCE_REPOSITORY,
+        SOURCE_SYNC_JOB_REPOSITORY,
         ListSourcesUseCase,
         GetSourceUseCase,
         UploadSourceUseCase,
       ],
+    };
+  }
+
+  static forRoot(_options: SourcesModuleOptions = {}): DynamicModule {
+    return {
+      module: SourcesModule,
+      imports: [SourcesModule.forFeature()],
+      controllers: [SourcesHttpController],
+      providers: [HandleIngestionResultHandler],
     };
   }
 }

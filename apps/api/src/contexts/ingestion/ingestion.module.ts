@@ -21,13 +21,9 @@ export type IngestionModuleOptions = Record<string, never>;
 
 @Module({})
 export class IngestionModule {
-  static forRoot(_options: IngestionModuleOptions = {}): DynamicModule {
+  static forFeature(): DynamicModule {
     return {
       module: IngestionModule,
-      imports: [
-        BullModule.registerQueue({ name: EMBED_REQUESTS_QUEUE }),
-        BullModule.registerQueue({ name: EMBED_RESULTS_QUEUE }),
-      ],
       providers: [
         {
           provide: SOURCE_EMBEDDING_REPOSITORY,
@@ -39,6 +35,20 @@ export class IngestionModule {
           provide: EMBEDDER,
           useClass: OllamaHttpEmbedder,
         },
+      ],
+      exports: [SOURCE_EMBEDDING_REPOSITORY, EMBEDDER],
+    };
+  }
+
+  static forRoot(_options: IngestionModuleOptions = {}): DynamicModule {
+    return {
+      module: IngestionModule,
+      imports: [
+        BullModule.registerQueue({ name: EMBED_REQUESTS_QUEUE }),
+        BullModule.registerQueue({ name: EMBED_RESULTS_QUEUE }),
+        IngestionModule.forFeature(),
+      ],
+      providers: [
         {
           provide: RecursiveCharacterChunker,
           useFactory: () => new RecursiveCharacterChunker(),
@@ -47,7 +57,6 @@ export class IngestionModule {
         EmbedRequestConsumer,
         EmbedResultConsumer,
       ],
-      exports: [SOURCE_EMBEDDING_REPOSITORY, EMBEDDER],
     };
   }
 }

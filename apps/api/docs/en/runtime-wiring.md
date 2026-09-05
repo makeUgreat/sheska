@@ -103,6 +103,10 @@ flowchart TB
 - Do not make use case behavior depend on NestJS request objects, module references, container lookups, lifecycle callbacks, or other framework runtime APIs.
 - Bounded context root modules MAY compose that context's application, presentation, and infrastructure providers.
 - Prefer composing providers by bounded context or runtime boundary instead of mirroring every use case folder as a NestJS module.
+- `DynamicModule` factories such as `forRoot()`/`forFeature()` return a new module instance on every call. NestJS does not deduplicate them across import paths, so an import graph that reaches the same `forRoot()` from more than one path instantiates that module, and every listener, consumer, and controller it registers, once per path.
+- A bounded context root module that exposes both `forRoot()` and `forFeature()` MUST keep event listeners, queue consumers, schedulers, and controllers in `forRoot()` only.
+- `forFeature()` MUST contain only stateless providers, such as tokens and repositories, that are safe to construct more than once.
+- Import a context's `forRoot()` exactly once, from the module that owns the composition. Other modules that only need that context's providers MUST import `forFeature()`, not `forRoot()`.
 
 ## Port Binding
 
