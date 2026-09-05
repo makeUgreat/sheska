@@ -16,7 +16,12 @@ import {
 import { LOGGER } from '@kernels/application';
 import { EMBEDDER } from '@contexts/ingestion/ingestion.di-tokens';
 import { IngestionFailedDomainEvent } from '@contexts/ingestion/domain';
-import { RecursiveCharacterChunker } from '@contexts/ingestion/application/services/recursive-character.chunker';
+import {
+  RecursiveCharacterChunker,
+  DEFAULT_CHUNK_SIZE,
+  DEFAULT_CHUNK_OVERLAP,
+  DEFAULT_SEPARATORS,
+} from '@contexts/ingestion/application/services/recursive-character.chunker';
 
 const REDIS_CONNECTION = { host: '127.0.0.1', port: 56379 };
 
@@ -41,7 +46,12 @@ describe('EmbedRequestConsumer', () => {
         EmbedRequestConsumer,
         {
           provide: RecursiveCharacterChunker,
-          useFactory: () => new RecursiveCharacterChunker(),
+          useFactory: () =>
+            new RecursiveCharacterChunker({
+              chunkSize: DEFAULT_CHUNK_SIZE,
+              chunkOverlap: DEFAULT_CHUNK_OVERLAP,
+              separators: DEFAULT_SEPARATORS,
+            }),
         },
         { provide: EMBEDDER, useValue: { embed } },
         {

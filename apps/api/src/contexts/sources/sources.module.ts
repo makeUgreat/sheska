@@ -39,7 +39,6 @@ export class SourcesModule {
           provide: SOURCE_FINGERPRINTER,
           useClass: SourceSha256Fingerprinter,
         },
-        SourceContentSnapshotCalculator,
         {
           provide: SOURCE_REPOSITORY,
           useFactory: (db: NodePgDatabase<typeof sourcesSchema>) =>
@@ -64,6 +63,7 @@ export class SourcesModule {
             new SourcePgDrizzleQuery(db),
           inject: [DATABASE_TOKENS.drizzleDatabase],
         },
+        SourceContentSnapshotCalculator,
         ListSourcesUseCase,
         GetSourceUseCase,
         UploadSourceUseCase,
