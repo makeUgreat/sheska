@@ -1,23 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { BullModule } from '@nestjs/bullmq';
+import { BullModule, getQueueToken } from '@nestjs/bullmq';
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { type Queue, QueueEvents } from 'bullmq';
-import { EmbedRequestBullMqConsumer } from '@contexts/ingestion/presentation/queue/bullmq/embed-request.bullmq.consumer';
-import { EmbedResultBullMqDispatcher } from '@contexts/ingestion/infrastructure/queue/bullmq/embed-result.bullmq.dispatcher';
-import { EmbedSourceContentUseCase } from '@contexts/ingestion/application/use-cases/embed-source-content.use-case';
-import { LOGGER } from '@kernels/application';
 import {
-  EMBEDDER,
-  EMBED_RESULT_DISPATCHER,
-} from '@contexts/ingestion/ingestion.di-tokens';
-import {
+  EmbedRequestConsumer,
   EMBED_REQUESTS_QUEUE,
-  EMBED_RESULTS_QUEUE,
   type EmbedRequestPayload,
+} from '@contexts/ingestion/application/queue-handlers/embed-request.consumer';
+import {
+  EMBED_RESULTS_QUEUE,
   type EmbedResultPayload,
-} from '@contexts/ingestion/application/ports';
+} from '@contexts/ingestion/application/queue-handlers/embed-result.consumer';
+import { LOGGER } from '@kernels/application';
+import { EMBEDDER } from '@contexts/ingestion/ingestion.di-tokens';
 import { IngestionFailedDomainEvent } from '@contexts/ingestion/domain';
 import {
   RecursiveCharacterChunker,
@@ -28,7 +25,7 @@ import {
 
 const REDIS_CONNECTION = { host: '127.0.0.1', port: 56379 };
 
-describe('EmbedRequestBullMqConsumer', () => {
+describe('EmbedRequestConsumer', () => {
   let app: INestApplication;
   let embedRequestsQueue: Queue<EmbedRequestPayload>;
   let embedResultsQueue: Queue<EmbedResultPayload>;
@@ -46,12 +43,7 @@ describe('EmbedRequestBullMqConsumer', () => {
         EventEmitterModule.forRoot(),
       ],
       providers: [
-        EmbedRequestBullMqConsumer,
-        EmbedSourceContentUseCase,
-        {
-          provide: EMBED_RESULT_DISPATCHER,
-          useClass: EmbedResultBullMqDispatcher,
-        },
+        EmbedRequestConsumer,
         {
           provide: RecursiveCharacterChunker,
           useFactory: () =>

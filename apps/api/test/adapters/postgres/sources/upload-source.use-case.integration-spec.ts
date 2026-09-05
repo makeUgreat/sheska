@@ -11,7 +11,7 @@ import {
   type SourceRepository,
   type SourceSyncJobRepository,
 } from '@contexts/sources/domain';
-import { EMBED_REQUESTS_QUEUE } from '@contexts/ingestion/application/ports';
+import { EMBED_REQUESTS_QUEUE } from '@contexts/ingestion/application/queue-handlers/embed-request.consumer';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
 import * as schema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
 import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';

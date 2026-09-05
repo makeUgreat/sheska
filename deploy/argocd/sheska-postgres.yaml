@@ -3,12 +3,6 @@ kind: Application
 metadata:
   name: sheska-postgres
   namespace: argocd
-  annotations:
-    notifications.argoproj.io/subscribe.on-manifest-synced.homelab: "C0BV08N8XFC"
-    notifications.argoproj.io/subscribe.on-health-degraded.homelab: "C0BV08N8XFC"
-    notifications.argoproj.io/subscribe.on-sync-failed.homelab: "C0BV08N8XFC"
-    notifications.argoproj.io/subscribe.on-health-suspended.homelab: "C0BV08N8XFC"
-    notifications.argoproj.io/subscribe.on-health-missing.homelab: "C0BV08N8XFC"
 spec:
   project: sheska
   source:
