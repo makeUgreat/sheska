@@ -88,6 +88,31 @@ describe('SheskaPlugin', () => {
         }),
       );
     });
+
+    it('rebuilds the API client after the base URL changes', async () => {
+      plugin = makePlugin({
+        healthCheckIntervalMinutes: 0,
+        autoSyncEnabled: false,
+      });
+      await plugin.onload();
+      plugin.settings.apiBaseUrl = 'http://staging:3001';
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockResolvedValue({ ok: true, json: () => Promise.resolve({}) }),
+      );
+
+      await plugin.saveSettings();
+      const commandArg = vi.mocked(plugin.addCommand).mock.calls[0][0];
+      await (
+        commandArg as unknown as { callback: () => Promise<void> }
+      ).callback();
+
+      expect(fetch).toHaveBeenCalledWith('http://staging:3001/readyz', {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
   });
 
   describe('loadSyncCache', () => {
