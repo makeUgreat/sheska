@@ -1,6 +1,19 @@
 import { vi } from 'vitest';
 
+export interface FileStats {
+  ctime: number;
+  mtime: number;
+  size: number;
+}
+
 export class TFile {
+  constructor(
+    public path: string,
+    public stat: FileStats = { ctime: 0, mtime: 0, size: 0 },
+  ) {}
+}
+
+export class TAbstractFile {
   constructor(public path: string) {}
 }
 
@@ -47,13 +60,73 @@ class MockWorkspace {
   }
 }
 
+export const vaultEventHandlers: Record<
+  string,
+  ((...args: unknown[]) => void) | undefined
+> = {};
+
 class MockVault {
   read = vi.fn().mockResolvedValue('');
+  getFiles = vi.fn().mockReturnValue([]);
+  getMarkdownFiles = vi.fn().mockReturnValue([]);
+
+  on(event: string, handler: (...args: unknown[]) => void): object {
+    vaultEventHandlers[event] = handler;
+    return {};
+  }
 }
 
 export class App {
   workspace = new MockWorkspace();
   vault = new MockVault();
+}
+
+export interface Debouncer<T extends unknown[], V> {
+  (...args: T): this;
+  cancel(): this;
+  run(): V | void;
+}
+
+// Real-timer-backed fake so tests can use vi.useFakeTimers()/advanceTimersByTimeAsync
+// to observe genuine coalescing behavior, instead of a synchronous passthrough that
+// would make it impossible to test multi-call debounce semantics.
+export function debounce<T extends unknown[], V>(
+  cb: (...args: T) => V,
+  timeout = 0,
+  resetTimer = false,
+): Debouncer<T, V> {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let lastArgs: T;
+
+  const fn = ((...args: T) => {
+    lastArgs = args;
+    if (timer !== null && resetTimer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+    if (timer === null) {
+      timer = setTimeout(() => {
+        timer = null;
+        cb(...lastArgs);
+      }, timeout);
+    }
+    return fn;
+  }) as Debouncer<T, V>;
+
+  fn.cancel = () => {
+    if (timer !== null) {
+      clearTimeout(timer);
+      timer = null;
+    }
+    return fn;
+  };
+
+  fn.run = () => {
+    fn.cancel();
+    return cb(...lastArgs);
+  };
+
+  return fn;
 }
 
 export class Plugin {
@@ -93,6 +166,12 @@ export interface RenderedSetting {
   desc: string;
   textInputs: RenderedTextInput[];
   buttons: RenderedButton[];
+  toggles: RenderedToggle[];
+}
+
+export interface RenderedToggle {
+  value: boolean;
+  onChange(value: boolean): Promise<void>;
 }
 
 export interface RenderedTextInput {
@@ -131,8 +210,28 @@ class MockButtonComponent {
   }
 }
 
+class MockToggleComponent {
+  constructor(private record: RenderedToggle) {}
+
+  setValue(value: boolean): this {
+    this.record.value = value;
+    return this;
+  }
+
+  onChange(cb: (value: boolean) => void | Promise<void>): this {
+    this.record.onChange = async (value: boolean) => cb(value);
+    return this;
+  }
+}
+
 export class Setting {
-  private record: RenderedSetting = { name: '', desc: '', textInputs: [], buttons: [] };
+  private record: RenderedSetting = {
+    name: '',
+    desc: '',
+    textInputs: [],
+    buttons: [],
+    toggles: [],
+  };
 
   constructor(_containerEl: unknown) {
     renderedSettings.push(this.record);
@@ -159,6 +258,13 @@ export class Setting {
     const buttonRecord: RenderedButton = { text: '', disabled: false, click: async () => {} };
     cb(new MockButtonComponent(buttonRecord));
     this.record.buttons.push(buttonRecord);
+    return this;
+  }
+
+  addToggle(cb: (toggle: MockToggleComponent) => void): this {
+    const toggleRecord: RenderedToggle = { value: false, onChange: async () => {} };
+    cb(new MockToggleComponent(toggleRecord));
+    this.record.toggles.push(toggleRecord);
     return this;
   }
 }

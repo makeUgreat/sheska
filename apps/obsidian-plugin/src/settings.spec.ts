@@ -10,6 +10,18 @@ describe('DEFAULT_SETTINGS', () => {
   it('defaults healthCheckIntervalMinutes to 5', () => {
     expect(DEFAULT_SETTINGS.healthCheckIntervalMinutes).toBe(5);
   });
+
+  it('defaults autoSyncEnabled to true', () => {
+    expect(DEFAULT_SETTINGS.autoSyncEnabled).toBe(true);
+  });
+
+  it('defaults autoSyncDebounceSeconds to 10', () => {
+    expect(DEFAULT_SETTINGS.autoSyncDebounceSeconds).toBe(10);
+  });
+
+  it('defaults autoSyncSweepIntervalMinutes to 30', () => {
+    expect(DEFAULT_SETTINGS.autoSyncSweepIntervalMinutes).toBe(30);
+  });
 });
 
 function makeTab(
@@ -64,6 +76,34 @@ describe('SheskaSettingTab', () => {
       tab.display();
 
       expect(renderedSettings[1].textInputs[0].inputEl.type).toBe('number');
+    });
+
+    it('renders autoSyncEnabled as a toggle reflecting the current setting', () => {
+      const tab = makeTab();
+
+      tab.display();
+
+      expect(renderedSettings[2].toggles[0].value).toBe(
+        DEFAULT_SETTINGS.autoSyncEnabled,
+      );
+    });
+
+    it('updates autoSyncEnabled and saves when the toggle changes', async () => {
+      const tab = makeTab();
+      tab.display();
+
+      await renderedSettings[2].toggles[0].onChange(false);
+
+      const plugin = (
+        tab as unknown as {
+          pluginWithSettings: {
+            settings: { autoSyncEnabled: boolean };
+            saveSettings: ReturnType<typeof vi.fn>;
+          };
+        }
+      ).pluginWithSettings;
+      expect(plugin.settings.autoSyncEnabled).toBe(false);
+      expect(plugin.saveSettings).toHaveBeenCalledOnce();
     });
 
     it('clears the container before rendering', () => {
@@ -124,10 +164,10 @@ describe('SheskaSettingTab', () => {
   });
 
   describe('getSettingDefinitions', () => {
-    it('returns two definitions', () => {
+    it('returns five definitions', () => {
       const tab = new SheskaSettingTab({} as never, {} as never);
 
-      expect(tab.getSettingDefinitions()).toHaveLength(2);
+      expect(tab.getSettingDefinitions()).toHaveLength(5);
     });
 
     it('defines the apiBaseUrl text control', () => {
@@ -152,6 +192,44 @@ describe('SheskaSettingTab', () => {
         control: {
           type: 'number',
           key: 'healthCheckIntervalMinutes',
+          min: 0,
+        },
+      });
+    });
+
+    it('defines the autoSyncEnabled toggle control', () => {
+      const tab = new SheskaSettingTab({} as never, {} as never);
+
+      expect(tab.getSettingDefinitions()[2]).toMatchObject({
+        name: 'Auto-sync enabled',
+        control: {
+          type: 'toggle',
+          key: 'autoSyncEnabled',
+        },
+      });
+    });
+
+    it('defines the autoSyncDebounceSeconds number control', () => {
+      const tab = new SheskaSettingTab({} as never, {} as never);
+
+      expect(tab.getSettingDefinitions()[3]).toMatchObject({
+        name: 'Auto-sync debounce (seconds)',
+        control: {
+          type: 'number',
+          key: 'autoSyncDebounceSeconds',
+          min: 1,
+        },
+      });
+    });
+
+    it('defines the autoSyncSweepIntervalMinutes number control', () => {
+      const tab = new SheskaSettingTab({} as never, {} as never);
+
+      expect(tab.getSettingDefinitions()[4]).toMatchObject({
+        name: 'Auto-sync sweep interval (minutes)',
+        control: {
+          type: 'number',
+          key: 'autoSyncSweepIntervalMinutes',
           min: 0,
         },
       });

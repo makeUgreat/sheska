@@ -3,11 +3,17 @@ import { App, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 export interface SheskaSettings {
   apiBaseUrl: string;
   healthCheckIntervalMinutes: number;
+  autoSyncEnabled: boolean;
+  autoSyncDebounceSeconds: number;
+  autoSyncSweepIntervalMinutes: number;
 }
 
 export const DEFAULT_SETTINGS: SheskaSettings = {
   apiBaseUrl: 'http://localhost:3000',
   healthCheckIntervalMinutes: 5,
+  autoSyncEnabled: true,
+  autoSyncDebounceSeconds: 10,
+  autoSyncSweepIntervalMinutes: 30,
 };
 
 interface PluginWithSettings extends Plugin {
@@ -29,10 +35,15 @@ interface NumberControl<Key extends keyof SheskaSettings> {
   max?: number;
 }
 
+interface ToggleControl<Key extends keyof SheskaSettings> {
+  type: 'toggle';
+  key: Key;
+}
+
 interface SettingDefinition<Key extends keyof SheskaSettings> {
   name: string;
   desc: string;
-  control: TextControl<Key> | NumberControl<Key>;
+  control: TextControl<Key> | NumberControl<Key> | ToggleControl<Key>;
 }
 
 export class SheskaSettingTab extends PluginSettingTab {
@@ -60,6 +71,32 @@ export class SheskaSettingTab extends PluginSettingTab {
         control: {
           type: 'number',
           key: 'healthCheckIntervalMinutes',
+          min: 0,
+        },
+      },
+      {
+        name: 'Auto-sync enabled',
+        desc: 'Automatically upload notes to Sheska when they are created or modified, and periodically re-scan the vault for missed changes.',
+        control: {
+          type: 'toggle',
+          key: 'autoSyncEnabled',
+        },
+      },
+      {
+        name: 'Auto-sync debounce (seconds)',
+        desc: 'How long to wait after a note stops changing before uploading it.',
+        control: {
+          type: 'number',
+          key: 'autoSyncDebounceSeconds',
+          min: 1,
+        },
+      },
+      {
+        name: 'Auto-sync sweep interval (minutes)',
+        desc: 'How often to re-scan the whole vault for notes missed by event-based sync. Set to 0 to disable.',
+        control: {
+          type: 'number',
+          key: 'autoSyncSweepIntervalMinutes',
           min: 0,
         },
       },
@@ -113,6 +150,20 @@ export class SheskaSettingTab extends PluginSettingTab {
                 )[control.key] = parsed;
                 await this.pluginWithSettings.saveSettings();
               }
+            });
+        });
+      } else if (control.type === 'toggle') {
+        setting.addToggle((toggle) => {
+          toggle
+            .setValue(Boolean(this.pluginWithSettings.settings[control.key]))
+            .onChange(async (value) => {
+              (
+                this.pluginWithSettings.settings as unknown as Record<
+                  string,
+                  unknown
+                >
+              )[control.key] = value;
+              await this.pluginWithSettings.saveSettings();
             });
         });
       }
