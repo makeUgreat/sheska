@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/runtime-wiring.md
-last_synced: 2026-06-30
+last_synced: 2026-09-05
 related:
   - ./architecture.md
   - ./source-dependency.md
@@ -104,6 +104,10 @@ flowchart TB
 - Use case behavior를 NestJS request object, module reference, container lookup, lifecycle callback 또는 다른 framework runtime API에 의존하게 만들지 않는다.
 - Bounded context root module은 해당 context의 application, presentation, infrastructure provider를 조립할 수 있다.
 - NestJS provider는 use case folder마다 module을 복제하기보다 bounded context 또는 runtime boundary 단위로 조립하는 것을 선호한다.
+- `forRoot()`/`forFeature()` 같은 `DynamicModule` factory는 호출할 때마다 새 module instance를 반환한다. NestJS는 import path가 달라도 이를 동일한 것으로 중복 제거하지 않으므로, 같은 `forRoot()`에 도달하는 import path가 여러 개면 그 path 수만큼 module이 인스턴스화되고, 그 안에 등록된 listener, consumer, controller도 path 수만큼 중복 등록된다.
+- `forRoot()`와 `forFeature()`를 모두 제공하는 bounded context root module은 event listener, queue consumer, scheduler, controller를 `forRoot()`에만 두어야 한다.
+- `forFeature()`는 token, repository처럼 여러 번 생성돼도 안전한 stateless provider만 포함해야 한다.
+- Context의 `forRoot()`는 그 composition을 소유하는 module에서 한 번만 import한다. 해당 context의 provider만 필요한 다른 module은 `forRoot()`가 아니라 `forFeature()`를 import해야 한다.
 
 ## Port Binding
 

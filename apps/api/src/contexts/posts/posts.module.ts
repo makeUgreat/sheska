@@ -37,7 +37,7 @@ export class PostsModule {
   static forRoot(_options: PostsModuleOptions = {}): DynamicModule {
     return {
       module: PostsModule,
-      imports: [SourcesModule.forRoot(), IngestionModule.forRoot()],
+      imports: [SourcesModule.forFeature(), IngestionModule.forFeature()],
       controllers: [PostsHttpController],
       providers: [
         {
