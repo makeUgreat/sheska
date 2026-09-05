@@ -1,10 +1,8 @@
-import { Injectable, type OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { type OnModuleDestroy } from '@nestjs/common';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as sourcesSchema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
 import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
-import { parseDatabaseConfig } from './database.config';
 
 const schema = {
   ...sourcesSchema,
@@ -14,19 +12,18 @@ const schema = {
 export type ApiDrizzleSchema = typeof schema;
 export type ApiDrizzleDatabase = NodePgDatabase<ApiDrizzleSchema>;
 
-@Injectable()
+export interface DrizzlePostgresProviderOptions {
+  databaseUrl: string;
+}
+
 export class DrizzlePostgresProvider implements OnModuleDestroy {
   readonly database: ApiDrizzleDatabase;
 
   private readonly pool: Pool;
 
-  constructor(configService: ConfigService) {
-    const config = parseDatabaseConfig({
-      DATABASE_URL: configService.get('DATABASE_URL'),
-    });
-
+  constructor(options: DrizzlePostgresProviderOptions) {
     this.pool = new Pool({
-      connectionString: config.databaseUrl,
+      connectionString: options.databaseUrl,
     });
     this.database = drizzle({ client: this.pool, schema });
   }
