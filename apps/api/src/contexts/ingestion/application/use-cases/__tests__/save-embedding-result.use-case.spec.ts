@@ -1,53 +1,43 @@
 import { describe, expect, it, vi } from 'vitest';
-import { type Job } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   IngestionCompletedDomainEvent,
   IngestionFailedDomainEvent,
   SourceEmbedding,
 } from '@contexts/ingestion/domain';
+import { type EmbedResultPayload } from '@contexts/ingestion/application/ports';
 import { VALID_EMBEDDING } from '../../../../../../test/support/domains/fixtures/source-embedding.fixture';
-import {
-  EmbedResultConsumer,
-  type EmbedResultPayload,
-} from '../embed-result.consumer';
+import { SaveEmbeddingResultUseCase } from '../save-embedding-result.use-case';
 
-function buildMockLogger() {
-  return { log: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
-}
-
-function buildJob(
+function buildPayload(
   data: Partial<EmbedResultPayload> = {},
-): Job<EmbedResultPayload> {
+): EmbedResultPayload {
   return {
-    data: {
-      sourceId: data.sourceId ?? 'source-1',
-      syncJobId: data.syncJobId ?? 'sync-job-1',
-      model: data.model ?? 'qwen3-embedding:0.6b',
-      chunks: data.chunks ?? [
-        {
-          chunkIndex: 0,
-          chunkContent: 'chunk content',
-          embedding: VALID_EMBEDDING,
-        },
-      ],
-    },
-  } as Job<EmbedResultPayload>;
+    sourceId: data.sourceId ?? 'source-1',
+    syncJobId: data.syncJobId ?? 'sync-job-1',
+    model: data.model ?? 'qwen3-embedding:0.6b',
+    chunks: data.chunks ?? [
+      {
+        chunkIndex: 0,
+        chunkContent: 'chunk content',
+        embedding: VALID_EMBEDDING,
+      },
+    ],
+  };
 }
 
-describe('EmbedResultConsumer', () => {
-  describe('process', () => {
+describe('SaveEmbeddingResultUseCase', () => {
+  describe('execute', () => {
     it('embedding 결과를 저장하고 ingestion-completed 이벤트를 emit한다', async () => {
       const save = vi.fn().mockResolvedValue(undefined);
       const eventEmitter = new EventEmitter2();
       const emit = vi.spyOn(eventEmitter, 'emit');
-      const consumer = new EmbedResultConsumer(
+      const useCase = new SaveEmbeddingResultUseCase(
         { save, find: vi.fn() },
         eventEmitter,
-        buildMockLogger(),
       );
 
-      await consumer.process(buildJob());
+      await useCase.execute(buildPayload());
 
       expect(save).toHaveBeenCalledOnce();
       expect(emit).toHaveBeenCalledOnce();
@@ -60,13 +50,12 @@ describe('EmbedResultConsumer', () => {
     it('emit된 completed 이벤트에 syncJobId가 담긴다', async () => {
       const eventEmitter = new EventEmitter2();
       const emit = vi.spyOn(eventEmitter, 'emit');
-      const consumer = new EmbedResultConsumer(
+      const useCase = new SaveEmbeddingResultUseCase(
         { save: vi.fn().mockResolvedValue(undefined), find: vi.fn() },
         eventEmitter,
-        buildMockLogger(),
       );
 
-      await consumer.process(buildJob({ syncJobId: 'sync-job-42' }));
+      await useCase.execute(buildPayload({ syncJobId: 'sync-job-42' }));
 
       const event = emit.mock.calls[0][1] as IngestionCompletedDomainEvent;
       expect(event.syncJobId).toBe('sync-job-42');
@@ -74,14 +63,13 @@ describe('EmbedResultConsumer', () => {
 
     it('복수 청크가 담긴 payload로 SourceEmbedding을 저장한다', async () => {
       const save = vi.fn().mockResolvedValue(undefined);
-      const consumer = new EmbedResultConsumer(
+      const useCase = new SaveEmbeddingResultUseCase(
         { save, find: vi.fn() },
         new EventEmitter2(),
-        buildMockLogger(),
       );
 
-      await consumer.process(
-        buildJob({
+      await useCase.execute(
+        buildPayload({
           chunks: [
             {
               chunkIndex: 0,
@@ -103,20 +91,16 @@ describe('EmbedResultConsumer', () => {
     });
   });
 
-  describe('onFailed', () => {
-    it('job이 있으면 ingestion-failed 이벤트를 emit한다', () => {
+  describe('handleFailure', () => {
+    it('ingestion-failed 이벤트를 emit한다', () => {
       const eventEmitter = new EventEmitter2();
       const emit = vi.spyOn(eventEmitter, 'emit');
-      const consumer = new EmbedResultConsumer(
+      const useCase = new SaveEmbeddingResultUseCase(
         { save: vi.fn(), find: vi.fn() },
         eventEmitter,
-        buildMockLogger(),
       );
 
-      consumer.onFailed(
-        buildJob({ syncJobId: 'sync-job-1' }),
-        new Error('save failed'),
-      );
+      useCase.handleFailure(buildPayload({ syncJobId: 'sync-job-1' }));
 
       expect(emit).toHaveBeenCalledOnce();
       expect(emit).toHaveBeenCalledWith(
@@ -125,41 +109,18 @@ describe('EmbedResultConsumer', () => {
       );
     });
 
-    it('job이 undefined이면 아무것도 하지 않는다', () => {
+    it('emit된 failed 이벤트에 syncJobId가 담긴다', () => {
       const eventEmitter = new EventEmitter2();
       const emit = vi.spyOn(eventEmitter, 'emit');
-      const consumer = new EmbedResultConsumer(
+      const useCase = new SaveEmbeddingResultUseCase(
         { save: vi.fn(), find: vi.fn() },
         eventEmitter,
-        buildMockLogger(),
       );
 
-      consumer.onFailed(undefined, new Error('irrelevant'));
+      useCase.handleFailure(buildPayload({ syncJobId: 'sync-job-42' }));
 
-      expect(emit).not.toHaveBeenCalled();
-    });
-
-    it('실패 원인 Error와 job context를 로그에 기록한다', () => {
-      const logger = buildMockLogger();
-      const consumer = new EmbedResultConsumer(
-        { save: vi.fn(), find: vi.fn() },
-        new EventEmitter2(),
-        logger,
-      );
-      const error = new Error('save failed');
-
-      consumer.onFailed(buildJob(), error);
-
-      expect(logger.error).toHaveBeenCalledWith(
-        'Embed result failed',
-        error,
-        expect.objectContaining({
-          jobId: undefined,
-          sourceId: 'source-1',
-          syncJobId: 'sync-job-1',
-          attemptsMade: undefined,
-        }),
-      );
+      const event = emit.mock.calls[0][1] as IngestionFailedDomainEvent;
+      expect(event.syncJobId).toBe('sync-job-42');
     });
   });
 });

@@ -4,17 +4,18 @@ import { Test } from '@nestjs/testing';
 import { BullModule, getQueueToken } from '@nestjs/bullmq';
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { type Queue, QueueEvents } from 'bullmq';
-import {
-  EmbedResultConsumer,
-  EMBED_RESULTS_QUEUE,
-  type EmbedResultPayload,
-} from '@contexts/ingestion/application/queue-handlers/embed-result.consumer';
+import { EmbedResultBullMqConsumer } from '@contexts/ingestion/presentation/queue/bullmq/embed-result.bullmq.consumer';
+import { SaveEmbeddingResultUseCase } from '@contexts/ingestion/application/use-cases/save-embedding-result.use-case';
 import { LOGGER } from '@kernels/application';
 import { SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
 import {
   IngestionCompletedDomainEvent,
   IngestionFailedDomainEvent,
 } from '@contexts/ingestion/domain';
+import {
+  EMBED_RESULTS_QUEUE,
+  type EmbedResultPayload,
+} from '@contexts/ingestion/application/ports';
 import { VALID_EMBEDDING } from '../../../support/domains/fixtures/source-embedding.fixture';
 
 const REDIS_CONNECTION = { host: '127.0.0.1', port: 56379 };
@@ -23,7 +24,7 @@ const defaultChunks: EmbedResultPayload['chunks'] = [
   { chunkIndex: 0, chunkContent: 'chunk content', embedding: VALID_EMBEDDING },
 ];
 
-describe('EmbedResultConsumer', () => {
+describe('EmbedResultBullMqConsumer', () => {
   let app: INestApplication;
   let embedResultsQueue: Queue<EmbedResultPayload>;
   let queueEvents: QueueEvents;
@@ -39,7 +40,8 @@ describe('EmbedResultConsumer', () => {
         EventEmitterModule.forRoot(),
       ],
       providers: [
-        EmbedResultConsumer,
+        EmbedResultBullMqConsumer,
+        SaveEmbeddingResultUseCase,
         { provide: SOURCE_EMBEDDING_REPOSITORY, useValue: { save } },
         {
           provide: LOGGER,

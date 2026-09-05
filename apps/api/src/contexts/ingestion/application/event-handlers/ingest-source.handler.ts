@@ -1,11 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
+import { Inject, Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { type Queue } from 'bullmq';
-import {
-  EMBED_REQUESTS_QUEUE,
-  type EmbedRequestPayload,
-} from '@contexts/ingestion/application/queue-handlers/embed-request.consumer';
+import { type EmbedRequestDispatcher } from '@contexts/ingestion/application/ports';
+import { EMBED_REQUEST_DISPATCHER } from '@contexts/ingestion/ingestion.di-tokens';
 
 interface SourceSyncJobCreatedDomainEventPayload {
   readonly aggregateId: string;
@@ -16,16 +12,16 @@ interface SourceSyncJobCreatedDomainEventPayload {
 @Injectable()
 export class IngestSourceHandler {
   constructor(
-    @InjectQueue(EMBED_REQUESTS_QUEUE)
-    private readonly embedRequestsQueue: Queue,
+    @Inject(EMBED_REQUEST_DISPATCHER)
+    private readonly embedRequestDispatcher: EmbedRequestDispatcher,
   ) {}
 
   @OnEvent('source.sync_job.created')
   async handle(event: SourceSyncJobCreatedDomainEventPayload): Promise<void> {
-    await this.embedRequestsQueue.add('embed-request', {
+    await this.embedRequestDispatcher.enqueue({
       sourceId: event.sourceId,
       syncJobId: event.aggregateId,
       content: event.content,
-    } satisfies EmbedRequestPayload);
+    });
   }
 }
