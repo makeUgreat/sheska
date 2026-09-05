@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { type Job, type Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   IngestionFailedDomainEvent,
@@ -12,11 +13,10 @@ import {
   DEFAULT_SEPARATORS,
 } from '@contexts/ingestion/application/services/recursive-character.chunker';
 import {
+  EmbedRequestConsumer,
   type EmbedRequestPayload,
-  type EmbedResultDispatcher,
-  type EmbedResultPayload,
-} from '@contexts/ingestion/application/ports';
-import { EmbedSourceContentUseCase } from '../embed-source-content.use-case';
+} from '../embed-request.consumer';
+import { type EmbedResultPayload } from '../embed-result.consumer';
 
 function buildMockLogger() {
   return { log: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
@@ -26,18 +26,16 @@ function buildMockEmbedder(embed = vi.fn()) {
   return { embed };
 }
 
-function buildMockDispatcher(enqueue = vi.fn().mockResolvedValue(undefined)) {
-  return { enqueue } satisfies EmbedResultDispatcher;
-}
-
-function buildPayload(
+function buildJob(
   data: Partial<EmbedRequestPayload> = {},
-): EmbedRequestPayload {
+): Job<EmbedRequestPayload> {
   return {
-    sourceId: data.sourceId ?? 'source-1',
-    syncJobId: data.syncJobId ?? 'sync-job-1',
-    content: data.content ?? '# Source note',
-  };
+    data: {
+      sourceId: data.sourceId ?? 'source-1',
+      syncJobId: data.syncJobId ?? 'sync-job-1',
+      content: data.content ?? '# Source note',
+    },
+  } as Job<EmbedRequestPayload>;
 }
 
 const fakeEmbedding = Array.from({ length: 1024 }, () => 0.1);
@@ -48,26 +46,27 @@ const chunker = new RecursiveCharacterChunker({
   separators: DEFAULT_SEPARATORS,
 });
 
-describe('EmbedSourceContentUseCase', () => {
-  describe('execute', () => {
-    it('content를 청킹하고 청크별로 임베딩한 뒤 embed-results dispatcher에 결과를 넘긴다', async () => {
+describe('EmbedRequestConsumer', () => {
+  describe('process', () => {
+    it('content를 청킹하고 청크별로 임베딩한 뒤 embed-results 큐에 결과를 추가한다', async () => {
       const embed = vi
         .fn()
         .mockResolvedValue({ embedding: fakeEmbedding, model: fakeModel });
-      const enqueue = vi.fn().mockResolvedValue(undefined);
-      const useCase = new EmbedSourceContentUseCase(
+      const add = vi.fn().mockResolvedValue(undefined);
+      const consumer = new EmbedRequestConsumer(
         buildMockEmbedder(embed),
-        buildMockDispatcher(enqueue),
+        { add } as unknown as Queue,
         new EventEmitter2(),
         buildMockLogger(),
         chunker,
       );
 
-      await useCase.execute(buildPayload({ content: '# Source note' }));
+      await consumer.process(buildJob({ content: '# Source note' }));
 
       expect(embed).toHaveBeenCalledOnce();
       expect(embed).toHaveBeenCalledWith('# Source note');
-      expect(enqueue).toHaveBeenCalledWith(
+      expect(add).toHaveBeenCalledWith(
+        'embed-result',
         expect.objectContaining<Partial<EmbedResultPayload>>({
           sourceId: 'source-1',
           syncJobId: 'sync-job-1',
@@ -80,25 +79,25 @@ describe('EmbedSourceContentUseCase', () => {
       const embed = vi
         .fn()
         .mockResolvedValue({ embedding: fakeEmbedding, model: fakeModel });
-      const enqueue = vi.fn().mockResolvedValue(undefined);
+      const add = vi.fn().mockResolvedValue(undefined);
       // chunkSize=7: 'abc\n\ndef\n\nghi'는 단락별로 3개 청크로 분리됨
       const smallChunker = new RecursiveCharacterChunker({
         chunkSize: 7,
         chunkOverlap: 0,
         separators: DEFAULT_SEPARATORS,
       });
-      const useCase = new EmbedSourceContentUseCase(
+      const consumer = new EmbedRequestConsumer(
         buildMockEmbedder(embed),
-        buildMockDispatcher(enqueue),
+        { add } as unknown as Queue,
         new EventEmitter2(),
         buildMockLogger(),
         smallChunker,
       );
 
-      await useCase.execute(buildPayload({ content: 'abc\n\ndef\n\nghi' }));
+      await consumer.process(buildJob({ content: 'abc\n\ndef\n\nghi' }));
 
       expect(embed).toHaveBeenCalledTimes(3);
-      const payload = enqueue.mock.calls[0][0] as EmbedResultPayload;
+      const payload = (add.mock.calls[0] as [string, EmbedResultPayload])[1];
       expect(payload.chunks).toHaveLength(3);
       expect(payload.chunks[0].chunkIndex).toBe(0);
     });
@@ -114,15 +113,15 @@ describe('EmbedSourceContentUseCase', () => {
         chunkOverlap: 0,
         separators: DEFAULT_SEPARATORS,
       });
-      const useCase = new EmbedSourceContentUseCase(
+      const consumer = new EmbedRequestConsumer(
         buildMockEmbedder(embed),
-        buildMockDispatcher(),
+        { add: vi.fn() } as unknown as Queue,
         eventEmitter,
         buildMockLogger(),
         smallChunker,
       );
 
-      await useCase.execute(buildPayload({ content: 'abc\n\ndef\n\nghi' }));
+      await consumer.process(buildJob({ content: 'abc\n\ndef\n\nghi' }));
 
       expect(emit).toHaveBeenCalledWith(
         'source.ingestion.started',
@@ -144,15 +143,15 @@ describe('EmbedSourceContentUseCase', () => {
         chunkOverlap: 0,
         separators: DEFAULT_SEPARATORS,
       });
-      const useCase = new EmbedSourceContentUseCase(
+      const consumer = new EmbedRequestConsumer(
         buildMockEmbedder(embed),
-        buildMockDispatcher(),
+        { add: vi.fn() } as unknown as Queue,
         eventEmitter,
         buildMockLogger(),
         smallChunker,
       );
 
-      await useCase.execute(buildPayload({ content: 'abc\n\ndef\n\nghi' }));
+      await consumer.process(buildJob({ content: 'abc\n\ndef\n\nghi' }));
 
       const progressCalls = emit.mock.calls.filter(
         ([eventName]) => eventName === 'source.ingestion.progress',
@@ -167,22 +166,21 @@ describe('EmbedSourceContentUseCase', () => {
     });
   });
 
-  describe('handleFailure', () => {
-    it('ingestion-failed 이벤트를 emit한다', () => {
+  describe('onFailed', () => {
+    it('job이 있으면 ingestion-failed 이벤트를 emit한다', () => {
       const eventEmitter = new EventEmitter2();
       const emit = vi.spyOn(eventEmitter, 'emit');
-      const useCase = new EmbedSourceContentUseCase(
+      const consumer = new EmbedRequestConsumer(
         buildMockEmbedder(),
-        buildMockDispatcher(),
+        { add: vi.fn() } as unknown as Queue,
         eventEmitter,
         buildMockLogger(),
         chunker,
       );
 
-      useCase.handleFailure(
-        buildPayload({ syncJobId: 'sync-job-1' }),
+      consumer.onFailed(
+        buildJob({ syncJobId: 'sync-job-1' }),
         new Error('embed failed'),
-        { jobId: undefined, attemptsMade: 0 },
       );
 
       expect(emit).toHaveBeenCalledOnce();
@@ -194,9 +192,9 @@ describe('EmbedSourceContentUseCase', () => {
 
     it('에러 메시지를 로그에 기록한다', () => {
       const logger = buildMockLogger();
-      const useCase = new EmbedSourceContentUseCase(
+      const consumer = new EmbedRequestConsumer(
         buildMockEmbedder(),
-        buildMockDispatcher(),
+        { add: vi.fn() } as unknown as Queue,
         new EventEmitter2(),
         logger,
         chunker,
@@ -204,10 +202,7 @@ describe('EmbedSourceContentUseCase', () => {
 
       const error = new Error('connection refused');
 
-      useCase.handleFailure(buildPayload(), error, {
-        jobId: undefined,
-        attemptsMade: 0,
-      });
+      consumer.onFailed(buildJob(), error);
 
       expect(logger.error).toHaveBeenCalledWith(
         'Embed request failed',
@@ -216,16 +211,16 @@ describe('EmbedSourceContentUseCase', () => {
           jobId: undefined,
           sourceId: 'source-1',
           syncJobId: 'sync-job-1',
-          attemptsMade: 0,
+          attemptsMade: undefined,
         }),
       );
     });
 
     it('구조화된 exception이면 kind와 code를 로그에 기록한다', () => {
       const logger = buildMockLogger();
-      const useCase = new EmbedSourceContentUseCase(
+      const consumer = new EmbedRequestConsumer(
         buildMockEmbedder(),
-        buildMockDispatcher(),
+        { add: vi.fn() } as unknown as Queue,
         new EventEmitter2(),
         logger,
         chunker,
@@ -236,10 +231,7 @@ describe('EmbedSourceContentUseCase', () => {
         source: { boundary: 'http-client', adapter: 'ollama.embedder' },
       });
 
-      useCase.handleFailure(buildPayload(), error, {
-        jobId: undefined,
-        attemptsMade: 0,
-      });
+      consumer.onFailed(buildJob(), error);
 
       expect(logger.error).toHaveBeenCalledWith(
         'Embed request failed',
@@ -249,6 +241,22 @@ describe('EmbedSourceContentUseCase', () => {
           syncJobId: 'sync-job-1',
         }),
       );
+    });
+
+    it('job이 undefined이면 아무것도 하지 않는다', () => {
+      const eventEmitter = new EventEmitter2();
+      const emit = vi.spyOn(eventEmitter, 'emit');
+      const consumer = new EmbedRequestConsumer(
+        buildMockEmbedder(),
+        { add: vi.fn() } as unknown as Queue,
+        eventEmitter,
+        buildMockLogger(),
+        chunker,
+      );
+
+      consumer.onFailed(undefined, new Error('irrelevant'));
+
+      expect(emit).not.toHaveBeenCalled();
     });
   });
 });

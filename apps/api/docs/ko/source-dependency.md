@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/source-dependency.md
-last_synced: 2026-09-05
+last_synced: 2026-06-30
 related:
   - ./architecture.md
   - ./context-integration.md
@@ -141,30 +141,20 @@ Source dependency는 각 source area가 import할 수 있는 boundary와 import�
 
 ### Infrastructure Layer
 
-- Infrastructure layer는 **outbound(driven) adapter layer**다: application-owned port 또는 domain/application contract를 구현해서 구체 기술에 접근한다.
-- 핵심 판별 기준은 dependency inversion이다 — application이 interface를 소유하고 infrastructure가 그걸 구현한다. Application은 구체 기술을 모른다.
-- Database, ORM, external API, file system, message broker producer/dispatcher, SDK, persistence code에 사용한다.
+- Infrastructure layer는 technical adapter를 구현한다.
+- Database, ORM, external API, file system, message broker, SDK, persistence code에 사용한다.
+- Infrastructure code는 application-owned port 또는 domain/application contract를 구현한다.
 - Adapter code는 adapter context를 추가할 때 HTTP client, SDK, Drizzle error 같은 technology-specific error를 `cause`가 있는 일반 `Error`로 감쌀 수 있다.
 - Infrastructure code는 framework와 external library에 의존할 수 있다.
-- 기술에 결합돼 있다는 것 자체가 infrastructure로 분류되는 기준은 아니다 — 기술에 결합된 adapter가 Presentation Layer에 속하는 경우는 아래 노트를 참고한다.
 
 ### Presentation Layer
 
-- Presentation layer는 **inbound(driving) adapter layer**다: 프로세스 외부에서 오는 트리거를 받아 application-owned port 없이 application use case를 직접 호출한다.
-- 프로토콜 지향 entry point(HTTP controller, GraphQL resolver, request/response DTO, protocol mapper, HTTP error mapper)뿐 아니라, 같은 방식으로 application flow를 구동하는 non-protocol inbound trigger(큐/메시지 consumer, scheduled job trigger)도 포함한다. 판별 기준은 "HTTP인가"가 아니라 "이게 자기 주도로 application을 호출하는가"이다.
+- Presentation layer는 external request와 response의 entry point다.
+- Controller, resolver, request DTO, response DTO, protocol mapper, HTTP error mapper에 사용한다.
 - Presentation code는 application use case를 호출한다.
-- 외부 프로토콜을 다루는 presentation code는 protocol exception을 protocol response로 변환하고 masking policy를 적용한다 — 이건 non-protocol trigger에는 해당하지 않는다 (예: 큐 consumer는 변환할 protocol response가 없다).
+- Presentation code는 protocol exception을 protocol response로 변환하고 masking policy를 적용한다.
 - Presentation code는 domain, infrastructure, vendor, system exception detail을 client에 직접 노출하지 않는 것이 좋다.
-- Presentation code는 framework(큐 client library 같은 non-protocol framework 포함)와 protocol library에 의존할 수 있다.
-
-### 기술에 결합된 adapter를 Presentation과 Infrastructure 중 어디에 둘지 판단하기
-
-두 layer 모두 framework와 external library에 의존할 수 있으므로, "이게 기술 X를 다루는가"는 layer를 결정하지 않는다. 대신 물어야 할 질문은 **이 adapter가 application을 호출하는가(driving), 아니면 application이 정의한 interface를 구현하는가(driven)** 이다.
-
-- 큐 **consumer**는 job을 받아 application use case를 직접 호출한다 → controller와 마찬가지로 presentation.
-- 큐 **dispatcher/producer**는 application-owned port(예: `EmbedResultDispatcher`)를 구현해서 job을 enqueue한다 → repository와 마찬가지로 infrastructure.
-
-같은 기술이 하나의 기능 안에서도 서로 다른 파일로 양쪽에 다 나타날 수 있다 — 두 방향이 실제로 서로 다른 책임이기 때문이다.
+- Presentation code는 framework와 protocol library에 의존할 수 있다.
 
 ### Kernel Directory
 
@@ -181,3 +171,11 @@ Source dependency는 각 source area가 import할 수 있는 boundary와 import�
 
 `kernels/domain`과 domain layer code는 명시적 예외로 Node.js `EventEmitter` 계열에 의존할 수 있다.
 `EventEmitter2`와 같은 라이브러리는 Node 내장 `EventEmitter`의 얇은 확장이므로, framework나 external SDK 의존성이 아닌 Node.js runtime의 일부로 간주한다.
+
+### BullMQ Queue Handler 예외
+
+같은 bounded context 내부에서 publish된 큐를 소비하며 application flow를 오케스트레이션하는 internal async pipeline stage는 명시적 예외로 `@nestjs/bullmq`의 `WorkerHost`를 상속하고 `@Processor`, `@OnWorkerEvent`를 사용할 수 있다.
+
+이 예외는 같은 bounded context 내부에서 publish된 큐를 소비하는 경우에만 적용된다. 외부 시스템이 publish하는 통합 이벤트를 수신하는 consumer는 application layer 밖에 두어야 한다.
+
+`@OnWorkerEvent`는 framework lifecycle callback이지만, 이를 허용하지 않으면 worker 오류 처리 로직을 infrastructure로 분리해야 하며, 응집된 오케스트레이션 로직이 레이어 간에 분산되는 문제가 생긴다.

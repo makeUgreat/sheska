@@ -37,7 +37,7 @@ flowchart TB
 
   subgraph inboundRow[Inbound Adapter]
     direction LR
-    controllers[Presentation Adapters - HTTP, queue consumers, etc.]
+    controllers[Presentation Adapters]
   end
 
   subgraph usecaseRow[Application Flow]
@@ -52,7 +52,7 @@ flowchart TB
 
   subgraph outboundRow[Outbound Adapter]
     direction LR
-    adapters[Infrastructure Adapters - DB, external API, queue dispatchers, etc.]
+    adapters[Infrastructure Adapters]
   end
 
   subgraph domainRow[Domain]

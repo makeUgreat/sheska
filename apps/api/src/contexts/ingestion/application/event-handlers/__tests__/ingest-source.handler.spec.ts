@@ -1,12 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { type EmbedRequestDispatcher } from '@contexts/ingestion/application/ports';
+import { type Queue } from 'bullmq';
 import { IngestSourceHandler } from '../ingest-source.handler';
 
 describe('IngestSourceHandler', () => {
-  it('sync_job.created 이벤트를 처리해 embed-request dispatcher로 요청을 넘긴다', async () => {
-    const enqueue = vi.fn().mockResolvedValue(undefined);
-    const dispatcher: EmbedRequestDispatcher = { enqueue };
-    const handler = new IngestSourceHandler(dispatcher);
+  it('sync_job.created 이벤트를 처리해 embed-requests 큐에 요청을 추가한다', async () => {
+    const add = vi.fn().mockResolvedValue(undefined);
+    const handler = new IngestSourceHandler({ add } as unknown as Queue);
 
     const event = {
       aggregateId: 'sync-job-1',
@@ -16,7 +15,7 @@ describe('IngestSourceHandler', () => {
 
     await handler.handle(event);
 
-    expect(enqueue).toHaveBeenCalledWith({
+    expect(add).toHaveBeenCalledWith('embed-request', {
       sourceId: 'source-1',
       syncJobId: 'sync-job-1',
       content: '# Source note',

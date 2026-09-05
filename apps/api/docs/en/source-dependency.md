@@ -140,30 +140,20 @@ Production code outside `platform` must not import `platform`, except the thin `
 
 ### Infrastructure Layer
 
-- The infrastructure layer is the **outbound (driven) adapter layer**: it implements application-owned ports or domain/application contracts to reach a concrete technology.
-- The defining trait is dependency inversion: application owns the interface, infrastructure implements it. Application never knows the concrete technology.
-- Use it for database, ORM, external API, file system, message broker producers/dispatchers, SDK, and persistence code.
+- The infrastructure layer implements technical adapters.
+- Use it for database, ORM, external API, file system, message broker, SDK, and persistence code.
+- Infrastructure code implements application-owned ports or domain/application contracts.
 - Adapter code may wrap technology-specific errors, such as HTTP client, SDK, or Drizzle errors, in regular `Error` objects with `cause` when adding adapter context.
 - Infrastructure code MAY depend on frameworks and external libraries.
-- Being technology-coupled is not by itself what makes code infrastructure — see the Presentation Layer note below for the case where a technology-coupled adapter belongs there instead.
 
 ### Presentation Layer
 
-- The presentation layer is the **inbound (driving) adapter layer**: it receives triggers from outside the process and calls application use cases directly, without needing an application-owned port.
-- This includes protocol-facing entry points (HTTP controllers, GraphQL resolvers, request/response DTOs, protocol mappers, HTTP error mappers) **and** non-protocol inbound triggers that drive application flow the same way (queue/message consumers, scheduled job triggers). The classifier is "does this call into application on its own initiative," not "is this HTTP."
+- The presentation layer is the entry point for external requests and responses.
+- Use it for controllers, resolvers, request DTOs, response DTOs, protocol mappers, and HTTP error mappers.
 - Presentation code calls application use cases.
-- Presentation code that handles an external protocol converts protocol exceptions into protocol responses and applies masking policy; this does not apply to non-protocol triggers (e.g. a queue consumer has no protocol response to shape).
+- Presentation code converts protocol exceptions into protocol responses and applies masking policy.
 - Presentation code SHOULD NOT expose domain, infrastructure, vendor, or system exception details directly to clients.
-- Presentation code MAY depend on frameworks (including non-protocol frameworks such as a queue client library) and protocol libraries.
-
-### Choosing between Presentation and Infrastructure for a technology-coupled adapter
-
-Both layers may depend on frameworks and external libraries, so "this touches technology X" does not decide the layer. Ask instead: **does this adapter call into application (driving), or does it implement an interface application defined (driven)?**
-
-- A queue **consumer** receives a job and calls an application use case directly → presentation, same as a controller.
-- A queue **dispatcher/producer** implements an application-owned port (e.g. `EmbedResultDispatcher`) to enqueue a job → infrastructure, same as a repository.
-
-The same technology can appear on both sides of a single feature, in different files, because the two directions are genuinely different responsibilities.
+- Presentation code MAY depend on frameworks and protocol libraries.
 
 ### Kernel Directory
 
@@ -180,3 +170,12 @@ The same technology can appear on both sides of a single feature, in different f
 
 `kernels/domain` and domain layer code MAY depend on Node.js's `EventEmitter` family as an explicit exception.
 `EventEmitter2` and similar libraries are thin extensions of Node's built-in `EventEmitter` and are treated as part of the Node.js runtime rather than as framework or external SDK dependencies.
+
+### BullMQ Queue Handler Exception
+
+Application layer code that acts as an internal async pipeline stage MAY extend `WorkerHost` and use `@Processor` and `@OnWorkerEvent` from `@nestjs/bullmq` as an explicit exception.
+
+This exception applies only when the queue consumer orchestrates application flow between internally published queues within the same bounded context — not when consuming integration events published by an external system.
+External integration event consumers belong outside the application layer.
+
+`@OnWorkerEvent` is a framework lifecycle callback, but suppressing it here would force the worker error-handling concern into infrastructure, splitting cohesive orchestration logic across layers without a meaningful benefit.
