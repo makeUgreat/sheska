@@ -30,6 +30,8 @@ API architecture is described across two axes:
 - DDD model boundaries define where a model, language, and responsibility are valid.
 - Dependency and layer boundaries define which code may depend on which other code.
 
+`presentation` and `infrastructure` are split by inbound/outbound (driving/driven) role, not by protocol vs. technology: presentation is whatever calls into application on its own initiative (HTTP controllers, but also non-protocol triggers like queue consumers or scheduled jobs), and infrastructure is whatever implements an application-owned port to reach a technology (repositories, but also queue dispatchers/producers). The same technology can appear on both sides in different files. See the source dependency convention's Presentation/Infrastructure Layer sections for the full rule.
+
 Read the error policy when defining, transforming, masking, or exposing application errors, exceptions, protocol error responses, or system errors.
 
 ## Related Documents
