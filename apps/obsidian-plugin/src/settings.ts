@@ -12,7 +12,7 @@ export const DEFAULT_SETTINGS: SheskaSettings = {
   apiBaseUrl: 'http://localhost:3000',
   healthCheckIntervalMinutes: 5,
   autoSyncEnabled: true,
-  autoSyncDebounceSeconds: 10,
+  autoSyncDebounceSeconds: 20,
   autoSyncSweepIntervalMinutes: 30,
 };
 

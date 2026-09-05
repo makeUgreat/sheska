@@ -15,8 +15,8 @@ describe('DEFAULT_SETTINGS', () => {
     expect(DEFAULT_SETTINGS.autoSyncEnabled).toBe(true);
   });
 
-  it('defaults autoSyncDebounceSeconds to 10', () => {
-    expect(DEFAULT_SETTINGS.autoSyncDebounceSeconds).toBe(10);
+  it('defaults autoSyncDebounceSeconds to 20', () => {
+    expect(DEFAULT_SETTINGS.autoSyncDebounceSeconds).toBe(20);
   });
 
   it('defaults autoSyncSweepIntervalMinutes to 30', () => {
