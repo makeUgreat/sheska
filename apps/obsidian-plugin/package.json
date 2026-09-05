@@ -1,6 +1,6 @@
 {
   "name": "@sheska/obsidian-plugin",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Obsidian plugin for Sheska API",
   "main": "main.js",
@@ -11,8 +11,9 @@
     "lint": "eslint --config eslint/config.mjs \"src/**/*.ts\" --fix",
     "lint:check": "eslint --config eslint/config.mjs \"src/**/*.ts\"",
     "deps:check": "depcruise src --config dependency-cruiser/config.cjs",
-    "harness:static": "pnpm typecheck && pnpm lint:check && pnpm deps:check",
+    "harness:static": "pnpm typecheck && pnpm lint:check && pnpm deps:check && pnpm test:obsidian-smoke",
     "test": "vitest run",
+    "test:obsidian-smoke": "node scripts/obsidian-smoke-test.mjs",
     "test:watch": "vitest",
     "deploy:local": "pnpm build && mkdir -p \"/Users/a1234/Documents/Obsidian Vault/.obsidian/plugins/sheska\" && cp main.js manifest.json \"/Users/a1234/Documents/Obsidian Vault/.obsidian/plugins/sheska/\""
   },
