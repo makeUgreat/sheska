@@ -20,7 +20,8 @@ Persistence-specific rules are in the [API Persistence Policy](./persistence.md)
 
 - Use this document when naming, placing, or structuring application contract files or infrastructure adapter files.
 - Use the persistence policy for database schema, ORM, migration, repository mapper, and storage constraint rules.
-- Use the source dependency convention for import direction and layer boundary rules.
+- Use the source dependency convention for import direction and layer boundary rules — including which technology-coupled adapters are infrastructure (driven) versus presentation (driving; see the source dependency convention's Presentation Layer section).
+- The adapter file naming pattern below (`{domain-name}.{adapter-or-purpose}.{role}.ts`) also applies to presentation's non-protocol inbound adapters (e.g. queue consumers), not only to infrastructure adapters — the naming scheme is shared, even though the two live in different layers.
 
 ## Contract File Naming
 

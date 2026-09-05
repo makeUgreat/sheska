@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/architecture.md
-last_synced: 2026-06-30
+last_synced: 2026-09-05
 related:
   - ./error.md
   - ./ddd.md
@@ -30,6 +30,8 @@ API architecture는 두 축으로 설명한다:
 
 - DDD model boundary는 model, language, responsibility가 유효한 범위를 정의한다.
 - Dependency와 layer boundary는 어떤 code가 다른 code에 의존할 수 있는지 정의한다.
+
+`presentation`과 `infrastructure`는 프로토콜 vs 기술이 아니라 inbound/outbound(driving/driven) 역할로 나뉜다: presentation은 자기 주도로 application을 호출하는 모든 것(HTTP controller뿐 아니라 큐 consumer, scheduled job 같은 non-protocol trigger 포함)이고, infrastructure는 application-owned port를 구현해서 기술에 접근하는 모든 것(repository뿐 아니라 큐 dispatcher/producer 포함)이다. 같은 기술이 서로 다른 파일로 양쪽에 다 나타날 수 있다. 전체 규칙은 source dependency 컨벤션의 Presentation/Infrastructure Layer 섹션을 참고한다.
 
 Application error, exception, protocol error response, system error를 정의, 변환, masking, 노출하는 경우 error policy를 읽는다.
 
