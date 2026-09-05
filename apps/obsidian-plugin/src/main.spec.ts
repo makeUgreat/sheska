@@ -445,6 +445,58 @@ describe('SheskaPlugin', () => {
       vi.useRealTimers();
     });
 
+    it('immediately shows Not synced when the active file is edited, without waiting for the debounced upload', async () => {
+      plugin = makePlugin({
+        syncCache: { 'a.md': { mtime: 100, syncedAt: 1 } },
+      });
+      const file = new TFile('a.md', { ctime: 0, mtime: 100, size: 1 });
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(file);
+      await plugin.onload();
+      expect(statusBarItems[0].text).toBe('Sheska: ✓ Synced');
+
+      file.stat.mtime = 200;
+      vaultEventHandlers['modify']!(file);
+
+      expect(statusBarItems[0].text).toBe('Sheska: ○ Not synced');
+    });
+
+    it('shows a syncing indicator for the active file while its upload is in flight', async () => {
+      vi.useFakeTimers();
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              sourceId: '1',
+              externalSourceId: 'a.md',
+              fingerprint: 'x',
+            }),
+        }),
+      );
+      plugin = makePlugin({ autoSyncDebounceSeconds: 5 });
+      const file = new TFile('a.md', { ctime: 0, mtime: 100, size: 1 });
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(file);
+      let resolveRead!: (value: string) => void;
+      plugin.app.vault.read = vi.fn().mockReturnValue(
+        new Promise<string>((resolve) => {
+          resolveRead = resolve;
+        }),
+      );
+      await plugin.onload();
+
+      vaultEventHandlers['modify']!(file);
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(statusBarItems[0].text).toBe('Sheska: ⟳ Syncing...');
+
+      resolveRead('content');
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(statusBarItems[0].text).toBe('Sheska: ✓ Synced');
+      vi.useRealTimers();
+    });
+
     it('does not refresh the status bar when a background sync affects a different file', async () => {
       vi.useFakeTimers();
       vi.stubGlobal(
@@ -472,6 +524,79 @@ describe('SheskaPlugin', () => {
 
       expect(statusBarItems[0].text).toBe('Sheska: ○ Not synced');
       vi.useRealTimers();
+    });
+  });
+
+  describe('sync status notifications', () => {
+    it('does not show a Notice for the initial status bar render on load', async () => {
+      plugin = makePlugin({
+        syncCache: { 'a.md': { mtime: 100, syncedAt: 1 } },
+      });
+      plugin.app.workspace.getActiveFile = vi
+        .fn()
+        .mockReturnValue(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }));
+
+      await plugin.onload();
+
+      expect(noticeMessages).toEqual([]);
+    });
+
+    it('shows a Notice when a synced active file becomes not synced after an edit', async () => {
+      plugin = makePlugin({
+        syncCache: { 'a.md': { mtime: 100, syncedAt: 1 } },
+      });
+      const file = new TFile('a.md', { ctime: 0, mtime: 100, size: 1 });
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(file);
+      await plugin.onload();
+
+      file.stat.mtime = 200;
+      vaultEventHandlers['modify']!(file);
+
+      expect(noticeMessages).toContain('Sheska: "a.md" not synced.');
+    });
+
+    it('shows a Notice when the active file finishes syncing', async () => {
+      vi.useFakeTimers();
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              sourceId: '1',
+              externalSourceId: 'a.md',
+              fingerprint: 'x',
+            }),
+        }),
+      );
+      plugin = makePlugin({ autoSyncDebounceSeconds: 5 });
+      const file = new TFile('a.md', { ctime: 0, mtime: 100, size: 1 });
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(file);
+      plugin.app.vault.read = vi.fn().mockResolvedValue('content');
+      await plugin.onload();
+
+      vaultEventHandlers['modify']!(file);
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(noticeMessages).toContain('Sheska: "a.md" synced.');
+      vi.useRealTimers();
+    });
+
+    it('does not show a synced/not-synced Notice just from switching between notes', async () => {
+      plugin = makePlugin({
+        syncCache: { 'a.md': { mtime: 100, syncedAt: 1 } },
+      });
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(null);
+      await plugin.onload();
+
+      workspaceEventHandlers['file-open']!(
+        new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }),
+      );
+      workspaceEventHandlers['file-open']!(
+        new TFile('b.md', { ctime: 0, mtime: 200, size: 1 }),
+      );
+
+      expect(noticeMessages).toEqual([]);
     });
   });
 
