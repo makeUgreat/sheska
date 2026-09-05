@@ -49,12 +49,22 @@ export class Menu {
   }
 }
 
+export const workspaceEventHandlers: Record<
+  string,
+  ((...args: unknown[]) => void) | undefined
+> = {};
+
 class MockWorkspace {
   getActiveFile = vi.fn().mockReturnValue(null);
 
-  on(event: string, handler: (menu: Menu, file: TFile) => void): object {
+  on(
+    event: string,
+    handler: ((menu: Menu, file: TFile) => void) | ((...args: unknown[]) => void),
+  ): object {
     if (event === 'file-menu') {
-      fileMenuHandler = handler;
+      fileMenuHandler = handler as (menu: Menu, file: TFile) => void;
+    } else {
+      workspaceEventHandlers[event] = handler as (...args: unknown[]) => void;
     }
     return {};
   }
@@ -129,6 +139,22 @@ export function debounce<T extends unknown[], V>(
   return fn;
 }
 
+// Tracks status bar items created via addStatusBarItem() so tests can assert
+// on the text set through the real obsidian.d.ts HTMLElement.setText() API.
+export interface RenderedStatusBarItem {
+  text: string;
+}
+
+export const statusBarItems: RenderedStatusBarItem[] = [];
+
+class MockStatusBarItem {
+  constructor(private record: RenderedStatusBarItem) {}
+
+  setText(text: string): void {
+    this.record.text = text;
+  }
+}
+
 export class Plugin {
   app = new App();
   addCommand = vi.fn();
@@ -137,6 +163,11 @@ export class Plugin {
   loadData = vi.fn().mockResolvedValue({});
   saveData = vi.fn().mockResolvedValue(undefined);
   registerInterval = vi.fn((id: number) => id);
+  addStatusBarItem = vi.fn((): HTMLElement => {
+    const record: RenderedStatusBarItem = { text: '' };
+    statusBarItems.push(record);
+    return new MockStatusBarItem(record) as unknown as HTMLElement;
+  });
 }
 
 export class PluginSettingTab {
