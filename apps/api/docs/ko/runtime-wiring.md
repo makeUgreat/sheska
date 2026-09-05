@@ -107,6 +107,8 @@ flowchart TB
 - `forRoot()`/`forFeature()` 같은 `DynamicModule` factory는 호출할 때마다 새 module instance를 반환한다. NestJS는 import path가 달라도 이를 동일한 것으로 중복 제거하지 않으므로, 같은 `forRoot()`에 도달하는 import path가 여러 개면 그 path 수만큼 module이 인스턴스화되고, 그 안에 등록된 listener, consumer, controller도 path 수만큼 중복 등록된다.
 - `forRoot()`와 `forFeature()`를 모두 제공하는 bounded context root module은 event listener, queue consumer, scheduler, controller를 `forRoot()`에만 두어야 한다.
 - `forFeature()`는 token, repository처럼 여러 번 생성돼도 안전한 stateless provider만 포함해야 한다.
+- Provider가 `forFeature()`에 들어갈 자격은 stateless 여부만으로 정해지며, 지금 외부 consumer가 그 provider를 쓰는지로 정해지지 않는다. 지금 유일한 consumer가 안 쓴다는 이유로 stateless provider를 `forFeature()`에서 빼면 안 된다.
+- 서로 다른 consumer가 서로 겹치지 않는 subset을 필요로 해서 `forFeature()`의 export 표면이 부담스러워지면, stateless provider를 계속 수동으로 넣었다 뺐다 하지 말고 호출부가 명시적으로 provider를 선택하게(예: `forFeature(tokens)`) 만들어 해결한다.
 - Context의 `forRoot()`는 그 composition을 소유하는 module에서 한 번만 import한다. 해당 context의 provider만 필요한 다른 module은 `forRoot()`가 아니라 `forFeature()`를 import해야 한다.
 - Adapter를 조립하는 module이 `ConfigService`를 읽고, 그 adapter 소유의 config parser를 호출하고, `useFactory`로 adapter를 생성한다. Adapter class 자체에 `ConfigService`를 주입하지 않는다.
 - 이 조립 책임은 adapter나 `ConfigService`에서 오는 값에만 한정되지 않는다. Tunable configuration을 나타내는 constructor parameter에 default 값을 두면 안 되며, provider를 조립하는 module이 — 값이 하드코딩된 constant라 하더라도 — 그 값을 소유하고 `useFactory` 또는 plain constructor call로 명시적으로 전달해야 한다.

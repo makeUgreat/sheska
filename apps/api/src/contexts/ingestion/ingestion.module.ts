@@ -52,8 +52,21 @@ export class IngestionModule {
           },
           inject: [ConfigService],
         },
+        {
+          provide: RecursiveCharacterChunker,
+          useFactory: () =>
+            new RecursiveCharacterChunker({
+              chunkSize: DEFAULT_CHUNK_SIZE,
+              chunkOverlap: DEFAULT_CHUNK_OVERLAP,
+              separators: DEFAULT_SEPARATORS,
+            }),
+        },
       ],
-      exports: [SOURCE_EMBEDDING_REPOSITORY, EMBEDDER],
+      exports: [
+        SOURCE_EMBEDDING_REPOSITORY,
+        EMBEDDER,
+        RecursiveCharacterChunker,
+      ],
     };
   }
 
@@ -66,15 +79,6 @@ export class IngestionModule {
         IngestionModule.forFeature(),
       ],
       providers: [
-        {
-          provide: RecursiveCharacterChunker,
-          useFactory: () =>
-            new RecursiveCharacterChunker({
-              chunkSize: DEFAULT_CHUNK_SIZE,
-              chunkOverlap: DEFAULT_CHUNK_OVERLAP,
-              separators: DEFAULT_SEPARATORS,
-            }),
-        },
         IngestSourceHandler,
         EmbedRequestConsumer,
         EmbedResultConsumer,
