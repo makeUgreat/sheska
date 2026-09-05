@@ -4,6 +4,8 @@ import {
   fileMenuItems,
   fileMenuHandler,
   vaultEventHandlers,
+  workspaceEventHandlers,
+  statusBarItems,
   TFile,
   Menu,
 } from '../__mocks__/obsidian';
@@ -26,6 +28,7 @@ describe('SheskaPlugin', () => {
     plugin = makePlugin();
     noticeMessages.length = 0;
     fileMenuItems.length = 0;
+    statusBarItems.length = 0;
     vi.clearAllMocks();
   });
 
@@ -271,7 +274,7 @@ describe('SheskaPlugin', () => {
     it('registers a file-menu event handler', async () => {
       await plugin.onload();
 
-      expect(plugin.registerEvent).toHaveBeenCalledTimes(3);
+      expect(plugin.registerEvent).toHaveBeenCalledTimes(4);
     });
 
     it('adds an Upload to Sheska item to the file menu', async () => {
@@ -363,6 +366,112 @@ describe('SheskaPlugin', () => {
       expect(noticeMessages).toContain(
         'Failed to reach Sheska API. Check settings.',
       );
+    });
+  });
+
+  describe('sync status bar', () => {
+    it('creates a status bar item on load and clears it when there is no active file', async () => {
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(null);
+
+      await plugin.onload();
+
+      expect(plugin.addStatusBarItem).toHaveBeenCalledOnce();
+      expect(statusBarItems[0].text).toBe('');
+    });
+
+    it('shows Not synced for the active file when it is not in the sync cache', async () => {
+      plugin.app.workspace.getActiveFile = vi
+        .fn()
+        .mockReturnValue(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }));
+
+      await plugin.onload();
+
+      expect(statusBarItems[0].text).toBe('Sheska: ○ Not synced');
+    });
+
+    it('shows Synced for the active file when its mtime matches the cache', async () => {
+      plugin = makePlugin({
+        syncCache: { 'a.md': { mtime: 100, syncedAt: 1 } },
+      });
+      plugin.app.workspace.getActiveFile = vi
+        .fn()
+        .mockReturnValue(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }));
+
+      await plugin.onload();
+
+      expect(statusBarItems[0].text).toBe('Sheska: ✓ Synced');
+    });
+
+    it('updates the status bar when the active file changes via file-open', async () => {
+      plugin = makePlugin({
+        syncCache: { 'a.md': { mtime: 100, syncedAt: 1 } },
+      });
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(null);
+      await plugin.onload();
+      expect(statusBarItems[0].text).toBe('');
+
+      workspaceEventHandlers['file-open']!(
+        new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }),
+      );
+
+      expect(statusBarItems[0].text).toBe('Sheska: ✓ Synced');
+    });
+
+    it('refreshes the status bar after the active file is auto-synced in the background', async () => {
+      vi.useFakeTimers();
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              sourceId: '1',
+              externalSourceId: 'a.md',
+              fingerprint: 'x',
+            }),
+        }),
+      );
+      plugin = makePlugin({ autoSyncDebounceSeconds: 5 });
+      const file = new TFile('a.md', { ctime: 0, mtime: 100, size: 1 });
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(file);
+      plugin.app.vault.read = vi.fn().mockResolvedValue('content');
+      await plugin.onload();
+      expect(statusBarItems[0].text).toBe('Sheska: ○ Not synced');
+
+      vaultEventHandlers['modify']!(file);
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(statusBarItems[0].text).toBe('Sheska: ✓ Synced');
+      vi.useRealTimers();
+    });
+
+    it('does not refresh the status bar when a background sync affects a different file', async () => {
+      vi.useFakeTimers();
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              sourceId: '1',
+              externalSourceId: 'b.md',
+              fingerprint: 'x',
+            }),
+        }),
+      );
+      plugin = makePlugin({ autoSyncDebounceSeconds: 5 });
+      const activeFile = new TFile('a.md', { ctime: 0, mtime: 100, size: 1 });
+      const otherFile = new TFile('b.md', { ctime: 0, mtime: 200, size: 1 });
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(activeFile);
+      plugin.app.vault.read = vi.fn().mockResolvedValue('content');
+      await plugin.onload();
+      expect(statusBarItems[0].text).toBe('Sheska: ○ Not synced');
+
+      vaultEventHandlers['modify']!(otherFile);
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(statusBarItems[0].text).toBe('Sheska: ○ Not synced');
+      vi.useRealTimers();
     });
   });
 

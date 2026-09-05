@@ -199,6 +199,90 @@ describe('AutoSyncService', () => {
     expect(service.getSyncCache()['note.md']?.mtime).toBe(100);
   });
 
+  it('isSynced reports true only when the cached mtime matches the file', () => {
+    const { service } = makeService(
+      {},
+      { 'note.md': { mtime: 100, syncedAt: 1 } },
+    );
+
+    expect(
+      service.isSynced(
+        asObsidianFile(new TFile('note.md', { ctime: 0, mtime: 100, size: 1 })),
+      ),
+    ).toBe(true);
+    expect(
+      service.isSynced(
+        asObsidianFile(new TFile('note.md', { ctime: 0, mtime: 200, size: 1 })),
+      ),
+    ).toBe(false);
+    expect(
+      service.isSynced(
+        asObsidianFile(
+          new TFile('other.md', { ctime: 0, mtime: 100, size: 1 }),
+        ),
+      ),
+    ).toBe(false);
+  });
+
+  it('calls onFileSynced with the path after a successful upload', async () => {
+    const onFileSynced = vi.fn();
+    const api = {
+      uploadSource: vi.fn().mockResolvedValue({
+        sourceId: 'source-1',
+        externalSourceId: 'note.md',
+        fingerprint: 'fingerprint',
+      }),
+    };
+    const vault = {
+      read: vi.fn().mockResolvedValue('content'),
+      getMarkdownFiles: vi.fn().mockReturnValue([]),
+    };
+    const service = new AutoSyncService({
+      vault: vault as never,
+      api: api as unknown as SheskaApiClient,
+      settings: DEFAULT_SETTINGS,
+      syncCache: {},
+      saveSyncCache: vi.fn().mockResolvedValue(undefined),
+      onFileSynced,
+    });
+
+    await service.uploadFile(
+      asObsidianFile(new TFile('note.md', { ctime: 0, mtime: 100, size: 1 })),
+    );
+
+    expect(onFileSynced).toHaveBeenCalledWith('note.md');
+  });
+
+  it('does not call onFileSynced when the upload fails', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const onFileSynced = vi.fn();
+    const api = {
+      uploadSource: vi.fn().mockRejectedValue(new Error('boom')),
+    };
+    const vault = {
+      read: vi.fn().mockResolvedValue('content'),
+      getMarkdownFiles: vi.fn().mockReturnValue([]),
+    };
+    const service = new AutoSyncService({
+      vault: vault as never,
+      api: api as unknown as SheskaApiClient,
+      settings: { ...DEFAULT_SETTINGS, autoSyncDebounceSeconds: 1 },
+      syncCache: {},
+      saveSyncCache: vi.fn().mockResolvedValue(undefined),
+      onFileSynced,
+    });
+
+    service.onVaultFileChanged(
+      asObsidianAbstractFile(
+        new TFile('note.md', { ctime: 0, mtime: 100, size: 1 }),
+      ),
+    );
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(onFileSynced).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
   it('uses replacement API and settings after configure', async () => {
     const { api, service } = makeService({
       autoSyncDebounceSeconds: 5,

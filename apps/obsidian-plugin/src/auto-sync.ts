@@ -10,6 +10,7 @@ interface AutoSyncServiceOptions {
   settings: SheskaSettings;
   syncCache: SyncCache;
   saveSyncCache(): Promise<void>;
+  onFileSynced?(path: string): void;
 }
 
 export class AutoSyncService {
@@ -67,6 +68,11 @@ export class AutoSyncService {
     await this.uploadFileCore(file);
   }
 
+  isSynced(file: TFile): boolean {
+    const cached = this.syncCache[file.path];
+    return cached !== undefined && cached.mtime === file.stat.mtime;
+  }
+
   private createFlushDebouncer(): Debouncer<[], void> {
     return debounce(
       () => {
@@ -100,11 +106,11 @@ export class AutoSyncService {
     await this.api.uploadSource({ externalSourceId: file.path, content });
     this.syncCache[file.path] = { mtime: mtimeAtRead, syncedAt: Date.now() };
     await this.options.saveSyncCache();
+    this.options.onFileSynced?.(file.path);
   }
 
   private async uploadIfChanged(file: TFile): Promise<void> {
-    const cached = this.syncCache[file.path];
-    if (cached && cached.mtime === file.stat.mtime) return;
+    if (this.isSynced(file)) return;
     try {
       await this.uploadFileCore(file);
     } catch (err) {

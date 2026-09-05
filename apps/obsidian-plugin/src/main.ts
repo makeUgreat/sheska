@@ -15,6 +15,7 @@ export default class SheskaPlugin extends Plugin {
   private healthCheckScheduler!: HealthCheckScheduler;
   private autoSyncService!: AutoSyncService;
   private autoSyncSweepIntervalId: number | null = null;
+  private syncStatusBarItem!: HTMLElement;
 
   async onload(): Promise<void> {
     await this.loadSettings();
@@ -25,6 +26,7 @@ export default class SheskaPlugin extends Plugin {
     this.registerCommands();
     this.registerFileMenu();
     this.registerAutoSyncEvents();
+    this.registerSyncStatusBar();
 
     this.healthCheckScheduler.start();
     this.startAutoSyncSweepInterval();
@@ -119,7 +121,37 @@ export default class SheskaPlugin extends Plugin {
       settings: this.settings,
       syncCache: this.syncCache,
       saveSyncCache: async () => this.saveSyncCache(),
+      onFileSynced: (path) => this.onFileSynced(path),
     });
+  }
+
+  private onFileSynced(path: string): void {
+    const activeFile = this.app.workspace.getActiveFile();
+    if (activeFile?.path === path) {
+      this.updateSyncStatusBar(activeFile);
+    }
+  }
+
+  private registerSyncStatusBar(): void {
+    this.syncStatusBarItem = this.addStatusBarItem();
+    this.updateSyncStatusBar(this.app.workspace.getActiveFile());
+    this.registerEvent(
+      this.app.workspace.on('file-open', (file) =>
+        this.updateSyncStatusBar(file),
+      ),
+    );
+  }
+
+  private updateSyncStatusBar(file: TFile | null): void {
+    if (!file) {
+      this.syncStatusBarItem.setText('');
+      return;
+    }
+    this.syncStatusBarItem.setText(
+      this.autoSyncService.isSynced(file)
+        ? 'Sheska: ✓ Synced'
+        : 'Sheska: ○ Not synced',
+    );
   }
 
   private registerCommands(): void {
