@@ -14,6 +14,9 @@ resources:
   requests:
     cpu: 500m
     memory: 2Gi
+  limits:
+    cpu: 2000m
+    memory: 5Gi
 nodeSelector: {}
 tolerations: []
 # hash-n97-1 also hosts control-plane, Traefik, WireGuard, and
