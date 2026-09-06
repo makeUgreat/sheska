@@ -1,4 +1,4 @@
-name: Embedder Docker Publish
+name: Embedder Image Publish
 
 on:
   push:
