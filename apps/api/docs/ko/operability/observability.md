@@ -4,15 +4,15 @@ lang: ko
 audience: both
 applies_to:
   - apps/api
-source: ../en/observability.md
-last_synced: 2026-09-02
+source: ../../en/operability/observability.md
+last_synced: 2026-09-07
 read_when:
   - OpenTelemetry 계측을 추가하거나, 무엇을 어디로 export할지 바꾸거나, label로 조회 가능해야 하는 리소스 속성을 추가할 때.
   - `platform/otel/otel.bootstrap.ts`를 변경하기 전에 왜 이렇게 구성돼 있는지 이해하고 싶을 때.
 related:
   - ./logging.md
-  - ./runtime-wiring.md
-  - ./infrastructure.md
+  - ../architecture/runtime-wiring.md
+  - ../architecture/infrastructure.md
 ---
 
 # API 옵저버빌리티 컨벤션

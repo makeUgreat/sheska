@@ -4,13 +4,13 @@ lang: ko
 audience: both
 applies_to:
   - apps/api
-source: ../en/error.md
-last_synced: 2026-07-01
+source: ../../en/operability/error.md
+last_synced: 2026-09-07
 read_when:
   - API 오류와 시스템 오류를 정의, 매핑, 마스킹, 전파, 리뷰할 때.
 related:
-  - ./architecture.md
-  - ./source-dependency.md
+  - ../architecture/architecture.md
+  - ../architecture/source-dependency.md
 ---
 
 # API 오류 정책

@@ -4,8 +4,8 @@ lang: ko
 audience: both
 applies_to:
   - apps/api
-source: ../en/context-integration.md
-last_synced: 2026-09-01
+source: ../../en/architecture/context-integration.md
+last_synced: 2026-09-07
 related:
   - ./ddd.md
   - ./source-dependency.md

@@ -4,14 +4,14 @@ lang: en
 audience: both
 applies_to:
   - apps/api
-translation: ../ko/observability.md
+translation: ../../ko/operability/observability.md
 read_when:
   - Adding OpenTelemetry instrumentation, changing what gets exported or where, or adding a resource attribute that should appear as a queryable label.
   - Understanding why `platform/otel/otel.bootstrap.ts` is structured the way it is before changing it.
 related:
   - ./logging.md
-  - ./runtime-wiring.md
-  - ./infrastructure.md
+  - ../architecture/runtime-wiring.md
+  - ../architecture/infrastructure.md
 ---
 
 # API Observability Convention

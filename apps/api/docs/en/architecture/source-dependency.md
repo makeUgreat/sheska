@@ -4,10 +4,10 @@ lang: en
 audience: both
 applies_to:
   - apps/api
-translation: ../ko/source-dependency.md
+translation: ../../ko/architecture/source-dependency.md
 related:
   - ./architecture.md
-  - ./error.md
+  - ../operability/error.md
   - ./runtime-wiring.md
   - ./context-integration.md
 ---

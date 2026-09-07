@@ -4,15 +4,15 @@ lang: ko
 audience: both
 applies_to:
   - apps/api
-source: ../en/repository-methods.md
-last_synced: 2026-07-20
+source: ../../en/persistence/repository-methods.md
+last_synced: 2026-09-07
 related:
-  - ./ddd.md
+  - ../architecture/ddd.md
 ---
 
 # Repository Method 사용 가이드
 
-이 문서는 [API DDD 컨벤션](./ddd.md)의 이름 규칙을 보완하며, **호출 지점에서 어떤 method를 선택할지**에 대한 가이드를 제공한다. Method 이름이 아닌 사용 시점을 결정할 때 읽는다.
+이 문서는 [API DDD 컨벤션](../architecture/ddd.md)의 이름 규칙을 보완하며, **호출 지점에서 어떤 method를 선택할지**에 대한 가이드를 제공한다. Method 이름이 아닌 사용 시점을 결정할 때 읽는다.
 
 ## `get` vs `find`
 

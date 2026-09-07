@@ -4,12 +4,12 @@ lang: en
 audience: both
 applies_to:
   - apps/api
-translation: ../ko/error.md
+translation: ../../ko/operability/error.md
 read_when:
   - Defining, mapping, masking, propagating, or reviewing API errors and system errors.
 related:
-  - ./architecture.md
-  - ./source-dependency.md
+  - ../architecture/architecture.md
+  - ../architecture/source-dependency.md
 ---
 
 # API Error Policy

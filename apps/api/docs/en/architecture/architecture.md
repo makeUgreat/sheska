@@ -4,11 +4,11 @@ lang: en
 audience: both
 applies_to:
   - apps/api
-translation: ../ko/architecture.md
+translation: ../../ko/architecture/architecture.md
 related:
-  - ./error.md
+  - ../operability/error.md
   - ./ddd.md
-  - ./persistence.md
+  - ../persistence/persistence.md
   - ./infrastructure.md
   - ./source-dependency.md
   - ./runtime-wiring.md
@@ -36,9 +36,9 @@ Read the error policy when defining, transforming, masking, or exposing applicat
 
 ## Related Documents
 
-- [API Error Policy](./error.md): application error meaning, categories, transformation, response structure, and unexpected system error handling.
+- [API Error Policy](../operability/error.md): application error meaning, categories, transformation, response structure, and unexpected system error handling.
 - [API DDD Convention](./ddd.md): bounded contexts, implementation modules, domain kernel, and domain model rules.
-- [API Persistence Policy](./persistence.md): database schema, migration, ORM persistence, repository mapper, and storage constraint rules.
+- [API Persistence Policy](../persistence/persistence.md): database schema, migration, ORM persistence, repository mapper, and storage constraint rules.
 - [API Infrastructure Convention](./infrastructure.md): infrastructure adapter file naming, directory structure, and adapter conventions.
 - [API Source Dependency Convention](./source-dependency.md): import direction, layer boundaries, and framework import rules.
 - [API Runtime Wiring Convention](./runtime-wiring.md): NestJS DI, provider registration, platform runtime, and port binding rules.

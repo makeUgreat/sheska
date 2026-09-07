@@ -6,7 +6,7 @@ applies_to:
   - apps/api
 translation: ../ko/test.md
 related:
-  - ./architecture.md
+  - ./architecture/architecture.md
   - ./index.md
 ---
 

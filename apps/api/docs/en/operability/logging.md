@@ -4,12 +4,12 @@ lang: en
 audience: both
 applies_to:
   - apps/api
-translation: ../ko/logging.md
+translation: ../../ko/operability/logging.md
 read_when:
   - Deciding whether to log, what to log, where to log, and at which log level.
 related:
   - ./error.md
-  - ./architecture.md
+  - ../architecture/architecture.md
 ---
 
 # API Logging Policy

@@ -4,7 +4,7 @@ lang: en
 audience: both
 applies_to:
   - apps/api
-translation: ../ko/context-integration.md
+translation: ../../ko/architecture/context-integration.md
 related:
   - ./ddd.md
   - ./source-dependency.md

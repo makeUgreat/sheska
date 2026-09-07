@@ -4,12 +4,12 @@ lang: ko
 audience: both
 applies_to:
   - apps/api
-source: ../en/ddd.md
-last_synced: 2026-07-20
+source: ../../en/architecture/ddd.md
+last_synced: 2026-09-07
 related:
   - ./architecture.md
   - ./context-integration.md
-  - ./repository-methods.md
+  - ../persistence/repository-methods.md
 ---
 
 # API DDD 컨벤션
@@ -90,7 +90,7 @@ DDD 구성 요소는 class가 위치한 곳이 아니라 domain에서 맡는 역
 - `list`는 페이지네이션 없이 여러 aggregate를 반환한다. Filtering이 필요하면 explicit criteria object를 받는 것이 좋다. Caller가 domain behavior를 호출하기 위해 full aggregate가 필요할 때 repository에 `list`를 사용한다. 결과가 화면 표시용 flat read-model projection이라면(특히 cursor pagination과 함께 사용될 때) application Query port에 `paginate` 또는 `search`로 정의한다.
 - `find`와 `get`의 criteria object는 하나의 resource를 식별하는 unique lookup만 표현해야 한다. 여러 결과가 가능한 filtering은 `list`로 표현한다.
 - Storage mechanics, query implementation, table shape를 노출하는 repository method name은 피한다. 특히 field name을 method name에 포함하지 않고 criteria object의 field로 표현한다. 예: `findBySourceId(sourceId)` 대신 `find({ sourceId })`.
-- 각 method를 호출 지점에서 언제 사용할지에 대한 가이드는 [Repository Method 사용 가이드](./repository-methods.md)를 참조한다.
+- 각 method를 호출 지점에서 언제 사용할지에 대한 가이드는 [Repository Method 사용 가이드](../persistence/repository-methods.md)를 참조한다.
 
 ## Domain 캡슐화
 

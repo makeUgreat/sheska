@@ -4,14 +4,14 @@ lang: en
 audience: both
 applies_to:
   - apps/api
-translation: ../ko/repository-methods.md
+translation: ../../ko/persistence/repository-methods.md
 related:
-  - ./ddd.md
+  - ../architecture/ddd.md
 ---
 
 # Repository Method Usage Guide
 
-This document complements the naming rules in [API DDD Convention](./ddd.md) with **call-site usage guidance** for repository methods. Read this when deciding which method to call, not which to name.
+This document complements the naming rules in [API DDD Convention](../architecture/ddd.md) with **call-site usage guidance** for repository methods. Read this when deciding which method to call, not which to name.
 
 ## `get` vs `find`
 

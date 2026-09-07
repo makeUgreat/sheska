@@ -4,12 +4,12 @@ lang: en
 audience: both
 applies_to:
   - apps/api
-translation: ../ko/persistence.md
+translation: ../../ko/persistence/persistence.md
 related:
-  - ./architecture.md
-  - ./ddd.md
-  - ./source-dependency.md
-  - ./observability.md
+  - ../architecture/architecture.md
+  - ../architecture/ddd.md
+  - ../architecture/source-dependency.md
+  - ../operability/observability.md
 ---
 
 # API Persistence Policy
@@ -68,12 +68,12 @@ Persistence policy decides how database and ORM adapters preserve stored data wi
 ### Persistence Mapper Policy
 
 - Repository implementations own database calls, query composition, and wrapping vendor or storage-only errors when adapter context is useful.
-- In a raw `sql`...`` query passed to `db.execute`, keep the leading verb (`SELECT`, `WITH`, ...) and at least one following token on the same line — write `SELECT id, name` rather than `SELECT\n  id, name`. `@opentelemetry/instrumentation-pg` derives the query's operation name (used as both a span name segment and a Prometheus label) by trimming the query text and slicing up to the first literal space character, without treating a newline as a delimiter; a verb alone on its own line produces `"SELECT\n"` instead of `"SELECT"`, silently splitting one logical operation into two time series. See [API Observability Convention](./observability.md) for why this label exists.
+- In a raw `sql`...`` query passed to `db.execute`, keep the leading verb (`SELECT`, `WITH`, ...) and at least one following token on the same line — write `SELECT id, name` rather than `SELECT\n  id, name`. `@opentelemetry/instrumentation-pg` derives the query's operation name (used as both a span name segment and a Prometheus label) by trimming the query text and slicing up to the first literal space character, without treating a newline as a delimiter; a verb alone on its own line produces `"SELECT\n"` instead of `"SELECT"`, silently splitting one logical operation into two time series. See [API Observability Convention](../operability/observability.md) for why this label exists.
 - Persistence mappers own restoration input shape validation, persistence row to domain restoration, and domain object to insert row conversion.
 - Persistence mapper restoration methods should let domain restoration exceptions propagate unchanged.
 - Do not wrap domain restoration exceptions as repository or persistence errors only because the exception occurred while restoring a row.
 - Aggregate persistence mappers should be split by restored aggregate or entity. Avoid collecting unrelated aggregate mappings in one adapter-wide mapper.
-- Persistence adapter file names follow the adapter file naming rules in the [API Infrastructure Convention](./infrastructure.md).
+- Persistence adapter file names follow the adapter file naming rules in the [API Infrastructure Convention](../architecture/infrastructure.md).
 - Name persistence mapper files `{aggregate-or-entity}.persistence.mapper.ts` and classes `{AggregateOrEntity}PersistenceMapper`, such as `source.pg-drizzle.mapper.ts` and `SourcePgDrizzleMapper`.
 - Name concrete repository adapter files `{aggregate-or-entity}.{adapter}.repository.ts` and classes `{AggregateOrEntity}{Adapter}Repository`, such as `source.pg-drizzle.repository.ts` and `SourcePgDrizzleRepository`.
 - Domain objects restored from persistence should expose a `restore` path that validates domain invariants and does not record domain events.

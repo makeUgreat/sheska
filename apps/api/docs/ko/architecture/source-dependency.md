@@ -4,12 +4,12 @@ lang: ko
 audience: both
 applies_to:
   - apps/api
-source: ../en/source-dependency.md
-last_synced: 2026-09-05
+source: ../../en/architecture/source-dependency.md
+last_synced: 2026-09-07
 related:
   - ./architecture.md
   - ./context-integration.md
-  - ./error.md
+  - ../operability/error.md
   - ./runtime-wiring.md
 ---
 

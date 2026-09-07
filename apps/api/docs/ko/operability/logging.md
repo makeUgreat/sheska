@@ -4,13 +4,13 @@ lang: ko
 audience: both
 applies_to:
   - apps/api
-source: ../en/logging.md
-last_synced: 2026-07-10
+source: ../../en/operability/logging.md
+last_synced: 2026-09-07
 read_when:
   - 로그를 남길지, 무엇을 남길지, 어디서 남길지, 어떤 레벨로 남길지 결정할 때.
 related:
   - ./error.md
-  - ./architecture.md
+  - ../architecture/architecture.md
 ---
 
 # API 로깅 정책

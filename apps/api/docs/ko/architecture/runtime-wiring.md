@@ -4,8 +4,8 @@ lang: ko
 audience: both
 applies_to:
   - apps/api
-source: ../en/runtime-wiring.md
-last_synced: 2026-09-05
+source: ../../en/architecture/runtime-wiring.md
+last_synced: 2026-09-07
 related:
   - ./architecture.md
   - ./source-dependency.md

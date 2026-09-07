@@ -4,11 +4,11 @@ lang: en
 audience: both
 applies_to:
   - apps/api
-translation: ../ko/ddd.md
+translation: ../../ko/architecture/ddd.md
 related:
   - ./architecture.md
   - ./context-integration.md
-  - ./repository-methods.md
+  - ../persistence/repository-methods.md
 ---
 
 # API DDD Convention
@@ -89,7 +89,7 @@ DDD building blocks are chosen by the domain role they play, not by where a clas
 - `list` returns multiple aggregates without pagination. It SHOULD accept an explicit criteria object when filtering is needed. Use `list` on a repository when callers need full aggregate objects to invoke domain behavior. When the result is a flat read-model projection for display (especially with cursor pagination), define the operation on an application Query port using `paginate` or `search` instead.
 - `find` and `get` criteria objects should express only unique lookups that identify one resource. Use `list` for filtering that can return multiple results.
 - Avoid repository method names that expose storage mechanics, query implementation, or table shape. In particular, do not encode field names into method names; express them through criteria object fields instead. Example: prefer `find({ sourceId })` over `findBySourceId(sourceId)`.
-- For call-site guidance on when to use each method, see [Repository Method Usage Guide](./repository-methods.md).
+- For call-site guidance on when to use each method, see [Repository Method Usage Guide](../persistence/repository-methods.md).
 
 ## Domain Encapsulation
 

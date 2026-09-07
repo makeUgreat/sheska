@@ -4,18 +4,18 @@ lang: ko
 audience: both
 applies_to:
   - apps/api
-source: ../en/infrastructure.md
-last_synced: 2026-09-05
+source: ../../en/architecture/infrastructure.md
+last_synced: 2026-09-07
 related:
   - ./architecture.md
-  - ./persistence.md
+  - ../persistence/persistence.md
   - ./source-dependency.md
 ---
 
 # API Infrastructure 컨벤션
 
 이 문서는 infrastructure adapter code의 명명 및 구조 컨벤션을 정의한다.
-Persistence 관련 규칙은 [API Persistence 정책](./persistence.md)에 있다.
+Persistence 관련 규칙은 [API Persistence 정책](../persistence/persistence.md)에 있다.
 
 ## 적용 범위
 

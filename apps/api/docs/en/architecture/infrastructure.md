@@ -4,17 +4,17 @@ lang: en
 audience: both
 applies_to:
   - apps/api
-translation: ../ko/infrastructure.md
+translation: ../../ko/architecture/infrastructure.md
 related:
   - ./architecture.md
-  - ./persistence.md
+  - ../persistence/persistence.md
   - ./source-dependency.md
 ---
 
 # API Infrastructure Convention
 
 This document defines naming and structure conventions for infrastructure adapter code.
-Persistence-specific rules are in the [API Persistence Policy](./persistence.md).
+Persistence-specific rules are in the [API Persistence Policy](../persistence/persistence.md).
 
 ## Scope
 

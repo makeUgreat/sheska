@@ -4,7 +4,7 @@ lang: en
 audience: both
 applies_to:
   - apps/api
-translation: ../ko/runtime-wiring.md
+translation: ../../ko/architecture/runtime-wiring.md
 related:
   - ./architecture.md
   - ./source-dependency.md

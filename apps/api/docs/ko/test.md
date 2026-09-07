@@ -5,9 +5,9 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/test.md
-last_synced: 2026-06-30
+last_synced: 2026-09-07
 related:
-  - ./architecture.md
+  - ./architecture/architecture.md
   - ./index.md
 ---
 
