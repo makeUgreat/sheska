@@ -5,7 +5,12 @@ import {
   type SearchQueryEmbedder,
 } from '@contexts/posts/application/ports';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
+import { computeDeadline, type Deadline } from '@core/deadline';
 import { SearchPostsUseCase } from '../search-posts.use-case';
+
+function buildDeadline(remainingMs = 60_000): Deadline {
+  return computeDeadline(remainingMs);
+}
 
 type PostQueryMock = {
   get: MockedFunction<PostQuery['get']>;
@@ -67,11 +72,14 @@ describe('SearchPostsUseCase', () => {
     const searchQueryEmbedder = createSearchQueryEmbedderMock();
     const useCase = new SearchPostsUseCase(postQuery, searchQueryEmbedder);
 
-    const result = await useCase.execute({
-      query: 'TypeScript',
-      cursor: null,
-      limit: 20,
-    });
+    const result = await useCase.execute(
+      {
+        query: 'TypeScript',
+        cursor: null,
+        limit: 20,
+      },
+      buildDeadline(),
+    );
 
     expect(result.posts).toHaveLength(2);
     expect(result.posts[0]).toMatchObject({
@@ -94,11 +102,14 @@ describe('SearchPostsUseCase', () => {
     const searchQueryEmbedder = createSearchQueryEmbedderMock();
     const useCase = new SearchPostsUseCase(postQuery, searchQueryEmbedder);
 
-    const result = await useCase.execute({
-      query: 'nothing',
-      cursor: null,
-      limit: 20,
-    });
+    const result = await useCase.execute(
+      {
+        query: 'nothing',
+        cursor: null,
+        limit: 20,
+      },
+      buildDeadline(),
+    );
 
     expect(result.posts).toHaveLength(0);
   });
@@ -111,7 +122,10 @@ describe('SearchPostsUseCase', () => {
     const useCase = new SearchPostsUseCase(postQuery, searchQueryEmbedder);
 
     await expect(
-      useCase.execute({ query: 'TypeScript', cursor: null, limit: 20 }),
+      useCase.execute(
+        { query: 'TypeScript', cursor: null, limit: 20 },
+        buildDeadline(),
+      ),
     ).rejects.toBe(searchFailure);
   });
 
@@ -123,11 +137,14 @@ describe('SearchPostsUseCase', () => {
     searchQueryEmbedder.embed.mockResolvedValue(embedding);
     const useCase = new SearchPostsUseCase(postQuery, searchQueryEmbedder);
 
-    const result = await useCase.execute({
-      query: 'TypeScript',
-      cursor: null,
-      limit: 20,
-    });
+    const result = await useCase.execute(
+      {
+        query: 'TypeScript',
+        cursor: null,
+        limit: 20,
+      },
+      buildDeadline(),
+    );
 
     expect(postQuery.search).toHaveBeenCalledWith({
       query: 'TypeScript',
@@ -145,11 +162,14 @@ describe('SearchPostsUseCase', () => {
     searchQueryEmbedder.embed.mockResolvedValue(null);
     const useCase = new SearchPostsUseCase(postQuery, searchQueryEmbedder);
 
-    const result = await useCase.execute({
-      query: 'TypeScript',
-      cursor: null,
-      limit: 20,
-    });
+    const result = await useCase.execute(
+      {
+        query: 'TypeScript',
+        cursor: null,
+        limit: 20,
+      },
+      buildDeadline(),
+    );
 
     expect(postQuery.search).toHaveBeenCalledWith({
       query: 'TypeScript',
@@ -158,6 +178,22 @@ describe('SearchPostsUseCase', () => {
       queryEmbedding: null,
     });
     expect(result.semanticSearchApplied).toBe(false);
+  });
+
+  it('searchQueryEmbedder.embed를 signal과 함께 호출한다', async () => {
+    const postQuery = createPostQueryMock();
+    postQuery.search.mockResolvedValue(buildSearchResult());
+    const searchQueryEmbedder = createSearchQueryEmbedderMock();
+    const useCase = new SearchPostsUseCase(postQuery, searchQueryEmbedder);
+
+    await useCase.execute(
+      { query: 'TypeScript', cursor: null, limit: 20 },
+      buildDeadline(),
+    );
+
+    expect(searchQueryEmbedder.embed).toHaveBeenCalledWith('TypeScript', {
+      signal: expect.any(AbortSignal) as AbortSignal,
+    });
   });
 });
 

@@ -1,4 +1,5 @@
 export { ApplicationException } from './application.exception';
+export { effectiveAbortSignal } from './deadline-signal';
 export { toErrorLogContext } from './error-log.mapper';
 export {
   APPLICATION_ERROR_KIND,

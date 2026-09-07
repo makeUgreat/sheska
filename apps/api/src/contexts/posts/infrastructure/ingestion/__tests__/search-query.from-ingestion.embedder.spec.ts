@@ -95,6 +95,23 @@ describe('SearchQueryFromIngestionEmbedder', () => {
     );
   });
 
+  it('호출자가 signal을 넘기면 내부 기본 timeout 대신 그 signal을 그대로 embedder에 전달한다', async () => {
+    const controller = new AbortController();
+    const { embedder, embed } = createEmbedder(() =>
+      Promise.resolve({ embedding: [1], model: 'test-model' }),
+    );
+    const searchQueryEmbedder = new SearchQueryFromIngestionEmbedder(
+      embedder,
+      1000,
+    );
+
+    await searchQueryEmbedder.embed('query', { signal: controller.signal });
+
+    expect(embed).toHaveBeenCalledWith('query', {
+      signal: controller.signal,
+    });
+  });
+
   it('timeoutMs를 생략하면 SEARCH_QUERY_EMBED_TIMEOUT_MS 기본값으로 AbortSignal을 만든다', async () => {
     const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
     const { embedder } = createEmbedder(() =>

@@ -1,4 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { type Deadline } from '@core/deadline';
+import { effectiveAbortSignal } from '@kernels/application';
 import {
   type PostQuery,
   type PostQuerySearchCursor,
@@ -9,6 +11,13 @@ import {
   POST_QUERY,
   SEARCH_QUERY_EMBEDDER,
 } from '@contexts/posts/posts.di-tokens';
+
+// Own attempt-timeout ceiling for the search query embed call, independent of
+// the adapter's internal default (application code must not import an
+// infrastructure constant). Same order of magnitude as the adapter's
+// SEARCH_QUERY_EMBED_TIMEOUT_MS: interactive search should feel snappy, and
+// measured warm-state embedding latency is ~470-500ms.
+export const SEARCH_QUERY_EMBED_ATTEMPT_TIMEOUT_MS = 1_000;
 
 export type SearchPostsCommand = {
   readonly query: string;
@@ -29,8 +38,17 @@ export class SearchPostsUseCase {
     private readonly searchQueryEmbedder: SearchQueryEmbedder,
   ) {}
 
-  async execute(command: SearchPostsCommand): Promise<SearchPostsResult> {
-    const queryEmbedding = await this.searchQueryEmbedder.embed(command.query);
+  async execute(
+    command: SearchPostsCommand,
+    deadline: Deadline,
+  ): Promise<SearchPostsResult> {
+    const signal = effectiveAbortSignal(
+      deadline,
+      SEARCH_QUERY_EMBED_ATTEMPT_TIMEOUT_MS,
+    );
+    const queryEmbedding = await this.searchQueryEmbedder.embed(command.query, {
+      signal,
+    });
 
     const result = await this.postQuery.search({
       query: command.query,

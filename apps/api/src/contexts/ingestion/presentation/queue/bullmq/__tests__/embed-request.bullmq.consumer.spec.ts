@@ -45,7 +45,10 @@ describe('EmbedRequestBullMqConsumer', () => {
 
       await consumer.process(job);
 
-      expect(execute).toHaveBeenCalledWith(job.data);
+      expect(execute).toHaveBeenCalledWith(
+        job.data,
+        expect.objectContaining({ deadlineAt: expect.any(Number) as number }),
+      );
     });
   });
 
