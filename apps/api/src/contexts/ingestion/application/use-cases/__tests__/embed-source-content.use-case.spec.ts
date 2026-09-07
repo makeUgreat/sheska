@@ -66,16 +66,19 @@ describe('EmbedSourceContentUseCase', () => {
         new EventEmitter2(),
         chunker,
       );
+      const context = buildContext();
 
       await useCase.execute(
         buildPayload({ content: '# Source note' }),
-        buildContext(),
+        context,
       );
 
       expect(embed).toHaveBeenCalledOnce();
-      expect(embed).toHaveBeenCalledWith('# Source note', {
-        signal: expect.any(AbortSignal) as AbortSignal,
-      });
+      expect(embed).toHaveBeenCalledWith(
+        '# Source note',
+        context,
+        EMBED_CHUNK_ATTEMPT_TIMEOUT_MS,
+      );
       expect(enqueue).toHaveBeenCalledWith(
         expect.objectContaining<Partial<EmbedResultPayload>>({
           sourceId: 'source-1',
@@ -181,7 +184,7 @@ describe('EmbedSourceContentUseCase', () => {
       ).toEqual([1, 2, 3]);
     });
 
-    it('deadline까지 남은 시간이 EMBED_CHUNK_ATTEMPT_TIMEOUT_MS보다 짧으면 그 남은 시간만큼만 bound된 signal을 사용한다', async () => {
+    it('deadline이 짧은 context를 받아도 그 context와 EMBED_CHUNK_ATTEMPT_TIMEOUT_MS를 그대로 embedder에 전달한다 (attempt별 signal 계산은 adapter가 소유)', async () => {
       const embed = vi
         .fn()
         .mockResolvedValue({ embedding: fakeEmbedding, model: fakeModel });
@@ -191,20 +194,18 @@ describe('EmbedSourceContentUseCase', () => {
         new EventEmitter2(),
         chunker,
       );
-      const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
-      const shortRemainingMs = 1000;
+      const shortContext = buildContext(1000);
 
       await useCase.execute(
         buildPayload({ content: '# Source note' }),
-        buildContext(shortRemainingMs),
+        shortContext,
       );
 
-      expect(timeoutSpy).toHaveBeenCalledOnce();
-      const [appliedTimeoutMs] = timeoutSpy.mock.calls[0];
-      expect(appliedTimeoutMs).toBeGreaterThan(0);
-      expect(appliedTimeoutMs).toBeLessThanOrEqual(shortRemainingMs);
-      expect(appliedTimeoutMs).toBeLessThan(EMBED_CHUNK_ATTEMPT_TIMEOUT_MS);
-      timeoutSpy.mockRestore();
+      expect(embed).toHaveBeenCalledWith(
+        '# Source note',
+        shortContext,
+        EMBED_CHUNK_ATTEMPT_TIMEOUT_MS,
+      );
     });
   });
 

@@ -7,7 +7,10 @@ import {
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
-import { SearchPostsUseCase } from '../search-posts.use-case';
+import {
+  SearchPostsUseCase,
+  SEARCH_QUERY_EMBED_ATTEMPT_TIMEOUT_MS,
+} from '../search-posts.use-case';
 
 function buildContext(remainingMs = 60_000): CallContext {
   return { deadline: computeDeadline(remainingMs) };
@@ -181,20 +184,23 @@ describe('SearchPostsUseCase', () => {
     expect(result.semanticSearchApplied).toBe(false);
   });
 
-  it('searchQueryEmbedder.embed를 signal과 함께 호출한다', async () => {
+  it('searchQueryEmbedder.embed를 context와 SEARCH_QUERY_EMBED_ATTEMPT_TIMEOUT_MS와 함께 호출한다', async () => {
     const postQuery = createPostQueryMock();
     postQuery.search.mockResolvedValue(buildSearchResult());
     const searchQueryEmbedder = createSearchQueryEmbedderMock();
     const useCase = new SearchPostsUseCase(postQuery, searchQueryEmbedder);
+    const context = buildContext();
 
     await useCase.execute(
       { query: 'TypeScript', cursor: null, limit: 20 },
-      buildContext(),
+      context,
     );
 
-    expect(searchQueryEmbedder.embed).toHaveBeenCalledWith('TypeScript', {
-      signal: expect.any(AbortSignal) as AbortSignal,
-    });
+    expect(searchQueryEmbedder.embed).toHaveBeenCalledWith(
+      'TypeScript',
+      context,
+      SEARCH_QUERY_EMBED_ATTEMPT_TIMEOUT_MS,
+    );
   });
 });
 

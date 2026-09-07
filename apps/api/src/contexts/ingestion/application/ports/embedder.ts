@@ -1,6 +1,9 @@
+import { type CallContext } from '@core/call-context';
+
 export interface Embedder {
   embed(
     text: string,
-    options?: { signal?: AbortSignal },
+    context: CallContext,
+    attemptTimeoutMs?: number,
   ): Promise<{ embedding: number[]; model: string }>;
 }

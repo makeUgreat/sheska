@@ -1,3 +1,4 @@
+import { type CallContext } from '@core/call-context';
 import { type Embedder } from '@contexts/ingestion/ingestion.di-tokens';
 import { type SearchQueryEmbedder } from '@contexts/posts/application/ports';
 
@@ -15,12 +16,15 @@ export class SearchQueryFromIngestionEmbedder implements SearchQueryEmbedder {
 
   async embed(
     query: string,
-    options?: { signal?: AbortSignal },
+    context: CallContext,
+    attemptTimeoutMs: number = this.timeoutMs,
   ): Promise<number[] | null> {
     try {
-      const { embedding } = await this.embedder.embed(query, {
-        signal: options?.signal ?? AbortSignal.timeout(this.timeoutMs),
-      });
+      const { embedding } = await this.embedder.embed(
+        query,
+        context,
+        attemptTimeoutMs,
+      );
       return embedding;
     } catch {
       return null;

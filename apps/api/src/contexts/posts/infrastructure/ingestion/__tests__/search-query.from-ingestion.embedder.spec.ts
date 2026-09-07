@@ -1,14 +1,21 @@
 import { describe, expect, it, vi, type Mock } from 'vitest';
+import { computeDeadline } from '@core/deadline';
+import { type CallContext } from '@core/call-context';
 import { type Embedder } from '@contexts/ingestion/ingestion.di-tokens';
 import {
   SearchQueryFromIngestionEmbedder,
   SEARCH_QUERY_EMBED_TIMEOUT_MS,
 } from '../search-query.from-ingestion.embedder';
 
+function buildContext(remainingMs = 60_000): CallContext {
+  return { deadline: computeDeadline(remainingMs) };
+}
+
 function createEmbedder(
   impl: (
     text: string,
-    options?: { signal?: AbortSignal },
+    context: CallContext,
+    attemptTimeoutMs?: number,
   ) => Promise<{ embedding: number[]; model: string }>,
 ): { embedder: Embedder; embed: Mock } {
   const embed = vi.fn(impl);
@@ -26,12 +33,12 @@ describe('SearchQueryFromIngestionEmbedder', () => {
       1000,
     );
 
-    const result = await searchQueryEmbedder.embed('query');
+    const result = await searchQueryEmbedder.embed('query', buildContext());
 
     expect(result).toEqual(embedding);
   });
 
-  it('embed가 throw하면 null을 반환한다', async () => {
+  it('감싸고 있는 embedder가 throw하면(retry 소진 포함) null을 반환한다', async () => {
     const { embedder } = createEmbedder(() => {
       throw new Error('embedding failed');
     });
@@ -40,63 +47,12 @@ describe('SearchQueryFromIngestionEmbedder', () => {
       1000,
     );
 
-    const result = await searchQueryEmbedder.embed('query');
+    const result = await searchQueryEmbedder.embed('query', buildContext());
 
     expect(result).toBeNull();
   });
 
-  it('timeoutMs 안에 응답하지 않는 embedder에 대해 signal이 abort되고 null을 반환하며 대기 시간이 timeoutMs를 크게 초과하지 않는다', async () => {
-    const timeoutMs = 20;
-    const { embedder } = createEmbedder(
-      (_text, options) =>
-        new Promise((resolve, reject) => {
-          const timer = setTimeout(
-            () => resolve({ embedding: [1, 2, 3], model: 'test-model' }),
-            timeoutMs * 10,
-          );
-          options?.signal?.addEventListener('abort', () => {
-            clearTimeout(timer);
-            reject(
-              new DOMException('The operation was aborted', 'TimeoutError'),
-            );
-          });
-        }),
-    );
-    const searchQueryEmbedder = new SearchQueryFromIngestionEmbedder(
-      embedder,
-      timeoutMs,
-    );
-
-    const start = Date.now();
-    const result = await searchQueryEmbedder.embed('query');
-    const elapsed = Date.now() - start;
-
-    expect(result).toBeNull();
-    expect(elapsed).toBeLessThan(timeoutMs * 5);
-  });
-
-  it('embedder.embed에 timeoutMs로부터 만든 AbortSignal을 전달한다', async () => {
-    const { embedder, embed } = createEmbedder((_text, options) => {
-      expect(options?.signal).toBeInstanceOf(AbortSignal);
-      return Promise.resolve({ embedding: [1], model: 'test-model' });
-    });
-    const searchQueryEmbedder = new SearchQueryFromIngestionEmbedder(
-      embedder,
-      1000,
-    );
-
-    await searchQueryEmbedder.embed('query');
-
-    expect(embed).toHaveBeenCalledWith(
-      'query',
-      expect.objectContaining({
-        signal: expect.any(AbortSignal) as AbortSignal,
-      }),
-    );
-  });
-
-  it('호출자가 signal을 넘기면 내부 기본 timeout 대신 그 signal을 그대로 embedder에 전달한다', async () => {
-    const controller = new AbortController();
+  it('context를 감싸고 있는 embedder에 그대로 전달한다 (자체 retry/timeout 로직을 갖지 않는다)', async () => {
     const { embedder, embed } = createEmbedder(() =>
       Promise.resolve({ embedding: [1], model: 'test-model' }),
     );
@@ -104,24 +60,41 @@ describe('SearchQueryFromIngestionEmbedder', () => {
       embedder,
       1000,
     );
+    const context = buildContext();
 
-    await searchQueryEmbedder.embed('query', { signal: controller.signal });
+    await searchQueryEmbedder.embed('query', context);
 
-    expect(embed).toHaveBeenCalledWith('query', {
-      signal: controller.signal,
-    });
+    expect(embed).toHaveBeenCalledWith('query', context, 1000);
   });
 
-  it('timeoutMs를 생략하면 SEARCH_QUERY_EMBED_TIMEOUT_MS 기본값으로 AbortSignal을 만든다', async () => {
-    const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
-    const { embedder } = createEmbedder(() =>
+  it('attemptTimeoutMs를 넘기면 그 값을 감싸고 있는 embedder에 그대로 전달한다', async () => {
+    const { embedder, embed } = createEmbedder(() =>
+      Promise.resolve({ embedding: [1], model: 'test-model' }),
+    );
+    const searchQueryEmbedder = new SearchQueryFromIngestionEmbedder(
+      embedder,
+      1000,
+    );
+    const context = buildContext();
+
+    await searchQueryEmbedder.embed('query', context, 500);
+
+    expect(embed).toHaveBeenCalledWith('query', context, 500);
+  });
+
+  it('attemptTimeoutMs를 생략하면 생성자에 전달된 timeoutMs를 기본값으로 사용한다', async () => {
+    const { embedder, embed } = createEmbedder(() =>
       Promise.resolve({ embedding: [1], model: 'test-model' }),
     );
     const searchQueryEmbedder = new SearchQueryFromIngestionEmbedder(embedder);
+    const context = buildContext();
 
-    await searchQueryEmbedder.embed('query');
+    await searchQueryEmbedder.embed('query', context);
 
-    expect(timeoutSpy).toHaveBeenCalledWith(SEARCH_QUERY_EMBED_TIMEOUT_MS);
-    timeoutSpy.mockRestore();
+    expect(embed).toHaveBeenCalledWith(
+      'query',
+      context,
+      SEARCH_QUERY_EMBED_TIMEOUT_MS,
+    );
   });
 });

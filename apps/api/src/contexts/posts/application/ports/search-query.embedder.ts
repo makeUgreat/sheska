@@ -1,6 +1,9 @@
+import { type CallContext } from '@core/call-context';
+
 export interface SearchQueryEmbedder {
   embed(
     query: string,
-    options?: { signal?: AbortSignal },
+    context: CallContext,
+    attemptTimeoutMs?: number,
   ): Promise<number[] | null>;
 }

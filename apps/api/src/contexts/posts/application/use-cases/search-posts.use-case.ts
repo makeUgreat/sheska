@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { type CallContext } from '@core/call-context';
-import { effectiveAbortSignal } from '@kernels/application';
 import {
   type PostQuery,
   type PostQuerySearchCursor,
@@ -42,13 +41,11 @@ export class SearchPostsUseCase {
     command: SearchPostsCommand,
     context: CallContext,
   ): Promise<SearchPostsResult> {
-    const signal = effectiveAbortSignal(
-      context.deadline,
+    const queryEmbedding = await this.searchQueryEmbedder.embed(
+      command.query,
+      context,
       SEARCH_QUERY_EMBED_ATTEMPT_TIMEOUT_MS,
     );
-    const queryEmbedding = await this.searchQueryEmbedder.embed(command.query, {
-      signal,
-    });
 
     const result = await this.postQuery.search({
       query: command.query,
