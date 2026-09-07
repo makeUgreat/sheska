@@ -11,43 +11,55 @@ related:
 
 # Documentation Guidelines
 
-Durable project Markdown documents are maintained as paired English and Korean documents when they define conventions, project behavior, or long-lived project understanding.
+Durable project Markdown documents are maintained as paired English and Korean documents when they define
+conventions, project behavior, or long-lived project understanding.
 Paired documents should describe the same policy.
 
 ## Synchronization Policy
 
 - English and Korean documents are paired policy documents.
 - Neither language automatically wins when paired documents conflict.
-- If paired documents conflict, choose the intended policy from either language and update both documents in the same change unit.
+- If paired documents conflict, choose the intended policy from either language and update both documents in the
+  same change unit.
 - Do not keep one language knowingly stale after resolving a conflict.
 
 ## Scope And Exceptions
 
-- This guideline applies to durable project Markdown documentation, including root documentation, repository-wide docs, app docs, and maintained tool READMEs.
-- Agent instruction files such as `AGENTS.md` are execution instructions rather than human-facing documentation, so language pairs are not required.
+- This guideline applies to durable project Markdown documentation, including root documentation, repository-wide
+  docs, app docs, and maintained tool READMEs.
+- Agent instruction files such as `AGENTS.md` are execution instructions rather than human-facing documentation, so
+  language pairs are not required.
 - Temporary or hidden working notes, such as files under `.codex/temp/`, are excluded.
-- Generated documents, short local notes, and narrow tool-specific files may stay single-language when a paired document would add maintenance cost without improving project understanding.
+- Generated documents, short local notes, and narrow tool-specific files may stay single-language when a paired
+  document would add maintenance cost without improving project understanding.
 
 ## Documentation Role
 
 - This project treats documentation as part of the engineering harness.
 - Documentation provides feedforward guidance.
-  - It shapes decisions before implementation by explaining intent, boundaries, mental models, tradeoffs, and review standards.
+  - It shapes decisions before implementation by explaining intent, boundaries, mental models, tradeoffs, and review
+    standards.
 - Static analysis, tests, type checks, generators, and CI are feedback controls and verification gates.
   - They verify concrete, structured, and repeatable requirements during or after implementation.
 - Documentation SHOULD guide judgment where automation cannot express context well.
-- Documentation SHOULD NOT duplicate long mechanical rule lists that are already enforced by feedback controls or verification gates.
-  - When a mechanical requirement matters, explain why it exists, when it matters, and where enforcement lives instead of restating every enforced detail.
-- Use `MUST` in English documentation only when a human or agent must make the decision before automated verification can help, or when violating the rule creates a policy, correctness, or maintenance risk.
-- Prefer flexible guidance for implementation choices that depend on context, provided automated checks or tests can catch the exact required shape later.
+- Documentation SHOULD NOT duplicate long mechanical rule lists that are already enforced by feedback controls or
+  verification gates.
+  - When a mechanical requirement matters, explain why it exists, when it matters, and where enforcement lives
+    instead of restating every enforced detail.
+- Use `MUST` in English documentation only when a human or agent must make the decision before automated verification
+  can help, or when violating the rule creates a policy, correctness, or maintenance risk.
+- Prefer flexible guidance for implementation choices that depend on context, provided automated checks or tests can
+  catch the exact required shape later.
 
 ## Language Pairs
 
 - Use language-based directory names: `en` for English documents, `ko` for Korean documents.
-- A durable convention document MUST have a matching document in the other language, at the same relative path and file name.
+- A durable convention document MUST have a matching document in the other language, at the same relative path and
+  file name.
   - `docs/en/` pairs with `docs/ko/`.
   - `apps/*/docs/en/` pairs with `apps/*/docs/ko/`.
-- Public Markdown files outside language directories SHOULD use English as the base file and Korean as `*.ko.md`, when they are long-lived user-facing or maintainer-facing documents.
+- Public Markdown files outside language directories SHOULD use English as the base file and Korean as `*.ko.md`,
+  when they are long-lived user-facing or maintainer-facing documents.
   - Example: `README.md` and `README.ko.md`.
 
 ## Synchronization
@@ -55,15 +67,18 @@ Paired documents should describe the same policy.
 - English and Korean documents MUST keep the same heading hierarchy and major section order.
   - Heading text MAY be translated; exact wording does not need to match.
 - Direct sentence-by-sentence translation is not required.
-  - A Korean document may use different examples, ordering, or added context than its English pair, per [Writing Style](#writing-style).
+  - A Korean document may use different examples, ordering, or added context than its English pair, per
+    [Writing Style](#writing-style).
 - Rules, exceptions, commands, paths, API names, and type names must carry the same meaning in both documents.
 - When one language changes, update the paired language in the same PR or change unit.
 
 ## Metadata
 
-- Durable convention documents SHOULD include YAML frontmatter or equivalent metadata that identifies the title, language, audience or scope, and paired document.
+- Durable convention documents SHOULD include YAML frontmatter or equivalent metadata that identifies the title,
+  language, audience or scope, and paired document.
   - Identify the pair with `translation` in the English document and `source` plus `last_synced` in the Korean document.
-- Keep metadata keys consistent within a document family, but do not add keys that are not consumed by readers, tools, or maintenance workflow.
+- Keep metadata keys consistent within a document family, but do not add keys that are not consumed by readers,
+  tools, or maintenance workflow.
 - Include `read_when` only when a document is routed from an index and the trigger is useful at the document itself.
 - Include `related` only when there are clear documents that should be read together.
 - Use relative paths in cross-document metadata links.
@@ -76,7 +91,8 @@ Paired documents should describe the same policy.
 ## Document Structure
 
 - Use one `#` for the title and `##` for major rule groups.
-  - Go to `###` or deeper only when it keeps a rule, its rationale, exceptions, and examples together under one decision area.
+  - Go to `###` or deeper only when it keeps a rule, its rationale, exceptions, and examples together under one
+    decision area.
 - Order sections by what the reader needs first.
   - Scope and synchronization policy rules before task-specific rules.
   - Default rules before exceptions.
@@ -94,8 +110,10 @@ Paired documents should describe the same policy.
 - Keep temporary handling in work notes, PR descriptions, or the specific change context.
   - Do not promote it to a convention document.
 - State durable desired behavior directly.
-  - Prefer `Use Y` over `Do not keep the previous X pattern; use Y` when the previous pattern only matters to the current change.
-  - Mention current or past implementation details only when they explain a durable boundary, tradeoff, or migration rule.
+  - Prefer `Use Y` over `Do not keep the previous X pattern; use Y` when the previous pattern only matters to the
+    current change.
+  - Mention current or past implementation details only when they explain a durable boundary, tradeoff, or migration
+    rule.
 
 ## Writing Style
 
@@ -119,8 +137,26 @@ Paired documents should describe the same policy.
 
 - Write for a human colleague reading as a developer, not as a translation of the English document.
 - Prioritize natural Korean sentence flow and word order over mirroring the English sentence structure.
-- Keep code, commands, file paths, URLs, frontmatter keys, API names, type names, package names, identifiers, and product names in their original form.
-  - Mixing them into Korean text is normal, not an exception to call out.
+- Keep code, commands, file paths, URLs, frontmatter keys, API names, type names, package names, identifiers, and
+  product names in their original form.
+  - This rule preserves identifiers and official names.
+  - This rule does not mean that general explanatory terms, abstract concepts, or sentence connectors should stay in
+    English.
+- Translate general explanatory terms into Korean when preserving the English term would make Korean documentation
+  harder to read.
+  - Keep the English term when the English term is a code-level identifier, an official pattern name, a document
+    title, or a stable project term.
+  - Prefer Korean for ordinary conceptual words that are not identifiers.
+  - For example, use `아키텍처 경계` for `architectural boundary` unless the English term is being used as a fixed
+    term.
+  - For example, use `상위 소스 영역` for `high-level source area`.
+- Avoid clustering too many English terms in one Korean sentence.
+  - When several English terms are needed, split the sentence or explain the rule in Korean around the fixed terms.
+  - When a fixed term needs to be introduced, include the English term at the first mention and use the Korean
+    expression afterward when the meaning remains clear.
+- Prefer Korean explanations over English keyword lists in Korean related-document descriptions.
+  - Link labels and fixed policy names may preserve English terms.
+  - Description text should help a Korean-reading developer quickly decide whether to open the linked document.
 - Use whatever example, order, or added context reads most naturally in Korean.
   - The only constraint: it must convey the same policy as the English document.
 
@@ -131,3 +167,8 @@ Paired documents should describe the same policy.
 - Include nuance when a rule has tradeoffs, known exceptions, or depends on implementation context.
 - Break a long bullet into nested bullets instead of stacking multiple clauses on one line.
   - Each clause gets its own line, nested one level under the point it elaborates.
+- Keep Markdown source readable without horizontal scrolling.
+  - Prefer splitting long rules into nested bullets that each express one semantic unit.
+  - Wrap prose at 120 characters when structural splitting would not improve the content.
+  - Do not wrap tables, code blocks, URLs, or other syntax when wrapping would reduce readability or correctness.
+  - Preserve list indentation when a wrapped line continues a bullet.

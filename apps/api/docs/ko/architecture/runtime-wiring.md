@@ -8,26 +8,27 @@ source: ../../en/architecture/runtime-wiring.md
 last_synced: 2026-09-07
 related:
   - ./architecture.md
+  - ./infrastructure.md
   - ./source-dependency.md
 ---
 
 # API Runtime Wiring 컨벤션
 
-Runtime wiring rule은 object가 어디서 생성되고 implementation이 port에 어떻게 연결되는지 판단한다.
-Runtime wiring은 source dependency rule을 약화해서는 안 된다.
-
 ## 적용 범위
 
-- Object creation, provider binding, port implementation registration, NestJS DI usage, runtime configuration ownership을 결정할 때 이 문서를 사용한다.
-- Source file이 다른 source file을 import할 수 있는지 판단할 때는 source dependency convention을 사용한다.
+- 객체 생성, provider 연결, port 구현체 등록, NestJS DI 사용, runtime 설정 소유권을 결정할 때 이 문서를
+  사용한다.
+- 한 소스 파일이 다른 소스 파일을 import할 수 있는지는
+  [source dependency 컨벤션](./source-dependency.md)을 사용해 판단한다.
+- Runtime wiring은 source dependency 규칙을 약화해서는 안 된다.
 
 ## Runtime Model
 
 ### Runtime Flow And Wiring Map
 
-이 map은 source import가 아니라 runtime flow와 provider binding을 보여준다.
-실선 arrow는 runtime call/use direction을 나타낸다.
-점선 arrow는 provider registration, binding, implementation을 나타낸다.
+- 이 다이어그램은 소스 import가 아니라 runtime 흐름과 provider 연결을 보여준다.
+  - 실선 화살표는 runtime 호출 또는 사용 방향을 나타낸다.
+  - 점선 화살표는 provider 등록, 연결 또는 구현을 나타낸다.
 
 ```mermaid
 flowchart TB
@@ -75,60 +76,102 @@ flowchart TB
 
 ## Platform
 
-- `src/main.ts`는 얇은 process entrypoint로 유지한다.
-- `platform`은 application startup과 runtime wiring code를 담는다.
-- NestJS root module, startup function, runtime config loading, global filter, interceptor, guard, pipe, app-level provider wiring에는 `platform/nest`를 사용한다.
-- `platform`은 bounded context, adapter, kernels, `core`, framework, external runtime library에 의존할 수 있다.
-- `platform`은 business rule을 담아서는 안 된다.
-- `src/main.ts`의 얇은 entrypoint를 제외하고, `platform` 밖의 production code는 `platform`을 import해서는 안 된다.
+- `src/main.ts`는 얇은 프로세스 진입점으로 유지한다.
+- `platform`은 애플리케이션 시작과 runtime 배선을 소유한다.
+  - NestJS 루트 모듈, 시작 함수, runtime 설정 로딩, 전역 filter, interceptor, guard, pipe,
+    앱 수준 provider 배선에는 `platform/nest`를 사용한다.
+  - `platform`은 바운디드 컨텍스트, 어댑터, kernel, `core`, framework, 외부 runtime library에 의존할 수 있다.
+  - `platform`은 비즈니스 규칙을 담아서는 안 된다.
 
 ## Environment Configuration
 
-- Environment variable definition은 그 값을 사용하는 boundary에 속한다.
-- Local API runtime value는 commit하면 안 되는 `apps/api/.env`에 둔다.
-- `NODE_ENV`는 Node runtime mode를 설명하고 API app environment를 선택한다 (`development`, `production`, `test`).
-- Runtime selector의 허용 값과 default는 그 값을 소유하는 typed config schema 또는 mapper에 둔다.
-- Environment variable owner는 schema, default, typed config mapper, owner-specific validation rule을 정의하는 것이 좋다.
-- `platform`은 app-level과 selection-level environment schema를 aggregate하고 process startup에서 API runtime validation을 실행한다.
-- Adapter의 environment variable schema와 typed config parser는 그 adapter 소유 directory에 둔다 (예: adapter file 옆의 `*.config.ts`). Adapter class 자체는 `ConfigService`나 `process.env`를 직접 읽으면 안 되고, 이미 parsing된 typed options object를 constructor로 받아야 한다.
-- Conditional module registration처럼 raw `process.env`를 검사해야 하는 runtime wiring은 string comparison을 중복하기보다 owner-provided selector helper를 호출하는 것이 좋다.
-- Production code는 `process.env`를 직접 읽기보다 validation 이후 typed config provider 또는 `ConfigService` value를 소비하는 것이 좋다.
+- 환경 변수 정의는 그 값을 사용하는 경계에 속한다.
+  - 소유자는 schema, 기본값, typed config mapper, 소유자별 검증 규칙을 정의하는 것이 좋다.
+- 로컬 API runtime 값은 commit하면 안 되는 `apps/api/.env`에 둔다.
+- `NODE_ENV`는 Node runtime mode를 나타내며 API 앱 환경을 선택한다 (`development`, `production`, `test`).
+- Runtime selector의 허용 값과 기본값은 그 값을 소유하는 typed config schema 또는 mapper에 둔다.
+- `platform`은 앱 수준과 선택 수준의 환경 schema를 모은다.
+  - 프로세스 시작 시 API runtime 검증을 실행한다.
+- 어댑터의 환경 변수 schema와 typed config parser는 해당 어댑터 디렉터리가 소유한다.
+  - 예를 들어 어댑터 파일 옆에 `*.config.ts` 파일을 둔다.
+  - 어댑터 클래스는 `ConfigService`나 `process.env`를 직접 읽어서는 안 된다.
+  - 이미 parsing된 typed options 객체를 생성자로 받아야 한다.
+- Runtime 배선에서 raw `process.env`를 검사해야 한다면 소유자가 제공하는 selector helper를 호출하는 것이 좋다.
+  - 조건부 모듈 등록이 한 예다.
+  - 설정 경계가 소유하는 문자열 비교를 중복하지 않는다.
+- Production 코드는 검증된 typed config provider 또는 `ConfigService` 값을 사용하는 것이 좋다.
+  - Production 코드는 `process.env`를 직접 읽지 않는 것이 좋다.
 
 ## NestJS DI
 
-- NestJS DI는 `platform/nest`, presentation adapter, infrastructure adapter, application use case 또는 service에서 실용적인 runtime wiring으로 사용할 수 있다.
-- NestJS DI 때문에 domain code에서 NestJS로 source dependency가 생기면 안 된다.
-- Application use case와 service는 constructor injection을 위해 `@Injectable()`, `@Inject()`, provider token 같은 좁은 DI metadata를 사용할 수 있다.
-- Provider registration과 module composition은 application code 곳곳에 흩뜨리지 말고 `platform/nest` 또는 bounded context root module에 둔다.
-- Application use case는 explicit dependency로 생성되는 plain TypeScript class로도 instantiation 가능하게 유지하는 것이 좋다.
-- Use case behavior를 NestJS request object, module reference, container lookup, lifecycle callback 또는 다른 framework runtime API에 의존하게 만들지 않는다.
-- Bounded context root module은 해당 context의 application, presentation, infrastructure provider를 조립할 수 있다.
-- NestJS provider는 use case folder마다 module을 복제하기보다 bounded context 또는 runtime boundary 단위로 조립하는 것을 선호한다.
-- `forRoot()`/`forFeature()` 같은 `DynamicModule` factory는 호출할 때마다 새 module instance를 반환한다. NestJS는 import path가 달라도 이를 동일한 것으로 중복 제거하지 않으므로, 같은 `forRoot()`에 도달하는 import path가 여러 개면 그 path 수만큼 module이 인스턴스화되고, 그 안에 등록된 listener, consumer, controller도 path 수만큼 중복 등록된다.
-- `forRoot()`와 `forFeature()`를 모두 제공하는 bounded context root module은 event listener, queue consumer, scheduler, controller를 `forRoot()`에만 두어야 한다.
-- `forFeature()`는 token, repository처럼 여러 번 생성돼도 안전한 stateless provider만 포함해야 한다.
-- Provider가 `forFeature()`에 들어갈 자격은 stateless 여부만으로 정해지며, 지금 외부 consumer가 그 provider를 쓰는지로 정해지지 않는다. 지금 유일한 consumer가 안 쓴다는 이유로 stateless provider를 `forFeature()`에서 빼면 안 된다.
-- 서로 다른 consumer가 서로 겹치지 않는 subset을 필요로 해서 `forFeature()`의 export 표면이 부담스러워지면, stateless provider를 계속 수동으로 넣었다 뺐다 하지 말고 호출부가 명시적으로 provider를 선택하게(예: `forFeature(tokens)`) 만들어 해결한다.
-- Context의 `forRoot()`는 그 composition을 소유하는 module에서 한 번만 import한다. 해당 context의 provider만 필요한 다른 module은 `forRoot()`가 아니라 `forFeature()`를 import해야 한다.
-- Adapter를 조립하는 module이 `ConfigService`를 읽고, 그 adapter 소유의 config parser를 호출하고, `useFactory`로 adapter를 생성한다. Adapter class 자체에 `ConfigService`를 주입하지 않는다.
-- 이 조립 책임은 adapter나 `ConfigService`에서 오는 값에만 한정되지 않는다. Tunable configuration을 나타내는 constructor parameter에 default 값을 두면 안 되며, provider를 조립하는 module이 — 값이 하드코딩된 constant라 하더라도 — 그 값을 소유하고 `useFactory` 또는 plain constructor call로 명시적으로 전달해야 한다.
-- `useFactory`로 생성하는 adapter는 `@Injectable()`이 필요 없다 — NestJS는 factory가 만든 instance에도 `OnModuleDestroy` 같은 lifecycle hook을 그대로 호출한다.
-- 같은 module 안에서 한 `useFactory`의 출력을 다른 `useFactory`에 전달하기 위해서만 만든 DI token은, 다른 module이 그 값을 실제로 주입받아야 하는 경우가 아니라면 module 안에서만 쓰고 export하지 않는다.
-- Adapter의 config parsing과 adapter 생성은 하나의 `useFactory`로 합쳐도 된다. Options provider와 construction provider를 따로 나누는 건, container 안의 다른 무언가가 adapter instance 자체를 별도로 추적해야 할 때만 한다 — 예를 들어 adapter가 `OnModuleDestroy` 같은 lifecycle hook을 구현하는데 실제로 export하는 token은 instance가 아니라 거기서 파생된 값만 노출한다면, NestJS는 그 instance를 볼 방법이 없어 hook을 호출하지 못한다.
+### DI 경계
+
+- NestJS DI는 `platform/nest`, presentation 어댑터, infrastructure 어댑터, application 유스 케이스 또는
+  서비스의 runtime 배선에 사용할 수 있다.
+- NestJS DI 때문에 도메인 코드에서 NestJS로 소스 의존성이 생겨서는 안 된다.
+- Application 유스 케이스와 서비스는 생성자 주입을 위한 좁은 metadata를 사용할 수 있다.
+  - `@Injectable()`, `@Inject()`, provider token이 이에 해당한다.
+  - 유스 케이스는 명시적인 의존성으로 생성할 수 있는 일반 TypeScript 클래스로 유지하는 것이 좋다.
+  - 유스 케이스 동작은 request 객체, module reference, container lookup, lifecycle callback 또는 다른 NestJS
+    runtime API에 의존해서는 안 된다.
+- Provider 등록과 모듈 조립은 `platform/nest` 또는 바운디드 컨텍스트 루트 모듈에 둔다.
+  - 바운디드 컨텍스트 루트 모듈은 해당 컨텍스트의 application, presentation, infrastructure provider를
+    조립할 수 있다.
+  - 유스 케이스 폴더마다 모듈을 만들기보다 바운디드 컨텍스트 또는 runtime 경계 단위로 조립한다.
+
+### 동적 모듈 조립
+
+- `forRoot()`/`forFeature()` 같은 `DynamicModule` factory는 호출할 때마다 새 module instance를 반환한다.
+  - NestJS는 import path가 다른 동적 모듈을 중복 제거하지 않는다.
+  - 여러 import path가 같은 `forRoot()`에 도달하면 각 path가 모듈을 인스턴스화한다.
+  - 해당 모듈의 listener, consumer, controller도 함께 중복 등록된다.
+- `forRoot()`와 `forFeature()`를 모두 제공하는 바운디드 컨텍스트 루트 모듈은 책임을 분리해야 한다.
+  - Event listener, queue consumer, scheduler, controller는 `forRoot()`에만 둔다.
+  - `forFeature()`에는 여러 번 생성해도 안전한 stateless provider만 둔다.
+  - Token과 repository가 stateless provider의 예다.
+- Provider의 `forFeature()` 포함 여부는 현재 consumer가 아니라 stateless 여부로 결정한다.
+  - 현재 유일한 consumer가 사용하지 않는다는 이유로 stateless provider를 제거하지 않는다.
+- Consumer마다 서로 겹치지 않는 provider 일부가 필요하다면 호출 지점에서 provider를 선택하게 한다.
+  - 예: `forFeature(tokens)`.
+  - 현재 consumer에 맞춰 공통 export 목록을 계속 조정하지 않는다.
+- 컨텍스트의 `forRoot()`는 조립을 소유하는 모듈에서 한 번만 import한다.
+  - Provider만 필요한 다른 모듈은 `forRoot()`가 아니라 `forFeature()`를 import해야 한다.
+
+### 어댑터 생성
+
+- 어댑터를 조립하는 모듈이 생성 책임을 소유한다.
+  - 모듈에서 `ConfigService`를 읽고 어댑터가 소유한 config parser를 호출한다.
+  - `useFactory`를 통해 어댑터를 생성한다.
+  - 어댑터 클래스에 `ConfigService`를 주입하지 않는다.
+- 조정 가능한 설정을 나타내는 생성자 매개변수에는 기본값을 두어서는 안 된다.
+  - Provider를 조립하는 모듈이 하드코딩된 상수를 포함한 구체적인 값을 소유한다.
+  - 조립하는 모듈이 `useFactory` 또는 일반 생성자 호출을 통해 값을 명시적으로 전달한다.
+
+### Factory Provider 생명주기
+
+- `useFactory`로 생성하는 어댑터에는 `@Injectable()`이 필요하지 않다.
+  - NestJS는 factory가 만든 instance에도 `OnModuleDestroy` 같은 lifecycle hook을 호출한다.
+- 같은 모듈 안에서 `useFactory` 결과를 다른 `useFactory`로 전달하기 위한 DI token은 모듈 내부에 둔다.
+  - 다른 모듈이 같은 값을 실제로 주입받아야 할 때만 token을 export한다.
+- 어댑터 설정 parsing과 어댑터 생성은 하나의 `useFactory`에서 처리할 수 있다.
+- Container가 어댑터 instance를 별도로 추적해야 할 때만 설정 parsing과 생성을 다른 provider로 나눈다.
+  - 어댑터가 lifecycle hook을 구현하지만 공개 token은 파생된 값만 제공하는 경우가 이에 해당한다.
+  - 어댑터 instance provider가 없으면 NestJS가 해당 instance의 lifecycle hook을 호출할 수 없다.
 
 ## Port Binding
 
-- 이 convention에서 `port`는 기본적으로 application-owned boundary contract를 뜻한다.
-- Port는 단순히 모든 interface, error type, DTO, mapper, shared contract를 뜻하지 않는다.
-- `port`는 architecture 용어와 directory 개념으로 사용하되, contract type name에는 `Port` suffix를 붙이지 않는다. Contract는 그것이 나타내는 capability 기준으로 이름 붙인다.
-- Runtime wiring은 inner source file이 outer implementation을 import하지 않게 유지하면서 outer implementation을 inner port에 연결할 수 있다.
-- Infrastructure adapter는 application port를 구현할 수 있다.
-- `platform` 또는 adapter wiring은 각 port를 만족하는 implementation을 등록한다.
-- Runtime wiring을 이유로 domain 또는 application core에 금지된 import를 추가하면 안 된다.
+- Port는 application이 소유하는 경계 계약이며 모든 interface, error type, DTO, mapper 또는 공유 계약을
+  의미하지 않는다.
+- 계약 파일과 타입 이름은 [infrastructure 컨벤션](./infrastructure.md)을 따른다.
+- Runtime 배선은 소스 의존성을 뒤집지 않고 외부 구현체를 내부 port에 연결할 수 있다.
+  - Infrastructure 어댑터는 application port를 구현할 수 있다.
+  - `platform` 또는 바운디드 컨텍스트 배선이 각 port의 구현체를 등록한다.
+- Runtime 배선을 이유로 domain 또는 application core에 금지된 import를 추가하면 안 된다.
 
 ## Non-Port Contracts
 
-- Presentation DTO와 mapper는 protocol adapter contract이지 port가 아니다.
-- Presentation failure response는 protocol adapter contract이지 port가 아니다.
-- Infrastructure exception과 persistence mapper는 adapter concern이지 port가 아니다.
-- Outer layer contract를 application core가 소비해야 한다면, 그 contract를 안쪽으로 옮겨 application port 또는 application-kernel contract로 모델링한다.
+- 모든 경계 타입을 port로 분류하지 않는다.
+  - Presentation DTO, mapper, failure response는 protocol adapter 계약이다.
+  - Infrastructure exception과 persistence mapper는 어댑터 관심사다.
+- Application core가 외부 레이어 계약을 사용해야 한다면 계약을 안쪽으로 옮긴다.
+  - Application port 또는 application-kernel 계약으로 모델링한다.

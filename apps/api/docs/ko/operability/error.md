@@ -10,67 +10,80 @@ read_when:
   - API 오류와 시스템 오류를 정의, 매핑, 마스킹, 전파, 리뷰할 때.
 related:
   - ../architecture/architecture.md
+  - ../architecture/context-integration.md
   - ../architecture/source-dependency.md
+  - ./logging.md
+  - ./observability.md
 ---
 
 # API 오류 정책
 
-Error는 API 제어 흐름과 외부 계약의 일부다.
-
 ## 적용 범위
 
-- 이 문서는 error의 의미, 소유 경계, 변환 시점, 노출 가능한 정보를 판단할 때 사용한다.
-- 이 정책은 throw된 exception, rejected promise, vendor raw error, 예상하지 못한 system error, protocol-facing error response를 다룬다.
+- 오류의 의미, 소유권, 변환 시점, 노출 범위를 판단할 때 이 문서를 사용한다.
+- 이 정책은 exception, rejected promise, vendor raw error, 예상하지 못한 system error, protocol error
+  response를 다룬다.
 
 ## Error 소유권
 
 ### Exception과 Response 채널
 
-이 프로젝트는 exception을 기본 error 채널로 사용한다.
-구조화된 failure response는 protocol-facing boundary에서만 사용한다.
-
-- Throw된 error, exception, rejected promise는 중단된 control flow다. Domain invariant 실패, technical adapter 실패, operational failure, programming error에 사용한다.
-- Request validation은 presentation boundary에서 처리하고, 구조화된 response body를 가진 protocol exception을 throw할 수 있다.
-- Caller는 복구할 수 있거나, boundary context를 추가할 수 있거나, protocol response로 변환할 수 있을 때만 exception을 catch하는 것이 좋다.
-- Application use case는 infrastructure, domain, system exception을 보통 그대로 전파한다.
-- `Result`/failure-family contract를 기본으로 추가하지 않는다. Caller에게 안정적이고 유용한 branching behavior가 있고 exception propagation보다 명확할 때만 반환되는 failure contract를 도입한다.
-- Domain constructor와 factory는 invariant를 throw로 방어한다. Boundary가 명시적으로 변환하지 않는 한, throw된 invariant failure는 bug, 손상된 persisted state, 또는 부족한 boundary validation으로 취급한다.
+- 이 프로젝트는 exception을 기본 오류 채널로 사용한다.
+  - Domain 불변 조건 실패, 어댑터 실패, 운영 실패, programming error에는 exception 또는 rejected promise를
+    사용한다.
+- 구조화된 failure response는 protocol 경계에서만 사용한다.
+  - Presentation의 request validation은 구조화된 response body가 있는 protocol exception을 던질 수 있다.
+- 복구하거나 경계 맥락을 추가하거나 protocol response로 변환할 때만 exception을 catch하는 것이 좋다.
+- Application 유스 케이스는 infrastructure, domain, system exception을 보통 그대로 전파한다.
+- `Result` 또는 failure 계열 계약을 기본으로 추가하지 않는다.
+  - 호출자에게 안정적이고 유용한 분기 동작이 있고 exception 전파보다 명확할 때만 failure 계약을 반환한다.
+- Domain 생성자와 factory는 exception을 던져 불변 조건을 보호한다.
+  - 경계가 명시적으로 변환하지 않는 불변 조건 실패는 bug, 손상된 저장 상태 또는 부족한 경계 검증으로
+    취급한다.
 
 ### Error Shape 계약
 
-구조화된 error shape은 그것을 운반하는 채널과 무관한 데이터 계약으로 정의한다.
-
-- 각 kernel 레이어는 `error.base.ts`에 error shape을 정의한다: `DomainErrorBase`, `ApplicationErrorBase`, `InfrastructureErrorBase`.
-- Error shape은 `kind`, `code`, `message`, `details`를 담는다. `kind`는 실패를 분류하고, `code`는 caller와 기계가 안정적으로 식별할 수 있는 값이다.
-- 같은 error shape을 exception 채널(`DomainException`, `ApplicationException`)이나 result 채널(`Result.err(error)`) 중 어느 쪽으로든 운반할 수 있다. 채널 선택은 데이터 shape이 아니라 caller가 실패에 따라 분기해야 하는지 여부로 결정한다.
-- 레이어별 exception wrapper(`DomainException`, `ApplicationException`)는 error shape을 `error` 프로퍼티에 보관한다. boundary가 식별하고 변환해야 하는 structured error를 throw할 때 사용한다.
-- HTTP presentation boundary는 `ApplicationErrorKind`를 HTTP status code로 매핑한다. Domain과 infrastructure error는 항상 `500`으로 mask한다.
+- 구조화된 error shape은 운반 채널과 독립적인 데이터 계약으로 정의한다.
+- 각 kernel 레이어는 `error.base.ts`에 error shape을 정의한다.
+  - 기본 shape은 `DomainErrorBase`, `ApplicationErrorBase`, `InfrastructureErrorBase`,
+    `PresentationErrorBase`다.
+- 모든 error shape은 `kind`, `code`, `message`, `details`를 담는다.
+  - `kind`는 실패를 분류한다.
+  - `code`는 호출자와 기계가 실패를 안정적으로 식별하게 한다.
+  - Infrastructure error는 `source`를 추가로 담고 `cause`를 포함할 수 있다.
+- 같은 error shape을 exception 채널이나 result 채널로 운반할 수 있다.
+  - Exception wrapper는 `DomainException`, `ApplicationException`, `InfrastructureException`,
+    `PresentationException`이다.
+  - 각 wrapper는 `message`를 `Error`에 전달하고 exception instance에 `kind`, `code`, `details`를 노출한다.
+  - `InfrastructureException`은 `source`도 노출하고 `Error`를 통해 `cause`를 보존한다.
+  - 경계가 구조화된 error를 식별하고 변환해야 할 때 exception wrapper를 사용한다.
+  - 호출자가 안정적으로 분기해야 할 때만 `Result.err(error)`를 사용한다.
 
 ### Error 소유자
 
-Error는 의미를 소유한 경계 기준으로 분류한다:
-
-- Domain error: transport, database, framework, SDK detail이 없는 business invariant와 domain model guard 실패.
-- Application error: 특정 external adapter 또는 protocol이 소유하지 않는 use case와 orchestration 실패.
-- Infrastructure error: database, SDK, HTTP client, file system, message broker, persistence failure를 포함한 technical adapter 실패.
-- Presentation error: HTTP validation response 같은 protocol-facing exception과 response body.
-- Vendor raw error: application code가 wrap 또는 mask하기 전 외부 adapter, SDK, database, HTTP client, framework에서 온 실패.
-- System error: 일반 application contract로 처리할 수 없는 예상하지 못한 runtime, process, network, OS, resource, environment 실패.
-
-Logging은 관측 가능성을 도울 수 있지만, logging만으로 error handling이 되지는 않는다.
+- 오류는 의미를 소유한 경계를 기준으로 분류한다.
+  - Domain error는 기술 세부사항이 없는 비즈니스 불변 조건과 도메인 모델 보호 실패다.
+  - Application error는 특정 어댑터나 protocol이 소유하지 않는 유스 케이스와 오케스트레이션 실패다.
+  - Infrastructure error는 기술 어댑터 실패다.
+  - Presentation error는 protocol exception과 response body다.
+  - Vendor raw error는 SDK, 데이터베이스, HTTP client 또는 framework에서 온 정규화되지 않은 실패다.
+  - System error는 예상하지 못한 runtime, 프로세스, 네트워크, OS, 리소스 또는 환경 실패다.
+- Logging은 관측 가능성을 지원하지만 그 자체로 오류를 처리하지는 않는다.
+  - 장애의 로그 위치와 방법은 [로깅 정책](./logging.md)을 따른다.
 
 ## 변환 경계
 
-Error는 소유자, 대상 독자, 노출 정책이 바뀌는 경계를 건널 때 변환한다.
-
-- Adapter boundary는 adapter context를 추가할 때 vendor raw error를 `cause`가 있는 일반 `Error`로 감쌀 수 있다.
-- Use case는 infrastructure dependency가 실패했다는 이유만으로 infrastructure exception을 변환하지 않는 것이 좋다.
-- Protocol boundary는 알려진 protocol exception을 변환하고, 인식하지 못한 exception은 외부 client에 노출하기 전에 mask한다.
-- 독립적인 bounded context 또는 module을 건너는 error는 그 경계가 사용하는 communication contract를 통해 변환한다.
-- Presentation boundary는 domain, infrastructure, vendor, system, unknown error를 외부 client에 노출하기 전에 반드시 mask해야 한다.
-
-호출 스택이 내부 folder boundary를 건넜다는 이유만으로 error를 감싸지 않는다.
-정보 은닉, 소유권, 관측 가능성, caller behavior를 개선할 때 변환하는 것을 선호한다.
+- 오류는 소유자, 대상 독자 또는 노출 정책이 바뀌는 경계를 건널 때 변환한다.
+  - 호출 스택이 내부 폴더 경계를 건넜다는 이유만으로 오류를 감싸지 않는다.
+  - 정보 은닉, 소유권, 관측 가능성 또는 호출자 동작을 개선할 때 변환한다.
+- Adapter 경계는 맥락을 추가할 때 vendor raw error를 `cause`가 있는 `Error`로 감쌀 수 있다.
+- 유스 케이스는 infrastructure 의존성이 실패했다는 이유만으로 infrastructure exception을 변환하지 않는다.
+- 독립적인 바운디드 컨텍스트는 통신 계약을 통해 오류를 변환한다.
+  - 크로스 컨텍스트 경계는 [context integration 컨벤션](../architecture/context-integration.md)을 따른다.
+- Protocol 경계는 인식한 오류를 변환하고 외부 계약이 허용하지 않는 정보를 마스킹한다.
+  - `ApplicationErrorKind`는 protocol status로 매핑하고 application 소유 error shape을 노출한다.
+  - 인식한 `InfrastructureErrorKind`는 protocol status로 매핑하되 infrastructure `details`는 마스킹한다.
+  - Domain, vendor raw, system, unknown error는 안전한 내부 오류 response로 마스킹한다.
 
 ## Error 흐름
 
@@ -117,36 +130,32 @@ flowchart TB
 
 ## Protocol Error Response 형태
 
-Protocol-facing error response는 안정적인 failure shape을 사용하는 것이 좋다.
-HTTP response에는 소유 protocol이 다르게 정할 이유가 없다면 `kernels/presentation`의 `HttpFailure`를 사용한다.
-
-- `statusCode`: 숫자 protocol status.
-- `code`: 사람과 기계가 response를 분류하는 안정적인 값이다. Caller는 `message`를 parsing하지 말고 `code`에 의존하는 것이 좋다.
-- `message`: presentation 또는 debugging을 위한 사람이 읽을 수 있는 맥락이다. 변경, 지역화, masking, 재작성이 가능하다. Program code는 정확한 `message` text에 의존하면 안 된다.
-- `details`: caller behavior 또는 machine processing을 위한 최소 structured data다. Response contract의 일부가 되므로 수신자가 의존해도 되는 data만 포함한다.
-
-Validation response는 caller가 조치할 수 있을 때 field-level detail을 포함할 수 있다.
-Protocol contract가 명시적으로 허용하지 않는 한 internal diagnostic data를 protocol response로 노출하지 않는다.
+- Protocol error response는 안정적인 failure shape을 사용하는 것이 좋다.
+  - HTTP에서는 protocol이 달리 정할 이유가 없다면 `kernels/presentation`의 `HttpFailure`를 사용한다.
+  - `statusCode`는 숫자로 표현한 protocol status다.
+  - `code`는 호출자와 기계가 response를 분류할 때 사용하는 안정적인 값이다.
+  - `message`는 변경, 지역화, masking 또는 재작성될 수 있는 사람이 읽는 맥락이다.
+  - `details`는 수신자가 의존해도 되는 최소한의 구조화된 데이터다.
+- 프로그램 코드는 정확한 `message` 문구를 parsing하거나 이에 의존해서는 안 된다.
+- Validation response는 호출자가 조치할 수 있을 때 필드별 세부사항을 포함할 수 있다.
+- Protocol 계약이 명시적으로 허용하지 않는 한 내부 진단 정보를 response로 노출해서는 안 된다.
 
 ## Vendor Error 계약
 
-Vendor raw error는 external contract다.
-Adapter code가 vendor error의 structured field를 읽는다면 error를 wrap 또는 translate하기 전에 adapter boundary에서 해당 field를 검증하고 정규화한다.
-
-- Adapter가 database error code, constraint name, SDK error code, HTTP client response metadata처럼 structured vendor field에 의존한다면 external error contract에는 `zod` schema를 사용하는 것을 선호한다.
-- External enum-like code set은 `as const` object로 한 번 정의하고, 그 object에서 `zod` enum schema를 만들며, TypeScript type은 `z.infer`로 schema에서 파생한다.
-- 같은 external code set에 대해 별도 TypeScript enum 또는 union과 별도 `zod` enum 목록을 따로 유지하지 않는다.
-- Vendor error가 adapter가 소유하지 않는 field를 포함할 수 있다면 알 수 없는 vendor metadata를 허용하고, application contract에 필요한 field만 정규화한다.
+- Vendor raw error는 외부 계약이다.
+  - 구조화된 vendor 필드는 오류를 감싸거나 변환하기 전에 어댑터 경계에서 검증하고 정규화한다.
+- 어댑터가 구조화된 vendor 필드에 의존한다면 `zod` schema를 사용하는 것이 좋다.
+  - 데이터베이스 error code, constraint name, SDK error code, HTTP response metadata 등이 해당한다.
+- 외부 enum 형태의 code set은 `as const` 객체로 한 번 정의한다.
+  - 해당 객체에서 `zod` enum을 만들고 `z.infer`로 TypeScript 타입을 파생한다.
+  - 별도의 TypeScript enum 또는 union과 별도의 `zod` enum 목록을 함께 유지하지 않는다.
+- Vendor error가 어댑터가 소유하지 않는 필드를 포함할 수 있다면 알 수 없는 metadata를 허용한다.
+  - Application 계약에 필요한 필드만 정규화한다.
 
 ## 예상하지 못한 System Error
 
-Application이 가능한 모든 thrown value 또는 rejected promise를 알고 처리할 수는 없다.
-Boundary에서는 명시적으로 이해하는 error만 보존하고, 인식하지 못한 error는 application 바깥에 노출하기 전에 mask한다.
-
-- 인식한 technical failure는 외부 caller가 protocol contract의 일부로 다룰 수 있을 때만 명시적인 protocol response로 변환한다.
-- 인식하지 못한 failure는 presentation 또는 process boundary가 안전한 internal response로 mask할 때까지 exception 또는 rejected-promise path에 둔다.
-- 내부 관측 가능성을 위해 가능하면 원래 cause를 보존한다.
-- 인식하지 못한 failure는 logging, metric, tracing 또는 다른 operational signal을 통해 관측 가능하게 만든다.
-- 알 수 없는 failure를 처리하거나 관측 가능하게 만들지 않고 조용히 삼키지 않는다.
-
-Application 바깥으로 보내는 예상하지 못한 system error response는 안정적이고 안전해야 하며 반드시 mask되어야 한다.
+- 인식하지 못한 failure는 presentation 또는 process 경계까지 exception 또는 rejected-promise 경로에 둔다.
+- 내부 관측 가능성을 위해 가능하면 원래 `cause`를 보존한다.
+- 인식하지 못한 failure는 운영 신호를 통해 관측할 수 있게 만든다.
+  - [로깅 정책](./logging.md)과 [관측 가능성 컨벤션](./observability.md)을 따른다.
+- 알 수 없는 failure를 처리하거나 관측할 수 있게 만들지 않고 삼켜서는 안 된다.

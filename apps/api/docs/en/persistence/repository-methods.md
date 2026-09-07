@@ -5,104 +5,113 @@ audience: both
 applies_to:
   - apps/api
 translation: ../../ko/persistence/repository-methods.md
+read_when:
+  - Choosing a repository or query-port method at an application call site.
 related:
   - ../architecture/ddd.md
+  - ../architecture/context-integration.md
+  - ./persistence.md
+  - ../operability/error.md
 ---
 
 # Repository Method Usage Guide
 
-This document complements the naming rules in [API DDD Convention](../architecture/ddd.md) with **call-site usage guidance** for repository methods. Read this when deciding which method to call, not which to name.
+## Scope
+
+- Use this guide to choose repository and query-port methods at call sites.
+- Use related policies for decisions outside this guide.
+  - Method names and repository contracts: [DDD convention](../architecture/ddd.md).
+  - Database and mapper behavior: [persistence policy](./persistence.md).
+  - Exception ownership and translation: [error policy](../operability/error.md).
 
 ## `get` vs `find`
 
-### Decision rule
+### Decision Rule
 
-| Method | When absent | Use when |
-|--------|-------------|----------|
-| `find` | Returns `null` | Null is a **valid state** that drives a branch in the business flow |
-| `get` | Throws `InfrastructureException(NOT_FOUND)` | Absence is **exceptional** — the caller requires the resource to exist |
+- Use `find` when absence is an expected state that controls the application flow.
+  - It returns `null` when no item matches.
+- Use `get` when the caller requires the item to exist.
+  - It returns the item or throws `InfrastructureException` with `kind: 'not_found'`.
+  - Its return type does not include `null`.
 
-### When to use `find`
+### Use `find` for Branching
 
-Use `find` when null carries meaning — it is a legitimate path, not an error.
+- Use `find` when the call site must branch on absence, for example:
+  - Create when no aggregate exists and update when one does.
+  - Detect a conflict when an aggregate already exists.
+  - Skip an event whose target was removed by an expected race.
 
-**Upsert** — null triggers creation; non-null triggers update:
 ```ts
 const source = await this.sources.find({ externalSourceId });
-if (!source) return this.persistChange(Source.create(...));
+if (!source) {
+  return this.persistChange(Source.create({ externalSourceId, ...snapshot }));
+}
 source.syncContentSnapshot(snapshot);
 ```
 
-**Conflict detection** — null means safe to proceed; non-null means conflict:
 ```ts
 const existing = await this.posts.find({ sourceId });
-if (existing) throw new ApplicationException({ kind: STATE_CONFLICT, ... });
+if (existing) {
+  throw new ApplicationException({ kind: STATE_CONFLICT, ... });
+}
 ```
 
-**Graceful skip** — absence is an expected race condition in an event handler, not an error:
 ```ts
 const syncJob = await this.syncJobs.find({ id: event.syncJobId });
 if (!syncJob) return;
 ```
 
-### When to use `get`
+### Use `get` for Required State
 
-Use `get` when the caller requires the resource to exist and absence signals a bug or client error:
+- Use `get` when continuing the use case requires the item.
 
 ```ts
 const post = await this.posts.get({ id: command.postId });
-// throws NOT_FOUND automatically — no null check needed
+// No null branch is required.
 ```
 
-### Anti-pattern to avoid
-
-Catching `find` null only to throw `NOT_FOUND` duplicates what `get` already does:
-
-```ts
-// ❌ do not use find just to re-throw NOT_FOUND
-const source = await this.sources.find({ id });
-if (!source) throw new ApplicationException({ kind: NOT_FOUND, ... });
-
-// ✓ use get — it throws NOT_FOUND automatically
-const source = await this.sources.get({ id });
-```
+- Do not call `find` only to throw an equivalent `not_found` error immediately.
+  - Use `get` when the repository's not-found error already has the required meaning.
+  - Keep `find` when absence must be translated into a distinct application-owned failure.
 
 ## Repository vs Query Port
 
-### Read-for-write vs Read-for-display
+### Aggregate vs Projection
 
-Every multi-aggregate retrieval falls into one of two categories:
+- Use a repository when the caller needs domain objects.
+  - Invoke domain behavior on the returned aggregate.
+  - Evaluate domain state before a change.
+  - Restore one or more complete aggregates with `get`, `find`, or `list`.
+- Use an application query port when the caller needs a read projection without domain behavior.
+  - Return paginated or search results.
+  - Combine fields from multiple aggregates or contexts.
+  - Shape data for an application result without reconstructing aggregates.
+- Choose by the required result and behavior, not by the number of returned rows.
 
-| Category | Definition | Where to implement |
-|---|---|---|
-| **Read-for-write** | Load the aggregate so you can call domain methods on it or verify its existence as a precondition before a write | Repository (`list`) |
-| **Read-for-display** | Fetch data to present to a caller without invoking domain behavior afterward | Application Query port (`paginate`, `search`) |
+### JOIN Policy
 
-Use `repository.list()` when the caller needs full aggregate objects:
-- To invoke domain methods (`post.incrementViewCount()`, `source.syncContentSnapshot(...)`)
-- To check domain invariants before a state change
+- Repository implementations MAY join tables within one aggregate.
+  - Use such joins only to restore the root, child entities, and embedded value objects.
+  - They MUST NOT join another aggregate or bounded context into the repository result.
+- Query-port implementations MAY join across aggregates and bounded contexts to build a read projection.
+  - Keep the query contract owned by the consuming application layer.
+  - Follow the [context integration convention](../architecture/context-integration.md) for cross-context access.
 
-Use `query.paginate()` / `query.search()` when the caller just needs flat data for display:
-- Paginated lists with cursor
-- Read models that combine fields from multiple aggregates
-- Any retrieval where the use case calls no domain methods on the returned objects
+### Query-Port Method Names
 
-### JOIN policy
+- Use the standard name that matches the result contract:
+  - `get`: return one item and throw when absent.
+  - `find`: return one item or `null` when absent.
+  - `paginate`: return a page and its next cursor.
+  - `search`: return a relevance-ranked page for a query.
+  - `count`: return the number of matching items.
+  - `exists`: return whether at least one item matches.
+- Define only methods required by the context.
+  - Do not add speculative query methods.
 
-| Layer | Allowed JOINs |
-|---|---|
-| **Repository** | Intra-aggregate only. A repository JOIN reconstructs a single aggregate from its tables (root + child entities + embedded value objects). It MUST NOT JOIN outside the aggregate boundary to pull in data from another aggregate or context. |
-| **Query Port** | Cross-aggregate and cross-context JOINs are allowed. A query port implementation may JOIN any tables needed to build the read-model projection. This is its main advantage over a repository read. |
+## Review Checks
 
-### Standard Query port method names
-
-| Method | Semantics |
-|---|---|
-| `get` | Return one item; throw when absent |
-| `find` | Return one item or `null` when absent |
-| `paginate` | Return a page of items with a cursor for the next page |
-| `search` | Return a relevance-ranked page of items matching a query string |
-| `count` | Return the number of matching items |
-| `exists` | Return `true`/`false` whether at least one matching item exists |
-
-Define only the methods your context actually needs. Do not add methods speculatively.
+- Does absence drive a valid branch (`find`) or violate a required precondition (`get`)?
+- Does the caller need a domain object (repository) or a read projection (query port)?
+- Does a repository JOIN stay within one aggregate boundary?
+- Is every query-port method required by an existing use case?

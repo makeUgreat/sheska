@@ -5,83 +5,111 @@ audience: both
 applies_to:
   - apps/api
 translation: ../../ko/persistence/persistence.md
+read_when:
+  - Changing a database schema, migration, persistence adapter, mapper, or storage constraint.
 related:
-  - ../architecture/architecture.md
   - ../architecture/ddd.md
+  - ../architecture/infrastructure.md
   - ../architecture/source-dependency.md
+  - ./repository-methods.md
   - ../operability/observability.md
 ---
 
 # API Persistence Policy
 
-Persistence policy decides how database and ORM adapters preserve stored data without taking ownership of domain rules.
-
 ## Scope
 
-- This policy applies to API persistence adapters, database schemas, migrations, and persistence mappers.
-- Use the DDD convention for domain ownership and the source dependency convention for layer boundaries.
-- Persistence code may know database and ORM details, but it must not become the source of business meaning.
+- Use this policy for database schemas, migrations, persistence adapters, and persistence mappers.
+- Use related conventions for decisions outside this document's scope.
+  - Use the [DDD convention](../architecture/ddd.md) for domain ownership and repository contract names.
+  - Use the [source dependency convention](../architecture/source-dependency.md) for layer boundaries.
+  - Use the [infrastructure convention](../architecture/infrastructure.md) for adapter files and directories.
+  - Use the [repository method guide](./repository-methods.md) to choose methods at call sites.
+- Persistence code MAY know database and ORM details.
+- Persistence code MUST NOT become the source of business meaning.
 
-## Storage Ownership
-
-### Responsibility Boundary
+## Responsibility Boundary
 
 - Domain code owns domain and business invariants.
-- Application code owns use-case orchestration, transaction boundaries, authorization and input/output flow, and application-owned contract constraints.
-- Persistence code stores and restores state for application ports.
-- Persistence code must not enforce domain or business invariants with database table validation.
-- Persistence code may enforce storage integrity that is required for reliable rows, relations, and lookups.
+- Application code owns use-case orchestration and application contract constraints.
+  - These include transaction boundaries, authorization, and input/output flow.
+- Persistence code stores and restores state through application-owned ports.
+- Persistence code MUST NOT duplicate domain or business invariants as table validation.
+- Persistence code MAY enforce structural integrity needed for reliable rows, relations, and lookups.
 
 ## Storage Shape
 
 ### Database Constraints
 
-- Allowed structural constraints include primary keys, foreign keys, unique constraints, not-null columns, indexes, and storage defaults such as timestamps.
-- Use unique constraints when they protect repository lookup identity, idempotency keys, or storage-level uniqueness required by an application contract.
-- Do not use database-native enum types. Store enum-like values in scalar columns and keep allowed-value meaning in the owning domain or application contract.
-- Do not duplicate value object or aggregate validation as `CHECK` constraints, database enum restrictions, triggers, or equivalent table-level validation.
-- Examples of domain-owned rules include trimmed non-empty strings, numeric ranges, lifecycle status transitions, and content-derived consistency checks.
+- Structural constraints MAY include:
+  - Primary keys and foreign keys.
+  - Unique and not-null constraints.
+  - Indexes and storage defaults such as timestamps.
+- Use unique constraints for lookup identity, idempotency keys, or application-contract storage uniqueness.
+- Do not use database-native enum types.
+  - Store enum-like values in scalar columns.
+  - Keep allowed-value meaning in the owning domain or application contract.
+- Do not duplicate domain validation with `CHECK` constraints, enum restrictions, triggers, or equivalents.
+  - Domain-owned examples include non-empty strings, numeric ranges, state transitions, and content consistency.
 
 ### Search Vector Columns
 
-- A `tsvector` column belongs on the same table as the field it indexes and should be a `GENERATED ALWAYS AS (...) STORED` column, not a value written by application code or synchronized by a trigger that reaches into another aggregate's table.
-- Do not use a trigger on one aggregate's table to update a derived column on another aggregate's table. A post's `title_search_vector` and a source's `content_search_vector` are separate generated columns for this reason, even though a search query joins and ranks across both.
-- Keep the tokenization function used to build a `tsvector` (for example a bigram-splitting helper for CJK text) as a plain, `IMMUTABLE` SQL/PL/pgSQL function stored in a migration and reused by every generated column that needs it, not duplicated per table or reimplemented in application code.
-- Search vector columns are a storage-integrity and read-performance concern, not a business invariant. They must not enforce or derive business meaning; they only keep a read-optimized projection in sync with the field it indexes.
+- Put a `tsvector` column on the same table as the field it indexes.
+- Define it as `GENERATED ALWAYS AS (...) STORED`.
+  - Application code MUST NOT write the derived value.
+  - A trigger MUST NOT update a derived column on another aggregate's table.
+- Keep each aggregate's search vector separate even when a read query joins and ranks across aggregates.
+  - For example, keep `posts.title_search_vector` separate from `sources.content_search_vector`.
+- Define reusable tokenization, such as CJK bigram splitting, once in a migration.
+  - Use a plain `IMMUTABLE` SQL or PL/pgSQL function.
+  - Reuse it from generated columns instead of duplicating it or implementing it in application code.
+- Treat search vectors as storage-integrity and read-performance projections, not business rules.
 
 ### Drizzle Schema
 
-- Drizzle table definitions should describe storage shape, relations, indexes, and structural constraints.
-- Do not define PostgreSQL enum types with Drizzle `pgEnum` or equivalent migration output.
+- Drizzle table definitions describe storage shape, relations, indexes, and structural constraints.
+- Do not define PostgreSQL enum types with `pgEnum` or equivalent migration output.
 - Avoid Drizzle `check` definitions for domain or business invariants.
-- TypeScript-only narrowing in Drizzle schema may be used for adapter ergonomics, but domain code remains the owner of validation and state transitions.
-- Generated migrations and snapshots should match the intended persistence policy, not merely the latest local schema output.
+- TypeScript-only narrowing MAY improve adapter ergonomics.
+  - Domain code remains responsible for validation and state transitions.
+- Generated migrations and snapshots MUST match the intended policy, not only the latest schema output.
 
 ## Boundary Mapping
 
-### Repository Mapping
-
 - Persistence mappers translate between database rows and domain objects at the infrastructure boundary.
-- Restoring a database row into a domain object must still pass through domain construction or restoration APIs.
-- If domain restoration rejects a stored row by throwing, let that exception preserve the domain invariant failure instead of weakening the domain model or relabeling it as a persistence error.
+- A mapper owns:
+  - Validation of the persistence row shape.
+  - Restoration from a persistence row to a domain object.
+  - Conversion from a domain object to an insert row.
+- Restore database rows through domain construction or restoration APIs.
+  - The restoration path MUST validate domain invariants without recording domain events.
+- Let domain restoration exceptions propagate unchanged.
+  - Do not relabel them as persistence errors merely because restoration occurred in an adapter.
+- Split aggregate mappers by the aggregate or entity they restore.
+  - Do not collect unrelated mappings in one adapter-wide mapper.
+- Domain-to-insert mapping MAY trust a domain object that has already passed its invariants.
+  - Add adapter validation only for an additional storage-specific constraint.
 
-### Persistence Mapper Policy
+## Repository Adapters
 
-- Repository implementations own database calls, query composition, and wrapping vendor or storage-only errors when adapter context is useful.
-- In a raw `sql`...`` query passed to `db.execute`, keep the leading verb (`SELECT`, `WITH`, ...) and at least one following token on the same line — write `SELECT id, name` rather than `SELECT\n  id, name`. `@opentelemetry/instrumentation-pg` derives the query's operation name (used as both a span name segment and a Prometheus label) by trimming the query text and slicing up to the first literal space character, without treating a newline as a delimiter; a verb alone on its own line produces `"SELECT\n"` instead of `"SELECT"`, silently splitting one logical operation into two time series. See [API Observability Convention](../operability/observability.md) for why this label exists.
-- Persistence mappers own restoration input shape validation, persistence row to domain restoration, and domain object to insert row conversion.
-- Persistence mapper restoration methods should let domain restoration exceptions propagate unchanged.
-- Do not wrap domain restoration exceptions as repository or persistence errors only because the exception occurred while restoring a row.
-- Aggregate persistence mappers should be split by restored aggregate or entity. Avoid collecting unrelated aggregate mappings in one adapter-wide mapper.
-- Persistence adapter file names follow the adapter file naming rules in the [API Infrastructure Convention](../architecture/infrastructure.md).
-- Name persistence mapper files `{aggregate-or-entity}.persistence.mapper.ts` and classes `{AggregateOrEntity}PersistenceMapper`, such as `source.pg-drizzle.mapper.ts` and `SourcePgDrizzleMapper`.
-- Name concrete repository adapter files `{aggregate-or-entity}.{adapter}.repository.ts` and classes `{AggregateOrEntity}{Adapter}Repository`, such as `source.pg-drizzle.repository.ts` and `SourcePgDrizzleRepository`.
-- Domain objects restored from persistence should expose a `restore` path that validates domain invariants and does not record domain events.
-- Repository `save` methods that return a domain object should return the domain object restored from the database-returned row, not the original input object.
-- Domain-to-insert mapping may trust domain objects that already passed domain invariants. Use duplicate insert validation only when the adapter has an additional storage-only constraint.
+- Repository implementations own database calls and query composition.
+- Wrap vendor or storage errors when adapter context improves the failure.
+  - Do not use this wrapping rule for domain restoration exceptions.
+- A `save` method that returns a domain object MUST restore it from the database-returned row.
+  - Do not return the original input object.
+- Follow the [infrastructure naming rules](../architecture/infrastructure.md) for repository and mapper files.
+
+### Raw SQL Operation Names
+
+- In a raw Drizzle `sql` template passed to `db.execute`, keep the leading verb and next token on one line.
+  - Write `SELECT id, name`, not `SELECT\n  id, name`.
+- `@opentelemetry/instrumentation-pg` uses the first literal space to derive the operation name.
+  - A newline after the verb can produce a different telemetry label for the same logical operation.
+  - See the [observability convention](../operability/observability.md) for telemetry label policy.
 
 ## Review Checks
 
-- Check whether a new database constraint protects storage integrity or reimplements a domain invariant.
-- Check whether a Drizzle schema change makes the database the owner of business meaning.
-- Check whether repository and mapper changes preserve domain validation at the boundary.
+- Does each database constraint protect storage integrity rather than duplicate a domain invariant?
+- Does the Drizzle schema leave business meaning with the domain or application layer?
+- Do repository and mapper changes preserve domain validation at the boundary?
+- Does returned persisted state come from the database-returned row?
