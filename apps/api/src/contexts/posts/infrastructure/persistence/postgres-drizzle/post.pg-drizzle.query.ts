@@ -13,6 +13,7 @@ import {
 } from '@contexts/posts/application/ports';
 import {
   classifyPostgresError,
+  INFRASTRUCTURE_ERROR_KIND,
   InfrastructureException,
   sliceForCursor,
 } from '@kernels/infrastructure';
@@ -53,7 +54,7 @@ export class PostPgDrizzleQuery implements PostQuery {
     const result = await this.find(criteria);
     if (result === null) {
       throw new InfrastructureException({
-        kind: 'not_found',
+        kind: INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
         code: 'post.get_with_source_not_found',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Post not found',

@@ -27,6 +27,18 @@ describe('classifyPostgresError', () => {
     );
   });
 
+  it('40001 (serialization_failure) → CONCURRENCY_CONFLICT', () => {
+    expect(classifyPostgresError(createPostgresError('40001'))).toBe(
+      INFRASTRUCTURE_ERROR_KIND.CONCURRENCY_CONFLICT,
+    );
+  });
+
+  it('40P01 (deadlock_detected) → CONCURRENCY_CONFLICT', () => {
+    expect(classifyPostgresError(createPostgresError('40P01'))).toBe(
+      INFRASTRUCTURE_ERROR_KIND.CONCURRENCY_CONFLICT,
+    );
+  });
+
   it('08006 (connection_failure) → UNAVAILABLE', () => {
     expect(classifyPostgresError(createPostgresError('08006'))).toBe(
       INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,

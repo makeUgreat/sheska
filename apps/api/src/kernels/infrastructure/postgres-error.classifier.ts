@@ -18,6 +18,9 @@ const POSTGRES_ERROR_KIND_MAP: Record<string, InfrastructureErrorKind> = {
   '23503': INFRASTRUCTURE_ERROR_KIND.CONFLICT, // foreign_key_violation
   '23502': INFRASTRUCTURE_ERROR_KIND.CONFLICT, // not_null_violation
   '23514': INFRASTRUCTURE_ERROR_KIND.CONFLICT, // check_violation
+  // Class 40 — Transaction Rollback (concurrency, not data)
+  '40001': INFRASTRUCTURE_ERROR_KIND.CONCURRENCY_CONFLICT, // serialization_failure
+  '40P01': INFRASTRUCTURE_ERROR_KIND.CONCURRENCY_CONFLICT, // deadlock_detected
 };
 
 export function classifyPostgresError(error: unknown): InfrastructureErrorKind {
