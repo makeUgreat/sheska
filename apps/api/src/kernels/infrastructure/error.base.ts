@@ -63,8 +63,15 @@ export type InfrastructureInvalidDataDetails = {
   readonly fields: string[];
 };
 
+export type InfrastructureBadResponseDetails = {
+  readonly statusCode: number;
+  readonly retryAfterMs?: number;
+};
+
 export type InfrastructureErrorDetailsFor<
   Kind extends InfrastructureErrorKind,
 > = Kind extends typeof INFRASTRUCTURE_ERROR_KIND.INVALID_DATA
   ? InfrastructureInvalidDataDetails
-  : Record<string, unknown>;
+  : Kind extends typeof INFRASTRUCTURE_ERROR_KIND.BAD_RESPONSE
+    ? InfrastructureBadResponseDetails
+    : Record<string, unknown>;
