@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { type Deadline } from '@core/deadline';
+import { type CallContext } from '@core/call-context';
 import { effectiveAbortSignal } from '@kernels/application';
 import {
   type PostQuery,
@@ -40,10 +40,10 @@ export class SearchPostsUseCase {
 
   async execute(
     command: SearchPostsCommand,
-    deadline: Deadline,
+    context: CallContext,
   ): Promise<SearchPostsResult> {
     const signal = effectiveAbortSignal(
-      deadline,
+      context.deadline,
       SEARCH_QUERY_EMBED_ATTEMPT_TIMEOUT_MS,
     );
     const queryEmbedding = await this.searchQueryEmbedder.embed(command.query, {

@@ -28,7 +28,7 @@ export class EmbedRequestBullMqConsumer extends WorkerHost {
 
   async process(job: Job<EmbedRequestPayload>): Promise<void> {
     const deadline = computeDeadline(EMBED_JOB_DEADLINE_MS);
-    await this.embedSourceContent.execute(job.data, deadline);
+    await this.embedSourceContent.execute(job.data, { deadline });
   }
 
   @OnWorkerEvent('failed')

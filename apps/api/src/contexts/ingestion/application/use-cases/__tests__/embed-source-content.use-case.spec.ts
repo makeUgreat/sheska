@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { computeDeadline, type Deadline } from '@core/deadline';
+import { computeDeadline } from '@core/deadline';
+import { type CallContext } from '@core/call-context';
 import {
   IngestionFailedDomainEvent,
   IngestionProgressDomainEvent,
@@ -40,8 +41,8 @@ function buildPayload(
   };
 }
 
-function buildDeadline(remainingMs = 60_000): Deadline {
-  return computeDeadline(remainingMs);
+function buildContext(remainingMs = 60_000): CallContext {
+  return { deadline: computeDeadline(remainingMs) };
 }
 
 const fakeEmbedding = Array.from({ length: 1024 }, () => 0.1);
@@ -68,7 +69,7 @@ describe('EmbedSourceContentUseCase', () => {
 
       await useCase.execute(
         buildPayload({ content: '# Source note' }),
-        buildDeadline(),
+        buildContext(),
       );
 
       expect(embed).toHaveBeenCalledOnce();
@@ -104,7 +105,7 @@ describe('EmbedSourceContentUseCase', () => {
 
       await useCase.execute(
         buildPayload({ content: 'abc\n\ndef\n\nghi' }),
-        buildDeadline(),
+        buildContext(),
       );
 
       expect(embed).toHaveBeenCalledTimes(3);
@@ -133,7 +134,7 @@ describe('EmbedSourceContentUseCase', () => {
 
       await useCase.execute(
         buildPayload({ content: 'abc\n\ndef\n\nghi' }),
-        buildDeadline(),
+        buildContext(),
       );
 
       expect(emit).toHaveBeenCalledWith(
@@ -165,7 +166,7 @@ describe('EmbedSourceContentUseCase', () => {
 
       await useCase.execute(
         buildPayload({ content: 'abc\n\ndef\n\nghi' }),
-        buildDeadline(),
+        buildContext(),
       );
 
       const progressCalls = emit.mock.calls.filter(
@@ -195,7 +196,7 @@ describe('EmbedSourceContentUseCase', () => {
 
       await useCase.execute(
         buildPayload({ content: '# Source note' }),
-        buildDeadline(shortRemainingMs),
+        buildContext(shortRemainingMs),
       );
 
       expect(timeoutSpy).toHaveBeenCalledOnce();

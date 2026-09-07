@@ -5,11 +5,12 @@ import {
   type SearchQueryEmbedder,
 } from '@contexts/posts/application/ports';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
-import { computeDeadline, type Deadline } from '@core/deadline';
+import { computeDeadline } from '@core/deadline';
+import { type CallContext } from '@core/call-context';
 import { SearchPostsUseCase } from '../search-posts.use-case';
 
-function buildDeadline(remainingMs = 60_000): Deadline {
-  return computeDeadline(remainingMs);
+function buildContext(remainingMs = 60_000): CallContext {
+  return { deadline: computeDeadline(remainingMs) };
 }
 
 type PostQueryMock = {
@@ -78,7 +79,7 @@ describe('SearchPostsUseCase', () => {
         cursor: null,
         limit: 20,
       },
-      buildDeadline(),
+      buildContext(),
     );
 
     expect(result.posts).toHaveLength(2);
@@ -108,7 +109,7 @@ describe('SearchPostsUseCase', () => {
         cursor: null,
         limit: 20,
       },
-      buildDeadline(),
+      buildContext(),
     );
 
     expect(result.posts).toHaveLength(0);
@@ -124,7 +125,7 @@ describe('SearchPostsUseCase', () => {
     await expect(
       useCase.execute(
         { query: 'TypeScript', cursor: null, limit: 20 },
-        buildDeadline(),
+        buildContext(),
       ),
     ).rejects.toBe(searchFailure);
   });
@@ -143,7 +144,7 @@ describe('SearchPostsUseCase', () => {
         cursor: null,
         limit: 20,
       },
-      buildDeadline(),
+      buildContext(),
     );
 
     expect(postQuery.search).toHaveBeenCalledWith({
@@ -168,7 +169,7 @@ describe('SearchPostsUseCase', () => {
         cursor: null,
         limit: 20,
       },
-      buildDeadline(),
+      buildContext(),
     );
 
     expect(postQuery.search).toHaveBeenCalledWith({
@@ -188,7 +189,7 @@ describe('SearchPostsUseCase', () => {
 
     await useCase.execute(
       { query: 'TypeScript', cursor: null, limit: 20 },
-      buildDeadline(),
+      buildContext(),
     );
 
     expect(searchQueryEmbedder.embed).toHaveBeenCalledWith('TypeScript', {

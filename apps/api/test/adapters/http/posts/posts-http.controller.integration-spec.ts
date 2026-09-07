@@ -357,7 +357,11 @@ describe('PostsHttpController', () => {
           cursor: null,
           limit: 20,
         },
-        expect.objectContaining({ deadlineAt: expect.any(Number) as number }),
+        {
+          deadline: expect.objectContaining({
+            deadlineAt: expect.any(Number) as number,
+          }) as { deadlineAt: number },
+        },
       );
     });
 
@@ -382,7 +386,11 @@ describe('PostsHttpController', () => {
           cursor: { id: 'post-1', score: 0.8 },
           limit: 5,
         },
-        expect.objectContaining({ deadlineAt: expect.any(Number) as number }),
+        {
+          deadline: expect.objectContaining({
+            deadlineAt: expect.any(Number) as number,
+          }) as { deadlineAt: number },
+        },
       );
     });
 
@@ -446,7 +454,11 @@ describe('PostsHttpController', () => {
           cursor: null,
           limit: 20,
         },
-        expect.objectContaining({ deadlineAt: expect.any(Number) as number }),
+        {
+          deadline: expect.objectContaining({
+            deadlineAt: expect.any(Number) as number,
+          }) as { deadlineAt: number },
+        },
       );
     });
 

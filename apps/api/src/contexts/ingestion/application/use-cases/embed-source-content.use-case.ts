@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { type Deadline } from '@core/deadline';
+import { type CallContext } from '@core/call-context';
 import { effectiveAbortSignal } from '@kernels/application';
 import {
   IngestionFailedDomainEvent,
@@ -39,7 +39,7 @@ export class EmbedSourceContentUseCase {
   // TODO: add retry logic for embedder call failures
   async execute(
     payload: EmbedRequestPayload,
-    deadline: Deadline,
+    context: CallContext,
   ): Promise<void> {
     const { sourceId, syncJobId, content } = payload;
 
@@ -59,7 +59,7 @@ export class EmbedSourceContentUseCase {
 
     for (const chunk of chunks) {
       const signal = effectiveAbortSignal(
-        deadline,
+        context.deadline,
         EMBED_CHUNK_ATTEMPT_TIMEOUT_MS,
       );
       const result = await this.embedder.embed(chunk.content, { signal });

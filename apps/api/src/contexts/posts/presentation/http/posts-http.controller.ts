@@ -104,7 +104,7 @@ export class PostsHttpController {
         cursor: request.cursor ?? null,
         limit: request.limit,
       },
-      deadline,
+      { deadline },
     );
 
     return {
