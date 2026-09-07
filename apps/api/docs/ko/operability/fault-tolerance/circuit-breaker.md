@@ -11,6 +11,7 @@ read_when:
 related:
   - ./index.md
   - ./retry.md
+  - ./retry-budget.md
 ---
 
 # API Circuit Breaker 정책
@@ -21,8 +22,8 @@ related:
 
 - 이 문서는 circuit breaker 상태 전환, breaker를 어느 범위에 둘지, circuit breaker가 재시도와 어떻게 상호작용하는지 판단할 때 사용한다.
 - 재시도 소유권, 재시도 횟수, backoff, error classification은 이 문서가 아니라 [API 재시도 정책](./retry.md)에 정의되어 있다.
-- retry budget, idempotency, 관측성은 별개의 fault-tolerance 관심사이며 아직 정식 컨벤션 문서로 승격되지 않았다.
-  - 현재 승격 상태는 [API Fault Tolerance 인덱스](./index.md)에서 확인한다.
+- retry budget 비율, budget window, retry budget이 개별 호출 재시도·circuit breaker와 어떻게 조합되는지는 이 문서가 아니라 [API Retry Budget 정책](./retry-budget.md)에 정의되어 있다.
+- idempotency와 관측성은 별개의 fault-tolerance 관심사다. idempotency는 [API Idempotent Receiver 정책](./idempotent-receiver.md)에, 재시도 고유의 관측성은 [API 재시도 정책](./retry.md)에 정의되어 있다.
 
 ## Circuit Breaker가 필요한 이유
 

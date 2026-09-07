@@ -10,6 +10,7 @@ read_when:
 related:
   - ./index.md
   - ./retry.md
+  - ./retry-budget.md
 ---
 
 # API Circuit Breaker Policy
@@ -20,8 +21,8 @@ related:
 
 - Use this document when deciding circuit breaker state transitions, what a breaker is scoped to, or how it composes with retry.
 - Retry ownership, retry count, backoff, and error classification are defined in [API Retry Policy](./retry.md), not by this document.
-- Retry budget, idempotency, and observability are separate fault-tolerance concerns not yet promoted into a convention document.
-  - Read [API Fault Tolerance Index](./index.md) for their current status.
+- Retry budget ratio, budget window, and how retry budget composes with per-call retry and circuit breaker are defined in [API Retry Budget Policy](./retry-budget.md), not by this document.
+- Idempotency and observability are separate fault-tolerance concerns; idempotency is defined in [API Idempotent Receiver Policy](./idempotent-receiver.md) and retry-specific observability in [API Retry Policy](./retry.md).
 
 ## Why A Circuit Breaker
 
