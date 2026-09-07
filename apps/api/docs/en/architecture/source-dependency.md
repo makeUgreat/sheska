@@ -7,6 +7,8 @@ applies_to:
 translation: ../../ko/architecture/source-dependency.md
 related:
   - ./architecture.md
+  - ./ddd.md
+  - ./infrastructure.md
   - ../operability/error.md
   - ./runtime-wiring.md
   - ./context-integration.md
@@ -14,20 +16,18 @@ related:
 
 # API Source Dependency Convention
 
-Source dependency rules decide what a source file may import.
-Dependency direction MUST remain consistent from outer layers toward inner layers.
-
 ## Scope
 
 - Use this document when deciding import direction, source layer ownership, project path aliases, and public surfaces.
-- Use the runtime wiring convention when the question is how implementations are created or bound at runtime.
+- Use the [runtime wiring convention](./runtime-wiring.md) when deciding how implementations are created or bound.
+- Dependency direction MUST remain consistent from outer layers toward inner layers.
 
 ## Dependency Direction
 
 ### Visual Dependency Map
 
-Read every arrow as "the source may import the target."
-If a dependency is not shown here and is not explicitly allowed in this document, treat it as forbidden by default.
+- Read every arrow as "the source may import the target."
+  - Treat dependencies not shown or explicitly allowed by a routed convention as forbidden by default.
 
 ```mermaid
 flowchart TB
@@ -64,51 +64,31 @@ flowchart TB
   domainKernel --> core
 ```
 
-The primary source direction is:
-
-```text
-presentation -> application -> domain -> core
-infrastructure -> application -> domain -> core
-```
-
-### Source Direction
-
-Judge source dependencies by the boundaries each source area may import and must not import.
-
-| Source area | May import | Must not import |
-| --- | --- | --- |
-| `core` | Nothing | project layers, frameworks, external SDKs, and business concepts |
-| `kernels` | `core` | bounded context implementations, `platform`, framework code, and outer layers |
-| `domain` | `core`, `kernels/domain` | `application`, `infrastructure`, `presentation`, `platform`, NestJS, database, HTTP, and SDK code |
-| `application` | `core`, `domain`, `kernels/application`, same-context `*.di-tokens.ts` files, and narrow NestJS DI APIs used only for provider construction | infrastructure implementations, presentation DTOs, non-DI framework runtime APIs, and platform concrete types |
-| `infrastructure` | `core`, `domain`, `application`, `kernels/infrastructure`, frameworks, or external libraries when implementing adapters | `presentation` and `platform` startup code |
-| `presentation` | `core`, `application`, `kernels/presentation`, frameworks, or protocol libraries when handling external protocols | infrastructure implementations, database adapters, and SDK adapters |
-| Bounded context root wiring module | that context's application, presentation, and infrastructure code to compose the feature | arbitrary composition of another context's internal implementation |
-
-`platform` may import bounded context, adapter, and framework code required for runtime startup and module wiring.
-Production code outside `platform` must not import `platform`, except the thin `src/main.ts` entrypoint.
-
 ## Import Surfaces
 
 ### Import Path Policy
 
-- Project path aliases are declared only in [`apps/api/tsconfig.json`](../../tsconfig.json).
-- TypeScript, Vitest, and static analysis tools should consume `tsconfig.json` instead of redefining project alias meaning.
+- Project path aliases are declared only in [`apps/api/tsconfig.json`](../../../tsconfig.json).
+- TypeScript, Vitest, and static analysis tools should consume `tsconfig.json`.
+  - Do not redefine project alias meaning in each tool.
 - Path aliases represent stable architectural boundaries, not general path-shortening conveniences.
-- Keep aliases limited to named source boundaries such as `@core/*`, `@kernels/*`, `@contexts/*`, and `@platform/*`.
-- Do not add broad aliases such as `@api/*`, `@src/*`, or `@/*`.
-- When aliases exist for source boundaries, production `src` imports should use them when crossing those boundaries.
-- Prefer relative imports inside the same local implementation area.
+  - Keep aliases limited to named source boundaries such as `@core/*`, `@kernels/*`, `@contexts/*`, and
+    `@platform/*`.
+  - Do not add broad aliases such as `@api/*`, `@src/*`, or `@/*`.
+- Use a source-boundary alias when production code crosses a boundary for which an alias exists.
+  - Prefer relative imports inside the same local implementation area.
 
 ### Public Surface Policy
 
-- `index.ts` files are JavaScript/TypeScript barrel files and should be used as public surfaces for intentionally exported contracts, not as default folder decoration.
-- Do not create `index.ts` files mechanically or re-export every folder-internal export by default.
+- Use `index.ts` as the public surface for intentionally exported contracts, not as default folder decoration.
+  - Do not create `index.ts` mechanically or re-export every folder-internal export.
 - Public surfaces should expose only contracts that another source area actually needs to import.
-- Do not expose internal implementations, helpers, adapter details, test fixtures, or local-only types through a public surface unless they are external contracts.
+  - Do not expose internal implementations, helpers, adapter details, test fixtures, or local-only types unless they
+    are external contracts.
 - Cross-boundary imports SHOULD target a public surface when one exists.
-- Production imports into kernel directories, context domain code, and application ports should use their public surfaces.
-- Avoid deep imports into another context or layer internals unless this document explicitly allows the dependency.
+  - Production imports into kernels, context domain code, and application ports should use their public surfaces.
+- Avoid deep imports into another context or layer internals unless a routed convention explicitly allows them.
+  - Follow the [context integration convention](./context-integration.md) for cross-context adapter and wiring imports.
 
 ## Source Areas
 
@@ -116,67 +96,81 @@ Production code outside `platform` must not import `platform`, except the thin `
 
 - `core` contains pure primitives that have no layer, framework, bounded context, or business vocabulary.
 - Any layer MAY depend on `core`.
+- `core` MUST NOT depend on project layers, frameworks, external SDKs, or business concepts.
 
 ### Domain Layer
 
-- The domain layer contains business rules and domain models.
-- Use it for entities, value objects, aggregates, domain services, and domain events.
-- Domain code MUST NOT know application, infrastructure, presentation, framework, database, HTTP, or SDK details.
-- Domain code SHOULD express pure business behavior and invariants.
-- Domain code may depend on `core` and `kernels/domain`.
+- The domain layer owns business rules and domain models.
+  - Follow the [DDD convention](./ddd.md) for domain model ownership and building blocks.
+- Domain code MAY depend on `core` and `kernels/domain`.
+- Domain code MUST NOT depend on application, infrastructure, presentation, platform, framework, database, HTTP, or
+  SDK code.
 
 ### Application Layer
 
-- The application layer expresses use cases and application flow.
-- Application code uses domain models to execute user intent.
-- Application code MUST NOT know infrastructure implementation details.
-- Application code MUST NOT know presentation request or response DTO shapes.
-- Application code MAY use narrow NestJS DI APIs, such as provider decorators or injection tokens, when they only describe object construction.
-- Application code MAY import provider tokens from same-context `*.di-tokens.ts` files.
-- Application use case behavior MUST NOT depend on NestJS runtime objects, module configuration, container lookups, or framework lifecycle callbacks.
-- Keep application dependencies explicit in constructors so use cases remain instantiable as plain TypeScript classes in tests.
-- Application code SHOULD let domain, infrastructure, and system exceptions propagate unless the use case can recover or add application-owned context.
-- Aside from the narrow DI metadata and same-context provider tokens allowed above, application core may depend on `core`, domain code, and `kernels/application`.
+- The application layer owns use cases and application flow.
+- Application code MAY depend on `core`, domain code, `kernels/application`, and same-context `*.di-tokens.ts` files.
+- Application code MAY use narrow NestJS DI APIs only when they describe object construction.
+  - Provider decorators and injection tokens are allowed.
+  - Keep dependencies explicit in constructors so use cases remain constructible as plain TypeScript classes.
+- Application behavior MUST NOT depend on infrastructure implementations, presentation DTOs, platform concrete types,
+  module configuration, container lookups, or framework lifecycle callbacks.
+- Application code SHOULD propagate domain, infrastructure, and system exceptions unless it can recover or add
+  application-owned context.
+  - Follow the [error policy](../operability/error.md) for exception ownership and transformation.
 
 ### Infrastructure Layer
 
-- The infrastructure layer is the **outbound (driven) adapter layer**: it implements application-owned ports or domain/application contracts to reach a concrete technology.
-- The defining trait is dependency inversion: application owns the interface, infrastructure implements it. Application never knows the concrete technology.
-- Use it for database, ORM, external API, file system, message broker producers/dispatchers, SDK, and persistence code.
-- Adapter code may wrap technology-specific errors, such as HTTP client, SDK, or Drizzle errors, in regular `Error` objects with `cause` when adding adapter context.
-- Infrastructure code MAY depend on frameworks and external libraries.
-- Being technology-coupled is not by itself what makes code infrastructure — see the Presentation Layer note below for the case where a technology-coupled adapter belongs there instead.
+- Infrastructure is the outbound (driven) adapter layer.
+  - It implements application-owned ports or domain/application contracts to reach concrete technology.
+  - Follow the [infrastructure convention](./infrastructure.md) for adapter naming and structure.
+- Infrastructure code MAY depend on `core`, domain, application, `kernels/infrastructure`, frameworks, and external
+  libraries when implementing adapters.
+- Infrastructure code MUST NOT depend on presentation or platform startup code.
+- Adapter code MAY wrap technology-specific errors in an `Error` with `cause` when adding adapter context.
+  - Follow the [error policy](../operability/error.md) for error ownership and transformation.
 
 ### Presentation Layer
 
-- The presentation layer is the **inbound (driving) adapter layer**: it receives triggers from outside the process and calls application use cases directly, without needing an application-owned port.
-- This includes protocol-facing entry points (HTTP controllers, GraphQL resolvers, request/response DTOs, protocol mappers, HTTP error mappers) **and** non-protocol inbound triggers that drive application flow the same way (queue/message consumers, scheduled job triggers). The classifier is "does this call into application on its own initiative," not "is this HTTP."
-- Presentation code calls application use cases.
-- Presentation code that handles an external protocol converts protocol exceptions into protocol responses and applies masking policy; this does not apply to non-protocol triggers (e.g. a queue consumer has no protocol response to shape).
-- Presentation code SHOULD NOT expose domain, infrastructure, vendor, or system exception details directly to clients.
-- Presentation code MAY depend on frameworks (including non-protocol frameworks such as a queue client library) and protocol libraries.
+- Presentation is the inbound (driving) adapter layer.
+  - It receives external triggers and calls application use cases without an application-owned port.
+- Presentation code MAY depend on `core`, application, `kernels/presentation`, frameworks, and protocol libraries.
+- Presentation code MUST NOT depend on infrastructure implementations, database adapters, or SDK adapters.
+- Presentation includes protocol-facing entry points and non-protocol inbound triggers.
+  - Protocol-facing entry points include HTTP controllers, GraphQL resolvers, DTOs, protocol mappers, and HTTP error
+    mappers.
+  - Non-protocol inbound triggers include queue/message consumers and scheduled job triggers.
+  - Classify by whether the adapter initiates an application call, not by whether it handles HTTP.
+- Protocol-facing presentation code converts protocol exceptions into responses and applies masking policy.
+  - Non-protocol triggers have no protocol response to shape.
+  - Follow the [error policy](../operability/error.md) for masking and exception transformation.
 
-### Choosing between Presentation and Infrastructure for a technology-coupled adapter
+### Technology-Coupled Adapter Classification
 
-Both layers may depend on frameworks and external libraries, so "this touches technology X" does not decide the layer. Ask instead: **does this adapter call into application (driving), or does it implement an interface application defined (driven)?**
+- Classify a technology-coupled adapter by direction, not by the technology it uses.
+  - An adapter that initiates an application call is driving and belongs to presentation.
+  - An adapter that implements an application-owned port is driven and belongs to infrastructure.
+  - A queue consumer is presentation; a queue dispatcher or producer is infrastructure.
+- The same technology may appear on both sides of a feature because each direction has a different responsibility.
 
-- A queue **consumer** receives a job and calls an application use case directly → presentation, same as a controller.
-- A queue **dispatcher/producer** implements an application-owned port (e.g. `EmbedResultDispatcher`) to enqueue a job → infrastructure, same as a repository.
+### Wiring Areas
 
-The same technology can appear on both sides of a single feature, in different files, because the two directions are genuinely different responsibilities.
+- A bounded context root wiring module MAY import that context's application, presentation, and infrastructure code.
+  - It MUST NOT arbitrarily compose another context's internal implementation.
+- `platform` MAY import bounded contexts, adapters, kernels, `core`, frameworks, and external runtime libraries for
+  startup and module wiring.
+  - Production code outside `platform` MUST NOT import `platform`, except the thin `src/main.ts` entrypoint.
 
 ### Kernel Directory
 
-- `kernels/domain` contains common domain-layer policy and stable domain concepts intentionally shared by multiple bounded contexts.
-- `kernels/application` contains common application-layer contracts only.
-- `kernels/infrastructure` contains common infrastructure adapter policy only.
-- `kernels/presentation` contains common presentation-layer policy only.
 - Kernel directories MAY depend on `core`.
-- Kernel directories MUST NOT depend on bounded contexts, platform code, framework code, or outer layers.
-- Kernel directories MUST NOT become generic utility buckets.
-- Feature-specific policy belongs inside the owning bounded context.
+- Kernel directories MUST NOT depend on bounded contexts, platform, frameworks, or outer layers.
+- Keep feature-specific policy inside its owning bounded context.
+  - Kernel directories MUST NOT become generic utility buckets.
 
-### EventEmitter Exception
+### Event Emitter Exceptions
 
-`kernels/domain` and domain layer code MAY depend on Node.js's `EventEmitter` family as an explicit exception.
-`EventEmitter2` and similar libraries are thin extensions of Node's built-in `EventEmitter` and are treated as part of the Node.js runtime rather than as framework or external SDK dependencies.
+- Domain code and `kernels/domain` MAY depend on Node.js's built-in `EventEmitter` as an explicit exception.
+  - This exception does not include framework event emitters.
+- Application code MAY depend on `@nestjs/event-emitter` only to publish or handle application and domain events.
+  - This exception does not permit unrelated NestJS runtime dependencies in application code.

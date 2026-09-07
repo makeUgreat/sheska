@@ -8,6 +8,8 @@ source: ../../en/architecture/source-dependency.md
 last_synced: 2026-09-07
 related:
   - ./architecture.md
+  - ./ddd.md
+  - ./infrastructure.md
   - ./context-integration.md
   - ../operability/error.md
   - ./runtime-wiring.md
@@ -15,20 +17,19 @@ related:
 
 # API Source Dependency 컨벤션
 
-Source dependency rule은 source file이 무엇을 import할 수 있는지 판단한다.
-Dependency direction은 outer layer에서 inner layer로 향하는 방향을 일관되게 유지해야 한다.
-
 ## 적용 범위
 
-- Import direction, source layer ownership, project path alias, public surface를 결정할 때 이 문서를 사용한다.
-- 구현체가 runtime에서 어떻게 생성되거나 연결되는지 판단할 때는 runtime wiring convention을 사용한다.
+- Import 방향, 소스 레이어 소유권, 프로젝트 path alias, public surface를 결정할 때 이 문서를 사용한다.
+- 구현체가 runtime에서 어떻게 생성되거나 연결되는지는
+  [runtime wiring 컨벤션](./runtime-wiring.md)을 사용해 판단한다.
+- 의존성 방향은 외부 레이어에서 내부 레이어로 일관되게 향해야 한다.
 
 ## Dependency Direction
 
 ### Visual Dependency Map
 
-모든 arrow는 "source가 target을 import할 수 있다"는 뜻으로 읽는다.
-이 문서에 dependency가 표시되어 있지 않고 명시적으로 허용되어 있지도 않다면 기본적으로 금지된 것으로 본다.
+- 모든 화살표는 "소스가 대상을 import할 수 있다"는 뜻으로 읽는다.
+  - 다이어그램에 없거나 라우팅된 컨벤션이 명시적으로 허용하지 않은 의존성은 기본적으로 금지한다.
 
 ```mermaid
 flowchart TB
@@ -65,119 +66,114 @@ flowchart TB
   domainKernel --> core
 ```
 
-Primary source direction은 다음과 같다:
-
-```text
-presentation -> application -> domain -> core
-infrastructure -> application -> domain -> core
-```
-
-### Source Direction
-
-Source dependency는 각 source area가 import할 수 있는 boundary와 import하면 안 되는 boundary를 기준으로 판단한다.
-
-| Source area | May import | Must not import |
-| --- | --- | --- |
-| `core` | 없음 | project layer, framework, external SDK, business concept |
-| `kernels` | `core` | bounded context implementation, `platform`, framework code, outer layer |
-| `domain` | `core`, `kernels/domain` | `application`, `infrastructure`, `presentation`, `platform`, NestJS, database, HTTP, SDK |
-| `application` | `core`, `domain`, `kernels/application`, 같은 context의 `*.di-tokens.ts` file, provider construction에만 사용하는 좁은 NestJS DI API | infrastructure implementation, presentation DTO, DI가 아닌 framework runtime API, platform concrete type |
-| `infrastructure` | Adapter 구현 시 `core`, `domain`, `application`, `kernels/infrastructure`, framework 또는 external library | `presentation`, `platform` startup code |
-| `presentation` | External protocol 처리 시 `core`, `application`, `kernels/presentation`, framework 또는 protocol library | infrastructure implementation, database adapter, SDK adapter |
-| Bounded context root wiring module | Feature 조립을 위해 해당 context의 application, presentation, infrastructure code | 다른 context의 내부 구현을 임의로 조립하지 않는다 |
-
-`platform`은 runtime startup과 module wiring에 필요한 bounded context, adapter, framework code를 import할 수 있다.
-`src/main.ts`의 얇은 entrypoint를 제외하고, `platform` 밖 production code는 `platform`을 import하지 않는다.
-
 ## Import Surface
 
 ### Import Path 정책
 
-- Project path alias는 [`apps/api/tsconfig.json`](../../tsconfig.json)에만 선언한다.
-- TypeScript, Vitest, static analysis tool은 project alias 의미를 재정의하지 말고 `tsconfig.json`을 사용하는 것이 좋다.
-- Path alias는 일반적인 path-shortening convenience가 아니라 stable architectural boundary를 표현한다.
-- Alias는 `@core/*`, `@kernels/*`, `@contexts/*`, `@platform/*` 같은 named source boundary로 제한한다.
-- `@api/*`, `@src/*`, `@/*` 같은 broad alias는 추가하지 않는다.
-- Source boundary alias가 존재한다면 production `src` import는 해당 boundary를 넘을 때 그 alias를 사용하는 것이 좋다.
-- 같은 local implementation area 내부에서는 relative import를 선호한다.
+- Project path alias는 [`apps/api/tsconfig.json`](../../../tsconfig.json)에만 선언한다.
+- TypeScript, Vitest, 정적 분석 도구는 `tsconfig.json`을 사용하는 것이 좋다.
+  - 도구마다 프로젝트 alias의 의미를 다시 정의하지 않는다.
+- Path alias는 일반적인 경로 축약이 아니라 안정적인 아키텍처 경계를 표현한다.
+  - `@core/*`, `@kernels/*`, `@contexts/*`, `@platform/*` 같은 소스 경계로 제한한다.
+  - `@api/*`, `@src/*`, `@/*` 같은 포괄적인 alias는 추가하지 않는다.
+- Production 코드가 alias가 있는 소스 경계를 넘을 때는 해당 alias를 사용한다.
+  - 같은 구현 영역 안에서는 상대 경로 import를 선호한다.
 
 ### Public Surface 정책
 
-- `index.ts` file은 JavaScript/TypeScript barrel file이며, 기본 folder decoration이 아니라 의도적으로 export하는 contract의 public surface로 사용한다.
-- `index.ts` file을 기계적으로 만들거나 folder 내부의 모든 export를 그대로 다시 노출하지 않는다.
-- Public surface에는 외부 source area가 실제로 import해야 하는 contract만 노출한다.
-- 내부 구현, helper, adapter detail, test fixture, local-only type은 외부 계약이 아니라면 public surface에 노출하지 않는다.
-- Cross-boundary import는 public surface가 있으면 그 public surface를 대상으로 하는 것이 좋다.
-- Kernel directory, context domain code, application port로 들어가는 production import는 해당 public surface를 사용하는 것이 좋다.
-- 다른 context 또는 layer internal로 들어가는 deep import는 이 문서가 해당 dependency를 명시적으로 허용하지 않는 한 피한다.
+- `index.ts`는 의도적으로 공개하는 계약의 public surface로 사용하며 기본 폴더 장식으로 만들지 않는다.
+  - `index.ts`를 기계적으로 만들거나 폴더 내부의 모든 export를 다시 노출하지 않는다.
+- Public surface에는 다른 소스 영역이 실제로 import해야 하는 계약만 노출한다.
+  - 외부 계약이 아닌 내부 구현, helper, 어댑터 세부사항, test fixture, 지역 타입은 노출하지 않는다.
+- 경계를 넘는 import는 public surface가 있다면 그 surface를 대상으로 하는 것이 좋다.
+  - Kernel, 컨텍스트 도메인 코드, application port로 들어가는 production import도 public surface를 사용한다.
+- 라우팅된 컨벤션이 명시적으로 허용하지 않는 한 다른 컨텍스트나 레이어 내부로 deep import하지 않는다.
+  - 크로스 컨텍스트 어댑터와 배선 import는
+    [context integration 컨벤션](./context-integration.md)을 따른다.
 
 ## Source Area
 
 ### Core
 
-- `core`는 layer, framework, bounded context, business vocabulary가 없는 pure primitive를 담는다.
-- 모든 layer는 `core`에 의존할 수 있다.
+- `core`는 레이어, framework, 바운디드 컨텍스트, 비즈니스 용어가 없는 순수 primitive를 담는다.
+- 모든 레이어는 `core`에 의존할 수 있다.
+- `core`는 프로젝트 레이어, framework, 외부 SDK, 비즈니스 개념에 의존해서는 안 된다.
 
 ### Domain Layer
 
-- Domain layer는 business rule과 domain model을 담는다.
-- Entity, value object, aggregate, domain service, domain event에 사용한다.
-- Domain code는 application, infrastructure, presentation, framework, database, HTTP, SDK detail을 알면 안 된다.
-- Domain code는 pure business behavior와 invariant를 표현하는 것이 좋다.
-- Domain code는 `core`와 `kernels/domain`에 의존할 수 있다.
+- Domain 레이어는 비즈니스 규칙과 도메인 모델을 소유한다.
+  - 도메인 모델 소유권과 구성 요소는 [DDD 컨벤션](./ddd.md)을 따른다.
+- Domain 코드는 `core`와 `kernels/domain`에 의존할 수 있다.
+- Domain 코드는 application, infrastructure, presentation, platform, framework, 데이터베이스, HTTP, SDK
+  코드에 의존해서는 안 된다.
 
 ### Application Layer
 
-- Application layer는 use case와 application flow를 표현한다.
-- Application code는 domain model을 사용해 user intent를 실행한다.
-- Application code는 infrastructure implementation detail을 알면 안 된다.
-- Application code는 presentation request 또는 response DTO shape를 알면 안 된다.
-- Application code는 object construction만 설명하는 provider decorator 또는 injection token 같은 좁은 NestJS DI API를 사용할 수 있다.
-- Application code는 같은 context의 `*.di-tokens.ts` file에서 provider token을 import할 수 있다.
-- Application use case behavior는 NestJS runtime object, module configuration, container lookup, framework lifecycle callback에 의존해서는 안 된다.
-- Use case가 test에서 plain TypeScript class로 생성될 수 있도록 application dependency는 constructor에 명시적으로 둔다.
-- Application code는 use case가 복구할 수 있거나 application-owned context를 추가할 수 있는 경우가 아니라면 domain, infrastructure, system exception을 그대로 전파하는 것이 좋다.
-- 위에서 허용한 좁은 DI metadata와 같은 context provider token을 제외하면, application core는 `core`, domain code, `kernels/application`에 의존할 수 있다.
+- Application 레이어는 유스 케이스와 application 흐름을 소유한다.
+- Application 코드는 `core`, domain 코드, `kernels/application`, 같은 컨텍스트의 `*.di-tokens.ts`에
+  의존할 수 있다.
+- Application 코드는 객체 생성만 설명하는 좁은 NestJS DI API를 사용할 수 있다.
+  - Provider decorator와 injection token이 이에 해당한다.
+  - 유스 케이스를 일반 TypeScript 클래스로 생성할 수 있도록 의존성을 생성자에 명시한다.
+- Application 동작은 infrastructure 구현체, presentation DTO, platform 구체 타입, 모듈 설정, container
+  lookup 또는 framework lifecycle callback에 의존해서는 안 된다.
+- Application 코드는 복구하거나 application 소유 맥락을 추가할 수 없다면 domain, infrastructure, system
+  exception을 그대로 전파하는 것이 좋다.
+  - 예외 소유권과 변환은 [오류 정책](../operability/error.md)을 따른다.
 
 ### Infrastructure Layer
 
-- Infrastructure layer는 **outbound(driven) adapter layer**다: application-owned port 또는 domain/application contract를 구현해서 구체 기술에 접근한다.
-- 핵심 판별 기준은 dependency inversion이다 — application이 interface를 소유하고 infrastructure가 그걸 구현한다. Application은 구체 기술을 모른다.
-- Database, ORM, external API, file system, message broker producer/dispatcher, SDK, persistence code에 사용한다.
-- Adapter code는 adapter context를 추가할 때 HTTP client, SDK, Drizzle error 같은 technology-specific error를 `cause`가 있는 일반 `Error`로 감쌀 수 있다.
-- Infrastructure code는 framework와 external library에 의존할 수 있다.
-- 기술에 결합돼 있다는 것 자체가 infrastructure로 분류되는 기준은 아니다 — 기술에 결합된 adapter가 Presentation Layer에 속하는 경우는 아래 노트를 참고한다.
+- Infrastructure는 아웃바운드(driven) 어댑터 레이어다.
+  - Application 소유 port 또는 domain/application 계약을 구현해 구체 기술에 접근한다.
+  - 어댑터 이름과 구조는 [infrastructure 컨벤션](./infrastructure.md)을 따른다.
+- Infrastructure 코드는 어댑터 구현을 위해 `core`, domain, application, `kernels/infrastructure`, framework,
+  외부 라이브러리에 의존할 수 있다.
+- Infrastructure 코드는 presentation이나 platform 시작 코드에 의존해서는 안 된다.
+- 어댑터 코드는 기술별 오류에 맥락을 추가할 때 `cause`가 있는 `Error`로 감쌀 수 있다.
+  - 오류 소유권과 변환은 [오류 정책](../operability/error.md)을 따른다.
 
 ### Presentation Layer
 
-- Presentation layer는 **inbound(driving) adapter layer**다: 프로세스 외부에서 오는 트리거를 받아 application-owned port 없이 application use case를 직접 호출한다.
-- 프로토콜 지향 entry point(HTTP controller, GraphQL resolver, request/response DTO, protocol mapper, HTTP error mapper)뿐 아니라, 같은 방식으로 application flow를 구동하는 non-protocol inbound trigger(큐/메시지 consumer, scheduled job trigger)도 포함한다. 판별 기준은 "HTTP인가"가 아니라 "이게 자기 주도로 application을 호출하는가"이다.
-- Presentation code는 application use case를 호출한다.
-- 외부 프로토콜을 다루는 presentation code는 protocol exception을 protocol response로 변환하고 masking policy를 적용한다 — 이건 non-protocol trigger에는 해당하지 않는다 (예: 큐 consumer는 변환할 protocol response가 없다).
-- Presentation code는 domain, infrastructure, vendor, system exception detail을 client에 직접 노출하지 않는 것이 좋다.
-- Presentation code는 framework(큐 client library 같은 non-protocol framework 포함)와 protocol library에 의존할 수 있다.
+- Presentation은 인바운드(driving) 어댑터 레이어다.
+  - 외부 트리거를 받아 application 소유 port 없이 application 유스 케이스를 호출한다.
+- Presentation 코드는 `core`, application, `kernels/presentation`, framework, protocol library에 의존할 수 있다.
+- Presentation 코드는 infrastructure 구현체, 데이터베이스 어댑터, SDK 어댑터에 의존해서는 안 된다.
+- Presentation에는 프로토콜 진입점과 비프로토콜 인바운드 트리거가 포함된다.
+  - 프로토콜 진입점에는 HTTP controller, GraphQL resolver, DTO, protocol mapper, HTTP error mapper가 있다.
+  - 비프로토콜 트리거에는 큐/message consumer와 scheduled job trigger가 있다.
+  - HTTP 사용 여부가 아니라 어댑터가 application 호출을 시작하는지로 분류한다.
+- 프로토콜을 처리하는 presentation 코드는 protocol exception을 응답으로 변환하고 masking 정책을 적용한다.
+  - 비프로토콜 트리거에는 변환할 protocol response가 없다.
+  - Masking과 예외 변환은 [오류 정책](../operability/error.md)을 따른다.
 
-### 기술에 결합된 adapter를 Presentation과 Infrastructure 중 어디에 둘지 판단하기
+### 기술 결합 어댑터 분류
 
-두 layer 모두 framework와 external library에 의존할 수 있으므로, "이게 기술 X를 다루는가"는 layer를 결정하지 않는다. 대신 물어야 할 질문은 **이 adapter가 application을 호출하는가(driving), 아니면 application이 정의한 interface를 구현하는가(driven)** 이다.
+- 기술 결합 어댑터는 사용하는 기술이 아니라 방향으로 분류한다.
+  - Application 호출을 시작하는 어댑터는 driving이며 presentation에 속한다.
+  - Application 소유 port를 구현하는 어댑터는 driven이며 infrastructure에 속한다.
+  - 큐 consumer는 presentation이고, 큐 dispatcher 또는 producer는 infrastructure다.
+- 두 방향의 책임이 다르므로 같은 기술이 한 기능의 양쪽에 나타날 수 있다.
 
-- 큐 **consumer**는 job을 받아 application use case를 직접 호출한다 → controller와 마찬가지로 presentation.
-- 큐 **dispatcher/producer**는 application-owned port(예: `EmbedResultDispatcher`)를 구현해서 job을 enqueue한다 → repository와 마찬가지로 infrastructure.
+### 배선 영역
 
-같은 기술이 하나의 기능 안에서도 서로 다른 파일로 양쪽에 다 나타날 수 있다 — 두 방향이 실제로 서로 다른 책임이기 때문이다.
+- 바운디드 컨텍스트 루트 배선 모듈은 해당 컨텍스트의 application, presentation, infrastructure 코드를
+  import할 수 있다.
+  - 다른 컨텍스트의 내부 구현을 임의로 조립해서는 안 된다.
+- `platform`은 시작과 모듈 배선을 위해 바운디드 컨텍스트, 어댑터, kernel, `core`, framework, 외부 runtime
+  library를 import할 수 있다.
+  - 얇은 `src/main.ts` 진입점을 제외하고 `platform` 밖 production 코드는 `platform`을 import해서는 안 된다.
 
 ### Kernel Directory
 
-- `kernels/domain`은 domain-layer 공통 policy와 여러 bounded context가 의도적으로 공유하는 stable domain concept를 담는다.
-- `kernels/application`은 application-layer 공통 contract만 담는다.
-- `kernels/infrastructure`는 infrastructure 공통 adapter policy만 담는다.
-- `kernels/presentation`은 presentation-layer 공통 policy만 담는다.
-- Kernel directory는 `core`에 의존할 수 있다.
-- Kernel directory는 bounded context, platform code, framework code, outer layer에 의존해서는 안 된다.
-- Kernel directory는 generic utility bucket이 되어서는 안 된다.
-- Feature-specific policy는 소유 bounded context 내부에 둔다.
+- Kernel 디렉터리는 `core`에 의존할 수 있다.
+- Kernel 디렉터리는 바운디드 컨텍스트, platform, framework 또는 외부 레이어에 의존해서는 안 된다.
+- 기능별 정책은 소유하는 바운디드 컨텍스트 내부에 둔다.
+  - Kernel 디렉터리를 일반적인 유틸리티 모음으로 만들면 안 된다.
 
-### EventEmitter 예외
+### Event Emitter 예외
 
-`kernels/domain`과 domain layer code는 명시적 예외로 Node.js `EventEmitter` 계열에 의존할 수 있다.
-`EventEmitter2`와 같은 라이브러리는 Node 내장 `EventEmitter`의 얇은 확장이므로, framework나 external SDK 의존성이 아닌 Node.js runtime의 일부로 간주한다.
+- Domain 코드와 `kernels/domain`은 명시적 예외로 Node.js 내장 `EventEmitter`에 의존할 수 있다.
+  - 이 예외는 framework event emitter를 포함하지 않는다.
+- Application 코드는 application event와 domain event를 발행하거나 처리할 때만 `@nestjs/event-emitter`에
+  의존할 수 있다.
+  - 이 예외는 application 코드에서 다른 NestJS runtime 의존성을 허용하지 않는다.

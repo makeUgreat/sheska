@@ -5,169 +5,196 @@ audience: both
 applies_to:
   - apps/api
 translation: ../ko/test.md
+read_when:
+  - Choosing an API test type, location, case structure, double, fixture, or command.
 related:
-  - ./architecture/architecture.md
-  - ./index.md
+  - ./architecture/source-dependency.md
+  - ./persistence/persistence.md
+  - ./operability/error.md
 ---
 
 # API Test Convention
 
-The API app uses Vitest and separates unit tests from integration tests.
-Write integration tests when the test must verify observable behavior across real boundaries, such as framework routing, actual HTTP responses, real adapter modules, or external dependencies.
-
 ## Scope
 
-- Use this document when choosing test type, test file placement, test case shape, or API test commands.
+- The API app uses Vitest and separates unit tests from integration tests.
+- Use the cheapest test layer that can prove the behavior reliably.
+  - Use a unit test for behavior owned by one unit with controlled collaborators.
+  - Use an integration test for observable behavior that requires an assembled boundary.
+- Follow the [source dependency convention](./architecture/source-dependency.md) for test import boundaries.
 
 ## Test Tooling
 
-- `apps/api` tests MUST use Vitest.
-- Keep Vitest configuration centralized in `apps/api/vitest.config.ts` with named `test.projects`.
-  Add a new test boundary as a named project unless Vitest or another tool requires a separate config file.
+- API tests MUST use Vitest.
+- Keep configuration in `apps/api/vitest.config.ts` with named `test.projects`.
+- Add a named project when a boundary needs distinct inclusion rules, setup, timeouts, or runtime dependencies.
+- Follow the configured filename patterns:
+  - Unit tests: `src/**/*.spec.ts`.
+  - Integration tests: `test/**/*.integration-spec.ts` or `test/**/*.e2e-spec.ts`.
 
 ## Test Case Design
 
-- Prefer the target name in `describe()`.
-- `it()` test case names should be written primarily in Korean so the behavior intent stays easy for the team to review. Keep routes, code identifiers, and technical terms in their original language when that is clearer.
-- Each `it()` should call one unit of work and verify one specific behavior result.
-- Keep status code, body, and header assertions in the same `it()` when they verify the same execution result.
-- Split `it()` blocks when the execution path or expected result differs, such as success, failure, exception, boundary value, authentication/authorization, or validation.
-- Avoid sharing state between tests. If a shared resource is required, create it in `beforeEach` and clean it up in `afterEach`.
-- Tests must produce the same result under the same conditions.
+- Name the outer `describe()` after the target under test.
+- Write `it()` names primarily in Korean.
+  - Keep routes, code identifiers, and technical terms in their original language when clearer.
+- Each `it()` SHOULD execute one behavior and verify one result.
+  - Keep status, body, and header assertions together when they describe the same response.
+  - Split cases when the execution path or expected outcome differs.
+- Assert observable results and collaborator interactions, not private helper call order.
+- Tests MUST be deterministic and MUST NOT depend on state left by another test.
+  - Create and clean up isolated state with the narrowest suitable lifecycle hooks.
 
 ## Test Doubles
 
-- Test code MAY depend on Vitest helpers such as `vi.fn()`, `vi.spyOn()`, mock return configuration, and mock assertions to build and inspect test doubles.
-- Prefer test-library mocks over bespoke stub classes when a dependency only needs configured return values, call verification, or simple error injection.
-- Use a hand-written fake or stub class when the test double needs meaningful state, shared behavior across methods, or a domain-specific in-memory implementation that would be harder to read as a group of mock functions.
-- Keep test doubles at the cheapest useful scope. Define them inside the spec file by default, and extract shared factories only when multiple tests need the same behavior.
-- In integration tests, use test doubles only for collaborators outside the boundary being verified. Do not mock the adapter, runtime dependency, or framework wiring that the integration test exists to prove.
-- For boundary-specific integration tests under `test/{boundary}/`, the boundary directory identifies the real dependency under verification. Replace unrelated boundary adapters with test doubles unless the test is explicitly about their boundary.
+- Vitest helpers such as `vi.fn()` and `vi.spyOn()` MAY be used to create and inspect test doubles.
+- Prefer mocks for configured returns, call verification, or simple error injection.
+- Use a hand-written fake or stub when the double needs meaningful state or shared behavior across methods.
+- Keep a double in its spec by default.
+  - Extract a shared factory only when multiple specs require the same behavior.
+- In integration tests, replace only collaborators outside the boundary under test.
+  - Keep the adapter, framework wiring, or runtime dependency that the test exists to prove real.
 
-## Test Fixtures and Factories
+## Fixtures and Helpers
 
-- Keep a fixture or helper inside the spec file by default. Extract it only when multiple specs need the same setup shape or when repeated setup hides the behavior under test.
-- Use `buildX` for pure fixture factories that only create in-memory values, domain objects, DTOs, rows, or test doubles without external I/O or persistence side effects.
-- Use `createX` only when the helper persists data, starts runtime resources, or otherwise changes external state.
-- Use `setupX` for helpers that assemble a test environment, such as a Nest application, testing module, mock group, or boundary runtime.
-- Context-wide fixtures shared by unit and integration tests SHOULD live under `test/contexts/{context}/fixtures/`.
-- Boundary-specific fixtures SHOULD live under the matching boundary directory, such as `test/postgres/contexts/{context}/fixtures/`.
-- Keep helpers shared by multiple integration boundaries under `test/support/`.
-- Do not add a test path alias only to shorten imports. Use relative imports unless the source dependency convention intentionally introduces a test-specific alias.
+- Keep a fixture or helper in its spec unless reuse or repeated setup justifies extraction.
+- Name helpers by side effect:
+  - `buildX`: create in-memory values, domain objects, DTOs, rows, or doubles without external I/O.
+  - `createX`: persist data, start a runtime resource, or otherwise change external state.
+  - `setupX`: assemble a Nest app, testing module, mock group, or boundary runtime.
+- Place extracted helpers by ownership:
+  - Shared domain fixtures: `test/support/domains/fixtures/`.
+  - Boundary fixtures: `test/adapters/{boundary}/{context}/fixtures/`.
+  - Boundary setup: `test/adapters/{boundary}/support/`.
+  - Helpers shared across integration boundaries: `test/support/`.
+- Do not add a test path alias only to shorten imports.
 
-## Test Layers
+## Unit Tests
 
-### Unit Tests
+### Placement and Scope
 
-- Prefer placing unit tests in a `__tests__` directory inside the target file's directory. Example: `apps/api/src/contexts/sources/domain/__tests__/source-fingerprint.vo.spec.ts`
-- Target pure services, functions, controllers without HTTP transport, and small units of business logic.
-- Unit tests should cover representative edge cases, boundary values, invalid shapes, error paths, immutability, identity/equality behavior, and meaningful default behavior when those cases define the unit's contract. Prefer proving these details at the unit level instead of pushing them into slower integration tests.
-- Do not use an HTTP server, actual Nest application startup, or external I/O.
-- Create required dependencies directly or replace them with lightweight mocks/stubs.
-- Use a Nest testing module only when DI configuration must be verified.
+- Place unit specs in `__tests__` beside the target source files.
+  - Example: `src/contexts/sources/domain/__tests__/source-content.vo.spec.ts`.
+- Unit tests MUST NOT start an HTTP server, a real Nest application, or external I/O.
+- Construct the target directly and replace its collaborators with lightweight doubles.
+- Use a Nest testing module only when DI metadata or module configuration is the behavior under test.
 
-#### Domain Unit Tests
+### Domain Tests
 
-- Domain unit tests should focus on behavior and invariants owned by the domain object or domain service.
-- For value objects and domain values, prioritize valid construction, normalization, invariant violations, boundary values, equality or identity behavior, and immutability only when it is an explicit contract.
-- For aggregates and entities, prioritize lifecycle creation and restoration, state transitions, consistency boundary protection, domain event emission, and thrown domain errors for invalid domain actions.
-- Express cases in domain language. Do not shape domain tests around DTO, persistence, or API scenarios unless that shape is itself a domain concept.
+- Test behavior and invariants owned by the domain object or service.
+- For value objects, prioritize:
+  - Construction and normalization.
+  - Invariant violations and boundary values.
+  - Equality, identity, and explicit immutability guarantees.
+- For aggregates and entities, prioritize:
+  - Creation and restoration.
+  - State transitions and consistency boundaries.
+  - Domain events and errors from invalid actions.
+- Express cases in domain language rather than DTO, persistence, or API scenarios.
 
-#### Use Case Unit Tests
+### Use Case Tests
 
-- Use case unit tests should be written as cases that reveal the application flow the use case coordinates. Split cases by business situation, make each orchestration branch explicit through inputs and collaborator outcomes, and assert the resulting decision or side effect instead of private helper call order.
-- Prioritize application-level decisions, such as command interpretation, branching by repository or port results, domain result propagation, required persistence or external port calls, and error mapping owned by the use case.
-- Replace collaborators with mocks or stubs at the port boundary. Configure collaborator outcomes to make each orchestration branch explicit, then assert the final result and observable port interactions.
-- Do not repeat detailed domain invariants or adapter storage behavior in use case unit tests. Keep those in domain unit tests or boundary integration tests.
+- Make each orchestration branch explicit through inputs and port outcomes.
+- Verify application-owned decisions:
+  - Command interpretation and branching.
+  - Domain result propagation.
+  - Required persistence or external-port interactions.
+  - Error mapping owned by the use case.
+- Do not repeat detailed domain invariants or adapter storage behavior.
 
 ### Shared Contract Tests
 
-- Shared contracts, base classes, kernel helpers, and reusable policies should have especially thorough unit tests for the behavior they own.
-- A shared contract test should prove the reusable guarantee once with minimal representative implementations, fixtures, or subclasses.
-- Concrete implementations that rely on a shared contract should not repeat inherited or delegated contract tests. They should test only their own validation, configuration, overrides, composition, and domain-specific behavior.
-- If a concrete implementation overrides, narrows, or extends shared contract behavior, test both the implementation-specific behavior and compatibility with the shared contract expectation.
-- When reviewing coverage, prefer moving duplicated implementation tests up to the shared contract test when the behavior belongs to the shared abstraction.
+- Test reusable guarantees of base classes, kernel helpers, and shared policies once at their owner.
+- Use minimal representative implementations, fixtures, or subclasses.
+- Concrete implementations SHOULD test only their own validation, configuration, composition, and overrides.
+  - Retest the shared guarantee when an override narrows or extends it.
 
-### Integration Tests
+## Integration Tests
 
-- Prefer splitting integration spec files by boundary, context, and architecture layer. For example, use `apps/api/test/http/contexts/sources/presentation/sources-http.controller.integration-spec.ts` for an HTTP controller adapter, and `apps/api/test/postgres/contexts/sources/infrastructure/persistence/source.repository.integration-spec.ts` for a Postgres-backed repository adapter.
-- Use integration tests to verify interactions that unit tests cannot cover, such as routing, request and response handling, real adapter contract behavior, and real external dependency behavior.
-- If a test uses hard-to-control elements such as an actual network, REST API, system time, file system, or database, separate it as an integration test instead of a unit test.
-- Do not use integration tests to repeat every domain or application invariant. Keep detailed domain and application rule coverage in unit tests, and use integration tests for observable boundary behavior such as request and response shape, validation pipe behavior, framework routing, adapter wiring observed through a route or port contract, and repository save/find contracts.
-- Nest app integration test files should create the app in `beforeEach` and close it in `afterEach` when the app is initialized.
-- The outer `describe()` should name the integrated target.
-- For route tests, the inner `describe()` should usually be the controller method and route. Example: `describe('GET /')`.
+### Purpose
 
-#### Integration Boundary Layout
+- Use integration tests for behavior that only an assembled boundary can prove, such as:
+  - Framework routing, request parsing, response shaping, and exception filters.
+  - Real adapter modules and application-owned port contracts.
+  - Database schemas, constraints, ORM queries, transactions, and upserts.
+  - Message brokers, external APIs, and other real runtime dependencies.
+- Using a controllable clock or in-memory filesystem does not by itself require an integration test.
+- Do not repeat every domain or application rule at the integration layer.
 
-Group integration specs under `test/{boundary}/`.
-The boundary directory names the protocol or runtime dependency under verification, such as HTTP, Postgres, Redis, object storage, a message broker, or a real external API.
-Nest one level deeper to name the bounded context: `test/{boundary}/{context}/`.
-Use the filename to identify the target; do not mirror the source architecture layer in the path.
-For example, prefer `test/postgres/sources/upload-source.use-case.integration-spec.ts` over encoding the layer path in the directory.
+### Layout
 
-Use `test/domains/fixtures/` for shared domain fixtures and helpers that are not owned by one integration boundary.
-Use `test/{boundary}/{context}/fixtures/` for boundary-specific fixtures.
-Place boundary-specific setup and support files under `test/{boundary}/support/`.
-Keep helpers shared by multiple integration boundaries under `test/support/`.
+- Put adapter integration specs under `test/adapters/{boundary}/{context}/`.
+  - Boundaries currently include `http`, `local`, `postgres`, `redis`, and `ollama`.
+  - Use `platform` as the context for app-wide platform behavior.
+  - Identify the target in the filename; do not mirror source-layer directories.
+  - Example: `test/adapters/postgres/sources/source.repository.integration-spec.ts`.
+- Put tool and static-policy integration specs under `test/static/{tool}/`.
+- Keep reusable runtime orchestration under `test/runtime/`.
 
-#### Adapter Boundary Scope
+### Boundary Ownership
 
-Adapter integration tests should target the application-owned port or protocol contract through the real adapter implementation and any required external dependency.
+- The boundary directory identifies the primary real dependency under test.
+- Keep that boundary real and replace unrelated external boundaries with test doubles.
+  - HTTP tests verify routing and response behavior with downstream collaborators controlled.
+  - Postgres tests verify database wiring and query behavior without requiring a real queue.
+- The same entry point MAY appear under multiple boundaries when each test proves a different responsibility.
+- Name the test after the boundary-owned behavior, not an incidental result.
+- Cross-boundary smoke tests MAY use several real dependencies only to prove production composition.
+  - Keep them few, make the broader scope explicit, and prefer happy paths.
 
-Split adapter test coverage by ownership of the behavior under test.
-Unit tests should cover behavior owned by the adapter code itself, such as mapping between external or persistence shapes and domain objects, preserving domain restoration exceptions, wrapping adapter or infrastructure exceptions with useful context, and adapter-specific branching that can be proven without real external I/O.
-Integration tests should cover behavior that only becomes meaningful when the selected boundary is assembled, such as real database schema and constraint behavior, ORM query compatibility, transaction or upsert behavior, and repository save/find contracts observed through the real adapter module.
+### Adapter Coverage
 
-When an adapter wraps errors thrown by an external dependency, the unit test should cover the wrapping behavior: given some thrown value, assert the resulting InfrastructureException kind, code, source, and the serializable shape of `cause`. The unit test may inject any convenient error value for this. A matching integration test in the boundary directory should cover at least one real failure path — such as an unreachable host or a refused connection — to anchor what the dependency actually throws at runtime. The real error shape is a contract imposed by the runtime, not the adapter, and cannot be established without a real call. This is the specific case described in the general rule at Boundary Ownership and Overlap: real dependency failure cases belong in that dependency boundary only when the behavior cannot be proven reliably without the real dependency.
+- Unit-test behavior owned by adapter code:
+  - Mapping between external or persistence shapes and domain objects.
+  - Preservation of domain restoration exceptions.
+  - Infrastructure error wrapping and adapter-specific branching.
+- Integration-test behavior imposed by the real dependency:
+  - Schema and constraint behavior.
+  - ORM and protocol compatibility.
+  - Transaction, upsert, connection, and real failure behavior.
+- When an adapter wraps dependency errors:
+  - Unit-test the resulting `InfrastructureException` kind, code, source, and `cause` shape.
+  - Add a real failure case only when the dependency's runtime error shape is part of the required contract.
+  - Follow the [error policy](./operability/error.md) for exception ownership.
+- Limited overlap is acceptable when tests prove different owners of the same observable result.
 
-Prefer proving each behavior at the cheapest test layer that can prove it reliably.
-Do not repeat detailed domain, application, or mapper invariant cases in integration tests only because the adapter participates in the flow.
-Integration tests may overlap with unit tests only when the same observable result proves a different responsibility, such as verifying that a real database constraint produces the repository exception behavior already covered with a fake database in unit tests.
+### Runtime Lifecycle
 
-#### Boundary Ownership and Overlap
-
-The integration test boundary directory defines the primary real boundary under verification.
-Do not decide the test scope only from the entry point being called.
-The same route, controller, use case, or port may appear in more than one integration boundary when each test proves a different responsibility.
-
-Within a boundary-specific integration test, keep the primary boundary real and replace unrelated external boundaries with test doubles.
-For example, an HTTP health test under `test/http/` should verify route matching, status codes, response body shape, and exception-filter mapping with database and queue collaborators mocked.
-A Postgres health test under `test/postgres/` should verify the real database module, provider wiring, and query compatibility, while mocking queue collaborators unless the test is explicitly about the queue boundary.
-
-Test names in boundary-specific integration tests should describe the responsibility owned by that boundary, not just the shared entry point or an incidental observable result.
-For example, a Postgres health test may call `GET /health`, but its `describe()` and `it()` names should emphasize real Postgres wiring or query compatibility rather than HTTP status codes or response body shape.
-
-Failure cases belong at the cheapest layer that owns the behavior.
-Protocol error mapping and response shape failures usually belong in the protocol boundary test with controlled test doubles.
-Real dependency failure cases belong in that dependency boundary only when the behavior cannot be proven reliably without the real dependency, such as real database constraint behavior, transaction behavior, connection setup, or ORM query compatibility.
-
-Cross-boundary smoke tests that use several real external dependencies are allowed only when they prove production composition rather than a single adapter contract.
-Keep them few, prefer happy-path coverage, and place or name them so the broader scope is explicit.
+- Initialize and close every Nest app or application context created by a spec.
+- Use `beforeEach` and `afterEach` when each case requires a fresh runtime or isolated mutable state.
+- Use `beforeAll` and `afterAll` when the runtime can be shared safely and test data remains isolated.
 
 ## Commands
 
-```bash
-pnpm --filter @sheska/api lint:check         # ESLint checks
-pnpm --filter @sheska/api typecheck          # TypeScript type checking
-pnpm --filter @sheska/api test:unit          # Unit tests
-pnpm --filter @sheska/api test:integration:local # Local integration tests that do not require Postgres, Redis, or Ollama
-pnpm --filter @sheska/api test:integration:postgres # Postgres-backed integration tests
-pnpm --filter @sheska/api test:integration:redis # Redis-backed integration tests
-pnpm --filter @sheska/api test:integration:ollama # Ollama-backed integration tests
-pnpm --filter @sheska/api test:integration   # All integration tests
-pnpm --filter @sheska/api test:integration:all # All integration tests
-pnpm --filter @sheska/api test:runtime:start # Start the reusable test runtime for consumer workspaces
-pnpm --filter @sheska/api test:runtime:wait  # Wait until the test runtime is ready
-pnpm --filter @sheska/api test:runtime:url   # Print the test runtime base URL
-pnpm --filter @sheska/api test:runtime:stop  # Stop the test runtime and owned dependencies
-pnpm --filter @sheska/api test               # Unit tests, then all integration tests
-pnpm --filter @sheska/api test:watch         # Vitest watch mode from the API package
-pnpm --filter @sheska/api test:cov           # Unit test coverage from the API package
-```
+- Static checks:
+  - `pnpm --filter @sheska/api lint:check`.
+  - `pnpm --filter @sheska/api typecheck`.
+- Unit tests:
+  - `pnpm --filter @sheska/api test:unit`.
+  - `pnpm --filter @sheska/api test:watch`.
+  - `pnpm --filter @sheska/api test:cov`.
+- Integration projects:
+  - `pnpm --filter @sheska/api test:integration:local`.
+  - `pnpm --filter @sheska/api test:integration:postgres`.
+  - `pnpm --filter @sheska/api test:integration:redis`.
+  - `pnpm --filter @sheska/api test:integration:ollama`.
+- All integration tests:
+  - `pnpm --filter @sheska/api test:integration:all`.
+  - `test:integration` is an alias of `test:integration:all`.
+- Full API test suite:
+  - `pnpm --filter @sheska/api test`.
+- Reusable test runtime:
+  - `pnpm --filter @sheska/api test:runtime:start`.
+  - `pnpm --filter @sheska/api test:runtime:wait`.
+  - `pnpm --filter @sheska/api test:runtime:url`.
+  - `pnpm --filter @sheska/api test:runtime:stop`.
+- Set `SHESKA_TEST_RUNTIME_ID` when running multiple API test runtimes concurrently.
+  - Use the same ID for every runtime command in one lifecycle.
+- Before a PR, run the checks and test projects affected by the change.
 
-Set `SHESKA_TEST_RUNTIME_ID` when running more than one API test runtime concurrently.
-Use the same runtime id for `test:runtime:start`, `test:runtime:wait`, `test:runtime:url`, and `test:runtime:stop`.
+## Review Checks
 
-Before opening a PR, run the checks that match the scope of the change.
-If only isolated services or functions changed, run `pnpm --filter @sheska/api lint:check`, `pnpm --filter @sheska/api typecheck`, and `pnpm --filter @sheska/api test:unit`.
+- Is the behavior tested at the cheapest layer that can prove it?
+- Does the test location match the configured Vitest project and real boundary?
+- Are doubles limited to collaborators outside the behavior under test?
+- Are fixtures and runtime resources isolated and cleaned up?
+- Does each case describe one distinct behavior result?

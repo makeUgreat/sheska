@@ -16,7 +16,7 @@ related:
 
 # API Architecture Convention
 
-This document is the API architecture map; use the linked documents for detailed rules.
+- This document is the API architecture map; use the linked documents for detailed rules.
 
 ## Scope
 
@@ -25,14 +25,17 @@ This document is the API architecture map; use the linked documents for detailed
 
 ## Architecture Axes
 
-API architecture is described across two axes:
+- API architecture is described across two axes:
+  - DDD model boundaries define where a model, language, and responsibility are valid.
+  - Dependency and layer boundaries define which code may depend on which other code.
 
-- DDD model boundaries define where a model, language, and responsibility are valid.
-- Dependency and layer boundaries define which code may depend on which other code.
+- Split `presentation` and `infrastructure` by inbound/outbound (driving/driven) role, not by protocol vs. technology.
+  - `presentation` is whatever calls into application on its own initiative, including HTTP controllers and non-protocol triggers like queue consumers or scheduled jobs.
+  - `infrastructure` is whatever implements an application-owned port to reach a technology, including repositories and queue dispatchers/producers.
+  - The same technology can appear on both sides in different files.
+  - See the source dependency convention's Presentation/Infrastructure Layer sections for the full rule.
 
-`presentation` and `infrastructure` are split by inbound/outbound (driving/driven) role, not by protocol vs. technology: presentation is whatever calls into application on its own initiative (HTTP controllers, but also non-protocol triggers like queue consumers or scheduled jobs), and infrastructure is whatever implements an application-owned port to reach a technology (repositories, but also queue dispatchers/producers). The same technology can appear on both sides in different files. See the source dependency convention's Presentation/Infrastructure Layer sections for the full rule.
-
-Read the error policy when defining, transforming, masking, or exposing application errors, exceptions, protocol error responses, or system errors.
+- Read the error policy when defining, transforming, masking, or exposing application errors, exceptions, protocol error responses, or system errors.
 
 ## Related Documents
 
@@ -45,7 +48,7 @@ Read the error policy when defining, transforming, masking, or exposing applicat
 
 ## Source Boundaries
 
-The high-level API source boundaries are:
+- The high-level API source boundaries are:
 
 ```text
 src/
@@ -66,9 +69,9 @@ src/
       presentation/
 ```
 
-This map names architectural boundaries, not a complete folder contract.
-Create lower-level directories and layer folders only when code needs them.
-Subdirectories inside context layers, `platform/nest`, and `kernels` may differ by feature, adapter type, or framework need.
+- This map names architectural boundaries, not a complete folder contract.
+- Create lower-level directories and layer folders only when code needs them.
+- Subdirectories inside context layers, `platform/nest`, and `kernels` may differ by feature, adapter type, or framework need.
 
 ## Directory Reading Rules
 

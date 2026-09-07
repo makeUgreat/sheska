@@ -6,169 +6,196 @@ applies_to:
   - apps/api
 source: ../en/test.md
 last_synced: 2026-09-07
+read_when:
+  - API 테스트 종류, 위치, case 구조, test double, fixture, 명령을 선택할 때.
 related:
-  - ./architecture/architecture.md
-  - ./index.md
+  - ./architecture/source-dependency.md
+  - ./persistence/persistence.md
+  - ./operability/error.md
 ---
 
 # API 테스트 컨벤션
 
-API 앱은 Vitest를 사용하며 단위 테스트와 통합 테스트를 분리한다.
-Framework routing, 실제 HTTP 응답, 실제 adapter module, 외부 dependency처럼 실제 boundary를 넘는 관찰 가능한 동작을 검증해야 할 때 통합 테스트를 작성한다.
-
 ## 적용 범위
 
-- Test type, test file placement, test case shape, API test command를 선택할 때 이 문서를 사용한다.
+- API 앱은 Vitest를 사용하며 단위 테스트와 통합 테스트를 분리한다.
+- 동작을 신뢰성 있게 증명할 수 있는 가장 저렴한 테스트 계층을 사용한다.
+  - 하나의 unit이 소유한 동작을 통제된 collaborator로 검증할 때는 단위 테스트를 사용한다.
+  - 조립된 boundary가 필요한 관찰 가능한 동작에는 통합 테스트를 사용한다.
+- 테스트 import 경계는 [source dependency 컨벤션](./architecture/source-dependency.md)을 따른다.
 
 ## 테스트 도구
 
-- `apps/api` 테스트는 반드시 Vitest를 사용한다.
-- Vitest 설정은 named `test.projects`를 사용하는 `apps/api/vitest.config.ts`에 모아둔다.
-  Vitest나 다른 도구가 별도 config file을 요구하는 경우가 아니라면 새 test boundary는 named project로 추가한다.
+- API 테스트는 반드시 Vitest를 사용한다.
+- Named `test.projects`를 사용하는 `apps/api/vitest.config.ts`에 설정을 모아둔다.
+- 포함 규칙, setup, timeout, runtime dependency가 별도로 필요한 boundary는 named project로 추가한다.
+- 설정된 파일 이름 패턴을 따른다.
+  - 단위 테스트: `src/**/*.spec.ts`.
+  - 통합 테스트: `test/**/*.integration-spec.ts` 또는 `test/**/*.e2e-spec.ts`.
 
 ## 테스트 케이스 설계
 
-- `describe()`에는 테스트 대상 이름을 사용하는 것을 선호한다.
-- `it()` 테스트 케이스 이름은 팀이 동작 의도를 쉽게 검토할 수 있도록 한글 중심으로 작성해야 한다. Route, code identifier, technical term은 더 명확하다면 원문 언어를 유지할 수 있다.
-- 각 `it()`는 하나의 작업 단위를 호출하고 하나의 구체적인 동작 결과를 검증해야 한다.
-- 상태 코드, 본문, 헤더가 같은 실행 결과를 검증한다면 같은 `it()` 안에서 assertion한다.
-- 성공, 실패, 예외, 경계값, 인증/인가, validation처럼 실행 경로나 기대 결과가 다르면 `it()` 블록을 나눈다.
-- 테스트 사이에 상태 공유는 피한다. 공유 리소스가 필요하면 `beforeEach`에서 만들고 `afterEach`에서 정리한다.
-- 테스트는 같은 조건에서 항상 같은 결과를 내야 한다.
+- 바깥 `describe()`는 테스트 대상의 이름으로 작성한다.
+- `it()` 이름은 한글 중심으로 작성한다.
+  - Route, code identifier, technical term은 더 명확할 때 원문 언어를 유지한다.
+- 각 `it()`는 하나의 동작을 실행하고 하나의 결과를 검증하는 것이 좋다.
+  - 같은 응답을 설명하는 status, body, header 검증은 함께 둔다.
+  - 실행 경로나 기대 결과가 다르면 case를 나눈다.
+- Private helper 호출 순서가 아니라 관찰 가능한 결과와 collaborator interaction을 검증한다.
+- 테스트는 결정적이어야 하며 다른 테스트가 남긴 상태에 의존해서는 안 된다.
+  - 가장 좁고 적합한 lifecycle hook으로 격리된 상태를 만들고 정리한다.
 
 ## Test Double
 
-- Test code는 test double을 만들고 검증하기 위해 `vi.fn()`, `vi.spyOn()`, mock return 설정, mock assertion 같은 Vitest helper에 의존할 수 있다.
-- Dependency가 설정된 반환값, 호출 검증, 단순 error injection만 필요로 한다면 별도 stub class보다 test-library mock을 선호한다.
-- Test double에 의미 있는 상태, 여러 method가 공유하는 behavior, 또는 mock function 묶음보다 읽기 쉬운 domain-specific in-memory 구현이 필요하다면 직접 작성한 fake 또는 stub class를 사용한다.
-- Test double은 유용한 가장 좁은 범위에 둔다. 기본적으로 spec file 안에 정의하고, 여러 테스트가 같은 behavior를 필요로 할 때만 shared factory로 추출한다.
-- 통합 테스트에서는 검증하려는 boundary 바깥의 collaborator에만 test double을 사용한다. 통합 테스트가 증명하려는 adapter, runtime dependency, framework wiring 자체는 mock으로 대체하지 않는다.
-- `test/{boundary}/` 아래의 boundary-specific integration test에서는 boundary directory가 검증 대상인 실제 dependency를 나타낸다. 해당 boundary를 명시적으로 테스트하는 경우가 아니라면 관련 없는 boundary adapter는 test double로 대체한다.
+- `vi.fn()`, `vi.spyOn()` 같은 Vitest helper로 test double을 만들고 검증해도 된다.
+- 반환값 설정, 호출 검증, 단순 오류 주입에는 mock을 우선 사용한다.
+- 여러 메서드가 공유하는 의미 있는 상태나 동작이 필요하면 직접 작성한 fake 또는 stub을 사용한다.
+- Test double은 기본적으로 해당 spec 안에 둔다.
+  - 여러 spec이 같은 동작을 필요로 할 때만 공용 factory를 추출한다.
+- 통합 테스트에서는 검증 boundary 바깥의 collaborator만 대체한다.
+  - 테스트가 증명하려는 adapter, framework wiring, runtime dependency는 실제 구현을 사용한다.
 
-## 테스트 Fixture와 Factory
+## Fixture와 Helper
 
-- Fixture 또는 helper는 기본적으로 spec file 안에 둔다. 여러 spec이 같은 setup shape를 필요로 하거나 반복 setup이 검증하려는 동작을 가릴 때만 추출한다.
-- `buildX`는 외부 I/O나 persistence side effect 없이 in-memory value, domain object, DTO, row, test double만 생성하는 순수 fixture factory에 사용한다.
-- `createX`는 data를 저장하거나 runtime resource를 시작하거나 외부 상태를 바꾸는 helper에만 사용한다.
-- `setupX`는 Nest application, testing module, mock group, boundary runtime 같은 test environment를 조립하는 helper에 사용한다.
-- 단위 테스트와 통합 테스트가 공유하는 context-wide fixture는 `test/contexts/{context}/fixtures/` 아래에 두는 것이 좋다.
-- Boundary-specific fixture는 `test/postgres/contexts/{context}/fixtures/`처럼 해당 boundary directory 아래에 두는 것이 좋다.
-- 여러 integration boundary가 공유하는 helper는 `test/support/` 아래에 둔다.
-- Import를 짧게 만들기 위해서만 test path alias를 추가하지 않는다. Source dependency convention에서 test-specific alias를 의도적으로 도입하기 전까지는 relative import를 사용한다.
+- 재사용이나 반복되는 setup 때문에 필요하지 않다면 fixture와 helper를 해당 spec 안에 둔다.
+- Side effect에 따라 helper 이름을 정한다.
+  - `buildX`: 외부 I/O 없이 메모리의 값, 도메인 객체, DTO, row, double을 만든다.
+  - `createX`: 데이터를 저장하거나 runtime resource를 시작하는 등 외부 상태를 바꾼다.
+  - `setupX`: Nest app, testing module, mock group, boundary runtime을 조립한다.
+- 추출한 helper는 소유권에 따라 배치한다.
+  - 공용 domain fixture: `test/support/domains/fixtures/`.
+  - Boundary fixture: `test/adapters/{boundary}/{context}/fixtures/`.
+  - Boundary setup: `test/adapters/{boundary}/support/`.
+  - 여러 integration boundary가 공유하는 helper: `test/support/`.
+- Import를 줄이기 위한 목적으로만 test path alias를 추가하지 않는다.
 
-## 테스트 계층
+## 단위 테스트
 
-### 단위 테스트
+### 배치와 범위
 
-- 단위 테스트는 대상 file의 directory 안에 있는 `__tests__` directory에 두는 것을 선호한다. 예: `apps/api/src/contexts/sources/domain/__tests__/source-fingerprint.vo.spec.ts`
-- 순수 서비스, 함수, HTTP transport 없는 controller, 작은 비즈니스 로직 단위를 대상으로 한다.
-- 대표적인 edge case, boundary value, invalid shape, error path, immutability, identity/equality behavior, 의미 있는 default behavior가 해당 unit의 contract를 정의한다면 단위 테스트에서 검증해야 한다. 이런 세부사항은 느린 통합 테스트로 미루기보다 단위 테스트 수준에서 증명하는 것을 선호한다.
-- HTTP 서버, 실제 Nest 애플리케이션 startup, 외부 I/O를 사용하지 않는다.
-- 필요한 dependency는 직접 만들거나 가벼운 mock/stub으로 대체한다.
-- DI 설정을 검증해야 할 때만 Nest testing module을 사용한다.
+- 단위 spec은 대상 source file 옆의 `__tests__`에 둔다.
+  - 예: `src/contexts/sources/domain/__tests__/source-content.vo.spec.ts`.
+- 단위 테스트는 HTTP server, 실제 Nest application, 외부 I/O를 시작해서는 안 된다.
+- 대상을 직접 생성하고 collaborator는 가벼운 test double로 대체한다.
+- DI metadata나 module 설정이 검증 대상일 때만 Nest testing module을 사용한다.
 
-#### Domain 단위 테스트
+### 도메인 테스트
 
-- Domain 단위 테스트는 domain object 또는 domain service가 소유한 behavior와 invariant에 집중한다.
-- Value object와 domain value는 valid construction, normalization, invariant violation, boundary value, equality 또는 identity behavior를 우선적으로 검증하고, immutability는 명시적인 contract일 때만 검증한다.
-- Aggregate와 entity는 lifecycle creation과 restoration, state transition, consistency boundary 보호, domain event emission, invalid domain action에 대한 thrown domain error를 우선적으로 검증한다.
-- Case는 domain language로 표현한다. DTO, persistence, API scenario의 shape가 domain concept 자체가 아니라면 그 shape를 중심으로 domain test를 작성하지 않는다.
+- 도메인 객체나 service가 소유한 동작과 invariant를 검증한다.
+- Value object에서는 다음 항목을 우선한다.
+  - 생성과 normalization.
+  - Invariant violation과 boundary value.
+  - Equality, identity, 명시적인 immutability 보장.
+- Aggregate와 entity에서는 다음 항목을 우선한다.
+  - 생성과 복원.
+  - 상태 전이와 consistency boundary.
+  - Domain event와 유효하지 않은 동작의 오류.
+- DTO, persistence, API scenario가 아니라 domain language로 case를 표현한다.
 
-#### Use Case 단위 테스트
+### Use Case 테스트
 
-- Use case 단위 테스트는 use case가 조율하는 application flow가 드러나는 case로 작성하는 것을 기본으로 한다. 비즈니스 상황별로 case를 나누고, 입력과 collaborator 결과로 orchestration branch를 명확히 드러내며, private helper 호출 순서보다 최종 decision 또는 side effect를 검증한다.
-- Command 해석, repository 또는 port 결과에 따른 branch, domain result 전파, 필요한 persistence 또는 external port 호출, use case가 소유한 error mapping 같은 application-level decision을 우선적으로 검증한다.
-- Collaborator는 port boundary에서 mock 또는 stub으로 대체한다. Collaborator outcome을 설정해 각 orchestration branch를 명확히 만들고, 최종 result와 관찰 가능한 port interaction을 검증한다.
-- 상세한 domain invariant나 adapter storage behavior를 use case 단위 테스트에서 반복하지 않는다. 그런 검증은 domain 단위 테스트나 boundary integration test에 둔다.
+- 입력과 port 결과를 통해 각 orchestration branch를 명확히 드러낸다.
+- Application이 소유한 판단을 검증한다.
+  - Command 해석과 분기.
+  - Domain result 전파.
+  - 필요한 persistence 또는 external port interaction.
+  - Use case가 소유한 error mapping.
+- 상세한 domain invariant나 adapter 저장 동작을 반복하지 않는다.
 
-### 공통 계약 테스트
+### 공용 계약 테스트
 
-- Shared contract, base class, kernel helper, reusable policy는 자신이 소유한 동작을 특히 촘촘한 단위 테스트로 검증해야 한다.
-- 공통 계약 테스트는 최소한의 대표 구현체, fixture, subclass를 사용해 재사용되는 보장을 한 번 증명해야 한다.
-- 공통 계약에 의존하는 구체 구현체는 상속받거나 위임한 contract test를 반복하지 않는다. 자신의 validation, configuration, override, composition, domain-specific behavior만 테스트한다.
-- 구체 구현체가 공통 계약 동작을 override하거나 좁히거나 확장한다면, 구현체 고유 동작과 공통 계약 기대와의 호환성을 모두 테스트한다.
-- Coverage를 review할 때 동작이 shared abstraction에 속한다면 중복된 구현체 테스트를 공통 계약 테스트로 올리는 것을 선호한다.
+- Base class, kernel helper, 공용 policy의 재사용 보장은 소유 위치에서 한 번 검증한다.
+- 최소한의 대표 implementation, fixture, subclass를 사용한다.
+- 구체 implementation은 자체 validation, configuration, composition, override만 검증하는 것이 좋다.
+  - Override가 공용 보장을 축소하거나 확장하면 해당 보장도 다시 검증한다.
 
-### 통합 테스트
+## 통합 테스트
 
-- Integration spec file은 boundary, context, architecture layer 기준으로 나누는 것을 선호한다. 예를 들어 HTTP controller adapter에는 `apps/api/test/http/contexts/sources/presentation/sources-http.controller.integration-spec.ts`, Postgres 기반 repository adapter에는 `apps/api/test/postgres/contexts/sources/infrastructure/persistence/source.repository.integration-spec.ts`를 사용한다.
-- Routing, request/response handling, 실제 adapter contract 동작, 실제 외부 dependency 동작처럼 단위 테스트로 다룰 수 없는 상호작용을 검증할 때 통합 테스트를 사용한다.
-- 실제 네트워크, REST API, 시스템 시간, 파일 시스템, 데이터베이스처럼 통제하기 어려운 요소를 사용하는 테스트는 단위 테스트가 아니라 통합 테스트로 분리한다.
-- 모든 domain 또는 application invariant를 통합 테스트에서 반복하지 않는다. 상세한 domain/application rule coverage는 단위 테스트에 두고, 통합 테스트는 request/response shape, validation pipe behavior, framework routing, route 또는 port contract를 통해 관찰되는 adapter wiring, repository save/find contract 같은 observable boundary behavior에 사용한다.
-- Nest app integration test file은 app을 초기화한다면 `beforeEach`에서 만들고 `afterEach`에서 닫아야 한다.
-- 바깥 `describe()`는 통합 대상 이름을 지정해야 한다.
-- Route test에서는 안쪽 `describe()`가 보통 controller method와 route를 나타내야 한다. 예: `describe('GET /')`.
+### 목적
 
-#### Integration Boundary 배치
+- 조립된 boundary에서만 증명할 수 있는 동작에 통합 테스트를 사용한다. 예시는 다음과 같다.
+  - Framework routing, request parsing, response shaping, exception filter.
+  - 실제 adapter module과 application-owned port contract.
+  - Database schema, constraint, ORM query, transaction, upsert.
+  - Message broker, external API, 그 밖의 실제 runtime dependency.
+- 제어 가능한 clock이나 in-memory filesystem을 쓴다는 이유만으로 통합 테스트가 되지는 않는다.
+- 모든 domain 또는 application rule을 통합 테스트에서 반복하지 않는다.
 
-통합 spec은 `test/{boundary}/` 아래로 묶는다.
-Boundary directory는 HTTP, Postgres, Redis, object storage, message broker, 실제 external API처럼 검증 대상인 protocol 또는 runtime dependency를 나타낸다.
-한 단계 더 내려가 bounded context를 나타낸다: `test/{boundary}/{context}/`.
-File name으로 target을 식별하며, source의 architecture layer를 경로에 미러링하지 않는다.
-예를 들어 `test/postgres/sources/upload-source.use-case.integration-spec.ts`처럼 layer 경로를 directory에 넣지 않는 쪽을 선호한다.
+### 배치
 
-`test/domains/fixtures/`는 특정 integration boundary에 속하지 않는 shared domain fixture와 helper에 사용한다.
-`test/{boundary}/{context}/fixtures/`는 boundary-specific fixture에 사용한다.
-Boundary-specific setup과 support file은 `test/{boundary}/support/` 아래에 둔다.
-여러 integration boundary가 공유하는 helper는 `test/support/` 아래에 둔다.
+- Adapter 통합 spec은 `test/adapters/{boundary}/{context}/`에 둔다.
+  - 현재 boundary는 `http`, `local`, `postgres`, `redis`, `ollama`다.
+  - 앱 공용 platform 동작의 context에는 `platform`을 사용한다.
+  - 파일 이름으로 대상을 식별하고 source layer directory를 그대로 만들지 않는다.
+  - 예: `test/adapters/postgres/sources/source.repository.integration-spec.ts`.
+- Tool과 정적 정책 통합 spec은 `test/static/{tool}/`에 둔다.
+- 재사용하는 runtime orchestration은 `test/runtime/`에 둔다.
 
-#### Adapter Boundary 범위
+### Boundary 소유권
 
-Adapter integration test는 실제 adapter implementation과 필요한 외부 dependency를 붙인 상태에서 application이 소유한 port 또는 protocol contract를 검증해야 한다.
+- Boundary directory는 테스트할 주된 실제 dependency를 나타낸다.
+- 해당 boundary는 실제 구현을 사용하고 관련 없는 external boundary는 test double로 대체한다.
+  - HTTP 테스트는 downstream collaborator를 통제하면서 routing과 response 동작을 검증한다.
+  - Postgres 테스트는 실제 queue 없이 database wiring과 query 동작을 검증한다.
+- 서로 다른 책임을 증명한다면 같은 entry point가 여러 boundary에 나타나도 된다.
+- 부수적으로 관찰되는 결과가 아니라 boundary가 소유한 동작으로 테스트 이름을 작성한다.
+- 여러 실제 dependency를 쓰는 cross-boundary smoke test는 production composition을 증명할 때만 허용한다.
+  - 수를 적게 유지하고 넓은 범위를 명시하며 happy path를 우선한다.
 
-Adapter test coverage는 검증하려는 동작의 소유자가 어디에 있는지를 기준으로 나눈다.
-단위 테스트는 adapter code 자체가 소유한 동작을 검증해야 한다. 예를 들어 external 또는 persistence shape와 domain object 사이의 mapping, domain restoration exception 보존, adapter 또는 infrastructure exception을 유용한 context로 감싸는 동작, 실제 외부 I/O 없이 증명할 수 있는 adapter-specific branching을 단위 테스트에서 다룬다.
-통합 테스트는 선택된 boundary가 조립되었을 때만 의미가 있는 동작을 검증해야 한다. 예를 들어 실제 database schema와 constraint 동작, ORM query compatibility, transaction 또는 upsert 동작, 실제 adapter module을 통해 관찰되는 repository save/find contract를 통합 테스트에서 다룬다.
+### Adapter 검증 범위
 
-Adapter가 외부 dependency에서 던진 error를 감싸는 경우, 단위 테스트는 wrapping behavior를 검증해야 한다. 즉, 어떤 값이 throw되었을 때 결과 InfrastructureException의 kind, code, source, 그리고 `cause`의 직렬화 가능한 shape를 assertion하는 것이다. 이때 단위 테스트는 편의상 임의의 error 값을 주입해도 된다. Boundary directory 안의 대응하는 통합 테스트는 도달할 수 없는 호스트나 거부된 연결처럼 실제 실패 경로를 최소 하나 검증해야 하며, 이를 통해 runtime에서 dependency가 실제로 무엇을 throw하는지를 고정한다. 실제 error shape는 adapter가 아니라 runtime이 부과하는 contract이며, 실제 호출 없이는 확인할 수 없다. 이 경우는 Boundary 소유권과 중복 섹션의 일반 규칙에서 설명하는 특수한 사례에 해당한다. 즉, real dependency failure case는 실제 dependency 없이는 신뢰성 있게 증명할 수 없을 때만 해당 dependency boundary에 둔다.
+- Adapter 코드가 소유한 동작은 단위 테스트로 검증한다.
+  - External 또는 persistence shape와 domain object 사이의 mapping.
+  - Domain restoration exception 보존.
+  - Infrastructure error wrapping과 adapter-specific branching.
+- 실제 dependency가 부과하는 동작은 통합 테스트로 검증한다.
+  - Schema와 constraint 동작.
+  - ORM과 protocol 호환성.
+  - Transaction, upsert, connection, 실제 failure 동작.
+- Adapter가 dependency error를 감쌀 때는 다음 규칙을 따른다.
+  - 결과 `InfrastructureException`의 kind, code, source, `cause` shape은 단위 테스트로 검증한다.
+  - Dependency의 runtime error shape가 필요한 contract일 때만 실제 failure case를 추가한다.
+  - Exception 소유권은 [오류 정책](./operability/error.md)을 따른다.
+- 같은 관찰 결과로 서로 다른 소유자의 책임을 증명한다면 제한적인 중복을 허용한다.
 
-각 동작은 신뢰성 있게 증명할 수 있는 가장 저렴한 test layer에서 검증하는 것을 선호한다.
-Adapter가 흐름에 참여한다는 이유만으로 상세한 domain, application, mapper invariant case를 통합 테스트에서 반복하지 않는다.
-같은 observable result를 검증하더라도 책임이 다르면 제한적으로 중복을 허용할 수 있다. 예를 들어 단위 테스트에서 fake database로 검증한 repository exception behavior를, 통합 테스트에서는 실제 database constraint가 같은 behavior로 이어지는지 확인할 수 있다.
+### Runtime 수명주기
 
-#### Boundary 소유권과 중복
-
-Integration test boundary directory는 검증 대상인 primary real boundary를 정의한다.
-호출하는 entry point만 보고 test scope를 결정하지 않는다.
-같은 route, controller, use case, port라도 각 테스트가 서로 다른 책임을 증명한다면 둘 이상의 integration boundary에 나타날 수 있다.
-
-Boundary-specific integration test에서는 primary boundary를 실제로 붙이고, 관련 없는 external boundary는 test double로 대체한다.
-예를 들어 `test/http/` 아래의 health test는 database와 queue collaborator를 mock으로 두고 route matching, status code, response body shape, exception-filter mapping을 검증해야 한다.
-`test/postgres/` 아래의 health test는 실제 database module, provider wiring, query compatibility를 검증해야 하며, queue boundary를 명시적으로 테스트하는 경우가 아니라면 queue collaborator는 mock으로 둔다.
-
-Boundary-specific integration test의 test name은 공유 entry point나 부수적으로 관찰되는 결과가 아니라, 해당 boundary가 소유한 책임을 설명해야 한다.
-예를 들어 Postgres health test가 `GET /health`를 호출하더라도 `describe()`와 `it()` 이름은 HTTP status code나 response body shape보다 실제 Postgres wiring 또는 query compatibility를 강조해야 한다.
-
-Failure case는 그 behavior를 소유한 가장 저렴한 layer에 둔다.
-Protocol error mapping과 response shape failure는 대체로 controlled test double을 사용하는 protocol boundary test에 둔다.
-Real dependency failure case는 실제 dependency 없이는 신뢰성 있게 증명할 수 없을 때만 해당 dependency boundary에 둔다. 예를 들어 실제 database constraint behavior, transaction behavior, connection setup, ORM query compatibility가 이에 해당한다.
-
-여러 real external dependency를 함께 붙이는 cross-boundary smoke test는 단일 adapter contract가 아니라 production composition을 증명할 때만 허용한다.
-이런 테스트는 적게 유지하고, happy path coverage를 선호하며, 더 넓은 scope가 명확하게 드러나도록 배치하거나 이름을 정한다.
+- Spec에서 생성한 모든 Nest app과 application context를 초기화하고 종료한다.
+- 각 case에 새 runtime이나 격리된 mutable state가 필요하면 `beforeEach`와 `afterEach`를 사용한다.
+- Runtime을 안전하게 공유할 수 있고 test data가 격리된다면 `beforeAll`과 `afterAll`을 사용한다.
 
 ## 명령어
 
-```bash
-pnpm --filter @sheska/api lint:check         # ESLint 검사
-pnpm --filter @sheska/api typecheck          # TypeScript type checking
-pnpm --filter @sheska/api test:unit          # 단위 테스트
-pnpm --filter @sheska/api test:integration:local # Postgres, Redis, Ollama가 필요 없는 local 통합 테스트
-pnpm --filter @sheska/api test:integration:postgres # Postgres 기반 통합 테스트
-pnpm --filter @sheska/api test:integration:redis # Redis 기반 통합 테스트
-pnpm --filter @sheska/api test:integration:ollama # Ollama 기반 통합 테스트
-pnpm --filter @sheska/api test:integration   # 모든 통합 테스트
-pnpm --filter @sheska/api test:integration:all # 모든 통합 테스트
-pnpm --filter @sheska/api test:runtime:start # Consumer workspace용 재사용 test runtime 시작
-pnpm --filter @sheska/api test:runtime:wait  # test runtime이 준비될 때까지 대기
-pnpm --filter @sheska/api test:runtime:url   # test runtime base URL 출력
-pnpm --filter @sheska/api test:runtime:stop  # test runtime과 소유 dependency 정리
-pnpm --filter @sheska/api test               # 단위 테스트, 그 다음 모든 통합 테스트
-pnpm --filter @sheska/api test:watch         # API package에서 Vitest watch 모드
-pnpm --filter @sheska/api test:cov           # API package에서 단위 테스트 커버리지
-```
+- 정적 검사:
+  - `pnpm --filter @sheska/api lint:check`.
+  - `pnpm --filter @sheska/api typecheck`.
+- 단위 테스트:
+  - `pnpm --filter @sheska/api test:unit`.
+  - `pnpm --filter @sheska/api test:watch`.
+  - `pnpm --filter @sheska/api test:cov`.
+- 통합 테스트 project:
+  - `pnpm --filter @sheska/api test:integration:local`.
+  - `pnpm --filter @sheska/api test:integration:postgres`.
+  - `pnpm --filter @sheska/api test:integration:redis`.
+  - `pnpm --filter @sheska/api test:integration:ollama`.
+- 전체 통합 테스트:
+  - `pnpm --filter @sheska/api test:integration:all`.
+  - `test:integration`은 `test:integration:all`의 alias다.
+- 전체 API 테스트:
+  - `pnpm --filter @sheska/api test`.
+- 재사용 test runtime:
+  - `pnpm --filter @sheska/api test:runtime:start`.
+  - `pnpm --filter @sheska/api test:runtime:wait`.
+  - `pnpm --filter @sheska/api test:runtime:url`.
+  - `pnpm --filter @sheska/api test:runtime:stop`.
+- API test runtime을 동시에 여러 개 실행하면 `SHESKA_TEST_RUNTIME_ID`를 설정한다.
+  - 하나의 lifecycle에서는 모든 runtime command에 같은 ID를 사용한다.
+- PR을 열기 전에 변경 범위에 해당하는 검사와 test project를 실행한다.
 
-API test runtime을 동시에 둘 이상 실행할 때는 `SHESKA_TEST_RUNTIME_ID`를 설정한다.
-`test:runtime:start`, `test:runtime:wait`, `test:runtime:url`, `test:runtime:stop`에는 같은 runtime id를 사용해야 한다.
+## 리뷰 점검
 
-PR을 열기 전에 변경 범위에 맞는 검사를 실행한다.
-고립된 서비스나 함수만 변경했다면 `pnpm --filter @sheska/api lint:check`, `pnpm --filter @sheska/api typecheck`, `pnpm --filter @sheska/api test:unit`을 실행한다.
+- 동작을 증명할 수 있는 가장 저렴한 계층에서 테스트하는가?
+- 테스트 위치가 설정된 Vitest project와 실제 boundary에 맞는가?
+- 검증 대상 바깥의 collaborator만 test double로 대체했는가?
+- Fixture와 runtime resource를 격리하고 정리하는가?
+- 각 case가 하나의 구체적인 동작 결과를 설명하는가?

@@ -25,13 +25,11 @@ related:
 
 ## Synchronization Policy
 
-English and Korean `apps/api` convention documents are paired documents that should describe the same policy.
-When they conflict, choose the intended policy from either language and update both documents in the same change unit.
+- English and Korean `apps/api` convention documents are paired documents that should describe the same policy. When they conflict, choose the intended policy from either language and update both documents in the same change unit.
 
 ## Reading Rules
 
-Read only the `apps/api` convention documents relevant to the current task.
-When changing public project Markdown documents, also read the repository documentation convention index.
+- Read only the `apps/api` convention documents relevant to the current task. When changing public project Markdown documents, also read the repository documentation convention index.
 
 ## Routing
 

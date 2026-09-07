@@ -7,26 +7,26 @@ applies_to:
 source: ../../en/operability/observability.md
 last_synced: 2026-09-07
 read_when:
-  - OpenTelemetry 계측을 추가하거나, 무엇을 어디로 export할지 바꾸거나, label로 조회 가능해야 하는 리소스 속성을 추가할 때.
-  - `platform/otel/otel.bootstrap.ts`를 변경하기 전에 왜 이렇게 구성돼 있는지 이해하고 싶을 때.
+  - OpenTelemetry 계측, exporter, endpoint, 리소스 속성을 변경할 때.
+  - `platform/otel/otel.bootstrap.ts`나 시작 순서를 변경할 때.
 related:
   - ./logging.md
   - ../architecture/runtime-wiring.md
-  - ../architecture/infrastructure.md
 ---
 
 # API 옵저버빌리티 컨벤션
 
-이 앱은 traces, logs, metrics를 OpenTelemetry(OTLP)로 클러스터 공통 collector에 push한다. 이 문서는 파이프라인 아키텍처, 전송 정책, 소유 경계를 다룬다. 무엇을 로그로 남길지, 어떤 레벨로 남길지는 [API 로깅 정책](./logging.md)을 읽는다 — 그 정책은 내용과 레벨을, 이 문서는 전송을 다룬다.
+## 적용 범위
 
-## 범위
-
-- OTLP export 배선, 환경/endpoint 설정, telemetry에 붙는 리소스 속성 집합을 변경할 때 이 문서를 사용한다.
-- Collector, 저장소, 대시보드(Alloy, Loki, Tempo, Prometheus, Grafana)는 이 레포가 아니라 별도의 `hash-infra` 레포가 소유한다. 이 레포는 계측 코드와 그것이 가리키는 endpoint만 소유한다.
+- 이 앱은 trace, log, metric을 OTLP로 공용 Alloy 배포에 전송한다.
+- 이 문서는 telemetry 전송, 활성화, 리소스 속성, 소유 경계를 다룬다.
+- 무엇을 어떤 레벨로 기록할지는 [API 로깅 정책](./logging.md)을 따른다.
+  - 로깅 정책은 로그 내용과 심각도를, 이 문서는 전송과 상관관계를 규정한다.
 
 ## 파이프라인
 
-세 신호 모두 환경과 무관하게 같은 경로로 push된다 — 로컬 pull 방식 대체 경로는 없다:
+- 계측하는 모든 환경에서 세 신호는 같은 push 경로를 사용한다.
+  - 로컬 전용 pull 방식 대체 경로는 두지 않는다.
 
 ```mermaid
 flowchart LR
@@ -39,30 +39,53 @@ flowchart LR
   prometheus -.->|query| grafana
 ```
 
-Metrics도 정책적으로 scrape가 아니라 push다: pull 방식 `ServiceMonitor`는 VPN 뒤에 있는 로컬 dev 프로세스에 닿을 수 없고, metrics만 다른 전송 방식을 쓰면 prod와 dev가 설정이 아니라 코드 수준에서 갈라진다.
-
-`OTEL_EXPORTER_OTLP_ENDPOINT`가 유일하게 환경마다 달라지는 값이다 — production에서는 클러스터 내부 DNS 이름, 로컬 dev에서는 공유 스택의 VPN 노출 주소를 가리킨다. 둘 다 `hash-infra`의 같은 Alloy 인스턴스로 향한다.
+- metric은 `ServiceMonitor`가 수집하도록 노출하지 않고 push한다.
+  - 클러스터의 수집기는 VPN을 통해 로컬 개발 프로세스에 접근할 수 없다.
+  - 한 가지 전송 방식을 사용하면 운영과 개발의 코드 경로를 같게 유지할 수 있다.
+- `OTEL_EXPORTER_OTLP_ENDPOINT`로 Alloy 주소를 선택한다.
+  - 운영 환경은 클러스터 내부 DNS 주소를 사용한다.
+  - 로컬 개발은 같은 Alloy 배포의 VPN 노출 주소를 사용한다.
 
 ## 소유 경계
 
-`deployment.environment.name`은 모든 신호에 붙는다. 같은 클러스터 공통 백엔드를 공유하는 production telemetry와 로컬 dev telemetry를 Grafana에서 구분하기 위해서다.
-
-Loki도 Prometheus도 OpenTelemetry 리소스 속성을 기본으로 조회 가능한 indexed label로 승격시키지 않는다. 각 백엔드마다 명시적 opt-in이 필요하고, 그 opt-in은 이 레포가 아니라 `hash-infra`의 Alloy 쪽이 소유한다. 이 레포에서 리소스 속성을 추가하면 raw payload엔 보이지만, 그것만으로 Grafana에서 필터링 가능해지진 않는다 — `hash-infra`의 Alloy 설정도 같이 바꿔야 한다.
-
-**주의**: 다른 레포 소관이더라도, metrics에 대해 리소스 속성을 통째로 label로 승격시키는 방식(Alloy의 `resource_to_telemetry_conversion`)은 켜지 않는다. 이건 프로세스 재시작마다 바뀌는 값(`process.pid` 등)을 포함한 모든 리소스 속성을 승격시켜서, 재시작할 때마다 정리되지 않는 새 Prometheus 시계열을 만든다.
+- 이 저장소는 애플리케이션 계측, OTel 설정 파싱, 리소스 속성을 소유한다.
+- 별도 `hash-infra` 저장소는 Alloy, telemetry backend, dashboard, endpoint 가용성을 소유한다.
+- 모든 신호에 다음 리소스 속성을 붙인다.
+  - `service.name`: 하드코딩한 `SERVICE_NAME` 상수.
+  - `service.version`: 실행 중인 package의 `npm_package_version`.
+  - `deployment.environment.name`: 하나의 backend를 공유하는 telemetry를 구분하는 `NODE_ENV`.
+- 리소스 속성을 추가해도 Loki나 Prometheus에서 조회 가능한 label이 되지는 않는다.
+  - label 승격에는 `hash-infra`의 명시적인 Alloy 설정 변경이 필요하다.
+- metric에 `resource_to_telemetry_conversion`을 사용한 일괄 리소스-label 승격을 활성화하지 않는다.
+  - 이 설정은 `process.pid`처럼 카디널리티가 높은 속성도 승격한다.
+  - 그러면 프로세스를 재시작할 때마다 유지되는 Prometheus 시계열이 추가될 수 있다.
 
 ## 환경 정책
 
-SDK는 `NODE_ENV`가 명시적 허용 목록(`production`, `development`)에 있고 `OTEL_EXPORTER_OTLP_ENDPOINT`가 설정돼 있을 때만 시작한다 — `test`만 제외하는 방식이 아니라 화이트리스트라서, 설정 안 됐거나 인식 못 하는 `NODE_ENV`는 telemetry를 흘려보내는 대신 fail-closed로 꺼진다. 새 배포 환경이 생기면 허용 목록을 확장한다.
+- 다음 조건을 모두 충족할 때만 SDK를 시작한다.
+  - `NODE_ENV`가 `production` 또는 `development`다.
+  - `OTEL_EXPORTER_OTLP_ENDPOINT`가 있고 유효한 URL이다.
+- `NODE_ENV`가 없거나 허용 목록에 없으면 telemetry를 비활성화한다.
+  - 계측할 환경을 추가할 때 허용 목록을 명시적으로 확장한다.
+- 환경에 따라 달라지는 OTel 전송 값은 OTLP endpoint만 둔다.
+- service name은 `.env.*` 파일이나 Helm values가 아니라 코드에 둔다.
+  - service name은 애플리케이션 식별자이며 배포마다 달라지지 않는다.
 
-Service 이름은 환경변수가 아니라 하드코딩된 상수다: 앱 자신의 정체성은 배포 설정이 아니라 코드베이스에 대한 고정된 사실이라, OTLP endpoint와 달리 `.env.*` 파일이나 Helm values에 들어갈 이유가 없다.
+## 부트스트랩
 
-## Bootstrap
-
-**주의**: OTel bootstrap은 `main.ts`의 가장 첫 import여야 하고, NestJS provider나 module이 되면 안 된다. Auto-instrumentation은 모듈(`http`, `express`, `pg`, `ioredis`)을 `require()` 시점에 patch하는데, Nest 자체의 부팅 순서를 포함해서 그 모듈들을 먼저 로드하는 건 무엇이든 해당 모듈에 대한 계측을 영구히 건너뛰게 만든다. 이건 어떤 프레임워크에서든 똑같이 적용되는 Node 모듈 로딩 제약이지, NestJS 전용 규칙이 아니다.
-
-**주의**: bootstrap은 Nest의 `ConfigModule`을 거치지 않고 `dotenv`로 직접 `.env.${NODE_ENV}`를 로드한다. `ConfigService`를 쓰도록 리팩터링하지 않는다 — 이 모듈은 `AppModule`이 로드되기 전에 실행되므로, 그 시점엔 아직 소비할 typed config 자체가 존재하지 않는다.
+- OTel bootstrap은 반드시 `main.ts`의 첫 번째 import로 유지한다.
+  - Auto-instrumentation은 `http`, `express`, `pg`, `ioredis` 같은 모듈을 로드할 때 patch한다.
+  - 이런 모듈을 먼저 로드하면 해당 모듈에 계측을 적용할 수 없다.
+- bootstrap을 NestJS provider나 module로 만들면 안 된다.
+  - NestJS bootstrap과 일반 [런타임 배선](../architecture/runtime-wiring.md)보다 먼저 실행해야 한다.
+- bootstrap은 설정을 파싱하기 전에 `dotenv`로 `.env.${NODE_ENV}`를 직접 로드한다.
+  - 이 로직을 `ConfigService`로 바꾸지 않는다. 아직 `AppModule`과 typed application config가 없기 때문이다.
+- processor가 대기 중인 telemetry를 내보낼 수 있도록 `SIGTERM`에서 SDK를 종료한다.
 
 ## 로깅 통합
 
-**주의**: trace correlation을 위한 커스텀 pino `mixin`이나 로그 전송을 위한 별도 pino transport를 추가하지 않는다. `@opentelemetry/instrumentation-pino`가 SDK 실행 중이면 이미 모든 pino 로그 레코드에 `trace_id`/`span_id`를 주입하고 OTel logs 파이프라인으로 전달한다 — 둘 다 다시 추가하면 데이터와 logger 설정이 중복된다.
+- trace 상관관계를 위한 커스텀 pino `mixin`을 추가하지 않는다.
+  - SDK가 실행되면 `@opentelemetry/instrumentation-pino`가 이미 `trace_id`와 `span_id`를 주입한다.
+- OTel log 전송을 위한 두 번째 pino transport를 추가하지 않는다.
+  - 같은 instrumentation이 이미 pino record를 OTel logs 파이프라인으로 전달한다.
+  - 두 번째 통합을 추가하면 record와 logger 설정이 중복된다.

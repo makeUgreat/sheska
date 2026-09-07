@@ -9,123 +9,105 @@ read_when:
   - Deciding whether to log, what to log, where to log, and at which log level.
 related:
   - ./error.md
+  - ./observability.md
   - ../architecture/architecture.md
 ---
 
 # API Logging Policy
 
-Logs are records of important events that occurred while the application was running, preserved for later review.
+## Scope
 
-## Purpose
-
-A log record is worth writing when it could help answer one or more of the following questions later:
-
-- When did this occur?
-- Where did it occur?
-- What happened?
-- Which request or operation was involved?
-- How did the system handle it?
-- Does the operator need to take action?
+- Use this document when deciding whether, where, and at which level to record an application event.
+- Write a log only when it helps reconstruct an operation, understand its outcome, or decide whether action is needed.
+- Follow the [observability convention](./observability.md) for log transport, export, and trace correlation.
 
 ## Log Categories
 
-Logs differ by nature and may carry different policies:
+- Classify a log by the event it records.
+  - Fault logs record operational failures and system errors.
+  - Security logs record authentication, authorization, and access-control events.
+  - Audit logs record business-significant state changes attributable to an actor.
+  - Access logs record inbound and outbound request traffic.
+- This document defines fault-log decisions only.
 
-- **Fault logs**: operational failures and system errors that require attention.
-- **Security logs**: authentication, authorization, and access control events.
-- **Audit logs**: business-significant state changes traceable to a specific actor.
-- **Access logs**: inbound and outbound request traffic records.
+## Fault Log Decisions
 
-The rest of this document focuses on **fault logs**, specifically logging decisions when errors occur. The timing and format of security, audit, and access logs follow separate policies (TBD — add sections here when needed).
+- Classify an error before choosing whether and at which level to log it.
+  - Follow the [error policy](./error.md) for error ownership and classification.
+  - Error classification decides whether and at which level to log; it does not decide where to log.
+- Do not turn every error into a fault log mechanically.
 
-## When to Write Fault Logs for Errors
+### Levels
 
-Not every error warrants a fault log entry. Mechanical "error → log" flow is an anti-pattern.
+- Use `error` for a terminal operational or system failure that requires investigation or action.
+- Use `warn` for an operationally relevant failure that was recovered, degraded, or intentionally swallowed.
+- Use `log` (info severity) or `debug` for useful context about expected outcomes that are not faults.
+  - Choose `debug` when the context is primarily diagnostic and too detailed for normal operation.
 
-Classify errors before deciding whether to log and at which level. The classification below determines **whether to log and at what level** — it does not determine **where** to log. Location is governed by the [Observable Boundary](#observable-boundary) section below.
+### Error Classification
 
-### Business Errors
-
-Business errors are predictable failures where the business rule was not satisfied. They are not faults.
-
-Examples:
-- Insufficient balance
-- Coupon conditions not met
-- Order already cancelled
-- Reservation time unavailable
-
-Do not write fault logs (error level) for business errors. Doing so pollutes the fault signal and makes real incidents harder to find. If the input context is operationally useful, record it at a lower level (info/debug) — but still at the observable boundary, not at the point of occurrence.
-
-### External Errors
-
-External errors originate outside the application and vary in nature. Log decisions depend on their character:
-
-- **Vendor business rule rejection**: the vendor refused the request according to its own business rules. This is not a system fault; do not write a fault log.
-- **System failure**: a failure in the vendor system or the integration layer itself. Write a fault log.
+- Business errors are expected failures of a business rule, not system faults.
+  - Do not log business errors at `error` level.
+  - Logging business errors at `error` level pollutes the fault signal and makes real incidents harder to find.
+  - Record operationally useful context at `log` or `debug` at the observable boundary.
+- Classify an external error by its meaning, not only by its origin.
+  - A vendor business-rule rejection is not a system fault and does not require a fault log.
+  - A vendor or integration system failure requires a fault log.
 
 ## Observable Boundary
 
-Log once at the **observable boundary** — not at every layer an error passes through.
+- Log once at the **observable boundary** — not at every layer an error passes through.
+  - The observable boundary is where handling finishes instead of rethrowing the error.
+  - Logging at every layer inflates metrics, duplicates alerts, and misrepresents incident counts.
+- **Log or throw, not both.**
+  - When rethrowing, add context and preserve `cause` without logging.
 
-**Why**: logging at each layer (the log-and-throw anti-pattern) produces N log entries for a single event. This inflates metrics, triggers duplicate alerts, and creates misleading incident counts.
+### Top-Level Boundary
 
-**Definition**: the boundary is the point where the error is finally handled rather than rethrown. "Observable" means within the scope our application can know about. This definition yields two forms.
-
-### Type 1 — Top-Level Boundary (Normal Case)
-
-The error keeps propagating via rethrow until it reaches the top of the application. In a web server, the global exception filter typically serves this role.
-
-```
-PaymentService → PaymentVendorClient → HttpClient
-```
-
-If `HttpClient` times out, `PaymentVendorClient` wraps it as `VendorTimeoutError`, and `PaymentService` wraps that as `PaymentFailedError`. Logging at each point produces three entries for one event. Log once at the global exception filter instead.
-
-**Log or throw — not both.** When rethrowing an error, do not log it. Add context to the error and rethrow.
+- Log a propagated fault at the top-level handler that converts it into a final response or process outcome.
+  - In the HTTP runtime, the global exception filter is the top-level observable boundary.
 
 ```typescript
 try {
   await db.save(order);
 } catch (cause) {
-  // Do not log here. Wrap with context and rethrow.
   throw new OrderPersistenceError('Failed to save order', { cause, orderId: order.id });
 }
 ```
 
-### Type 2 — Swallow Boundary (Exceptional Case)
+### Swallow Boundary
 
-When a layer catches an error and does not rethrow it — a non-critical failure that is intentionally ignored, or a retry loop where a later attempt succeeded — this point also qualifies as an observable boundary by definition ("finally handled, not rethrown"). The error will not propagate further, so **this is the only opportunity to make it observable**. Failing to log here causes the event to disappear from the record permanently.
+- Treat a catch point that does not rethrow as an observable boundary.
+  - Log there only when the swallowed failure is operationally relevant under the level and classification rules.
+  - Do not log a successfully recovered transient failure merely because it was caught.
+  - A relevant swallowed failure cannot be logged later because it no longer propagates.
 
-A swallow boundary often sits inside a domain or application layer, unlike Type 1. How to log in that case is covered by the [Separation of Concerns](#separation-of-concerns) section below.
+## Logging Dependencies
 
-## Separation of Concerns
-
-Domain and application code must not depend on a concrete logger implementation. Logging is a cross-cutting concern.
-
-- Code that rethrows an error throws a typed error with context. It does not log.
-- Top-level boundary logging (Type 1) is handled exclusively by middleware, interceptors, or global exception handlers.
-- When a swallow boundary (Type 2) sits inside a domain or application layer, that layer accepts an injected **logging port** (interface) instead of a concrete logger. The infrastructure layer owns the implementation; domain code substitutes a mock in tests.
+- Domain and application code MUST NOT depend on a concrete logger implementation.
+- Top-level boundary logging belongs to middleware, interceptors, global exception handlers, or process handlers.
+- A domain or application swallow boundary may use an injected logging contract.
+  - The contract belongs to the appropriate kernel and is named by capability, such as `Logger`.
+  - Runtime or platform wiring owns the concrete implementation.
+  - Tests replace the contract with a test double.
 
 ```typescript
-interface LoggingPort {
-  warn(context: Record<string, unknown>, message: string): void;
+interface Logger {
+  warn(message: string, context?: Record<string, unknown>): void;
 }
 
 class RetryingNotificationSender {
-  constructor(private readonly logging: LoggingPort) {}
+  constructor(private readonly logger: Logger) {}
 
   async sendBestEffort(notification: Notification): Promise<void> {
     try {
       await this.retryableSend(notification);
     } catch (cause) {
-      // Swallow boundary: no further propagation, so capture observability here.
-      this.logging.warn(
-        { cause, notificationId: notification.id },
+      this.logger.warn(
         'Notification delivery abandoned after retries',
+        { cause, notificationId: notification.id },
       );
     }
   }
 }
 ```
-
-This keeps domain code pure and testable while ensuring errors at swallow boundaries do not disappear unobserved.

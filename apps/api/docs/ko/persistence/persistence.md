@@ -1,88 +1,116 @@
 ---
-title: API Persistence 정책
+title: API 영속성 정책
 lang: ko
 audience: both
 applies_to:
   - apps/api
 source: ../../en/persistence/persistence.md
 last_synced: 2026-09-07
+read_when:
+  - 데이터베이스 스키마, migration, 영속성 어댑터, mapper, 저장소 제약을 변경할 때.
 related:
-  - ../architecture/architecture.md
   - ../architecture/ddd.md
+  - ../architecture/infrastructure.md
   - ../architecture/source-dependency.md
+  - ./repository-methods.md
   - ../operability/observability.md
 ---
 
-# API Persistence 정책
-
-Persistence policy는 database와 ORM adapter가 domain rule의 소유자가 되지 않으면서 저장된 데이터를 보존하는 방식을 정한다.
+# API 영속성 정책
 
 ## 적용 범위
 
-- 이 정책은 API persistence adapter, database schema, migration, persistence mapper에 적용한다.
-- Domain ownership은 DDD convention을 따르고, layer boundary는 source dependency convention을 따른다.
-- Persistence code는 database와 ORM detail을 알 수 있지만 business meaning의 출처가 되어서는 안 된다.
+- 데이터베이스 스키마, migration, 영속성 어댑터와 mapper에 이 정책을 사용한다.
+- 이 문서의 범위를 벗어나는 결정에는 관련 컨벤션을 사용한다.
+  - 도메인 소유권과 repository contract 이름은 [DDD 컨벤션](../architecture/ddd.md)을 따른다.
+  - 레이어 경계는 [source dependency 컨벤션](../architecture/source-dependency.md)을 따른다.
+  - adapter 파일과 디렉터리는 [Infrastructure 컨벤션](../architecture/infrastructure.md)을 따른다.
+  - 호출부의 메서드 선택은 [repository 메서드 가이드](./repository-methods.md)를 따른다.
+- 영속성 코드는 데이터베이스와 ORM 세부 사항을 알아도 된다.
+- 영속성 코드는 비즈니스 의미의 출처가 되어서는 안 된다.
 
-## 저장소 소유권
+## 책임 경계
 
-### 책임 경계
-
-- Domain code가 domain invariant와 business invariant를 소유한다.
-- Application code는 use-case orchestration, transaction boundary, 권한/입출력 흐름, application-owned contract constraint를 소유한다.
-- Persistence code는 application port를 위해 state를 저장하고 복원한다.
-- Persistence code는 database table validation으로 domain invariant나 business invariant를 강제해서는 안 된다.
-- Persistence code는 신뢰할 수 있는 row, relation, lookup에 필요한 storage integrity를 강제할 수 있다.
+- 도메인 코드는 도메인 불변식과 비즈니스 불변식을 소유한다.
+- 애플리케이션 코드는 use case 조율과 애플리케이션 계약 제약을 소유한다.
+  - 여기에는 transaction boundary, authorization, 입출력 흐름이 포함된다.
+- 영속성 코드는 애플리케이션이 소유한 port를 통해 상태를 저장하고 복원한다.
+- 영속성 코드는 도메인이나 비즈니스 불변식을 테이블 검증으로 중복 구현해서는 안 된다.
+- 영속성 코드는 신뢰할 수 있는 행, 관계, 조회에 필요한 구조적 무결성을 보장해도 된다.
 
 ## 저장 형태
 
-### Database Constraint
+### 데이터베이스 제약
 
-- 허용되는 structural constraint에는 primary key, foreign key, unique constraint, not-null column, index, timestamp 같은 storage default가 포함된다.
-- Repository lookup identity, idempotency key, application contract가 요구하는 storage-level uniqueness를 보호할 때 unique constraint를 사용한다.
-- Database-native enum type은 사용하지 않는다. Enum-like value는 scalar column에 저장하고, 허용 값의 의미는 그 값을 소유하는 domain 또는 application contract에 둔다.
-- Value object 또는 aggregate validation을 `CHECK` constraint, database enum restriction, trigger, 또는 이에 준하는 table-level validation으로 중복 구현하지 않는다.
-- Domain이 소유하는 규칙의 예시는 trim된 non-empty string, numeric range, lifecycle status transition, content-derived consistency check다.
+- 구조적 제약에는 다음 항목을 사용할 수 있다.
+  - Primary key와 foreign key.
+  - Unique와 not-null constraint.
+  - Index와 timestamp 같은 저장 기본값.
+- 조회 식별자, idempotency key, application contract의 저장소 유일성에는 unique constraint를 사용한다.
+- 데이터베이스 고유 enum type을 사용하지 않는다.
+  - Enum과 유사한 값은 scalar column에 저장한다.
+  - 허용 값의 의미는 이를 소유하는 domain 또는 application contract에 둔다.
+- Domain validation을 `CHECK`, enum restriction, trigger 또는 이에 준하는 기능으로 중복 구현하지 않는다.
+  - 비어 있지 않은 문자열, 숫자 범위, 상태 전이, 내용 일관성 등이 domain 소유 규칙에 해당한다.
 
-### Search Vector Column
+### 검색 벡터 열
 
-- `tsvector` column은 자신이 색인하는 field와 같은 테이블에 두고, application code가 값을 쓰거나 다른 aggregate의 테이블까지 넘어가는 trigger로 동기화하지 말고 `GENERATED ALWAYS AS (...) STORED` column으로 만든다.
-- 한 aggregate 테이블의 trigger로 다른 aggregate 테이블의 derived column을 갱신하지 않는다. 검색 쿼리가 두 값을 join해서 함께 랭킹을 매기더라도, post의 `title_search_vector`와 source의 `content_search_vector`는 이 이유로 각자 별도의 generated column으로 둔다.
-- `tsvector`를 만드는 tokenization function(예: CJK 텍스트용 bigram 분리 helper)은 순수하고 `IMMUTABLE`한 SQL/PL/pgSQL function으로 migration에 저장해서, 이를 필요로 하는 모든 generated column이 재사용하게 하고, 테이블마다 중복 구현하거나 application code에 다시 구현하지 않는다.
-- Search vector column은 business invariant가 아니라 storage integrity/read performance 관심사다. Business meaning을 강제하거나 파생시켜서는 안 되며, 자신이 색인하는 field와 동기화된 read-optimized projection을 유지하는 역할만 한다.
+- `tsvector` 열은 색인 대상 field와 같은 테이블에 둔다.
+- `GENERATED ALWAYS AS (...) STORED`로 정의한다.
+  - 애플리케이션 코드가 파생 값을 직접 쓰면 안 된다.
+  - Trigger가 다른 aggregate 테이블의 파생 열을 갱신하면 안 된다.
+- 조회 쿼리가 여러 aggregate를 join하고 순위를 계산하더라도 각 검색 벡터는 분리한다.
+  - 예를 들어 `posts.title_search_vector`와 `sources.content_search_vector`를 따로 둔다.
+- CJK bigram 분리 같은 공용 tokenization은 migration에 한 번만 정의한다.
+  - 순수한 `IMMUTABLE` SQL 또는 PL/pgSQL function을 사용한다.
+  - 중복하거나 애플리케이션 코드에 구현하지 않고 generated column에서 재사용한다.
+- 검색 벡터는 비즈니스 규칙이 아니라 저장 무결성과 조회 성능을 위한 projection으로 취급한다.
 
 ### Drizzle Schema
 
-- Drizzle table definition은 storage shape, relation, index, structural constraint를 설명해야 한다.
-- Drizzle `pgEnum` 또는 그에 준하는 migration output으로 PostgreSQL enum type을 정의하지 않는다.
-- Domain invariant나 business invariant에는 Drizzle `check` definition을 피한다.
-- Adapter ergonomics를 위해 Drizzle schema에서 TypeScript-only narrowing을 사용할 수 있지만, validation과 state transition의 소유자는 domain code다.
-- Generated migration과 snapshot은 단순히 최신 local schema output이 아니라 의도한 persistence policy와 일치해야 한다.
+- Drizzle 테이블 정의는 저장 형태, 관계, index, 구조적 제약을 설명한다.
+- `pgEnum`이나 이에 준하는 migration output으로 PostgreSQL enum type을 정의하지 않는다.
+- Domain invariant나 business invariant에는 Drizzle `check` definition을 사용하지 않는다.
+- Adapter 사용 편의를 위한 TypeScript 타입 좁히기는 허용한다.
+  - 검증과 상태 전이의 책임은 도메인 코드에 남는다.
+- 생성된 migration과 snapshot은 최신 schema output뿐 아니라 의도한 정책과 일치해야 한다.
 
 ## 경계 매핑
 
-### Repository Mapping
+- 영속성 mapper는 infrastructure 경계에서 데이터베이스 행과 도메인 객체를 변환한다.
+- Mapper는 다음 책임을 소유한다.
+  - 영속성 행 형태 검증.
+  - 영속성 행에서 도메인 객체로 복원.
+  - 도메인 객체에서 insert row로 변환.
+- 데이터베이스 행은 domain construction 또는 restoration API를 통해 복원한다.
+  - 복원 경로는 domain event를 기록하지 않으면서 도메인 불변식을 검증해야 한다.
+- Domain restoration exception은 변경하지 않고 전파한다.
+  - 어댑터에서 복원 중 발생했다는 이유만으로 persistence error로 바꾸지 않는다.
+- Aggregate mapper는 복원하는 aggregate 또는 entity 단위로 나눈다.
+  - 관련 없는 mapping을 하나의 adapter 공용 mapper에 모으지 않는다.
+- Domain-to-insert mapping은 이미 invariant를 통과한 도메인 객체를 신뢰해도 된다.
+  - 어댑터에 별도의 저장소 전용 제약이 있을 때만 검증을 추가한다.
 
-- Persistence mapper는 infrastructure boundary에서 database row와 domain object를 변환한다.
-- Database row를 domain object로 복원할 때도 domain construction 또는 restoration API를 거쳐야 한다.
-- Domain restoration이 저장된 row를 throw로 거부하면 domain model을 약화하거나 persistence error로 이름을 바꾸지 말고 해당 exception이 domain invariant failure를 보존하게 둔다.
+## Repository 어댑터
 
-### Persistence Mapper 정책
+- Repository 구현은 데이터베이스 호출과 query 구성을 소유한다.
+- 어댑터 맥락이 장애 이해에 도움이 되면 vendor 또는 storage error를 감싼다.
+  - 이 규칙을 domain restoration exception에는 적용하지 않는다.
+- 도메인 객체를 반환하는 `save`는 데이터베이스가 반환한 행에서 객체를 복원해야 한다.
+  - 원래 입력 객체를 반환하지 않는다.
+- Repository와 mapper 파일 이름은 [Infrastructure 명명 규칙](../architecture/infrastructure.md)을 따른다.
 
-- Repository implementation은 database call, query composition, adapter context가 유용할 때 vendor 또는 storage-only error를 감싸는 책임을 소유한다.
-- `db.execute`에 넘기는 raw `sql`...`` 쿼리에서는 앞머리 verb(`SELECT`, `WITH` 등)와 그 뒤 첫 토큰을 같은 줄에 둔다 — `SELECT\n  id, name`이 아니라 `SELECT id, name`처럼. `@opentelemetry/instrumentation-pg`는 쿼리의 operation name(span 이름 일부이자 Prometheus label로도 쓰임)을 쿼리 텍스트를 trim한 뒤 첫 공백(` `) 문자까지 잘라서 얻는데, 개행문자는 구분자로 안 쳐준다. verb가 줄 끝에 혼자 있으면 `"SELECT"`가 아니라 `"SELECT\n"`이 되어, 같은 operation인데 시계열이 둘로 조용히 쪼개진다. 이 label이 왜 존재하는지는 [API 옵저버빌리티 컨벤션](../operability/observability.md)을 참고한다.
-- Persistence mapper는 복원 입력의 shape validation, persistence row에서 domain으로 복원하는 책임, domain object를 insert row로 변환하는 책임을 소유한다.
-- Persistence mapper의 restore method는 domain restoration exception을 그대로 전파하는 것이 좋다.
-- Row를 복원하는 중 발생했다는 이유만으로 domain restoration exception을 repository 또는 persistence error로 감싸지 않는다.
-- Aggregate persistence mapper는 복원 대상 aggregate 또는 entity 단위로 나누는 것이 좋다. 관련 없는 aggregate mapping을 하나의 adapter-wide mapper에 모으지 않는다.
-- Persistence adapter file name은 [API Infrastructure 컨벤션](../architecture/infrastructure.md)의 adapter file naming 규칙을 따른다.
-- Persistence mapper file은 `{aggregate-or-entity}.persistence.mapper.ts`, class는 `{AggregateOrEntity}PersistenceMapper`로 이름 짓는다. 예: `source.pg-drizzle.mapper.ts`, `SourcePgDrizzleMapper`.
-- Concrete repository adapter file은 `{aggregate-or-entity}.{adapter}.repository.ts`, class는 `{AggregateOrEntity}{Adapter}Repository`로 이름 짓는다. 예: `source.pg-drizzle.repository.ts`, `SourcePgDrizzleRepository`.
-- Persistence에서 복원되는 domain object는 domain invariant를 검증하고 domain event를 기록하지 않는 `restore` 경로를 노출해야 한다.
-- Domain object를 반환하는 repository `save` method는 원래 입력 object가 아니라 database가 반환한 row에서 복원한 domain object를 반환해야 한다.
-- Domain-to-insert mapping은 이미 domain invariant를 통과한 domain object를 신뢰할 수 있다. Adapter에 추가 storage-only constraint가 있을 때만 insert validation을 중복할 수 있다.
+### Raw SQL Operation Name
+
+- `db.execute`에 전달하는 raw Drizzle `sql` template에서는 첫 verb와 다음 token을 한 줄에 둔다.
+  - `SELECT\n  id, name`이 아니라 `SELECT id, name`으로 작성한다.
+- `@opentelemetry/instrumentation-pg`는 첫 일반 공백을 기준으로 operation name을 만든다.
+  - Verb 뒤 개행은 같은 논리적 operation에 다른 telemetry label을 만들 수 있다.
+  - Telemetry label 정책은 [옵저버빌리티 컨벤션](../operability/observability.md)을 참고한다.
 
 ## 리뷰 점검
 
-- 새 database constraint가 storage integrity를 보호하는지, domain invariant를 재구현하는지 확인한다.
-- Drizzle schema change가 database를 business meaning의 소유자로 만들지 않는지 확인한다.
-- Repository와 mapper change가 boundary에서 domain validation을 유지하는지 확인한다.
+- 각 데이터베이스 제약이 도메인 불변식을 중복하지 않고 저장 무결성을 보호하는가?
+- Drizzle schema가 비즈니스 의미를 도메인 또는 애플리케이션 레이어에 남기는가?
+- Repository와 mapper 변경이 경계에서 도메인 검증을 유지하는가?
+- 반환하는 저장 상태가 데이터베이스 반환 행에서 만들어지는가?
