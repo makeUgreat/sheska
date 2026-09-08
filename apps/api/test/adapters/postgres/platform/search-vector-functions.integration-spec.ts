@@ -10,7 +10,10 @@ import { SOURCE_REPOSITORY } from '@contexts/sources/sources.di-tokens';
 import { DATABASE_TOKENS } from '@kernels/infrastructure';
 import { AppModule } from '@platform/nest/app.module';
 import { buildPost } from '../../../support/domains/fixtures/post.fixture';
-import { buildSource } from '../../../support/domains/fixtures/source.fixture';
+import {
+  buildSource,
+  sourceContentByteSize,
+} from '../../../support/domains/fixtures/source.fixture';
 
 describe('Search vector Postgres functions', () => {
   let app: INestApplication;
@@ -183,8 +186,12 @@ describe('Search vector Postgres functions', () => {
         }),
       );
 
+      const updatedContent = '완전히다른콘텐츠내용';
+
       await db.execute(sql`
-        UPDATE sources SET content = ${'완전히다른콘텐츠내용'} WHERE id = ${source.id}
+        UPDATE sources
+        SET content = ${updatedContent}, size_bytes = ${sourceContentByteSize(updatedContent)}
+        WHERE id = ${source.id}
       `);
 
       const result = await db.execute<{ vector: string }>(sql`
