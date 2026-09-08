@@ -1,7 +1,9 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   classifyPostgresError,
+  DATABASE_TOKENS,
   InfrastructureException,
   withTransactionRetry,
   type TransactionRetryPolicy,
@@ -20,8 +22,12 @@ const SOURCE_EMBEDDING_SAVE_TRANSACTION_RETRY_POLICY: TransactionRetryPolicy = {
   baseDelayMs: 20,
 };
 
+@Injectable()
 export class SourceEmbeddingPgDrizzleRepository implements SourceEmbeddingRepository {
-  constructor(private readonly db: NodePgDatabase<typeof schema>) {}
+  constructor(
+    @Inject(DATABASE_TOKENS.drizzleDatabase)
+    private readonly db: NodePgDatabase<typeof schema>,
+  ) {}
 
   async find(criteria: { sourceId: string }): Promise<SourceEmbedding | null> {
     const rows = await this.db

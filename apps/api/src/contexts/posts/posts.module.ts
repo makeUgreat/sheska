@@ -1,6 +1,4 @@
 import { Module, type DynamicModule } from '@nestjs/common';
-import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { DATABASE_TOKENS } from '@kernels/infrastructure';
 import { PublishPostUseCase } from '@contexts/posts/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/posts/application/use-cases/get-post.use-case';
 import { ListPostsUseCase } from '@contexts/posts/application/use-cases/list-posts.use-case';
@@ -9,7 +7,6 @@ import { CountPostsUseCase } from '@contexts/posts/application/use-cases/count-p
 import { UpdatePostTitleUseCase } from '@contexts/posts/application/use-cases/update-post-title.use-case';
 import { PostPgDrizzleRepository } from '@contexts/posts/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.repository';
 import { PostPgDrizzleQuery } from '@contexts/posts/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.query';
-import * as postsSchema from '@contexts/posts/infrastructure/persistence/postgres-drizzle/schema';
 import { SourceFromSourcesLookup } from '@contexts/posts/acl/sources/source.from-sources.lookup';
 import { SearchQueryFromIngestionEmbedder } from '@contexts/posts/acl/ingestion/search-query.from-ingestion.embedder';
 import { PostsHttpController } from '@contexts/posts/presentation/http/posts-http.controller';
@@ -38,15 +35,11 @@ export class PostsModule {
       providers: [
         {
           provide: POST_REPOSITORY,
-          useFactory: (db: NodePgDatabase<typeof postsSchema>) =>
-            new PostPgDrizzleRepository(db),
-          inject: [DATABASE_TOKENS.drizzleDatabase],
+          useClass: PostPgDrizzleRepository,
         },
         {
           provide: POST_QUERY,
-          useFactory: (db: NodePgDatabase<typeof postsSchema>) =>
-            new PostPgDrizzleQuery(db),
-          inject: [DATABASE_TOKENS.drizzleDatabase],
+          useClass: PostPgDrizzleQuery,
         },
         {
           provide: SOURCE_LOOKUP,

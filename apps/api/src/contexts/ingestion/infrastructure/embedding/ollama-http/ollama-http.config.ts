@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const OLLAMA_CONFIG = Symbol('OLLAMA_CONFIG');
+
 const ollamaConfigSchema = z
   .object({
     EMBEDDING_BASE_URL: z.url(),

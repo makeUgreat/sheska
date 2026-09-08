@@ -1,3 +1,4 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { z } from 'zod';
 import { type CallContext } from '@core/call-context';
 import {
@@ -12,8 +13,10 @@ import {
 } from '@kernels/infrastructure';
 import type { Embedder } from '@contexts/ingestion/application/ports';
 import { DEFAULT_CHUNK_SIZE } from '@contexts/ingestion/application/services/recursive-character.chunker';
+import { OLLAMA_CONFIG, type OllamaConfig } from './ollama-http.config';
 
 const ADAPTER = 'ollama.embedder';
+const OLLAMA_MODEL = 'qwen3-embedding:0.6b';
 const CONSERVATIVE_MS_PER_CHAR = 30;
 const DEFAULT_EMBED_REQUEST_TIMEOUT_MS =
   DEFAULT_CHUNK_SIZE * CONSERVATIVE_MS_PER_CHAR;
@@ -33,19 +36,15 @@ const OllamaEmbeddingsResponse = z.object({
   embedding: z.array(z.number()),
 });
 
-export interface OllamaHttpEmbedderOptions {
-  baseUrl: string;
-  model: string;
-}
-
+@Injectable()
 export class OllamaHttpEmbedder implements Embedder {
-  private readonly baseUrl: string;
-  private readonly model: string;
+  private readonly model = OLLAMA_MODEL;
   private readonly circuitBreaker: CircuitBreaker;
 
-  constructor(options: OllamaHttpEmbedderOptions) {
-    this.baseUrl = options.baseUrl;
-    this.model = options.model;
+  constructor(
+    @Inject(OLLAMA_CONFIG)
+    private readonly config: OllamaConfig,
+  ) {
     this.circuitBreaker = new CircuitBreaker({
       policy: OLLAMA_HTTP_EMBED_CIRCUIT_BREAKER_POLICY,
     });
@@ -88,7 +87,7 @@ export class OllamaHttpEmbedder implements Embedder {
     let response: Response;
 
     try {
-      response = await fetch(`${this.baseUrl}/api/embeddings`, {
+      response = await fetch(`${this.config.baseUrl}/api/embeddings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ model: this.model, prompt: text }),
