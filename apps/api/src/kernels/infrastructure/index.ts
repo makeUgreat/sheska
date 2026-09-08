@@ -26,3 +26,7 @@ export { InfrastructureException } from './infrastructure.exception';
 export { classifyPostgresError } from './postgres-error.classifier';
 export { parseRetryAfterMs } from './retry-after';
 export { withRetry, type RetryAttempt, type RetryPolicy } from './retry';
+export {
+  withTransactionRetry,
+  type TransactionRetryPolicy,
+} from './transaction-retry';
