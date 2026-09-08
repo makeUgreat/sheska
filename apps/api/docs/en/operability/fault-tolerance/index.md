@@ -11,6 +11,7 @@ related:
   - ./async-workflow-retry.md
   - ./circuit-breaker.md
   - ./idempotent-receiver.md
+  - ./retry-budget.md
 ---
 
 # API Fault Tolerance Index
@@ -34,11 +35,8 @@ related:
 - Message queue consumer retry, dead letter queue/redrive policy, or workflow/activity/saga retry: read [API Async & Workflow Retry Policy](./async-workflow-retry.md).
 - Circuit breaker state transitions, breaker scope, or circuit breaker composition with retry: read [API Circuit Breaker Policy](./circuit-breaker.md).
 - Natural-idempotency criteria, idempotency key generation/storage, or server-side deduplication for a retried mutation: read [API Idempotent Receiver Policy](./idempotent-receiver.md).
-
-- Retry budget has not been promoted into a dedicated sub-document yet.
-  - Retry-specific observability and the mutation-retry idempotency gate are already defined within [API Retry Policy](./retry.md); they do not need a separate sub-document entry here.
+- Retry budget ratio, budget window, or how retry budget composes with per-call retry and circuit breaker: read [API Retry Budget Policy](./retry-budget.md).
 
 - A policy draft covering the remaining topics exists at `.claude/temp/retry-resilience-policy.ko.md` but has not been finalized as a convention document.
 - Once a topic is finalized, add a routing entry here in the same style as the parent [API Convention Index](../../index.md), for example:
-  - Retry budget policy: read API Retry Budget Policy (link once created).
   - Bulkhead, fallback, graceful degradation, or health-check-based failover policy: read the relevant document (link once created).

@@ -13,6 +13,7 @@ related:
   - ./async-workflow-retry.md
   - ./circuit-breaker.md
   - ./idempotent-receiver.md
+  - ./retry-budget.md
   - ../error.md
   - ../logging.md
   - ../observability.md
@@ -27,9 +28,7 @@ related:
 - Use this document when deciding who retries, how many times, with what delay, and for which errors.
 - Timeout/deadline is defined in [API Timeout & Deadline Policy](./timeout-deadline.md), not by this document.
 - Circuit breaker composition is defined in [API Circuit Breaker Policy](./circuit-breaker.md), not by this document.
-- Retry budget is a separate fault-tolerance concern not yet promoted into a convention document.
-  - It interacts with retry (see [Interaction With Other Fault-Tolerance Concerns](#interaction-with-other-fault-tolerance-concerns)).
-  - Read [API Fault Tolerance Index](./index.md) for their current status.
+- Retry budget ratio, budget window, and how retry budget composes with per-call retry and circuit breaker are defined in [API Retry Budget Policy](./retry-budget.md), not by this document.
 - Idempotency's mutation-retry gate is defined in [Retryable Errors](#retryable-errors). The broader idempotent-receiver policy (natural-idempotency criteria, idempotency key generation, storage, and deduplication) is defined in [API Idempotent Receiver Policy](./idempotent-receiver.md), not by this document.
 - The structured log fields and metrics a retry decision must produce are defined in [Observability](#observability), not by this bullet list.
   - Whether to log an event and at what level is governed by [API Logging Policy](../logging.md); how logs and metrics are transported is governed by [API Observability Convention](../observability.md). This document only defines retry-specific content.
@@ -170,13 +169,10 @@ request_duration_ms
 ```
 
 - Circuit breaker state and transitions have their own metrics, defined in [API Circuit Breaker Policy](./circuit-breaker.md), not duplicated here.
-- Retry budget metrics will be added here once retry budget itself is promoted into a convention document.
+- Retry budget metrics are defined in [API Retry Budget Policy](./retry-budget.md), not duplicated here.
 
 ## Interaction With Other Fault-Tolerance Concerns
 
 - A retry policy alone is not a complete resilience strategy.
-  - Timeout/deadline, circuit breaker composition, the idempotency mutation-retry gate and its idempotent-receiver mechanism, and retry observability are already covered elsewhere.
-  - See [Backoff And Jitter](#backoff-and-jitter), [Retryable Errors](#retryable-errors), [Observability](#observability), [API Circuit Breaker Policy](./circuit-breaker.md), and [API Idempotent Receiver Policy](./idempotent-receiver.md).
-- It also composes with a concern not yet promoted into a convention document:
-  - Retry budget: limits how much total retry traffic the system generates, independent of any single call's `maxRetries`.
-- Do not implement this ad hoc based on this document alone. Check [API Fault Tolerance Index](./index.md) for its promotion status before relying on undocumented behavior.
+  - Timeout/deadline, circuit breaker composition, retry budget, the idempotency mutation-retry gate and its idempotent-receiver mechanism, and retry observability are already covered elsewhere.
+  - See [Backoff And Jitter](#backoff-and-jitter), [Retryable Errors](#retryable-errors), [Observability](#observability), [API Circuit Breaker Policy](./circuit-breaker.md), [API Retry Budget Policy](./retry-budget.md), and [API Idempotent Receiver Policy](./idempotent-receiver.md).
