@@ -1,35 +1,32 @@
 import { z } from 'zod';
 import { type CallContext } from '@core/call-context';
 import {
+  CircuitBreaker,
+  CircuitBreakerOpenError,
   INFRASTRUCTURE_ERROR_KIND,
   InfrastructureException,
   parseRetryAfterMs,
-  withRetry,
+  withCircuitBreakerRetry,
+  type CircuitBreakerPolicy,
   type RetryPolicy,
 } from '@kernels/infrastructure';
 import type { Embedder } from '@contexts/ingestion/application/ports';
 import { DEFAULT_CHUNK_SIZE } from '@contexts/ingestion/application/services/recursive-character.chunker';
 
 const ADAPTER = 'ollama.embedder';
-
-// Scale the default timeout with the chunker's max chunk size, rather than a flat
-// constant, so it stays correct if chunking parameters change. This replaces
-// reliance on undici's implicit 5-minute default, which fires mid-request and
-// looks like a server-side failure instead of a client timeout.
-// 30ms/char is a deliberately generous rate for CPU-only embedding inference.
 const CONSERVATIVE_MS_PER_CHAR = 30;
-
-// Default per-attempt timeout used when the caller doesn't pass its own
-// attemptTimeoutMs.
 const DEFAULT_EMBED_REQUEST_TIMEOUT_MS =
   DEFAULT_CHUNK_SIZE * CONSERVATIVE_MS_PER_CHAR;
-
-// Read-only external call, per retry.md's table. baseDelayMs/maxDelayMs are an
-// illustrative starting point (retry.md: tune from observed data, don't fix).
 const OLLAMA_HTTP_EMBED_RETRY_POLICY: RetryPolicy = {
   maxRetries: 2,
   baseDelayMs: 250,
   maxDelayMs: 2_000,
+};
+const OLLAMA_HTTP_EMBED_CIRCUIT_BREAKER_POLICY: CircuitBreakerPolicy = {
+  failureRateThreshold: 0.5,
+  evaluationWindowMs: 60_000,
+  minimumRequestCount: 10,
+  openDurationMs: 30_000,
 };
 
 const OllamaEmbeddingsResponse = z.object({
@@ -44,22 +41,44 @@ export interface OllamaHttpEmbedderOptions {
 export class OllamaHttpEmbedder implements Embedder {
   private readonly baseUrl: string;
   private readonly model: string;
+  private readonly circuitBreaker: CircuitBreaker;
 
   constructor(options: OllamaHttpEmbedderOptions) {
     this.baseUrl = options.baseUrl;
     this.model = options.model;
+    this.circuitBreaker = new CircuitBreaker({
+      policy: OLLAMA_HTTP_EMBED_CIRCUIT_BREAKER_POLICY,
+    });
   }
 
-  embed(
+  async embed(
     text: string,
     context: CallContext,
     attemptTimeoutMs: number = DEFAULT_EMBED_REQUEST_TIMEOUT_MS,
   ): Promise<{ embedding: number[]; model: string }> {
-    return withRetry((attempt) => this.embedOnce(text, attempt.signal), {
-      deadline: context.deadline,
-      attemptTimeoutMs,
-      policy: OLLAMA_HTTP_EMBED_RETRY_POLICY,
-    });
+    try {
+      return await withCircuitBreakerRetry(
+        (attempt) => this.embedOnce(text, attempt.signal),
+        {
+          breaker: this.circuitBreaker,
+          deadline: context.deadline,
+          attemptTimeoutMs,
+          retryPolicy: OLLAMA_HTTP_EMBED_RETRY_POLICY,
+        },
+      );
+    } catch (error) {
+      if (error instanceof CircuitBreakerOpenError) {
+        throw new InfrastructureException({
+          kind: INFRASTRUCTURE_ERROR_KIND.CIRCUIT_OPEN,
+          code: 'ollama.circuit_open',
+          source: { boundary: 'http-client', adapter: ADAPTER },
+          message: 'Ollama circuit breaker is open',
+          details: {},
+          cause: error,
+        });
+      }
+      throw error;
+    }
   }
 
   private async embedOnce(
