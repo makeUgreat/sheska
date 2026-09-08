@@ -1,3 +1,6 @@
 export interface SearchQueryEmbedder {
-  embed(query: string): Promise<number[] | null>;
+  embed(
+    query: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<number[] | null>;
 }

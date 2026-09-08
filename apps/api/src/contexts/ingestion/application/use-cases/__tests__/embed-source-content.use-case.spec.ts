@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { computeDeadline } from '@core/deadline';
+import { type CallContext } from '@core/call-context';
 import {
   IngestionFailedDomainEvent,
   IngestionProgressDomainEvent,
@@ -16,7 +18,10 @@ import {
   type EmbedResultDispatcher,
   type EmbedResultPayload,
 } from '@contexts/ingestion/application/ports';
-import { EmbedSourceContentUseCase } from '../embed-source-content.use-case';
+import {
+  EmbedSourceContentUseCase,
+  EMBED_CHUNK_ATTEMPT_TIMEOUT_MS,
+} from '../embed-source-content.use-case';
 
 function buildMockEmbedder(embed = vi.fn()) {
   return { embed };
@@ -34,6 +39,10 @@ function buildPayload(
     syncJobId: data.syncJobId ?? 'sync-job-1',
     content: data.content ?? '# Source note',
   };
+}
+
+function buildContext(remainingMs = 60_000): CallContext {
+  return { deadline: computeDeadline(remainingMs) };
 }
 
 const fakeEmbedding = Array.from({ length: 1024 }, () => 0.1);
@@ -58,10 +67,15 @@ describe('EmbedSourceContentUseCase', () => {
         chunker,
       );
 
-      await useCase.execute(buildPayload({ content: '# Source note' }));
+      await useCase.execute(
+        buildPayload({ content: '# Source note' }),
+        buildContext(),
+      );
 
       expect(embed).toHaveBeenCalledOnce();
-      expect(embed).toHaveBeenCalledWith('# Source note');
+      expect(embed).toHaveBeenCalledWith('# Source note', {
+        signal: expect.any(AbortSignal) as AbortSignal,
+      });
       expect(enqueue).toHaveBeenCalledWith(
         expect.objectContaining<Partial<EmbedResultPayload>>({
           sourceId: 'source-1',
@@ -89,7 +103,10 @@ describe('EmbedSourceContentUseCase', () => {
         smallChunker,
       );
 
-      await useCase.execute(buildPayload({ content: 'abc\n\ndef\n\nghi' }));
+      await useCase.execute(
+        buildPayload({ content: 'abc\n\ndef\n\nghi' }),
+        buildContext(),
+      );
 
       expect(embed).toHaveBeenCalledTimes(3);
       const payload = enqueue.mock.calls[0][0] as EmbedResultPayload;
@@ -115,7 +132,10 @@ describe('EmbedSourceContentUseCase', () => {
         smallChunker,
       );
 
-      await useCase.execute(buildPayload({ content: 'abc\n\ndef\n\nghi' }));
+      await useCase.execute(
+        buildPayload({ content: 'abc\n\ndef\n\nghi' }),
+        buildContext(),
+      );
 
       expect(emit).toHaveBeenCalledWith(
         'source.ingestion.started',
@@ -144,7 +164,10 @@ describe('EmbedSourceContentUseCase', () => {
         smallChunker,
       );
 
-      await useCase.execute(buildPayload({ content: 'abc\n\ndef\n\nghi' }));
+      await useCase.execute(
+        buildPayload({ content: 'abc\n\ndef\n\nghi' }),
+        buildContext(),
+      );
 
       const progressCalls = emit.mock.calls.filter(
         ([eventName]) => eventName === 'source.ingestion.progress',
@@ -156,6 +179,32 @@ describe('EmbedSourceContentUseCase', () => {
             (event as IngestionProgressDomainEvent).processedChunks,
         ),
       ).toEqual([1, 2, 3]);
+    });
+
+    it('deadline까지 남은 시간이 EMBED_CHUNK_ATTEMPT_TIMEOUT_MS보다 짧으면 그 남은 시간만큼만 bound된 signal을 사용한다', async () => {
+      const embed = vi
+        .fn()
+        .mockResolvedValue({ embedding: fakeEmbedding, model: fakeModel });
+      const useCase = new EmbedSourceContentUseCase(
+        buildMockEmbedder(embed),
+        buildMockDispatcher(),
+        new EventEmitter2(),
+        chunker,
+      );
+      const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
+      const shortRemainingMs = 1000;
+
+      await useCase.execute(
+        buildPayload({ content: '# Source note' }),
+        buildContext(shortRemainingMs),
+      );
+
+      expect(timeoutSpy).toHaveBeenCalledOnce();
+      const [appliedTimeoutMs] = timeoutSpy.mock.calls[0];
+      expect(appliedTimeoutMs).toBeGreaterThan(0);
+      expect(appliedTimeoutMs).toBeLessThanOrEqual(shortRemainingMs);
+      expect(appliedTimeoutMs).toBeLessThan(EMBED_CHUNK_ATTEMPT_TIMEOUT_MS);
+      timeoutSpy.mockRestore();
     });
   });
 

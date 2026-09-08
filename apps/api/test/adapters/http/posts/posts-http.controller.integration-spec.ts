@@ -351,11 +351,18 @@ describe('PostsHttpController', () => {
       ]);
       expect(typeof body.nextCursor).toBe('string');
       expect(body.semanticSearchApplied).toBe(true);
-      expect(searchPostsUseCase.execute).toHaveBeenCalledWith({
-        query: 'TypeScript',
-        cursor: null,
-        limit: 20,
-      });
+      expect(searchPostsUseCase.execute).toHaveBeenCalledWith(
+        {
+          query: 'TypeScript',
+          cursor: null,
+          limit: 20,
+        },
+        {
+          deadline: expect.objectContaining({
+            deadlineAt: expect.any(Number) as number,
+          }) as { deadlineAt: number },
+        },
+      );
     });
 
     it('cursor와 limit 쿼리 파라미터를 디코딩하여 use case에 전달한다', async () => {
@@ -373,11 +380,18 @@ describe('PostsHttpController', () => {
         .query({ q: 'TypeScript', cursor: encodedCursor, limit: 5 })
         .expect(200);
 
-      expect(searchPostsUseCase.execute).toHaveBeenCalledWith({
-        query: 'TypeScript',
-        cursor: { id: 'post-1', score: 0.8 },
-        limit: 5,
-      });
+      expect(searchPostsUseCase.execute).toHaveBeenCalledWith(
+        {
+          query: 'TypeScript',
+          cursor: { id: 'post-1', score: 0.8 },
+          limit: 5,
+        },
+        {
+          deadline: expect.objectContaining({
+            deadlineAt: expect.any(Number) as number,
+          }) as { deadlineAt: number },
+        },
+      );
     });
 
     it('score가 없는 cursor이면 400 응답을 반환한다', async () => {
@@ -434,11 +448,18 @@ describe('PostsHttpController', () => {
         .query({ q: 'a' })
         .expect(200);
 
-      expect(searchPostsUseCase.execute).toHaveBeenCalledWith({
-        query: 'a',
-        cursor: null,
-        limit: 20,
-      });
+      expect(searchPostsUseCase.execute).toHaveBeenCalledWith(
+        {
+          query: 'a',
+          cursor: null,
+          limit: 20,
+        },
+        {
+          deadline: expect.objectContaining({
+            deadlineAt: expect.any(Number) as number,
+          }) as { deadlineAt: number },
+        },
+      );
     });
 
     it('예기치 못한 오류는 500 응답으로 마스킹한다', async () => {

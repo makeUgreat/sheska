@@ -9,6 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { computeDeadline } from '@core/deadline';
 import { PublishPostUseCase } from '@contexts/posts/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/posts/application/use-cases/get-post.use-case';
 import { ListPostsUseCase } from '@contexts/posts/application/use-cases/list-posts.use-case';
@@ -34,6 +35,11 @@ import {
   UpdatePostHttpRequest,
   type UpdatePostHttpResponse,
 } from './dto/update-post.http.dto';
+
+// Entry-point deadline for a search request. Currently only bounds the query
+// embed call, so it starts at the same value as the use-case's own attempt
+// timeout; widen this if the request later gains other time-bounded work.
+const SEARCH_REQUEST_DEADLINE_MS = 1_000;
 
 @Controller('posts')
 export class PostsHttpController {
@@ -91,11 +97,15 @@ export class PostsHttpController {
   async search(
     @Query() request: SearchPostsHttpRequest,
   ): Promise<SearchPostsHttpResponse> {
-    const result = await this.searchPostsUseCase.execute({
-      query: request.q,
-      cursor: request.cursor ?? null,
-      limit: request.limit,
-    });
+    const deadline = computeDeadline(SEARCH_REQUEST_DEADLINE_MS);
+    const result = await this.searchPostsUseCase.execute(
+      {
+        query: request.q,
+        cursor: request.cursor ?? null,
+        limit: request.limit,
+      },
+      { deadline },
+    );
 
     return {
       posts: result.posts.map((post) => ({

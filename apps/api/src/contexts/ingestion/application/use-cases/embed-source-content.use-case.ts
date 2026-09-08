@@ -1,5 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { type CallContext } from '@core/call-context';
+import { effectiveAbortSignal } from '@kernels/application';
 import {
   IngestionFailedDomainEvent,
   IngestionProgressDomainEvent,
@@ -17,6 +19,12 @@ import {
 } from '@contexts/ingestion/ingestion.di-tokens';
 import { RecursiveCharacterChunker } from '@contexts/ingestion/application/services/recursive-character.chunker';
 
+// Per-attempt ceiling for embedding a single chunk, independent of the
+// adapter's own internal default (application code must not import an
+// infrastructure constant). The job-level deadline still bounds this further
+// once little time remains.
+export const EMBED_CHUNK_ATTEMPT_TIMEOUT_MS = 30_000;
+
 @Injectable()
 export class EmbedSourceContentUseCase {
   constructor(
@@ -29,7 +37,10 @@ export class EmbedSourceContentUseCase {
   ) {}
 
   // TODO: add retry logic for embedder call failures
-  async execute(payload: EmbedRequestPayload): Promise<void> {
+  async execute(
+    payload: EmbedRequestPayload,
+    context: CallContext,
+  ): Promise<void> {
     const { sourceId, syncJobId, content } = payload;
 
     const chunks = this.chunker.chunk(content);
@@ -47,7 +58,11 @@ export class EmbedSourceContentUseCase {
     let model = '';
 
     for (const chunk of chunks) {
-      const result = await this.embedder.embed(chunk.content);
+      const signal = effectiveAbortSignal(
+        context.deadline,
+        EMBED_CHUNK_ATTEMPT_TIMEOUT_MS,
+      );
+      const result = await this.embedder.embed(chunk.content, { signal });
       model = result.model;
       embedChunks.push({
         chunkIndex: chunk.index,

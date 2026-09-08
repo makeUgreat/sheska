@@ -13,10 +13,13 @@ export class SearchQueryFromIngestionEmbedder implements SearchQueryEmbedder {
     private readonly timeoutMs: number = SEARCH_QUERY_EMBED_TIMEOUT_MS,
   ) {}
 
-  async embed(query: string): Promise<number[] | null> {
+  async embed(
+    query: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<number[] | null> {
     try {
       const { embedding } = await this.embedder.embed(query, {
-        signal: AbortSignal.timeout(this.timeoutMs),
+        signal: options?.signal ?? AbortSignal.timeout(this.timeoutMs),
       });
       return embedding;
     } catch {
