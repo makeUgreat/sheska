@@ -14,9 +14,16 @@ import { DEFAULT_SETTINGS } from './settings';
 
 function makePlugin(
   loadDataResult: Record<string, unknown> = {},
+  useDefaultAutoSyncDirectory = false,
 ): SheskaPlugin {
   const plugin = new SheskaPlugin({} as never, {} as never);
-  plugin.loadData = vi.fn().mockResolvedValue(loadDataResult);
+  plugin.loadData = vi
+    .fn()
+    .mockResolvedValue(
+      useDefaultAutoSyncDirectory
+        ? loadDataResult
+        : { autoSyncDirectories: '', ...loadDataResult },
+    );
   plugin.saveData = vi.fn().mockResolvedValue(undefined);
   return plugin;
 }
@@ -34,6 +41,7 @@ describe('SheskaPlugin', () => {
 
   describe('onload', () => {
     it('loads settings and initialises the API client', async () => {
+      plugin = makePlugin({}, true);
       await plugin.onload();
 
       expect(plugin.settings).toMatchObject(DEFAULT_SETTINGS);
@@ -57,6 +65,7 @@ describe('SheskaPlugin', () => {
 
   describe('loadSettings', () => {
     it('falls back to DEFAULT_SETTINGS when loadData returns empty', async () => {
+      plugin = makePlugin({}, true);
       await plugin.loadSettings();
 
       expect(plugin.settings).toMatchObject({
