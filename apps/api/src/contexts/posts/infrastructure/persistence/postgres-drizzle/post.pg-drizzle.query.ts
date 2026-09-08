@@ -1,3 +1,4 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { count, desc, lt, sql } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
@@ -13,6 +14,7 @@ import {
 } from '@contexts/posts/application/ports';
 import {
   classifyPostgresError,
+  DATABASE_TOKENS,
   INFRASTRUCTURE_ERROR_KIND,
   InfrastructureException,
   sliceForCursor,
@@ -47,8 +49,12 @@ type SearchPostRow = {
   searchScore: number;
 };
 
+@Injectable()
 export class PostPgDrizzleQuery implements PostQuery {
-  constructor(private readonly db: NodePgDatabase<QuerySchema>) {}
+  constructor(
+    @Inject(DATABASE_TOKENS.drizzleDatabase)
+    private readonly db: NodePgDatabase<QuerySchema>,
+  ) {}
 
   async get(criteria: PostQueryFindCriteria): Promise<PostQueryResult> {
     const result = await this.find(criteria);

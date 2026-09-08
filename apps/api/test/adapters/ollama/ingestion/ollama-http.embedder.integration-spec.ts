@@ -5,7 +5,7 @@ import { InfrastructureException } from '@kernels/infrastructure';
 import { OllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.embedder';
 
 const OLLAMA_TEST_BASE_URL = 'http://127.0.0.1:11435';
-const OLLAMA_TEST_MODEL = 'qwen3-embedding:0.6b'; // options.model로 직접 전달 — global-setup.ts가 pull하는 모델과 일치해야 함
+const OLLAMA_TEST_MODEL = 'qwen3-embedding:0.6b'; // 클래스 내부 OLLAMA_MODEL 상수와 일치해야 함 — global-setup.ts가 pull하는 모델
 const OLLAMA_UNREACHABLE_URL = 'http://127.0.0.1:19999';
 
 function buildContext(remainingMs = 60_000): CallContext {
@@ -16,10 +16,7 @@ describe('OllamaHttpEmbedder (integration)', () => {
   let embedder: OllamaHttpEmbedder;
 
   beforeAll(() => {
-    embedder = new OllamaHttpEmbedder({
-      baseUrl: OLLAMA_TEST_BASE_URL,
-      model: OLLAMA_TEST_MODEL,
-    });
+    embedder = new OllamaHttpEmbedder({ baseUrl: OLLAMA_TEST_BASE_URL });
   });
 
   it('텍스트를 임베딩하면 1024차원 벡터와 모델명을 반환한다', async () => {
@@ -55,7 +52,6 @@ describe('OllamaHttpEmbedder — 서비스 불가 (integration)', () => {
   beforeAll(() => {
     unreachableEmbedder = new OllamaHttpEmbedder({
       baseUrl: OLLAMA_UNREACHABLE_URL,
-      model: OLLAMA_TEST_MODEL,
     });
   });
 

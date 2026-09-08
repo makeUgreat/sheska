@@ -1,14 +1,10 @@
 import { Module, type DynamicModule } from '@nestjs/common';
-import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { DATABASE_TOKENS } from '@kernels/infrastructure';
 import { SourceContentSnapshotCalculator } from '@contexts/sources/application/services/source-content-snapshot-calculator.service';
 import { SourceFromRepositoryLookup } from '@contexts/sources/application/services/source.from-repository.lookup';
-import { type SourceRepository } from '@contexts/sources/domain';
 import { GetSourceUseCase } from '@contexts/sources/application/use-cases/get-source.use-case';
 import { ListSourcesUseCase } from '@contexts/sources/application/use-cases/list-sources.use-case';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
 import { SourceSha256Fingerprinter } from '@contexts/sources/infrastructure/fingerprinter/source.sha256.fingerprinter';
-import * as sourcesSchema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
 import { SourcePgDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
 import { SourceSyncJobPgDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source-sync-job.pg-drizzle.repository';
 import { SourceEmbeddingFromIngestionLookup } from '@contexts/sources/acl/ingestion/source-embedding.from-ingestion.lookup';
@@ -44,15 +40,11 @@ export class SourcesModule {
         },
         {
           provide: SOURCE_REPOSITORY,
-          useFactory: (db: NodePgDatabase<typeof sourcesSchema>) =>
-            new SourcePgDrizzleRepository(db),
-          inject: [DATABASE_TOKENS.drizzleDatabase],
+          useClass: SourcePgDrizzleRepository,
         },
         {
           provide: SOURCE_SYNC_JOB_REPOSITORY,
-          useFactory: (db: NodePgDatabase<typeof sourcesSchema>) =>
-            new SourceSyncJobPgDrizzleRepository(db),
-          inject: [DATABASE_TOKENS.drizzleDatabase],
+          useClass: SourceSyncJobPgDrizzleRepository,
         },
         {
           provide: SOURCE_EMBEDDING_LOOKUP,
@@ -62,15 +54,11 @@ export class SourcesModule {
         },
         {
           provide: SOURCE_QUERY,
-          useFactory: (db: NodePgDatabase<typeof sourcesSchema>) =>
-            new SourcePgDrizzleQuery(db),
-          inject: [DATABASE_TOKENS.drizzleDatabase],
+          useClass: SourcePgDrizzleQuery,
         },
         {
           provide: SOURCE_LOOKUP,
-          useFactory: (repository: SourceRepository) =>
-            new SourceFromRepositoryLookup(repository),
-          inject: [SOURCE_REPOSITORY],
+          useClass: SourceFromRepositoryLookup,
         },
         SourceContentSnapshotCalculator,
         ListSourcesUseCase,

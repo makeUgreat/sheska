@@ -1,3 +1,4 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
@@ -8,6 +9,7 @@ import {
 } from '@contexts/posts/domain';
 import {
   classifyPostgresError,
+  DATABASE_TOKENS,
   InfrastructureException,
 } from '@kernels/infrastructure';
 import * as schema from './schema';
@@ -15,8 +17,12 @@ import { PostPgDrizzleMapper } from './post.pg-drizzle.mapper';
 
 const ADAPTER = 'post.pg-drizzle';
 
+@Injectable()
 export class PostPgDrizzleRepository implements PostRepository {
-  constructor(private readonly db: NodePgDatabase<typeof schema>) {}
+  constructor(
+    @Inject(DATABASE_TOKENS.drizzleDatabase)
+    private readonly db: NodePgDatabase<typeof schema>,
+  ) {}
 
   async get(criteria: PostRepositoryGetCriteria): Promise<Post> {
     let row: schema.PostRow | undefined;

@@ -14,7 +14,7 @@ describe('OllamaHttpEmbedder', () => {
   const model = 'qwen3-embedding:0.6b';
 
   beforeEach(() => {
-    client = new OllamaHttpEmbedder({ baseUrl, model });
+    client = new OllamaHttpEmbedder({ baseUrl });
   });
 
   it('성공 시 임베딩과 모델을 반환한다', async () => {

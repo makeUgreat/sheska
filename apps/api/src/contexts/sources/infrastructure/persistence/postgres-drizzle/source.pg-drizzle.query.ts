@@ -1,3 +1,4 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
@@ -8,6 +9,7 @@ import {
 } from '@contexts/sources/application/ports';
 import {
   classifyPostgresError,
+  DATABASE_TOKENS,
   InfrastructureException,
   sliceForCursor,
 } from '@kernels/infrastructure';
@@ -32,8 +34,12 @@ type SourceWithLatestJobRow = {
   published_post_id: string | null;
 };
 
+@Injectable()
 export class SourcePgDrizzleQuery implements SourceQuery {
-  constructor(private readonly db: NodePgDatabase<QuerySchema>) {}
+  constructor(
+    @Inject(DATABASE_TOKENS.drizzleDatabase)
+    private readonly db: NodePgDatabase<QuerySchema>,
+  ) {}
 
   async paginate({
     limit,
