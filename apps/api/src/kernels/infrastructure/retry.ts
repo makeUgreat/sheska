@@ -12,7 +12,7 @@ export interface RetryPolicy {
   readonly maxDelayMs: number;
 }
 
-interface RetryAttempt {
+export interface RetryAttempt {
   readonly attempt: number;
   readonly signal: AbortSignal;
 }
