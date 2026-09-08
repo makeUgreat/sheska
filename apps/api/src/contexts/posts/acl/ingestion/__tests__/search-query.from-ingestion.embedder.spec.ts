@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, type Mock } from 'vitest';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
-import { type Embedder } from '@contexts/ingestion/ingestion.di-tokens';
+import { type Embedder } from '@contexts/ingestion';
 import {
   SearchQueryFromIngestionEmbedder,
   SEARCH_QUERY_EMBED_TIMEOUT_MS,

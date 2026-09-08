@@ -10,19 +10,15 @@ import { UpdatePostTitleUseCase } from '@contexts/posts/application/use-cases/up
 import { PostPgDrizzleRepository } from '@contexts/posts/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.repository';
 import { PostPgDrizzleQuery } from '@contexts/posts/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.query';
 import * as postsSchema from '@contexts/posts/infrastructure/persistence/postgres-drizzle/schema';
-import { SourceFromSourcesLookup } from '@contexts/posts/infrastructure/sources/source.from-sources.lookup';
-import { SearchQueryFromIngestionEmbedder } from '@contexts/posts/infrastructure/ingestion/search-query.from-ingestion.embedder';
+import { SourceFromSourcesLookup } from '@contexts/posts/acl/sources/source.from-sources.lookup';
+import { SearchQueryFromIngestionEmbedder } from '@contexts/posts/acl/ingestion/search-query.from-ingestion.embedder';
 import { PostsHttpController } from '@contexts/posts/presentation/http/posts-http.controller';
 import {
-  type SourceRepository,
-  SOURCE_REPOSITORY,
-} from '@contexts/sources/sources.di-tokens';
-import { SourcesModule } from '@contexts/sources/sources.module';
-import {
-  type Embedder,
-  EMBEDDER,
-} from '@contexts/ingestion/ingestion.di-tokens';
-import { IngestionModule } from '@contexts/ingestion/ingestion.module';
+  type SourceLookup as SourcesSourceLookup,
+  SOURCE_LOOKUP as SOURCES_SOURCE_LOOKUP,
+  SourcesModule,
+} from '@contexts/sources';
+import { type Embedder, EMBEDDER, IngestionModule } from '@contexts/ingestion';
 import {
   POST_QUERY,
   POST_REPOSITORY,
@@ -54,9 +50,9 @@ export class PostsModule {
         },
         {
           provide: SOURCE_LOOKUP,
-          useFactory: (sourceRepository: SourceRepository) =>
-            new SourceFromSourcesLookup(sourceRepository),
-          inject: [SOURCE_REPOSITORY],
+          useFactory: (sourcesLookup: SourcesSourceLookup) =>
+            new SourceFromSourcesLookup(sourcesLookup),
+          inject: [SOURCES_SOURCE_LOOKUP],
         },
         {
           provide: SEARCH_QUERY_EMBEDDER,

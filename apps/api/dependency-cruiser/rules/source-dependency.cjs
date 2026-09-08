@@ -61,26 +61,41 @@ module.exports = [
     name: 'api-infrastructure-not-to-presentation-or-platform',
     severity: 'error',
     comment:
-      'Infrastructure adapters implement technical details and must not depend on presentation adapters or platform wiring. ' +
+      'Infrastructure adapters implement technical details and must not depend on presentation adapters, the ACL, or platform wiring. ' +
       `See ${docs.sourceDependency}#infrastructure-layer.`,
     from: {
       path: '^src/contexts/[^/]+/infrastructure/',
     },
     to: {
-      path: '^src/(platform/|contexts/[^/]+/presentation/)',
+      path: '^src/(platform/|contexts/[^/]+/(presentation|acl)/)',
     },
   },
   {
     name: 'api-presentation-not-to-domain-infrastructure-or-platform',
     severity: 'error',
     comment:
-      'Presentation should call application use cases and map protocol concerns; it must not reach into domain internals, infrastructure adapters, or platform wiring. ' +
+      'Presentation should call application use cases and map protocol concerns; it must not reach into domain internals, infrastructure adapters, the ACL, or platform wiring. ' +
       `See ${docs.sourceDependency}#presentation-layer.`,
     from: {
       path: '^src/contexts/([^/]+)/presentation/',
     },
     to: {
-      path: '^src/(platform/|contexts/$1/(domain|infrastructure)/)',
+      path: '^src/(platform/|contexts/$1/(domain|infrastructure|acl)/)',
+    },
+  },
+  {
+    name: 'api-acl-stays-narrow',
+    severity: 'error',
+    comment:
+      "The Anti-Corruption Layer implements a consumer-owned port to reach across a context boundary. It may depend " +
+      "only on core, this context's own application ports, and the producer context's public surface — never this " +
+      "context's own domain or infrastructure internals, presentation, or platform. " +
+      `See ${docs.contextIntegration}#rule-2.`,
+    from: {
+      path: '^src/contexts/([^/]+)/acl/',
+    },
+    to: {
+      path: '^src/(platform/|contexts/$1/(domain|infrastructure|presentation)/)',
     },
   },
   {
@@ -93,7 +108,22 @@ module.exports = [
       path: '^src/contexts/([^/]+)/',
     },
     to: {
-      path: '^src/contexts/(?!$1/)[^/]+/(domain|infrastructure|presentation)/',
+      path: '^src/contexts/(?!$1/)[^/]+/(domain|infrastructure|presentation|acl)/',
+    },
+  },
+  {
+    name: 'api-only-through-context-public-surface',
+    severity: 'error',
+    comment:
+      "A context's root-level files (its *.di-tokens.ts and *.module.ts) are internal wiring, not a cross-context " +
+      "contract. Other contexts may depend only on the producer's index.ts public surface. " +
+      `See ${docs.contextIntegration}#rule-2.`,
+    from: {
+      path: '^src/contexts/([^/]+)/',
+    },
+    to: {
+      path: '^src/contexts/(?!$1/)[^/]+/[^/]+[.]ts$',
+      pathNot: '^src/contexts/[^/]+/index[.]ts$',
     },
   },
   {

@@ -34,7 +34,7 @@ export class PublishPostUseCase {
   ) {}
 
   async execute(command: PublishPostCommand): Promise<PublishPostResult> {
-    const sourceInfo = await this.sourceLookup.get(command.sourceId);
+    const sourceContent = await this.sourceLookup.get(command.sourceId);
 
     const existing = await this.posts.find({ sourceId: command.sourceId });
 
@@ -48,8 +48,8 @@ export class PublishPostUseCase {
     }
 
     const derivedTitle =
-      extractFrontmatterTitle(sourceInfo.content) ??
-      sourceInfo.externalSourceId;
+      extractFrontmatterTitle(sourceContent.content) ??
+      sourceContent.externalSourceId;
 
     const post = Post.create({
       sourceId: command.sourceId,

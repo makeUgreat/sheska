@@ -1,17 +1,17 @@
-import { type SourceEmbeddingRepository } from '@contexts/ingestion/ingestion.di-tokens';
+import { type SourceEmbeddingRepository } from '@contexts/ingestion/domain';
 import {
   type SourceEmbeddingLookup,
-  type EmbeddingInfo,
-} from '@contexts/sources/application/ports';
+  type EmbeddingMetadata,
+} from '@contexts/ingestion/application/ports';
 
-export class SourceEmbeddingFromIngestionLookup implements SourceEmbeddingLookup {
+export class SourceEmbeddingFromRepositoryLookup implements SourceEmbeddingLookup {
   constructor(private readonly sourceEmbeddings: SourceEmbeddingRepository) {}
 
   async find({
     sourceId,
   }: {
     sourceId: string;
-  }): Promise<EmbeddingInfo | null> {
+  }): Promise<EmbeddingMetadata | null> {
     const embedding = await this.sourceEmbeddings.find({ sourceId });
     if (!embedding) return null;
     const props = embedding.getProps();

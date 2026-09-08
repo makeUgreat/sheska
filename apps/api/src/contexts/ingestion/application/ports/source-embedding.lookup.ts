@@ -1,4 +1,4 @@
-export interface SourceEmbeddingMetadata {
+export interface EmbeddingMetadata {
   readonly model: string;
   readonly dimensions: number;
   readonly createdAt: Date;
@@ -6,5 +6,5 @@ export interface SourceEmbeddingMetadata {
 }
 
 export interface SourceEmbeddingLookup {
-  find(criteria: { sourceId: string }): Promise<SourceEmbeddingMetadata | null>;
+  find(criteria: { sourceId: string }): Promise<EmbeddingMetadata | null>;
 }

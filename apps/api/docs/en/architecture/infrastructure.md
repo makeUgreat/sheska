@@ -9,6 +9,7 @@ related:
   - ./architecture.md
   - ../persistence/persistence.md
   - ./source-dependency.md
+  - ./context-integration.md
 ---
 
 # API Infrastructure Convention
@@ -19,6 +20,7 @@ related:
   - Application contracts.
   - Infrastructure adapters.
   - Presentation's non-protocol inbound adapters, such as queue consumers.
+  - ACL adapters (cross-context Pull adapters under `contexts/A/acl/<B-name>/`).
   - Kernel utilities.
 - Use related conventions for decisions outside this document's scope.
   - Use the [persistence policy](../persistence/persistence.md) for database schema, ORM, migration, repository mapper,
@@ -26,8 +28,9 @@ related:
   - Use the [source dependency convention](./source-dependency.md) for import direction and layer boundaries.
   - Use its Presentation Layer section to classify technology-coupled adapters as infrastructure (driven) or
     presentation (driving).
-- The adapter file naming pattern is shared by infrastructure adapters and presentation's non-protocol inbound
-  adapters even though they live in different layers.
+  - Use the [context integration convention](./context-integration.md) for ACL adapter rules and naming vocabulary.
+- The adapter file naming pattern is shared by infrastructure adapters, presentation's non-protocol inbound
+  adapters, and ACL adapters even though they live in different layers.
 
 ## Contract File Naming
 

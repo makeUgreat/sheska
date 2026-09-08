@@ -1,6 +1,6 @@
 import { type PostRepository } from '@contexts/posts/domain';
 import {
-  type SourceInfo,
+  type PublishableSourceContent,
   type SourceLookup,
 } from '@contexts/posts/application/ports';
 import { APPLICATION_ERROR_KIND } from '@kernels/application';
@@ -19,12 +19,12 @@ type SourceLookupMock = {
   find: MockedFunction<SourceLookup['find']>;
 };
 
-const sourceInfoWithFrontmatter: SourceInfo = {
+const sourceContentWithFrontmatter: PublishableSourceContent = {
   content: '---\ntitle: 테스트 포스트\n---\n본문',
   externalSourceId: 'Notes/test.md',
 };
 
-const sourceInfoWithoutFrontmatter: SourceInfo = {
+const sourceContentWithoutFrontmatter: PublishableSourceContent = {
   content: '# 프론트매터 없는 마크다운',
   externalSourceId: 'Notes/test.md',
 };
@@ -33,7 +33,7 @@ describe('PublishPostUseCase', () => {
   it('source가 존재하고 post가 없으면 프론트매터 title로 post를 생성하고 저장한다', async () => {
     const posts = createPostRepositoryMock();
     const sourceLookup = createSourceLookupMock({
-      sourceInfo: sourceInfoWithFrontmatter,
+      sourceContent: sourceContentWithFrontmatter,
     });
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
@@ -53,7 +53,7 @@ describe('PublishPostUseCase', () => {
   it('프론트매터 title이 없으면 externalSourceId를 title로 사용한다', async () => {
     const posts = createPostRepositoryMock();
     const sourceLookup = createSourceLookupMock({
-      sourceInfo: sourceInfoWithoutFrontmatter,
+      sourceContent: sourceContentWithoutFrontmatter,
     });
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
@@ -66,7 +66,7 @@ describe('PublishPostUseCase', () => {
     const notFoundError = new Error('Source not found');
     const posts = createPostRepositoryMock();
     const sourceLookup = createSourceLookupMock({
-      sourceInfo: sourceInfoWithFrontmatter,
+      sourceContent: sourceContentWithFrontmatter,
     });
     sourceLookup.get.mockRejectedValue(notFoundError);
     const useCase = new PublishPostUseCase(posts, sourceLookup);
@@ -83,7 +83,7 @@ describe('PublishPostUseCase', () => {
     const posts = createPostRepositoryMock();
     posts.find.mockResolvedValue(existingPost);
     const sourceLookup = createSourceLookupMock({
-      sourceInfo: sourceInfoWithFrontmatter,
+      sourceContent: sourceContentWithFrontmatter,
     });
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
@@ -100,7 +100,7 @@ describe('PublishPostUseCase', () => {
     const lookupFailure = new Error('Source lookup failed');
     const posts = createPostRepositoryMock();
     const sourceLookup = createSourceLookupMock({
-      sourceInfo: sourceInfoWithFrontmatter,
+      sourceContent: sourceContentWithFrontmatter,
     });
     sourceLookup.get.mockRejectedValue(lookupFailure);
     const useCase = new PublishPostUseCase(posts, sourceLookup);
@@ -116,7 +116,7 @@ describe('PublishPostUseCase', () => {
     const posts = createPostRepositoryMock();
     posts.find.mockRejectedValue(findFailure);
     const sourceLookup = createSourceLookupMock({
-      sourceInfo: sourceInfoWithFrontmatter,
+      sourceContent: sourceContentWithFrontmatter,
     });
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
@@ -131,7 +131,7 @@ describe('PublishPostUseCase', () => {
     const posts = createPostRepositoryMock();
     posts.save.mockRejectedValue(saveFailure);
     const sourceLookup = createSourceLookupMock({
-      sourceInfo: sourceInfoWithFrontmatter,
+      sourceContent: sourceContentWithFrontmatter,
     });
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
@@ -152,12 +152,12 @@ function createPostRepositoryMock(): PostRepositoryMock {
 }
 
 function createSourceLookupMock({
-  sourceInfo,
+  sourceContent,
 }: {
-  sourceInfo: SourceInfo;
+  sourceContent: PublishableSourceContent;
 }): SourceLookupMock {
   return {
-    get: vi.fn<SourceLookup['get']>().mockResolvedValue(sourceInfo),
-    find: vi.fn<SourceLookup['find']>().mockResolvedValue(sourceInfo),
+    get: vi.fn<SourceLookup['get']>().mockResolvedValue(sourceContent),
+    find: vi.fn<SourceLookup['find']>().mockResolvedValue(sourceContent),
   };
 }

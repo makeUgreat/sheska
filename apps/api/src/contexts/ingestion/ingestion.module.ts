@@ -23,11 +23,14 @@ import {
   DEFAULT_CHUNK_OVERLAP,
   DEFAULT_SEPARATORS,
 } from '@contexts/ingestion/application/services/recursive-character.chunker';
+import { SourceEmbeddingFromRepositoryLookup } from '@contexts/ingestion/application/services/source-embedding.from-repository.lookup';
+import { type SourceEmbeddingRepository } from '@contexts/ingestion/domain';
 import { SourceEmbeddingPgDrizzleRepository } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/source-embedding.pg-drizzle.repository';
 import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
 import {
   EMBEDDER,
   SOURCE_EMBEDDING_REPOSITORY,
+  SOURCE_EMBEDDING_LOOKUP,
   EMBED_REQUEST_DISPATCHER,
   EMBED_RESULT_DISPATCHER,
 } from './ingestion.di-tokens';
@@ -45,6 +48,12 @@ export class IngestionModule {
           useFactory: (db: NodePgDatabase<typeof ingestionSchema>) =>
             new SourceEmbeddingPgDrizzleRepository(db),
           inject: [DATABASE_TOKENS.drizzleDatabase],
+        },
+        {
+          provide: SOURCE_EMBEDDING_LOOKUP,
+          useFactory: (repository: SourceEmbeddingRepository) =>
+            new SourceEmbeddingFromRepositoryLookup(repository),
+          inject: [SOURCE_EMBEDDING_REPOSITORY],
         },
         {
           provide: EMBEDDER,
@@ -71,6 +80,7 @@ export class IngestionModule {
       ],
       exports: [
         SOURCE_EMBEDDING_REPOSITORY,
+        SOURCE_EMBEDDING_LOOKUP,
         EMBEDDER,
         RecursiveCharacterChunker,
       ],

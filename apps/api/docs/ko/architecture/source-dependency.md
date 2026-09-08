@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../../en/architecture/source-dependency.md
-last_synced: 2026-09-07
+last_synced: 2026-09-08
 related:
   - ./architecture.md
   - ./ddd.md
@@ -37,6 +37,7 @@ flowchart TB
     direction LR
     presentation[Presentation]
     infrastructure[Infrastructure]
+    acl[ACL]
   end
 
   application[Application]
@@ -53,6 +54,7 @@ flowchart TB
 
   presentation --> application
   infrastructure --> application
+  acl --> application
   application --> domain
   domain --> core
 
@@ -65,6 +67,10 @@ flowchart TB
   applicationKernel --> core
   domainKernel --> core
 ```
+
+- `acl`은 다른 바운디드 컨텍스트의 public surface(`@contexts/<other-context>`)에도 의존한다 — 이 다이어그램은 한
+  컨텍스트 내부 의존성만 그린 것이라 위에는 표시되지 않았다. 그 크로스 컨텍스트 엣지는
+  [context integration 컨벤션](./context-integration.md)을 따른다.
 
 ## Import Surface
 
@@ -132,6 +138,16 @@ flowchart TB
 - 어댑터 코드는 기술별 오류에 맥락을 추가할 때 `cause`가 있는 `Error`로 감쌀 수 있다.
   - 오류 소유권과 변환은 [오류 정책](../operability/error.md)을 따른다.
 
+### Anti-Corruption Layer (ACL)
+
+- ACL은 컨슈머 소유 포트를 구현해서 바운디드 컨텍스트 경계를 넘는다.
+  - 어댑터 이름, 위치, 프로듀서/컨슈머 네이밍 어휘는 [context integration 컨벤션](./context-integration.md)을 따른다.
+- ACL 코드는 `core`, 이 컨텍스트 자신의 `application/ports`, 그리고 다른 컨텍스트의 public surface
+  (`@contexts/<other-context>`, 즉 그 컨텍스트의 `index.ts`)에 의존할 수 있다.
+- ACL 코드는 이 컨텍스트 자신의 domain이나 infrastructure 내부, presentation, platform에 의존해서는 안 된다.
+- ACL 코드는 다른 컨텍스트의 domain, infrastructure, presentation, 루트 레벨 배선 파일에 의존해서는 안 된다 —
+  그 컨텍스트의 `index.ts` public surface만 의존할 수 있다.
+
 ### Presentation Layer
 
 - Presentation은 인바운드(driving) 어댑터 레이어다.
@@ -156,7 +172,7 @@ flowchart TB
 
 ### 배선 영역
 
-- 바운디드 컨텍스트 루트 배선 모듈은 해당 컨텍스트의 application, presentation, infrastructure 코드를
+- 바운디드 컨텍스트 루트 배선 모듈은 해당 컨텍스트의 application, presentation, infrastructure, ACL 코드를
   import할 수 있다.
   - 다른 컨텍스트의 내부 구현을 임의로 조립해서는 안 된다.
 - `platform`은 시작과 모듈 배선을 위해 바운디드 컨텍스트, 어댑터, kernel, `core`, framework, 외부 runtime

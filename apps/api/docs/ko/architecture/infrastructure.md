@@ -5,11 +5,12 @@ audience: both
 applies_to:
   - apps/api
 source: ../../en/architecture/infrastructure.md
-last_synced: 2026-09-07
+last_synced: 2026-09-08
 related:
   - ./architecture.md
   - ../persistence/persistence.md
   - ./source-dependency.md
+  - ./context-integration.md
 ---
 
 # API Infrastructure 컨벤션
@@ -20,6 +21,7 @@ related:
   - 애플리케이션 계약.
   - Infrastructure 어댑터.
   - 큐 consumer 같은 presentation의 비프로토콜 인바운드 어댑터.
+  - ACL 어댑터 (`contexts/A/acl/<B-name>/` 밑의 크로스 컨텍스트 Pull 어댑터).
   - Kernel 유틸리티.
 - 이 문서의 범위를 벗어나는 결정에는 관련 컨벤션을 사용한다.
   - 데이터베이스 스키마, ORM, migration, repository mapper, 저장소 제약 규칙은
@@ -27,8 +29,9 @@ related:
   - import 방향과 레이어 경계는 [source dependency 컨벤션](./source-dependency.md)을 사용한다.
   - 기술 결합 어댑터가 infrastructure(driven)인지 presentation(driving)인지 분류할 때는 해당 문서의
     Presentation Layer 섹션을 사용한다.
-- 어댑터 파일 명명 패턴은 서로 다른 레이어에 있더라도 infrastructure 어댑터와 presentation의
-  비프로토콜 인바운드 어댑터가 공유한다.
+  - ACL 어댑터 규칙과 네이밍 어휘는 [context integration 컨벤션](./context-integration.md)을 사용한다.
+- 어댑터 파일 명명 패턴은 서로 다른 레이어에 있더라도 infrastructure 어댑터, presentation의
+  비프로토콜 인바운드 어댑터, ACL 어댑터가 공유한다.
 
 ## Contract 파일 명명
 
