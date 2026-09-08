@@ -1,6 +1,7 @@
 import { computeExponentialBackoffMs } from '@core/backoff';
 import { effectiveTimeoutMs, remainingMs, type Deadline } from '@core/deadline';
 import { applyFullJitter } from '@core/jitter';
+import { sleep as defaultSleep } from '@core/sleep';
 import {
   classifyInfrastructureRetry,
   type RetryClassification,
@@ -27,10 +28,6 @@ interface WithRetryOptions {
   readonly random?: () => number;
 }
 
-function defaultSleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export async function withRetry<T>(
   operation: (attempt: RetryAttempt) => Promise<T>,
   options: WithRetryOptions,
@@ -47,7 +44,7 @@ export async function withRetry<T>(
 
   let attempt = 0;
 
-  for (;;) {
+  while (true) {
     const signal = AbortSignal.timeout(
       effectiveTimeoutMs(deadline, attemptTimeoutMs, now()),
     );
