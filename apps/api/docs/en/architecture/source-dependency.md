@@ -35,6 +35,7 @@ flowchart TB
     direction LR
     presentation[Presentation]
     infrastructure[Infrastructure]
+    acl[ACL]
   end
 
   application[Application]
@@ -51,6 +52,7 @@ flowchart TB
 
   presentation --> application
   infrastructure --> application
+  acl --> application
   application --> domain
   domain --> core
 
@@ -63,6 +65,10 @@ flowchart TB
   applicationKernel --> core
   domainKernel --> core
 ```
+
+- `acl` also depends on another bounded context's public surface (`@contexts/<other-context>`) — not shown above, since
+  this diagram maps dependencies within one context. Follow the
+  [context integration convention](./context-integration.md) for that cross-context edge.
 
 ## Import Surfaces
 
@@ -130,6 +136,17 @@ flowchart TB
 - Adapter code MAY wrap technology-specific errors in an `Error` with `cause` when adding adapter context.
   - Follow the [error policy](../operability/error.md) for error ownership and transformation.
 
+### Anti-Corruption Layer (ACL)
+
+- The ACL implements a consumer-owned port to reach across a bounded context boundary.
+  - Follow the [context integration convention](./context-integration.md) for adapter naming, file location, and
+    the producer/consumer naming vocabulary.
+- ACL code MAY depend on `core`, this context's own `application/ports`, and another context's public surface
+  (`@contexts/<other-context>`, i.e. that context's `index.ts`).
+- ACL code MUST NOT depend on this context's own domain or infrastructure internals, presentation, or platform.
+- ACL code MUST NOT depend on another context's domain, infrastructure, presentation, or root-level wiring files —
+  only that context's `index.ts` public surface.
+
 ### Presentation Layer
 
 - Presentation is the inbound (driving) adapter layer.
@@ -155,7 +172,8 @@ flowchart TB
 
 ### Wiring Areas
 
-- A bounded context root wiring module MAY import that context's application, presentation, and infrastructure code.
+- A bounded context root wiring module MAY import that context's application, presentation, infrastructure, and
+  ACL code.
   - It MUST NOT arbitrarily compose another context's internal implementation.
 - `platform` MAY import bounded contexts, adapters, kernels, `core`, frameworks, and external runtime libraries for
   startup and module wiring.

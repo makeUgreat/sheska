@@ -11,7 +11,7 @@ import {
 } from '@contexts/sources/sources.di-tokens';
 import {
   type SourceEmbeddingLookup,
-  type EmbeddingInfo,
+  type SourceEmbeddingMetadata,
   type SourceQuery,
 } from '@contexts/sources/application/ports';
 
@@ -34,7 +34,7 @@ export interface GetSourceResult {
     readonly processedChunks: number;
     readonly createdAt: Date;
   } | null;
-  readonly embedding: EmbeddingInfo | null;
+  readonly embedding: SourceEmbeddingMetadata | null;
   readonly publishedPostId: string | null;
 }
 

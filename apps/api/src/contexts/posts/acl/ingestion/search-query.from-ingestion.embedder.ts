@@ -1,5 +1,5 @@
 import { type CallContext } from '@core/call-context';
-import { type Embedder } from '@contexts/ingestion/ingestion.di-tokens';
+import { type Embedder } from '@contexts/ingestion';
 import { type SearchQueryEmbedder } from '@contexts/posts/application/ports';
 
 // Interactive search should feel snappy; if embedding takes longer than this,

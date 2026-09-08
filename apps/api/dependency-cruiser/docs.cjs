@@ -1,4 +1,5 @@
 module.exports = {
-  runtimeWiring: 'apps/api/docs/en/runtime-wiring.md',
-  sourceDependency: 'apps/api/docs/en/source-dependency.md',
+  runtimeWiring: 'apps/api/docs/en/architecture/runtime-wiring.md',
+  sourceDependency: 'apps/api/docs/en/architecture/source-dependency.md',
+  contextIntegration: 'apps/api/docs/en/architecture/context-integration.md',
 };
