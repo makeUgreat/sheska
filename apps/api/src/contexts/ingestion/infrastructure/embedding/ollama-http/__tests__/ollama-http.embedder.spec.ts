@@ -190,4 +190,31 @@ describe('OllamaHttpEmbedder', () => {
       details: { statusCode: 404 },
     });
   });
+
+  it('재시도가 모두 소진되어 breaker의 실패율 threshold를 넘으면 이후 호출은 fetch를 호출하지 않고 CIRCUIT_OPEN InfrastructureException을 던진다', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+      headers: new Headers(),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    // Production policy requires minimumRequestCount: 10 failing logical
+    // calls (each already retry-exhausted, 3 fetch attempts apiece) before
+    // the breaker trips at failureRateThreshold: 0.5.
+    for (let i = 0; i < 10; i++) {
+      await expect(client.embed('hello', buildContext())).rejects.toMatchObject(
+        { kind: 'bad_response' },
+      );
+    }
+    fetchMock.mockClear();
+
+    await expect(client.embed('hello', buildContext())).rejects.toMatchObject({
+      kind: 'circuit_open',
+      code: 'ollama.circuit_open',
+      cause: expect.any(Error) as Error,
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  }, 20_000);
 });

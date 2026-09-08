@@ -76,6 +76,7 @@ describe('classifyInfrastructureRetry', () => {
     INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
     INFRASTRUCTURE_ERROR_KIND.RESTORE_FAILED,
     INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
+    INFRASTRUCTURE_ERROR_KIND.CIRCUIT_OPEN,
   ])('%s kind는 재시도 불가하다', (kind) => {
     expect(classifyInfrastructureRetry(buildException(kind))).toEqual({
       retryable: false,

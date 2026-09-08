@@ -6,6 +6,15 @@ export {
 } from './cursor.paginator';
 export { DATABASE_TOKENS } from './database.tokens';
 export {
+  CircuitBreaker,
+  CircuitBreakerOpenError,
+  type CircuitBreakerPolicy,
+} from './circuit-breaker';
+export {
+  withCircuitBreakerRetry,
+  type WithCircuitBreakerRetryOptions,
+} from './circuit-breaker-retry';
+export {
   INFRASTRUCTURE_ERROR_KIND,
   type InfrastructureErrorBase,
   type InfrastructureErrorOf,
@@ -16,4 +25,4 @@ export {
 export { InfrastructureException } from './infrastructure.exception';
 export { classifyPostgresError } from './postgres-error.classifier';
 export { parseRetryAfterMs } from './retry-after';
-export { withRetry, type RetryPolicy } from './retry';
+export { withRetry, type RetryAttempt, type RetryPolicy } from './retry';

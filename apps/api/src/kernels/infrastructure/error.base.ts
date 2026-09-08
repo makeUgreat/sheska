@@ -30,6 +30,10 @@ export const INFRASTRUCTURE_ERROR_KIND = {
   NOT_FOUND: 'not_found',
   // The error cannot be meaningfully classified at the infrastructure boundary.
   UNEXPECTED: 'unexpected',
+  // The circuit breaker for this dependency is open; the call was never attempted.
+  // Deliberately excluded from RETRYABLE_INFRASTRUCTURE_ERROR_KINDS in retry-error.classifier.ts — retrying would defeat the breaker's
+  // fail-fast purpose. See circuit-breaker.ts / circuit-breaker.md.
+  CIRCUIT_OPEN: 'circuit_open',
 } as const;
 
 export type InfrastructureErrorKind =
