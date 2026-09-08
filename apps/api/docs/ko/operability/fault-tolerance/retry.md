@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../../../en/operability/fault-tolerance/retry.md
-last_synced: 2026-09-07
+last_synced: 2026-09-08
 read_when:
   - 외부 의존성(외부 API, LLM, 네트워크 호출, 큐) 호출에 대한 재시도 소유권, 재시도 횟수, backoff, 어떤 오류가 재시도 대상인지를 정의, 구현, 리뷰할 때.
 related:
@@ -15,6 +15,7 @@ related:
   - ./circuit-breaker.md
   - ./idempotent-receiver.md
   - ./retry-budget.md
+  - ./transaction-retry.md
   - ../error.md
   - ../logging.md
   - ../observability.md
@@ -42,6 +43,8 @@ related:
   - 예외: 재시도 단위가 단일 외부 호출이 아니라 통째로 다시 실행해야 의미가 있는 workflow 전체일 때는 상위 계층이 재시도할 수 있다.
     - 예: saga나 orchestration의 한 단계를 atomic하게 다시 실행해야 한다면, 그 안의 호출 하나만 재시도하지 않고 saga/orchestrator 단위로 재시도한다.
     - 예: BullMQ job 단위 재시도(`.claude/temp/embed-queue-retry-policy.ko.md` 큐 재시도 정책 초안 참고)는 job 안에서 실패한 외부 호출 하나가 아니라 job 전체를 다시 실행한다.
+    - 예: 동시에 실행된 다른 트랜잭션과 충돌한 DB 트랜잭션은 그 안의 문장 하나가 아니라 트랜잭션 전체를 다시 실행해서 재시도한다.
+      - 그 재시도 루프를 어떻게 구조화하고 소유하는지는 [API 트랜잭션 재시도 정책](./transaction-retry.md)을 참고한다.
     - consumer retry, dead letter queue/redrive policy, workflow/activity retry, saga retry는 [API 비동기 & Workflow 재시도 정책](./async-workflow-retry.md)에서 자세히 다룬다.
   - 이 예외가 적용되는 경우, workflow 단위 재시도 시도 안에서 이루어지는 외부 호출에 대해서는 client/adapter 계층 자체의 재시도를 끈다(`maxRetries: 0`).
   - workflow 단위 재시도와 client/adapter 단위 재시도를 같은 호출에 동시에 적용하지 않는다.
@@ -114,6 +117,7 @@ user cancellation
   - 위 네트워크 기준 classification(4xx/5xx 기준)은 여기 적용되지 않는다.
 - 트랜잭션 일부가 아니라, 그 트랜잭션 전체 또는 그것이 속한 여러 단계짜리 작업 단위 전체를 처음부터 다시 실행한다.
   - 이게 안전한 이유는 실패한 트랜잭션이 부분 반영 없이 전부 롤백되기 때문이다. 이건 멱등성과는 다른 안전성 보장이다: 멱등성은 "여러 번 실행해도 결과가 같다"는 성질이고, 트랜잭션 원자성은 "실패하면 아예 반영 안 된다"는 성질이다.
+  - 재시도 루프 자체를 어떻게 구조화하고 소유하는지는 [API 트랜잭션 재시도 정책](./transaction-retry.md)을 참고한다.
 - DB가 알려주는 동시성 충돌(예: `SERIALIZABLE` 격리 수준에서의 serialization failure, deadlock)은 재시도 가능으로 취급한다.
   - DB가 driver exception이나 vendor별 에러 코드로 이를 명시적으로 신호하므로, 일반적인 에러 메시지로 추측하지 말고 그 신호를 인식해서 판단한다.
 - 애플리케이션이 직접 검사하는 optimistic concurrency 충돌도 최신 데이터를 다시 읽은 뒤 재시도 가능으로 취급한다.
@@ -164,5 +168,5 @@ request_duration_ms
 ## 다른 Fault-Tolerance 관심사와의 상호작용
 
 - 재시도 정책만으로는 완전한 회복성 전략이 되지 않는다.
-  - timeout/deadline, circuit breaker 조합, retry budget, idempotency mutation 재시도 게이트와 그 idempotent receiver 메커니즘, 재시도 관측성은 이미 다른 곳에서 다룬다.
-  - [Backoff와 Jitter](#backoff와-jitter), [재시도 대상 오류](#재시도-대상-오류), [관측성](#관측성), [API Circuit Breaker 정책](./circuit-breaker.md), [API Retry Budget 정책](./retry-budget.md), [API Idempotent Receiver 정책](./idempotent-receiver.md) 참고.
+  - timeout/deadline, circuit breaker 조합, retry budget, idempotency mutation 재시도 게이트와 그 idempotent receiver 메커니즘, DB 트랜잭션 재시도, 재시도 관측성은 이미 다른 곳에서 다룬다.
+  - [Backoff와 Jitter](#backoff와-jitter), [재시도 대상 오류](#재시도-대상-오류), [관측성](#관측성), [API Circuit Breaker 정책](./circuit-breaker.md), [API Retry Budget 정책](./retry-budget.md), [API Idempotent Receiver 정책](./idempotent-receiver.md), [API 트랜잭션 재시도 정책](./transaction-retry.md) 참고.

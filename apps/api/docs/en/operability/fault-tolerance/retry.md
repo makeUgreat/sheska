@@ -14,6 +14,7 @@ related:
   - ./circuit-breaker.md
   - ./idempotent-receiver.md
   - ./retry-budget.md
+  - ./transaction-retry.md
   - ../error.md
   - ../logging.md
   - ../observability.md
@@ -41,6 +42,8 @@ related:
   - Exception: an upper layer may retry when the unit of work is a whole workflow that only makes sense to re-run as a whole, not a single external call.
     - Example: a saga or orchestration step that must be re-run atomically is retried by the saga/orchestrator, not by retrying one call inside it.
     - Example: a BullMQ job-level retry (see the queue retry policy draft at `.claude/temp/embed-queue-retry-policy.ko.md`) re-runs the whole job, not just the external call that failed inside it.
+    - Example: a database transaction that conflicts with a concurrent transaction is retried by re-running the whole transaction, not by retrying one statement inside it.
+      - See [API Transaction Retry Policy](./transaction-retry.md) for how that retry loop is structured and owned.
     - See [API Async & Workflow Retry Policy](./async-workflow-retry.md) for consumer retry, dead letter queue/redrive policy, workflow/activity retry, and saga retry in detail.
   - When this exception applies, disable the client/adapter layer's own retry (`maxRetries: 0`) for external calls made inside the workflow-level retry attempt.
   - Do not let workflow-level retry and client/adapter-level retry apply to the same call at the same time.
@@ -124,6 +127,7 @@ user cancellation
   - The network-level classification above (4xx/5xx-based) does not apply to it.
 - Retry the whole transaction, or the whole multi-step unit of work it belongs to, from the start rather than retrying part of it.
   - This is safe because a failed transaction rolls back in full with no partial effect. This is a different safety guarantee than idempotency: idempotency makes repeated execution produce the same result, while transaction atomicity makes a failed attempt have no effect at all.
+  - See [API Transaction Retry Policy](./transaction-retry.md) for how the retry loop itself is structured and owned.
 - Treat a database-reported concurrency conflict (for example, a serialization failure under `SERIALIZABLE` isolation, or a deadlock) as retryable.
   - The database signals these explicitly, through a driver exception or a vendor-specific error code. Recognize that signal instead of guessing from a generic error message.
 - Treat an application-checked optimistic-concurrency conflict as retryable too, after re-reading the latest data.
@@ -174,5 +178,5 @@ request_duration_ms
 ## Interaction With Other Fault-Tolerance Concerns
 
 - A retry policy alone is not a complete resilience strategy.
-  - Timeout/deadline, circuit breaker composition, retry budget, the idempotency mutation-retry gate and its idempotent-receiver mechanism, and retry observability are already covered elsewhere.
-  - See [Backoff And Jitter](#backoff-and-jitter), [Retryable Errors](#retryable-errors), [Observability](#observability), [API Circuit Breaker Policy](./circuit-breaker.md), [API Retry Budget Policy](./retry-budget.md), and [API Idempotent Receiver Policy](./idempotent-receiver.md).
+  - Timeout/deadline, circuit breaker composition, retry budget, the idempotency mutation-retry gate and its idempotent-receiver mechanism, database transaction retry, and retry observability are already covered elsewhere.
+  - See [Backoff And Jitter](#backoff-and-jitter), [Retryable Errors](#retryable-errors), [Observability](#observability), [API Circuit Breaker Policy](./circuit-breaker.md), [API Retry Budget Policy](./retry-budget.md), [API Idempotent Receiver Policy](./idempotent-receiver.md), and [API Transaction Retry Policy](./transaction-retry.md).
