@@ -6,7 +6,10 @@ import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { type Queue, QueueEvents } from 'bullmq';
 import { EmbedRequestBullMqConsumer } from '@contexts/ingestion/presentation/queue/bullmq/embed-request.bullmq.consumer';
 import { EmbedResultBullMqDispatcher } from '@contexts/ingestion/infrastructure/queue/bullmq/embed-result.bullmq.dispatcher';
-import { EmbedSourceContentUseCase } from '@contexts/ingestion/application/use-cases/embed-source-content.use-case';
+import {
+  EMBED_CHUNK_ATTEMPT_TIMEOUT_MS,
+  EmbedSourceContentUseCase,
+} from '@contexts/ingestion/application/use-cases/embed-source-content.use-case';
 import { LOGGER } from '@kernels/application';
 import {
   EMBEDDER,
@@ -106,7 +109,15 @@ describe('EmbedRequestBullMqConsumer', () => {
 
     await job.waitUntilFinished(queueEvents);
 
-    expect(embed).toHaveBeenCalledWith('# Hello World');
+    expect(embed).toHaveBeenCalledWith(
+      '# Hello World',
+      expect.objectContaining({
+        deadline: expect.objectContaining({
+          deadlineAt: expect.any(Number) as number,
+        }) as unknown,
+      }),
+      EMBED_CHUNK_ATTEMPT_TIMEOUT_MS,
+    );
 
     const [resultJob] = await embedResultsQueue.getWaiting();
     expect(resultJob.data).toMatchObject({
