@@ -122,11 +122,24 @@ export class AutoSyncService {
   }
 
   private async uploadIfChanged(file: TFile): Promise<void> {
+    if (!this.isInAutoSyncDirectory(file.path)) return;
     if (this.isSynced(file)) return;
     try {
       await this.uploadFileCore(file);
     } catch (err) {
       console.error(`[Sheska] Auto-sync failed for "${file.path}":`, err);
     }
+  }
+
+  private isInAutoSyncDirectory(filePath: string): boolean {
+    const directories = this.settings.autoSyncDirectories
+      .split(',')
+      .map((directory) => directory.trim().replace(/^\/+|\/+$/g, ''))
+      .filter(Boolean);
+
+    if (directories.length === 0) return true;
+    return directories.some((directory) =>
+      filePath.startsWith(`${directory}/`),
+    );
   }
 }

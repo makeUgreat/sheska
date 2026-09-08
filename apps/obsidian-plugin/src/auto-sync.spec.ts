@@ -39,7 +39,11 @@ function makeService(
   const service = new AutoSyncService({
     vault: vault as never,
     api: api as unknown as SheskaApiClient,
-    settings: { ...DEFAULT_SETTINGS, ...settings },
+    settings: {
+      ...DEFAULT_SETTINGS,
+      autoSyncDirectories: '',
+      ...settings,
+    },
     syncCache,
     saveSyncCache,
   });
@@ -114,6 +118,36 @@ describe('AutoSyncService', () => {
     expect(api.uploadSource).not.toHaveBeenCalled();
   });
 
+  it('uploads vault changes only from configured auto-sync folders', async () => {
+    const { api, service } = makeService({
+      autoSyncDebounceSeconds: 1,
+      autoSyncDirectories: 'Projects, Notes/Published/',
+    });
+
+    service.onVaultFileChanged(
+      asObsidianAbstractFile(
+        new TFile('Projects/a.md', { ctime: 0, mtime: 100, size: 1 }),
+      ),
+    );
+    service.onVaultFileChanged(
+      asObsidianAbstractFile(
+        new TFile('Notes/Published/b.md', { ctime: 0, mtime: 100, size: 1 }),
+      ),
+    );
+    service.onVaultFileChanged(
+      asObsidianAbstractFile(
+        new TFile('Projects-old/c.md', { ctime: 0, mtime: 100, size: 1 }),
+      ),
+    );
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(
+      api.uploadSource.mock.calls.map(
+        ([body]) => (body as { externalSourceId: string }).externalSourceId,
+      ),
+    ).toEqual(['Projects/a.md', 'Notes/Published/b.md']);
+  });
+
   it('skips changed-file uploads when the cached mtime matches', async () => {
     const { api, service } = makeService(
       { autoSyncDebounceSeconds: 1 },
@@ -154,6 +188,45 @@ describe('AutoSyncService', () => {
       externalSourceId: 'changed.md',
       content: 'content',
     });
+  });
+
+  it('sweeps only markdown files inside configured auto-sync folders', async () => {
+    const included = new TFile('Journal/2026/today.md', {
+      ctime: 0,
+      mtime: 100,
+      size: 1,
+    });
+    const excluded = new TFile('Archive/old.md', {
+      ctime: 0,
+      mtime: 100,
+      size: 1,
+    });
+    const { api, service, vault } = makeService({
+      autoSyncDirectories: '/Journal/',
+    });
+    vault.getMarkdownFiles.mockReturnValue([included, excluded]);
+
+    await service.runSweep();
+
+    expect(api.uploadSource).toHaveBeenCalledOnce();
+    expect(api.uploadSource).toHaveBeenCalledWith({
+      externalSourceId: 'Journal/2026/today.md',
+      content: 'content',
+    });
+  });
+
+  it('manual upload ignores the configured auto-sync folders', async () => {
+    const { api, service } = makeService({
+      autoSyncDirectories: 'Projects',
+    });
+
+    await service.uploadFile(
+      asObsidianFile(
+        new TFile('Archive/note.md', { ctime: 0, mtime: 100, size: 1 }),
+      ),
+    );
+
+    expect(api.uploadSource).toHaveBeenCalledOnce();
   });
 
   it('continues a debounced batch after one upload fails', async () => {
@@ -295,7 +368,11 @@ describe('AutoSyncService', () => {
     const service = new AutoSyncService({
       vault: vault as never,
       api: api as unknown as SheskaApiClient,
-      settings: { ...DEFAULT_SETTINGS, autoSyncDebounceSeconds: 1 },
+      settings: {
+        ...DEFAULT_SETTINGS,
+        autoSyncDirectories: '',
+        autoSyncDebounceSeconds: 1,
+      },
       syncCache: {},
       saveSyncCache: vi.fn().mockResolvedValue(undefined),
       onSyncFinished,
@@ -345,6 +422,7 @@ describe('AutoSyncService', () => {
 
     service.configure(newApi as unknown as SheskaApiClient, {
       ...DEFAULT_SETTINGS,
+      autoSyncDirectories: '',
       autoSyncDebounceSeconds: 1,
     });
     service.onVaultFileChanged(

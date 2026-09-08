@@ -4,6 +4,7 @@ export interface SheskaSettings {
   apiBaseUrl: string;
   healthCheckIntervalMinutes: number;
   autoSyncEnabled: boolean;
+  autoSyncDirectories: string;
   autoSyncDebounceSeconds: number;
   autoSyncSweepIntervalMinutes: number;
 }
@@ -12,6 +13,7 @@ export const DEFAULT_SETTINGS: SheskaSettings = {
   apiBaseUrl: 'http://localhost:3000',
   healthCheckIntervalMinutes: 5,
   autoSyncEnabled: true,
+  autoSyncDirectories: '09_Knowledge',
   autoSyncDebounceSeconds: 20,
   autoSyncSweepIntervalMinutes: 30,
 };
@@ -80,6 +82,15 @@ export class SheskaSettingTab extends PluginSettingTab {
         control: {
           type: 'toggle',
           key: 'autoSyncEnabled',
+        },
+      },
+      {
+        name: 'Auto-sync folders',
+        desc: 'Only automatically sync notes in these vault-relative folders and their subfolders. Separate multiple folders with commas. Leave blank to sync the whole vault.',
+        control: {
+          type: 'text',
+          key: 'autoSyncDirectories',
+          placeholder: 'Projects, Notes/Published',
         },
       },
       {
