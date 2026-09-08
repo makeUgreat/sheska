@@ -4,9 +4,10 @@ import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   classifyPostgresError,
   DATABASE_TOKENS,
+  INFRASTRUCTURE_ERROR_KIND,
   InfrastructureException,
-  withTransactionRetry,
-  type TransactionRetryPolicy,
+  resiliencePipeline,
+  type RetryPolicy,
 } from '@kernels/infrastructure';
 import {
   type SourceEmbedding,
@@ -17,9 +18,15 @@ import type { SourceEmbeddingInsert } from './schema';
 import { SourceEmbeddingPgDrizzleMapper } from './source-embedding.pg-drizzle.mapper';
 
 const ADAPTER = 'source-embedding.pg-drizzle';
-const SOURCE_EMBEDDING_SAVE_TRANSACTION_RETRY_POLICY: TransactionRetryPolicy = {
+const SOURCE_EMBEDDING_SAVE_TRANSACTION_RETRY_POLICY: RetryPolicy = {
   maxRetries: 3,
   baseDelayMs: 20,
+  maxDelayMs: 20,
+  classify: (error) => ({
+    retryable:
+      InfrastructureException.is(error) &&
+      error.kind === INFRASTRUCTURE_ERROR_KIND.CONCURRENCY_CONFLICT,
+  }),
 };
 
 @Injectable()
@@ -45,9 +52,9 @@ export class SourceEmbeddingPgDrizzleRepository implements SourceEmbeddingReposi
     const inserts = SourceEmbeddingPgDrizzleMapper.toInserts(sourceEmbedding);
     const { sourceId } = inserts[0];
 
-    await withTransactionRetry(() => this.saveOnce(sourceId, inserts), {
-      policy: SOURCE_EMBEDDING_SAVE_TRANSACTION_RETRY_POLICY,
-    });
+    await resiliencePipeline()
+      .retry(SOURCE_EMBEDDING_SAVE_TRANSACTION_RETRY_POLICY)
+      .execute(() => this.saveOnce(sourceId, inserts));
   }
 
   private async saveOnce(

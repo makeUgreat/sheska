@@ -2,20 +2,16 @@ import { describe, expect, it, vi, type Mock } from 'vitest';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
 import { type Embedder } from '@contexts/ingestion';
-import {
-  SearchQueryFromIngestionEmbedder,
-  SEARCH_QUERY_EMBED_TIMEOUT_MS,
-} from '../search-query.from-ingestion.embedder';
+import { SearchQueryFromIngestionEmbedder } from '../search-query.from-ingestion.embedder';
 
 function buildContext(remainingMs = 60_000): CallContext {
-  return { deadline: computeDeadline(remainingMs) };
+  return { deadline: computeDeadline(remainingMs), attemptTimeoutMs: 1_000 };
 }
 
 function createEmbedder(
   impl: (
     text: string,
     context: CallContext,
-    attemptTimeoutMs?: number,
   ) => Promise<{ embedding: number[]; model: string }>,
 ): { embedder: Embedder; embed: Mock } {
   const embed = vi.fn(impl);
@@ -28,10 +24,7 @@ describe('SearchQueryFromIngestionEmbedder', () => {
     const { embedder } = createEmbedder(() =>
       Promise.resolve({ embedding, model: 'test-model' }),
     );
-    const searchQueryEmbedder = new SearchQueryFromIngestionEmbedder(
-      embedder,
-      1000,
-    );
+    const searchQueryEmbedder = new SearchQueryFromIngestionEmbedder(embedder);
 
     const result = await searchQueryEmbedder.embed('query', buildContext());
 
@@ -42,10 +35,7 @@ describe('SearchQueryFromIngestionEmbedder', () => {
     const { embedder } = createEmbedder(() => {
       throw new Error('embedding failed');
     });
-    const searchQueryEmbedder = new SearchQueryFromIngestionEmbedder(
-      embedder,
-      1000,
-    );
+    const searchQueryEmbedder = new SearchQueryFromIngestionEmbedder(embedder);
 
     const result = await searchQueryEmbedder.embed('query', buildContext());
 
@@ -56,45 +46,11 @@ describe('SearchQueryFromIngestionEmbedder', () => {
     const { embedder, embed } = createEmbedder(() =>
       Promise.resolve({ embedding: [1], model: 'test-model' }),
     );
-    const searchQueryEmbedder = new SearchQueryFromIngestionEmbedder(
-      embedder,
-      1000,
-    );
-    const context = buildContext();
-
-    await searchQueryEmbedder.embed('query', context);
-
-    expect(embed).toHaveBeenCalledWith('query', context, 1000);
-  });
-
-  it('attemptTimeoutMs를 넘기면 그 값을 감싸고 있는 embedder에 그대로 전달한다', async () => {
-    const { embedder, embed } = createEmbedder(() =>
-      Promise.resolve({ embedding: [1], model: 'test-model' }),
-    );
-    const searchQueryEmbedder = new SearchQueryFromIngestionEmbedder(
-      embedder,
-      1000,
-    );
-    const context = buildContext();
-
-    await searchQueryEmbedder.embed('query', context, 500);
-
-    expect(embed).toHaveBeenCalledWith('query', context, 500);
-  });
-
-  it('attemptTimeoutMs를 생략하면 생성자에 전달된 timeoutMs를 기본값으로 사용한다', async () => {
-    const { embedder, embed } = createEmbedder(() =>
-      Promise.resolve({ embedding: [1], model: 'test-model' }),
-    );
     const searchQueryEmbedder = new SearchQueryFromIngestionEmbedder(embedder);
     const context = buildContext();
 
     await searchQueryEmbedder.embed('query', context);
 
-    expect(embed).toHaveBeenCalledWith(
-      'query',
-      context,
-      SEARCH_QUERY_EMBED_TIMEOUT_MS,
-    );
+    expect(embed).toHaveBeenCalledWith('query', context);
   });
 });

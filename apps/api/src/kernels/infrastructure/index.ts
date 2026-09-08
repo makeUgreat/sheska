@@ -11,10 +11,6 @@ export {
   type CircuitBreakerPolicy,
 } from './circuit-breaker';
 export {
-  withCircuitBreakerRetry,
-  type WithCircuitBreakerRetryOptions,
-} from './circuit-breaker-retry';
-export {
   INFRASTRUCTURE_ERROR_KIND,
   type InfrastructureErrorBase,
   type InfrastructureErrorOf,
@@ -25,8 +21,10 @@ export {
 export { InfrastructureException } from './infrastructure.exception';
 export { classifyPostgresError } from './postgres-error.classifier';
 export { parseRetryAfterMs } from './retry-after';
-export { withRetry, type RetryAttempt, type RetryPolicy } from './retry';
+export { classifyInfrastructureRetry } from './retry-error.classifier';
 export {
-  withTransactionRetry,
-  type TransactionRetryPolicy,
-} from './transaction-retry';
+  resiliencePipeline,
+  type ResilienceAttempt,
+  type ResilienceExecutionOptions,
+} from './resilience.pipeline';
+export { type RetryPolicy } from './retry';

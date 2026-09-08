@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { type Job } from 'bullmq';
 import { type EmbedRequestPayload } from '@contexts/ingestion/application/ports';
-import { type EmbedSourceContentUseCase } from '@contexts/ingestion/application/use-cases/embed-source-content.use-case';
+import {
+  EMBED_SOURCE_CONTENT_CALL_POLICY,
+  type EmbedSourceContentUseCase,
+} from '@contexts/ingestion/application/use-cases/embed-source-content.use-case';
 import { EmbedRequestBullMqConsumer } from '../embed-request.bullmq.consumer';
 
 function buildMockUseCase() {
@@ -49,6 +52,7 @@ describe('EmbedRequestBullMqConsumer', () => {
         deadline: expect.objectContaining({
           deadlineAt: expect.any(Number) as number,
         }) as { deadlineAt: number },
+        attemptTimeoutMs: EMBED_SOURCE_CONTENT_CALL_POLICY.attemptTimeoutMs,
       });
     });
   });

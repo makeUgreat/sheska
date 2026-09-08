@@ -9,7 +9,7 @@ const OLLAMA_TEST_MODEL = 'qwen3-embedding:0.6b'; // 클래스 내부 OLLAMA_MOD
 const OLLAMA_UNREACHABLE_URL = 'http://127.0.0.1:19999';
 
 function buildContext(remainingMs = 60_000): CallContext {
-  return { deadline: computeDeadline(remainingMs) };
+  return { deadline: computeDeadline(remainingMs), attemptTimeoutMs: 30_000 };
 }
 
 describe('OllamaHttpEmbedder (integration)', () => {

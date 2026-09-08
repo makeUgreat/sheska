@@ -8,12 +8,15 @@ import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
 import {
+  SEARCH_POSTS_CALL_POLICY,
   SearchPostsUseCase,
-  SEARCH_QUERY_EMBED_ATTEMPT_TIMEOUT_MS,
 } from '../search-posts.use-case';
 
 function buildContext(remainingMs = 60_000): CallContext {
-  return { deadline: computeDeadline(remainingMs) };
+  return {
+    deadline: computeDeadline(remainingMs),
+    attemptTimeoutMs: SEARCH_POSTS_CALL_POLICY.attemptTimeoutMs,
+  };
 }
 
 type PostQueryMock = {
@@ -184,7 +187,7 @@ describe('SearchPostsUseCase', () => {
     expect(result.semanticSearchApplied).toBe(false);
   });
 
-  it('searchQueryEmbedder.embed를 context와 SEARCH_QUERY_EMBED_ATTEMPT_TIMEOUT_MS와 함께 호출한다', async () => {
+  it('searchQueryEmbedder.embed에 call context를 전달한다', async () => {
     const postQuery = createPostQueryMock();
     postQuery.search.mockResolvedValue(buildSearchResult());
     const searchQueryEmbedder = createSearchQueryEmbedderMock();
@@ -199,7 +202,6 @@ describe('SearchPostsUseCase', () => {
     expect(searchQueryEmbedder.embed).toHaveBeenCalledWith(
       'TypeScript',
       context,
-      SEARCH_QUERY_EMBED_ATTEMPT_TIMEOUT_MS,
     );
   });
 });

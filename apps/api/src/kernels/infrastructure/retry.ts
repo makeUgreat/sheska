@@ -1,62 +1,52 @@
 import { computeExponentialBackoffMs } from '@core/backoff';
-import { effectiveTimeoutMs, remainingMs, type Deadline } from '@core/deadline';
+import { remainingMs, type Deadline } from '@core/deadline';
 import { applyFullJitter } from '@core/jitter';
 import { sleep as defaultSleep } from '@core/sleep';
-import {
-  classifyInfrastructureRetry,
-  type RetryClassification,
-} from './retry-error.classifier';
+import { type RetryClassification } from './retry-error.classifier';
 
 export interface RetryPolicy {
   readonly maxRetries: number;
   readonly baseDelayMs: number;
   readonly maxDelayMs: number;
+  readonly classify: (error: unknown) => RetryClassification;
 }
 
-export interface RetryAttempt {
-  readonly attempt: number;
-  readonly signal: AbortSignal;
-}
-
-interface WithRetryOptions {
+interface RetryLoopOptions {
   readonly deadline: Deadline;
-  readonly attemptTimeoutMs: number;
   readonly policy: RetryPolicy;
-  readonly classify?: (error: unknown) => RetryClassification;
-  readonly now?: () => number;
-  readonly sleep?: (ms: number) => Promise<void>;
-  readonly random?: () => number;
 }
 
-export async function withRetry<T>(
-  operation: (attempt: RetryAttempt) => Promise<T>,
-  options: WithRetryOptions,
+export interface RetryRuntime {
+  readonly now: () => number;
+  readonly sleep: (ms: number) => Promise<void>;
+  readonly random: () => number;
+}
+
+export const SYSTEM_RETRY_RUNTIME: RetryRuntime = {
+  now: Date.now,
+  sleep: defaultSleep,
+  random: Math.random,
+};
+
+export async function withRetryAttempts<T>(
+  operation: (attempt: number) => Promise<T>,
+  options: RetryLoopOptions,
+  runtime: RetryRuntime,
 ): Promise<T> {
-  const {
-    deadline,
-    attemptTimeoutMs,
-    policy,
-    classify = classifyInfrastructureRetry,
-    now = Date.now,
-    sleep = defaultSleep,
-    random = Math.random,
-  } = options;
+  const { deadline, policy } = options;
+  const { now, sleep, random } = runtime;
 
   let attempt = 0;
 
   while (true) {
-    const signal = AbortSignal.timeout(
-      effectiveTimeoutMs(deadline, attemptTimeoutMs, now()),
-    );
-
     try {
-      return await operation({ attempt, signal });
+      return await operation(attempt);
     } catch (error) {
       if (attempt >= policy.maxRetries) {
         throw error;
       }
 
-      const classification = classify(error);
+      const classification = policy.classify(error);
       if (!classification.retryable) {
         throw error;
       }

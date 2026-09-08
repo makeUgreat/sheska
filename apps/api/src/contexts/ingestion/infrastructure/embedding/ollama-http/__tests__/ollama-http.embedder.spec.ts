@@ -4,8 +4,11 @@ import { type CallContext } from '@core/call-context';
 import { InfrastructureException } from '@kernels/infrastructure';
 import { OllamaHttpEmbedder } from '../ollama-http.embedder';
 
-function buildContext(remainingMs = 60_000): CallContext {
-  return { deadline: computeDeadline(remainingMs) };
+function buildContext(
+  remainingMs = 60_000,
+  attemptTimeoutMs = 30_000,
+): CallContext {
+  return { deadline: computeDeadline(remainingMs), attemptTimeoutMs };
 }
 
 describe('OllamaHttpEmbedder', () => {
@@ -96,27 +99,25 @@ describe('OllamaHttpEmbedder', () => {
     vi.stubGlobal('fetch', fetchMock);
     const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
 
-    await client.embed('hello', buildContext(), 5_000);
+    await client.embed('hello', buildContext(60_000, 5_000));
 
     expect(timeoutSpy).toHaveBeenCalledWith(5_000);
     timeoutSpy.mockRestore();
   });
 
-  it('attemptTimeoutMs를 넘기지 않으면 DEFAULT_EMBED_REQUEST_TIMEOUT_MS를 사용한다', async () => {
+  it('CallContext의 attemptTimeoutMs를 사용한다', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ embedding: [0.1] }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    await client.embed('hello', buildContext());
+    const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
 
-    const [, options] = fetchMock.mock.calls[0] as [
-      string,
-      { signal: AbortSignal },
-    ];
-    expect(options.signal).toBeInstanceOf(AbortSignal);
-    expect(options.signal.aborted).toBe(false);
+    await client.embed('hello', buildContext(60_000, 7_000));
+
+    expect(timeoutSpy).toHaveBeenCalledWith(7_000);
+    timeoutSpy.mockRestore();
   });
 
   it('Ollama가 재시도 가능한 5xx로 한 번 실패한 뒤 성공하면 재시도해서 결과를 반환한다', async () => {

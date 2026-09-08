@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { type CallContext } from '@core/call-context';
+import { type CallContext, type CallPolicy } from '@core/call-context';
 import {
   IngestionFailedDomainEvent,
   IngestionProgressDomainEvent,
@@ -18,11 +18,10 @@ import {
 } from '@contexts/ingestion/ingestion.di-tokens';
 import { RecursiveCharacterChunker } from '@contexts/ingestion/application/services/recursive-character.chunker';
 
-// Per-attempt ceiling for embedding a single chunk, independent of the
-// adapter's own internal default (application code must not import an
-// infrastructure constant). The job-level deadline still bounds this further
-// once little time remains.
-export const EMBED_CHUNK_ATTEMPT_TIMEOUT_MS = 30_000;
+export const EMBED_SOURCE_CONTENT_CALL_POLICY = {
+  deadlineMs: 5 * 60_000,
+  attemptTimeoutMs: 30_000,
+} as const satisfies CallPolicy;
 
 @Injectable()
 export class EmbedSourceContentUseCase {
@@ -56,11 +55,7 @@ export class EmbedSourceContentUseCase {
     let model = '';
 
     for (const chunk of chunks) {
-      const result = await this.embedder.embed(
-        chunk.content,
-        context,
-        EMBED_CHUNK_ATTEMPT_TIMEOUT_MS,
-      );
+      const result = await this.embedder.embed(chunk.content, context);
       model = result.model;
       embedChunks.push({
         chunkIndex: chunk.index,
