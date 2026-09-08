@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { computeDeadline } from '@core/deadline';
+import { type CallContext } from '@core/call-context';
 import { InfrastructureException } from '@kernels/infrastructure';
 import { OllamaHttpEmbedder } from '../ollama-http.embedder';
+
+function buildContext(remainingMs = 60_000): CallContext {
+  return { deadline: computeDeadline(remainingMs) };
+}
 
 describe('OllamaHttpEmbedder', () => {
   let client: OllamaHttpEmbedder;
@@ -21,7 +27,7 @@ describe('OllamaHttpEmbedder', () => {
       }),
     );
 
-    const result = await client.embed('hello world');
+    const result = await client.embed('hello world', buildContext());
 
     expect(result).toEqual({ embedding: fakeEmbedding, model });
     expect(fetch).toHaveBeenCalledWith(`${baseUrl}/api/embeddings`, {
@@ -38,23 +44,23 @@ describe('OllamaHttpEmbedder', () => {
     });
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(timeoutError));
 
-    await expect(client.embed('hello')).rejects.toMatchObject({
+    await expect(client.embed('hello', buildContext())).rejects.toMatchObject({
       kind: 'timeout',
       code: 'ollama.request_timeout',
       cause: timeoutError,
     });
   });
 
-  it('fetch가 실패하면 UNAVAILABLE InfrastructureException을 던진다', async () => {
+  it('fetch가 계속 실패하면 재시도가 소진된 뒤 UNAVAILABLE InfrastructureException을 던진다', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockRejectedValue(new Error('Network error')),
     );
 
-    await expect(client.embed('hello')).rejects.toThrow(
+    await expect(client.embed('hello', buildContext())).rejects.toThrow(
       InfrastructureException,
     );
-    await expect(client.embed('hello')).rejects.toMatchObject({
+    await expect(client.embed('hello', buildContext())).rejects.toMatchObject({
       kind: 'unavailable',
       code: 'ollama.request_failed',
       cause: expect.objectContaining({
@@ -73,75 +79,37 @@ describe('OllamaHttpEmbedder', () => {
       }),
     );
 
-    await expect(client.embed('hello')).rejects.toThrow(
+    await expect(client.embed('hello', buildContext())).rejects.toThrow(
       InfrastructureException,
     );
-    await expect(client.embed('hello')).rejects.toMatchObject({
+    await expect(client.embed('hello', buildContext())).rejects.toMatchObject({
       kind: 'invalid_data',
       code: 'ollama.invalid_response',
     });
   });
 
-  it('호출자가 signal을 넘기면 그 signal을 그대로 fetch에 전달한다', async () => {
-    const controller = new AbortController();
+  it('호출자가 attemptTimeoutMs를 넘기면 그 값으로 attempt별 signal의 timeout이 bound된다', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ embedding: [0.1] }),
     });
     vi.stubGlobal('fetch', fetchMock);
+    const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
 
-    await client.embed('hello', { signal: controller.signal });
+    await client.embed('hello', buildContext(), 5_000);
 
-    const [, options] = fetchMock.mock.calls[0] as [
-      string,
-      { signal: AbortSignal },
-    ];
-    expect(options.signal).toBe(controller.signal);
+    expect(timeoutSpy).toHaveBeenCalledWith(5_000);
+    timeoutSpy.mockRestore();
   });
 
-  it('호출자가 넘긴 signal이 이미 abort된 상태면 그대로 fetch에 전달된다', async () => {
-    const controller = new AbortController();
-    controller.abort();
+  it('attemptTimeoutMs를 넘기지 않으면 DEFAULT_EMBED_REQUEST_TIMEOUT_MS를 사용한다', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ embedding: [0.1] }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    await client.embed('hello', { signal: controller.signal });
-
-    const [, options] = fetchMock.mock.calls[0] as [
-      string,
-      { signal: AbortSignal },
-    ];
-    expect(options.signal.aborted).toBe(true);
-  });
-
-  it('호출자가 넘긴 signal이 EMBED_REQUEST_TIMEOUT_MS보다 긴 타임아웃이어도 어댑터 기본값에 의해 줄어들지 않는다', async () => {
-    const longSignal = AbortSignal.timeout(24 * 60 * 60 * 1000);
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ embedding: [0.1] }),
-    });
-    vi.stubGlobal('fetch', fetchMock);
-
-    await client.embed('hello', { signal: longSignal });
-
-    const [, options] = fetchMock.mock.calls[0] as [
-      string,
-      { signal: AbortSignal },
-    ];
-    expect(options.signal).toBe(longSignal);
-  });
-
-  it('호출자가 signal을 넘기지 않으면 내부 타임아웃 signal만으로 fetch를 호출한다', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ embedding: [0.1] }),
-    });
-    vi.stubGlobal('fetch', fetchMock);
-
-    await client.embed('hello');
+    await client.embed('hello', buildContext());
 
     const [, options] = fetchMock.mock.calls[0] as [
       string,
@@ -151,22 +119,75 @@ describe('OllamaHttpEmbedder', () => {
     expect(options.signal.aborted).toBe(false);
   });
 
-  it('Ollama가 에러 상태로 응답하면 BAD_RESPONSE InfrastructureException을 던진다', async () => {
+  it('Ollama가 재시도 가능한 5xx로 한 번 실패한 뒤 성공하면 재시도해서 결과를 반환한다', async () => {
+    const fakeEmbedding = [0.1, 0.2, 0.3];
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        statusText: 'Busy',
+        headers: new Headers(),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ embedding: fakeEmbedding }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await client.embed('hello', buildContext());
+
+    expect(result).toEqual({ embedding: fakeEmbedding, model });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('Ollama가 계속 5xx를 반환하면 maxRetries만큼 재시도한 뒤 BAD_RESPONSE를 던진다', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+      headers: new Headers(),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(client.embed('hello', buildContext())).rejects.toMatchObject({
+      kind: 'bad_response',
+      code: 'ollama.bad_response',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('Ollama가 재시도 불가능한 4xx를 반환하면 재시도하지 않는다', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      statusText: 'Not Found',
+      headers: new Headers(),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(client.embed('hello', buildContext())).rejects.toMatchObject({
+      kind: 'bad_response',
+      code: 'ollama.bad_response',
+    });
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it('Ollama가 에러 상태로 응답하면 BAD_RESPONSE InfrastructureException의 details에 statusCode를 담는다', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
         ok: false,
-        status: 500,
-        statusText: 'Internal Server Error',
+        status: 404,
+        statusText: 'Not Found',
+        headers: new Headers(),
       }),
     );
 
-    await expect(client.embed('hello')).rejects.toThrow(
-      InfrastructureException,
-    );
-    await expect(client.embed('hello')).rejects.toMatchObject({
+    await expect(client.embed('hello', buildContext())).rejects.toMatchObject({
       kind: 'bad_response',
       code: 'ollama.bad_response',
+      details: { statusCode: 404 },
     });
   });
 });

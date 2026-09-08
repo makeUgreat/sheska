@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { type CallContext } from '@core/call-context';
-import { effectiveAbortSignal } from '@kernels/application';
 import {
   IngestionFailedDomainEvent,
   IngestionProgressDomainEvent,
@@ -36,7 +35,6 @@ export class EmbedSourceContentUseCase {
     private readonly chunker: RecursiveCharacterChunker,
   ) {}
 
-  // TODO: add retry logic for embedder call failures
   async execute(
     payload: EmbedRequestPayload,
     context: CallContext,
@@ -58,11 +56,11 @@ export class EmbedSourceContentUseCase {
     let model = '';
 
     for (const chunk of chunks) {
-      const signal = effectiveAbortSignal(
-        context.deadline,
+      const result = await this.embedder.embed(
+        chunk.content,
+        context,
         EMBED_CHUNK_ATTEMPT_TIMEOUT_MS,
       );
-      const result = await this.embedder.embed(chunk.content, { signal });
       model = result.model;
       embedChunks.push({
         chunkIndex: chunk.index,
