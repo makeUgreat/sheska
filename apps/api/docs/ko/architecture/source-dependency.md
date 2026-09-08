@@ -134,6 +134,10 @@ flowchart TB
   - 어댑터 이름과 구조는 [infrastructure 컨벤션](./infrastructure.md)을 따른다.
 - Infrastructure 코드는 어댑터 구현을 위해 `core`, domain, application, `kernels/infrastructure`, framework,
   외부 라이브러리에 의존할 수 있다.
+  - 어댑터 클래스는 framework의 DI 컨테이너가 이미 하는 일을 재구현하는 수작업 factory 함수보다, framework
+    고유의 생성/의존성 주입(예: NestJS `@Injectable()` + 생성자 주입)을 기본으로 사용하는 것이 좋다.
+  - 어댑터를 framework에서 분리해 두는 것은 구체적인 이유가 있을 때만 한다 — 예를 들어 DI 컨테이너를 부트스트랩하지
+    않고 순수 생성자 호출로 단위 테스트하고 싶거나, 이 런타임 밖에서 재사용해야 하는 경우.
 - Infrastructure 코드는 presentation이나 platform 시작 코드에 의존해서는 안 된다.
 - 어댑터 코드는 기술별 오류에 맥락을 추가할 때 `cause`가 있는 `Error`로 감쌀 수 있다.
   - 오류 소유권과 변환은 [오류 정책](../operability/error.md)을 따른다.
@@ -153,6 +157,10 @@ flowchart TB
 - Presentation은 인바운드(driving) 어댑터 레이어다.
   - 외부 트리거를 받아 application 소유 port 없이 application 유스 케이스를 호출한다.
 - Presentation 코드는 `core`, application, `kernels/presentation`, framework, protocol library에 의존할 수 있다.
+  - 어댑터 클래스는 framework의 DI 컨테이너가 이미 하는 일을 재구현하는 수작업 factory 함수보다, framework
+    고유의 생성/의존성 주입(예: NestJS `@Injectable()` + 생성자 주입)을 기본으로 사용하는 것이 좋다.
+  - 어댑터를 framework에서 분리해 두는 것은 구체적인 이유가 있을 때만 한다 — 예를 들어 DI 컨테이너를 부트스트랩하지
+    않고 순수 생성자 호출로 단위 테스트하고 싶거나, 이 런타임 밖에서 재사용해야 하는 경우.
 - Presentation 코드는 infrastructure 구현체, 데이터베이스 어댑터, SDK 어댑터에 의존해서는 안 된다.
 - Presentation에는 프로토콜 진입점과 비프로토콜 인바운드 트리거가 포함된다.
   - 프로토콜 진입점에는 HTTP controller, GraphQL resolver, DTO, protocol mapper, HTTP error mapper가 있다.

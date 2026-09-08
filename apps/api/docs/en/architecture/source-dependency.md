@@ -132,6 +132,11 @@ flowchart TB
   - Follow the [infrastructure convention](./infrastructure.md) for adapter naming and structure.
 - Infrastructure code MAY depend on `core`, domain, application, `kernels/infrastructure`, frameworks, and external
   libraries when implementing adapters.
+  - Prefer framework-native construction and dependency injection (for example, NestJS `@Injectable()` with
+    constructor injection) as the default for an adapter class, instead of a hand-built factory function that
+    re-implements what the framework's DI container already does.
+  - Keep an adapter framework-agnostic only for a concrete reason, such as constructing it via a plain constructor
+    call in a unit test without bootstrapping a DI container, or reusing it outside this runtime.
 - Infrastructure code MUST NOT depend on presentation or platform startup code.
 - Adapter code MAY wrap technology-specific errors in an `Error` with `cause` when adding adapter context.
   - Follow the [error policy](../operability/error.md) for error ownership and transformation.
@@ -152,6 +157,11 @@ flowchart TB
 - Presentation is the inbound (driving) adapter layer.
   - It receives external triggers and calls application use cases without an application-owned port.
 - Presentation code MAY depend on `core`, application, `kernels/presentation`, frameworks, and protocol libraries.
+  - Prefer framework-native construction and dependency injection (for example, NestJS `@Injectable()` with
+    constructor injection) as the default for an adapter class, instead of a hand-built factory function that
+    re-implements what the framework's DI container already does.
+  - Keep an adapter framework-agnostic only for a concrete reason, such as constructing it via a plain constructor
+    call in a unit test without bootstrapping a DI container, or reusing it outside this runtime.
 - Presentation code MUST NOT depend on infrastructure implementations, database adapters, or SDK adapters.
 - Presentation includes protocol-facing entry points and non-protocol inbound triggers.
   - Protocol-facing entry points include HTTP controllers, GraphQL resolvers, DTOs, protocol mappers, and HTTP error
