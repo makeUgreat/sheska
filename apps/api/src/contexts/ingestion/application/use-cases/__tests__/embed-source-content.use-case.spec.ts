@@ -19,8 +19,8 @@ import {
   type EmbedResultPayload,
 } from '@contexts/ingestion/application/ports';
 import {
+  EMBED_SOURCE_CONTENT_CALL_POLICY,
   EmbedSourceContentUseCase,
-  EMBED_CHUNK_ATTEMPT_TIMEOUT_MS,
 } from '../embed-source-content.use-case';
 
 function buildMockEmbedder(embed = vi.fn()) {
@@ -42,7 +42,10 @@ function buildPayload(
 }
 
 function buildContext(remainingMs = 60_000): CallContext {
-  return { deadline: computeDeadline(remainingMs) };
+  return {
+    deadline: computeDeadline(remainingMs),
+    attemptTimeoutMs: EMBED_SOURCE_CONTENT_CALL_POLICY.attemptTimeoutMs,
+  };
 }
 
 const fakeEmbedding = Array.from({ length: 1024 }, () => 0.1);
@@ -74,11 +77,7 @@ describe('EmbedSourceContentUseCase', () => {
       );
 
       expect(embed).toHaveBeenCalledOnce();
-      expect(embed).toHaveBeenCalledWith(
-        '# Source note',
-        context,
-        EMBED_CHUNK_ATTEMPT_TIMEOUT_MS,
-      );
+      expect(embed).toHaveBeenCalledWith('# Source note', context);
       expect(enqueue).toHaveBeenCalledWith(
         expect.objectContaining<Partial<EmbedResultPayload>>({
           sourceId: 'source-1',
@@ -184,7 +183,7 @@ describe('EmbedSourceContentUseCase', () => {
       ).toEqual([1, 2, 3]);
     });
 
-    it('deadline이 짧은 context를 받아도 그 context와 EMBED_CHUNK_ATTEMPT_TIMEOUT_MS를 그대로 embedder에 전달한다 (attempt별 signal 계산은 adapter가 소유)', async () => {
+    it('deadline과 attempt timeout이 포함된 context를 embedder에 그대로 전달한다', async () => {
       const embed = vi
         .fn()
         .mockResolvedValue({ embedding: fakeEmbedding, model: fakeModel });
@@ -201,11 +200,7 @@ describe('EmbedSourceContentUseCase', () => {
         shortContext,
       );
 
-      expect(embed).toHaveBeenCalledWith(
-        '# Source note',
-        shortContext,
-        EMBED_CHUNK_ATTEMPT_TIMEOUT_MS,
-      );
+      expect(embed).toHaveBeenCalledWith('# Source note', shortContext);
     });
   });
 

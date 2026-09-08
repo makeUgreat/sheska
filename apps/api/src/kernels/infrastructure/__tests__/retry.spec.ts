@@ -1,9 +1,50 @@
 import { describe, expect, it, vi } from 'vitest';
 import { computeDeadline } from '@core/deadline';
-import { withRetry, type RetryPolicy } from '../retry';
+import {
+  withRetryAttempts as executeRetryAttempts,
+  type RetryPolicy,
+  type RetryRuntime,
+} from '../retry';
+import { classifyInfrastructureRetry } from '../retry-error.classifier';
 
 function buildPolicy(overrides: Partial<RetryPolicy> = {}): RetryPolicy {
-  return { maxRetries: 2, baseDelayMs: 100, maxDelayMs: 1_000, ...overrides };
+  return {
+    maxRetries: 2,
+    baseDelayMs: 100,
+    maxDelayMs: 1_000,
+    classify: classifyInfrastructureRetry,
+    ...overrides,
+  };
+}
+
+interface TestRetryOptions {
+  readonly deadline: Parameters<typeof executeRetryAttempts>[1]['deadline'];
+  readonly policy: RetryPolicy;
+  readonly classify?: RetryPolicy['classify'];
+  readonly now?: RetryRuntime['now'];
+  readonly sleep?: RetryRuntime['sleep'];
+  readonly random?: RetryRuntime['random'];
+}
+
+function withRetryAttempts<T>(
+  operation: (attempt: number) => Promise<T>,
+  options: TestRetryOptions,
+): Promise<T> {
+  return executeRetryAttempts(
+    operation,
+    {
+      deadline: options.deadline,
+      policy: {
+        ...options.policy,
+        classify: options.classify ?? options.policy.classify,
+      },
+    },
+    {
+      now: options.now ?? Date.now,
+      sleep: options.sleep ?? (() => Promise.resolve()),
+      random: options.random ?? Math.random,
+    },
+  );
 }
 
 function buildClock(start = 0) {
@@ -16,24 +57,20 @@ function buildClock(start = 0) {
   };
 }
 
-describe('withRetry', () => {
+describe('withRetryAttempts', () => {
   it('첫 시도에 성공하면 operation을 한 번만 호출한다', async () => {
     const clock = buildClock();
     const operation = vi.fn().mockResolvedValue('ok');
 
-    const result = await withRetry(operation, {
+    const result = await withRetryAttempts(operation, {
       deadline: computeDeadline(60_000, clock.now()),
-      attemptTimeoutMs: 1_000,
       policy: buildPolicy(),
       now: clock.now,
     });
 
     expect(result).toBe('ok');
     expect(operation).toHaveBeenCalledOnce();
-    expect(operation).toHaveBeenCalledWith({
-      attempt: 0,
-      signal: expect.any(AbortSignal) as AbortSignal,
-    });
+    expect(operation).toHaveBeenCalledWith(0);
   });
 
   it('재시도 가능한 에러가 나면 backoff 후 재시도해서 결국 성공한다', async () => {
@@ -49,9 +86,8 @@ describe('withRetry', () => {
       return Promise.resolve();
     });
 
-    const result = await withRetry(operation, {
+    const result = await withRetryAttempts(operation, {
       deadline: computeDeadline(60_000, clock.now()),
-      attemptTimeoutMs: 1_000,
       policy: buildPolicy(),
       classify: () => ({ retryable: true }),
       now: clock.now,
@@ -74,9 +110,8 @@ describe('withRetry', () => {
     });
 
     await expect(
-      withRetry(operation, {
+      withRetryAttempts(operation, {
         deadline: computeDeadline(60_000, clock.now()),
-        attemptTimeoutMs: 1_000,
         policy: buildPolicy({ maxRetries: 2 }),
         classify: () => ({ retryable: true }),
         now: clock.now,
@@ -97,9 +132,8 @@ describe('withRetry', () => {
     });
 
     await expect(
-      withRetry(operation, {
+      withRetryAttempts(operation, {
         deadline: computeDeadline(60_000, clock.now()),
-        attemptTimeoutMs: 1_000,
         policy: buildPolicy(),
         classify: () => ({ retryable: false }),
         now: clock.now,
@@ -122,9 +156,8 @@ describe('withRetry', () => {
       return Promise.resolve();
     });
 
-    await withRetry(operation, {
+    await withRetryAttempts(operation, {
       deadline: computeDeadline(60_000, clock.now()),
-      attemptTimeoutMs: 1_000,
       policy: buildPolicy(),
       classify: () => ({ retryable: true, retryAfterMs: 5_000 }),
       now: clock.now,
@@ -145,9 +178,8 @@ describe('withRetry', () => {
     });
 
     await expect(
-      withRetry(operation, {
+      withRetryAttempts(operation, {
         deadline: computeDeadline(50, clock.now()),
-        attemptTimeoutMs: 1_000,
         policy: buildPolicy({ baseDelayMs: 1_000, maxDelayMs: 1_000 }),
         classify: () => ({ retryable: true }),
         now: clock.now,
@@ -162,43 +194,13 @@ describe('withRetry', () => {
     const clock = buildClock();
     const operation = vi.fn().mockResolvedValue('ok');
 
-    const result = await withRetry(operation, {
+    const result = await withRetryAttempts(operation, {
       deadline: computeDeadline(-1_000, clock.now()),
-      attemptTimeoutMs: 1_000,
       policy: buildPolicy(),
       now: clock.now,
     });
 
     expect(result).toBe('ok');
     expect(operation).toHaveBeenCalledOnce();
-  });
-
-  it('매 attempt마다 새로 bound된 AbortSignal을 만든다', async () => {
-    const clock = buildClock();
-    const error = new Error('transient');
-    const signals: AbortSignal[] = [];
-    const operation = vi.fn((attempt: { signal: AbortSignal }) => {
-      signals.push(attempt.signal);
-      return signals.length === 1
-        ? Promise.reject(error)
-        : Promise.resolve('ok');
-    });
-    const sleep = vi.fn((ms: number) => {
-      clock.advance(ms);
-      return Promise.resolve();
-    });
-
-    await withRetry(operation, {
-      deadline: computeDeadline(60_000, clock.now()),
-      attemptTimeoutMs: 1_000,
-      policy: buildPolicy(),
-      classify: () => ({ retryable: true }),
-      now: clock.now,
-      sleep,
-      random: () => 0,
-    });
-
-    expect(signals).toHaveLength(2);
-    expect(signals[0]).not.toBe(signals[1]);
   });
 });

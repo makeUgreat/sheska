@@ -6,24 +6,22 @@ import {
   CircuitBreakerOpenError,
   INFRASTRUCTURE_ERROR_KIND,
   InfrastructureException,
+  classifyInfrastructureRetry,
   parseRetryAfterMs,
-  withCircuitBreakerRetry,
+  resiliencePipeline,
   type CircuitBreakerPolicy,
   type RetryPolicy,
 } from '@kernels/infrastructure';
 import type { Embedder } from '@contexts/ingestion/application/ports';
-import { DEFAULT_CHUNK_SIZE } from '@contexts/ingestion/application/services/recursive-character.chunker';
 import { OLLAMA_CONFIG, type OllamaConfig } from './ollama-http.config';
 
 const ADAPTER = 'ollama.embedder';
 const OLLAMA_MODEL = 'qwen3-embedding:0.6b';
-const CONSERVATIVE_MS_PER_CHAR = 30;
-const DEFAULT_EMBED_REQUEST_TIMEOUT_MS =
-  DEFAULT_CHUNK_SIZE * CONSERVATIVE_MS_PER_CHAR;
 const OLLAMA_HTTP_EMBED_RETRY_POLICY: RetryPolicy = {
   maxRetries: 2,
   baseDelayMs: 250,
   maxDelayMs: 2_000,
+  classify: classifyInfrastructureRetry,
 };
 const OLLAMA_HTTP_EMBED_CIRCUIT_BREAKER_POLICY: CircuitBreakerPolicy = {
   failureRateThreshold: 0.5,
@@ -53,18 +51,16 @@ export class OllamaHttpEmbedder implements Embedder {
   async embed(
     text: string,
     context: CallContext,
-    attemptTimeoutMs: number = DEFAULT_EMBED_REQUEST_TIMEOUT_MS,
   ): Promise<{ embedding: number[]; model: string }> {
     try {
-      return await withCircuitBreakerRetry(
-        (attempt) => this.embedOnce(text, attempt.signal),
-        {
-          breaker: this.circuitBreaker,
+      return await resiliencePipeline()
+        .circuitBreaker(this.circuitBreaker)
+        .retry(OLLAMA_HTTP_EMBED_RETRY_POLICY)
+        .timeout({
           deadline: context.deadline,
-          attemptTimeoutMs,
-          retryPolicy: OLLAMA_HTTP_EMBED_RETRY_POLICY,
-        },
-      );
+          attemptTimeoutMs: context.attemptTimeoutMs,
+        })
+        .execute((attempt) => this.embedOnce(text, attempt.signal));
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
         throw new InfrastructureException({
