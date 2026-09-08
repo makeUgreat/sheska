@@ -6,6 +6,11 @@ export {
 } from './cursor.paginator';
 export { DATABASE_TOKENS } from './database.tokens';
 export {
+  CircuitBreaker,
+  CircuitBreakerOpenError,
+  type CircuitBreakerPolicy,
+} from './circuit-breaker';
+export {
   INFRASTRUCTURE_ERROR_KIND,
   type InfrastructureErrorBase,
   type InfrastructureErrorOf,
