@@ -2,6 +2,7 @@ import { Module, type DynamicModule } from '@nestjs/common';
 import { SourceContentSnapshotCalculator } from '@contexts/sources/application/services/source-content-snapshot-calculator.service';
 import { SourceFromRepositoryLookup } from '@contexts/sources/application/services/source.from-repository.lookup';
 import { GetSourceUseCase } from '@contexts/sources/application/use-cases/get-source.use-case';
+import { GetSourceSyncJobUseCase } from '@contexts/sources/application/use-cases/get-source-sync-job.use-case';
 import { ListSourcesUseCase } from '@contexts/sources/application/use-cases/list-sources.use-case';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
 import { SourceSha256Fingerprinter } from '@contexts/sources/infrastructure/fingerprinter/source.sha256.fingerprinter';
@@ -10,6 +11,7 @@ import { SourceSyncJobPgDrizzleRepository } from '@contexts/sources/infrastructu
 import { SourceEmbeddingFromIngestionLookup } from '@contexts/sources/acl/ingestion/source-embedding.from-ingestion.lookup';
 import { SourcePgDrizzleQuery } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.query';
 import { SourcesHttpController } from '@contexts/sources/presentation/http/sources-http.controller';
+import { SourceSyncJobsHttpController } from '@contexts/sources/presentation/http/source-sync-jobs-http.controller';
 import { HandleIngestionResultHandler } from '@contexts/sources/application/event-handlers/handle-ingestion-result.handler';
 import {
   type SourceEmbeddingLookup as IngestionSourceEmbeddingLookup,
@@ -63,6 +65,7 @@ export class SourcesModule {
         SourceContentSnapshotCalculator,
         ListSourcesUseCase,
         GetSourceUseCase,
+        GetSourceSyncJobUseCase,
         UploadSourceUseCase,
       ],
       exports: [
@@ -71,6 +74,7 @@ export class SourcesModule {
         SOURCE_LOOKUP,
         ListSourcesUseCase,
         GetSourceUseCase,
+        GetSourceSyncJobUseCase,
         UploadSourceUseCase,
       ],
     };
@@ -80,7 +84,7 @@ export class SourcesModule {
     return {
       module: SourcesModule,
       imports: [SourcesModule.forFeature()],
-      controllers: [SourcesHttpController],
+      controllers: [SourcesHttpController, SourceSyncJobsHttpController],
       providers: [HandleIngestionResultHandler],
     };
   }

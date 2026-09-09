@@ -27,6 +27,7 @@ type SourceRepositoryMock = {
 };
 
 type SourceSyncJobRepositoryMock = {
+  get: MockedFunction<SourceSyncJobRepository['get']>;
   find: MockedFunction<SourceSyncJobRepository['find']>;
   findLatest: MockedFunction<SourceSyncJobRepository['findLatest']>;
   save: MockedFunction<SourceSyncJobRepository['save']>;
@@ -422,6 +423,11 @@ function createSourceRepositoryMock(): SourceRepositoryMock {
 
 function createSourceSyncJobRepositoryMock(): SourceSyncJobRepositoryMock {
   return {
+    get: vi
+      .fn<SourceSyncJobRepository['get']>()
+      .mockResolvedValue(
+        restoreSyncJob({ sourceId: 'source-1', status: 'pending' }),
+      ),
     find: vi.fn<SourceSyncJobRepository['find']>().mockResolvedValue(null),
     findLatest: vi
       .fn<SourceSyncJobRepository['findLatest']>()
