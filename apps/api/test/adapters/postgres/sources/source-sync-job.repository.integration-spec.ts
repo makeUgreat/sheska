@@ -64,13 +64,62 @@ describe('SourceSyncJobDrizzleRepository', () => {
     });
   });
 
+  it('같은 sourceId와 fingerprint의 active sync job은 하나만 저장한다', async () => {
+    const source = buildSource({
+      externalSourceId: 'Notes/sync-job-active-unique.md',
+    });
+    await sourceRepository.save(source);
+    const first = buildSourceSyncJob({
+      sourceId: source.id,
+      fingerprint: 'fingerprint-active',
+    });
+    const second = buildSourceSyncJob({
+      sourceId: source.id,
+      fingerprint: 'fingerprint-active',
+    });
+    await repository.save(first);
+
+    await expect(repository.save(second)).rejects.toMatchObject({
+      kind: 'conflict',
+      code: 'source_sync_job.save_failed',
+    });
+  });
+
+  it('기존 sync job이 종료되면 같은 sourceId와 fingerprint로 새 job을 저장한다', async () => {
+    const source = buildSource({
+      externalSourceId: 'Notes/sync-job-retry-after-completed.md',
+    });
+    await sourceRepository.save(source);
+    const first = buildSourceSyncJob({
+      sourceId: source.id,
+      fingerprint: 'fingerprint-retry',
+    });
+    await repository.save(first);
+    first.markCompleted();
+    await repository.save(first);
+    const second = buildSourceSyncJob({
+      sourceId: source.id,
+      fingerprint: 'fingerprint-retry',
+    });
+
+    await expect(repository.save(second)).resolves.toMatchObject({
+      id: second.id,
+    });
+  });
+
   it('sourceId로 가장 최근 sync job을 반환한다', async () => {
     const source = buildSource({
       externalSourceId: 'Notes/sync-job-latest.md',
     });
     await sourceRepository.save(source);
-    const first = buildSourceSyncJob({ sourceId: source.id });
-    const second = buildSourceSyncJob({ sourceId: source.id });
+    const first = buildSourceSyncJob({
+      sourceId: source.id,
+      fingerprint: 'fingerprint-first',
+    });
+    const second = buildSourceSyncJob({
+      sourceId: source.id,
+      fingerprint: 'fingerprint-second',
+    });
     await repository.save(first);
     await new Promise((resolve) => setTimeout(resolve, 5));
     await repository.save(second);

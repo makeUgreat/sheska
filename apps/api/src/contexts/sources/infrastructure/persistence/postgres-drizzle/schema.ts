@@ -5,6 +5,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
 const tsvector = customType<{ data: string }>({
@@ -28,19 +29,27 @@ export const sources = pgTable('sources', {
     .defaultNow(),
 });
 
-export const sourceSyncJobs = pgTable('source_sync_jobs', {
-  id: text('id').primaryKey(),
-  sourceId: text('source_id')
-    .notNull()
-    .references(() => sources.id),
-  fingerprint: text('fingerprint').notNull(),
-  status: text('status').notNull(),
-  totalChunks: integer('total_chunks'),
-  processedChunks: integer('processed_chunks').notNull().default(0),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const sourceSyncJobs = pgTable(
+  'source_sync_jobs',
+  {
+    id: text('id').primaryKey(),
+    sourceId: text('source_id')
+      .notNull()
+      .references(() => sources.id),
+    fingerprint: text('fingerprint').notNull(),
+    status: text('status').notNull(),
+    totalChunks: integer('total_chunks'),
+    processedChunks: integer('processed_chunks').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('source_sync_jobs_active_source_fingerprint_unique')
+      .on(table.sourceId, table.fingerprint)
+      .where(sql`${table.status} IN ('pending', 'processing')`),
+  ],
+);
 
 export type SourceRow = typeof sources.$inferSelect;
 export type SourceInsert = typeof sources.$inferInsert;

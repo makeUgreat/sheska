@@ -94,6 +94,14 @@ export class SourceSyncJob extends AggregateRoot<SourceSyncJobProps> {
     return this.props.status === 'completed';
   }
 
+  isActiveFor(fingerprint: string): boolean {
+    const isActive =
+      this.props.status === 'pending' || this.props.status === 'processing';
+    const hasSameFingerprint = this.props.fingerprint.unpack() === fingerprint;
+
+    return isActive && hasSameFingerprint;
+  }
+
   public validate(): void {
     if (!SourceSyncJob.isStatus(this.props.status)) {
       throw new Error('Source sync job status is invalid');

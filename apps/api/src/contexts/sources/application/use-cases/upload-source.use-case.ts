@@ -69,6 +69,9 @@ export class UploadSourceUseCase {
         sourceId: source.id,
       });
       if (latestSyncJob?.isCompleted()) return this.completeUpload(source);
+      if (latestSyncJob?.isActiveFor(snapshot.fingerprint)) {
+        return this.completeUpload(source, latestSyncJob);
+      }
     }
 
     return this.persistChange(source, command.content);
