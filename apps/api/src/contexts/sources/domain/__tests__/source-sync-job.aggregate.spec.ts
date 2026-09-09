@@ -150,4 +150,44 @@ describe('SourceSyncJob', () => {
       },
     );
   });
+
+  describe('isActiveFor', () => {
+    it.each(['pending', 'processing'] as const)(
+      'status가 %s이고 fingerprint가 같으면 true를 반환한다',
+      (status) => {
+        const syncJob = SourceSyncJob.restore({
+          id: 'source-sync-job-1',
+          sourceId: 'source-1',
+          fingerprint: 'fingerprint-1',
+          status,
+        });
+
+        expect(syncJob.isActiveFor('fingerprint-1')).toBe(true);
+      },
+    );
+
+    it('fingerprint가 다르면 false를 반환한다', () => {
+      const syncJob = SourceSyncJob.create({
+        sourceId: 'source-1',
+        content: '# Source note',
+        fingerprint: 'fingerprint-1',
+      });
+
+      expect(syncJob.isActiveFor('fingerprint-2')).toBe(false);
+    });
+
+    it.each(['completed', 'failed'] as const)(
+      'status가 %s면 false를 반환한다',
+      (status) => {
+        const syncJob = SourceSyncJob.restore({
+          id: 'source-sync-job-1',
+          sourceId: 'source-1',
+          fingerprint: 'fingerprint-1',
+          status,
+        });
+
+        expect(syncJob.isActiveFor('fingerprint-1')).toBe(false);
+      },
+    );
+  });
 });

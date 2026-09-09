@@ -127,6 +127,50 @@ describe('UploadSourceUseCase', () => {
     expect(syncJobs.save).not.toHaveBeenCalled();
   });
 
+  it.each(['pending', 'processing'])(
+    '같은 content snapshot의 최근 sync job이 %s이면 기존 job을 반환한다',
+    async (status) => {
+      const existingSource = restoreSource({
+        id: 'source-1',
+        externalSourceId: 'Notes/source.md',
+        content: '# Source note',
+        fingerprint: 'fingerprint-1',
+      });
+      const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
+        content: '# Source note',
+        fingerprint: 'fingerprint-1',
+      });
+      const sources = createSourceRepositoryMock();
+      sources.find.mockResolvedValue(existingSource);
+      const syncJobs = createSourceSyncJobRepositoryMock();
+      syncJobs.findLatest.mockResolvedValue(
+        restoreSyncJob({
+          sourceId: 'source-1',
+          fingerprint: 'fingerprint-1',
+          status,
+        }),
+      );
+      const eventEmitter = createEventEmitterMock();
+      const useCase = new UploadSourceUseCase(
+        contentSnapshotCalculator,
+        sources,
+        syncJobs,
+        asEventEmitter(eventEmitter),
+        buildMockLogger(),
+      );
+
+      const result = await useCase.execute({
+        externalSourceId: 'Notes/source.md',
+        content: '# Source note',
+      });
+
+      expect(result.syncJobId).toBe('sync-job-1');
+      expect(sources.save).not.toHaveBeenCalled();
+      expect(syncJobs.save).not.toHaveBeenCalled();
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
+    },
+  );
+
   it('같은 content snapshot이라도 최근 sync job이 없으면 sync job을 생성한다', async () => {
     const existingSource = restoreSource({
       id: 'source-1',
@@ -447,12 +491,13 @@ function createEventEmitterMock(): EventEmitterMock {
 
 function restoreSyncJob(params: {
   sourceId: string;
+  fingerprint?: string;
   status: string;
 }): SourceSyncJob {
   return SourceSyncJob.restore({
     id: 'sync-job-1',
     sourceId: params.sourceId,
-    fingerprint: 'fingerprint-1',
+    fingerprint: params.fingerprint ?? 'fingerprint-1',
     status: params.status,
   });
 }
