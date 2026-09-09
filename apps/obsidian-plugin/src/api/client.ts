@@ -16,6 +16,22 @@ export interface UploadSourceResponse {
   syncJobId?: string;
 }
 
+export type SourceSyncJobStatus =
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed';
+
+export interface SourceSyncJobResponse {
+  syncJobId: string;
+  sourceId: string;
+  fingerprint: string;
+  status: SourceSyncJobStatus;
+  totalChunks: number | null;
+  processedChunks: number;
+  createdAt: string;
+}
+
 export class SheskaApiClient {
   constructor(private readonly baseUrl: string) {}
 
@@ -56,5 +72,11 @@ export class SheskaApiClient {
 
   uploadSource(body: UploadSourceRequest): Promise<UploadSourceResponse> {
     return this.post<UploadSourceResponse>('/sources', body);
+  }
+
+  getSyncJob(syncJobId: string): Promise<SourceSyncJobResponse> {
+    return this.get<SourceSyncJobResponse>(
+      `/sync-jobs/${encodeURIComponent(syncJobId)}`,
+    );
   }
 }

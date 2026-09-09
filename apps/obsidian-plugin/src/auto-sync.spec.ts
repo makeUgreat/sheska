@@ -23,6 +23,7 @@ function asObsidianAbstractFile(
 function makeService(
   settings: Partial<SheskaSettings> = {},
   syncCache: SyncCache = {},
+  shouldPollSyncJob?: (path: string) => boolean,
 ) {
   const api = {
     uploadSource: vi.fn().mockResolvedValue({
@@ -30,6 +31,7 @@ function makeService(
       externalSourceId: 'note.md',
       fingerprint: 'fingerprint',
     }),
+    getSyncJob: vi.fn(),
   };
   const vault = {
     read: vi.fn().mockResolvedValue('content'),
@@ -46,6 +48,7 @@ function makeService(
     },
     syncCache,
     saveSyncCache,
+    shouldPollSyncJob,
   });
   return { api, saveSyncCache, service, vault };
 }
@@ -73,6 +76,123 @@ describe('AutoSyncService', () => {
     });
     expect(syncCache['note.md']).toMatchObject({ mtime: 123 });
     expect(saveSyncCache).toHaveBeenCalledOnce();
+  });
+
+  it('polls a created sync job and marks the file synced only after completion', async () => {
+    const syncCache: SyncCache = {};
+    const { api, saveSyncCache, service } = makeService({}, syncCache);
+    api.uploadSource.mockResolvedValue({
+      sourceId: 'source-1',
+      externalSourceId: 'note.md',
+      fingerprint: 'fingerprint',
+      syncJobId: 'job-1',
+    });
+    api.getSyncJob
+      .mockResolvedValueOnce({ status: 'processing' })
+      .mockResolvedValueOnce({ status: 'completed' });
+    const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+
+    await service.uploadFile(asObsidianFile(file));
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(syncCache['note.md']).toMatchObject({
+      status: 'processing',
+      syncJobId: 'job-1',
+    });
+    expect(service.isSynced(asObsidianFile(file))).toBe(false);
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    expect(api.getSyncJob).toHaveBeenCalledTimes(2);
+    expect(syncCache['note.md']).toMatchObject({ status: 'synced' });
+    expect(saveSyncCache).toHaveBeenCalledTimes(3);
+  });
+
+  it('records a failed sync job without failing the accepted upload', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const syncCache: SyncCache = {};
+    const { api, service } = makeService({}, syncCache);
+    api.uploadSource.mockResolvedValue({
+      sourceId: 'source-1',
+      externalSourceId: 'note.md',
+      fingerprint: 'fingerprint',
+      syncJobId: 'job-1',
+    });
+    api.getSyncJob.mockResolvedValue({ status: 'failed' });
+    const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+
+    await expect(
+      service.uploadFile(asObsidianFile(file)),
+    ).resolves.toBeUndefined();
+    await vi.advanceTimersByTimeAsync(2_000);
+
+    expect(syncCache['note.md']).toMatchObject({ status: 'failed' });
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it('does not poll an uploaded file when it is not the active polling target', async () => {
+    const syncCache: SyncCache = {};
+    const { api, service } = makeService({}, syncCache, () => false);
+    api.uploadSource.mockResolvedValue({
+      sourceId: 'source-1',
+      externalSourceId: 'note.md',
+      fingerprint: 'fingerprint',
+      syncJobId: 'job-1',
+    });
+    const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+
+    await service.uploadFile(asObsidianFile(file));
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(api.getSyncJob).not.toHaveBeenCalled();
+    expect(syncCache['note.md']).toMatchObject({ status: 'accepted' });
+  });
+
+  it('does not re-upload an inactive file that already has a pending sync job', async () => {
+    const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+    const { api, service, vault } = makeService(
+      {},
+      {
+        'note.md': {
+          mtime: 123,
+          acceptedAt: 1,
+          syncJobId: 'job-1',
+          status: 'accepted',
+        },
+      },
+      () => false,
+    );
+    vault.getMarkdownFiles.mockReturnValue([file]);
+
+    await service.runSweep();
+
+    expect(api.uploadSource).not.toHaveBeenCalled();
+    expect(api.getSyncJob).not.toHaveBeenCalled();
+  });
+
+  it('resumes polling a cached job when its note becomes active', async () => {
+    let active = false;
+    const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+    const syncCache: SyncCache = {
+      'note.md': {
+        mtime: 123,
+        acceptedAt: 1,
+        syncJobId: 'job-1',
+        status: 'accepted',
+      },
+    };
+    const { api, service } = makeService({}, syncCache, () => active);
+    api.getSyncJob.mockResolvedValue({ status: 'completed' });
+
+    await service.pollSyncJobForFile(asObsidianFile(file));
+    expect(api.getSyncJob).not.toHaveBeenCalled();
+
+    active = true;
+    const polling = service.pollSyncJobForFile(asObsidianFile(file));
+    await vi.advanceTimersByTimeAsync(2_000);
+    await polling;
+
+    expect(api.getSyncJob).toHaveBeenCalledWith('job-1');
+    expect(syncCache['note.md']).toMatchObject({ status: 'synced' });
   });
 
   it('coalesces changed files into one debounced flush', async () => {
