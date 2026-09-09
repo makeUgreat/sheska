@@ -89,4 +89,13 @@ describe('SourceSyncJobDrizzleRepository', () => {
 
     expect(result).toBeNull();
   });
+
+  it('존재하지 않는 id는 NOT_FOUND exception을 throw한다', async () => {
+    await expect(
+      repository.get({ id: 'non-existent-id' }),
+    ).rejects.toMatchObject({
+      kind: 'not_found',
+      code: 'source_sync_job.not_found',
+    });
+  });
 });

@@ -8,6 +8,7 @@ import {
 import {
   classifyPostgresError,
   DATABASE_TOKENS,
+  INFRASTRUCTURE_ERROR_KIND,
   InfrastructureException,
 } from '@kernels/infrastructure';
 import * as schema from './schema';
@@ -21,6 +22,20 @@ export class SourceSyncJobPgDrizzleRepository implements SourceSyncJobRepository
     @Inject(DATABASE_TOKENS.drizzleDatabase)
     private readonly db: NodePgDatabase<typeof schema>,
   ) {}
+
+  async get(criteria: { id: string }): Promise<SourceSyncJob> {
+    const syncJob = await this.find(criteria);
+    if (!syncJob) {
+      throw new InfrastructureException({
+        kind: INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
+        code: 'source_sync_job.not_found',
+        source: { boundary: 'persistence', adapter: ADAPTER },
+        message: 'Source sync job not found',
+        details: { id: criteria.id },
+      });
+    }
+    return syncJob;
+  }
 
   async find(criteria: { id: string }): Promise<SourceSyncJob | null> {
     const row = await this.db
