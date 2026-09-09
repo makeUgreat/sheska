@@ -497,7 +497,7 @@ describe('SheskaPlugin', () => {
       vaultEventHandlers['modify']!(file);
       await vi.advanceTimersByTimeAsync(5000);
 
-      expect(statusBarItems[0].text).toBe('Sheska: ⟳ Syncing...');
+      expect(statusBarItems[0].text).toBe('Sheska: ⟳ Uploading...');
 
       resolveRead('content');
       await vi.advanceTimersByTimeAsync(0);

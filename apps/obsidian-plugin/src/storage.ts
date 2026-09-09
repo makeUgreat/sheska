@@ -4,7 +4,12 @@ import type { SheskaSettings } from '@/settings';
 
 export interface SyncCacheEntry {
   mtime: number;
-  syncedAt: number;
+  syncedAt?: number;
+  acceptedAt?: number;
+  sourceId?: string;
+  syncJobId?: string;
+  fingerprint?: string;
+  status?: 'accepted' | 'processing' | 'synced' | 'failed';
 }
 
 export type SyncCache = Record<string, SyncCacheEntry>;

@@ -12,6 +12,11 @@ interface AutoSyncServiceOptions {
   saveSyncCache(): Promise<void>;
   onSyncStart?(path: string): void;
   onSyncFinished?(path: string): void;
+  onSyncStateChanged?(path: string): void;
+  shouldPollSyncJob?(path: string): boolean;
+  syncJobPollInitialDelayMs?: number;
+  syncJobPollIntervalMs?: number;
+  syncJobPollTimeoutMs?: number;
 }
 
 export class AutoSyncService {
@@ -20,7 +25,9 @@ export class AutoSyncService {
   private syncCache: SyncCache;
   private readonly dirtyFiles = new Map<string, TFile>();
   private readonly syncingFiles = new Set<string>();
+  private readonly pollingFiles = new Set<string>();
   private isFlushing = false;
+  private cancelled = false;
   private flushDebounced: Debouncer<[], void>;
 
   constructor(private readonly options: AutoSyncServiceOptions) {
@@ -45,6 +52,7 @@ export class AutoSyncService {
   }
 
   cancel(): void {
+    this.cancelled = true;
     this.flushDebounced.cancel();
   }
 
@@ -72,11 +80,35 @@ export class AutoSyncService {
 
   isSynced(file: TFile): boolean {
     const cached = this.syncCache[file.path];
-    return cached !== undefined && cached.mtime === file.stat.mtime;
+    return (
+      cached !== undefined &&
+      cached.mtime === file.stat.mtime &&
+      (cached.status === undefined || cached.status === 'synced')
+    );
   }
 
   isSyncing(file: TFile): boolean {
     return this.syncingFiles.has(file.path);
+  }
+
+  async pollSyncJobForFile(file: TFile): Promise<void> {
+    const cached = this.syncCache[file.path];
+    if (
+      !cached?.syncJobId ||
+      cached.mtime !== file.stat.mtime ||
+      (cached.status !== 'accepted' && cached.status !== 'processing') ||
+      !this.shouldPollSyncJob(file.path) ||
+      this.pollingFiles.has(file.path)
+    ) {
+      return;
+    }
+
+    this.pollingFiles.add(file.path);
+    try {
+      await this.waitForSyncJob(file.path, cached.syncJobId, cached.mtime);
+    } finally {
+      this.pollingFiles.delete(file.path);
+    }
   }
 
   private createFlushDebouncer(): Debouncer<[], void> {
@@ -112,18 +144,134 @@ export class AutoSyncService {
     try {
       const mtimeAtRead = file.stat.mtime;
       const content = await this.options.vault.read(file);
-      await this.api.uploadSource({ externalSourceId: file.path, content });
-      this.syncCache[file.path] = { mtime: mtimeAtRead, syncedAt: Date.now() };
+      const upload = await this.api.uploadSource({
+        externalSourceId: file.path,
+        content,
+      });
+      if (!upload.syncJobId) {
+        this.syncCache[file.path] = {
+          mtime: mtimeAtRead,
+          syncedAt: Date.now(),
+          sourceId: upload.sourceId,
+          fingerprint: upload.fingerprint,
+          status: 'synced',
+        };
+        await this.options.saveSyncCache();
+        return;
+      }
+
+      this.syncCache[file.path] = {
+        mtime: mtimeAtRead,
+        acceptedAt: Date.now(),
+        sourceId: upload.sourceId,
+        syncJobId: upload.syncJobId,
+        fingerprint: upload.fingerprint,
+        status: 'accepted',
+      };
       await this.options.saveSyncCache();
+      this.options.onSyncStateChanged?.(file.path);
+      if (this.shouldPollSyncJob(file.path)) {
+        void this.pollSyncJobForFile(file).catch((error: unknown) => {
+          console.error(
+            `[Sheska] Sync job polling failed for "${file.path}":`,
+            error,
+          );
+        });
+      }
     } finally {
       this.syncingFiles.delete(file.path);
       this.options.onSyncFinished?.(file.path);
     }
   }
 
+  private async waitForSyncJob(
+    path: string,
+    syncJobId: string,
+    mtime: number,
+  ): Promise<void> {
+    const initialDelay = this.options.syncJobPollInitialDelayMs ?? 2_000;
+    const interval = this.options.syncJobPollIntervalMs ?? 5_000;
+    const timeout = this.options.syncJobPollTimeoutMs ?? 120_000;
+    const deadline = Date.now() + timeout;
+    await this.delay(initialDelay);
+
+    while (
+      !this.cancelled &&
+      this.shouldPollSyncJob(path) &&
+      Date.now() <= deadline
+    ) {
+      const job = await this.api.getSyncJob(syncJobId);
+      const cached = this.syncCache[path];
+      if (!cached || cached.syncJobId !== syncJobId || cached.mtime !== mtime) {
+        return;
+      }
+
+      if (job.status === 'completed') {
+        this.syncCache[path] = {
+          ...cached,
+          status: 'synced',
+          syncedAt: Date.now(),
+        };
+        await this.options.saveSyncCache();
+        this.options.onSyncStateChanged?.(path);
+        return;
+      }
+      if (job.status === 'failed') {
+        this.syncCache[path] = { ...cached, status: 'failed' };
+        await this.options.saveSyncCache();
+        this.options.onSyncStateChanged?.(path);
+        throw new Error(`Sheska sync job failed: ${syncJobId}`);
+      }
+
+      this.syncCache[path] = {
+        ...cached,
+        status: job.status === 'processing' ? 'processing' : 'accepted',
+      };
+      await this.options.saveSyncCache();
+      this.options.onSyncStateChanged?.(path);
+      await this.delay(interval);
+    }
+
+    if (this.cancelled || !this.shouldPollSyncJob(path)) return;
+
+    const cached = this.syncCache[path];
+    if (cached?.syncJobId === syncJobId && cached.mtime === mtime) {
+      this.syncCache[path] = { ...cached, status: 'failed' };
+      await this.options.saveSyncCache();
+      this.options.onSyncStateChanged?.(path);
+    }
+    throw new Error(`Timed out waiting for Sheska sync job: ${syncJobId}`);
+  }
+
+  private delay(milliseconds: number): Promise<void> {
+    return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+  }
+
+  private shouldPollSyncJob(path: string): boolean {
+    return this.options.shouldPollSyncJob?.(path) ?? true;
+  }
+
   private async uploadIfChanged(file: TFile): Promise<void> {
     if (!this.isInAutoSyncDirectory(file.path)) return;
     if (this.isSynced(file)) return;
+    const cached = this.syncCache[file.path];
+    if (
+      cached?.mtime === file.stat.mtime &&
+      cached.syncJobId &&
+      (cached.status === 'accepted' || cached.status === 'processing')
+    ) {
+      if (this.shouldPollSyncJob(file.path)) {
+        try {
+          await this.pollSyncJobForFile(file);
+        } catch (err) {
+          console.error(
+            `[Sheska] Sync job polling failed for "${file.path}":`,
+            err,
+          );
+        }
+      }
+      return;
+    }
     try {
       await this.uploadFileCore(file);
     } catch (err) {

@@ -8,7 +8,13 @@ import type { SheskaSettings } from '@/settings';
 import { PluginDataStore } from '@/storage';
 import type { SyncCache } from '@/storage';
 
-type SyncStatus = 'synced' | 'not-synced' | 'syncing';
+type SyncStatus =
+  | 'synced'
+  | 'not-synced'
+  | 'uploading'
+  | 'accepted'
+  | 'processing'
+  | 'failed';
 
 export default class SheskaPlugin extends Plugin {
   declare settings: SheskaSettings;
@@ -127,6 +133,9 @@ export default class SheskaPlugin extends Plugin {
       saveSyncCache: async () => this.saveSyncCache(),
       onSyncStart: (path) => this.refreshStatusBarIfActive(path),
       onSyncFinished: (path) => this.refreshStatusBarIfActive(path),
+      onSyncStateChanged: (path) => this.refreshStatusBarIfActive(path),
+      shouldPollSyncJob: (path) =>
+        this.app.workspace.getActiveFile()?.path === path,
     });
   }
 
@@ -139,16 +148,35 @@ export default class SheskaPlugin extends Plugin {
 
   private registerSyncStatusBar(): void {
     this.syncStatusBarItem = this.addStatusBarItem();
-    this.updateSyncStatusBar(this.app.workspace.getActiveFile());
+    const activeFile = this.app.workspace.getActiveFile();
+    this.updateSyncStatusBar(activeFile);
+    this.pollActiveFileSyncJob(activeFile);
     this.registerEvent(
-      this.app.workspace.on('file-open', (file) =>
-        this.updateSyncStatusBar(file),
-      ),
+      this.app.workspace.on('file-open', (file) => {
+        this.updateSyncStatusBar(file);
+        this.pollActiveFileSyncJob(file);
+      }),
     );
   }
 
+  private pollActiveFileSyncJob(file: TFile | null): void {
+    if (!file) return;
+    void this.autoSyncService
+      .pollSyncJobForFile(file)
+      .catch((error: unknown) => {
+        console.error(
+          `[Sheska] Sync job polling failed for "${file.path}":`,
+          error,
+        );
+      });
+  }
+
   private getSyncStatus(file: TFile): SyncStatus {
-    if (this.autoSyncService.isSyncing(file)) return 'syncing';
+    const cached = this.syncCache[file.path];
+    if (this.autoSyncService.isSyncing(file) && !cached) return 'uploading';
+    if (cached?.mtime === file.stat.mtime && cached.status) {
+      return cached.status;
+    }
     return this.autoSyncService.isSynced(file) ? 'synced' : 'not-synced';
   }
 
@@ -159,11 +187,17 @@ export default class SheskaPlugin extends Plugin {
     }
     const status = this.getSyncStatus(file);
     const text =
-      status === 'syncing'
-        ? 'Sheska: ⟳ Syncing...'
-        : status === 'synced'
-          ? 'Sheska: ✓ Synced'
-          : 'Sheska: ○ Not synced';
+      status === 'uploading'
+        ? 'Sheska: ⟳ Uploading...'
+        : status === 'accepted'
+          ? 'Sheska: ◷ Queued'
+          : status === 'processing'
+            ? 'Sheska: ⟳ Syncing...'
+            : status === 'failed'
+              ? 'Sheska: ✕ Failed'
+              : status === 'synced'
+                ? 'Sheska: ✓ Synced'
+                : 'Sheska: ○ Not synced';
     this.syncStatusBarItem.setText(text);
     this.notifyStatusChange(file, status);
   }

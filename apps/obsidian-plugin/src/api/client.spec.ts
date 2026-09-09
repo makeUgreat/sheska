@@ -190,4 +190,31 @@ describe('SheskaApiClient', () => {
       ).rejects.toThrow('Sheska API error: 422 Unprocessable Entity');
     });
   });
+
+  describe('getSyncJob', () => {
+    it('calls GET /sync-jobs/:id', async () => {
+      const response = {
+        syncJobId: 'job/1',
+        sourceId: 'source-1',
+        fingerprint: 'abc123',
+        status: 'completed',
+        totalChunks: 2,
+        processedChunks: 2,
+        createdAt: '2026-09-09T00:00:00.000Z',
+      };
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(response),
+        }),
+      );
+
+      await expect(client.getSyncJob('job/1')).resolves.toEqual(response);
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:3000/sync-jobs/job%2F1',
+        { headers: { 'Content-Type': 'application/json' } },
+      );
+    });
+  });
 });
