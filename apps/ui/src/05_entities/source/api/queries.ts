@@ -1,6 +1,11 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useHttpClient } from '@/shared/api';
-import { getSource, listSources } from './client';
+import { getSource, getSyncJob, listSources } from './client';
+import { type SyncJobSummary } from './types';
 
 const SYNC_JOB_POLL_INTERVAL_MS = 2000;
 const ACTIVE_SYNC_JOB_STATUSES = new Set(['pending', 'processing']);
@@ -31,11 +36,33 @@ export function useSource(id: string | undefined) {
     queryKey: ['sources', id],
     queryFn: () => getSource(http, id!),
     enabled: !!id,
-    refetchInterval: (query) => {
-      const status = query.state.data?.latestSyncJob?.status;
-      return status && ACTIVE_SYNC_JOB_STATUSES.has(status)
-        ? SYNC_JOB_POLL_INTERVAL_MS
-        : false;
+  });
+}
+
+export function useSyncJob(
+  syncJob: SyncJobSummary | null | undefined,
+  sourceId: string | undefined,
+) {
+  const http = useHttpClient();
+  const queryClient = useQueryClient();
+  const isActive =
+    syncJob !== null &&
+    syncJob !== undefined &&
+    ACTIVE_SYNC_JOB_STATUSES.has(syncJob.status);
+
+  return useQuery({
+    queryKey: ['sync-jobs', syncJob?.syncJobId],
+    queryFn: async () => {
+      const result = await getSyncJob(http, syncJob!.syncJobId);
+      if (!ACTIVE_SYNC_JOB_STATUSES.has(result.status) && sourceId) {
+        void queryClient.invalidateQueries({ queryKey: ['sources', sourceId] });
+      }
+      return result;
     },
+    enabled: isActive,
+    refetchInterval: (query) =>
+      query.state.data && ACTIVE_SYNC_JOB_STATUSES.has(query.state.data.status)
+        ? SYNC_JOB_POLL_INTERVAL_MS
+        : false,
   });
 }

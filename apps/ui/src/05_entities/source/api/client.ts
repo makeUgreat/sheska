@@ -3,6 +3,7 @@ import {
   type GetSourceResponse,
   type ListSourcesParams,
   type ListSourcesResponse,
+  type SyncJob,
 } from './types';
 
 export function listSources(
@@ -24,4 +25,8 @@ export function getSource(
   id: string,
 ): Promise<GetSourceResponse> {
   return http.get<GetSourceResponse>(`/sources/${id}`);
+}
+
+export function getSyncJob(http: HttpClient, id: string): Promise<SyncJob> {
+  return http.get<SyncJob>(`/sync-jobs/${encodeURIComponent(id)}`);
 }

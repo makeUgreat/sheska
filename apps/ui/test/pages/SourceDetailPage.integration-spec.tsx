@@ -113,17 +113,25 @@ describe('SourceDetailPage', () => {
   });
 
   it('sync job이 processing 상태이면 진행률을 렌더링한다', async () => {
+    const processingJob = {
+      syncJobId: 'sync-job-1',
+      sourceId: 'source-1',
+      fingerprint: 'fingerprint-1',
+      status: 'processing' as const,
+      totalChunks: 10,
+      processedChunks: 3,
+      createdAt: NOW,
+    };
     const client = buildMockHttpClient({
-      get: vi.fn().mockResolvedValue({
-        ...MOCK_SOURCE,
-        latestSyncJob: {
-          syncJobId: 'sync-job-1',
-          status: 'processing',
-          totalChunks: 10,
-          processedChunks: 3,
-          createdAt: NOW,
-        },
-      }),
+      get: vi
+        .fn()
+        .mockImplementation((path: string) =>
+          Promise.resolve(
+            path.startsWith('/sync-jobs/')
+              ? processingJob
+              : { ...MOCK_SOURCE, latestSyncJob: processingJob },
+          ),
+        ),
     });
 
     renderPage(client);
@@ -133,6 +141,45 @@ describe('SourceDetailPage', () => {
       expect(screen.getByText('3/10 (30%)')).toBeDefined();
       const progressbar = screen.getByRole('progressbar');
       expect(progressbar.getAttribute('aria-valuenow')).toBe('30');
+    });
+  });
+
+  it('active sync job은 sync job API로 polling하고 완료 후 source를 갱신한다', async () => {
+    const activeSource = {
+      ...MOCK_SOURCE,
+      latestSyncJob: {
+        ...MOCK_SOURCE.latestSyncJob!,
+        status: 'processing' as const,
+        processedChunks: 2,
+      },
+      embedding: null,
+    };
+    const get = vi.fn().mockImplementation((path: string) => {
+      if (path === '/sync-jobs/sync-job-1') {
+        return Promise.resolve({
+          ...activeSource.latestSyncJob,
+          sourceId: 'source-1',
+          fingerprint: 'fingerprint-1',
+          status: 'completed',
+          processedChunks: 4,
+        });
+      }
+      return Promise.resolve(
+        get.mock.calls.filter(([calledPath]) => calledPath === path).length > 1
+          ? MOCK_SOURCE
+          : activeSource,
+      );
+    });
+    const client = buildMockHttpClient({ get });
+
+    renderPage(client);
+
+    await waitFor(() => {
+      expect(get).toHaveBeenCalledWith('/sync-jobs/sync-job-1');
+      expect(
+        get.mock.calls.filter(([path]) => path === '/sources/source-1').length,
+      ).toBe(2);
+      expect(screen.getByText('text-embedding-3-small')).toBeDefined();
     });
   });
 
