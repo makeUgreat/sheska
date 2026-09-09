@@ -6,6 +6,11 @@ export interface SyncJobSummary {
   createdAt: string;
 }
 
+export interface SyncJob extends SyncJobSummary {
+  sourceId: string;
+  fingerprint: string;
+}
+
 export interface SourceSummary {
   sourceId: string;
   externalSourceId: string;

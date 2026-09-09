@@ -5,6 +5,7 @@ import {
   SyncJobBadge,
   SyncJobProgress,
   useSource,
+  useSyncJob,
 } from '@/entities/source';
 import { PublishPostPanel } from '@/features/publish-post';
 
@@ -87,6 +88,11 @@ function EmbeddingSection({ embedding }: { embedding: EmbeddingInfo | null }) {
 export function SourceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: source, isLoading, error } = useSource(id);
+  const { data: polledSyncJob } = useSyncJob(
+    source?.latestSyncJob,
+    source?.sourceId,
+  );
+  const displayedSyncJob = polledSyncJob ?? source?.latestSyncJob ?? null;
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10">
@@ -163,7 +169,7 @@ export function SourceDetailPage() {
                 </dd>
               </div>
               <div className="sm:col-span-2 grid gap-3 border-t border-gray-200 pt-4">
-                <SyncJobSection syncJob={source.latestSyncJob} />
+                <SyncJobSection syncJob={displayedSyncJob} />
                 <EmbeddingSection embedding={source.embedding} />
               </div>
             </dl>

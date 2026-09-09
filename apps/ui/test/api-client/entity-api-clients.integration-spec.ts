@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { getPost, listPosts, publishPost } from '@/entities/post';
-import { getSource, listSources } from '@/entities/source';
+import { getSource, getSyncJob, listSources } from '@/entities/source';
 import { HttpClient } from '@/shared/api';
 
 const BASE_URL_FILE = '/tmp/sheska-ui-api-client-runtime/base-url';
@@ -96,6 +96,40 @@ describe('entity API clients', () => {
 
     await expect(getSource(http, 'non-existent-source')).rejects.toThrow(
       'HTTP error: 404 Not Found',
+    );
+  });
+
+  it('getSyncJob 응답 계약이 실제 API와 일치한다', async () => {
+    const baseUrl =
+      process.env.SHESKA_API_CLIENT_INTEGRATION_BASE_URL ??
+      (await readFile(BASE_URL_FILE, 'utf8')).trim();
+    const http = new HttpClient(baseUrl);
+    const uploadResponse = await fetch(`${baseUrl}/sources`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        externalSourceId: `ui-api-client-${randomUUID()}`,
+        content: `API client integration test content ${randomUUID()}`,
+      }),
+    });
+    expect(uploadResponse.status).toBe(201);
+    const uploaded = (await uploadResponse.json()) as {
+      sourceId: string;
+      fingerprint: string;
+      syncJobId: string;
+    };
+
+    const syncJob = await getSyncJob(http, uploaded.syncJobId);
+
+    expect(syncJob).toEqual(
+      expect.objectContaining({
+        syncJobId: uploaded.syncJobId,
+        sourceId: uploaded.sourceId,
+        fingerprint: uploaded.fingerprint,
+        status: expect.stringMatching(
+          /^(pending|processing|completed|failed)$/,
+        ),
+      }),
     );
   });
 
