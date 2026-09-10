@@ -6,6 +6,7 @@ export default defineConfig({
     './src/contexts/sources/infrastructure/persistence/postgres-drizzle/schema.ts',
     './src/contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema.ts',
     './src/contexts/posts/infrastructure/persistence/postgres-drizzle/schema.ts',
+    './src/kernels/infrastructure/persistence/postgres-drizzle/outbox.pg-drizzle.schema.ts',
   ],
   out: './database/drizzle',
   dbCredentials: {
