@@ -5,6 +5,7 @@ import {
   type SourceSyncJobRepository,
 } from '@contexts/sources/domain';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { type OutboxWriter } from '@kernels/application';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import {
   type UploadSourceContentSnapshotCalculator,
@@ -39,6 +40,10 @@ type EventEmitterMock = {
   emitAsync: MockedFunction<EventEmitter2['emitAsync']>;
 };
 
+type OutboxWriterMock = {
+  append: MockedFunction<OutboxWriter['append']>;
+};
+
 function buildMockLogger() {
   return { log: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
 }
@@ -51,12 +56,13 @@ describe('UploadSourceUseCase', () => {
     });
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
+    const outbox = createOutboxWriterMock();
     const eventEmitter = createEventEmitterMock();
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
       sources,
       syncJobs,
-      createSourcesUnitOfWorkMock(sources, syncJobs),
+      createSourcesUnitOfWorkMock(sources, syncJobs, outbox),
       asEventEmitter(eventEmitter),
       buildMockLogger(),
     );
@@ -88,6 +94,22 @@ describe('UploadSourceUseCase', () => {
       content: '# Source note',
       fingerprint: 'fingerprint-1',
     });
+    const savedSyncJob = syncJobs.save.mock.calls[0]?.[0];
+    expect(outbox.append).toHaveBeenCalledOnce();
+    const appendedMessage = outbox.append.mock.calls[0]?.[0];
+    expect(appendedMessage).toMatchObject({
+      eventType: 'source.sync_job.created',
+      eventVersion: 1,
+      payload: {
+        sourceId: savedSyncJob?.getProps().sourceId,
+        syncJobId: savedSyncJob?.id,
+        content: '# Source note',
+      },
+    });
+    expect(appendedMessage?.eventId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
+    expect(appendedMessage?.occurredAt).toBeInstanceOf(Date);
   });
 
   it('같은 content snapshot이고 최근 sync job이 completed면 저장과 sync job 생성을 건너뛴다', async () => {
@@ -427,6 +449,34 @@ describe('UploadSourceUseCase', () => {
     expect(sources.save).toHaveBeenCalledOnce();
   });
 
+  it('outbox 저장 exception을 전파하고 domain event를 발행하지 않는다', async () => {
+    const outboxFailure = new Error('Outbox operation failed');
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
+    const sources = createSourceRepositoryMock();
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    const outbox = createOutboxWriterMock();
+    outbox.append.mockRejectedValue(outboxFailure);
+    const eventEmitter = createEventEmitterMock();
+    const useCase = new UploadSourceUseCase(
+      contentSnapshotCalculator,
+      sources,
+      syncJobs,
+      createSourcesUnitOfWorkMock(sources, syncJobs, outbox),
+      asEventEmitter(eventEmitter),
+      buildMockLogger(),
+    );
+
+    const result = useCase.execute({
+      externalSourceId: 'Notes/source.md',
+      content: '# Source note',
+    });
+
+    await expect(result).rejects.toBe(outboxFailure);
+    expect(sources.save).toHaveBeenCalledOnce();
+    expect(syncJobs.save).toHaveBeenCalledOnce();
+    expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
+  });
+
   it('domain이 source snapshot을 거부하면 저장하지 않고 throw한다', async () => {
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
       content: '# Source note',
@@ -505,9 +555,16 @@ function createEventEmitterMock(): EventEmitterMock {
 function createSourcesUnitOfWorkMock(
   sources: SourceRepositoryMock,
   syncJobs: SourceSyncJobRepositoryMock,
+  outbox: OutboxWriterMock = createOutboxWriterMock(),
 ): SourcesUnitOfWork {
   return {
-    execute: (work) => work({ sources, syncJobs }),
+    execute: (work) => work({ sources, syncJobs, outbox }),
+  };
+}
+
+function createOutboxWriterMock(): OutboxWriterMock {
+  return {
+    append: vi.fn<OutboxWriter['append']>().mockResolvedValue(undefined),
   };
 }
 

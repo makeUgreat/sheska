@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { type Queue } from 'bullmq';
-import { DATABASE_TOKENS } from '@kernels/infrastructure';
+import { DATABASE_TOKENS, outboxMessages } from '@kernels/infrastructure';
 import { type SourceFingerprinter } from '@contexts/sources/application/ports';
 import {
   type SourceRepository,
@@ -102,6 +102,30 @@ describe('UploadSourceUseCase', () => {
       fingerprint,
       status: 'pending',
     });
+
+    const persistedMessages = await database
+      .select()
+      .from(outboxMessages)
+      .where(eq(outboxMessages.eventType, 'source.sync_job.created'));
+    const outboxMessage = persistedMessages.find(
+      (message) =>
+        (message.payload as { syncJobId?: string }).syncJobId ===
+        result.syncJobId,
+    );
+
+    expect(outboxMessage).toMatchObject({
+      eventType: 'source.sync_job.created',
+      eventVersion: 1,
+      publishedAt: null,
+      payload: {
+        sourceId: result.sourceId,
+        syncJobId: result.syncJobId,
+        content,
+      },
+    });
+    expect(outboxMessage?.eventId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
   });
 
   it('같은 content를 다시 업로드할 때 active sync job을 재사용한다', async () => {
