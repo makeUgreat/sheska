@@ -1,7 +1,15 @@
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { eq } from 'drizzle-orm';
+import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { createOutboxEvent } from '@kernels/application';
 import { type SourcesUnitOfWork } from '@contexts/sources/application/ports';
+import {
+  SOURCE_SYNC_JOB_CREATED_EVENT_TYPE,
+  SOURCE_SYNC_JOB_CREATED_EVENT_VERSION,
+  type SourceSyncJobCreatedOutboxEvent,
+} from '@contexts/sources/application/events/source-sync-job-created.outbox-event';
 import {
   type SourceRepository,
   type SourceSyncJobRepository,
@@ -12,12 +20,15 @@ import {
   SOURCES_UNIT_OF_WORK,
 } from '@contexts/sources/sources.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
+import { DATABASE_TOKENS, outboxMessages } from '@kernels/infrastructure';
+import * as schema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
 import { buildSourceSyncJob } from '../../../support/domains/fixtures/source-sync-job.fixture';
 import { buildSource } from '../../../support/domains/fixtures/source.fixture';
 
 describe('SourcesPgDrizzleUnitOfWork', () => {
   let app: INestApplication;
   let unitOfWork: SourcesUnitOfWork;
+  let database: NodePgDatabase<typeof schema>;
   let sources: SourceRepository;
   let syncJobs: SourceSyncJobRepository;
 
@@ -28,6 +39,9 @@ describe('SourcesPgDrizzleUnitOfWork', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
     unitOfWork = app.get<SourcesUnitOfWork>(SOURCES_UNIT_OF_WORK);
+    database = app.get<NodePgDatabase<typeof schema>>(
+      DATABASE_TOKENS.drizzleDatabase,
+    );
     sources = app.get<SourceRepository>(SOURCE_REPOSITORY);
     syncJobs = app.get<SourceSyncJobRepository>(SOURCE_SYNC_JOB_REPOSITORY);
   });
@@ -70,11 +84,22 @@ describe('SourcesPgDrizzleUnitOfWork', () => {
       sourceId: source.id,
       fingerprint: 'unit-of-work-rollback',
     });
+    const event: SourceSyncJobCreatedOutboxEvent = createOutboxEvent({
+      eventType: SOURCE_SYNC_JOB_CREATED_EVENT_TYPE,
+      eventVersion: SOURCE_SYNC_JOB_CREATED_EVENT_VERSION,
+      occurredAt: new Date(),
+      payload: {
+        sourceId: source.id,
+        syncJobId: firstSyncJob.id,
+        content: '# Source note',
+      },
+    });
 
     await expect(
       unitOfWork.execute(async (resources) => {
         await resources.sources.save(source);
         await resources.syncJobs.save(firstSyncJob);
+        await resources.outbox.append(event);
         await resources.syncJobs.save(conflictingSyncJob);
       }),
     ).rejects.toMatchObject({
@@ -84,5 +109,10 @@ describe('SourcesPgDrizzleUnitOfWork', () => {
 
     await expect(sources.find({ id: source.id })).resolves.toBeNull();
     await expect(syncJobs.find({ id: firstSyncJob.id })).resolves.toBeNull();
+    const persistedMessages = await database
+      .select()
+      .from(outboxMessages)
+      .where(eq(outboxMessages.eventId, event.eventId));
+    expect(persistedMessages).toHaveLength(0);
   });
 });

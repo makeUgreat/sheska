@@ -1,6 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { LOGGER, type LoggerPort } from '@kernels/application';
+import {
+  createOutboxEvent,
+  LOGGER,
+  type LoggerPort,
+} from '@kernels/application';
 import {
   ExternalSourceId,
   Source,
@@ -13,6 +17,11 @@ import {
   type SourceContentSnapshotCalculation,
 } from '../services/source-content-snapshot-calculator.service';
 import { type SourcesUnitOfWork } from '@contexts/sources/application/ports';
+import {
+  SOURCE_SYNC_JOB_CREATED_EVENT_TYPE,
+  SOURCE_SYNC_JOB_CREATED_EVENT_VERSION,
+  type SourceSyncJobCreatedOutboxEvent,
+} from '@contexts/sources/application/events/source-sync-job-created.outbox-event';
 import {
   SOURCE_REPOSITORY,
   SOURCE_SYNC_JOB_REPOSITORY,
@@ -92,10 +101,21 @@ export class UploadSourceUseCase {
       fingerprint,
       content,
     });
+    const outboxEvent: SourceSyncJobCreatedOutboxEvent = createOutboxEvent({
+      eventType: SOURCE_SYNC_JOB_CREATED_EVENT_TYPE,
+      eventVersion: SOURCE_SYNC_JOB_CREATED_EVENT_VERSION,
+      occurredAt: syncJob.createdAt,
+      payload: {
+        sourceId: source.id,
+        syncJobId: syncJob.id,
+        content,
+      },
+    });
 
     const result = await this.unitOfWork.execute(async (resources) => {
       const savedSource = await resources.sources.save(source);
       const savedSyncJob = await resources.syncJobs.save(syncJob);
+      await resources.outbox.append(outboxEvent);
 
       return this.completeUpload(savedSource, savedSyncJob);
     });
