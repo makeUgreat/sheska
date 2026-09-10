@@ -20,6 +20,7 @@ export {
 } from './error.base';
 export { InfrastructureException } from './infrastructure.exception';
 export { classifyPostgresError } from './postgres-error.classifier';
+export { type PgDrizzleSession } from './pg-drizzle.session';
 export { parseRetryAfterMs } from './retry-after';
 export { classifyInfrastructureRetry } from './retry-error.classifier';
 export {

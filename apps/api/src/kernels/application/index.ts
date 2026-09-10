@@ -10,3 +10,4 @@ export {
 } from './error.base';
 export { type LoggerPort } from './logger';
 export { LOGGER } from './logger.tokens';
+export { type UnitOfWork } from './unit-of-work';

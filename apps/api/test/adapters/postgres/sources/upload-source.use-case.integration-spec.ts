@@ -104,7 +104,7 @@ describe('UploadSourceUseCase', () => {
     });
   });
 
-  it('같은 content를 다시 업로드할 때 임베딩이 없으면 sync job을 생성한다', async () => {
+  it('같은 content를 다시 업로드할 때 active sync job을 재사용한다', async () => {
     const externalSourceId = 'Notes/upload-usecase-unchanged-no-embedding.md';
     const content = '# Same source note';
     const fingerprint = useFingerprint(content, 'fingerprint-unchanged-source');
@@ -116,14 +116,14 @@ describe('UploadSourceUseCase', () => {
       sourceId: firstResult.sourceId,
       externalSourceId,
       fingerprint,
+      syncJobId: firstResult.syncJobId,
     });
-    expect(secondResult.syncJobId?.length).toBeGreaterThan(0);
 
     const persistedSyncJobs = await findSyncJobsBySourceId(
       firstResult.sourceId,
     );
 
-    expect(persistedSyncJobs).toHaveLength(2);
+    expect(persistedSyncJobs).toHaveLength(1);
   });
 
   it('같은 content를 다시 업로드할 때 임베딩이 최신이면 저장 갱신과 sync job 생성을 건너뛴다', async () => {

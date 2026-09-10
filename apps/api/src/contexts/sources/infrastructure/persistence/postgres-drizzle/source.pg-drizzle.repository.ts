@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
-import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   type Source,
   type SourceRepository,
@@ -11,6 +10,7 @@ import {
   classifyPostgresError,
   DATABASE_TOKENS,
   InfrastructureException,
+  type PgDrizzleSession,
 } from '@kernels/infrastructure';
 import * as schema from './schema';
 import { SourcePgDrizzleMapper } from './source.pg-drizzle.mapper';
@@ -21,7 +21,7 @@ const ADAPTER = 'source.pg-drizzle';
 export class SourcePgDrizzleRepository implements SourceRepository {
   constructor(
     @Inject(DATABASE_TOKENS.drizzleDatabase)
-    private readonly db: NodePgDatabase<typeof schema>,
+    private readonly db: PgDrizzleSession<typeof schema>,
   ) {}
 
   async find(criteria: SourceRepositoryFindCriteria): Promise<Source | null> {
