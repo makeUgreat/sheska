@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
-import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   type SourceSyncJob,
   type SourceSyncJobRepository,
@@ -10,6 +9,7 @@ import {
   DATABASE_TOKENS,
   INFRASTRUCTURE_ERROR_KIND,
   InfrastructureException,
+  type PgDrizzleSession,
 } from '@kernels/infrastructure';
 import * as schema from './schema';
 import { SourceSyncJobPgDrizzleMapper } from './source-sync-job.pg-drizzle.mapper';
@@ -20,7 +20,7 @@ const ADAPTER = 'source-sync-job.pg-drizzle';
 export class SourceSyncJobPgDrizzleRepository implements SourceSyncJobRepository {
   constructor(
     @Inject(DATABASE_TOKENS.drizzleDatabase)
-    private readonly db: NodePgDatabase<typeof schema>,
+    private readonly db: PgDrizzleSession<typeof schema>,
   ) {}
 
   async get(criteria: { id: string }): Promise<SourceSyncJob> {

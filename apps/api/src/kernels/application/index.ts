@@ -1,5 +1,4 @@
 export { ApplicationException } from './application.exception';
-export { effectiveAbortSignal } from './deadline-signal';
 export { toErrorLogContext } from './error-log.mapper';
 export {
   APPLICATION_ERROR_KIND,
@@ -11,3 +10,4 @@ export {
 } from './error.base';
 export { type LoggerPort } from './logger';
 export { LOGGER } from './logger.tokens';
+export { type UnitOfWork } from './unit-of-work';

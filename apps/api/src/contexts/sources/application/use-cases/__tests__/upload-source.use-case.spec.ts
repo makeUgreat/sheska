@@ -10,6 +10,7 @@ import {
   type UploadSourceContentSnapshotCalculator,
   UploadSourceUseCase,
 } from '../upload-source.use-case';
+import { type SourcesUnitOfWork } from '../../ports';
 import {
   buildSource,
   sourceContentByteSize,
@@ -55,6 +56,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createSourcesUnitOfWorkMock(sources, syncJobs),
       asEventEmitter(eventEmitter),
       buildMockLogger(),
     );
@@ -109,6 +111,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createSourcesUnitOfWorkMock(sources, syncJobs),
       asEventEmitter(createEventEmitterMock()),
       buildMockLogger(),
     );
@@ -155,6 +158,7 @@ describe('UploadSourceUseCase', () => {
         contentSnapshotCalculator,
         sources,
         syncJobs,
+        createSourcesUnitOfWorkMock(sources, syncJobs),
         asEventEmitter(eventEmitter),
         buildMockLogger(),
       );
@@ -190,6 +194,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createSourcesUnitOfWorkMock(sources, syncJobs),
       asEventEmitter(eventEmitter),
       buildMockLogger(),
     );
@@ -229,6 +234,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createSourcesUnitOfWorkMock(sources, syncJobs),
       asEventEmitter(eventEmitter),
       buildMockLogger(),
     );
@@ -265,6 +271,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createSourcesUnitOfWorkMock(sources, syncJobs),
       asEventEmitter(eventEmitter),
       buildMockLogger(),
     );
@@ -300,6 +307,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createSourcesUnitOfWorkMock(sources, syncJobs),
       asEventEmitter(createEventEmitterMock()),
       buildMockLogger(),
     );
@@ -326,6 +334,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createSourcesUnitOfWorkMock(sources, syncJobs),
       asEventEmitter(createEventEmitterMock()),
       buildMockLogger(),
     );
@@ -351,6 +360,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createSourcesUnitOfWorkMock(sources, syncJobs),
       asEventEmitter(createEventEmitterMock()),
       buildMockLogger(),
     );
@@ -375,6 +385,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createSourcesUnitOfWorkMock(sources, syncJobs),
       asEventEmitter(createEventEmitterMock()),
       buildMockLogger(),
     );
@@ -400,6 +411,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createSourcesUnitOfWorkMock(sources, syncJobs),
       asEventEmitter(createEventEmitterMock()),
       buildMockLogger(),
     );
@@ -426,6 +438,7 @@ describe('UploadSourceUseCase', () => {
       contentSnapshotCalculator,
       sources,
       syncJobs,
+      createSourcesUnitOfWorkMock(sources, syncJobs),
       asEventEmitter(createEventEmitterMock()),
       buildMockLogger(),
     );
@@ -486,6 +499,15 @@ function createEventEmitterMock(): EventEmitterMock {
   return {
     emit: vi.fn(),
     emitAsync: vi.fn().mockResolvedValue([]),
+  };
+}
+
+function createSourcesUnitOfWorkMock(
+  sources: SourceRepositoryMock,
+  syncJobs: SourceSyncJobRepositoryMock,
+): SourcesUnitOfWork {
+  return {
+    execute: (work) => work({ sources, syncJobs }),
   };
 }
 

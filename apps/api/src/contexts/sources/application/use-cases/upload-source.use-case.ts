@@ -12,9 +12,11 @@ import {
   SourceContentSnapshotCalculator,
   type SourceContentSnapshotCalculation,
 } from '../services/source-content-snapshot-calculator.service';
+import { type SourcesUnitOfWork } from '@contexts/sources/application/ports';
 import {
   SOURCE_REPOSITORY,
   SOURCE_SYNC_JOB_REPOSITORY,
+  SOURCES_UNIT_OF_WORK,
 } from '@contexts/sources/sources.di-tokens';
 
 export interface UploadSourceCommand {
@@ -42,6 +44,8 @@ export class UploadSourceUseCase {
     private readonly sources: SourceRepository,
     @Inject(SOURCE_SYNC_JOB_REPOSITORY)
     private readonly syncJobs: SourceSyncJobRepository,
+    @Inject(SOURCES_UNIT_OF_WORK)
+    private readonly unitOfWork: SourcesUnitOfWork,
     private readonly eventEmitter: EventEmitter2,
     @Inject(LOGGER)
     private readonly logger: LoggerPort,
@@ -89,12 +93,16 @@ export class UploadSourceUseCase {
       content,
     });
 
-    const savedSource = await this.sources.save(source);
-    const savedSyncJob = await this.syncJobs.save(syncJob);
+    const result = await this.unitOfWork.execute(async (resources) => {
+      const savedSource = await resources.sources.save(source);
+      const savedSyncJob = await resources.syncJobs.save(syncJob);
+
+      return this.completeUpload(savedSource, savedSyncJob);
+    });
 
     await syncJob.publishEvents(this.logger, this.eventEmitter);
 
-    return this.completeUpload(savedSource, savedSyncJob);
+    return result;
   }
 
   private completeUpload(

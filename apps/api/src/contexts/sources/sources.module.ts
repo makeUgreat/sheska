@@ -10,6 +10,7 @@ import { SourcePgDrizzleRepository } from '@contexts/sources/infrastructure/pers
 import { SourceSyncJobPgDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source-sync-job.pg-drizzle.repository';
 import { SourceEmbeddingFromIngestionLookup } from '@contexts/sources/acl/ingestion/source-embedding.from-ingestion.lookup';
 import { SourcePgDrizzleQuery } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.query';
+import { SourcesPgDrizzleUnitOfWork } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/sources.pg-drizzle.unit-of-work';
 import { SourcesHttpController } from '@contexts/sources/presentation/http/sources-http.controller';
 import { SourceSyncJobsHttpController } from '@contexts/sources/presentation/http/source-sync-jobs-http.controller';
 import { HandleIngestionResultHandler } from '@contexts/sources/application/event-handlers/handle-ingestion-result.handler';
@@ -25,6 +26,7 @@ import {
   SOURCE_EMBEDDING_LOOKUP,
   SOURCE_QUERY,
   SOURCE_LOOKUP,
+  SOURCES_UNIT_OF_WORK,
 } from './sources.di-tokens';
 
 export type SourcesModuleOptions = Record<string, never>;
@@ -47,6 +49,10 @@ export class SourcesModule {
         {
           provide: SOURCE_SYNC_JOB_REPOSITORY,
           useClass: SourceSyncJobPgDrizzleRepository,
+        },
+        {
+          provide: SOURCES_UNIT_OF_WORK,
+          useClass: SourcesPgDrizzleUnitOfWork,
         },
         {
           provide: SOURCE_EMBEDDING_LOOKUP,
