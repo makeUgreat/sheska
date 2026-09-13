@@ -64,6 +64,10 @@ flowchart TB
   infrastructureKernel --> core
   applicationKernel --> core
   domainKernel --> core
+  presentationKernel --> applicationKernel
+  infrastructureKernel --> applicationKernel
+  infrastructureKernel --> domainKernel
+  applicationKernel --> domainKernel
 ```
 
 - `acl` also depends on another bounded context's public surface (`@contexts/<other-context>`) — not shown above, since
@@ -191,10 +195,36 @@ flowchart TB
 
 ### Kernel Directory
 
-- Kernel directories MAY depend on `core`.
-- Kernel directories MUST NOT depend on bounded contexts, platform, frameworks, or outer layers.
+- Kernel directories follow the same inward dependency direction as their corresponding context layers:
+  - `kernels/domain` MAY depend on `core`.
+  - `kernels/application` MAY depend on `core` and `kernels/domain`.
+  - `kernels/infrastructure` MAY depend on `core`, `kernels/domain`, and `kernels/application`.
+  - `kernels/presentation` MAY depend on `core` and `kernels/application`.
+- Kernel directories MUST NOT depend outward or sideways against that direction.
+  - In particular, `kernels/application` MUST NOT depend on `kernels/infrastructure` or `kernels/presentation`.
+  - `kernels/infrastructure` and `kernels/presentation` MUST NOT depend on each other.
+- Cross-kernel imports MUST use the target kernel's `index.ts` public surface.
+- All kernel directories MUST remain independent of bounded contexts and platform.
+- Allowing inward cross-kernel imports does not broaden framework access; follow the
+  [runtime wiring convention](./runtime-wiring.md) for framework restrictions.
 - Keep feature-specific policy inside its owning bounded context.
   - Kernel directories MUST NOT become generic utility buckets.
+
+#### Risks When Sharing Contracts Across Kernel Layers
+
+- Contracts in `kernels/application` and `kernels/domain` MUST remain technology-neutral.
+  - Do not expose database rows, ORM query builders, queue jobs, HTTP objects, or adapter configuration through those
+    contracts.
+- Do not move feature events, payloads, or policies into a kernel merely so multiple contexts can import them.
+  - A kernel MUST NOT become an indirect cross-context integration surface; use the owning context's public contract
+    and the [context integration convention](./context-integration.md).
+- `kernels/infrastructure` MAY implement or use contracts from `kernels/application` or `kernels/domain`, following
+  the allowed dependency direction.
+  - An allowed dependency direction does not by itself justify placing a context-specific implementation in a kernel.
+  - Promote an adapter to `kernels/infrastructure` only when multiple contexts genuinely reuse both its behavior and
+    lifecycle; otherwise keep it in the owning context's infrastructure layer.
+- Reverse dependencies and cycles remain forbidden when one kernel layer implements another kernel layer's contract.
+  - Static dependency checks enforce direction and the repository-wide circular-dependency rule remains applicable.
 
 ### Event Emitter Exceptions
 

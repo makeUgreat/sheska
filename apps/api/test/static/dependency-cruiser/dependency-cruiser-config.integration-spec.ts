@@ -28,7 +28,11 @@ const apiRuleNames = [
   'api-inner-layers-not-to-frameworks',
   'api-application-not-to-non-di-nest-frameworks',
   'api-core-is-independent',
-  'api-kernels-stay-in-layer',
+  'api-domain-kernel-stays-inner',
+  'api-application-kernel-stays-inner',
+  'api-infrastructure-kernel-follows-layer-direction',
+  'api-presentation-kernel-follows-layer-direction',
+  'api-kernel-cross-layer-only-through-public-surface',
   'api-domain-stays-inner',
   'api-application-stays-inner',
   'api-infrastructure-not-to-presentation-or-platform',
@@ -45,6 +49,22 @@ const validFiles: Record<string, string> = {
   `,
   'src/kernels/domain/index.ts': `
     export const domainKernel = 'domain-kernel';
+  `,
+  'src/kernels/application/index.ts': `
+    import { domainKernel } from '@kernels/domain';
+
+    export const applicationKernel = domainKernel;
+  `,
+  'src/kernels/infrastructure/index.ts': `
+    import { applicationKernel } from '@kernels/application';
+    import { domainKernel } from '@kernels/domain';
+
+    export const infrastructureKernel = [applicationKernel, domainKernel];
+  `,
+  'src/kernels/presentation/index.ts': `
+    import { applicationKernel } from '@kernels/application';
+
+    export const presentationKernel = applicationKernel;
   `,
   'src/contexts/corrections/domain/index.ts': `
     import { guard } from '@core/guard';
@@ -123,6 +143,43 @@ const invalidFiles: Record<string, string> = {
     import { correction } from '../../contexts/corrections/domain';
 
     export const value = correction;
+  `,
+  'src/kernels/domain/uses-application-kernel.ts': `
+    import { applicationKernel } from '../application';
+
+    export const value = applicationKernel;
+  `,
+  'src/kernels/application/uses-infrastructure-kernel.ts': `
+    import { infrastructureKernel } from '../infrastructure';
+
+    export const value = infrastructureKernel;
+  `,
+  'src/kernels/infrastructure/uses-presentation-kernel.ts': `
+    import { presentationKernel } from '../presentation';
+
+    export const value = presentationKernel;
+  `,
+  'src/kernels/presentation/uses-infrastructure-kernel.ts': `
+    import { infrastructureKernel } from '../infrastructure';
+
+    export const value = infrastructureKernel;
+  `,
+  'src/kernels/domain/domain-contract.ts': `
+    export const internalDomainContract = 'internal';
+  `,
+  'src/kernels/application/uses-domain-kernel-internal.ts': `
+    import { internalDomainContract } from '../domain/domain-contract';
+
+    export const value = internalDomainContract;
+  `,
+  'src/kernels/application/index.ts': `
+    export const applicationKernel = 'application-kernel';
+  `,
+  'src/kernels/infrastructure/index.ts': `
+    export const infrastructureKernel = 'infrastructure-kernel';
+  `,
+  'src/kernels/presentation/index.ts': `
+    export const presentationKernel = 'presentation-kernel';
   `,
   'src/kernels/domain/entity.base.ts': `
     export class EntityBase {}

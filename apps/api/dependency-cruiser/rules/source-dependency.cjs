@@ -15,17 +15,73 @@ module.exports = [
     },
   },
   {
-    name: 'api-kernels-stay-in-layer',
+    name: 'api-domain-kernel-stays-inner',
     severity: 'error',
     comment:
-      'Kernels may depend only on core and their own kernel. Feature policy belongs in the owning bounded context. ' +
+      'The domain kernel may depend only on core and its own files. ' +
       `See ${docs.sourceDependency}#kernel-directories.`,
+    from: {
+      path: '^src/kernels/domain/',
+    },
+    to: {
+      path: '^src/',
+      pathNot: '^src/(core/|kernels/domain/)',
+    },
+  },
+  {
+    name: 'api-application-kernel-stays-inner',
+    severity: 'error',
+    comment:
+      'The application kernel may depend only on core, the domain kernel, and its own files. ' +
+      `See ${docs.sourceDependency}#kernel-directories.`,
+    from: {
+      path: '^src/kernels/application/',
+    },
+    to: {
+      path: '^src/',
+      pathNot: '^src/(core/|kernels/(domain|application)/)',
+    },
+  },
+  {
+    name: 'api-infrastructure-kernel-follows-layer-direction',
+    severity: 'error',
+    comment:
+      'The infrastructure kernel may depend inward on core, domain-kernel, and application-kernel contracts, but not on presentation, contexts, or platform. ' +
+      `See ${docs.sourceDependency}#kernel-directories.`,
+    from: {
+      path: '^src/kernels/infrastructure/',
+    },
+    to: {
+      path: '^src/',
+      pathNot:
+        '^src/(core/|kernels/(domain|application|infrastructure)/)',
+    },
+  },
+  {
+    name: 'api-presentation-kernel-follows-layer-direction',
+    severity: 'error',
+    comment:
+      'The presentation kernel may depend inward on core and application-kernel contracts, but not on domain, infrastructure, contexts, or platform. ' +
+      `See ${docs.sourceDependency}#kernel-directories.`,
+    from: {
+      path: '^src/kernels/presentation/',
+    },
+    to: {
+      path: '^src/',
+      pathNot: '^src/(core/|kernels/(application|presentation)/)',
+    },
+  },
+  {
+    name: 'api-kernel-cross-layer-only-through-public-surface',
+    severity: 'error',
+    comment:
+      'Cross-kernel imports must use the target kernel public surface; keep implementation details private to their owning kernel. ' +
+      `See ${docs.sourceDependency}#public-surface-policy.`,
     from: {
       path: '^src/kernels/([^/]+)/',
     },
     to: {
-      path: '^src/',
-      pathNot: '^src/(core/|kernels/$1/)',
+      path: '^src/kernels/(?!$1/)[^/]+/(?!index[.]ts$)',
     },
   },
   {
