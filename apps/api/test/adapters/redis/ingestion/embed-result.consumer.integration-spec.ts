@@ -16,6 +16,7 @@ import {
   EMBED_RESULTS_QUEUE,
   type EmbedResultPayload,
 } from '@contexts/ingestion/application/ports';
+import { IntegrationEventsModule } from '@platform/nest/events/integration-events.module';
 import { VALID_EMBEDDING } from '../../../support/domains/fixtures/source-embedding.fixture';
 
 const REDIS_CONNECTION = { host: '127.0.0.1', port: 56379 };
@@ -38,6 +39,7 @@ describe('EmbedResultBullMqConsumer', () => {
         BullModule.forRoot({ connection: REDIS_CONNECTION }),
         BullModule.registerQueue({ name: EMBED_RESULTS_QUEUE }),
         EventEmitterModule.forRoot(),
+        IntegrationEventsModule,
       ],
       providers: [
         EmbedResultBullMqConsumer,
@@ -58,6 +60,10 @@ describe('EmbedResultBullMqConsumer', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
+    const eventEmitter = app.get(EventEmitter2);
+    eventEmitter.on('source.ingestion.completed', () => undefined);
+    eventEmitter.on('source.ingestion.failed', () => undefined);
+
     embedResultsQueue = app.get(getQueueToken(EMBED_RESULTS_QUEUE));
     queueEvents = new QueueEvents(EMBED_RESULTS_QUEUE, {
       connection: REDIS_CONNECTION,
@@ -74,7 +80,7 @@ describe('EmbedResultBullMqConsumer', () => {
   it('embedding 결과를 저장하고 ingestion-completed 이벤트를 emit한다', async () => {
     save.mockResolvedValue(undefined);
     const eventEmitter = app.get(EventEmitter2);
-    const emit = vi.spyOn(eventEmitter, 'emit');
+    const emitAsync = vi.spyOn(eventEmitter, 'emitAsync');
 
     const job = await embedResultsQueue.add('embed-result', {
       sourceId: 'source-1',
@@ -86,7 +92,7 @@ describe('EmbedResultBullMqConsumer', () => {
     await job.waitUntilFinished(queueEvents);
 
     expect(save).toHaveBeenCalledOnce();
-    expect(emit).toHaveBeenCalledWith(
+    expect(emitAsync).toHaveBeenCalledWith(
       'source.ingestion.completed',
       expect.objectContaining<Partial<IngestionCompletedIntegrationEvent>>({
         eventType: 'source.ingestion.completed',
