@@ -4,7 +4,6 @@ import {
   type SourceRepository,
   type SourceSyncJobRepository,
 } from '@contexts/sources/domain';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { type OutboxWriter } from '@kernels/application';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import {
@@ -35,18 +34,9 @@ type SourceSyncJobRepositoryMock = {
   save: MockedFunction<SourceSyncJobRepository['save']>;
 };
 
-type EventEmitterMock = {
-  emit: MockedFunction<EventEmitter2['emit']>;
-  emitAsync: MockedFunction<EventEmitter2['emitAsync']>;
-};
-
 type OutboxWriterMock = {
   append: MockedFunction<OutboxWriter['append']>;
 };
-
-function buildMockLogger() {
-  return { log: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
-}
 
 describe('UploadSourceUseCase', () => {
   it('새 source를 저장하고 sync job을 생성한다', async () => {
@@ -57,14 +47,11 @@ describe('UploadSourceUseCase', () => {
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
     const outbox = createOutboxWriterMock();
-    const eventEmitter = createEventEmitterMock();
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
       sources,
       syncJobs,
       createSourcesUnitOfWorkMock(sources, syncJobs, outbox),
-      asEventEmitter(eventEmitter),
-      buildMockLogger(),
     );
 
     const result = await useCase.execute({
@@ -89,9 +76,8 @@ describe('UploadSourceUseCase', () => {
       content: '# Source note',
       fingerprint: 'fingerprint-1',
     });
-    expectSyncJobSavedWith(syncJobs, eventEmitter, {
+    expectSyncJobSavedWith(syncJobs, {
       sourceId: sources.save.mock.calls[0]?.[0]?.id,
-      content: '# Source note',
       fingerprint: 'fingerprint-1',
     });
     const savedSyncJob = syncJobs.save.mock.calls[0]?.[0];
@@ -110,6 +96,7 @@ describe('UploadSourceUseCase', () => {
       /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
     );
     expect(appendedMessage?.occurredAt).toBeInstanceOf(Date);
+    expect(savedSyncJob?.domainEvents).toEqual([]);
   });
 
   it('같은 content snapshot이고 최근 sync job이 completed면 저장과 sync job 생성을 건너뛴다', async () => {
@@ -134,8 +121,6 @@ describe('UploadSourceUseCase', () => {
       sources,
       syncJobs,
       createSourcesUnitOfWorkMock(sources, syncJobs),
-      asEventEmitter(createEventEmitterMock()),
-      buildMockLogger(),
     );
 
     const result = await useCase.execute({
@@ -175,14 +160,11 @@ describe('UploadSourceUseCase', () => {
           status,
         }),
       );
-      const eventEmitter = createEventEmitterMock();
       const useCase = new UploadSourceUseCase(
         contentSnapshotCalculator,
         sources,
         syncJobs,
         createSourcesUnitOfWorkMock(sources, syncJobs),
-        asEventEmitter(eventEmitter),
-        buildMockLogger(),
       );
 
       const result = await useCase.execute({
@@ -193,7 +175,6 @@ describe('UploadSourceUseCase', () => {
       expect(result.syncJobId).toBe('sync-job-1');
       expect(sources.save).not.toHaveBeenCalled();
       expect(syncJobs.save).not.toHaveBeenCalled();
-      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
     },
   );
 
@@ -211,14 +192,11 @@ describe('UploadSourceUseCase', () => {
     const sources = createSourceRepositoryMock();
     sources.find.mockResolvedValue(existingSource);
     const syncJobs = createSourceSyncJobRepositoryMock();
-    const eventEmitter = createEventEmitterMock();
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
       sources,
       syncJobs,
       createSourcesUnitOfWorkMock(sources, syncJobs),
-      asEventEmitter(eventEmitter),
-      buildMockLogger(),
     );
 
     const result = await useCase.execute({
@@ -227,9 +205,8 @@ describe('UploadSourceUseCase', () => {
     });
 
     expect(result.syncJobId?.length).toBeGreaterThan(0);
-    expectSyncJobSavedWith(syncJobs, eventEmitter, {
+    expectSyncJobSavedWith(syncJobs, {
       sourceId: 'source-1',
-      content: '# Source note',
       fingerprint: 'fingerprint-1',
     });
   });
@@ -251,14 +228,11 @@ describe('UploadSourceUseCase', () => {
     syncJobs.findLatest.mockResolvedValue(
       restoreSyncJob({ sourceId: 'source-1', status: 'failed' }),
     );
-    const eventEmitter = createEventEmitterMock();
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
       sources,
       syncJobs,
       createSourcesUnitOfWorkMock(sources, syncJobs),
-      asEventEmitter(eventEmitter),
-      buildMockLogger(),
     );
 
     const result = await useCase.execute({
@@ -267,9 +241,8 @@ describe('UploadSourceUseCase', () => {
     });
 
     expect(result.syncJobId?.length).toBeGreaterThan(0);
-    expectSyncJobSavedWith(syncJobs, eventEmitter, {
+    expectSyncJobSavedWith(syncJobs, {
       sourceId: 'source-1',
-      content: '# Source note',
       fingerprint: 'fingerprint-1',
     });
   });
@@ -288,14 +261,11 @@ describe('UploadSourceUseCase', () => {
     const sources = createSourceRepositoryMock();
     sources.find.mockResolvedValue(existingSource);
     const syncJobs = createSourceSyncJobRepositoryMock();
-    const eventEmitter = createEventEmitterMock();
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
       sources,
       syncJobs,
       createSourcesUnitOfWorkMock(sources, syncJobs),
-      asEventEmitter(eventEmitter),
-      buildMockLogger(),
     );
 
     const result = await useCase.execute({
@@ -314,9 +284,8 @@ describe('UploadSourceUseCase', () => {
       content: '# New source note',
       fingerprint: 'fingerprint-new',
     });
-    expectSyncJobSavedWith(syncJobs, eventEmitter, {
+    expectSyncJobSavedWith(syncJobs, {
       sourceId: 'source-1',
-      content: '# New source note',
       fingerprint: 'fingerprint-new',
     });
   });
@@ -330,8 +299,6 @@ describe('UploadSourceUseCase', () => {
       sources,
       syncJobs,
       createSourcesUnitOfWorkMock(sources, syncJobs),
-      asEventEmitter(createEventEmitterMock()),
-      buildMockLogger(),
     );
 
     await expect(
@@ -357,8 +324,6 @@ describe('UploadSourceUseCase', () => {
       sources,
       syncJobs,
       createSourcesUnitOfWorkMock(sources, syncJobs),
-      asEventEmitter(createEventEmitterMock()),
-      buildMockLogger(),
     );
 
     const result = useCase.execute({
@@ -383,8 +348,6 @@ describe('UploadSourceUseCase', () => {
       sources,
       syncJobs,
       createSourcesUnitOfWorkMock(sources, syncJobs),
-      asEventEmitter(createEventEmitterMock()),
-      buildMockLogger(),
     );
 
     const result = useCase.execute({
@@ -408,8 +371,6 @@ describe('UploadSourceUseCase', () => {
       sources,
       syncJobs,
       createSourcesUnitOfWorkMock(sources, syncJobs),
-      asEventEmitter(createEventEmitterMock()),
-      buildMockLogger(),
     );
 
     const result = useCase.execute({
@@ -434,8 +395,6 @@ describe('UploadSourceUseCase', () => {
       sources,
       syncJobs,
       createSourcesUnitOfWorkMock(sources, syncJobs),
-      asEventEmitter(createEventEmitterMock()),
-      buildMockLogger(),
     );
 
     const result = useCase.execute({
@@ -449,21 +408,18 @@ describe('UploadSourceUseCase', () => {
     expect(sources.save).toHaveBeenCalledOnce();
   });
 
-  it('outbox 저장 exception을 전파하고 domain event를 발행하지 않는다', async () => {
+  it('outbox 저장 exception을 전파하고 domain event를 유지한다', async () => {
     const outboxFailure = new Error('Outbox operation failed');
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
     const outbox = createOutboxWriterMock();
     outbox.append.mockRejectedValue(outboxFailure);
-    const eventEmitter = createEventEmitterMock();
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
       sources,
       syncJobs,
       createSourcesUnitOfWorkMock(sources, syncJobs, outbox),
-      asEventEmitter(eventEmitter),
-      buildMockLogger(),
     );
 
     const result = useCase.execute({
@@ -474,7 +430,7 @@ describe('UploadSourceUseCase', () => {
     await expect(result).rejects.toBe(outboxFailure);
     expect(sources.save).toHaveBeenCalledOnce();
     expect(syncJobs.save).toHaveBeenCalledOnce();
-    expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
+    expect(syncJobs.save.mock.calls[0]?.[0]?.domainEvents).toHaveLength(1);
   });
 
   it('domain이 source snapshot을 거부하면 저장하지 않고 throw한다', async () => {
@@ -489,8 +445,6 @@ describe('UploadSourceUseCase', () => {
       sources,
       syncJobs,
       createSourcesUnitOfWorkMock(sources, syncJobs),
-      asEventEmitter(createEventEmitterMock()),
-      buildMockLogger(),
     );
 
     const result = useCase.execute({
@@ -545,13 +499,6 @@ function createSourceSyncJobRepositoryMock(): SourceSyncJobRepositoryMock {
   };
 }
 
-function createEventEmitterMock(): EventEmitterMock {
-  return {
-    emit: vi.fn(),
-    emitAsync: vi.fn().mockResolvedValue([]),
-  };
-}
-
 function createSourcesUnitOfWorkMock(
   sources: SourceRepositoryMock,
   syncJobs: SourceSyncJobRepositoryMock,
@@ -581,10 +528,6 @@ function restoreSyncJob(params: {
   });
 }
 
-function asEventEmitter(eventEmitter: EventEmitterMock): EventEmitter2 {
-  return eventEmitter as unknown as EventEmitter2;
-}
-
 function expectSourceSavedWith(
   sources: ReturnType<typeof createSourceRepositoryMock>,
   expected: {
@@ -607,10 +550,8 @@ function expectSourceSavedWith(
 
 function expectSyncJobSavedWith(
   syncJobs: ReturnType<typeof createSourceSyncJobRepositoryMock>,
-  eventEmitter: EventEmitterMock,
   expected: {
     sourceId: string | undefined;
-    content: string;
     fingerprint: string;
   },
 ) {
@@ -621,15 +562,6 @@ function expectSyncJobSavedWith(
     fingerprint: expected.fingerprint,
     status: 'pending',
   });
-  expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
-    'source.sync_job.created',
-    expect.objectContaining({
-      eventName: 'source.sync_job.created',
-      sourceId: expected.sourceId,
-      content: expected.content,
-      fingerprint: expected.fingerprint,
-    }),
-  );
 }
 
 function sourceSyncJobProps(syncJob: SourceSyncJob | undefined) {

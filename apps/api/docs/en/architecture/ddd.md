@@ -79,6 +79,18 @@ related:
 - Use `unpack()` to read the raw value from a value object.
   - When reading several fields from a composite value object, call `unpack()` once and reuse the result.
 
+## Domain Events
+
+- An aggregate records domain events but does not publish them directly.
+  - The aggregate MUST NOT depend on an event emitter, event publisher, logger, outbox writer, or transport to deliver
+    its recorded events.
+  - A concrete domain event declares its `eventName` as a `readonly` literal property on the class.
+  - Do not extract a module-level constant solely to initialize the concrete domain event's `eventName`.
+- Application orchestration collects recorded domain events and decides how to hand them off.
+  - For cross-context delivery, map domain events to integration events.
+- Clear an aggregate's recorded domain events only after the intended handoff succeeds.
+  - Keep the events recorded when aggregate persistence or event handoff fails.
+
 ## Repository Method Naming
 
 - `save` persists an aggregate through the repository contract.

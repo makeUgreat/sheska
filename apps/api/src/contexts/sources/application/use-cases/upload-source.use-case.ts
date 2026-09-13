@@ -1,10 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import {
-  createOutboxEvent,
-  LOGGER,
-  type LoggerPort,
-} from '@kernels/application';
 import {
   ExternalSourceId,
   Source,
@@ -17,11 +11,7 @@ import {
   type SourceContentSnapshotCalculation,
 } from '../services/source-content-snapshot-calculator.service';
 import { type SourcesUnitOfWork } from '@contexts/sources/application/ports';
-import {
-  SOURCE_SYNC_JOB_CREATED_EVENT_TYPE,
-  SOURCE_SYNC_JOB_CREATED_EVENT_VERSION,
-  type SourceSyncJobCreatedOutboxEvent,
-} from '@contexts/sources/application/events/source-sync-job-created.outbox-event';
+import { SourceSyncJobCreatedIntegrationEvent } from '@contexts/sources/application/events/source-sync-job-created.integration-event';
 import {
   SOURCE_REPOSITORY,
   SOURCE_SYNC_JOB_REPOSITORY,
@@ -55,9 +45,6 @@ export class UploadSourceUseCase {
     private readonly syncJobs: SourceSyncJobRepository,
     @Inject(SOURCES_UNIT_OF_WORK)
     private readonly unitOfWork: SourcesUnitOfWork,
-    private readonly eventEmitter: EventEmitter2,
-    @Inject(LOGGER)
-    private readonly logger: LoggerPort,
   ) {}
 
   async execute(command: UploadSourceCommand): Promise<UploadSourceResult> {
@@ -101,26 +88,28 @@ export class UploadSourceUseCase {
       fingerprint,
       content,
     });
-    const outboxEvent: SourceSyncJobCreatedOutboxEvent = createOutboxEvent({
-      eventType: SOURCE_SYNC_JOB_CREATED_EVENT_TYPE,
-      eventVersion: SOURCE_SYNC_JOB_CREATED_EVENT_VERSION,
-      occurredAt: syncJob.createdAt,
-      payload: {
-        sourceId: source.id,
-        syncJobId: syncJob.id,
-        content,
-      },
-    });
+    const integrationEvents = syncJob.domainEvents.map(
+      (event) =>
+        new SourceSyncJobCreatedIntegrationEvent({
+          occurredAt: event.occurredAt,
+          sourceId: event.sourceId,
+          syncJobId: event.aggregateId,
+          content: event.content,
+        }),
+    );
 
     const result = await this.unitOfWork.execute(async (resources) => {
       const savedSource = await resources.sources.save(source);
       const savedSyncJob = await resources.syncJobs.save(syncJob);
-      await resources.outbox.append(outboxEvent);
+
+      for (const integrationEvent of integrationEvents) {
+        await resources.outbox.append(integrationEvent);
+      }
 
       return this.completeUpload(savedSource, savedSyncJob);
     });
 
-    await syncJob.publishEvents(this.logger, this.eventEmitter);
+    syncJob.clearDomainEvents();
 
     return result;
   }

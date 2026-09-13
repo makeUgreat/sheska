@@ -123,6 +123,9 @@ flowchart TB
 - Application code MAY use narrow NestJS DI APIs only when they describe object construction.
   - Provider decorators and injection tokens are allowed.
   - Keep dependencies explicit in constructors so use cases remain constructible as plain TypeScript classes.
+- As an explicit framework-dependency exception, application code MAY depend on `@nestjs/event-emitter` only to
+  publish application or integration events.
+  - This exception does not permit unrelated NestJS runtime dependencies in application code.
 - Application behavior MUST NOT depend on infrastructure implementations, presentation DTOs, platform concrete types,
   module configuration, container lookups, or framework lifecycle callbacks.
 - Application code SHOULD propagate domain, infrastructure, and system exceptions unless it can recover or add
@@ -225,10 +228,3 @@ flowchart TB
     lifecycle; otherwise keep it in the owning context's infrastructure layer.
 - Reverse dependencies and cycles remain forbidden when one kernel layer implements another kernel layer's contract.
   - Static dependency checks enforce direction and the repository-wide circular-dependency rule remains applicable.
-
-### Event Emitter Exceptions
-
-- Domain code and `kernels/domain` MAY depend on Node.js's built-in `EventEmitter` as an explicit exception.
-  - This exception does not include framework event emitters.
-- Application code MAY depend on `@nestjs/event-emitter` only to publish or handle application and domain events.
-  - This exception does not permit unrelated NestJS runtime dependencies in application code.

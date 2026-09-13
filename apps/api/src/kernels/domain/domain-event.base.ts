@@ -5,8 +5,8 @@ export interface DomainEventParams {
   readonly occurredAt?: Date;
 }
 
-export abstract class DomainEvent<TEventName extends string = string> {
-  abstract readonly eventName: TEventName;
+export abstract class DomainEvent {
+  abstract readonly eventName: string;
   readonly aggregateId: AggregateID;
   readonly occurredAt: Date;
 

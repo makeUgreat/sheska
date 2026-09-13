@@ -22,6 +22,52 @@ related:
 - Use the [source dependency convention](./source-dependency.md) for import direction and layer boundary rules.
 - Use the [runtime wiring convention](./runtime-wiring.md) for provider registration and module wiring rules.
 
+## Event Classification And Delivery
+
+### Domain Events
+
+- A domain event records a business fact produced by an aggregate inside its owning bounded context.
+  - The aggregate records the domain event; application orchestration collects it.
+  - Do not expose a domain event class directly as a cross-context contract.
+
+### Integration Events
+
+- An integration event is a versioned application-layer contract that communicates a fact across a bounded context
+  boundary.
+  - An integration event contains transport-neutral metadata and plain payload data: `eventId`, `eventType`,
+    `eventVersion`, `occurredAt`, and `payload`.
+  - An integration event MUST NOT expose aggregates, entities, value objects, repositories, or transport-specific
+    objects.
+- Define each producer-side integration event as a concrete class extending the application-kernel `IntegrationEvent`
+  base class.
+  - Construct producer events with `new <Fact>IntegrationEvent(...)` so event-specific creation and payload assembly
+    stay together.
+  - Declare `eventType` and `eventVersion` as `readonly` literal properties directly on the concrete class.
+  - Do not extract module-level constants solely to initialize a concrete integration event's identity properties.
+  - Domain events and integration events MAY have similar base-class shapes, but neither event type inherits from the
+    other because they have different ownership and compatibility rules.
+- Map a domain event to an integration event when the communicated fact originates from an aggregate.
+  - Application orchestration MAY create an integration event directly when the communicated fact is produced by an
+    application workflow rather than an aggregate state transition.
+- Treat a received integration event as untrusted boundary input.
+  - Validate its type, version, metadata, and payload in a presentation consumer before invoking application behavior.
+  - A consumer MUST NOT rely on the producer's concrete class or `instanceof`; serialization preserves the event
+    structure, not the class identity.
+  - A consumer MAY define its own local identity constants when a schema, decorator, or routing table uses the same
+    literal more than once; do not import producer-side constants across the context boundary.
+
+### Event Type Decision
+
+- Decide the event category by ownership boundary, independently from its delivery channel.
+  - Use a domain event for a business fact owned and consumed inside one bounded context.
+  - Use an integration event when a fact crosses a bounded context boundary, even when both contexts run in the same
+    application process.
+  - Do not turn a domain event into an integration event merely because it is delivered asynchronously or persisted.
+- Prefer an explicit call when the next operation is required to complete the current use case.
+  - Use events for reactions that are meaningfully decoupled from the initiating operation.
+  - The distinction between required orchestration and an event reaction is a business responsibility decision, not
+    a framework choice.
+
 ## Integration Strategy
 
 ### Default Strategy: Pull (Consumer-Owned Port + Adapter)

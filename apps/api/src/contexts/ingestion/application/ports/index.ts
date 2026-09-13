@@ -5,6 +5,7 @@ export {
 } from './source-embedding.lookup';
 export {
   EMBED_REQUESTS_QUEUE,
+  type EmbedRequestDispatchOptions,
   type EmbedRequestPayload,
   type EmbedRequestDispatcher,
 } from './embed-request.dispatcher';

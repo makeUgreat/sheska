@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../../en/architecture/context-integration.md
-last_synced: 2026-09-08
+last_synced: 2026-09-14
 related:
   - ./ddd.md
   - ./source-dependency.md
@@ -22,6 +22,48 @@ related:
 - 모델 소유권과 경계 결정은 [DDD 컨벤션](./ddd.md)을 사용한다.
 - import 방향과 레이어 경계 규칙은 [source dependency 컨벤션](./source-dependency.md)을 사용한다.
 - provider 등록과 모듈 배선 규칙은 [runtime wiring 컨벤션](./runtime-wiring.md)을 사용한다.
+
+## 이벤트 분류와 전달
+
+### 도메인 이벤트
+
+- Domain event는 소유 bounded context 안에서 aggregate가 만든 비즈니스 사실을 기록한다.
+  - Aggregate가 domain event를 기록하고 application orchestration이 수집한다.
+  - Domain event 클래스를 컨텍스트 사이의 계약으로 직접 노출하지 않는다.
+
+### 통합 이벤트
+
+- Integration event는 bounded context 경계를 넘어 사실을 전달하는 버전이 있는 application layer 계약이다.
+  - Integration event는 전송 기술과 무관한 `eventId`, `eventType`, `eventVersion`, `occurredAt`, `payload`와
+    원시 데이터 형태의 payload를 가진다.
+  - Aggregate, entity, value object, repository 또는 전송 기술 객체를 노출해서는 안 된다.
+- Producer의 각 integration event는 application kernel의 `IntegrationEvent` 기반 클래스를 확장하는 구체
+  클래스로 정의한다.
+  - 이벤트별 생성 규칙과 payload 조립을 한곳에 두기 위해 `new <Fact>IntegrationEvent(...)`로 생성한다.
+  - `eventType`과 `eventVersion`은 구체 클래스에 `readonly` 리터럴 속성으로 직접 선언한다.
+  - 구체 integration event의 식별 속성을 초기화하기 위한 용도로만 모듈 상수를 만들지 않는다.
+  - Domain event와 integration event의 기반 클래스 형태는 유사할 수 있지만 소유권과 호환성 규칙이
+    다르므로 서로 상속하지 않는다.
+- Aggregate에서 발생한 사실을 전달할 때는 domain event를 integration event로 변환한다.
+  - Aggregate 상태 변경이 아니라 application workflow에서 발생한 사실이라면 application orchestration이
+    integration event를 직접 만들 수 있다.
+- 수신한 integration event는 신뢰할 수 없는 경계 입력으로 취급한다.
+  - Presentation consumer가 type, version, metadata, payload를 검증한 후 application 동작을 호출한다.
+  - 직렬화 이후에는 구조만 유지되고 클래스 정체성은 유지되지 않으므로 producer의 구체 클래스나
+    `instanceof`에 의존해서는 안 된다.
+  - Schema, decorator 또는 routing table에서 같은 리터럴을 여러 번 사용한다면 consumer 소유의 지역
+    상수를 둘 수 있다. 컨텍스트 경계를 넘어 producer의 상수를 import하지 않는다.
+
+### 이벤트 종류 결정
+
+- 이벤트 종류는 전달 채널과 독립적으로 소유권 경계를 기준으로 결정한다.
+  - 하나의 bounded context가 소유하고 그 안에서 소비하는 비즈니스 사실에는 domain event를 사용한다.
+  - 두 컨텍스트가 같은 application process에서 실행되더라도 bounded context 경계를 넘는 사실에는
+    integration event를 사용한다.
+  - 비동기로 전달하거나 영속화한다는 이유만으로 domain event를 integration event로 바꾸지 않는다.
+- 다음 동작이 현재 유스 케이스를 완료하는 데 반드시 필요하면 명시적인 호출을 우선한다.
+  - 시작 동작과 의미 있게 분리할 수 있는 반응에 이벤트를 사용한다.
+  - 필수 orchestration과 event reaction의 구분은 framework 선택이 아니라 비즈니스 책임에 관한 결정이다.
 
 ## 통합 전략
 

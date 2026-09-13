@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../../en/architecture/source-dependency.md
-last_synced: 2026-09-13
+last_synced: 2026-09-14
 related:
   - ./architecture.md
   - ./ddd.md
@@ -125,6 +125,9 @@ flowchart TB
 - Application 코드는 객체 생성만 설명하는 좁은 NestJS DI API를 사용할 수 있다.
   - Provider decorator와 injection token이 이에 해당한다.
   - 유스 케이스를 일반 TypeScript 클래스로 생성할 수 있도록 의존성을 생성자에 명시한다.
+- Framework 의존성의 명시적 예외로, application 코드는 application event나 integration event를 발행할
+  때만 `@nestjs/event-emitter`에 의존할 수 있다.
+  - 이 예외는 application 코드에서 다른 NestJS runtime 의존성을 허용하지 않는다.
 - Application 동작은 infrastructure 구현체, presentation DTO, platform 구체 타입, 모듈 설정, container
   lookup 또는 framework lifecycle callback에 의존해서는 안 된다.
 - Application 코드는 복구하거나 application 소유 맥락을 추가할 수 없다면 domain, infrastructure, system
@@ -223,11 +226,3 @@ flowchart TB
 - 한 kernel 레이어가 다른 kernel 레이어의 계약을 구현하는 경우에도 역방향 의존성과 순환 의존성은
   계속 금지한다.
   - 정적 의존성 검사가 방향을 강제하고 repository 전체의 순환 의존성 규칙도 그대로 적용한다.
-
-### Event Emitter 예외
-
-- Domain 코드와 `kernels/domain`은 명시적 예외로 Node.js 내장 `EventEmitter`에 의존할 수 있다.
-  - 이 예외는 framework event emitter를 포함하지 않는다.
-- Application 코드는 application event와 domain event를 발행하거나 처리할 때만 `@nestjs/event-emitter`에
-  의존할 수 있다.
-  - 이 예외는 application 코드에서 다른 NestJS runtime 의존성을 허용하지 않는다.

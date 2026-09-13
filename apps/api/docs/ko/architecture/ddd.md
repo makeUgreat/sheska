@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../../en/architecture/ddd.md
-last_synced: 2026-09-07
+last_synced: 2026-09-14
 related:
   - ./architecture.md
   - ./context-integration.md
@@ -76,6 +76,18 @@ related:
 
 - Value object의 원시 값을 읽을 때는 `unpack()`을 사용한다.
   - 복합 value object에서 여러 필드를 읽을 때는 `unpack()`을 한 번만 호출하고 그 결과를 재사용한다.
+
+## 도메인 이벤트
+
+- Aggregate는 domain event를 기록하지만 직접 발행하지 않는다.
+  - 기록한 이벤트를 전달하기 위해 event emitter, event publisher, logger, outbox writer 또는 전송 기술에
+    의존해서는 안 된다.
+  - 구체 domain event의 `eventName`은 클래스의 `readonly` 리터럴 속성으로 선언한다.
+  - 구체 domain event의 `eventName`을 초기화하기 위한 용도로만 모듈 상수를 만들지 않는다.
+- 기록된 domain event를 수집하고 전달 방법을 결정하는 책임은 application orchestration에 둔다.
+  - 컨텍스트 사이에 전달할 때는 domain event를 integration event로 변환한다.
+- Aggregate에 기록된 domain event는 의도한 전달이 성공한 후에만 정리한다.
+  - Aggregate 저장 또는 event 전달이 실패하면 기록된 이벤트를 유지한다.
 
 ## Repository 메서드 이름
 

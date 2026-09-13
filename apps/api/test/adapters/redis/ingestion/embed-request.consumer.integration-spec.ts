@@ -21,7 +21,7 @@ import {
   type EmbedRequestPayload,
   type EmbedResultPayload,
 } from '@contexts/ingestion/application/ports';
-import { IngestionFailedDomainEvent } from '@contexts/ingestion/domain';
+import { type IngestionFailedIntegrationEvent } from '@contexts/ingestion/application/events/ingestion.integration-event';
 import {
   RecursiveCharacterChunker,
   DEFAULT_CHUNK_SIZE,
@@ -134,11 +134,11 @@ describe('EmbedRequestBullMqConsumer', () => {
     });
   });
 
-  it('embed()가 실패하면 IngestionFailedDomainEvent를 emit한다', async () => {
+  it('embed()가 실패하면 IngestionFailedIntegrationEvent를 emit한다', async () => {
     embed.mockRejectedValue(new Error('Ollama unavailable'));
     const eventEmitter = app.get(EventEmitter2);
 
-    const failedEventPromise = new Promise<IngestionFailedDomainEvent>(
+    const failedEventPromise = new Promise<IngestionFailedIntegrationEvent>(
       (resolve) => {
         eventEmitter.once('source.ingestion.failed', resolve);
       },
@@ -151,7 +151,10 @@ describe('EmbedRequestBullMqConsumer', () => {
     );
 
     const event = await failedEventPromise;
-    expect(event).toBeInstanceOf(IngestionFailedDomainEvent);
-    expect(event.syncJobId).toBe('sync-job-1');
+    expect(event).toMatchObject({
+      eventType: 'source.ingestion.failed',
+      eventVersion: 1,
+      payload: { syncJobId: 'sync-job-1' },
+    });
   });
 });

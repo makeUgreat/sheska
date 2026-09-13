@@ -1,6 +1,9 @@
 import { AggregateRoot, newId } from '@kernels/domain';
 import { SourceFingerprint } from './source-fingerprint.vo';
-import { SourceSyncJobCreatedDomainEvent } from './source-sync-job.event';
+import {
+  SourceSyncJobCreatedDomainEvent,
+  type SourceSyncJobDomainEvent,
+} from './source-sync-job.event';
 
 interface SourceSyncJobProps {
   sourceId: string;
@@ -28,7 +31,10 @@ interface SourceSyncJobRestoreParams {
   createdAt?: Date;
 }
 
-export class SourceSyncJob extends AggregateRoot<SourceSyncJobProps> {
+export class SourceSyncJob extends AggregateRoot<
+  SourceSyncJobProps,
+  SourceSyncJobDomainEvent
+> {
   static create(params: SourceSyncJobCreateParams): SourceSyncJob {
     const { sourceId, content, fingerprint } = params;
 

@@ -1,38 +1,21 @@
 import { type DomainEvent } from './domain-event.base';
 import { Entity } from './entity.base';
-import { type LoggerPort } from './logger';
 
-interface DomainEventPublisher {
-  emitAsync(eventName: string, event: DomainEvent): Promise<unknown>;
-}
+export abstract class AggregateRoot<
+  EntityProps,
+  TDomainEvent extends DomainEvent = DomainEvent,
+> extends Entity<EntityProps> {
+  private _domainEvents: TDomainEvent[] = [];
 
-export abstract class AggregateRoot<EntityProps> extends Entity<EntityProps> {
-  private _domainEvents: DomainEvent[] = [];
-
-  get domainEvents(): readonly DomainEvent[] {
+  get domainEvents(): readonly TDomainEvent[] {
     return [...this._domainEvents];
   }
 
-  public clearEvents(): void {
+  public clearDomainEvents(): void {
     this._domainEvents = [];
   }
 
-  public async publishEvents(
-    logger: LoggerPort,
-    eventEmitter: DomainEventPublisher,
-  ): Promise<void> {
-    await Promise.all(
-      this._domainEvents.map(async (event) => {
-        logger.debug(
-          `"${event.eventName}" event published for aggregate ${this.constructor.name}: ${this.id}`,
-        );
-        return eventEmitter.emitAsync(event.eventName, event);
-      }),
-    );
-    this.clearEvents();
-  }
-
-  protected addEvent(domainEvent: DomainEvent): void {
+  protected addEvent(domainEvent: TDomainEvent): void {
     this._domainEvents.push(domainEvent);
   }
 }

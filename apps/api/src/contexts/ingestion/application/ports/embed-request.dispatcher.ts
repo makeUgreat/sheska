@@ -6,6 +6,13 @@ export interface EmbedRequestPayload {
   readonly content: string;
 }
 
+export interface EmbedRequestDispatchOptions {
+  readonly idempotencyKey?: string;
+}
+
 export interface EmbedRequestDispatcher {
-  enqueue(payload: EmbedRequestPayload): Promise<void>;
+  enqueue(
+    payload: EmbedRequestPayload,
+    options?: EmbedRequestDispatchOptions,
+  ): Promise<void>;
 }

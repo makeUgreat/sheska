@@ -1,4 +1,4 @@
-import { type OutboxEvent, type OutboxWriter } from '@kernels/application';
+import { type IntegrationEvent, type OutboxWriter } from '@kernels/application';
 import {
   classifyPostgresError,
   InfrastructureException,
@@ -13,7 +13,7 @@ const ADAPTER = 'outbox.pg-drizzle';
 export class OutboxPgDrizzleWriter implements OutboxWriter {
   constructor(private readonly db: PgDrizzleSession<OutboxSchema>) {}
 
-  async append(event: OutboxEvent): Promise<void> {
+  async append(event: IntegrationEvent): Promise<void> {
     try {
       await this.db.insert(outboxMessages).values({
         eventId: event.eventId,

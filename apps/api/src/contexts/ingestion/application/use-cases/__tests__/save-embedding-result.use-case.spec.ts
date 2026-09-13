@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { SourceEmbedding } from '@contexts/ingestion/domain';
 import {
-  IngestionCompletedDomainEvent,
-  IngestionFailedDomainEvent,
-  SourceEmbedding,
-} from '@contexts/ingestion/domain';
+  type IngestionCompletedIntegrationEvent,
+  type IngestionFailedIntegrationEvent,
+} from '@contexts/ingestion/application/events/ingestion.integration-event';
 import { type EmbedResultPayload } from '@contexts/ingestion/application/ports';
 import { VALID_EMBEDDING } from '../../../../../../test/support/domains/fixtures/source-embedding.fixture';
 import { SaveEmbeddingResultUseCase } from '../save-embedding-result.use-case';
@@ -43,7 +43,10 @@ describe('SaveEmbeddingResultUseCase', () => {
       expect(emit).toHaveBeenCalledOnce();
       expect(emit).toHaveBeenCalledWith(
         'source.ingestion.completed',
-        expect.any(IngestionCompletedDomainEvent),
+        expect.objectContaining({
+          eventType: 'source.ingestion.completed',
+          eventVersion: 1,
+        }),
       );
     });
 
@@ -57,8 +60,8 @@ describe('SaveEmbeddingResultUseCase', () => {
 
       await useCase.execute(buildPayload({ syncJobId: 'sync-job-42' }));
 
-      const event = emit.mock.calls[0][1] as IngestionCompletedDomainEvent;
-      expect(event.syncJobId).toBe('sync-job-42');
+      const event = emit.mock.calls[0][1] as IngestionCompletedIntegrationEvent;
+      expect(event.payload.syncJobId).toBe('sync-job-42');
     });
 
     it('복수 청크가 담긴 payload로 SourceEmbedding을 저장한다', async () => {
@@ -105,7 +108,10 @@ describe('SaveEmbeddingResultUseCase', () => {
       expect(emit).toHaveBeenCalledOnce();
       expect(emit).toHaveBeenCalledWith(
         'source.ingestion.failed',
-        expect.any(IngestionFailedDomainEvent),
+        expect.objectContaining({
+          eventType: 'source.ingestion.failed',
+          eventVersion: 1,
+        }),
       );
     });
 
@@ -119,8 +125,8 @@ describe('SaveEmbeddingResultUseCase', () => {
 
       useCase.handleFailure(buildPayload({ syncJobId: 'sync-job-42' }));
 
-      const event = emit.mock.calls[0][1] as IngestionFailedDomainEvent;
-      expect(event.syncJobId).toBe('sync-job-42');
+      const event = emit.mock.calls[0][1] as IngestionFailedIntegrationEvent;
+      expect(event.payload.syncJobId).toBe('sync-job-42');
     });
   });
 });

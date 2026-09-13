@@ -3,13 +3,8 @@ import { Test } from '@nestjs/testing';
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createOutboxEvent } from '@kernels/application';
 import { type SourcesUnitOfWork } from '@contexts/sources/application/ports';
-import {
-  SOURCE_SYNC_JOB_CREATED_EVENT_TYPE,
-  SOURCE_SYNC_JOB_CREATED_EVENT_VERSION,
-  type SourceSyncJobCreatedOutboxEvent,
-} from '@contexts/sources/application/events/source-sync-job-created.outbox-event';
+import { SourceSyncJobCreatedIntegrationEvent } from '@contexts/sources/application/events/source-sync-job-created.integration-event';
 import {
   type SourceRepository,
   type SourceSyncJobRepository,
@@ -84,15 +79,11 @@ describe('SourcesPgDrizzleUnitOfWork', () => {
       sourceId: source.id,
       fingerprint: 'unit-of-work-rollback',
     });
-    const event: SourceSyncJobCreatedOutboxEvent = createOutboxEvent({
-      eventType: SOURCE_SYNC_JOB_CREATED_EVENT_TYPE,
-      eventVersion: SOURCE_SYNC_JOB_CREATED_EVENT_VERSION,
+    const event = new SourceSyncJobCreatedIntegrationEvent({
       occurredAt: new Date(),
-      payload: {
-        sourceId: source.id,
-        syncJobId: firstSyncJob.id,
-        content: '# Source note',
-      },
+      sourceId: source.id,
+      syncJobId: firstSyncJob.id,
+      content: '# Source note',
     });
 
     await expect(

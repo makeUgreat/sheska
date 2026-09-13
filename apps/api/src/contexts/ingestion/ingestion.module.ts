@@ -1,7 +1,6 @@
 import { Module, type DynamicModule } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
-import { IngestSourceHandler } from '@contexts/ingestion/application/event-handlers/ingest-source.handler';
 import {
   EMBED_REQUESTS_QUEUE,
   EMBED_RESULTS_QUEUE,
@@ -10,6 +9,7 @@ import { EmbedSourceContentUseCase } from '@contexts/ingestion/application/use-c
 import { SaveEmbeddingResultUseCase } from '@contexts/ingestion/application/use-cases/save-embedding-result.use-case';
 import { EmbedRequestBullMqConsumer } from '@contexts/ingestion/presentation/queue/bullmq/embed-request.bullmq.consumer';
 import { EmbedResultBullMqConsumer } from '@contexts/ingestion/presentation/queue/bullmq/embed-result.bullmq.consumer';
+import { SourceSyncJobCreatedIntegrationEventConsumer } from '@contexts/ingestion/presentation/events/source-sync-job-created.integration-event.consumer';
 import { EmbedRequestBullMqDispatcher } from '@contexts/ingestion/infrastructure/queue/bullmq/embed-request.bullmq.dispatcher';
 import { EmbedResultBullMqDispatcher } from '@contexts/ingestion/infrastructure/queue/bullmq/embed-result.bullmq.dispatcher';
 import { OllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.embedder';
@@ -89,7 +89,7 @@ export class IngestionModule {
         IngestionModule.forFeature(),
       ],
       providers: [
-        IngestSourceHandler,
+        SourceSyncJobCreatedIntegrationEventConsumer,
         {
           provide: EMBED_REQUEST_DISPATCHER,
           useClass: EmbedRequestBullMqDispatcher,
