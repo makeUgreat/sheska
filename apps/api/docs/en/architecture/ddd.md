@@ -55,13 +55,13 @@ related:
 
 ### Project-Relevant Building Block Roles
 
-| Concept | Role |
-|---|---|
-| Entity | Domain object with identity whose state can change during its lifecycle. |
-| Value Object | Immutable object whose meaning is determined by its values, not by identity. |
-| Aggregate | Group of entities and value objects whose consistency must be protected together. |
-| Aggregate Root | Only externally reachable entry point into an aggregate; it protects aggregate invariants. |
-| Repository | Domain collection-like abstraction for saving and retrieving aggregates; it is not a database query helper. Repository reads are **read-for-write**: aggregates are loaded to call domain methods on them or to verify preconditions before a write. |
+| Concept        | Role                                                                                                                                                                                                                                                 |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Entity         | Domain object with identity whose state can change during its lifecycle.                                                                                                                                                                             |
+| Value Object   | Immutable object whose meaning is determined by its values, not by identity.                                                                                                                                                                         |
+| Aggregate      | Group of entities and value objects whose consistency must be protected together.                                                                                                                                                                    |
+| Aggregate Root | Only externally reachable entry point into an aggregate; it protects aggregate invariants.                                                                                                                                                           |
+| Repository     | Domain collection-like abstraction for saving and retrieving aggregates; it is not a database query helper. Repository reads are **read-for-write**: aggregates are loaded to call domain methods on them or to verify preconditions before a write. |
 
 ### Responsibility Placement
 
@@ -88,8 +88,19 @@ related:
   - Do not extract a module-level constant solely to initialize the concrete domain event's `eventName`.
 - Application orchestration collects recorded domain events and decides how to hand them off.
   - For cross-context delivery, map domain events to integration events.
+  - When the delivery must be durable, persist the integration events through an outbox in the same transaction as
+    the aggregate changes.
 - Clear an aggregate's recorded domain events only after the intended handoff succeeds.
-  - Keep the events recorded when aggregate persistence or event handoff fails.
+  - Keep the events recorded when aggregate persistence or outbox persistence fails.
+- A domain event does not require an outbox merely because it is an event.
+  - When a reaction is required to complete the current use case, invoke the behavior explicitly instead of relying
+    on asynchronous event delivery.
+  - For durable cross-context delivery, map the domain event to an integration event and persist that integration
+    event in the outbox; do not serialize the domain event class into the integration-event outbox directly.
+  - If a same-context asynchronous reaction later requires durable delivery, define a separate internal durable
+    message contract and deliberately extend the outbox policy. Do not misclassify it as an integration event only
+    because it needs persistence.
+  - A domain event store used for event sourcing is a different persistence mechanism from a transactional outbox.
 
 ## Repository Method Naming
 

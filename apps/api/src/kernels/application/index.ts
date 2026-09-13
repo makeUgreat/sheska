@@ -18,5 +18,6 @@ export {
   INTEGRATION_EVENT_DISPATCHER,
   type IntegrationEventDispatcher,
 } from './integration-event.dispatcher';
+export { type OutboxRelayStore } from './outbox-relay.store';
 export { type OutboxWriter } from './outbox.writer';
 export { type UnitOfWork } from './unit-of-work';

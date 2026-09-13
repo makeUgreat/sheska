@@ -5,7 +5,11 @@ import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { type Queue } from 'bullmq';
-import { DATABASE_TOKENS, outboxMessages } from '@kernels/infrastructure';
+import {
+  DATABASE_TOKENS,
+  OutboxRelay,
+  outboxMessages,
+} from '@kernels/infrastructure';
 import { type SourceFingerprinter } from '@contexts/sources/application/ports';
 import {
   type SourceRepository,
@@ -30,6 +34,7 @@ describe('UploadSourceUseCase', () => {
   let sources: SourceRepository;
   let syncJobs: SourceSyncJobRepository;
   let useCase: UploadSourceUseCase;
+  let outboxRelay: OutboxRelay;
   let embedRequestsQueue: Queue;
   const fingerprints = new Map<string, string>();
   const sourceFingerprinter: SourceFingerprinter = {
@@ -61,6 +66,7 @@ describe('UploadSourceUseCase', () => {
     sources = app.get<SourceRepository>(SOURCE_REPOSITORY);
     syncJobs = app.get<SourceSyncJobRepository>(SOURCE_SYNC_JOB_REPOSITORY);
     useCase = app.get(UploadSourceUseCase);
+    outboxRelay = app.get(OutboxRelay);
   });
 
   beforeEach(() => {
@@ -116,7 +122,6 @@ describe('UploadSourceUseCase', () => {
     expect(outboxMessage).toMatchObject({
       eventType: 'source.sync_job.created',
       eventVersion: 1,
-      publishedAt: null,
       payload: {
         sourceId: result.sourceId,
         syncJobId: result.syncJobId,
@@ -126,6 +131,21 @@ describe('UploadSourceUseCase', () => {
     expect(outboxMessage?.eventId).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
     );
+
+    await outboxRelay.relayPending();
+
+    const [publishedEvent] = await database
+      .select()
+      .from(outboxMessages)
+      .where(eq(outboxMessages.eventId, outboxMessage!.eventId));
+    expect(publishedEvent?.publishedAt).toBeInstanceOf(Date);
+
+    const queuedJob = await embedRequestsQueue.getJob(outboxMessage!.eventId);
+    expect(queuedJob?.data).toEqual({
+      sourceId: result.sourceId,
+      syncJobId: result.syncJobId,
+      content,
+    });
   });
 
   it('같은 content를 다시 업로드할 때 active sync job을 재사용한다', async () => {

@@ -55,13 +55,13 @@ related:
 
 ### 프로젝트 관련 구성 요소 역할
 
-| 개념 | 역할 |
-|---|---|
-| Entity | 생명주기 동안 상태가 변할 수 있는 식별자를 가진 도메인 객체. |
-| Value Object | 식별자가 아니라 값 자체로 의미가 결정되는 불변 객체. |
-| Aggregate | 일관성을 함께 보호해야 하는 entity와 value object의 묶음. |
-| Aggregate Root | aggregate 외부에서 접근 가능한 유일한 진입점이며 aggregate 불변 조건을 보호한다. |
-| Repository | aggregate를 저장하고 다시 가져오는 도메인 컬렉션 형태의 추상화이며 데이터베이스 조회 도우미가 아니다. Repository를 통한 읽기는 **read-for-write**다. 도메인 메서드를 호출하거나 쓰기 전 전제 조건을 검증하기 위해 aggregate를 불러온다. |
+| 개념           | 역할                                                                                                                                                                                                                                    |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Entity         | 생명주기 동안 상태가 변할 수 있는 식별자를 가진 도메인 객체.                                                                                                                                                                            |
+| Value Object   | 식별자가 아니라 값 자체로 의미가 결정되는 불변 객체.                                                                                                                                                                                    |
+| Aggregate      | 일관성을 함께 보호해야 하는 entity와 value object의 묶음.                                                                                                                                                                               |
+| Aggregate Root | aggregate 외부에서 접근 가능한 유일한 진입점이며 aggregate 불변 조건을 보호한다.                                                                                                                                                        |
+| Repository     | aggregate를 저장하고 다시 가져오는 도메인 컬렉션 형태의 추상화이며 데이터베이스 조회 도우미가 아니다. Repository를 통한 읽기는 **read-for-write**다. 도메인 메서드를 호출하거나 쓰기 전 전제 조건을 검증하기 위해 aggregate를 불러온다. |
 
 ### 책임 배치 기준
 
@@ -86,8 +86,19 @@ related:
   - 구체 domain event의 `eventName`을 초기화하기 위한 용도로만 모듈 상수를 만들지 않는다.
 - 기록된 domain event를 수집하고 전달 방법을 결정하는 책임은 application orchestration에 둔다.
   - 컨텍스트 사이에 전달할 때는 domain event를 integration event로 변환한다.
+  - 이벤트를 유실 없이 전달해야 한다면 integration event를 aggregate 변경과 같은 트랜잭션에서 outbox에
+    저장한다.
 - Aggregate에 기록된 domain event는 의도한 전달이 성공한 후에만 정리한다.
-  - Aggregate 저장 또는 event 전달이 실패하면 기록된 이벤트를 유지한다.
+  - Aggregate 또는 outbox 저장이 실패하면 기록된 이벤트를 유지한다.
+- Domain event라는 이유만으로 outbox가 필요한 것은 아니다.
+  - 현재 유스 케이스를 완료하는 데 반드시 필요한 후속 동작은 비동기 이벤트 전달에 맡기지 않고
+    명시적으로 호출한다.
+  - 컨텍스트 경계를 넘는 내구성 있는 전달에는 domain event를 integration event로 변환해 outbox에
+    저장한다. Domain event 클래스를 integration event용 outbox에 직접 직렬화하지 않는다.
+  - 같은 컨텍스트의 비동기 반응에 나중에 내구성 있는 전달이 필요해지면 별도의 내부 durable message
+    계약을 정의하고 outbox 정책을 의도적으로 확장한다. 저장이 필요하다는 이유만으로 integration event로
+    잘못 분류하지 않는다.
+  - Event sourcing에 사용하는 domain event store는 transactional outbox와 다른 영속화 메커니즘이다.
 
 ## Repository 메서드 이름
 
