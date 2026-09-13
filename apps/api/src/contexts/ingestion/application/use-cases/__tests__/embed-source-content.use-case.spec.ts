@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
+import { type IntegrationEventDispatcher } from '@kernels/application';
 import {
   type IngestionFailedIntegrationEvent,
   type IngestionProgressIntegrationEvent,
@@ -29,6 +29,14 @@ function buildMockEmbedder(embed = vi.fn()) {
 
 function buildMockDispatcher(enqueue = vi.fn().mockResolvedValue(undefined)) {
   return { enqueue } satisfies EmbedResultDispatcher;
+}
+
+function buildMockIntegrationEventDispatcher(
+  dispatch = vi
+    .fn<IntegrationEventDispatcher['dispatch']>()
+    .mockResolvedValue(undefined),
+) {
+  return { dispatch } satisfies IntegrationEventDispatcher;
 }
 
 function buildPayload(
@@ -66,7 +74,7 @@ describe('EmbedSourceContentUseCase', () => {
       const useCase = new EmbedSourceContentUseCase(
         buildMockEmbedder(embed),
         buildMockDispatcher(enqueue),
-        new EventEmitter2(),
+        buildMockIntegrationEventDispatcher(),
         chunker,
       );
       const context = buildContext();
@@ -101,7 +109,7 @@ describe('EmbedSourceContentUseCase', () => {
       const useCase = new EmbedSourceContentUseCase(
         buildMockEmbedder(embed),
         buildMockDispatcher(enqueue),
-        new EventEmitter2(),
+        buildMockIntegrationEventDispatcher(),
         smallChunker,
       );
 
@@ -116,12 +124,13 @@ describe('EmbedSourceContentUseCase', () => {
       expect(payload.chunks[0].chunkIndex).toBe(0);
     });
 
-    it('시작 시 ingestion-started 이벤트를 totalChunks와 함께 emit한다', async () => {
+    it('시작 시 ingestion-started 이벤트를 totalChunks와 함께 dispatch한다', async () => {
       const embed = vi
         .fn()
         .mockResolvedValue({ embedding: fakeEmbedding, model: fakeModel });
-      const eventEmitter = new EventEmitter2();
-      const emit = vi.spyOn(eventEmitter, 'emit');
+      const dispatch = vi
+        .fn<IntegrationEventDispatcher['dispatch']>()
+        .mockResolvedValue(undefined);
       const smallChunker = new RecursiveCharacterChunker({
         chunkSize: 7,
         chunkOverlap: 0,
@@ -130,7 +139,7 @@ describe('EmbedSourceContentUseCase', () => {
       const useCase = new EmbedSourceContentUseCase(
         buildMockEmbedder(embed),
         buildMockDispatcher(),
-        eventEmitter,
+        buildMockIntegrationEventDispatcher(dispatch),
         smallChunker,
       );
 
@@ -139,8 +148,7 @@ describe('EmbedSourceContentUseCase', () => {
         buildContext(),
       );
 
-      expect(emit).toHaveBeenCalledWith(
-        'source.ingestion.started',
+      expect(dispatch).toHaveBeenCalledWith(
         expect.objectContaining<Partial<IngestionStartedIntegrationEvent>>({
           eventType: 'source.ingestion.started',
           eventVersion: 1,
@@ -152,12 +160,13 @@ describe('EmbedSourceContentUseCase', () => {
       );
     });
 
-    it('청크마다 ingestion-progress 이벤트를 순서대로 emit한다', async () => {
+    it('청크마다 ingestion-progress 이벤트를 순서대로 dispatch한다', async () => {
       const embed = vi
         .fn()
         .mockResolvedValue({ embedding: fakeEmbedding, model: fakeModel });
-      const eventEmitter = new EventEmitter2();
-      const emit = vi.spyOn(eventEmitter, 'emit');
+      const dispatch = vi
+        .fn<IntegrationEventDispatcher['dispatch']>()
+        .mockResolvedValue(undefined);
       const smallChunker = new RecursiveCharacterChunker({
         chunkSize: 7,
         chunkOverlap: 0,
@@ -166,7 +175,7 @@ describe('EmbedSourceContentUseCase', () => {
       const useCase = new EmbedSourceContentUseCase(
         buildMockEmbedder(embed),
         buildMockDispatcher(),
-        eventEmitter,
+        buildMockIntegrationEventDispatcher(dispatch),
         smallChunker,
       );
 
@@ -175,13 +184,13 @@ describe('EmbedSourceContentUseCase', () => {
         buildContext(),
       );
 
-      const progressCalls = emit.mock.calls.filter(
-        ([eventName]) => eventName === 'source.ingestion.progress',
+      const progressCalls = dispatch.mock.calls.filter(
+        ([event]) => event.eventType === 'source.ingestion.progress',
       );
       expect(progressCalls).toHaveLength(3);
       expect(
         progressCalls.map(
-          ([, event]) =>
+          ([event]) =>
             (event as IngestionProgressIntegrationEvent).payload
               .processedChunks,
         ),
@@ -195,7 +204,7 @@ describe('EmbedSourceContentUseCase', () => {
       const useCase = new EmbedSourceContentUseCase(
         buildMockEmbedder(embed),
         buildMockDispatcher(),
-        new EventEmitter2(),
+        buildMockIntegrationEventDispatcher(),
         chunker,
       );
       const shortContext = buildContext(1000);
@@ -210,21 +219,21 @@ describe('EmbedSourceContentUseCase', () => {
   });
 
   describe('handleFailure', () => {
-    it('ingestion-failed 이벤트를 emit한다', () => {
-      const eventEmitter = new EventEmitter2();
-      const emit = vi.spyOn(eventEmitter, 'emit');
+    it('ingestion-failed 이벤트를 dispatch한다', async () => {
+      const dispatch = vi
+        .fn<IntegrationEventDispatcher['dispatch']>()
+        .mockResolvedValue(undefined);
       const useCase = new EmbedSourceContentUseCase(
         buildMockEmbedder(),
         buildMockDispatcher(),
-        eventEmitter,
+        buildMockIntegrationEventDispatcher(dispatch),
         chunker,
       );
 
-      useCase.handleFailure(buildPayload({ syncJobId: 'sync-job-1' }));
+      await useCase.handleFailure(buildPayload({ syncJobId: 'sync-job-1' }));
 
-      expect(emit).toHaveBeenCalledOnce();
-      expect(emit).toHaveBeenCalledWith(
-        'source.ingestion.failed',
+      expect(dispatch).toHaveBeenCalledOnce();
+      expect(dispatch).toHaveBeenCalledWith(
         expect.objectContaining({
           eventType: 'source.ingestion.failed',
           eventVersion: 1,
@@ -232,19 +241,21 @@ describe('EmbedSourceContentUseCase', () => {
       );
     });
 
-    it('emit된 failed 이벤트에 syncJobId가 담긴다', () => {
-      const eventEmitter = new EventEmitter2();
-      const emit = vi.spyOn(eventEmitter, 'emit');
+    it('dispatch된 failed 이벤트에 syncJobId가 담긴다', async () => {
+      const dispatch = vi
+        .fn<IntegrationEventDispatcher['dispatch']>()
+        .mockResolvedValue(undefined);
       const useCase = new EmbedSourceContentUseCase(
         buildMockEmbedder(),
         buildMockDispatcher(),
-        eventEmitter,
+        buildMockIntegrationEventDispatcher(dispatch),
         chunker,
       );
 
-      useCase.handleFailure(buildPayload({ syncJobId: 'sync-job-42' }));
+      await useCase.handleFailure(buildPayload({ syncJobId: 'sync-job-42' }));
 
-      const event = emit.mock.calls[0][1] as IngestionFailedIntegrationEvent;
+      const event = dispatch.mock
+        .calls[0][0] as IngestionFailedIntegrationEvent;
       expect(event.payload.syncJobId).toBe('sync-job-42');
     });
   });

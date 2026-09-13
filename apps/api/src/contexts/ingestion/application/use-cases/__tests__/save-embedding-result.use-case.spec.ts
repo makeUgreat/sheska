@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { type IntegrationEventDispatcher } from '@kernels/application';
 import { SourceEmbedding } from '@contexts/ingestion/domain';
 import {
   type IngestionCompletedIntegrationEvent,
@@ -8,6 +8,14 @@ import {
 import { type EmbedResultPayload } from '@contexts/ingestion/application/ports';
 import { VALID_EMBEDDING } from '../../../../../../test/support/domains/fixtures/source-embedding.fixture';
 import { SaveEmbeddingResultUseCase } from '../save-embedding-result.use-case';
+
+function buildMockIntegrationEventDispatcher(
+  dispatch = vi
+    .fn<IntegrationEventDispatcher['dispatch']>()
+    .mockResolvedValue(undefined),
+) {
+  return { dispatch } satisfies IntegrationEventDispatcher;
+}
 
 function buildPayload(
   data: Partial<EmbedResultPayload> = {},
@@ -28,21 +36,21 @@ function buildPayload(
 
 describe('SaveEmbeddingResultUseCase', () => {
   describe('execute', () => {
-    it('embedding 결과를 저장하고 ingestion-completed 이벤트를 emit한다', async () => {
+    it('embedding 결과를 저장하고 ingestion-completed 이벤트를 dispatch한다', async () => {
       const save = vi.fn().mockResolvedValue(undefined);
-      const eventEmitter = new EventEmitter2();
-      const emit = vi.spyOn(eventEmitter, 'emit');
+      const dispatch = vi
+        .fn<IntegrationEventDispatcher['dispatch']>()
+        .mockResolvedValue(undefined);
       const useCase = new SaveEmbeddingResultUseCase(
         { save, find: vi.fn() },
-        eventEmitter,
+        buildMockIntegrationEventDispatcher(dispatch),
       );
 
       await useCase.execute(buildPayload());
 
       expect(save).toHaveBeenCalledOnce();
-      expect(emit).toHaveBeenCalledOnce();
-      expect(emit).toHaveBeenCalledWith(
-        'source.ingestion.completed',
+      expect(dispatch).toHaveBeenCalledOnce();
+      expect(dispatch).toHaveBeenCalledWith(
         expect.objectContaining({
           eventType: 'source.ingestion.completed',
           eventVersion: 1,
@@ -50,17 +58,19 @@ describe('SaveEmbeddingResultUseCase', () => {
       );
     });
 
-    it('emit된 completed 이벤트에 syncJobId가 담긴다', async () => {
-      const eventEmitter = new EventEmitter2();
-      const emit = vi.spyOn(eventEmitter, 'emit');
+    it('dispatch된 completed 이벤트에 syncJobId가 담긴다', async () => {
+      const dispatch = vi
+        .fn<IntegrationEventDispatcher['dispatch']>()
+        .mockResolvedValue(undefined);
       const useCase = new SaveEmbeddingResultUseCase(
         { save: vi.fn().mockResolvedValue(undefined), find: vi.fn() },
-        eventEmitter,
+        buildMockIntegrationEventDispatcher(dispatch),
       );
 
       await useCase.execute(buildPayload({ syncJobId: 'sync-job-42' }));
 
-      const event = emit.mock.calls[0][1] as IngestionCompletedIntegrationEvent;
+      const event = dispatch.mock
+        .calls[0][0] as IngestionCompletedIntegrationEvent;
       expect(event.payload.syncJobId).toBe('sync-job-42');
     });
 
@@ -68,7 +78,7 @@ describe('SaveEmbeddingResultUseCase', () => {
       const save = vi.fn().mockResolvedValue(undefined);
       const useCase = new SaveEmbeddingResultUseCase(
         { save, find: vi.fn() },
-        new EventEmitter2(),
+        buildMockIntegrationEventDispatcher(),
       );
 
       await useCase.execute(
@@ -95,19 +105,19 @@ describe('SaveEmbeddingResultUseCase', () => {
   });
 
   describe('handleFailure', () => {
-    it('ingestion-failed 이벤트를 emit한다', () => {
-      const eventEmitter = new EventEmitter2();
-      const emit = vi.spyOn(eventEmitter, 'emit');
+    it('ingestion-failed 이벤트를 dispatch한다', async () => {
+      const dispatch = vi
+        .fn<IntegrationEventDispatcher['dispatch']>()
+        .mockResolvedValue(undefined);
       const useCase = new SaveEmbeddingResultUseCase(
         { save: vi.fn(), find: vi.fn() },
-        eventEmitter,
+        buildMockIntegrationEventDispatcher(dispatch),
       );
 
-      useCase.handleFailure(buildPayload({ syncJobId: 'sync-job-1' }));
+      await useCase.handleFailure(buildPayload({ syncJobId: 'sync-job-1' }));
 
-      expect(emit).toHaveBeenCalledOnce();
-      expect(emit).toHaveBeenCalledWith(
-        'source.ingestion.failed',
+      expect(dispatch).toHaveBeenCalledOnce();
+      expect(dispatch).toHaveBeenCalledWith(
         expect.objectContaining({
           eventType: 'source.ingestion.failed',
           eventVersion: 1,
@@ -115,17 +125,19 @@ describe('SaveEmbeddingResultUseCase', () => {
       );
     });
 
-    it('emit된 failed 이벤트에 syncJobId가 담긴다', () => {
-      const eventEmitter = new EventEmitter2();
-      const emit = vi.spyOn(eventEmitter, 'emit');
+    it('dispatch된 failed 이벤트에 syncJobId가 담긴다', async () => {
+      const dispatch = vi
+        .fn<IntegrationEventDispatcher['dispatch']>()
+        .mockResolvedValue(undefined);
       const useCase = new SaveEmbeddingResultUseCase(
         { save: vi.fn(), find: vi.fn() },
-        eventEmitter,
+        buildMockIntegrationEventDispatcher(dispatch),
       );
 
-      useCase.handleFailure(buildPayload({ syncJobId: 'sync-job-42' }));
+      await useCase.handleFailure(buildPayload({ syncJobId: 'sync-job-42' }));
 
-      const event = emit.mock.calls[0][1] as IngestionFailedIntegrationEvent;
+      const event = dispatch.mock
+        .calls[0][0] as IngestionFailedIntegrationEvent;
       expect(event.payload.syncJobId).toBe('sync-job-42');
     });
   });

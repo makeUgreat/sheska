@@ -1,6 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { type CallContext, type CallPolicy } from '@core/call-context';
+import {
+  INTEGRATION_EVENT_DISPATCHER,
+  type IntegrationEventDispatcher,
+} from '@kernels/application';
 import {
   IngestionFailedIntegrationEvent,
   IngestionProgressIntegrationEvent,
@@ -30,7 +33,8 @@ export class EmbedSourceContentUseCase {
     private readonly embedder: Embedder,
     @Inject(EMBED_RESULT_DISPATCHER)
     private readonly embedResultDispatcher: EmbedResultDispatcher,
-    private readonly eventEmitter: EventEmitter2,
+    @Inject(INTEGRATION_EVENT_DISPATCHER)
+    private readonly integrationEventDispatcher: IntegrationEventDispatcher,
     private readonly chunker: RecursiveCharacterChunker,
   ) {}
 
@@ -45,7 +49,7 @@ export class EmbedSourceContentUseCase {
       syncJobId,
       totalChunks: chunks.length,
     });
-    this.eventEmitter.emit(startedEvent.eventType, startedEvent);
+    await this.integrationEventDispatcher.dispatch(startedEvent);
 
     // Chunks are embedded one at a time (not in parallel) because the embedding
     // server runs on a single CPU inference slot; concurrent requests would only
@@ -67,7 +71,7 @@ export class EmbedSourceContentUseCase {
         processedChunks: embedChunks.length,
         totalChunks: chunks.length,
       });
-      this.eventEmitter.emit(progressEvent.eventType, progressEvent);
+      await this.integrationEventDispatcher.dispatch(progressEvent);
     }
 
     await this.embedResultDispatcher.enqueue({
@@ -78,10 +82,10 @@ export class EmbedSourceContentUseCase {
     });
   }
 
-  handleFailure(payload: EmbedRequestPayload): void {
+  async handleFailure(payload: EmbedRequestPayload): Promise<void> {
     const event = new IngestionFailedIntegrationEvent({
       syncJobId: payload.syncJobId,
     });
-    this.eventEmitter.emit(event.eventType, event);
+    await this.integrationEventDispatcher.dispatch(event);
   }
 }
