@@ -52,6 +52,7 @@ type SearchPostRow = {
   searchScore: number;
   matchReason: PostMatchReason;
   embeddingDistance: number | null;
+  ftsRank: number | null;
 };
 
 @Injectable()
@@ -232,7 +233,8 @@ export class PostPgDrizzleQuery implements PostQuery {
         p.updated_at AS "updatedAt",
         (${score})   AS "searchScore",
         'keyword'    AS "matchReason",
-        NULL::double precision AS "embeddingDistance"
+        NULL::double precision AS "embeddingDistance",
+        RANK() OVER (ORDER BY (${score}) DESC) AS "ftsRank"
       FROM posts p
       INNER JOIN sources s ON p.source_id = s.id
       WHERE ${where}
@@ -257,7 +259,8 @@ export class PostPgDrizzleQuery implements PostQuery {
       WITH fts_candidates AS (
         SELECT
           p.id, p.source_id, p.title, p.view_count, p.created_at, p.updated_at,
-          RANK() OVER (ORDER BY (${this.ftsRelevanceScore(tsQuery)}) DESC) AS fts_rank
+          RANK() OVER (ORDER BY (${this.ftsRelevanceScore(tsQuery)}) DESC) AS fts_rank,
+          (p.title_search_vector @@ ${tsQuery}) AS title_matched
         FROM posts p
         INNER JOIN sources s ON p.source_id = s.id
         WHERE ${this.ftsMatchCondition(tsQuery)}
@@ -288,7 +291,8 @@ export class PostPgDrizzleQuery implements PostQuery {
           COALESCE(f.updated_at, e.updated_at) AS "updatedAt",
           (${this.rrfFusionScore()})            AS "searchScore",
           (${this.matchReasonCase()})           AS "matchReason",
-          e.embedding_distance                 AS "embeddingDistance"
+          e.embedding_distance                 AS "embeddingDistance",
+          f.fts_rank                           AS "ftsRank"
         FROM fts_candidates f
         FULL OUTER JOIN embedding_candidates e ON f.id = e.id
       )
@@ -309,6 +313,7 @@ export class PostPgDrizzleQuery implements PostQuery {
     return sql`(
       COALESCE(1.0 / (${RRF_K} + f.fts_rank), 0)
       + COALESCE(1.0 / (${RRF_K} + e.embedding_rank), 0)
+      + CASE WHEN f.title_matched THEN COALESCE(1.0 / (${RRF_K} + f.fts_rank), 0) ELSE 0 END
     )::double precision`;
   }
 
@@ -382,15 +387,22 @@ export class PostPgDrizzleQuery implements PostQuery {
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         matchReason: row.matchReason,
-        similarity: this.toSimilarityPercent(row.embeddingDistance),
+        similarity: this.toSimilarityPercent(row.embeddingDistance, row.ftsRank),
       })),
       nextCursor,
     };
   }
 
-  private toSimilarityPercent(embeddingDistance: number | null): number | null {
-    return embeddingDistance === null
-      ? null
-      : Math.round((1 - embeddingDistance) * 100);
+  private toSimilarityPercent(
+    embeddingDistance: number | null,
+    ftsRank: number | null,
+  ): number | null {
+    if (embeddingDistance !== null) {
+      return Math.min(100, Math.round((1 - embeddingDistance) * 100));
+    }
+    if (ftsRank !== null) {
+      return Math.min(100, Math.round(100 / ftsRank));
+    }
+    return null;
   }
 }

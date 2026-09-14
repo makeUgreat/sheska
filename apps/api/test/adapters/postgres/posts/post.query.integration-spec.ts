@@ -542,6 +542,98 @@ describe('PostPgDrizzleQuery', () => {
       );
     });
 
+    it('제목 매치 keyword-only가 본문 매치 both보다 상위 순위로 반환된다', async () => {
+      const titleOnlySource = await sources.save(
+        buildSource({ externalSourceId: 'Notes/pq-title-boost-title-only.md' }),
+      );
+      const contentBothSource = await sources.save(
+        buildSource({
+          externalSourceId: 'Notes/pq-title-boost-content-both.md',
+          content: '# 완전탐색알고리즘 설명',
+        }),
+      );
+      const titleOnlyPost = buildPost({
+        sourceId: titleOnlySource.id,
+        title: '완전탐색알고리즘 정리',
+      });
+      const contentBothPost = buildPost({
+        sourceId: contentBothSource.id,
+        title: '무관한 제목',
+      });
+      await posts.save(titleOnlyPost);
+      await posts.save(contentBothPost);
+      const queryEmbedding = Array.from({ length: 1024 }, () => 1);
+      await sourceEmbeddings.save(
+        buildSourceEmbedding({
+          sourceId: contentBothSource.id,
+          chunks: [
+            {
+              chunkIndex: 0,
+              chunkContent: 'chunk content',
+              embedding: Array.from({ length: 1024 }, () => 1),
+            },
+          ],
+        }),
+      );
+
+      const { posts: result } = await postQuery.search({
+        query: '완전탐색알고리즘',
+        limit: 20,
+        cursor: null,
+        queryEmbedding,
+      });
+
+      const ids = result.map((p) => p.postId);
+      expect(ids.indexOf(titleOnlyPost.id)).toBeLessThan(
+        ids.indexOf(contentBothPost.id),
+      );
+    });
+
+    it('keyword-only 매치도 similarity가 null이 아니다 (하이브리드 경로)', async () => {
+      const source = await sources.save(
+        buildSource({ externalSourceId: 'Notes/pq-keyword-similarity-hybrid.md' }),
+      );
+      const post = buildPost({
+        sourceId: source.id,
+        title: '러스트동시성모델설명',
+      });
+      await posts.save(post);
+      const queryEmbedding = Array.from({ length: 1024 }, () => 1);
+
+      const { posts: result } = await postQuery.search({
+        query: '러스트동시성모델설명',
+        limit: 20,
+        cursor: null,
+        queryEmbedding,
+      });
+
+      const found = result.find((p) => p.postId === post.id);
+      expect(found?.similarity).not.toBeNull();
+      expect(found?.similarity).toBeGreaterThan(0);
+    });
+
+    it('keyword-only 매치도 similarity가 null이 아니다 (순수 FTS 경로)', async () => {
+      const source = await sources.save(
+        buildSource({ externalSourceId: 'Notes/pq-keyword-similarity-fts.md' }),
+      );
+      const post = buildPost({
+        sourceId: source.id,
+        title: '코틀린코루틴완전정리',
+      });
+      await posts.save(post);
+
+      const { posts: result } = await postQuery.search({
+        query: '코틀린코루틴완전정리',
+        limit: 20,
+        cursor: null,
+        queryEmbedding: null,
+      });
+
+      const found = result.find((p) => p.postId === post.id);
+      expect(found?.similarity).not.toBeNull();
+      expect(found?.similarity).toBeGreaterThan(0);
+    });
+
     it('하이브리드 검색 결과를 nextCursor로 다음 페이지 조회한다', async () => {
       const hs1 = await sources.save(
         buildSource({ externalSourceId: 'Notes/pq-hybrid-cursor-1.md' }),
