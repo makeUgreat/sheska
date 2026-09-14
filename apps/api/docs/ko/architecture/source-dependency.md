@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../../en/architecture/source-dependency.md
-last_synced: 2026-09-08
+last_synced: 2026-09-13
 related:
   - ./architecture.md
   - ./ddd.md
@@ -66,6 +66,10 @@ flowchart TB
   infrastructureKernel --> core
   applicationKernel --> core
   domainKernel --> core
+  presentationKernel --> applicationKernel
+  infrastructureKernel --> applicationKernel
+  infrastructureKernel --> domainKernel
+  applicationKernel --> domainKernel
 ```
 
 - `acl`은 다른 바운디드 컨텍스트의 public surface(`@contexts/<other-context>`)에도 의존한다 — 이 다이어그램은 한
@@ -189,10 +193,36 @@ flowchart TB
 
 ### Kernel Directory
 
-- Kernel 디렉터리는 `core`에 의존할 수 있다.
-- Kernel 디렉터리는 바운디드 컨텍스트, platform, framework 또는 외부 레이어에 의존해서는 안 된다.
+- Kernel 디렉터리는 대응하는 컨텍스트 레이어와 같은 내부 방향의 의존성 규칙을 따른다.
+  - `kernels/domain`은 `core`에 의존할 수 있다.
+  - `kernels/application`은 `core`와 `kernels/domain`에 의존할 수 있다.
+  - `kernels/infrastructure`는 `core`, `kernels/domain`, `kernels/application`에 의존할 수 있다.
+  - `kernels/presentation`은 `core`와 `kernels/application`에 의존할 수 있다.
+- Kernel 디렉터리는 이 방향을 거슬러 바깥쪽 또는 옆 레이어에 의존해서는 안 된다.
+  - 특히 `kernels/application`은 `kernels/infrastructure`나 `kernels/presentation`에 의존해서는 안 된다.
+  - `kernels/infrastructure`와 `kernels/presentation`은 서로 의존해서는 안 된다.
+- Kernel 사이의 import는 대상 kernel의 `index.ts` public surface를 사용해야 한다.
+- 모든 kernel 디렉터리는 바운디드 컨텍스트와 platform으로부터 독립적이어야 한다.
+- 내부 방향의 kernel 간 import 허용은 framework 접근 범위를 넓히지 않는다. Framework 제한은
+  [runtime wiring 컨벤션](./runtime-wiring.md)을 따른다.
 - 기능별 정책은 소유하는 바운디드 컨텍스트 내부에 둔다.
   - Kernel 디렉터리를 일반적인 유틸리티 모음으로 만들면 안 된다.
+
+#### Kernel 레이어 간 공용 계약의 위험성
+
+- `kernels/application`과 `kernels/domain`의 계약은 기술 중립적으로 유지해야 한다.
+  - 이 계약으로 DB row, ORM query builder, queue job, HTTP 객체 또는 adapter 설정을 노출하지 않는다.
+- 여러 컨텍스트가 import할 수 있게 하려는 목적으로 feature event, payload 또는 정책을 kernel로 옮기지 않는다.
+  - Kernel을 간접적인 cross-context 통합 surface로 사용해서는 안 된다. 소유 컨텍스트의 public contract와
+    [context integration 컨벤션](./context-integration.md)을 사용한다.
+- 허용된 의존성 방향에 따라 `kernels/infrastructure`는 `kernels/application` 또는 `kernels/domain`의 계약을
+  구현하거나 사용할 수 있다.
+  - 의존성 방향이 허용된다는 사실만으로 컨텍스트별 구현을 kernel에 둘 수 있는 것은 아니다.
+  - 여러 컨텍스트가 adapter의 동작과 lifecycle을 모두 실제로 재사용할 때만 `kernels/infrastructure`로
+    승격한다. 그렇지 않으면 소유 컨텍스트의 infrastructure layer에 둔다.
+- 한 kernel 레이어가 다른 kernel 레이어의 계약을 구현하는 경우에도 역방향 의존성과 순환 의존성은
+  계속 금지한다.
+  - 정적 의존성 검사가 방향을 강제하고 repository 전체의 순환 의존성 규칙도 그대로 적용한다.
 
 ### Event Emitter 예외
 
