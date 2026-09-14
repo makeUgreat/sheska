@@ -25,6 +25,7 @@ const NOW = '2026-01-01T00:00:00.000Z';
 const SOURCE_SUMMARY: SourceSummary = {
   sourceId: 'source-1',
   externalSourceId: 'Notes/source.md',
+  title: 'Source note',
   fingerprint: 'fingerprint-1',
   sizeBytes: 14,
   createdAt: NOW,
@@ -91,7 +92,7 @@ describe('App', () => {
     renderApp(client);
 
     await user.click(
-      await screen.findByRole('link', { name: 'Notes/source.md' }),
+      await screen.findByRole('link', { name: 'Source note' }),
     );
 
     await waitFor(() => {

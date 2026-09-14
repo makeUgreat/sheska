@@ -84,7 +84,7 @@ export function SourceListPage() {
                       to={`/sources/${s.sourceId}`}
                       className="break-words text-2xl font-semibold leading-snug text-text-primary transition-colors group-hover:text-[#e06c75]"
                     >
-                      {s.externalSourceId}
+                      {s.title}
                     </Link>
                     <div className="flex flex-wrap items-center gap-3">
                       {s.publishedPostId && <PublishedBadge />}
