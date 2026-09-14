@@ -9,10 +9,10 @@ export function Footer() {
             to="/"
             className="text-2xl font-semibold leading-tight text-text-primary hover:text-[#e06c75]"
           >
-            The Garden
+            HASH
           </Link>
           <p className="mt-1 text-base leading-relaxed text-text-secondary">
-            Built for the curious.
+            Backend dev.
           </p>
         </div>
         <nav className="flex gap-6 text-base leading-relaxed text-text-secondary">

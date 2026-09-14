@@ -15,8 +15,8 @@ const meta = {
   args: {
     prompt: (
       <div className="mb-4">
-        <span className="text-secondary">visitor@garden:~$</span>{' '}
-        <span className="text-white">garden-cli init</span>
+        <span className="text-secondary">visitor@hash:~$</span>{' '}
+        <span className="text-white">hash-cli init</span>
       </div>
     ),
     children: (
@@ -28,7 +28,7 @@ const meta = {
     ),
     cursor: (
       <div className="mt-4 flex items-center">
-        <span className="text-secondary">visitor@garden:~$</span>
+        <span className="text-secondary">visitor@hash:~$</span>
         <span className="ml-2 h-5 w-2 animate-pulse bg-accent" />
       </div>
     ),
@@ -43,6 +43,6 @@ export const Default: Story = {};
 
 export const CustomTitle: Story = {
   args: {
-    title: 'garden-cli - preview',
+    title: 'hash-cli - preview',
   },
 };
