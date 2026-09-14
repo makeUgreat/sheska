@@ -10,6 +10,7 @@ import { IntegrationEventsModule } from './events/integration-events.module';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { HealthModule } from './health/health.module';
 import { LoggerModule } from './logger/logger.module';
+import { OutboxModule } from './outbox/outbox.module';
 import { ZodValidationPipe } from './pipes/zod-validation.pipe';
 import { QueueModule } from './queue/queue.module';
 
@@ -28,6 +29,7 @@ import { QueueModule } from './queue/queue.module';
     SourcesModule.forRoot(),
     IngestionModule.forRoot(),
     PostsModule.forRoot(),
+    OutboxModule,
   ],
   providers: [
     {

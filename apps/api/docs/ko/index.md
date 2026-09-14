@@ -5,8 +5,9 @@ audience: both
 applies_to:
   - apps/api
 source: ../en/index.md
-last_synced: 2026-09-07
+last_synced: 2026-09-12
 related:
+  - ./code-readability.md
   - ./operability/error.md
   - ./operability/logging.md
   - ./architecture/architecture.md
@@ -36,6 +37,10 @@ related:
 
 ## 라우팅
 
+### 코드
+
+- 조건식이나 불리언 이름을 결정하는 작업: [API 코드 가독성 컨벤션](./code-readability.md)을 읽는다.
+
 ### Architecture
 
 - `apps/api` architecture, DDD boundary, source structure, module boundary 결정 작업: [API 아키텍처 컨벤션](./architecture/architecture.md)을 읽는다.
@@ -43,7 +48,9 @@ related:
 - Infrastructure adapter file 명명, 디렉토리 구조, adapter 컨벤션 작업: [API Infrastructure 컨벤션](./architecture/infrastructure.md)을 읽는다.
 - Import direction, layer boundary, framework import 작업: [API Source Dependency 컨벤션](./architecture/source-dependency.md)을 읽는다.
 - NestJS DI, provider registration, module wiring, platform startup flow, port binding 작업: [API Runtime Wiring 컨벤션](./architecture/runtime-wiring.md)을 읽는다.
-- 크로스 컨텍스트 데이터 통합, 컨슈머 소유 포트/어댑터 배치, Pull vs Push 전략 결정 작업: [API 컨텍스트 통합 컨벤션](./architecture/context-integration.md)을 읽는다.
+- 크로스 컨텍스트 데이터 통합, domain event와 integration event 분류, outbox 전달 의미, 컨슈머 소유
+  포트/어댑터 배치, Pull vs Push 전략 결정 작업:
+  [API 컨텍스트 통합 컨벤션](./architecture/context-integration.md)을 읽는다.
 
 ### Operability
 

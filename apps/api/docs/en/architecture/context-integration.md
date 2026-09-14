@@ -68,6 +68,39 @@ related:
   - The distinction between required orchestration and an event reaction is a business responsibility decision, not
     a framework choice.
 
+### Delivery Channel Decision
+
+- Choose the delivery channel after choosing the event category.
+  - An in-process dispatcher is suitable when producer and consumer share a process and non-durable local delivery is
+    sufficient.
+  - A message broker or other remote transport is suitable when delivery crosses a process boundary.
+  - Process topology changes the dispatcher or transport implementation; it does not change a domain event into an
+    integration event or vice versa.
+- An outbox may precede either an in-process dispatcher or a message broker.
+  - The outbox relay reads a stored integration event and hands it to the configured `IntegrationEventDispatcher`.
+  - A local event-emitter dispatcher and a broker dispatcher are alternative implementations of that next delivery
+    boundary.
+  - Mark an outbox record as published only after the configured dispatcher accepts the event successfully.
+
+### Outbox Delivery
+
+- Outbox is a durable delivery mechanism for integration events, not a separate event category.
+  - Name the cross-context contract `IntegrationEvent` even when an outbox stores and relays it.
+  - Keep `OutboxWriter`, `OutboxRelayStore`, and `OutboxRelay` names for components that implement the storage and
+    relay mechanism.
+- When an integration event represents a committed database change and reliable delivery is required, persist the
+  integration event in the outbox transaction that commits the change.
+- Choose an outbox by durability and atomicity requirements, not by whether delivery stays in one process.
+  - Use an outbox when a committed database change implies a downstream reaction that must eventually occur, event
+    loss is unacceptable, and retry after a process restart is required.
+  - A same-process integration event MAY use an outbox when it needs those guarantees.
+  - A cross-process integration event does not automatically require an outbox when there is no database change to
+    commit atomically and durable handoff is not required.
+  - Do not add an outbox for best-effort local notifications or other reactions whose loss is explicitly acceptable.
+- Direct in-process dispatch and outbox delivery provide different guarantees.
+  - An event emitter can dispatch an integration event locally, but it does not make the event durable.
+  - Moving a local integration event to an outbox is a delivery-policy change, not an event-type change.
+
 ## Integration Strategy
 
 ### Default Strategy: Pull (Consumer-Owned Port + Adapter)
@@ -115,7 +148,9 @@ import { type SourceEmbeddingLookup as IngestionSourceEmbeddingLookup } from '@c
 import { type SourceEmbeddingLookup } from '@contexts/sources/application/ports';
 
 export class SourceEmbeddingFromIngestionLookup implements SourceEmbeddingLookup {
-  constructor(private readonly ingestionLookup: IngestionSourceEmbeddingLookup) {}
+  constructor(
+    private readonly ingestionLookup: IngestionSourceEmbeddingLookup,
+  ) {}
   // ...
 }
 ```
@@ -125,8 +160,8 @@ export class SourceEmbeddingFromIngestionLookup implements SourceEmbeddingLookup
 - **Producer-side implementation naming has no fixed template**, but the file still fills the same three slots as
   an infrastructure adapter — `{domain}.{what-it-collaborates-with}.{role}.ts` — even though it lives in
   `application/services/`, not `infrastructure/`, because it has no technology dependency.
-  - Infrastructure adapters vary by *technology* (`ollama-http`, `pg-drizzle`). Application-layer implementations
-    of a producer-owned port have no technology to vary by, so they vary by *collaborator* instead: which
+  - Infrastructure adapters vary by _technology_ (`ollama-http`, `pg-drizzle`). Application-layer implementations
+    of a producer-owned port have no technology to vary by, so they vary by _collaborator_ instead: which
     other application- or domain-owned dependency they compose to produce the answer.
   - Today's implementations collaborate with nothing but B's own repository, so the middle slot is
     `from-repository` and the role slot matches the port's own role (`lookup`): `source-embedding.from-repository.lookup.ts`
@@ -139,7 +174,7 @@ export class SourceEmbeddingFromIngestionLookup implements SourceEmbeddingLookup
   - Never use a bare `Impl` suffix — it names nothing about how the class does its job.
 - **Return types are named for what they concretely hold**, not with a generic template suffix like `Info`,
   `Details`, `Data`, or the port's own name — those carry no more meaning than `Data` itself.
-  - Example: ingestion's own concept is `EmbeddingMetadata` (model, dimensions, timestamps — metadata *about* an
+  - Example: ingestion's own concept is `EmbeddingMetadata` (model, dimensions, timestamps — metadata _about_ an
     embedding, not the vector). Sources' own copy, in its own language, is `SourceEmbeddingMetadata` (this
     source's embedding metadata). Sources' own concept for its content is `SourceDocument`. Posts' own copy, in
     its own language, is `PublishableSourceContent` (the content posts uses to derive a post).

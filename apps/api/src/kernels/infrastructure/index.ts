@@ -21,8 +21,10 @@ export {
 export { InfrastructureException } from './infrastructure.exception';
 export { classifyPostgresError } from './postgres-error.classifier';
 export { type PgDrizzleSession } from './pg-drizzle.session';
+export { OutboxRelay, type OutboxRelayOptions } from './outbox.relay';
 export { outboxMessages } from './persistence/postgres-drizzle/outbox.pg-drizzle.schema';
 export * as outboxSchema from './persistence/postgres-drizzle/outbox.pg-drizzle.schema';
+export { PgDrizzleOutboxStore } from './persistence/postgres-drizzle/outbox.pg-drizzle.store';
 export { parseRetryAfterMs } from './retry-after';
 export { classifyInfrastructureRetry } from './retry-error.classifier';
 export {

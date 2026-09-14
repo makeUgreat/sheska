@@ -28,5 +28,5 @@ export const outboxMessages = pgTable(
   ],
 );
 
-export type OutboxEventRow = typeof outboxMessages.$inferSelect;
-export type OutboxEventInsert = typeof outboxMessages.$inferInsert;
+export type OutboxMessageRow = typeof outboxMessages.$inferSelect;
+export type OutboxMessageInsert = typeof outboxMessages.$inferInsert;

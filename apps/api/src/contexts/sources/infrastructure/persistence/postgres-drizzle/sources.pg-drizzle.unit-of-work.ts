@@ -4,11 +4,10 @@ import {
   type SourcesUnitOfWork,
   type SourcesUnitOfWorkResources,
 } from '@contexts/sources/application/ports';
-import { DATABASE_TOKENS } from '@kernels/infrastructure';
+import { DATABASE_TOKENS, PgDrizzleOutboxStore } from '@kernels/infrastructure';
 import * as schema from './schema';
 import { SourcePgDrizzleRepository } from './source.pg-drizzle.repository';
 import { SourceSyncJobPgDrizzleRepository } from './source-sync-job.pg-drizzle.repository';
-import { OutboxPgDrizzleWriter } from './outbox.pg-drizzle.writer';
 
 @Injectable()
 export class SourcesPgDrizzleUnitOfWork implements SourcesUnitOfWork {
@@ -24,7 +23,7 @@ export class SourcesPgDrizzleUnitOfWork implements SourcesUnitOfWork {
       work({
         sources: new SourcePgDrizzleRepository(transaction),
         syncJobs: new SourceSyncJobPgDrizzleRepository(transaction),
-        outbox: new OutboxPgDrizzleWriter(transaction),
+        outbox: new PgDrizzleOutboxStore(transaction),
       }),
     );
   }

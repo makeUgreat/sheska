@@ -40,6 +40,69 @@ related:
 - 구현 모듈은 실용적인 코드 배선 또는 프레임워크 모듈 단위다.
   - 구현 모듈이 자동으로 DDD 바운디드 컨텍스트가 되는 것은 아니다.
 
+## Aggregate 참조와 접근
+
+### 참조 방식
+
+- 같은 aggregate 내부의 다른 객체는 객체 참조를 사용한다.
+- 다른 aggregate는 객체 참조가 아니라 대상 aggregate root의 ID로 참조한다.
+- 다른 aggregate의 내부 entity는 직접 참조하지 않는다.
+
+### 접근 경로
+
+- Aggregate 내부 entity와 value object에 대한 모든 상태 변경은 aggregate root 자신의 메서드를 통해서만 이루어진다.
+  - 내부 entity는 aggregate root가 호출하는 메서드를 통해 변경되며, 그 변경은 aggregate 경계 안에 머문다.
+  - Value object는 불변이라 자기 값을 바꾸는 메서드를 갖지 않는다. Value object를 "변경"한다는 것은 실제로는
+    aggregate root가 자신의 필드를 새 value object 인스턴스로 재할당하는 것이며, 그 교체 로직은 value object 자신이
+    아니라 root(또는 그 필드를 소유한 내부 entity) 쪽에 있다.
+  - Aggregate 외부 코드는 내부 entity나 value object를 직접 꺼내서는 안 된다. Value object의 경우 문제는 값이
+    손상될 위험이 아니다 — value object는 애초에 변경될 수 없다 — 그래도 root를 우회하면 aggregate 경계가 감추려는
+    내부 구조를 그대로 노출하게 된다. 이로부터 이어지는 getter·snapshot 규칙은 [도메인 캡슐화](#도메인-캡슐화)를
+    참조한다.
+  - 외부 코드는 항상 root를 통해 aggregate를 조회하고 변경한다.
+
+```ts
+const order: Order = await orderRepository.findById(orderId);
+order.changeLineQuantity(lineId, 3);
+await orderRepository.save(order);
+```
+
+- `orderLineRepository.findById()`처럼 내부 entity를 repository로 직접 조회하는 방식은 이 규칙 위반이다.
+
+### Aggregate 간 조율 책임
+
+- 여러 aggregate의 조회·생성·저장 순서 조정은 기본적으로 application 레이어가 담당한다.
+- 직접 의존이 순환 의존을 만들거나, 하나의 연산에 여러 aggregate·외부 서비스의 정보가 동시에 필요하면 application
+  orchestration 또는 domain event를 사용한다.
+
+### 같은 Bounded Context 내부의 예외
+
+- 도메인 의미가 명확하고 두 aggregate가 같은 bounded context에 속한 경우에 한해, 단방향 aggregate 의존이나 다른
+  aggregate를 생성하는 factory method는 허용될 수 있다.
+  - 이는 위 조율 책임 원칙의 예외이며, bounded context 경계를 넘는 경우에는 적용되지 않는다.
+
+### Bounded Context 경계
+
+- 위 [바운디드 컨텍스트](#바운디드-컨텍스트) 규칙을 따른다. 다른 바운디드 컨텍스트의 aggregate 타입은 도메인
+  레이어에서 직접 참조하지 않는다.
+
+### Repository의 로딩 책임
+
+- 전제: 내부 entity에 대한 모든 상태 변경은 aggregate root의 메서드를 통해서만 이루어진다. Application 코드나 다른
+  외부 코드가 내부 entity를 직접 꺼내 수정하는 일은 없다.
+- 이 전제가 성립하기 때문에, `order.changeLineQuantity()`와 같은 root 메서드가 `lines` 배열에서 해당 line을 찾아
+  수량을 바꾸고 불변식(예: 재고 한도 초과 금지)을 검증하려면, repository가 `findById()` 시점에 이미 `lines`를 함께
+  로딩해놨어야 한다. Root 메서드가 실행되는 시점에 필요한 내부 상태가 메모리에 없으면 그 연산 자체가 불가능하다.
+- Repository는 도메인 연산이 불변식을 검증하는 데 필요한 aggregate 상태를 완전하게 복원해야 한다.
+  - Root 메서드가 내부 entity를 조회·변경한다면, 그 entity도 root와 함께 로딩되어 있어야 한다.
+  - JOIN으로 조회할지 여부는 로딩 방식이며 infrastructure 구현 세부사항이지 도메인 규칙이 아니다.
+    [JOIN 정책](../persistence/repository-methods.md#join-policy)을 참조한다.
+
+### 경고 신호
+
+- Aggregate 전체를 매번 복원하는 비용이 부담스럽다면, 로딩 최적화를 고민하기 전에 이 aggregate가 너무 큰 것은 아닌지
+  먼저 의심한다.
+
 ## 도메인 커널
 
 - `kernels/domain`은 여러 컨텍스트의 도메인 레이어가 공유하는 도메인 커널 코드를 담는다.
@@ -55,13 +118,13 @@ related:
 
 ### 프로젝트 관련 구성 요소 역할
 
-| 개념 | 역할 |
-|---|---|
-| Entity | 생명주기 동안 상태가 변할 수 있는 식별자를 가진 도메인 객체. |
-| Value Object | 식별자가 아니라 값 자체로 의미가 결정되는 불변 객체. |
-| Aggregate | 일관성을 함께 보호해야 하는 entity와 value object의 묶음. |
-| Aggregate Root | aggregate 외부에서 접근 가능한 유일한 진입점이며 aggregate 불변 조건을 보호한다. |
-| Repository | aggregate를 저장하고 다시 가져오는 도메인 컬렉션 형태의 추상화이며 데이터베이스 조회 도우미가 아니다. Repository를 통한 읽기는 **read-for-write**다. 도메인 메서드를 호출하거나 쓰기 전 전제 조건을 검증하기 위해 aggregate를 불러온다. |
+| 개념           | 역할                                                                                                                                                                                                                                    |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Entity         | 생명주기 동안 상태가 변할 수 있는 식별자를 가진 도메인 객체.                                                                                                                                                                            |
+| Value Object   | 식별자가 아니라 값 자체로 의미가 결정되는 불변 객체.                                                                                                                                                                                    |
+| Aggregate      | 일관성을 함께 보호해야 하는 entity와 value object의 묶음.                                                                                                                                                                               |
+| Aggregate Root | aggregate 외부에서 접근 가능한 유일한 진입점이며 aggregate 불변 조건을 보호한다.                                                                                                                                                        |
+| Repository     | aggregate를 저장하고 다시 가져오는 도메인 컬렉션 형태의 추상화이며 데이터베이스 조회 도우미가 아니다. Repository를 통한 읽기는 **read-for-write**다. 도메인 메서드를 호출하거나 쓰기 전 전제 조건을 검증하기 위해 aggregate를 불러온다. |
 
 ### 책임 배치 기준
 
@@ -86,8 +149,19 @@ related:
   - 구체 domain event의 `eventName`을 초기화하기 위한 용도로만 모듈 상수를 만들지 않는다.
 - 기록된 domain event를 수집하고 전달 방법을 결정하는 책임은 application orchestration에 둔다.
   - 컨텍스트 사이에 전달할 때는 domain event를 integration event로 변환한다.
+  - 이벤트를 유실 없이 전달해야 한다면 integration event를 aggregate 변경과 같은 트랜잭션에서 outbox에
+    저장한다.
 - Aggregate에 기록된 domain event는 의도한 전달이 성공한 후에만 정리한다.
-  - Aggregate 저장 또는 event 전달이 실패하면 기록된 이벤트를 유지한다.
+  - Aggregate 또는 outbox 저장이 실패하면 기록된 이벤트를 유지한다.
+- Domain event라는 이유만으로 outbox가 필요한 것은 아니다.
+  - 현재 유스 케이스를 완료하는 데 반드시 필요한 후속 동작은 비동기 이벤트 전달에 맡기지 않고
+    명시적으로 호출한다.
+  - 컨텍스트 경계를 넘는 내구성 있는 전달에는 domain event를 integration event로 변환해 outbox에
+    저장한다. Domain event 클래스를 integration event용 outbox에 직접 직렬화하지 않는다.
+  - 같은 컨텍스트의 비동기 반응에 나중에 내구성 있는 전달이 필요해지면 별도의 내부 durable message
+    계약을 정의하고 outbox 정책을 의도적으로 확장한다. 저장이 필요하다는 이유만으로 integration event로
+    잘못 분류하지 않는다.
+  - Event sourcing에 사용하는 domain event store는 transactional outbox와 다른 영속화 메커니즘이다.
 
 ## Repository 메서드 이름
 
@@ -133,6 +207,14 @@ related:
 
 ## 리뷰 점검
 
+- 다른 aggregate를 객체 참조가 아니라 ID로 참조하는지, 다른 aggregate의 내부 entity를 직접 참조하지 않는지
+  확인한다.
+- Aggregate의 내부 entity나 value object가 외부 코드의 직접 접근이 아니라 aggregate root 자신의 메서드를 통해서만
+  변경되는지 확인한다.
+- 여러 aggregate를 조율하는 코드가 같은 bounded context 예외를 제외하면 직접적인 cross-aggregate 의존이 아니라
+  application orchestration 또는 domain event에 있는지 확인한다.
+- Repository가 현재 호출 지점이 보여줄 필드만이 아니라, root 메서드의 불변식 검증에 필요한 내부 상태까지 로딩하는지
+  확인한다.
 - 새로운 공유 추상화가 정말 안정적인 도메인 개념인지 확인한 뒤 도메인 커널 코드로 만든다.
 - 바운디드 컨텍스트의 공개 언어가 다른 컨텍스트의 내부 모델을 누출하고 있지 않은지 확인한다.
 - 도메인 객체가 데이터베이스 행 또는 요청 DTO처럼 동작하지 않고 비즈니스 동작을 표현하는지 확인한다.
