@@ -46,6 +46,7 @@ export type PostMatchReason = 'keyword' | 'semantic' | 'both';
 export type PostQuerySearchResultItem = PostQueryListItem & {
   readonly matchReason: PostMatchReason;
   readonly similarity: number | null;
+  readonly snippet: string | null;
 };
 
 export type PostQueryPaginateResult = {
