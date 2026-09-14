@@ -11,6 +11,8 @@ import {
   type PostQueryListItem,
   type PostQuerySearchOptions,
   type PostQuerySearchResult,
+  type PostQuerySearchCursor,
+  type PostMatchReason,
 } from '@contexts/posts/application/ports';
 import {
   classifyPostgresError,
@@ -48,6 +50,8 @@ type SearchPostRow = {
   createdAt: Date;
   updatedAt: Date;
   searchScore: number;
+  matchReason: PostMatchReason;
+  embeddingDistance: number | null;
 };
 
 @Injectable()
@@ -192,7 +196,7 @@ export class PostPgDrizzleQuery implements PostQuery {
         score: row.searchScore,
       }));
 
-      return this.toResult(data, nextCursor);
+      return this.toSearchResult(data, nextCursor);
     } catch (error: unknown) {
       throw new InfrastructureException({
         kind: classifyPostgresError(error),
@@ -226,7 +230,9 @@ export class PostPgDrizzleQuery implements PostQuery {
         p.view_count AS "viewCount",
         p.created_at AS "createdAt",
         p.updated_at AS "updatedAt",
-        (${score})   AS "searchScore"
+        (${score})   AS "searchScore",
+        'keyword'    AS "matchReason",
+        NULL::double precision AS "embeddingDistance"
       FROM posts p
       INNER JOIN sources s ON p.source_id = s.id
       WHERE ${where}
@@ -263,7 +269,8 @@ export class PostPgDrizzleQuery implements PostQuery {
           p.id, p.source_id, p.title, p.view_count, p.created_at, p.updated_at,
           RANK() OVER (
             ORDER BY MIN(se.embedding <=> ${embeddingLiteral}::vector)
-          ) AS embedding_rank
+          ) AS embedding_rank,
+          MIN(se.embedding <=> ${embeddingLiteral}::vector) AS embedding_distance
         FROM posts p
         INNER JOIN source_embeddings se ON se.source_id = p.source_id
         WHERE (se.embedding <=> ${embeddingLiteral}::vector) < ${EMBEDDING_MAX_DISTANCE}
@@ -279,7 +286,9 @@ export class PostPgDrizzleQuery implements PostQuery {
           COALESCE(f.view_count, e.view_count) AS "viewCount",
           COALESCE(f.created_at, e.created_at) AS "createdAt",
           COALESCE(f.updated_at, e.updated_at) AS "updatedAt",
-          (${this.rrfFusionScore()})            AS "searchScore"
+          (${this.rrfFusionScore()})            AS "searchScore",
+          (${this.matchReasonCase()})           AS "matchReason",
+          e.embedding_distance                 AS "embeddingDistance"
         FROM fts_candidates f
         FULL OUTER JOIN embedding_candidates e ON f.id = e.id
       )
@@ -301,6 +310,14 @@ export class PostPgDrizzleQuery implements PostQuery {
       COALESCE(1.0 / (${RRF_K} + f.fts_rank), 0)
       + COALESCE(1.0 / (${RRF_K} + e.embedding_rank), 0)
     )::double precision`;
+  }
+
+  private matchReasonCase(): SQL {
+    return sql`CASE
+      WHEN f.id IS NOT NULL AND e.id IS NOT NULL THEN 'both'
+      WHEN f.id IS NOT NULL THEN 'keyword'
+      ELSE 'semantic'
+    END`;
   }
 
   private ftsMatchCondition(tsQuery: SQL): SQL {
@@ -334,7 +351,7 @@ export class PostPgDrizzleQuery implements PostQuery {
   }
 
   private toResult<TCursor extends PostQueryCursor>(
-    data: Array<postsSchema.PostRow | SearchPostRow>,
+    data: postsSchema.PostRow[],
     nextCursor: TCursor | null,
   ): { posts: PostQueryListItem[]; nextCursor: TCursor | null } {
     return {
@@ -350,5 +367,30 @@ export class PostPgDrizzleQuery implements PostQuery {
       ),
       nextCursor,
     };
+  }
+
+  private toSearchResult(
+    data: SearchPostRow[],
+    nextCursor: PostQuerySearchCursor | null,
+  ): PostQuerySearchResult {
+    return {
+      posts: data.map((row) => ({
+        postId: row.id,
+        sourceId: row.sourceId,
+        title: row.title,
+        viewCount: row.viewCount,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        matchReason: row.matchReason,
+        similarity: this.toSimilarityPercent(row.embeddingDistance),
+      })),
+      nextCursor,
+    };
+  }
+
+  private toSimilarityPercent(embeddingDistance: number | null): number | null {
+    return embeddingDistance === null
+      ? null
+      : Math.round((1 - embeddingDistance) * 100);
   }
 }

@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { cursorQueryParamSchema } from '@kernels/presentation';
-import { type PostQuerySearchCursor } from '@contexts/posts/application/ports';
+import {
+  type PostMatchReason,
+  type PostQuerySearchCursor,
+} from '@contexts/posts/application/ports';
 
 const rankedCursorSchema = z.object({
   id: z.string(),
@@ -30,6 +33,8 @@ export interface SearchPostsHttpResponseItem {
   viewCount: number;
   createdAt: string;
   updatedAt: string;
+  matchReason: PostMatchReason;
+  similarity: number | null;
 }
 
 export interface SearchPostsHttpResponse {

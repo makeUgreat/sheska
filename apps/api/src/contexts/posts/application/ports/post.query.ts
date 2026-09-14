@@ -41,13 +41,20 @@ export type PostQueryListItem = {
   readonly updatedAt: Date;
 };
 
+export type PostMatchReason = 'keyword' | 'semantic' | 'both';
+
+export type PostQuerySearchResultItem = PostQueryListItem & {
+  readonly matchReason: PostMatchReason;
+  readonly similarity: number | null;
+};
+
 export type PostQueryPaginateResult = {
   readonly posts: ReadonlyArray<PostQueryListItem>;
   readonly nextCursor: PostQueryCursor | null;
 };
 
 export type PostQuerySearchResult = {
-  readonly posts: ReadonlyArray<PostQueryListItem>;
+  readonly posts: ReadonlyArray<PostQuerySearchResultItem>;
   readonly nextCursor: PostQuerySearchCursor | null;
 };
 
