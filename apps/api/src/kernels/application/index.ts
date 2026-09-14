@@ -14,5 +14,9 @@ export {
   IntegrationEvent,
   type IntegrationEventParams,
 } from './integration-event.base';
+export {
+  INTEGRATION_EVENT_DISPATCHER,
+  type IntegrationEventDispatcher,
+} from './integration-event.dispatcher';
 export { type OutboxWriter } from './outbox.writer';
 export { type UnitOfWork } from './unit-of-work';

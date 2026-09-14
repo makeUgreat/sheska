@@ -9,7 +9,7 @@ import { EmbedRequestBullMqConsumer } from '../embed-request.bullmq.consumer';
 
 function buildMockUseCase() {
   const execute = vi.fn().mockResolvedValue(undefined);
-  const handleFailure = vi.fn();
+  const handleFailure = vi.fn().mockResolvedValue(undefined);
   const useCase = {
     execute,
     handleFailure,
@@ -58,14 +58,14 @@ describe('EmbedRequestBullMqConsumer', () => {
   });
 
   describe('onFailed', () => {
-    it('job이 있으면 큐 이름, jobId, attemptsMade를 로그에 기록한다', () => {
+    it('job이 있으면 큐 이름, jobId, attemptsMade를 로그에 기록한다', async () => {
       const { useCase } = buildMockUseCase();
       const logger = buildMockLogger();
       const consumer = new EmbedRequestBullMqConsumer(useCase, logger);
       const job = buildJob();
       const error = new Error('embed failed');
 
-      consumer.onFailed(job, error);
+      await consumer.onFailed(job, error);
 
       expect(logger.error).toHaveBeenCalledWith(
         'embed-requests job failed',
@@ -78,7 +78,7 @@ describe('EmbedRequestBullMqConsumer', () => {
       );
     });
 
-    it('job이 있으면 job data로 useCase.handleFailure를 호출한다', () => {
+    it('job이 있으면 job data로 useCase.handleFailure를 호출한다', async () => {
       const { useCase, handleFailure } = buildMockUseCase();
       const consumer = new EmbedRequestBullMqConsumer(
         useCase,
@@ -86,17 +86,17 @@ describe('EmbedRequestBullMqConsumer', () => {
       );
       const job = buildJob();
 
-      consumer.onFailed(job, new Error('embed failed'));
+      await consumer.onFailed(job, new Error('embed failed'));
 
       expect(handleFailure).toHaveBeenCalledWith(job.data);
     });
 
-    it('job이 undefined이면 아무것도 하지 않는다', () => {
+    it('job이 undefined이면 아무것도 하지 않는다', async () => {
       const { useCase, handleFailure } = buildMockUseCase();
       const logger = buildMockLogger();
       const consumer = new EmbedRequestBullMqConsumer(useCase, logger);
 
-      consumer.onFailed(undefined, new Error('irrelevant'));
+      await consumer.onFailed(undefined, new Error('irrelevant'));
 
       expect(logger.error).not.toHaveBeenCalled();
       expect(handleFailure).not.toHaveBeenCalled();

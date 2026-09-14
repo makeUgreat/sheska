@@ -1,5 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import {
+  INTEGRATION_EVENT_DISPATCHER,
+  type IntegrationEventDispatcher,
+} from '@kernels/application';
 import {
   SourceEmbedding,
   type SourceEmbeddingRepository,
@@ -16,7 +19,8 @@ export class SaveEmbeddingResultUseCase {
   constructor(
     @Inject(SOURCE_EMBEDDING_REPOSITORY)
     private readonly sourceEmbeddings: SourceEmbeddingRepository,
-    private readonly eventEmitter: EventEmitter2,
+    @Inject(INTEGRATION_EVENT_DISPATCHER)
+    private readonly integrationEventDispatcher: IntegrationEventDispatcher,
   ) {}
 
   async execute(payload: EmbedResultPayload): Promise<void> {
@@ -24,13 +28,13 @@ export class SaveEmbeddingResultUseCase {
     const sourceEmbedding = SourceEmbedding.create({ sourceId, model, chunks });
     await this.sourceEmbeddings.save(sourceEmbedding);
     const event = new IngestionCompletedIntegrationEvent({ syncJobId });
-    this.eventEmitter.emit(event.eventType, event);
+    await this.integrationEventDispatcher.dispatch(event);
   }
 
-  handleFailure(payload: EmbedResultPayload): void {
+  async handleFailure(payload: EmbedResultPayload): Promise<void> {
     const event = new IngestionFailedIntegrationEvent({
       syncJobId: payload.syncJobId,
     });
-    this.eventEmitter.emit(event.eventType, event);
+    await this.integrationEventDispatcher.dispatch(event);
   }
 }

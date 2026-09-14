@@ -25,13 +25,16 @@ export class EmbedResultBullMqConsumer extends WorkerHost {
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job<EmbedResultPayload> | undefined, error: Error): void {
+  async onFailed(
+    job: Job<EmbedResultPayload> | undefined,
+    error: Error,
+  ): Promise<void> {
     if (!job) return;
     this.logger.error(`${job.queueName} job failed`, error, {
       queueName: job.queueName,
       jobId: job.id,
       attemptsMade: job.attemptsMade,
     } satisfies QueueJobFailureLogContext);
-    this.saveEmbeddingResult.handleFailure(job.data);
+    await this.saveEmbeddingResult.handleFailure(job.data);
   }
 }

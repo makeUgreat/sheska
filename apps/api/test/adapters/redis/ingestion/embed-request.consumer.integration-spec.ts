@@ -22,6 +22,7 @@ import {
   type EmbedResultPayload,
 } from '@contexts/ingestion/application/ports';
 import { type IngestionFailedIntegrationEvent } from '@contexts/ingestion/application/events/ingestion.integration-event';
+import { IntegrationEventsModule } from '@platform/nest/events/integration-events.module';
 import {
   RecursiveCharacterChunker,
   DEFAULT_CHUNK_SIZE,
@@ -47,6 +48,7 @@ describe('EmbedRequestBullMqConsumer', () => {
         BullModule.registerQueue({ name: EMBED_REQUESTS_QUEUE }),
         BullModule.registerQueue({ name: EMBED_RESULTS_QUEUE }),
         EventEmitterModule.forRoot(),
+        IntegrationEventsModule,
       ],
       providers: [
         EmbedRequestBullMqConsumer,
@@ -79,6 +81,11 @@ describe('EmbedRequestBullMqConsumer', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+
+    const eventEmitter = app.get(EventEmitter2);
+    eventEmitter.on('source.ingestion.started', () => undefined);
+    eventEmitter.on('source.ingestion.progress', () => undefined);
+    eventEmitter.on('source.ingestion.failed', () => undefined);
 
     embedRequestsQueue = app.get(getQueueToken(EMBED_REQUESTS_QUEUE));
     embedResultsQueue = app.get(getQueueToken(EMBED_RESULTS_QUEUE));

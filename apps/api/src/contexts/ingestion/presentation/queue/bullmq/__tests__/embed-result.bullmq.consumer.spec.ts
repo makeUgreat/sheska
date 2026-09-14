@@ -6,7 +6,7 @@ import { EmbedResultBullMqConsumer } from '../embed-result.bullmq.consumer';
 
 function buildMockUseCase() {
   const execute = vi.fn().mockResolvedValue(undefined);
-  const handleFailure = vi.fn();
+  const handleFailure = vi.fn().mockResolvedValue(undefined);
   const useCase = {
     execute,
     handleFailure,
@@ -51,14 +51,14 @@ describe('EmbedResultBullMqConsumer', () => {
   });
 
   describe('onFailed', () => {
-    it('job이 있으면 큐 이름, jobId, attemptsMade를 로그에 기록한다', () => {
+    it('job이 있으면 큐 이름, jobId, attemptsMade를 로그에 기록한다', async () => {
       const { useCase } = buildMockUseCase();
       const logger = buildMockLogger();
       const consumer = new EmbedResultBullMqConsumer(useCase, logger);
       const job = buildJob();
       const error = new Error('save failed');
 
-      consumer.onFailed(job, error);
+      await consumer.onFailed(job, error);
 
       expect(logger.error).toHaveBeenCalledWith(
         'embed-results job failed',
@@ -71,7 +71,7 @@ describe('EmbedResultBullMqConsumer', () => {
       );
     });
 
-    it('job이 있으면 job data로 useCase.handleFailure를 호출한다', () => {
+    it('job이 있으면 job data로 useCase.handleFailure를 호출한다', async () => {
       const { useCase, handleFailure } = buildMockUseCase();
       const consumer = new EmbedResultBullMqConsumer(
         useCase,
@@ -79,17 +79,17 @@ describe('EmbedResultBullMqConsumer', () => {
       );
       const job = buildJob();
 
-      consumer.onFailed(job, new Error('save failed'));
+      await consumer.onFailed(job, new Error('save failed'));
 
       expect(handleFailure).toHaveBeenCalledWith(job.data);
     });
 
-    it('job이 undefined이면 아무것도 하지 않는다', () => {
+    it('job이 undefined이면 아무것도 하지 않는다', async () => {
       const { useCase, handleFailure } = buildMockUseCase();
       const logger = buildMockLogger();
       const consumer = new EmbedResultBullMqConsumer(useCase, logger);
 
-      consumer.onFailed(undefined, new Error('irrelevant'));
+      await consumer.onFailed(undefined, new Error('irrelevant'));
 
       expect(logger.error).not.toHaveBeenCalled();
       expect(handleFailure).not.toHaveBeenCalled();

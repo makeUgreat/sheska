@@ -6,6 +6,7 @@ import { SourcesModule } from '@contexts/sources/sources.module';
 import { IngestionModule } from '@contexts/ingestion/ingestion.module';
 import { PostsModule } from '@contexts/posts/posts.module';
 import { DatabaseModule } from './database/database.module';
+import { IntegrationEventsModule } from './events/integration-events.module';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { HealthModule } from './health/health.module';
 import { LoggerModule } from './logger/logger.module';
@@ -20,6 +21,7 @@ import { QueueModule } from './queue/queue.module';
     }),
     LoggerModule,
     EventEmitterModule.forRoot({ wildcard: false }),
+    IntegrationEventsModule,
     QueueModule,
     DatabaseModule,
     HealthModule,
