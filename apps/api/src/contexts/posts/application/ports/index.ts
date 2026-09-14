@@ -11,6 +11,8 @@ export {
   type PostQueryPaginateOptions,
   type PostQuerySearchOptions,
   type PostQueryListItem,
+  type PostMatchReason,
+  type PostQuerySearchResultItem,
   type PostQueryPaginateResult,
   type PostQuerySearchResult,
   type PostQuery,

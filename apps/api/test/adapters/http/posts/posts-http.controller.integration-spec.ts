@@ -323,6 +323,8 @@ describe('PostsHttpController', () => {
             viewCount: 0,
             createdAt: now,
             updatedAt: now,
+            matchReason: 'both',
+            similarity: 82,
           },
         ],
         nextCursor: cursorValue,
@@ -347,6 +349,8 @@ describe('PostsHttpController', () => {
           viewCount: 0,
           createdAt: now.toISOString(),
           updatedAt: now.toISOString(),
+          matchReason: 'both',
+          similarity: 82,
         },
       ]);
       expect(typeof body.nextCursor).toBe('string');

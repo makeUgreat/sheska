@@ -64,6 +64,8 @@ describe('SearchPostsUseCase', () => {
             viewCount: 0,
             createdAt: new Date(),
             updatedAt: new Date(),
+            matchReason: 'keyword',
+            similarity: null,
           },
           {
             postId: 'post-2',
@@ -72,6 +74,8 @@ describe('SearchPostsUseCase', () => {
             viewCount: 0,
             createdAt: new Date(),
             updatedAt: new Date(),
+            matchReason: 'keyword',
+            similarity: null,
           },
         ],
       }),

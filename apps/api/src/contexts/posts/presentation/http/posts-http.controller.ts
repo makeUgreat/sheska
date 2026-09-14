@@ -113,6 +113,8 @@ export class PostsHttpController {
         viewCount: post.viewCount,
         createdAt: post.createdAt.toISOString(),
         updatedAt: post.updatedAt.toISOString(),
+        matchReason: post.matchReason,
+        similarity: post.similarity,
       })),
       nextCursor: result.nextCursor ? encodeCursor(result.nextCursor) : null,
       semanticSearchApplied: result.semanticSearchApplied,
