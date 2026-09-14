@@ -35,6 +35,7 @@ export interface SearchPostsHttpResponseItem {
   updatedAt: string;
   matchReason: PostMatchReason;
   similarity: number | null;
+  snippet: string | null;
 }
 
 export interface SearchPostsHttpResponse {

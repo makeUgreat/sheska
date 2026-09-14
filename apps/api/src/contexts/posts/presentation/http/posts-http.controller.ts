@@ -115,6 +115,7 @@ export class PostsHttpController {
         updatedAt: post.updatedAt.toISOString(),
         matchReason: post.matchReason,
         similarity: post.similarity,
+        snippet: post.snippet,
       })),
       nextCursor: result.nextCursor ? encodeCursor(result.nextCursor) : null,
       semanticSearchApplied: result.semanticSearchApplied,

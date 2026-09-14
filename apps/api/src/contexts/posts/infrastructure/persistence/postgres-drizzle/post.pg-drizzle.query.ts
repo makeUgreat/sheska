@@ -52,6 +52,7 @@ type SearchPostRow = {
   searchScore: number;
   matchReason: PostMatchReason;
   embeddingDistance: number | null;
+  content: string | null;
 };
 
 @Injectable()
@@ -196,7 +197,7 @@ export class PostPgDrizzleQuery implements PostQuery {
         score: row.searchScore,
       }));
 
-      return this.toSearchResult(data, nextCursor);
+      return this.toSearchResult(data, nextCursor, query);
     } catch (error: unknown) {
       throw new InfrastructureException({
         kind: classifyPostgresError(error),
@@ -232,7 +233,8 @@ export class PostPgDrizzleQuery implements PostQuery {
         p.updated_at AS "updatedAt",
         (${score})   AS "searchScore",
         'keyword'    AS "matchReason",
-        NULL::double precision AS "embeddingDistance"
+        NULL::double precision AS "embeddingDistance",
+        s.content    AS "content"
       FROM posts p
       INNER JOIN sources s ON p.source_id = s.id
       WHERE ${where}
@@ -257,6 +259,7 @@ export class PostPgDrizzleQuery implements PostQuery {
       WITH fts_candidates AS (
         SELECT
           p.id, p.source_id, p.title, p.view_count, p.created_at, p.updated_at,
+          s.content,
           RANK() OVER (ORDER BY (${this.ftsRelevanceScore(tsQuery)}) DESC) AS fts_rank,
           (p.title_search_vector @@ ${tsQuery}) AS title_matched
         FROM posts p
@@ -289,7 +292,8 @@ export class PostPgDrizzleQuery implements PostQuery {
           COALESCE(f.updated_at, e.updated_at) AS "updatedAt",
           (${this.rrfFusionScore()})            AS "searchScore",
           (${this.matchReasonCase()})           AS "matchReason",
-          e.embedding_distance                 AS "embeddingDistance"
+          e.embedding_distance                 AS "embeddingDistance",
+          f.content                            AS "content"
         FROM fts_candidates f
         FULL OUTER JOIN embedding_candidates e ON f.id = e.id
       )
@@ -374,6 +378,7 @@ export class PostPgDrizzleQuery implements PostQuery {
   private toSearchResult(
     data: SearchPostRow[],
     nextCursor: PostQuerySearchCursor | null,
+    query: string,
   ): PostQuerySearchResult {
     return {
       posts: data.map((row) => ({
@@ -385,6 +390,7 @@ export class PostPgDrizzleQuery implements PostQuery {
         updatedAt: row.updatedAt,
         matchReason: row.matchReason,
         similarity: this.toSimilarityPercent(row.embeddingDistance),
+        snippet: row.content === null ? null : this.toSnippet(row.content, query),
       })),
       nextCursor,
     };
@@ -394,5 +400,19 @@ export class PostPgDrizzleQuery implements PostQuery {
     return embeddingDistance === null
       ? null
       : Math.round((1 - embeddingDistance) * 100);
+  }
+
+  private toSnippet(content: string, query: string): string | null {
+    const index = content.toLowerCase().indexOf(query.toLowerCase());
+    if (index === -1) {
+      return null;
+    }
+
+    const start = Math.max(0, index - 40);
+    const end = Math.min(content.length, index + query.length + 40);
+    const prefix = start > 0 ? '...' : '';
+    const suffix = end < content.length ? '...' : '';
+
+    return `${prefix}${content.slice(start, end).trim()}${suffix}`;
   }
 }

@@ -66,6 +66,7 @@ describe('SearchPostsUseCase', () => {
             updatedAt: new Date(),
             matchReason: 'keyword',
             similarity: null,
+            snippet: null,
           },
           {
             postId: 'post-2',
@@ -76,6 +77,7 @@ describe('SearchPostsUseCase', () => {
             updatedAt: new Date(),
             matchReason: 'keyword',
             similarity: null,
+            snippet: null,
           },
         ],
       }),

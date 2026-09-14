@@ -589,6 +589,90 @@ describe('PostPgDrizzleQuery', () => {
       );
     });
 
+    it('본문에 검색어가 그대로 있으면 앞뒤 문맥이 포함된 snippet을 반환한다', async () => {
+      const source = await sources.save(
+        buildSource({
+          externalSourceId: 'Notes/pq-snippet-content-match.md',
+          content:
+            '이 문서는 자료구조와 알고리즘 전반을 폭넓게 다루는 종합 안내서이며 여러 예제와 함께 기본 개념부터 차근차근 설명한다. 그 중에서도 이진탐색트리는 삽입과 삭제, 조회가 모두 효율적인 자료구조로 널리 쓰인다. 실제 구현 예제도 함께 살펴본다.',
+        }),
+      );
+      const post = buildPost({ sourceId: source.id, title: '자료구조 정리' });
+      await posts.save(post);
+
+      const { posts: result } = await postQuery.search({
+        query: '이진탐색트리',
+        limit: 20,
+        cursor: null,
+        queryEmbedding: null,
+      });
+
+      const found = result.find((p) => p.postId === post.id);
+      expect(found?.snippet).not.toBeNull();
+      expect(found?.snippet?.toLowerCase()).toContain('이진탐색트리');
+      expect(found?.snippet?.startsWith('...')).toBe(true);
+      expect(found?.snippet?.endsWith('...')).toBe(true);
+    });
+
+    it('제목만 매치하고 본문에 검색어가 그대로 없으면 snippet이 null이다', async () => {
+      const source = await sources.save(
+        buildSource({
+          externalSourceId: 'Notes/pq-snippet-no-content-match.md',
+          content: '이 글은 다른 주제를 다루는 본문이다.',
+        }),
+      );
+      const post = buildPost({
+        sourceId: source.id,
+        title: '자바스크립트클로저정리',
+      });
+      await posts.save(post);
+
+      const { posts: result } = await postQuery.search({
+        query: '자바스크립트클로저정리',
+        limit: 20,
+        cursor: null,
+        queryEmbedding: null,
+      });
+
+      const found = result.find((p) => p.postId === post.id);
+      expect(found?.snippet).toBeNull();
+    });
+
+    it('semantic-only 매치는 snippet이 null이다', async () => {
+      const source = await sources.save(
+        buildSource({
+          externalSourceId: 'Notes/pq-snippet-semantic-only.md',
+          content: '완전히 무관한 본문 내용이다.',
+        }),
+      );
+      const post = buildPost({ sourceId: source.id, title: '무관한 제목' });
+      await posts.save(post);
+      const queryEmbedding = Array.from({ length: 1024 }, () => 1);
+      await sourceEmbeddings.save(
+        buildSourceEmbedding({
+          sourceId: source.id,
+          chunks: [
+            {
+              chunkIndex: 0,
+              chunkContent: 'chunk content',
+              embedding: Array.from({ length: 1024 }, () => 1),
+            },
+          ],
+        }),
+      );
+
+      const { posts: result } = await postQuery.search({
+        query: '없는키워드zzz',
+        limit: 20,
+        cursor: null,
+        queryEmbedding,
+      });
+
+      const found = result.find((p) => p.postId === post.id);
+      expect(found?.matchReason).toBe('semantic');
+      expect(found?.snippet).toBeNull();
+    });
+
     it('하이브리드 검색 결과를 nextCursor로 다음 페이지 조회한다', async () => {
       const hs1 = await sources.save(
         buildSource({ externalSourceId: 'Notes/pq-hybrid-cursor-1.md' }),
