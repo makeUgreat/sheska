@@ -1,4 +1,5 @@
 import { type FormEvent, type Ref } from 'react';
+import { Link } from 'react-router-dom';
 import { PostCard, type PostSummary } from '@/entities/post';
 import { StatusMessage } from '@/shared/ui';
 import { EndOfPosts, PostsLoading } from './posts-loading';
@@ -45,13 +46,12 @@ export function PostsListSection({
     >
       <div className="mx-auto max-w-[720px]">
         <div className="mb-6 flex justify-end">
-          <button
-            type="button"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          <Link
+            to="/"
             className="shrink-0 font-mono text-xs font-medium uppercase tracking-widest text-text-muted transition-colors hover:text-accent"
           >
             Back to top
-          </button>
+          </Link>
         </div>
         <form className="group mb-12" role="search" onSubmit={handleSubmit}>
           <div className="flex items-center gap-2 border-b border-accent/30 pb-2 transition-colors focus-within:border-accent">
