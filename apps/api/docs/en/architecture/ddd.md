@@ -40,6 +40,74 @@ related:
 - An implementation module is a practical code wiring or framework module unit.
   - An implementation module is not automatically a DDD bounded context.
 
+## Aggregate Reference And Access
+
+### Reference Style
+
+- Use an object reference for another object inside the same aggregate.
+- Reference another aggregate by its aggregate root's ID, not by an object reference.
+- Do not reference another aggregate's internal entity directly.
+
+### Access Path
+
+- All state changes to an aggregate's internal entities and value objects happen only through the aggregate root's
+  own methods.
+  - An internal entity changes through a method the aggregate root calls on it, so the change stays inside the
+    aggregate boundary.
+  - A value object is immutable and exposes no method that changes its own value. "Changing" a value object means
+    the aggregate root reassigns its field to a new value object instance; the replacement logic lives on the root
+    (or the internal entity that owns the field), never on the value object itself.
+  - Code outside the aggregate MUST NOT reach into an internal entity or value object directly. For a value object,
+    the risk is not corruption — it cannot be mutated — but bypassing the root still exposes internal structure the
+    aggregate boundary exists to hide. See [Domain Encapsulation](#domain-encapsulation) for the getter and snapshot
+    rules that follow from this.
+  - External code always reads and changes an aggregate through its root.
+
+```ts
+const order: Order = await orderRepository.findById(orderId);
+order.changeLineQuantity(lineId, 3);
+await orderRepository.save(order);
+```
+
+- A repository method that loads an internal entity directly, such as `orderLineRepository.findById()`, violates this rule.
+
+### Aggregate Coordination Responsibility
+
+- The application layer coordinates the load, create, and save order across multiple aggregates by default.
+- Use application orchestration or domain events when a direct dependency would create a cycle, or when the
+  operation needs information from multiple aggregates or external services at once.
+
+### Exception Within One Bounded Context
+
+- A one-directional aggregate dependency, or a factory method that creates another aggregate, MAY be allowed when the
+  domain meaning is unambiguous and both aggregates belong to the same bounded context.
+  - This is an exception to the coordination responsibility above; it does not extend across a bounded context
+    boundary.
+
+### Bounded Context Boundary
+
+- Follow the [Bounded Contexts](#bounded-contexts) rule above: a different bounded context's aggregate type is never
+  referenced directly from the domain layer.
+
+### Repository Loading Responsibility
+
+- Premise: every state change to an internal entity happens only through an aggregate root method; application code
+  or other outside code never pulls out an internal entity and changes it directly.
+- Because this premise holds, when a root method such as `order.changeLineQuantity()` finds a line inside `lines` and
+  changes its quantity while checking an invariant (for example, a stock limit), the repository must already have
+  loaded `lines` at `findById()` time. The operation is impossible if the state the root method needs is not in
+  memory when the method runs.
+- A repository MUST fully restore whatever aggregate state its domain operations need to check invariants.
+  - When a root method reads or changes an internal entity, the repository must load that internal entity together
+    with the root.
+  - Whether the query uses a JOIN is a loading detail and an infrastructure implementation choice, not a domain rule.
+    See the [JOIN Policy](../persistence/repository-methods.md#join-policy).
+
+### Warning Sign
+
+- If restoring an entire aggregate every time feels expensive, question whether the aggregate is too large before
+  reaching for a loading optimization.
+
 ## Domain Kernel
 
 - `kernels/domain` contains domain-layer kernel code shared by context domain layers.
@@ -152,6 +220,14 @@ related:
 
 ## Review Checks
 
+- Check whether another aggregate is referenced by ID rather than by object reference, and whether an internal
+  entity of another aggregate is referenced directly.
+- Check whether an aggregate's internal entity or value object changes only through the aggregate root's own
+  methods, never by external code reaching in directly.
+- Check whether multi-aggregate coordination lives in application orchestration or domain events rather than a
+  direct cross-aggregate dependency, except for the same-bounded-context exception.
+- Check whether a repository loads the internal state a root method's invariant check needs, not only the fields the
+  current call site happens to display.
 - Check whether a new shared abstraction is really a stable domain concept before making it domain-kernel code.
 - Check whether a bounded context's public language is leaking another context's internal model.
 - Check whether a domain object is expressing business behavior instead of acting as a database row or request DTO.
