@@ -19,6 +19,9 @@ export function Footer() {
           <Link to="/posts" className="transition-colors hover:text-[#e06c75]">
             Posts
           </Link>
+          <Link to="/notes" className="transition-colors hover:text-[#e06c75]">
+            Notes
+          </Link>
           <Link
             to="/sources"
             className="transition-colors hover:text-[#e06c75]"
