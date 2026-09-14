@@ -103,7 +103,7 @@ const post = await this.posts.get({ id: command.postId });
 - 결과 계약에 맞는 표준 이름을 사용한다.
   - `get`: 항목 하나를 반환하고 없으면 예외를 던진다.
   - `find`: 항목 하나를 반환하고 없으면 `null`을 반환한다.
-  - `paginate`: 페이지와 다음 cursor를 반환한다.
+  - `paginate`: 페이지 결과를 반환한다 (호출자의 탐색 요구에 따라 cursor 방식 또는 page 번호 방식).
   - `search`: query에 대한 관련도 순 페이지를 반환한다.
   - `count`: 조건에 맞는 항목 수를 반환한다.
   - `exists`: 조건에 맞는 항목이 하나 이상인지 반환한다.

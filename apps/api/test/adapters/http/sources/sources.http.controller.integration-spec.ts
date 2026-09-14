@@ -121,7 +121,10 @@ describe('SourcesHttpController', () => {
             publishedPostId: 'post-1',
           },
         ],
-        nextCursor: null,
+        page: 1,
+        pageSize: 10,
+        totalCount: 1,
+        totalPages: 1,
       });
 
       const response = await request(httpServer).get('/sources').expect(200);
@@ -146,47 +149,57 @@ describe('SourcesHttpController', () => {
             publishedPostId: 'post-1',
           },
         ],
-        nextCursor: null,
+        page: 1,
+        pageSize: 10,
+        totalCount: 1,
+        totalPages: 1,
       });
       expect(listSourcesUseCase.execute).toHaveBeenCalledWith({
-        cursor: null,
-        limit: 20,
+        page: 1,
+        pageSize: 10,
       });
     });
 
     it('source가 없으면 빈 배열을 반환한다', async () => {
       listSourcesUseCase.execute.mockResolvedValue({
         sources: [],
-        nextCursor: null,
+        page: 1,
+        pageSize: 10,
+        totalCount: 0,
+        totalPages: 0,
       });
 
       const response = await request(httpServer).get('/sources').expect(200);
 
-      expect(response.body).toEqual({ sources: [], nextCursor: null });
+      expect(response.body).toEqual({
+        sources: [],
+        page: 1,
+        pageSize: 10,
+        totalCount: 0,
+        totalPages: 0,
+      });
     });
 
-    it('cursor와 limit 쿼리 파라미터를 디코딩하여 use case에 전달한다', async () => {
-      const encodedCursor = Buffer.from(
-        JSON.stringify({ id: 'source-1' }),
-      ).toString('base64url');
+    it('page와 pageSize 쿼리 파라미터를 use case에 전달한다', async () => {
       listSourcesUseCase.execute.mockResolvedValue({
         sources: [],
-        nextCursor: null,
+        page: 2,
+        pageSize: 5,
+        totalCount: 0,
+        totalPages: 0,
       });
 
-      await request(httpServer)
-        .get(`/sources?cursor=${encodedCursor}&limit=5`)
-        .expect(200);
+      await request(httpServer).get('/sources?page=2&pageSize=5').expect(200);
 
       expect(listSourcesUseCase.execute).toHaveBeenCalledWith({
-        cursor: { id: 'source-1' },
-        limit: 5,
+        page: 2,
+        pageSize: 5,
       });
     });
 
-    it('유효하지 않은 limit이면 400 응답을 반환한다', async () => {
+    it('유효하지 않은 page이면 400 응답을 반환한다', async () => {
       const response = await request(httpServer)
-        .get('/sources?limit=-1')
+        .get('/sources?page=-1')
         .expect(400);
 
       expect(response.body).toMatchObject({
@@ -196,21 +209,9 @@ describe('SourcesHttpController', () => {
       expect(listSourcesUseCase.execute).not.toHaveBeenCalled();
     });
 
-    it('limit이 100을 초과하면 400 응답을 반환한다', async () => {
+    it('pageSize가 100을 초과하면 400 응답을 반환한다', async () => {
       const response = await request(httpServer)
-        .get('/sources?limit=101')
-        .expect(400);
-
-      expect(response.body).toMatchObject({
-        statusCode: 400,
-        code: 'request.validation_failed',
-      });
-      expect(listSourcesUseCase.execute).not.toHaveBeenCalled();
-    });
-
-    it('유효하지 않은 cursor이면 400 응답을 반환한다', async () => {
-      const response = await request(httpServer)
-        .get('/sources?cursor=not-a-cursor')
+        .get('/sources?pageSize=101')
         .expect(400);
 
       expect(response.body).toMatchObject({

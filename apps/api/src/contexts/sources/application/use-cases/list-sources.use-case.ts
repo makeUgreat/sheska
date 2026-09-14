@@ -1,14 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   type SourceQuery,
-  type SourceQueryCursor,
   type SourceQueryPaginateResult,
 } from '@contexts/sources/application/ports';
 import { SOURCE_QUERY } from '@contexts/sources/sources.di-tokens';
 
 export interface ListSourcesCommand {
-  readonly cursor: SourceQueryCursor | null;
-  readonly limit: number;
+  readonly page: number;
+  readonly pageSize: number;
 }
 
 @Injectable()
@@ -22,8 +21,8 @@ export class ListSourcesUseCase {
     command: ListSourcesCommand,
   ): Promise<SourceQueryPaginateResult> {
     return this.sourceQuery.paginate({
-      cursor: command.cursor,
-      limit: command.limit,
+      page: command.page,
+      pageSize: command.pageSize,
     });
   }
 }

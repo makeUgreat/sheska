@@ -13,7 +13,7 @@ describe('SourcePgDrizzleQuery', () => {
     const query = new SourcePgDrizzleQuery(db as never);
 
     await expect(
-      query.paginate({ limit: 20, cursor: null }),
+      query.paginate({ page: 1, pageSize: 10 }),
     ).rejects.toMatchObject({
       code: 'source.paginate_failed',
       source: { boundary: 'persistence', adapter: 'source.pg-drizzle' },

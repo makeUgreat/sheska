@@ -1,21 +1,17 @@
 import { z } from 'zod';
-import {
-  type CursorValue,
-  cursorQueryParamSchema,
-} from '@kernels/presentation';
 
 export const listSourcesHttpRequestSchema = z
   .object({
-    cursor: cursorQueryParamSchema.optional(),
-    limit: z.coerce.number().int().positive().max(100).default(20),
+    page: z.coerce.number().int().positive().default(1),
+    pageSize: z.coerce.number().int().positive().max(100).default(10),
   })
   .strict();
 
 export class ListSourcesHttpRequest {
   static readonly zodSchema = listSourcesHttpRequestSchema;
 
-  readonly cursor?: CursorValue;
-  readonly limit!: number;
+  readonly page!: number;
+  readonly pageSize!: number;
 }
 
 export interface SyncJobSummaryHttpResponse {
@@ -40,5 +36,8 @@ export interface SourceSummaryHttpResponse {
 
 export interface ListSourcesHttpResponse {
   readonly sources: SourceSummaryHttpResponse[];
-  readonly nextCursor: string | null;
+  readonly page: number;
+  readonly pageSize: number;
+  readonly totalCount: number;
+  readonly totalPages: number;
 }
