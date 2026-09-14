@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { z } from 'zod';
 import { type CallContext } from '@core/call-context';
+import { LOGGER, type LoggerPort } from '@kernels/application';
 import {
   CircuitBreaker,
   CircuitBreakerOpenError,
@@ -42,9 +43,13 @@ export class OllamaHttpEmbedder implements Embedder {
   constructor(
     @Inject(OLLAMA_CONFIG)
     private readonly config: OllamaConfig,
+    @Inject(LOGGER)
+    logger: LoggerPort,
   ) {
     this.circuitBreaker = new CircuitBreaker({
+      name: ADAPTER,
       policy: OLLAMA_HTTP_EMBED_CIRCUIT_BREAKER_POLICY,
+      logger,
     });
   }
 

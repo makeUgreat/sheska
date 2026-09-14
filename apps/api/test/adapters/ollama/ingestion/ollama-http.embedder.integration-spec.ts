@@ -1,6 +1,7 @@
-import { describe, beforeAll, it, expect } from 'vitest';
+import { describe, beforeAll, it, expect, vi } from 'vitest';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
+import { type LoggerPort } from '@kernels/application';
 import { InfrastructureException } from '@kernels/infrastructure';
 import { OllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.embedder';
 
@@ -12,11 +13,23 @@ function buildContext(remainingMs = 60_000): CallContext {
   return { deadline: computeDeadline(remainingMs), attemptTimeoutMs: 30_000 };
 }
 
+function createLogger(): LoggerPort {
+  return {
+    log: vi.fn<LoggerPort['log']>(),
+    error: vi.fn<LoggerPort['error']>(),
+    warn: vi.fn<LoggerPort['warn']>(),
+    debug: vi.fn<LoggerPort['debug']>(),
+  };
+}
+
 describe('OllamaHttpEmbedder (integration)', () => {
   let embedder: OllamaHttpEmbedder;
 
   beforeAll(() => {
-    embedder = new OllamaHttpEmbedder({ baseUrl: OLLAMA_TEST_BASE_URL });
+    embedder = new OllamaHttpEmbedder(
+      { baseUrl: OLLAMA_TEST_BASE_URL },
+      createLogger(),
+    );
   });
 
   it('텍스트를 임베딩하면 1024차원 벡터와 모델명을 반환한다', async () => {
@@ -50,9 +63,10 @@ describe('OllamaHttpEmbedder — 서비스 불가 (integration)', () => {
   let unreachableEmbedder: OllamaHttpEmbedder;
 
   beforeAll(() => {
-    unreachableEmbedder = new OllamaHttpEmbedder({
-      baseUrl: OLLAMA_UNREACHABLE_URL,
-    });
+    unreachableEmbedder = new OllamaHttpEmbedder(
+      { baseUrl: OLLAMA_UNREACHABLE_URL },
+      createLogger(),
+    );
   });
 
   it('Ollama에 연결할 수 없으면 재시도가 소진된 뒤 cause가 직렬화된 InfrastructureException을 던진다', async () => {

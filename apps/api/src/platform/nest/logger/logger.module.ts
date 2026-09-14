@@ -1,3 +1,4 @@
+import { trace } from '@opentelemetry/api';
 import { Global, Module } from '@nestjs/common';
 import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
 import { LOGGER } from '@kernels/application';
@@ -17,6 +18,16 @@ import { serializeAccessLogError } from './access-log-error.serializer';
           pinoHttp: {
             level,
             timestamp: () => `,"time":"${new Date().toISOString()}"`,
+            mixin: () => {
+              const spanContext = trace.getActiveSpan()?.spanContext();
+              if (!spanContext || !trace.isSpanContextValid(spanContext)) {
+                return {};
+              }
+              return {
+                trace_id: spanContext.traceId,
+                span_id: spanContext.spanId,
+              };
+            },
             autoLogging: {
               ignore: (req) => ['/livez', '/readyz'].includes(req.url ?? ''),
             },
