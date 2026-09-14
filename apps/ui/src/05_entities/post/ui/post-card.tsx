@@ -2,19 +2,19 @@ import { Link } from 'react-router-dom';
 import { type PostSummary } from '@/entities/post';
 import { PostMeta } from './post-meta';
 
-function HighlightedTitle({ title, query }: { title: string; query: string }) {
-  if (!query) return <>{title}</>;
+function Highlighted({ text, query }: { text: string; query: string }) {
+  if (!query) return <>{text}</>;
 
-  const index = title.toLowerCase().indexOf(query.toLowerCase());
-  if (index === -1) return <>{title}</>;
+  const index = text.toLowerCase().indexOf(query.toLowerCase());
+  if (index === -1) return <>{text}</>;
 
   return (
     <>
-      {title.slice(0, index)}
+      {text.slice(0, index)}
       <mark className="bg-accent text-white">
-        {title.slice(index, index + query.length)}
+        {text.slice(index, index + query.length)}
       </mark>
-      {title.slice(index + query.length)}
+      {text.slice(index + query.length)}
     </>
   );
 }
@@ -39,11 +39,14 @@ export function PostCard({
             similarity={post.similarity}
           />
           <h3 className="font-sans text-headline-md text-text-primary transition-colors group-hover:text-accent">
-            <HighlightedTitle title={post.title} query={highlight} />
+            <Highlighted text={post.title} query={highlight} />
           </h3>
           <p className="line-clamp-2 text-base leading-relaxed text-text-secondary">
-            A saved note from the garden index, ready for focused reading and
-            revision.
+            {post.snippet ? (
+              <Highlighted text={post.snippet} query={highlight} />
+            ) : (
+              'A saved note from the garden index, ready for focused reading and revision.'
+            )}
           </p>
           <span className="mt-2 inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-accent">
             <span>Read Note</span>

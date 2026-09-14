@@ -168,13 +168,15 @@ Props:
 
 ### `PostCard`
 
-Metadata, title, summary, action link, optional search result title highlight를
-가진 post preview를 렌더링한다.
+Metadata, title, summary, action link, optional `highlight` marking을
+가진 post preview를 렌더링한다. `post.snippet`이 있으면 고정 summary text
+대신 매치된 본문에서 뽑은 하이라이팅된 excerpt를 보여주고, 없으면 고정
+summary text를 그대로 보여준다.
 
 Props:
 
 - `post`: `PostSummary`.
-- `highlight`: title 안에서 표시할 optional search query text.
+- `highlight`: title과 snippet 안에서 표시할 optional search query text.
 
 ### `PostSectionHeader`
 

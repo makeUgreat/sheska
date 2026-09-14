@@ -6,6 +6,7 @@ export interface PostSummary {
   createdAt: string;
   updatedAt: string;
   similarity?: number | null;
+  snippet?: string | null;
 }
 
 export interface ListPostsParams {
