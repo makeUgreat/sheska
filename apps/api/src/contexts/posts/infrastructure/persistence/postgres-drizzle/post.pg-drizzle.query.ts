@@ -30,7 +30,7 @@ const TITLE_SEARCH_WEIGHT = 1;
 const CONTENT_SEARCH_WEIGHT = TITLE_SEARCH_WEIGHT * 0.4;
 const RRF_K = 60;
 const CANDIDATE_POOL_SIZE = 50;
-const EMBEDDING_MAX_DISTANCE = 0.5;
+const EMBEDDING_MAX_DISTANCE = 0.6;
 
 type PostWithSourceRow = {
   post_id: string;
@@ -257,7 +257,8 @@ export class PostPgDrizzleQuery implements PostQuery {
       WITH fts_candidates AS (
         SELECT
           p.id, p.source_id, p.title, p.view_count, p.created_at, p.updated_at,
-          RANK() OVER (ORDER BY (${this.ftsRelevanceScore(tsQuery)}) DESC) AS fts_rank
+          RANK() OVER (ORDER BY (${this.ftsRelevanceScore(tsQuery)}) DESC) AS fts_rank,
+          (p.title_search_vector @@ ${tsQuery}) AS title_matched
         FROM posts p
         INNER JOIN sources s ON p.source_id = s.id
         WHERE ${this.ftsMatchCondition(tsQuery)}
@@ -309,6 +310,7 @@ export class PostPgDrizzleQuery implements PostQuery {
     return sql`(
       COALESCE(1.0 / (${RRF_K} + f.fts_rank), 0)
       + COALESCE(1.0 / (${RRF_K} + e.embedding_rank), 0)
+      + CASE WHEN f.title_matched THEN COALESCE(1.0 / (${RRF_K} + f.fts_rank), 0) ELSE 0 END
     )::double precision`;
   }
 
