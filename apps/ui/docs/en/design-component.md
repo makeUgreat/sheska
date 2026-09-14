@@ -172,13 +172,15 @@ Props:
 
 ### `PostCard`
 
-Renders a post preview with metadata, title, summary, action link, and optional
-title highlighting for search results.
+Renders a post preview with metadata, title, summary, action link, and
+optional `highlight` marking for search results. When `post.snippet` is
+present, it replaces the static summary text with a highlighted excerpt
+from the matched content; otherwise the static summary is shown.
 
 Props:
 
 - `post`: `PostSummary`.
-- `highlight`: optional search query text to mark in the title.
+- `highlight`: optional search query text to mark in the title and snippet.
 
 ### `PostSectionHeader`
 

@@ -61,3 +61,15 @@ export const SearchMatch: Story = {
     highlight: 'Storybook',
   },
 };
+
+export const SearchMatchWithSnippet: Story = {
+  args: {
+    post: {
+      ...samplePost,
+      similarity: 82,
+      snippet:
+        '...this post walks through setting up Storybook for the Sheska UI package, covering stories, controls, and autodocs...',
+    },
+    highlight: 'Storybook',
+  },
+};
