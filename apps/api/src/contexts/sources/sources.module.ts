@@ -12,8 +12,12 @@ import { SourcePgDrizzleRepository } from '@contexts/sources/infrastructure/pers
 import { SourceSyncJobPgDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source-sync-job.pg-drizzle.repository';
 import { SourceEmbeddingFromIngestionLookup } from '@contexts/sources/acl/ingestion/source-embedding.from-ingestion.lookup';
 import { SourcePgDrizzleQuery } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.query';
+import { NotePgDrizzleQuery } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/note.pg-drizzle.query';
 import { SourcesPgDrizzleUnitOfWork } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/sources.pg-drizzle.unit-of-work';
 import { SourcesHttpController } from '@contexts/sources/presentation/http/sources.http.controller';
+import { NotesHttpController } from '@contexts/sources/presentation/http/notes.http.controller';
+import { GetNoteUseCase } from '@contexts/sources/application/use-cases/get-note.use-case';
+import { ListNotesUseCase } from '@contexts/sources/application/use-cases/list-notes.use-case';
 import { SourceSyncJobsHttpController } from '@contexts/sources/presentation/http/source-sync-jobs.http.controller';
 import { IngestionIntegrationEventConsumer } from '@contexts/sources/presentation/events/ingestion.integration-event.consumer';
 import {
@@ -28,6 +32,7 @@ import {
   SOURCE_SYNC_JOB_REPOSITORY,
   SOURCE_EMBEDDING_LOOKUP,
   SOURCE_QUERY,
+  NOTE_QUERY,
   SOURCE_LOOKUP,
   SOURCES_UNIT_OF_WORK,
 } from './sources.di-tokens';
@@ -72,6 +77,10 @@ export class SourcesModule {
           useClass: SourcePgDrizzleQuery,
         },
         {
+          provide: NOTE_QUERY,
+          useClass: NotePgDrizzleQuery,
+        },
+        {
           provide: SOURCE_LOOKUP,
           useClass: SourceFromRepositoryLookup,
         },
@@ -80,6 +89,8 @@ export class SourcesModule {
         GetSourceUseCase,
         GetSourceSyncJobUseCase,
         UploadSourceUseCase,
+        ListNotesUseCase,
+        GetNoteUseCase,
       ],
       exports: [
         SOURCE_REPOSITORY,
@@ -89,6 +100,8 @@ export class SourcesModule {
         GetSourceUseCase,
         GetSourceSyncJobUseCase,
         UploadSourceUseCase,
+        ListNotesUseCase,
+        GetNoteUseCase,
       ],
     };
   }
@@ -97,7 +110,11 @@ export class SourcesModule {
     return {
       module: SourcesModule,
       imports: [SourcesModule.forFeature()],
-      controllers: [SourcesHttpController, SourceSyncJobsHttpController],
+      controllers: [
+        SourcesHttpController,
+        SourceSyncJobsHttpController,
+        NotesHttpController,
+      ],
       providers: [
         ApplyIngestionUpdateUseCase,
         IngestionIntegrationEventConsumer,

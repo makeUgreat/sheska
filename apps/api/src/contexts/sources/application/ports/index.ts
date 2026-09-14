@@ -17,6 +17,13 @@ export type {
   SourceQueryPaginateResult,
 } from './source.query';
 export type {
+  NoteQuery,
+  NoteQueryCursor,
+  NoteQueryListItem,
+  NoteQueryResult,
+  NoteQueryPaginateResult,
+} from './note.query';
+export type {
   SourcesUnitOfWork,
   SourcesUnitOfWorkResources,
 } from './sources.unit-of-work';
