@@ -5,11 +5,13 @@ export function LandingHero({
   onQueryChange,
   totalPostCount,
   articlesHref,
+  notesHref,
 }: {
   query: string;
   onQueryChange: (query: string) => void;
   totalPostCount: number;
   articlesHref: string;
+  notesHref: string;
 }) {
   return (
     <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white px-4 pb-24 pt-12">
@@ -77,6 +79,19 @@ export function LandingHero({
           Scroll For Articles
         </span>
         <span className="text-xl leading-none">v</span>
+      </a>
+
+      <a
+        href={notesHref}
+        className="absolute right-4 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-3 text-on-secondary/30 transition-colors duration-300 ease-out hover:text-accent sm:right-10"
+      >
+        <span
+          className="font-mono text-xs font-medium uppercase tracking-widest"
+          style={{ writingMode: 'vertical-rl' }}
+        >
+          Browse Notes
+        </span>
+        <span className="text-xl leading-none">&gt;</span>
       </a>
     </section>
   );

@@ -13,6 +13,7 @@ export function LandingPage() {
         onQueryChange={setQuery}
         totalPostCount={data?.count ?? 0}
         articlesHref="/posts"
+        notesHref="/notes"
       />
     </main>
   );
