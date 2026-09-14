@@ -149,26 +149,26 @@ Example:
 
 ### `PostMeta`
 
-Renders the date and view count as a mono metadata row. When search match
-data is present, also renders a `MatchBadge` in the same row.
+Renders the date and view count as a mono metadata row. When a search
+`similarity` percentage is present, also renders a `MatchBadge` in the same
+row.
 
 Props:
 
 - `updatedAt`: ISO timestamp string.
 - `viewCount`: numeric post views.
-- `matchReason`: optional `'keyword' | 'semantic' | 'both'` — omit outside search results.
-- `similarity`: optional `number | null` — percentage shown only when `matchReason` is `'semantic'` or `'both'`.
+- `similarity`: optional `number | null` — omit or pass `null` outside search results.
 
 ### `MatchBadge`
 
-Renders a `Tag` describing why a search result matched: `'keyword'` uses
-`tone="muted"`, `'semantic'`/`'both'` use `tone="accent"`. Appends
-`· {similarity}%` when `similarity` is not null.
+Renders a `Tag` (`tone="accent"`) showing only the match percentage, e.g.
+`82% match`. Every search result carries a `similarity` value regardless of
+whether it matched by keyword or embedding — the match-type distinction is
+not surfaced in the UI.
 
 Props:
 
-- `matchReason`: `'keyword' | 'semantic' | 'both'`.
-- `similarity`: `number | null`.
+- `similarity`: `number`.
 
 ### `PostCard`
 

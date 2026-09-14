@@ -1,4 +1,3 @@
-import { type PostMatchReason } from '../api/types';
 import { MatchBadge } from './match-badge';
 
 function formatDate(value: string) {
@@ -16,12 +15,10 @@ function Separator() {
 export function PostMeta({
   updatedAt,
   viewCount,
-  matchReason,
   similarity = null,
 }: {
   updatedAt: string;
   viewCount: number;
-  matchReason?: PostMatchReason;
   similarity?: number | null;
 }) {
   return (
@@ -29,10 +26,10 @@ export function PostMeta({
       <span className="font-bold">{formatDate(updatedAt)}</span>
       <Separator />
       <span>{viewCount} views</span>
-      {matchReason && (
+      {similarity !== null && (
         <>
           <Separator />
-          <MatchBadge matchReason={matchReason} similarity={similarity} />
+          <MatchBadge similarity={similarity} />
         </>
       )}
     </div>
