@@ -45,7 +45,7 @@ export function PostCard({
             {post.snippet ? (
               <Highlighted text={post.snippet} query={highlight} />
             ) : (
-              'A saved note from the garden index, ready for focused reading and revision.'
+              'A saved note from the HASH index, ready for focused reading and revision.'
             )}
           </p>
           <span className="mt-2 inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-accent">
