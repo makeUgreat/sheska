@@ -21,6 +21,8 @@ export {
 export { InfrastructureException } from './infrastructure.exception';
 export { classifyPostgresError } from './postgres-error.classifier';
 export { type PgDrizzleSession } from './pg-drizzle.session';
+export { outboxMessages } from './persistence/postgres-drizzle/outbox.pg-drizzle.schema';
+export * as outboxSchema from './persistence/postgres-drizzle/outbox.pg-drizzle.schema';
 export { parseRetryAfterMs } from './retry-after';
 export { classifyInfrastructureRetry } from './retry-error.classifier';
 export {
