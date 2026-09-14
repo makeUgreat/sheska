@@ -35,7 +35,9 @@ const SOURCE_SUMMARY: SourceSummary = {
 
 const SOURCE_DETAIL: GetSourceResponse = {
   ...SOURCE_SUMMARY,
-  content: '# Source note',
+  frontmatter: {},
+  title: 'Source note',
+  body: '# Source note',
   embedding: null,
 };
 
@@ -95,7 +97,7 @@ describe('App', () => {
     await waitFor(() => {
       expect(getSource).toHaveBeenCalledWith('/sources/source-1');
       expect(
-        screen.getByRole('heading', { name: 'Notes/source.md' }),
+        screen.getByRole('heading', { name: 'Source note' }),
       ).toBeDefined();
       expect(screen.getByText('# Source note')).toBeDefined();
     });

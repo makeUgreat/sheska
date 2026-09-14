@@ -42,7 +42,9 @@ export interface EmbeddingInfo {
 export interface GetSourceResponse {
   sourceId: string;
   externalSourceId: string;
-  content: string;
+  frontmatter: Record<string, unknown>;
+  title: string;
+  body: string;
   fingerprint: string;
   sizeBytes: number;
   createdAt: string;
