@@ -33,7 +33,12 @@ export function PostCard({
         className="group -mx-6 block rounded-lg p-6 transition-all duration-300 hover:bg-surface-container-lowest focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-white"
       >
         <div className="flex flex-col gap-2">
-          <PostMeta updatedAt={post.updatedAt} viewCount={post.viewCount} />
+          <PostMeta
+            updatedAt={post.updatedAt}
+            viewCount={post.viewCount}
+            matchReason={post.matchReason}
+            similarity={post.similarity}
+          />
           <h3 className="font-sans text-headline-md text-text-primary transition-colors group-hover:text-accent">
             <HighlightedTitle title={post.title} query={highlight} />
           </h3>
