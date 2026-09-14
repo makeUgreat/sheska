@@ -51,3 +51,24 @@ export const LongTitle: Story = {
     },
   },
 };
+
+export const SemanticMatch: Story = {
+  args: {
+    post: {
+      ...samplePost,
+      matchReason: 'semantic',
+      similarity: 82,
+    },
+  },
+};
+
+export const BothMatch: Story = {
+  args: {
+    post: {
+      ...samplePost,
+      matchReason: 'both',
+      similarity: 91,
+    },
+    highlight: 'Storybook',
+  },
+};

@@ -22,3 +22,24 @@ export const HighViewCount: Story = {
     viewCount: 128_400,
   },
 };
+
+export const KeywordMatch: Story = {
+  args: {
+    matchReason: 'keyword',
+    similarity: null,
+  },
+};
+
+export const SemanticMatch: Story = {
+  args: {
+    matchReason: 'semantic',
+    similarity: 82,
+  },
+};
+
+export const BothMatch: Story = {
+  args: {
+    matchReason: 'both',
+    similarity: 91,
+  },
+};
