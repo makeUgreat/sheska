@@ -6,6 +6,7 @@ applies_to:
   - apps/api
 translation: ../ko/index.md
 related:
+  - ./code-readability.md
   - ./operability/error.md
   - ./operability/logging.md
   - ./architecture/architecture.md
@@ -33,6 +34,10 @@ related:
 
 ## Routing
 
+### Code
+
+- Conditional logic or boolean naming decisions: read [API Code Readability Convention](./code-readability.md).
+
 ### Architecture
 
 - `apps/api` architecture, DDD boundary, source structure, or module boundary decisions: read [API Architecture Convention](./architecture/architecture.md).
@@ -40,7 +45,9 @@ related:
 - Infrastructure adapter file naming, directory structure, or adapter conventions: read [API Infrastructure Convention](./architecture/infrastructure.md).
 - Import direction, layer boundaries, or framework imports: read [API Source Dependency Convention](./architecture/source-dependency.md).
 - NestJS DI, provider registration, module wiring, platform startup flow, or port binding: read [API Runtime Wiring Convention](./architecture/runtime-wiring.md).
-- Cross-context data integration, consumer-owned port or adapter placement, or Pull vs Push strategy decisions: read [API Context Integration Convention](./architecture/context-integration.md).
+- Cross-context data integration, domain vs integration event classification, outbox delivery semantics,
+  consumer-owned port or adapter placement, or Pull vs Push strategy decisions: read
+  [API Context Integration Convention](./architecture/context-integration.md).
 
 ### Operability
 
