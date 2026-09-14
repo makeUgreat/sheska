@@ -1,7 +1,6 @@
 import { useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { usePost } from '@/entities/post';
-import { UpdatePostTitle } from '@/features/update-post-title';
 import { ActionLink, StatusMessage, Tag } from '@/shared/ui';
 
 export function PostDetailPage() {
@@ -23,7 +22,9 @@ export function PostDetailPage() {
             <Tag className="mb-3 inline-block">Post</Tag>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex-1">
-                <UpdatePostTitle post={post} />
+                <h1 className="break-words text-4xl font-bold leading-tight tracking-tight text-text-primary">
+                  {post.title}
+                </h1>
               </div>
               <div className="shrink-0 rounded border border-outline-variant/10 bg-surface-container-lowest px-4 py-3 text-center">
                 <div className="text-2xl font-semibold text-white">
@@ -82,13 +83,13 @@ export function PostDetailPage() {
             </div>
           </dl>
 
-          {post.sourceContent && (
+          {post.body && (
             <section className="mt-8">
               <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
                 Content
               </h2>
               <div className="prose prose-neutral max-w-none rounded border border-outline-variant/10 bg-page-background p-5">
-                <ReactMarkdown>{post.sourceContent}</ReactMarkdown>
+                <ReactMarkdown>{post.body}</ReactMarkdown>
               </div>
             </section>
           )}

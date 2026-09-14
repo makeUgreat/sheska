@@ -95,7 +95,6 @@ export class PostPgDrizzleRepository implements PostRepository {
         .onConflictDoUpdate({
           target: schema.posts.id,
           set: {
-            title: postInsert.title,
             viewCount: postInsert.viewCount,
             updatedAt: new Date(),
           },

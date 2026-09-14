@@ -9,7 +9,9 @@ import { SourcePgDrizzleMapper } from '../source.pg-drizzle.mapper';
 describe('SourcePgDrizzleMapper', () => {
   it('valid source row를 Source aggregate로 복원한다', () => {
     const row = buildSourceRow({
-      content: '안녕',
+      body: '안녕',
+      frontmatter: { title: '인사' },
+      title: '인사',
       fingerprint: 'fingerprint-1',
     });
 
@@ -18,21 +20,25 @@ describe('SourcePgDrizzleMapper', () => {
     expect(source.id).toBe('source-1');
     expect(source.getProps().externalSourceId.unpack()).toBe('Notes/source.md');
     expect(source.getProps().contentSnapshot.unpack()).toEqual({
-      content: '안녕',
+      body: '안녕',
+      frontmatter: { title: '인사' },
+      title: '인사',
       fingerprint: 'fingerprint-1',
       size: sourceContentByteSize('안녕'),
     });
   });
 
-  it('source row의 persisted snapshot이 domain invariant를 깨면 throw한다', () => {
+  it('source row의 title이 공백이면 domain invariant error를 throw한다', () => {
     const row = buildSourceRow({
-      content: '안녕',
+      body: '안녕',
+      frontmatter: {},
+      title: ' ',
       fingerprint: 'fingerprint-1',
       sizeBytes: 1,
     });
 
     expect(() => SourcePgDrizzleMapper.toDomain(row)).toThrow(
-      'Source size must match content byte size',
+      'Source title must not be blank',
     );
   });
 
@@ -44,7 +50,9 @@ describe('SourcePgDrizzleMapper', () => {
     expect(row).toEqual({
       id: source.id,
       externalSourceId: 'Notes/source.md',
-      content: '# Source note',
+      body: '# Source note',
+      frontmatter: {},
+      title: 'Notes/source.md',
       fingerprint: 'fingerprint-1',
       sizeBytes: sourceContentByteSize('# Source note'),
     });

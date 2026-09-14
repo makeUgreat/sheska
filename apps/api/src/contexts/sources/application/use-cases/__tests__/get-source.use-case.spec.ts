@@ -30,7 +30,9 @@ describe('GetSourceUseCase', () => {
   it('source를 id로 조회하여 반환한다', async () => {
     const source = buildSource({
       externalSourceId: 'Notes/source.md',
-      content: '# Source note',
+      body: '# Source note',
+      frontmatter: {},
+      title: 'Notes/source.md',
       fingerprint: 'fingerprint-1',
     });
     const sources = createSourceRepositoryMock();
@@ -50,7 +52,9 @@ describe('GetSourceUseCase', () => {
     expect(result).toMatchObject({
       sourceId: source.id,
       externalSourceId: 'Notes/source.md',
-      content: '# Source note',
+      body: '# Source note',
+      frontmatter: {},
+      title: 'Notes/source.md',
       fingerprint: 'fingerprint-1',
       publishedPostId: null,
     });

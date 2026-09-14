@@ -68,7 +68,9 @@ export class SourcesHttpController {
     return {
       sourceId: result.sourceId,
       externalSourceId: result.externalSourceId,
-      content: result.content,
+      body: result.body,
+      frontmatter: result.frontmatter,
+      title: result.title,
       fingerprint: result.fingerprint,
       sizeBytes: result.sizeBytes,
       createdAt: result.createdAt.toISOString(),

@@ -27,7 +27,7 @@ const MOCK_POST: GetPostResponse = {
   viewCount: 7,
   createdAt: NOW,
   updatedAt: NOW,
-  sourceContent: '---\ntitle: 테스트 포스트\n---\n본문 내용입니다.',
+  body: '본문 내용입니다.',
 };
 
 function buildMockHttpClient(
@@ -79,6 +79,8 @@ describe('PostDetailPage', () => {
       expect(screen.getByText('post-1')).toBeDefined();
       expect(screen.getByText('source-1')).toBeDefined();
       expect(screen.getByText('7')).toBeDefined();
+      expect(screen.getByText('본문 내용입니다.')).toBeDefined();
+      expect(screen.queryByRole('button', { name: 'Edit title' })).toBeNull();
     });
   });
 

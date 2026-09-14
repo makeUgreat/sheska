@@ -39,7 +39,16 @@ type PostWithSourceRow = {
   view_count: number;
   created_at: Date;
   updated_at: Date;
-  source_content: string;
+  source_body: string;
+};
+
+type PostListRow = {
+  id: string;
+  sourceId: string;
+  title: string;
+  viewCount: number;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 type SearchPostRow = {
@@ -83,11 +92,11 @@ export class PostPgDrizzleQuery implements PostQuery {
       const result = await this.db.execute<PostWithSourceRow>(sql`
         SELECT p.id   AS post_id,
           p.source_id,
-          p.title,
+          s.title,
           p.view_count,
           p.created_at,
           p.updated_at,
-          s.content     AS source_content
+          s.body        AS source_body
         FROM posts p
         INNER JOIN sources s ON p.source_id = s.id
         WHERE p.id = ${criteria.id}
@@ -117,7 +126,7 @@ export class PostPgDrizzleQuery implements PostQuery {
       viewCount: row.view_count,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
-      sourceContent: row.source_content,
+      body: row.source_body,
     };
   }
 
@@ -129,8 +138,16 @@ export class PostPgDrizzleQuery implements PostQuery {
 
     try {
       const baseQuery = this.db
-        .select()
+        .select({
+          id: postsSchema.posts.id,
+          sourceId: postsSchema.posts.sourceId,
+          title: sql<string>`s.title`,
+          viewCount: postsSchema.posts.viewCount,
+          createdAt: postsSchema.posts.createdAt,
+          updatedAt: postsSchema.posts.updatedAt,
+        })
         .from(postsSchema.posts)
+        .innerJoin(sql`sources s`, sql`${postsSchema.posts.sourceId} = s.id`)
         .orderBy(desc(postsSchema.posts.id))
         .limit(limit + 1);
 
@@ -158,8 +175,8 @@ export class PostPgDrizzleQuery implements PostQuery {
   async count(): Promise<number> {
     try {
       const [row] = await this.db
-          .select({ count: count() })
-          .from(postsSchema.posts);
+        .select({ count: count() })
+        .from(postsSchema.posts);
       return row?.count ?? 0;
     } catch (error: unknown) {
       throw new InfrastructureException({
@@ -227,14 +244,14 @@ export class PostPgDrizzleQuery implements PostQuery {
     return this.db.execute<SearchPostRow>(sql`
       SELECT p.id  AS "id",
         p.source_id  AS "sourceId",
-        p.title      AS "title",
+        s.title      AS "title",
         p.view_count AS "viewCount",
         p.created_at AS "createdAt",
         p.updated_at AS "updatedAt",
         (${score})   AS "searchScore",
         'keyword'    AS "matchReason",
         NULL::double precision AS "embeddingDistance",
-        s.content    AS "content"
+        s.body       AS "content"
       FROM posts p
       INNER JOIN sources s ON p.source_id = s.id
       WHERE ${where}
@@ -258,10 +275,12 @@ export class PostPgDrizzleQuery implements PostQuery {
     return this.db.execute<SearchPostRow>(sql`
       WITH fts_candidates AS (
         SELECT
-          p.id, p.source_id, p.title, p.view_count, p.created_at, p.updated_at,
-          s.content,
+          p.id, p.source_id,
+          s.title,
+          p.view_count, p.created_at, p.updated_at,
+          s.body AS content,
           RANK() OVER (ORDER BY (${this.ftsRelevanceScore(tsQuery)}) DESC) AS fts_rank,
-          (p.title_search_vector @@ ${tsQuery}) AS title_matched
+          (s.title_search_vector @@ ${tsQuery}) AS title_matched
         FROM posts p
         INNER JOIN sources s ON p.source_id = s.id
         WHERE ${this.ftsMatchCondition(tsQuery)}
@@ -270,15 +289,19 @@ export class PostPgDrizzleQuery implements PostQuery {
       ),
       embedding_candidates AS (
         SELECT
-          p.id, p.source_id, p.title, p.view_count, p.created_at, p.updated_at,
+          p.id, p.source_id,
+          s.title,
+          p.view_count, p.created_at, p.updated_at,
           RANK() OVER (
             ORDER BY MIN(se.embedding <=> ${embeddingLiteral}::vector)
           ) AS embedding_rank,
           MIN(se.embedding <=> ${embeddingLiteral}::vector) AS embedding_distance
         FROM posts p
         INNER JOIN source_embeddings se ON se.source_id = p.source_id
+        INNER JOIN sources s ON s.id = p.source_id
         WHERE (se.embedding <=> ${embeddingLiteral}::vector) < ${EMBEDDING_MAX_DISTANCE}
-        GROUP BY p.id, p.source_id, p.title, p.view_count, p.created_at, p.updated_at
+        GROUP BY p.id, p.source_id, s.title,
+          p.view_count, p.created_at, p.updated_at
         ORDER BY embedding_rank
         LIMIT ${CANDIDATE_POOL_SIZE}
       ),
@@ -305,8 +328,8 @@ export class PostPgDrizzleQuery implements PostQuery {
   }
 
   private ftsRelevanceScore(tsQuery: SQL): SQL {
-    const titleMatchScore = sql`ts_rank(p.title_search_vector, ${tsQuery}, 2) * ${TITLE_SEARCH_WEIGHT}`;
-    const contentMatchScore = sql`ts_rank(s.content_search_vector, ${tsQuery}, 2) * ${CONTENT_SEARCH_WEIGHT}`;
+    const titleMatchScore = sql`ts_rank(s.title_search_vector, ${tsQuery}, 2) * ${TITLE_SEARCH_WEIGHT}`;
+    const contentMatchScore = sql`ts_rank(s.body_search_vector, ${tsQuery}, 2) * ${CONTENT_SEARCH_WEIGHT}`;
     return sql`${titleMatchScore} + ${contentMatchScore}`;
   }
 
@@ -328,8 +351,8 @@ export class PostPgDrizzleQuery implements PostQuery {
 
   private ftsMatchCondition(tsQuery: SQL): SQL {
     return sql`(
-      p.title_search_vector @@ ${tsQuery}
-      OR s.content_search_vector @@ ${tsQuery}
+      s.title_search_vector @@ ${tsQuery}
+      OR s.body_search_vector @@ ${tsQuery}
     )`;
   }
 
@@ -357,7 +380,7 @@ export class PostPgDrizzleQuery implements PostQuery {
   }
 
   private toResult<TCursor extends PostQueryCursor>(
-    data: postsSchema.PostRow[],
+    data: PostListRow[],
     nextCursor: TCursor | null,
   ): { posts: PostQueryListItem[]; nextCursor: TCursor | null } {
     return {
@@ -390,7 +413,8 @@ export class PostPgDrizzleQuery implements PostQuery {
         updatedAt: row.updatedAt,
         matchReason: row.matchReason,
         similarity: this.toSimilarityPercent(row.embeddingDistance),
-        snippet: row.content === null ? null : this.toSnippet(row.content, query),
+        snippet:
+          row.content === null ? null : this.toSnippet(row.content, query),
       })),
       nextCursor,
     };

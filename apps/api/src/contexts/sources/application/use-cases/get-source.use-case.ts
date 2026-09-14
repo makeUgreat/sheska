@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   type SourceRepository,
+  type SourceFrontmatterProps,
   type SourceSyncJobRepository,
 } from '@contexts/sources/domain';
 import {
@@ -22,7 +23,9 @@ export interface GetSourceCommand {
 export interface GetSourceResult {
   readonly sourceId: string;
   readonly externalSourceId: string;
-  readonly content: string;
+  readonly frontmatter: SourceFrontmatterProps;
+  readonly title: string;
+  readonly body: string;
   readonly fingerprint: string;
   readonly sizeBytes: number;
   readonly createdAt: Date;
@@ -65,7 +68,9 @@ export class GetSourceUseCase {
     return {
       sourceId: source.id,
       externalSourceId: props.externalSourceId.unpack(),
-      content: snapshot.content,
+      body: snapshot.body,
+      frontmatter: snapshot.frontmatter,
+      title: snapshot.title,
       fingerprint: snapshot.fingerprint,
       sizeBytes: snapshot.size,
       createdAt: source.createdAt,

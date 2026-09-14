@@ -36,7 +36,9 @@ describe('SourceDrizzleRepository', () => {
     expect(saveResult.id).toBe(source.id);
     expect(findResult?.id).toBe(source.id);
     expect(findResult?.getProps().contentSnapshot.unpack()).toEqual({
-      content: '# Source note',
+      body: '# Source note',
+      frontmatter: {},
+      title: externalSourceId,
       fingerprint: 'fingerprint-1',
       size: sourceContentByteSize('# Source note'),
     });
@@ -48,8 +50,11 @@ describe('SourceDrizzleRepository', () => {
     await repository.save(source);
 
     source.syncContentSnapshot({
-      content: '# Changed source note',
+      body: '# Changed source note',
+      frontmatter: {},
+      title: externalSourceId,
       fingerprint: 'fingerprint-2',
+      size: sourceContentByteSize('# Changed source note'),
     });
 
     const saveResult = await repository.save(source);
@@ -57,7 +62,9 @@ describe('SourceDrizzleRepository', () => {
 
     expect(saveResult.id).toBe(source.id);
     expect(findResult?.getProps().contentSnapshot.unpack()).toEqual({
-      content: '# Changed source note',
+      body: '# Changed source note',
+      frontmatter: {},
+      title: externalSourceId,
       fingerprint: 'fingerprint-2',
       size: sourceContentByteSize('# Changed source note'),
     });
@@ -73,7 +80,9 @@ describe('SourceDrizzleRepository', () => {
 
     expect(result?.id).toBe(source.id);
     expect(result?.getProps().contentSnapshot.unpack()).toEqual({
-      content: '# Source note',
+      body: '# Source note',
+      frontmatter: {},
+      title: 'Notes/find-source-by-id.md',
       fingerprint: 'fingerprint-1',
       size: sourceContentByteSize('# Source note'),
     });

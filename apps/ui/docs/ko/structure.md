@@ -49,7 +49,7 @@ app -> pages -> widgets -> features -> entities -> shared
 
 `widgets`는 feature, entity, shared UI를 조합한 완결된 UI block을 소유한다.
 
-`features`는 archive search state, post title update, source publishing 같은 user interaction과 workflow state를 소유한다.
+`features`는 archive search state나 source publishing 같은 user interaction과 workflow state를 소유한다.
 
 `entities`는 domain contract, API client, query hook, 최소 reusable entity UI를 소유한다.
 

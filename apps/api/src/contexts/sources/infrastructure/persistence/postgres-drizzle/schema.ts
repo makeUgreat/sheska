@@ -2,11 +2,13 @@ import { sql } from 'drizzle-orm';
 import {
   customType,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
+import { type SourceFrontmatterProps } from '@contexts/sources/domain';
 
 const tsvector = customType<{ data: string }>({
   dataType: () => 'tsvector',
@@ -15,12 +17,20 @@ const tsvector = customType<{ data: string }>({
 export const sources = pgTable('sources', {
   id: text('id').primaryKey(),
   externalSourceId: text('external_source_id').notNull().unique(),
-  content: text('content').notNull(),
+  body: text('body').notNull(),
+  frontmatter: jsonb('frontmatter')
+    .$type<SourceFrontmatterProps>()
+    .notNull()
+    .default({}),
+  title: text('title').notNull(),
   fingerprint: text('fingerprint').notNull(),
   sizeBytes: integer('size_bytes').notNull(),
-  contentSearchVector: tsvector('content_search_vector')
+  titleSearchVector: tsvector('title_search_vector')
     .notNull()
-    .generatedAlwaysAs(sql`to_tsvector('simple', bigram_tokens(content))`),
+    .generatedAlwaysAs(sql`to_tsvector('simple', bigram_tokens(title))`),
+  bodySearchVector: tsvector('body_search_vector')
+    .notNull()
+    .generatedAlwaysAs(sql`to_tsvector('simple', bigram_tokens(body))`),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),

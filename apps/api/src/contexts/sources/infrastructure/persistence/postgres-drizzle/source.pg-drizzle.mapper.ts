@@ -6,7 +6,9 @@ export class SourcePgDrizzleMapper {
     return Source.restore({
       id: row.id,
       externalSourceId: row.externalSourceId,
-      content: row.content,
+      frontmatter: row.frontmatter,
+      title: row.title,
+      body: row.body,
       fingerprint: row.fingerprint,
       size: row.sizeBytes,
       createdAt: row.createdAt,
@@ -21,7 +23,9 @@ export class SourcePgDrizzleMapper {
     return {
       id: source.id,
       externalSourceId: props.externalSourceId.unpack(),
-      content: contentSnapshot.content,
+      frontmatter: contentSnapshot.frontmatter,
+      title: contentSnapshot.title,
+      body: contentSnapshot.body,
       fingerprint: contentSnapshot.fingerprint,
       sizeBytes: contentSnapshot.size,
     };

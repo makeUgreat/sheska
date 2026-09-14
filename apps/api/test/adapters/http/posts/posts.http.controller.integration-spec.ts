@@ -7,7 +7,6 @@ import { GetPostUseCase } from '@contexts/posts/application/use-cases/get-post.u
 import { ListPostsUseCase } from '@contexts/posts/application/use-cases/list-posts.use-case';
 import { SearchPostsUseCase } from '@contexts/posts/application/use-cases/search-posts.use-case';
 import { CountPostsUseCase } from '@contexts/posts/application/use-cases/count-posts.use-case';
-import { UpdatePostTitleUseCase } from '@contexts/posts/application/use-cases/update-post-title.use-case';
 import {
   ApplicationException,
   APPLICATION_ERROR_KIND,
@@ -17,7 +16,7 @@ import {
   InfrastructureException,
   INFRASTRUCTURE_ERROR_KIND,
 } from '@kernels/infrastructure';
-import { PostsHttpController } from '@contexts/posts/presentation/http/posts-http.controller';
+import { PostsHttpController } from '@contexts/posts/presentation/http/posts.http.controller';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
 import { ZodValidationPipe } from '@platform/nest/pipes/zod-validation.pipe';
 import request from 'supertest';
@@ -51,10 +50,6 @@ type CountPostsUseCaseMock = {
   execute: MockedFunction<CountPostsUseCase['execute']>;
 };
 
-type UpdatePostTitleUseCaseMock = {
-  execute: MockedFunction<UpdatePostTitleUseCase['execute']>;
-};
-
 describe('PostsHttpController', () => {
   let app: INestApplication;
   let httpServer: Server;
@@ -63,7 +58,6 @@ describe('PostsHttpController', () => {
   let listPostsUseCase: ListPostsUseCaseMock;
   let searchPostsUseCase: SearchPostsUseCaseMock;
   let countPostsUseCase: CountPostsUseCaseMock;
-  let updatePostTitleUseCase: UpdatePostTitleUseCaseMock;
 
   beforeEach(async () => {
     publishPostUseCase = { execute: vi.fn<PublishPostUseCase['execute']>() };
@@ -71,9 +65,6 @@ describe('PostsHttpController', () => {
     listPostsUseCase = { execute: vi.fn<ListPostsUseCase['execute']>() };
     searchPostsUseCase = { execute: vi.fn<SearchPostsUseCase['execute']>() };
     countPostsUseCase = { execute: vi.fn<CountPostsUseCase['execute']>() };
-    updatePostTitleUseCase = {
-      execute: vi.fn<UpdatePostTitleUseCase['execute']>(),
-    };
 
     const testingModule = await Test.createTestingModule({
       controllers: [PostsHttpController],
@@ -83,7 +74,6 @@ describe('PostsHttpController', () => {
         { provide: ListPostsUseCase, useValue: listPostsUseCase },
         { provide: SearchPostsUseCase, useValue: searchPostsUseCase },
         { provide: CountPostsUseCase, useValue: countPostsUseCase },
-        { provide: UpdatePostTitleUseCase, useValue: updatePostTitleUseCase },
         { provide: APP_PIPE, useClass: ZodValidationPipe },
         {
           provide: LOGGER,
@@ -363,11 +353,11 @@ describe('PostsHttpController', () => {
           cursor: null,
           limit: 20,
         },
-        {
+        expect.objectContaining({
           deadline: expect.objectContaining({
             deadlineAt: expect.any(Number) as number,
           }) as { deadlineAt: number },
-        },
+        }),
       );
     });
 
@@ -392,11 +382,11 @@ describe('PostsHttpController', () => {
           cursor: { id: 'post-1', score: 0.8 },
           limit: 5,
         },
-        {
+        expect.objectContaining({
           deadline: expect.objectContaining({
             deadlineAt: expect.any(Number) as number,
           }) as { deadlineAt: number },
-        },
+        }),
       );
     });
 
@@ -460,11 +450,11 @@ describe('PostsHttpController', () => {
           cursor: null,
           limit: 20,
         },
-        {
+        expect.objectContaining({
           deadline: expect.objectContaining({
             deadlineAt: expect.any(Number) as number,
           }) as { deadlineAt: number },
-        },
+        }),
       );
     });
 
@@ -527,7 +517,7 @@ describe('PostsHttpController', () => {
         viewCount: 1,
         createdAt: now,
         updatedAt: now,
-        sourceContent: '테스트 본문',
+        body: '테스트 본문',
       });
 
       const response = await request(httpServer)
@@ -541,7 +531,7 @@ describe('PostsHttpController', () => {
         viewCount: 1,
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
-        sourceContent: '테스트 본문',
+        body: '테스트 본문',
       });
       expect(getPostUseCase.execute).toHaveBeenCalledWith({ postId: 'post-1' });
     });

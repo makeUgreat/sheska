@@ -28,10 +28,10 @@ function buildPostQueryResult(
     postId: overrides.postId ?? 'post-1',
     sourceId: overrides.sourceId ?? 'source-1',
     title: overrides.title ?? '테스트 포스트',
+    body: overrides.body ?? '테스트 source content',
     viewCount: overrides.viewCount ?? 1,
     createdAt: overrides.createdAt ?? new Date(),
     updatedAt: overrides.updatedAt ?? new Date(),
-    sourceContent: overrides.sourceContent ?? '테스트 source content',
   };
 }
 
@@ -42,8 +42,8 @@ describe('GetPostUseCase', () => {
       postId: post.id,
       sourceId: 'source-1',
       title: '테스트 포스트',
+      body: '본문 내용',
       viewCount: 1,
-      sourceContent: '본문 내용',
     });
     const posts = createPostRepositoryMock();
     const postQuery = createPostQueryMock();
@@ -57,8 +57,8 @@ describe('GetPostUseCase', () => {
       postId: post.id,
       sourceId: 'source-1',
       title: '테스트 포스트',
+      body: '본문 내용',
       viewCount: 1,
-      sourceContent: '본문 내용',
     });
     expect(posts.get).toHaveBeenCalledWith({ id: post.id });
     expect(posts.save).toHaveBeenCalledOnce();

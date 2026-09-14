@@ -43,11 +43,12 @@ describe('PostPgDrizzleQuery', () => {
     await app.close();
   });
 
-  it('post를 sourceContent와 함께 id로 조회한다', async () => {
+  it('post를 source body와 함께 id로 조회한다', async () => {
     const source = await sources.save(
       buildSource({
         externalSourceId: 'Notes/post-query-get.md',
         content: '# 조회 테스트 본문',
+        title: '조회 테스트',
       }),
     );
     const post = buildPost({ sourceId: source.id, title: '조회 테스트' });
@@ -60,7 +61,7 @@ describe('PostPgDrizzleQuery', () => {
       sourceId: source.id,
       title: '조회 테스트',
       viewCount: 0,
-      sourceContent: '# 조회 테스트 본문',
+      body: '# 조회 테스트 본문',
     });
   });
 
@@ -223,10 +224,16 @@ describe('PostPgDrizzleQuery', () => {
   describe('search', () => {
     it('title이 일치하는 post를 반환한다', async () => {
       const source1 = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-trgm-match.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-trgm-match.md',
+          title: 'TypeScript 입문 가이드',
+        }),
       );
       const source2 = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-trgm-nomatch.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-trgm-nomatch.md',
+          title: '파이썬 데이터 분석',
+        }),
       );
       const matchingPost = buildPost({
         sourceId: source1.id,
@@ -253,7 +260,10 @@ describe('PostPgDrizzleQuery', () => {
 
     it('오타가 포함된 query로도 유사한 title을 가진 post를 반환한다', async () => {
       const source = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-trgm-typo.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-trgm-typo.md',
+          title: 'TypeScript 입문 가이드',
+        }),
       );
       const post = buildPost({
         sourceId: source.id,
@@ -274,7 +284,10 @@ describe('PostPgDrizzleQuery', () => {
 
     it('짧은 query가 긴 title의 일부 단어와 일치하면 post를 반환한다', async () => {
       const source = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-trgm-word.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-trgm-word.md',
+          title: '소켓은 애플리케이션 계층과 전송계층간의 인터페이스이다',
+        }),
       );
       const post = buildPost({
         sourceId: source.id,
@@ -295,10 +308,16 @@ describe('PostPgDrizzleQuery', () => {
 
     it('유사도 높은 순서로 결과를 반환한다', async () => {
       const source1 = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-trgm-order-1.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-trgm-order-1.md',
+          title: 'TypeScript',
+        }),
       );
       const source2 = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-trgm-order-2.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-trgm-order-2.md',
+          title: 'TypeScript 입문 가이드 완벽 정리',
+        }),
       );
       const exactPost = buildPost({
         sourceId: source1.id,
@@ -326,13 +345,22 @@ describe('PostPgDrizzleQuery', () => {
 
     it('검색 결과를 nextCursor로 다음 페이지 조회한다', async () => {
       const s1 = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-search-cursor-1.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-search-cursor-1.md',
+          title: 'TypeScript A',
+        }),
       );
       const s2 = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-search-cursor-2.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-search-cursor-2.md',
+          title: 'TypeScript B',
+        }),
       );
       const s3 = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-search-cursor-3.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-search-cursor-3.md',
+          title: 'TypeScript C',
+        }),
       );
       await posts.save(buildPost({ sourceId: s1.id, title: 'TypeScript A' }));
       await posts.save(buildPost({ sourceId: s2.id, title: 'TypeScript B' }));
@@ -364,6 +392,7 @@ describe('PostPgDrizzleQuery', () => {
         buildSource({
           externalSourceId: 'Notes/pq-content-match.md',
           content: '이 문서는 리액트훅에 대한 심화 설명을 담고 있다',
+          title: '프론트엔드 스터디 노트',
         }),
       );
       const post = buildPost({
@@ -388,12 +417,14 @@ describe('PostPgDrizzleQuery', () => {
         buildSource({
           externalSourceId: 'Notes/pq-weight-title.md',
           content: '관련 없는 본문',
+          title: '쿠버네티스',
         }),
       );
       const contentSource = await sources.save(
         buildSource({
           externalSourceId: 'Notes/pq-weight-content.md',
           content: '쿠버네티스 클러스터 운영 경험을 공유합니다',
+          title: '운영 회고',
         }),
       );
       const titleMatch = buildPost({
@@ -433,7 +464,10 @@ describe('PostPgDrizzleQuery', () => {
 
     it('제목만 키워드 매치하고 임베딩이 없어도 하이브리드 쿼리에서 반환된다', async () => {
       const source = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-hybrid-fts-only.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-hybrid-fts-only.md',
+          title: 'RustLang 동시성 모델',
+        }),
       );
       const post = buildPost({
         sourceId: source.id,
@@ -454,7 +488,10 @@ describe('PostPgDrizzleQuery', () => {
 
     it('키워드 겹침 없이 임베딩만 근접해도 하이브리드 쿼리에서 반환된다', async () => {
       const source = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-hybrid-vector-only.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-hybrid-vector-only.md',
+          title: '완전히 무관한 제목',
+        }),
       );
       const post = buildPost({
         sourceId: source.id,
@@ -488,10 +525,16 @@ describe('PostPgDrizzleQuery', () => {
 
     it('FTS와 벡터 둘 다 강한 post가 하나만 강한 post보다 상위 순위로 반환된다', async () => {
       const bothSource = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-hybrid-rrf-both.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-hybrid-rrf-both.md',
+          title: 'GraphQL 스키마 설계',
+        }),
       );
       const ftsOnlySource = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-hybrid-rrf-fts-only.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-hybrid-rrf-fts-only.md',
+          title: 'GraphQL 스키마 설계',
+        }),
       );
       const bothPost = buildPost({
         sourceId: bothSource.id,
@@ -544,12 +587,16 @@ describe('PostPgDrizzleQuery', () => {
 
     it('제목 매치 keyword-only가 본문 매치 both보다 상위 순위로 반환된다', async () => {
       const titleOnlySource = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-title-boost-title-only.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-title-boost-title-only.md',
+          title: '완전탐색알고리즘 정리',
+        }),
       );
       const contentBothSource = await sources.save(
         buildSource({
           externalSourceId: 'Notes/pq-title-boost-content-both.md',
           content: '# 완전탐색알고리즘 설명',
+          title: '무관한 제목',
         }),
       );
       const titleOnlyPost = buildPost({
@@ -595,6 +642,7 @@ describe('PostPgDrizzleQuery', () => {
           externalSourceId: 'Notes/pq-snippet-content-match.md',
           content:
             '이 문서는 자료구조와 알고리즘 전반을 폭넓게 다루는 종합 안내서이며 여러 예제와 함께 기본 개념부터 차근차근 설명한다. 그 중에서도 이진탐색트리는 삽입과 삭제, 조회가 모두 효율적인 자료구조로 널리 쓰인다. 실제 구현 예제도 함께 살펴본다.',
+          title: '자료구조 정리',
         }),
       );
       const post = buildPost({ sourceId: source.id, title: '자료구조 정리' });
@@ -619,6 +667,7 @@ describe('PostPgDrizzleQuery', () => {
         buildSource({
           externalSourceId: 'Notes/pq-snippet-no-content-match.md',
           content: '이 글은 다른 주제를 다루는 본문이다.',
+          title: '자바스크립트클로저정리',
         }),
       );
       const post = buildPost({
@@ -643,6 +692,7 @@ describe('PostPgDrizzleQuery', () => {
         buildSource({
           externalSourceId: 'Notes/pq-snippet-semantic-only.md',
           content: '완전히 무관한 본문 내용이다.',
+          title: '무관한 제목',
         }),
       );
       const post = buildPost({ sourceId: source.id, title: '무관한 제목' });
@@ -675,13 +725,22 @@ describe('PostPgDrizzleQuery', () => {
 
     it('하이브리드 검색 결과를 nextCursor로 다음 페이지 조회한다', async () => {
       const hs1 = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-hybrid-cursor-1.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-hybrid-cursor-1.md',
+          title: 'Kotlin A',
+        }),
       );
       const hs2 = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-hybrid-cursor-2.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-hybrid-cursor-2.md',
+          title: 'Kotlin B',
+        }),
       );
       const hs3 = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-hybrid-cursor-3.md' }),
+        buildSource({
+          externalSourceId: 'Notes/pq-hybrid-cursor-3.md',
+          title: 'Kotlin C',
+        }),
       );
       await posts.save(buildPost({ sourceId: hs1.id, title: 'Kotlin A' }));
       await posts.save(buildPost({ sourceId: hs2.id, title: 'Kotlin B' }));

@@ -9,7 +9,6 @@ import {
   SOURCE_LOOKUP,
 } from '@contexts/posts/posts.di-tokens';
 import { type SourceLookup } from '@contexts/posts/application/ports';
-import { extractFrontmatterTitle } from '../extract-frontmatter-title';
 
 export interface PublishPostCommand {
   readonly sourceId: string;
@@ -34,7 +33,7 @@ export class PublishPostUseCase {
   ) {}
 
   async execute(command: PublishPostCommand): Promise<PublishPostResult> {
-    const sourceContent = await this.sourceLookup.get(command.sourceId);
+    const source = await this.sourceLookup.get(command.sourceId);
 
     const existing = await this.posts.find({ sourceId: command.sourceId });
 
@@ -47,13 +46,8 @@ export class PublishPostUseCase {
       });
     }
 
-    const derivedTitle =
-      extractFrontmatterTitle(sourceContent.content) ??
-      sourceContent.externalSourceId;
-
     const post = Post.create({
       sourceId: command.sourceId,
-      title: derivedTitle,
     });
 
     const saved = await this.posts.save(post);
@@ -62,7 +56,7 @@ export class PublishPostUseCase {
     return {
       postId: saved.id,
       sourceId: props.sourceId,
-      title: props.title.unpack(),
+      title: source.title,
       viewCount: props.viewCount.unpack(),
       createdAt: saved.createdAt,
       updatedAt: saved.updatedAt,

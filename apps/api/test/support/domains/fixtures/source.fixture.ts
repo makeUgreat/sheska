@@ -1,14 +1,26 @@
-import { Source } from '@contexts/sources/domain';
+import { Source, type SourceFrontmatterProps } from '@contexts/sources/domain';
 
 export function buildSource(
-  params: Partial<Parameters<typeof Source.create>[0]> = {},
+  params: {
+    externalSourceId?: string;
+    content?: string;
+    body?: string;
+    frontmatter?: SourceFrontmatterProps;
+    title?: string | null;
+    fingerprint?: string;
+    size?: number;
+  } = {},
 ): Source {
-  const content = params.content ?? '# Source note';
+  const body = params.body ?? params.content ?? '# Source note';
+  const externalSourceId = params.externalSourceId ?? 'Notes/source.md';
 
   return Source.create({
-    externalSourceId: params.externalSourceId ?? 'Notes/source.md',
-    content,
+    externalSourceId,
+    body,
+    frontmatter: params.frontmatter ?? {},
+    title: params.title ?? externalSourceId,
     fingerprint: params.fingerprint ?? 'fingerprint-1',
+    size: params.size ?? sourceContentByteSize(params.content ?? body),
   });
 }
 

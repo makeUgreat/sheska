@@ -59,7 +59,6 @@ export class UploadSourceUseCase {
     if (!source) {
       return this.persistChange(
         Source.create({ externalSourceId, ...snapshot }),
-        command.content,
       );
     }
 
@@ -74,19 +73,16 @@ export class UploadSourceUseCase {
       }
     }
 
-    return this.persistChange(source, command.content);
+    return this.persistChange(source);
   }
 
-  private async persistChange(
-    source: Source,
-    content: string,
-  ): Promise<UploadSourceResult> {
-    const { fingerprint } = source.getProps().contentSnapshot.unpack();
+  private async persistChange(source: Source): Promise<UploadSourceResult> {
+    const { body, fingerprint } = source.getProps().contentSnapshot.unpack();
 
     const syncJob = SourceSyncJob.create({
       sourceId: source.id,
       fingerprint,
-      content,
+      content: body,
     });
     const integrationEvents = syncJob.domainEvents.map(
       (event) =>

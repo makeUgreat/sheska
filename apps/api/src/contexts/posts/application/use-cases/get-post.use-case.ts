@@ -11,10 +11,10 @@ export interface GetPostResult {
   readonly postId: string;
   readonly sourceId: string;
   readonly title: string;
+  readonly body: string;
   readonly viewCount: number;
   readonly createdAt: Date;
   readonly updatedAt: Date;
-  readonly sourceContent: string;
 }
 
 @Injectable()
