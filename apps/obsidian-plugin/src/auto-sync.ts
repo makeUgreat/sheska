@@ -51,6 +51,10 @@ export class AutoSyncService {
     this.syncCache = syncCache;
   }
 
+  resetSyncCache(): void {
+    this.syncCache = {};
+  }
+
   cancel(): void {
     this.cancelled = true;
     this.flushDebounced.cancel();
