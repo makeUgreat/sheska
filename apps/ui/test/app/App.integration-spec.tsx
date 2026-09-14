@@ -125,7 +125,7 @@ describe('App', () => {
     await user.click(screen.getByRole('link', { name: 'Posts' }));
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Back to top' })).toBeDefined();
+      expect(screen.getByRole('link', { name: 'Back to top' })).toBeDefined();
     });
   });
 

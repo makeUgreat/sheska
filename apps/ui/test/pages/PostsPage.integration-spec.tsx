@@ -1,4 +1,4 @@
-import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -47,13 +47,6 @@ function renderPage(client: HttpClient) {
 }
 
 describe('PostsPage', () => {
-  const scrollTo = vi.fn();
-
-  beforeEach(() => {
-    scrollTo.mockClear();
-    window.scrollTo = scrollTo;
-  });
-
   it('렌더링 즉시 post 목록을 로딩하며 loading posts를 보여준다', async () => {
     const client = buildMockHttpClient({
       listPosts: vi.fn().mockReturnValue(new Promise(() => {})),
@@ -165,18 +158,16 @@ describe('PostsPage', () => {
 
     renderPage(client);
 
-    expect(screen.getByText('The Garden')).toBeDefined();
+    expect(screen.getByRole('link', { name: 'HASH' })).toBeDefined();
   });
 
-  it('Back to top 버튼을 클릭하면 최상단으로 스크롤한다', async () => {
-    const user = userEvent.setup();
+  it('Back to top 링크는 홈으로 이동한다', () => {
     const client = buildMockHttpClient();
 
     renderPage(client);
 
-    await user.click(screen.getByRole('button', { name: 'Back to top' }));
-
-    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+    const link = screen.getByRole('link', { name: 'Back to top' });
+    expect(link.getAttribute('href')).toBe('/');
   });
 
   it('검색어 입력만으로는 searchPosts를 호출하지 않는다', async () => {

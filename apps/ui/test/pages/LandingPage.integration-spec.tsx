@@ -46,8 +46,9 @@ describe('LandingPage', () => {
     renderPage(client);
 
     expect(screen.getByRole('heading', { name: 'HASH' })).toBeDefined();
-    expect(screen.getByLabelText('Search posts')).toBeDefined();
-    expect(screen.getByText('The Garden')).toBeDefined();
+    expect(
+      screen.getByLabelText('Search posts by title or content'),
+    ).toBeDefined();
   });
 
   it('scroll indicator는 posts archive route로 연결된다', () => {
