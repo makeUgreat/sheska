@@ -15,29 +15,25 @@ custom:
 # Body`);
 
     expect(result).toEqual({
-      success: true,
-      document: {
-        body: '# Body',
-        frontmatter: {
-          title: ' Retry Amplification ',
-          aliases: ['Nested Retries'],
-          custom: { published: false },
-        },
-        title: 'Retry Amplification',
+      body: '# Body',
+      frontmatter: {
+        title: ' Retry Amplification ',
+        aliases: ['Nested Retries'],
+        custom: { published: false },
       },
+      title: 'Retry Amplification',
     });
   });
 
   it('frontmatter가 없으면 전체 내용을 본문으로 사용한다', () => {
     expect(parser.parse('# Body')).toEqual({
-      success: true,
-      document: { body: '# Body', frontmatter: {}, title: null },
+      body: '# Body',
+      frontmatter: {},
+      title: null,
     });
   });
 
-  it('유효하지 않은 YAML이면 실패 결과를 반환한다', () => {
-    const result = parser.parse('---\ntitle: [\n---\nBody');
-
-    expect(result.success).toBe(false);
+  it('유효하지 않은 YAML이면 예외를 던진다', () => {
+    expect(() => parser.parse('---\ntitle: [\n---\nBody')).toThrow();
   });
 });

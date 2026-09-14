@@ -1,11 +1,11 @@
-import { Source, type SourceFrontmatter } from '@contexts/sources/domain';
+import { Source, type SourceFrontmatterProps } from '@contexts/sources/domain';
 
 export function buildSource(
   params: {
     externalSourceId?: string;
     content?: string;
     body?: string;
-    frontmatter?: SourceFrontmatter;
+    frontmatter?: SourceFrontmatterProps;
     title?: string | null;
     fingerprint?: string;
     size?: number;

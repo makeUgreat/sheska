@@ -6,10 +6,13 @@ import {
 import { SourceFingerprint } from './source-fingerprint.vo';
 import { SourceContent } from './source-content.vo';
 import { SourceSize } from './source-size.vo';
-import { type SourceFrontmatter } from './source-frontmatter';
+import {
+  SourceFrontmatter,
+  type SourceFrontmatterProps,
+} from './source-frontmatter.vo';
 
 interface SourceContentSnapshotProps {
-  frontmatter: SourceFrontmatter;
+  frontmatter: SourceFrontmatterProps;
   title: string;
   body: string;
   fingerprint: string;
@@ -22,7 +25,7 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
   }
 
   static create(params: {
-    frontmatter: SourceFrontmatter;
+    frontmatter: SourceFrontmatterProps;
     title: string;
     body: string;
     fingerprint: string;
@@ -30,11 +33,12 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
   }): SourceContentSnapshot {
     const { body, frontmatter, title, fingerprint, size } = params;
     const sourceContent = SourceContent.of(body);
+    const sourceFrontmatter = SourceFrontmatter.of(frontmatter);
     const sourceFingerprint = SourceFingerprint.of(fingerprint);
 
     return new SourceContentSnapshot({
       body: sourceContent.unpack(),
-      frontmatter,
+      frontmatter: sourceFrontmatter.unpack(),
       title,
       fingerprint: sourceFingerprint.unpack(),
       size: SourceSize.of(size).unpack(),
@@ -42,7 +46,7 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
   }
 
   static restore(params: {
-    frontmatter: SourceFrontmatter;
+    frontmatter: SourceFrontmatterProps;
     title: string;
     body: string;
     fingerprint: string;
@@ -50,12 +54,13 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
   }): SourceContentSnapshot {
     const { body, frontmatter, title, fingerprint, size } = params;
     const sourceContent = SourceContent.of(body);
+    const sourceFrontmatter = SourceFrontmatter.of(frontmatter);
     const sourceFingerprint = SourceFingerprint.of(fingerprint);
     const sourceSize = SourceSize.of(size);
 
     return new SourceContentSnapshot({
       body: sourceContent.unpack(),
-      frontmatter,
+      frontmatter: sourceFrontmatter.unpack(),
       title,
       fingerprint: sourceFingerprint.unpack(),
       size: sourceSize.unpack(),

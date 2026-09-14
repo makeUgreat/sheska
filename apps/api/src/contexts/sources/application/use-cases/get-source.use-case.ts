@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   type SourceRepository,
-  type SourceFrontmatter,
+  type SourceFrontmatterProps,
   type SourceSyncJobRepository,
 } from '@contexts/sources/domain';
 import {
@@ -23,7 +23,7 @@ export interface GetSourceCommand {
 export interface GetSourceResult {
   readonly sourceId: string;
   readonly externalSourceId: string;
-  readonly frontmatter: SourceFrontmatter;
+  readonly frontmatter: SourceFrontmatterProps;
   readonly title: string;
   readonly body: string;
   readonly fingerprint: string;

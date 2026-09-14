@@ -3,6 +3,7 @@ import {
   type SourceFingerprinter,
 } from '@contexts/sources/application/ports';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
+import { ApplicationException } from '@kernels/application';
 import { SourceContentSnapshotCalculator } from '../source-content-snapshot-calculator.service';
 
 type SourceFingerprinterMock = {
@@ -10,10 +11,9 @@ type SourceFingerprinterMock = {
 };
 
 const parser: SourceDocumentParser = {
-  parse: vi.fn().mockReturnValue({
-    success: true,
-    document: { body: '안녕', frontmatter: {}, title: null },
-  }),
+  parse: vi
+    .fn()
+    .mockReturnValue({ body: '안녕', frontmatter: {}, title: null }),
 };
 
 describe('SourceContentSnapshotCalculator', () => {
@@ -49,6 +49,35 @@ describe('SourceContentSnapshotCalculator', () => {
 
     await expect(calculator.calculate('# Source note')).rejects.toBe(
       fingerprinterFailure,
+    );
+  });
+
+  it('frontmatter 파싱 실패를 ApplicationException으로 변환한다', async () => {
+    const failingParser: SourceDocumentParser = {
+      parse: vi.fn().mockImplementation(() => {
+        throw new Error('Frontmatter must be a YAML mapping');
+      }),
+    };
+    const fingerprinter = createSourceFingerprinterMock();
+    const calculator = new SourceContentSnapshotCalculator(
+      fingerprinter,
+      failingParser,
+    );
+
+    await expect(calculator.calculate('# Source note')).rejects.toMatchObject({
+      kind: 'validation_failed',
+      code: 'sources.invalid_frontmatter',
+      details: {
+        fields: [
+          {
+            path: 'frontmatter',
+            messages: ['Frontmatter must be a YAML mapping'],
+          },
+        ],
+      },
+    });
+    await expect(calculator.calculate('# Source note')).rejects.toBeInstanceOf(
+      ApplicationException,
     );
   });
 });

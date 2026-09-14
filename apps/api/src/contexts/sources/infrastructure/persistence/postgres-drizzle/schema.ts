@@ -8,7 +8,7 @@ import {
   timestamp,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
-import { type SourceFrontmatter } from '@contexts/sources/domain';
+import { type SourceFrontmatterProps } from '@contexts/sources/domain';
 
 const tsvector = customType<{ data: string }>({
   dataType: () => 'tsvector',
@@ -19,7 +19,7 @@ export const sources = pgTable('sources', {
   externalSourceId: text('external_source_id').notNull().unique(),
   body: text('body').notNull(),
   frontmatter: jsonb('frontmatter')
-    .$type<SourceFrontmatter>()
+    .$type<SourceFrontmatterProps>()
     .notNull()
     .default({}),
   title: text('title').notNull(),

@@ -1,7 +1,7 @@
 import { AggregateRoot, newId } from '@kernels/domain';
 import { ExternalSourceId } from './external-source-id.vo';
 import { SourceContentSnapshot } from './source-content-snapshot.vo';
-import { type SourceFrontmatter } from './source-frontmatter';
+import { type SourceFrontmatterProps } from './source-frontmatter.vo';
 
 interface SourceProps {
   externalSourceId: ExternalSourceId;
@@ -11,7 +11,7 @@ interface SourceProps {
 interface SourceRestoreParams {
   id: string;
   externalSourceId: string;
-  frontmatter: SourceFrontmatter;
+  frontmatter: SourceFrontmatterProps;
   title: string;
   body: string;
   fingerprint: string;
@@ -22,7 +22,7 @@ interface SourceRestoreParams {
 
 interface SourceCreateParams {
   externalSourceId: string;
-  frontmatter: SourceFrontmatter;
+  frontmatter: SourceFrontmatterProps;
   title: string | null;
   body: string;
   fingerprint: string;
@@ -81,7 +81,7 @@ export class Source extends AggregateRoot<SourceProps> {
   }
 
   syncContentSnapshot(params: {
-    frontmatter: SourceFrontmatter;
+    frontmatter: SourceFrontmatterProps;
     title: string | null;
     body: string;
     fingerprint: string;

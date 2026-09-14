@@ -1,20 +1,15 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {Inject, Injectable} from '@nestjs/common';
 import {
+  type ParsedSourceDocument,
   type SourceDocumentParser,
   type SourceFingerprinter,
 } from '@contexts/sources/application/ports';
-import { type SourceFrontmatter } from '@contexts/sources/domain';
-import {
-  SOURCE_DOCUMENT_PARSER,
-  SOURCE_FINGERPRINTER,
-} from '@contexts/sources/sources.di-tokens';
-import {
-  APPLICATION_ERROR_KIND,
-  ApplicationException,
-} from '@kernels/application';
+import {type SourceFrontmatterProps} from '@contexts/sources/domain';
+import {SOURCE_DOCUMENT_PARSER, SOURCE_FINGERPRINTER,} from '@contexts/sources/sources.di-tokens';
+import {APPLICATION_ERROR_KIND, ApplicationException,} from '@kernels/application';
 
 export interface SourceContentSnapshotCalculation {
-  readonly frontmatter: SourceFrontmatter;
+  readonly frontmatter: SourceFrontmatterProps;
   readonly title: string | null;
   readonly body: string;
   readonly fingerprint: string;
@@ -31,22 +26,24 @@ export class SourceContentSnapshotCalculator {
   ) {}
 
   async calculate(content: string): Promise<SourceContentSnapshotCalculation> {
-    const [fingerprint, parsed] = await Promise.all([
-      this.sourceFingerprinter.calculate(content),
-      Promise.resolve(this.sourceDocumentParser.parse(content)),
-    ]);
+    const fingerprint = await this.sourceFingerprinter.calculate(content);
 
-    if (!parsed.success) {
+    let parsed: ParsedSourceDocument;
+    try {
+      parsed = this.sourceDocumentParser.parse(content);
+    } catch (error: unknown) {
       throw new ApplicationException({
         kind: APPLICATION_ERROR_KIND.VALIDATION_FAILED,
         code: 'sources.invalid_frontmatter',
         message: 'Source frontmatter is invalid',
-        details: { reason: parsed.reason },
+        details:{
+          fields: [{path: 'frontmatter', messages: [error instanceof Error ? error.message : 'Unknown error']}]
+        },
       });
     }
 
     return {
-      ...parsed.document,
+      ...parsed,
       fingerprint,
       size: new TextEncoder().encode(content).length,
     };

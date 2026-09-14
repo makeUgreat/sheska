@@ -67,6 +67,9 @@ const APPLICATION_KIND_TO_HTTP_STATUS: Record<ApplicationErrorKind, number> = {
     HttpStatus.SERVICE_UNAVAILABLE,
 };
 
+const APPLICATION_KINDS_WITH_EXPOSED_DETAILS: ReadonlySet<ApplicationErrorKind> =
+  new Set([APPLICATION_ERROR_KIND.VALIDATION_FAILED]);
+
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   constructor(@Inject(LOGGER) private readonly logger: LoggerPort) {}
@@ -127,7 +130,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       statusCode: APPLICATION_KIND_TO_HTTP_STATUS[exception.kind],
       code: exception.code,
       message: exception.message,
-      details: exception.details,
+      details: APPLICATION_KINDS_WITH_EXPOSED_DETAILS.has(exception.kind)
+        ? exception.details
+        : {},
     };
   }
 
