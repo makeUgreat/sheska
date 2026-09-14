@@ -34,16 +34,16 @@ select {
 
 @keyframes radar-ping {
   0%,
-  80%,
+  82%,
   100% {
-    opacity: 0.8;
+    opacity: 0.7;
     transform: scale(1);
     text-shadow: none;
   }
-  90% {
-    opacity: 1;
-    transform: scale(1.2);
-    text-shadow: 0 0 8px currentColor;
+  91% {
+    opacity: 0.95;
+    transform: scale(1.06);
+    text-shadow: 0 0 4px currentColor;
   }
 }
 
