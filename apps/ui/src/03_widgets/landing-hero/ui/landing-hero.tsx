@@ -21,77 +21,99 @@ export function LandingHero({
         </h1>
       </div>
 
-      <div className="z-10 w-full max-w-container-terminal px-0 sm:px-6">
-        <TerminalWindow
-          prompt={
-            <>
-              <div className="mb-4">
-                <span className="text-secondary">visitor@garden:~$</span>{' '}
-                <span className="text-white">
-                  garden-cli init --mode=explorative
-                </span>
+      <div className="relative w-full">
+        <div className="z-10 mx-auto w-full max-w-container-terminal px-0 sm:px-6">
+          <TerminalWindow
+            prompt={
+              <>
+                <div className="mb-4">
+                  <span className="text-secondary">visitor@hash:~$</span>{' '}
+                  <span className="text-white">
+                    hash-cli init --mode=explorative
+                  </span>
+                </div>
+                <div className="mb-4 text-tertiary opacity-80">
+                  Initializing HASH context...
+                  <br />
+                  Loading semantic nodes...
+                  <br />
+                  Ready for input.
+                </div>
+              </>
+            }
+            cursor={
+              <div className="mt-2 flex items-center">
+                <span className="text-secondary">visitor@hash:~$</span>
+                <span className="ml-2 text-white">Y</span>
+                <span className="ml-1 h-5 w-2 animate-pulse bg-accent" />
               </div>
-              <div className="mb-4 text-tertiary opacity-80">
-                Initializing Digital Garden context...
-                <br />
-                Loading semantic nodes...
-                <br />
-                Ready for input.
-              </div>
-            </>
-          }
-          cursor={
-            <div className="mt-2 flex items-center">
-              <span className="text-secondary">visitor@garden:~$</span>
-              <span className="ml-2 text-white">Y</span>
-              <span className="ml-1 h-5 w-2 animate-pulse bg-accent" />
+            }
+          >
+            <div className="mb-4">
+              <span className="text-secondary">visitor@hash:~$</span>{' '}
+              <input
+                type="search"
+                aria-label="Search posts by title or content"
+                placeholder="Search title or content"
+                value={query}
+                onChange={(e) => onQueryChange(e.target.value)}
+                className="w-[min(100%,34rem)] bg-transparent text-white caret-accent outline-none placeholder:text-white"
+              />
             </div>
-          }
+            <div className="mb-4 text-accent">
+              Analyzing recent thought logs...
+              <br />- {totalPostCount} notes found in /posts
+              <br />- Updated reading index for &quot;Generative UI&quot;
+              <br />- Technical snippets synced via CLI
+              <br />
+              <br />
+              Shall I display the latest entries? (Y/n)
+            </div>
+          </TerminalWindow>
+        </div>
+
+        <a
+          href={notesHref}
+          className="absolute -right-4 top-1/2 z-10 flex -translate-y-1/2 items-center gap-2 text-on-secondary/30 transition-colors duration-300 ease-out animate-[bounce-x_1.5s_infinite] hover:text-accent"
         >
-          <div className="mb-4">
-            <span className="text-secondary">visitor@garden:~$</span>{' '}
-            <input
-              type="search"
-              aria-label="Search posts by title or content"
-              placeholder="Search title or content"
-              value={query}
-              onChange={(e) => onQueryChange(e.target.value)}
-              className="w-[min(100%,34rem)] bg-transparent text-white caret-accent outline-none placeholder:text-white"
-            />
-          </div>
-          <div className="mb-4 text-accent">
-            Analyzing recent thought logs...
-            <br />- {totalPostCount} notes found in /posts
-            <br />- Updated reading index for &quot;Generative UI&quot;
-            <br />- Technical snippets synced via CLI
-            <br />
-            <br />
-            Shall I display the latest entries? (Y/n)
-          </div>
-        </TerminalWindow>
+          <span
+            className="font-mono text-xs font-medium uppercase tracking-widest"
+            style={{ writingMode: 'vertical-rl' }}
+          >
+            Browse Notes
+          </span>
+          <svg
+            className="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M7 5l9 7-9 7" />
+          </svg>
+        </a>
       </div>
 
       <a
         href={articlesHref}
-        className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-on-secondary/30 transition-opacity duration-300 ease-out animate-bounce opacity-100"
+        className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-on-secondary/30 transition-colors duration-300 ease-out animate-bounce hover:text-accent"
       >
         <span className="font-mono text-xs font-medium uppercase tracking-widest">
           Scroll For Articles
         </span>
-        <span className="text-xl leading-none">v</span>
-      </a>
-
-      <a
-        href={notesHref}
-        className="absolute right-4 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-3 text-on-secondary/30 transition-colors duration-300 ease-out hover:text-accent sm:right-10"
-      >
-        <span
-          className="font-mono text-xs font-medium uppercase tracking-widest"
-          style={{ writingMode: 'vertical-rl' }}
+        <svg
+          className="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          Browse Notes
-        </span>
-        <span className="text-xl leading-none">&gt;</span>
+          <path d="M5 7l7 9 7-9" />
+        </svg>
       </a>
     </section>
   );
