@@ -106,6 +106,7 @@ describe('SourcesHttpController', () => {
           {
             sourceId: 'source-1',
             externalSourceId: 'Notes/source.md',
+            title: 'Source',
             fingerprint: 'fingerprint-1',
             sizeBytes: 14,
             createdAt: now,
@@ -130,6 +131,7 @@ describe('SourcesHttpController', () => {
           {
             sourceId: 'source-1',
             externalSourceId: 'Notes/source.md',
+            title: 'Source',
             fingerprint: 'fingerprint-1',
             sizeBytes: 14,
             createdAt: now.toISOString(),

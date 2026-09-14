@@ -18,6 +18,7 @@ export type SourceQuerySyncJobSummary = {
 export type SourceQueryListItem = {
   readonly sourceId: string;
   readonly externalSourceId: string;
+  readonly title: string;
   readonly fingerprint: string;
   readonly sizeBytes: number;
   readonly createdAt: Date;

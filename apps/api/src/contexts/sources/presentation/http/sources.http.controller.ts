@@ -42,6 +42,7 @@ export class SourcesHttpController {
       sources: result.sources.map((s) => ({
         sourceId: s.sourceId,
         externalSourceId: s.externalSourceId,
+        title: s.title,
         fingerprint: s.fingerprint,
         sizeBytes: s.sizeBytes,
         createdAt: s.createdAt.toISOString(),
