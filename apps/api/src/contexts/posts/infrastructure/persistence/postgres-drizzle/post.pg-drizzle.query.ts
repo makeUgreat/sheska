@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { count, desc, lt, sql } from 'drizzle-orm';
+import { count, desc, lt, sql, type SQL } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   type PostQuery,
@@ -25,9 +25,10 @@ type QuerySchema = typeof postsSchema;
 
 const ADAPTER = 'post.pg-drizzle';
 const TITLE_SEARCH_WEIGHT = 1;
-const CONTENT_SEARCH_WEIGHT = 0.4;
+const CONTENT_SEARCH_WEIGHT = TITLE_SEARCH_WEIGHT * 0.4;
 const RRF_K = 60;
 const CANDIDATE_POOL_SIZE = 50;
+const EMBEDDING_MAX_DISTANCE = 0.5;
 
 type PostWithSourceRow = {
   post_id: string;
@@ -149,6 +150,24 @@ export class PostPgDrizzleQuery implements PostQuery {
     }
   }
 
+  async count(): Promise<number> {
+    try {
+      const [row] = await this.db
+          .select({ count: count() })
+          .from(postsSchema.posts);
+      return row?.count ?? 0;
+    } catch (error: unknown) {
+      throw new InfrastructureException({
+        kind: classifyPostgresError(error),
+        code: 'post.count_failed',
+        source: { boundary: 'persistence', adapter: ADAPTER },
+        message: 'Post count operation failed',
+        details: {},
+        cause: error,
+      });
+    }
+  }
+
   // todo: 추후에 score 계산 서브쿼리 최적화 필요성 부하테스트 후 검증
   async search({
     query,
@@ -156,19 +175,11 @@ export class PostPgDrizzleQuery implements PostQuery {
     cursor,
     queryEmbedding,
   }: PostQuerySearchOptions): Promise<PostQuerySearchResult> {
-    const isFirstPage = cursor === null;
-
     try {
       const result =
         queryEmbedding === null
-          ? await this.searchByFts(query, limit, cursor, isFirstPage)
-          : await this.searchHybrid(
-              query,
-              queryEmbedding,
-              limit,
-              cursor,
-              isFirstPage,
-            );
+          ? await this.searchByFts(query, limit, cursor)
+          : await this.searchHybrid(query, queryEmbedding, limit, cursor);
 
       const rows = result.rows.map((row) => ({
         ...row,
@@ -198,24 +209,15 @@ export class PostPgDrizzleQuery implements PostQuery {
     query: string,
     limit: number,
     cursor: PostQuerySearchOptions['cursor'],
-    isFirstPage: boolean,
   ) {
     const tsQuery = sql`bigram_tsquery(${query})`;
-    const score = sql`
-      ts_rank(p.title_search_vector, ${tsQuery}, 2) * ${TITLE_SEARCH_WEIGHT}
-      + ts_rank(s.content_search_vector, ${tsQuery}, 2) * ${CONTENT_SEARCH_WEIGHT}
-    `;
-    const matchWhere = sql`(
-      p.title_search_vector @@ ${tsQuery}
-      OR s.content_search_vector @@ ${tsQuery}
-    )`;
-    const where =
-      isFirstPage || cursor === null
-        ? matchWhere
-        : sql`${matchWhere} AND (
-            (${score}) < ${cursor.score}
-            OR ((${score}) = ${cursor.score} AND p.id < ${cursor.id})
-          )`;
+    const score = this.ftsRelevanceScore(tsQuery);
+    const matchWhere = this.ftsMatchCondition(tsQuery);
+
+    const isFirstPage = cursor === null;
+    const where = isFirstPage
+      ? matchWhere
+      : this.matchWhereAfterCursor(matchWhere, score, cursor);
 
     return this.db.execute<SearchPostRow>(sql`
       SELECT p.id  AS "id",
@@ -238,38 +240,21 @@ export class PostPgDrizzleQuery implements PostQuery {
     queryEmbedding: number[],
     limit: number,
     cursor: PostQuerySearchOptions['cursor'],
-    isFirstPage: boolean,
   ) {
     const tsQuery = sql`bigram_tsquery(${query})`;
     const embeddingLiteral = `[${queryEmbedding.join(',')}]`;
-    const ftsScore = sql`
-      ts_rank(p.title_search_vector, ${tsQuery}, 2) * ${TITLE_SEARCH_WEIGHT}
-      + ts_rank(s.content_search_vector, ${tsQuery}, 2) * ${CONTENT_SEARCH_WEIGHT}
-    `;
-    const matchWhere = sql`(
-      p.title_search_vector @@ ${tsQuery}
-      OR s.content_search_vector @@ ${tsQuery}
-    )`;
-    const rrfScore = sql`(
-      COALESCE(1.0 / (${RRF_K} + f.fts_rank), 0)
-      + COALESCE(1.0 / (${RRF_K} + e.embedding_rank), 0)
-    )::double precision`;
-    const cursorWhere =
-      isFirstPage || cursor === null
-        ? sql``
-        : sql`WHERE (
-            ("searchScore") < ${cursor.score}
-            OR (("searchScore") = ${cursor.score} AND "id" < ${cursor.id})
-          )`;
+
+    const isFirstPage = cursor === null;
+    const cursorWhere = isFirstPage ? sql`` : this.fusedCursorWhere(cursor);
 
     return this.db.execute<SearchPostRow>(sql`
       WITH fts_candidates AS (
         SELECT
           p.id, p.source_id, p.title, p.view_count, p.created_at, p.updated_at,
-          RANK() OVER (ORDER BY (${ftsScore}) DESC) AS fts_rank
+          RANK() OVER (ORDER BY (${this.ftsRelevanceScore(tsQuery)}) DESC) AS fts_rank
         FROM posts p
         INNER JOIN sources s ON p.source_id = s.id
-        WHERE ${matchWhere}
+        WHERE ${this.ftsMatchCondition(tsQuery)}
         ORDER BY fts_rank
         LIMIT ${CANDIDATE_POOL_SIZE}
       ),
@@ -281,6 +266,7 @@ export class PostPgDrizzleQuery implements PostQuery {
           ) AS embedding_rank
         FROM posts p
         INNER JOIN source_embeddings se ON se.source_id = p.source_id
+        WHERE (se.embedding <=> ${embeddingLiteral}::vector) < ${EMBEDDING_MAX_DISTANCE}
         GROUP BY p.id, p.source_id, p.title, p.view_count, p.created_at, p.updated_at
         ORDER BY embedding_rank
         LIMIT ${CANDIDATE_POOL_SIZE}
@@ -293,7 +279,7 @@ export class PostPgDrizzleQuery implements PostQuery {
           COALESCE(f.view_count, e.view_count) AS "viewCount",
           COALESCE(f.created_at, e.created_at) AS "createdAt",
           COALESCE(f.updated_at, e.updated_at) AS "updatedAt",
-          (${rrfScore})                        AS "searchScore"
+          (${this.rrfFusionScore()})            AS "searchScore"
         FROM fts_candidates f
         FULL OUTER JOIN embedding_candidates e ON f.id = e.id
       )
@@ -304,22 +290,47 @@ export class PostPgDrizzleQuery implements PostQuery {
     `);
   }
 
-  async count(): Promise<number> {
-    try {
-      const [row] = await this.db
-        .select({ count: count() })
-        .from(postsSchema.posts);
-      return row?.count ?? 0;
-    } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
-        code: 'post.count_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
-        message: 'Post count operation failed',
-        details: {},
-        cause: error,
-      });
-    }
+  private ftsRelevanceScore(tsQuery: SQL): SQL {
+    const titleMatchScore = sql`ts_rank(p.title_search_vector, ${tsQuery}, 2) * ${TITLE_SEARCH_WEIGHT}`;
+    const contentMatchScore = sql`ts_rank(s.content_search_vector, ${tsQuery}, 2) * ${CONTENT_SEARCH_WEIGHT}`;
+    return sql`${titleMatchScore} + ${contentMatchScore}`;
+  }
+
+  private rrfFusionScore(): SQL {
+    return sql`(
+      COALESCE(1.0 / (${RRF_K} + f.fts_rank), 0)
+      + COALESCE(1.0 / (${RRF_K} + e.embedding_rank), 0)
+    )::double precision`;
+  }
+
+  private ftsMatchCondition(tsQuery: SQL): SQL {
+    return sql`(
+      p.title_search_vector @@ ${tsQuery}
+      OR s.content_search_vector @@ ${tsQuery}
+    )`;
+  }
+
+  private keysetTieBreak(
+    scoreExpr: SQL,
+    idExpr: SQL,
+    cursor: { score: number; id: string },
+  ): SQL {
+    return sql`(
+      (${scoreExpr}) < ${cursor.score}
+      OR ((${scoreExpr}) = ${cursor.score} AND (${idExpr}) < ${cursor.id})
+    )`;
+  }
+
+  private matchWhereAfterCursor(
+    matchWhere: SQL,
+    scoreExpr: SQL,
+    cursor: { score: number; id: string },
+  ): SQL {
+    return sql`${matchWhere} AND ${this.keysetTieBreak(scoreExpr, sql`p.id`, cursor)}`;
+  }
+
+  private fusedCursorWhere(cursor: { score: number; id: string }): SQL {
+    return sql`WHERE ${this.keysetTieBreak(sql`"searchScore"`, sql`"id"`, cursor)}`;
   }
 
   private toResult<TCursor extends PostQueryCursor>(
