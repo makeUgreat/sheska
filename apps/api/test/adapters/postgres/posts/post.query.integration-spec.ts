@@ -589,51 +589,6 @@ describe('PostPgDrizzleQuery', () => {
       );
     });
 
-    it('keyword-only 매치도 similarity가 null이 아니다 (하이브리드 경로)', async () => {
-      const source = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-keyword-similarity-hybrid.md' }),
-      );
-      const post = buildPost({
-        sourceId: source.id,
-        title: '러스트동시성모델설명',
-      });
-      await posts.save(post);
-      const queryEmbedding = Array.from({ length: 1024 }, () => 1);
-
-      const { posts: result } = await postQuery.search({
-        query: '러스트동시성모델설명',
-        limit: 20,
-        cursor: null,
-        queryEmbedding,
-      });
-
-      const found = result.find((p) => p.postId === post.id);
-      expect(found?.similarity).not.toBeNull();
-      expect(found?.similarity).toBeGreaterThan(0);
-    });
-
-    it('keyword-only 매치도 similarity가 null이 아니다 (순수 FTS 경로)', async () => {
-      const source = await sources.save(
-        buildSource({ externalSourceId: 'Notes/pq-keyword-similarity-fts.md' }),
-      );
-      const post = buildPost({
-        sourceId: source.id,
-        title: '코틀린코루틴완전정리',
-      });
-      await posts.save(post);
-
-      const { posts: result } = await postQuery.search({
-        query: '코틀린코루틴완전정리',
-        limit: 20,
-        cursor: null,
-        queryEmbedding: null,
-      });
-
-      const found = result.find((p) => p.postId === post.id);
-      expect(found?.similarity).not.toBeNull();
-      expect(found?.similarity).toBeGreaterThan(0);
-    });
-
     it('하이브리드 검색 결과를 nextCursor로 다음 페이지 조회한다', async () => {
       const hs1 = await sources.save(
         buildSource({ externalSourceId: 'Notes/pq-hybrid-cursor-1.md' }),

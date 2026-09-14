@@ -52,7 +52,6 @@ type SearchPostRow = {
   searchScore: number;
   matchReason: PostMatchReason;
   embeddingDistance: number | null;
-  ftsRank: number | null;
 };
 
 @Injectable()
@@ -233,8 +232,7 @@ export class PostPgDrizzleQuery implements PostQuery {
         p.updated_at AS "updatedAt",
         (${score})   AS "searchScore",
         'keyword'    AS "matchReason",
-        NULL::double precision AS "embeddingDistance",
-        RANK() OVER (ORDER BY (${score}) DESC) AS "ftsRank"
+        NULL::double precision AS "embeddingDistance"
       FROM posts p
       INNER JOIN sources s ON p.source_id = s.id
       WHERE ${where}
@@ -291,8 +289,7 @@ export class PostPgDrizzleQuery implements PostQuery {
           COALESCE(f.updated_at, e.updated_at) AS "updatedAt",
           (${this.rrfFusionScore()})            AS "searchScore",
           (${this.matchReasonCase()})           AS "matchReason",
-          e.embedding_distance                 AS "embeddingDistance",
-          f.fts_rank                           AS "ftsRank"
+          e.embedding_distance                 AS "embeddingDistance"
         FROM fts_candidates f
         FULL OUTER JOIN embedding_candidates e ON f.id = e.id
       )
@@ -387,22 +384,15 @@ export class PostPgDrizzleQuery implements PostQuery {
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         matchReason: row.matchReason,
-        similarity: this.toSimilarityPercent(row.embeddingDistance, row.ftsRank),
+        similarity: this.toSimilarityPercent(row.embeddingDistance),
       })),
       nextCursor,
     };
   }
 
-  private toSimilarityPercent(
-    embeddingDistance: number | null,
-    ftsRank: number | null,
-  ): number | null {
-    if (embeddingDistance !== null) {
-      return Math.min(100, Math.round((1 - embeddingDistance) * 100));
-    }
-    if (ftsRank !== null) {
-      return Math.min(100, Math.round(100 / ftsRank));
-    }
-    return null;
+  private toSimilarityPercent(embeddingDistance: number | null): number | null {
+    return embeddingDistance === null
+      ? null
+      : Math.round((1 - embeddingDistance) * 100);
   }
 }
