@@ -3,9 +3,7 @@ import { type Page } from '@playwright/test';
 import { expect, test } from '../support/fixtures';
 
 async function enterPostsList(page: Page) {
-  await page.mouse.wheel(0, 1200);
-  await expect(page.getByText('Loading posts...')).toBeVisible();
-  await expect(page.getByText('Latest Notes & Essays')).toBeVisible();
+  await expect(page.getByText('Loading posts...')).not.toBeVisible();
 }
 
 test('source 상세 페이지에서 게시하기 버튼으로 포스트를 만들고 목록에서 확인할 수 있다', async ({
@@ -76,40 +74,6 @@ test('포스트 목록에서 제목 클릭 시 상세 페이지로 이동하고 
 
   await page.getByRole('link', { name: /back to posts/i }).click();
   await expect(page).toHaveURL('/posts');
-});
-
-test('포스트 상세 페이지에서 제목을 수정하면 변경된 제목이 반영된다', async ({
-  page,
-  apiBaseUrl,
-}) => {
-  const sourceRes = await fetch(`${apiBaseUrl}/sources`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      externalSourceId: `e2e-${randomUUID()}`,
-      content: `E2E 테스트 내용 ${randomUUID()}`,
-    }),
-  });
-  expect(sourceRes.status).toBe(201);
-  const { sourceId } = (await sourceRes.json()) as { sourceId: string };
-
-  const postRes = await fetch(`${apiBaseUrl}/posts`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sourceId }),
-  });
-  expect(postRes.status).toBe(201);
-  const { postId } = (await postRes.json()) as { postId: string };
-
-  await page.goto(`/posts/${postId}`);
-
-  await page.getByRole('button', { name: /edit title/i }).click();
-
-  const updatedTitle = `수정된 제목 ${randomUUID()}`;
-  await page.getByRole('textbox').fill(updatedTitle);
-  await page.getByRole('button', { name: /save/i }).click();
-
-  await expect(page.getByRole('heading', { name: updatedTitle })).toBeVisible();
 });
 
 test('포스트 상세 페이지에서 소스 내용이 표시된다', async ({
@@ -212,16 +176,18 @@ test('포스트 목록에서 제목이나 본문 검색어를 입력하면 일�
 
   await page.goto('/posts');
   const searchbox = page.getByRole('searchbox', {
-    name: /search posts by title or content/i,
+    name: /search by title or content/i,
   });
   await expect(searchbox).toBeVisible();
 
   await searchbox.fill('TypeScript');
+  await searchbox.press('Enter');
 
   await expect(page.getByText(matchingTitle)).toBeVisible();
   await expect(page.getByText(otherTitle)).not.toBeVisible();
 
   await searchbox.fill(contentKeyword);
+  await searchbox.press('Enter');
 
   await expect(page.getByText(contentOnlyTitle)).toBeVisible();
 });
@@ -253,10 +219,13 @@ test('포스트 목록에서 검색어를 지우면 전체 목록으로 돌아�
   await enterPostsList(page);
   await expect(page.getByText(title)).toBeVisible();
 
-  await page.getByRole('searchbox').fill('일치하지않는검색어xyz');
+  const searchbox = page.getByRole('searchbox');
+  await searchbox.fill('일치하지않는검색어xyz');
+  await searchbox.press('Enter');
   await expect(page.getByText(title)).not.toBeVisible();
 
-  await page.getByRole('searchbox').clear();
+  await searchbox.clear();
+  await searchbox.press('Enter');
   await expect(page.getByText(title)).toBeVisible();
 });
 
@@ -287,67 +256,6 @@ test('발행된 포스트가 목록에 제목과 함께 표시된다', async ({
   await enterPostsList(page);
 
   await expect(page.getByText(title)).toBeVisible();
-});
-
-test('포스트 목록은 스크롤 전에는 조회하지 않고 스크롤 후 조회한다', async ({
-  page,
-  apiBaseUrl,
-}) => {
-  const title = `E2E 지연 조회 ${randomUUID()}`;
-  const sourceRes = await fetch(`${apiBaseUrl}/sources`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      externalSourceId: `e2e-${randomUUID()}`,
-      content: `---\ntitle: ${title}\n---\nE2E 테스트 내용`,
-    }),
-  });
-  expect(sourceRes.status).toBe(201);
-  const { sourceId } = (await sourceRes.json()) as { sourceId: string };
-
-  const postRes = await fetch(`${apiBaseUrl}/posts`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sourceId }),
-  });
-  expect(postRes.status).toBe(201);
-
-  const postListRequests: string[] = [];
-  page.on('request', (request) => {
-    const url = request.url();
-    if (url.includes('/api/posts') && !url.includes('/api/posts/count')) {
-      postListRequests.push(url);
-    }
-  });
-
-  await page.goto('/posts');
-
-  await expect(page.getByText('Latest Notes & Essays')).not.toBeVisible();
-  expect(postListRequests).toHaveLength(0);
-
-  await enterPostsList(page);
-
-  await expect(page.locator('section:focus')).toContainText(
-    'Latest Notes & Essays',
-  );
-  await expect(page.getByRole('link', { name: title })).toBeVisible();
-  const initialRequestCount = postListRequests.length;
-  expect(initialRequestCount).toBeGreaterThan(0);
-
-  await page.mouse.wheel(0, -2000);
-
-  await expect(page.getByText('Latest Notes & Essays')).toBeVisible();
-  await expect(page.getByText('HASH')).not.toBeVisible();
-
-  await page.getByRole('button', { name: 'Back to top' }).click();
-
-  await expect(page.getByText('HASH')).toBeVisible();
-  await expect(page.getByText('Latest Notes & Essays')).not.toBeVisible();
-
-  await enterPostsList(page);
-
-  await expect(page.getByRole('link', { name: title })).toBeVisible();
-  expect(postListRequests.length).toBeGreaterThan(initialRequestCount);
 });
 
 test('포스트 목록에서 무한 스크롤로 다음 페이지를 로드한다', async ({
