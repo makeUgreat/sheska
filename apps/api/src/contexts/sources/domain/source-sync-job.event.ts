@@ -6,9 +6,7 @@ interface SourceSyncJobCreatedDomainEventParams extends DomainEventParams {
   readonly fingerprint: string;
 }
 
-type SourceSyncJobCreatedEventName = 'source.sync_job.created';
-
-export class SourceSyncJobCreatedDomainEvent extends DomainEvent<SourceSyncJobCreatedEventName> {
+export class SourceSyncJobCreatedDomainEvent extends DomainEvent {
   readonly eventName = 'source.sync_job.created';
   readonly sourceId: string;
   readonly content: string;
@@ -21,3 +19,5 @@ export class SourceSyncJobCreatedDomainEvent extends DomainEvent<SourceSyncJobCr
     this.fingerprint = params.fingerprint;
   }
 }
+
+export type SourceSyncJobDomainEvent = SourceSyncJobCreatedDomainEvent;

@@ -2,10 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { type CallContext, type CallPolicy } from '@core/call-context';
 import {
-  IngestionFailedDomainEvent,
-  IngestionProgressDomainEvent,
-  IngestionStartedDomainEvent,
-} from '@contexts/ingestion/domain';
+  IngestionFailedIntegrationEvent,
+  IngestionProgressIntegrationEvent,
+  IngestionStartedIntegrationEvent,
+} from '@contexts/ingestion/application/events/ingestion.integration-event';
 import {
   type Embedder,
   type EmbedRequestPayload,
@@ -41,12 +41,11 @@ export class EmbedSourceContentUseCase {
     const { sourceId, syncJobId, content } = payload;
 
     const chunks = this.chunker.chunk(content);
-    const startedEvent = new IngestionStartedDomainEvent({
-      aggregateId: syncJobId,
+    const startedEvent = new IngestionStartedIntegrationEvent({
       syncJobId,
       totalChunks: chunks.length,
     });
-    this.eventEmitter.emit(startedEvent.eventName, startedEvent);
+    this.eventEmitter.emit(startedEvent.eventType, startedEvent);
 
     // Chunks are embedded one at a time (not in parallel) because the embedding
     // server runs on a single CPU inference slot; concurrent requests would only
@@ -63,13 +62,12 @@ export class EmbedSourceContentUseCase {
         embedding: result.embedding,
       });
 
-      const progressEvent = new IngestionProgressDomainEvent({
-        aggregateId: syncJobId,
+      const progressEvent = new IngestionProgressIntegrationEvent({
         syncJobId,
         processedChunks: embedChunks.length,
         totalChunks: chunks.length,
       });
-      this.eventEmitter.emit(progressEvent.eventName, progressEvent);
+      this.eventEmitter.emit(progressEvent.eventType, progressEvent);
     }
 
     await this.embedResultDispatcher.enqueue({
@@ -81,10 +79,9 @@ export class EmbedSourceContentUseCase {
   }
 
   handleFailure(payload: EmbedRequestPayload): void {
-    const event = new IngestionFailedDomainEvent({
-      aggregateId: payload.syncJobId,
+    const event = new IngestionFailedIntegrationEvent({
       syncJobId: payload.syncJobId,
     });
-    this.eventEmitter.emit(event.eventName, event);
+    this.eventEmitter.emit(event.eventType, event);
   }
 }

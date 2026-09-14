@@ -5,6 +5,7 @@ import { GetSourceUseCase } from '@contexts/sources/application/use-cases/get-so
 import { GetSourceSyncJobUseCase } from '@contexts/sources/application/use-cases/get-source-sync-job.use-case';
 import { ListSourcesUseCase } from '@contexts/sources/application/use-cases/list-sources.use-case';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
+import { ApplyIngestionUpdateUseCase } from '@contexts/sources/application/use-cases/apply-ingestion-update.use-case';
 import { SourceSha256Fingerprinter } from '@contexts/sources/infrastructure/fingerprinter/source.sha256.fingerprinter';
 import { SourcePgDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
 import { SourceSyncJobPgDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source-sync-job.pg-drizzle.repository';
@@ -13,7 +14,7 @@ import { SourcePgDrizzleQuery } from '@contexts/sources/infrastructure/persisten
 import { SourcesPgDrizzleUnitOfWork } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/sources.pg-drizzle.unit-of-work';
 import { SourcesHttpController } from '@contexts/sources/presentation/http/sources-http.controller';
 import { SourceSyncJobsHttpController } from '@contexts/sources/presentation/http/source-sync-jobs-http.controller';
-import { HandleIngestionResultHandler } from '@contexts/sources/application/event-handlers/handle-ingestion-result.handler';
+import { IngestionIntegrationEventConsumer } from '@contexts/sources/presentation/events/ingestion.integration-event.consumer';
 import {
   type SourceEmbeddingLookup as IngestionSourceEmbeddingLookup,
   SOURCE_EMBEDDING_LOOKUP as INGESTION_SOURCE_EMBEDDING_LOOKUP,
@@ -91,7 +92,10 @@ export class SourcesModule {
       module: SourcesModule,
       imports: [SourcesModule.forFeature()],
       controllers: [SourcesHttpController, SourceSyncJobsHttpController],
-      providers: [HandleIngestionResultHandler],
+      providers: [
+        ApplyIngestionUpdateUseCase,
+        IngestionIntegrationEventConsumer,
+      ],
     };
   }
 }

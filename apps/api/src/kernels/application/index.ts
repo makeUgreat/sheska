@@ -11,9 +11,8 @@ export {
 export { type LoggerPort } from './logger';
 export { LOGGER } from './logger.tokens';
 export {
-  createOutboxEvent,
-  type OutboxEvent,
-  type OutboxEventParams,
-} from './outbox-event.base';
+  IntegrationEvent,
+  type IntegrationEventParams,
+} from './integration-event.base';
 export { type OutboxWriter } from './outbox.writer';
 export { type UnitOfWork } from './unit-of-work';

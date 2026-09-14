@@ -18,4 +18,22 @@ describe('EmbedRequestBullMqDispatcher', () => {
 
     expect(add).toHaveBeenCalledWith('embed-request', payload);
   });
+
+  it('idempotency key를 BullMQ job id로 사용한다', async () => {
+    const add = vi.fn().mockResolvedValue(undefined);
+    const dispatcher = new EmbedRequestBullMqDispatcher({
+      add,
+    } as unknown as Queue);
+    const payload = {
+      sourceId: 'source-1',
+      syncJobId: 'sync-job-1',
+      content: '# Source note',
+    };
+
+    await dispatcher.enqueue(payload, { idempotencyKey: 'event-1' });
+
+    expect(add).toHaveBeenCalledWith('embed-request', payload, {
+      jobId: 'event-1',
+    });
+  });
 });

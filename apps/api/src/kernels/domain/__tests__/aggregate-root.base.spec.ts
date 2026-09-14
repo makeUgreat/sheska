@@ -9,7 +9,7 @@ interface SampleProps {
   name: string;
 }
 
-class SampleDomainEvent extends DomainEvent<'sample.changed'> {
+class SampleDomainEvent extends DomainEvent {
   readonly eventName = 'sample.changed';
   readonly name: string;
 
@@ -96,7 +96,7 @@ describe('AggregateRoot', () => {
     });
   });
 
-  describe('clearEvents', () => {
+  describe('clearDomainEvents', () => {
     it('기록된 domain event를 비운다', () => {
       const aggregate = SampleAggregateRoot.create({
         id: 'sample-1',
@@ -104,7 +104,7 @@ describe('AggregateRoot', () => {
 
       aggregate.changeName('summer');
 
-      aggregate.clearEvents();
+      aggregate.clearDomainEvents();
 
       expect(aggregate.domainEvents).toEqual([]);
     });

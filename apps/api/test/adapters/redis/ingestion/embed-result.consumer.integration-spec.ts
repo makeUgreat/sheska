@@ -9,9 +9,9 @@ import { SaveEmbeddingResultUseCase } from '@contexts/ingestion/application/use-
 import { LOGGER } from '@kernels/application';
 import { SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
 import {
-  IngestionCompletedDomainEvent,
-  IngestionFailedDomainEvent,
-} from '@contexts/ingestion/domain';
+  type IngestionCompletedIntegrationEvent,
+  type IngestionFailedIntegrationEvent,
+} from '@contexts/ingestion/application/events/ingestion.integration-event';
 import {
   EMBED_RESULTS_QUEUE,
   type EmbedResultPayload,
@@ -88,15 +88,18 @@ describe('EmbedResultBullMqConsumer', () => {
     expect(save).toHaveBeenCalledOnce();
     expect(emit).toHaveBeenCalledWith(
       'source.ingestion.completed',
-      expect.any(IngestionCompletedDomainEvent),
+      expect.objectContaining<Partial<IngestionCompletedIntegrationEvent>>({
+        eventType: 'source.ingestion.completed',
+        eventVersion: 1,
+      }),
     );
   });
 
-  it('save()가 실패하면 IngestionFailedDomainEvent를 emit한다', async () => {
+  it('save()가 실패하면 IngestionFailedIntegrationEvent를 emit한다', async () => {
     save.mockRejectedValue(new Error('DB error'));
     const eventEmitter = app.get(EventEmitter2);
 
-    const failedEventPromise = new Promise<IngestionFailedDomainEvent>(
+    const failedEventPromise = new Promise<IngestionFailedIntegrationEvent>(
       (resolve) => {
         eventEmitter.once('source.ingestion.failed', resolve);
       },
@@ -114,7 +117,10 @@ describe('EmbedResultBullMqConsumer', () => {
     );
 
     const event = await failedEventPromise;
-    expect(event).toBeInstanceOf(IngestionFailedDomainEvent);
-    expect(event.syncJobId).toBe('sync-job-1');
+    expect(event).toMatchObject({
+      eventType: 'source.ingestion.failed',
+      eventVersion: 1,
+      payload: { syncJobId: 'sync-job-1' },
+    });
   });
 });

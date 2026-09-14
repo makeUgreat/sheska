@@ -3,10 +3,10 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
 import {
-  IngestionFailedDomainEvent,
-  IngestionProgressDomainEvent,
-  IngestionStartedDomainEvent,
-} from '@contexts/ingestion/domain';
+  type IngestionFailedIntegrationEvent,
+  type IngestionProgressIntegrationEvent,
+  type IngestionStartedIntegrationEvent,
+} from '@contexts/ingestion/application/events/ingestion.integration-event';
 import {
   RecursiveCharacterChunker,
   DEFAULT_CHUNK_SIZE,
@@ -141,9 +141,13 @@ describe('EmbedSourceContentUseCase', () => {
 
       expect(emit).toHaveBeenCalledWith(
         'source.ingestion.started',
-        expect.objectContaining<Partial<IngestionStartedDomainEvent>>({
-          syncJobId: 'sync-job-1',
-          totalChunks: 3,
+        expect.objectContaining<Partial<IngestionStartedIntegrationEvent>>({
+          eventType: 'source.ingestion.started',
+          eventVersion: 1,
+          payload: {
+            syncJobId: 'sync-job-1',
+            totalChunks: 3,
+          },
         }),
       );
     });
@@ -178,7 +182,8 @@ describe('EmbedSourceContentUseCase', () => {
       expect(
         progressCalls.map(
           ([, event]) =>
-            (event as IngestionProgressDomainEvent).processedChunks,
+            (event as IngestionProgressIntegrationEvent).payload
+              .processedChunks,
         ),
       ).toEqual([1, 2, 3]);
     });
@@ -220,7 +225,10 @@ describe('EmbedSourceContentUseCase', () => {
       expect(emit).toHaveBeenCalledOnce();
       expect(emit).toHaveBeenCalledWith(
         'source.ingestion.failed',
-        expect.any(IngestionFailedDomainEvent),
+        expect.objectContaining({
+          eventType: 'source.ingestion.failed',
+          eventVersion: 1,
+        }),
       );
     });
 
@@ -236,8 +244,8 @@ describe('EmbedSourceContentUseCase', () => {
 
       useCase.handleFailure(buildPayload({ syncJobId: 'sync-job-42' }));
 
-      const event = emit.mock.calls[0][1] as IngestionFailedDomainEvent;
-      expect(event.syncJobId).toBe('sync-job-42');
+      const event = emit.mock.calls[0][1] as IngestionFailedIntegrationEvent;
+      expect(event.payload.syncJobId).toBe('sync-job-42');
     });
   });
 });
