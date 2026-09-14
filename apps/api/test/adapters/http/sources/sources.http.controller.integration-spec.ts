@@ -9,7 +9,7 @@ import {
   ApplicationException,
   APPLICATION_ERROR_KIND,
 } from '@kernels/application';
-import { SourcesHttpController } from '@contexts/sources/presentation/http/sources-http.controller';
+import { SourcesHttpController } from '@contexts/sources/presentation/http/sources.http.controller';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
 import { ZodValidationPipe } from '@platform/nest/pipes/zod-validation.pipe';
 import { LOGGER } from '@kernels/application';

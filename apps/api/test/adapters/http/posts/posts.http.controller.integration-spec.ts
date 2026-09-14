@@ -16,7 +16,7 @@ import {
   InfrastructureException,
   INFRASTRUCTURE_ERROR_KIND,
 } from '@kernels/infrastructure';
-import { PostsHttpController } from '@contexts/posts/presentation/http/posts-http.controller';
+import { PostsHttpController } from '@contexts/posts/presentation/http/posts.http.controller';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
 import { ZodValidationPipe } from '@platform/nest/pipes/zod-validation.pipe';
 import request from 'supertest';

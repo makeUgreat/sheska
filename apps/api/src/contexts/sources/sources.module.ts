@@ -13,8 +13,8 @@ import { SourceSyncJobPgDrizzleRepository } from '@contexts/sources/infrastructu
 import { SourceEmbeddingFromIngestionLookup } from '@contexts/sources/acl/ingestion/source-embedding.from-ingestion.lookup';
 import { SourcePgDrizzleQuery } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.query';
 import { SourcesPgDrizzleUnitOfWork } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/sources.pg-drizzle.unit-of-work';
-import { SourcesHttpController } from '@contexts/sources/presentation/http/sources-http.controller';
-import { SourceSyncJobsHttpController } from '@contexts/sources/presentation/http/source-sync-jobs-http.controller';
+import { SourcesHttpController } from '@contexts/sources/presentation/http/sources.http.controller';
+import { SourceSyncJobsHttpController } from '@contexts/sources/presentation/http/source-sync-jobs.http.controller';
 import { IngestionIntegrationEventConsumer } from '@contexts/sources/presentation/events/ingestion.integration-event.consumer';
 import {
   type SourceEmbeddingLookup as IngestionSourceEmbeddingLookup,

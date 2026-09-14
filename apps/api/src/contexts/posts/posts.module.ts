@@ -8,7 +8,7 @@ import { PostPgDrizzleRepository } from '@contexts/posts/infrastructure/persiste
 import { PostPgDrizzleQuery } from '@contexts/posts/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.query';
 import { SourceFromSourcesLookup } from '@contexts/posts/acl/sources/source.from-sources.lookup';
 import { SearchQueryFromIngestionEmbedder } from '@contexts/posts/acl/ingestion/search-query.from-ingestion.embedder';
-import { PostsHttpController } from '@contexts/posts/presentation/http/posts-http.controller';
+import { PostsHttpController } from '@contexts/posts/presentation/http/posts.http.controller';
 import {
   type SourceLookup as SourcesSourceLookup,
   SOURCE_LOOKUP as SOURCES_SOURCE_LOOKUP,

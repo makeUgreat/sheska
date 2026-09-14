@@ -10,7 +10,7 @@ import {
   InfrastructureException,
 } from '@kernels/infrastructure';
 import { GetSourceSyncJobUseCase } from '@contexts/sources/application/use-cases/get-source-sync-job.use-case';
-import { SourceSyncJobsHttpController } from '@contexts/sources/presentation/http/source-sync-jobs-http.controller';
+import { SourceSyncJobsHttpController } from '@contexts/sources/presentation/http/source-sync-jobs.http.controller';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
 
 describe('SourceSyncJobsHttpController', () => {
