@@ -16,8 +16,9 @@ export class SourceFromRepositoryLookup implements SourceLookup {
     const source = await this.sources.get({ id: sourceId });
     const props = source.getProps();
     return {
-      content: props.contentSnapshot.unpack().content,
       externalSourceId: props.externalSourceId.unpack(),
+      title: props.contentSnapshot.unpack().title,
+      body: props.contentSnapshot.unpack().body,
     };
   }
 
@@ -26,8 +27,9 @@ export class SourceFromRepositoryLookup implements SourceLookup {
     if (source === null) return null;
     const props = source.getProps();
     return {
-      content: props.contentSnapshot.unpack().content,
       externalSourceId: props.externalSourceId.unpack(),
+      title: props.contentSnapshot.unpack().title,
+      body: props.contentSnapshot.unpack().body,
     };
   }
 }

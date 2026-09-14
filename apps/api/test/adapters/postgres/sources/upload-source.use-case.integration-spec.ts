@@ -95,7 +95,9 @@ describe('UploadSourceUseCase', () => {
     const source = await sources.find({ externalSourceId });
     expect(source?.id).toBe(result.sourceId);
     expect(source?.getProps().contentSnapshot.unpack()).toEqual({
-      content,
+      body: content,
+      frontmatter: {},
+      title: externalSourceId,
       fingerprint,
       size: sourceContentByteSize(content),
     });
@@ -170,6 +172,45 @@ describe('UploadSourceUseCase', () => {
     expect(persistedSyncJobs).toHaveLength(1);
   });
 
+  it('frontmatter 전체와 body를 분리하고 body만 임베딩 대상으로 전달한다', async () => {
+    const externalSourceId = 'Notes/upload-usecase-frontmatter.md';
+    const content = `---
+title: Retry Amplification
+aliases:
+  - Nested Retries
+custom:
+  status: draft
+---
+# Retry body`;
+    const fingerprint = useFingerprint(content, 'fingerprint-frontmatter');
+
+    const result = await useCase.execute({ externalSourceId, content });
+
+    const source = await sources.get({ id: result.sourceId });
+    expect(source.getProps().contentSnapshot.unpack()).toEqual({
+      body: '# Retry body',
+      frontmatter: {
+        title: 'Retry Amplification',
+        aliases: ['Nested Retries'],
+        custom: { status: 'draft' },
+      },
+      title: 'Retry Amplification',
+      fingerprint,
+      size: sourceContentByteSize(content),
+    });
+
+    const messages = await database
+      .select()
+      .from(outboxMessages)
+      .where(eq(outboxMessages.eventType, 'source.sync_job.created'));
+    const message = messages.find(
+      (candidate) =>
+        (candidate.payload as { syncJobId?: string }).syncJobId ===
+        result.syncJobId,
+    );
+    expect(message?.payload).toMatchObject({ content: '# Retry body' });
+  });
+
   it('같은 content를 다시 업로드할 때 임베딩이 최신이면 저장 갱신과 sync job 생성을 건너뛴다', async () => {
     const externalSourceId = 'Notes/upload-usecase-unchanged-with-embedding.md';
     const content = '# Same source note with embedding';
@@ -232,7 +273,9 @@ describe('UploadSourceUseCase', () => {
 
     const source = await sources.find({ externalSourceId });
     expect(source?.getProps().contentSnapshot.unpack()).toEqual({
-      content: newContent,
+      body: newContent,
+      frontmatter: {},
+      title: externalSourceId,
       fingerprint: newFingerprint,
       size: sourceContentByteSize(newContent),
     });

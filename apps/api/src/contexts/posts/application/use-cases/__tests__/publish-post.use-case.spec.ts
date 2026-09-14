@@ -1,6 +1,6 @@
 import { type PostRepository } from '@contexts/posts/domain';
 import {
-  type PublishableSourceContent,
+  type PublishableSource,
   type SourceLookup,
 } from '@contexts/posts/application/ports';
 import { APPLICATION_ERROR_KIND } from '@kernels/application';
@@ -19,14 +19,12 @@ type SourceLookupMock = {
   find: MockedFunction<SourceLookup['find']>;
 };
 
-const sourceContentWithFrontmatter: PublishableSourceContent = {
-  content: '---\ntitle: 테스트 포스트\n---\n본문',
-  externalSourceId: 'Notes/test.md',
+const sourceContentWithFrontmatter: PublishableSource = {
+  title: '테스트 포스트',
 };
 
-const sourceContentWithoutFrontmatter: PublishableSourceContent = {
-  content: '# 프론트매터 없는 마크다운',
-  externalSourceId: 'Notes/test.md',
+const sourceContentWithoutFrontmatter: PublishableSource = {
+  title: 'Notes/test.md',
 };
 
 describe('PublishPostUseCase', () => {
@@ -154,7 +152,7 @@ function createPostRepositoryMock(): PostRepositoryMock {
 function createSourceLookupMock({
   sourceContent,
 }: {
-  sourceContent: PublishableSourceContent;
+  sourceContent: PublishableSource;
 }): SourceLookupMock {
   return {
     get: vi.fn<SourceLookup['get']>().mockResolvedValue(sourceContent),

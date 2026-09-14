@@ -49,7 +49,7 @@ app -> pages -> widgets -> features -> entities -> shared
 
 `widgets` owns complete UI blocks that combine features, entities, and shared UI.
 
-`features` owns user interactions and workflow state, such as archive search state, post title updates, or source publishing.
+`features` owns user interactions and workflow state, such as archive search state or source publishing.
 
 `entities` owns domain contracts, API clients, query hooks, and minimal reusable entity UI.
 

@@ -86,7 +86,7 @@ describe('HttpClient', () => {
 
   describe('patch', () => {
     it('JSON body로 PATCH 요청을 보낸다', async () => {
-      const response = { postId: 'post-1', title: 'Updated' };
+      const response = { resourceId: 'resource-1', status: 'active' };
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({
@@ -95,13 +95,18 @@ describe('HttpClient', () => {
         }),
       );
 
-      const result = await client.patch('/posts/post-1', { title: 'Updated' });
-
-      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/posts/post-1', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: 'Updated' }),
+      const result = await client.patch('/resources/resource-1', {
+        status: 'active',
       });
+
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:3000/resources/resource-1',
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'active' }),
+        },
+      );
       expect(result).toEqual(response);
     });
   });

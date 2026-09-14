@@ -1,6 +1,7 @@
 import { AggregateRoot, newId } from '@kernels/domain';
 import { ExternalSourceId } from './external-source-id.vo';
 import { SourceContentSnapshot } from './source-content-snapshot.vo';
+import { type SourceFrontmatter } from './source-frontmatter';
 
 interface SourceProps {
   externalSourceId: ExternalSourceId;
@@ -10,7 +11,9 @@ interface SourceProps {
 interface SourceRestoreParams {
   id: string;
   externalSourceId: string;
-  content: string;
+  frontmatter: SourceFrontmatter;
+  title: string;
+  body: string;
   fingerprint: string;
   size: number;
   createdAt?: Date;
@@ -19,8 +22,11 @@ interface SourceRestoreParams {
 
 interface SourceCreateParams {
   externalSourceId: string;
-  content: string;
+  frontmatter: SourceFrontmatter;
+  title: string | null;
+  body: string;
   fingerprint: string;
+  size: number;
 }
 
 export interface SyncContentSnapshotResult {
@@ -30,14 +36,15 @@ export interface SyncContentSnapshotResult {
 
 export class Source extends AggregateRoot<SourceProps> {
   static create(params: SourceCreateParams): Source {
-    const { externalSourceId, content, fingerprint } = params;
+    const { externalSourceId, ...snapshot } = params;
+    const sourceId = ExternalSourceId.of(externalSourceId);
     return new Source({
       id: newId(),
       props: {
-        externalSourceId: ExternalSourceId.of(externalSourceId),
+        externalSourceId: sourceId,
         contentSnapshot: SourceContentSnapshot.create({
-          content,
-          fingerprint,
+          ...snapshot,
+          title: snapshot.title ?? sourceId.unpack(),
         }),
       },
     });
@@ -47,7 +54,9 @@ export class Source extends AggregateRoot<SourceProps> {
     const {
       id,
       externalSourceId,
-      content,
+      body,
+      frontmatter,
+      title,
       fingerprint,
       size,
       createdAt,
@@ -59,7 +68,9 @@ export class Source extends AggregateRoot<SourceProps> {
       props: {
         externalSourceId: ExternalSourceId.of(externalSourceId),
         contentSnapshot: SourceContentSnapshot.restore({
-          content,
+          body,
+          frontmatter,
+          title,
           fingerprint,
           size,
         }),
@@ -70,10 +81,16 @@ export class Source extends AggregateRoot<SourceProps> {
   }
 
   syncContentSnapshot(params: {
-    content: string;
+    frontmatter: SourceFrontmatter;
+    title: string | null;
+    body: string;
     fingerprint: string;
+    size: number;
   }): SyncContentSnapshotResult {
-    const contentSnapshot = SourceContentSnapshot.create(params);
+    const contentSnapshot = SourceContentSnapshot.create({
+      ...params,
+      title: params.title ?? this.props.externalSourceId.unpack(),
+    });
 
     if (this.props.contentSnapshot.hasSameContentAs(contentSnapshot)) {
       return { source: this, changed: false };

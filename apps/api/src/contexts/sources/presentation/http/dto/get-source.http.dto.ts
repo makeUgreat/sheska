@@ -16,7 +16,9 @@ export interface EmbeddingHttpResponse {
 export interface GetSourceHttpResponse {
   readonly sourceId: string;
   readonly externalSourceId: string;
-  readonly content: string;
+  readonly frontmatter: Readonly<Record<string, unknown>>;
+  readonly title: string;
+  readonly body: string;
   readonly fingerprint: string;
   readonly sizeBytes: number;
   readonly createdAt: string;

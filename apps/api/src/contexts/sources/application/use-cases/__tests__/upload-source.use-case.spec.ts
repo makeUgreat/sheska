@@ -459,15 +459,26 @@ describe('UploadSourceUseCase', () => {
 });
 
 function createContentSnapshotCalculatorMock(
-  snapshot = {
-    content: '# Source note',
-    fingerprint: 'fingerprint-1',
-  },
+  snapshot: {
+    content?: string;
+    body?: string;
+    frontmatter?: Record<string, never>;
+    title?: string | null;
+    fingerprint: string;
+    size?: number;
+  } = { content: '# Source note', fingerprint: 'fingerprint-1' },
 ): ContentSnapshotCalculatorMock {
+  const body = snapshot.body ?? snapshot.content ?? '';
   return {
     calculate: vi
       .fn<UploadSourceContentSnapshotCalculator['calculate']>()
-      .mockResolvedValue(snapshot),
+      .mockResolvedValue({
+        body,
+        frontmatter: snapshot.frontmatter ?? {},
+        title: snapshot.title ?? null,
+        fingerprint: snapshot.fingerprint,
+        size: snapshot.size ?? sourceContentByteSize(snapshot.content ?? body),
+      }),
   };
 }
 
@@ -542,7 +553,9 @@ function expectSourceSavedWith(
     expected.externalSourceId,
   );
   expect(savedSource?.getProps().contentSnapshot.unpack()).toEqual({
-    content: expected.content,
+    body: expected.content,
+    frontmatter: {},
+    title: expected.externalSourceId,
     fingerprint: expected.fingerprint,
     size: sourceContentByteSize(expected.content),
   });
@@ -581,7 +594,12 @@ function restoreSource(params: {
   fingerprint: string;
 }) {
   return Source.restore({
-    ...params,
+    id: params.id,
+    externalSourceId: params.externalSourceId,
+    body: params.content,
+    frontmatter: {},
+    title: params.externalSourceId,
+    fingerprint: params.fingerprint,
     size: sourceContentByteSize(params.content),
   });
 }

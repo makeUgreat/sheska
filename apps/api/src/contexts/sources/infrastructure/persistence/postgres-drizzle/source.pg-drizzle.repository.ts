@@ -122,7 +122,9 @@ export class SourcePgDrizzleRepository implements SourceRepository {
           target: schema.sources.id,
           set: {
             externalSourceId: sourceInsert.externalSourceId,
-            content: sourceInsert.content,
+            frontmatter: sourceInsert.frontmatter,
+            title: sourceInsert.title,
+            body: sourceInsert.body,
             fingerprint: sourceInsert.fingerprint,
             sizeBytes: sourceInsert.sizeBytes,
             updatedAt: new Date(),

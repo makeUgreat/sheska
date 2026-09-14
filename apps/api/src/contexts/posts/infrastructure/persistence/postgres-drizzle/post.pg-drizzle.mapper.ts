@@ -6,7 +6,6 @@ export class PostPgDrizzleMapper {
     return Post.restore({
       id: row.id,
       sourceId: row.sourceId,
-      title: row.title,
       viewCount: row.viewCount,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -19,7 +18,6 @@ export class PostPgDrizzleMapper {
     return {
       id: post.id,
       sourceId: props.sourceId,
-      title: props.title.unpack(),
       viewCount: props.viewCount.unpack(),
     };
   }

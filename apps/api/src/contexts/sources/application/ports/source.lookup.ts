@@ -1,6 +1,7 @@
 export interface SourceDocument {
-  readonly content: string;
   readonly externalSourceId: string;
+  readonly title: string;
+  readonly body: string;
 }
 
 export interface SourceLookup {

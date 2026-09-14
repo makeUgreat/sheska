@@ -1,4 +1,9 @@
 export type { SourceFingerprinter } from './source.fingerprinter';
+export type {
+  SourceDocumentParser,
+  ParsedSourceDocument,
+  ParseSourceDocumentResult,
+} from './source-document.parser';
 export type { SourceLookup, SourceDocument } from './source.lookup';
 export type {
   SourceEmbeddingLookup,

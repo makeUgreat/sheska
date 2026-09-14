@@ -8,8 +8,6 @@ import {
   type PublishPostResponse,
   type SearchPostsParams,
   type SearchPostsResponse,
-  type UpdatePostRequest,
-  type UpdatePostResponse,
 } from './types';
 
 export function listPosts(
@@ -53,12 +51,4 @@ export function publishPost(
   req: PublishPostRequest,
 ): Promise<PublishPostResponse> {
   return http.post<PublishPostResponse>('/posts', req);
-}
-
-export function updatePost(
-  http: HttpClient,
-  id: string,
-  req: UpdatePostRequest,
-): Promise<UpdatePostResponse> {
-  return http.patch<UpdatePostResponse>(`/posts/${id}`, req);
 }

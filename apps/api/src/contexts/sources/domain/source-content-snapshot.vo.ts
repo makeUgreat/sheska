@@ -6,9 +6,12 @@ import {
 import { SourceFingerprint } from './source-fingerprint.vo';
 import { SourceContent } from './source-content.vo';
 import { SourceSize } from './source-size.vo';
+import { type SourceFrontmatter } from './source-frontmatter';
 
 interface SourceContentSnapshotProps {
-  content: string;
+  frontmatter: SourceFrontmatter;
+  title: string;
+  body: string;
   fingerprint: string;
   size: number;
 }
@@ -19,32 +22,41 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
   }
 
   static create(params: {
-    content: string;
+    frontmatter: SourceFrontmatter;
+    title: string;
+    body: string;
     fingerprint: string;
+    size: number;
   }): SourceContentSnapshot {
-    const { content, fingerprint } = params;
-    const sourceContent = SourceContent.of(content);
+    const { body, frontmatter, title, fingerprint, size } = params;
+    const sourceContent = SourceContent.of(body);
     const sourceFingerprint = SourceFingerprint.of(fingerprint);
 
     return new SourceContentSnapshot({
-      content: sourceContent.unpack(),
+      body: sourceContent.unpack(),
+      frontmatter,
+      title,
       fingerprint: sourceFingerprint.unpack(),
-      size: SourceSize.of(sourceContent.byteSize).unpack(),
+      size: SourceSize.of(size).unpack(),
     });
   }
 
   static restore(params: {
-    content: string;
+    frontmatter: SourceFrontmatter;
+    title: string;
+    body: string;
     fingerprint: string;
     size: number;
   }): SourceContentSnapshot {
-    const { content, fingerprint, size } = params;
-    const sourceContent = SourceContent.of(content);
+    const { body, frontmatter, title, fingerprint, size } = params;
+    const sourceContent = SourceContent.of(body);
     const sourceFingerprint = SourceFingerprint.of(fingerprint);
     const sourceSize = SourceSize.of(size);
 
     return new SourceContentSnapshot({
-      content: sourceContent.unpack(),
+      body: sourceContent.unpack(),
+      frontmatter,
+      title,
       fingerprint: sourceFingerprint.unpack(),
       size: sourceSize.unpack(),
     });
@@ -58,12 +70,12 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
   }
 
   protected validate(props: SourceContentSnapshotProps): void {
-    if (!SourceContent.of(props.content).hasByteSize(props.size)) {
+    if (props.title.trim().length === 0) {
       throw new DomainException({
         kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
-        code: 'source.size_content_mismatch',
-        message: 'Source size must match content byte size',
-        details: { fields: ['size', 'content'] },
+        code: 'source.invalid_title',
+        message: 'Source title must not be blank',
+        details: { fields: ['title'] },
       });
     }
   }

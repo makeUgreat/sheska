@@ -5,7 +5,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -18,7 +17,6 @@ import {
   SearchPostsUseCase,
 } from '@contexts/posts/application/use-cases/search-posts.use-case';
 import { CountPostsUseCase } from '@contexts/posts/application/use-cases/count-posts.use-case';
-import { UpdatePostTitleUseCase } from '@contexts/posts/application/use-cases/update-post-title.use-case';
 import {
   PublishPostHttpRequest,
   type PublishPostHttpResponse,
@@ -34,10 +32,6 @@ import {
   type SearchPostsHttpResponse,
 } from './dto/search-posts.http.dto';
 import { type CountPostsHttpResponse } from './dto/count-posts.http.dto';
-import {
-  UpdatePostHttpRequest,
-  type UpdatePostHttpResponse,
-} from './dto/update-post.http.dto';
 
 @Controller('posts')
 export class PostsHttpController {
@@ -47,7 +41,6 @@ export class PostsHttpController {
     private readonly listPostsUseCase: ListPostsUseCase,
     private readonly searchPostsUseCase: SearchPostsUseCase,
     private readonly countPostsUseCase: CountPostsUseCase,
-    private readonly updatePostTitleUseCase: UpdatePostTitleUseCase,
   ) {}
 
   @Get()
@@ -137,27 +130,7 @@ export class PostsHttpController {
       postId: result.postId,
       sourceId: result.sourceId,
       title: result.title,
-      viewCount: result.viewCount,
-      createdAt: result.createdAt.toISOString(),
-      updatedAt: result.updatedAt.toISOString(),
-      sourceContent: result.sourceContent,
-    };
-  }
-
-  @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() request: UpdatePostHttpRequest,
-  ): Promise<UpdatePostHttpResponse> {
-    const result = await this.updatePostTitleUseCase.execute({
-      postId: id,
-      title: request.title,
-    });
-
-    return {
-      postId: result.postId,
-      sourceId: result.sourceId,
-      title: result.title,
+      body: result.body,
       viewCount: result.viewCount,
       createdAt: result.createdAt.toISOString(),
       updatedAt: result.updatedAt.toISOString(),

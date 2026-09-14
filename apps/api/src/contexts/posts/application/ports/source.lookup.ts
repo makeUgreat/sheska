@@ -1,9 +1,8 @@
-export interface PublishableSourceContent {
-  readonly content: string;
-  readonly externalSourceId: string;
+export interface PublishableSource {
+  readonly title: string;
 }
 
 export interface SourceLookup {
-  get(sourceId: string): Promise<PublishableSourceContent>;
-  find(sourceId: string): Promise<PublishableSourceContent | null>;
+  get(sourceId: string): Promise<PublishableSource>;
+  find(sourceId: string): Promise<PublishableSource | null>;
 }

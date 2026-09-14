@@ -48,20 +48,7 @@ export interface GetPostResponse {
   postId: string;
   sourceId: string;
   title: string;
-  viewCount: number;
-  createdAt: string;
-  updatedAt: string;
-  sourceContent: string;
-}
-
-export interface UpdatePostRequest {
-  title: string;
-}
-
-export interface UpdatePostResponse {
-  postId: string;
-  sourceId: string;
-  title: string;
+  body: string;
   viewCount: number;
   createdAt: string;
   updatedAt: string;

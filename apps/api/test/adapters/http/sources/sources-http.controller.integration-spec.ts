@@ -240,7 +240,9 @@ describe('SourcesHttpController', () => {
       getSourceUseCase.execute.mockResolvedValue({
         sourceId: 'source-1',
         externalSourceId: 'Notes/source.md',
-        content: '# Source note',
+        body: '# Source note',
+        frontmatter: { title: 'Source note' },
+        title: 'Source note',
         fingerprint: 'fingerprint-1',
         sizeBytes: 14,
         createdAt: now,
@@ -268,7 +270,9 @@ describe('SourcesHttpController', () => {
       expect(response.body).toMatchObject({
         sourceId: 'source-1',
         externalSourceId: 'Notes/source.md',
-        content: '# Source note',
+        body: '# Source note',
+        frontmatter: { title: 'Source note' },
+        title: 'Source note',
         fingerprint: 'fingerprint-1',
         sizeBytes: 14,
         createdAt: now.toISOString(),

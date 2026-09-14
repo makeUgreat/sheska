@@ -11,9 +11,8 @@ import {
   listPosts,
   publishPost,
   searchPosts,
-  updatePost,
 } from './client';
-import { type PublishPostRequest, type UpdatePostRequest } from './types';
+import { type PublishPostRequest } from './types';
 
 export function usePost(id: string | undefined) {
   const http = useHttpClient();
@@ -67,18 +66,6 @@ export function usePublishPost() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['posts'] });
       void queryClient.invalidateQueries({ queryKey: ['sources'] });
-    },
-  });
-}
-
-export function useUpdatePost(postId: string) {
-  const http = useHttpClient();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (req: UpdatePostRequest) => updatePost(http, postId, req),
-    onSuccess: (data) => {
-      queryClient.setQueryData(['posts', postId], data);
-      void queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
   });
 }

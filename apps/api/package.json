@@ -63,6 +63,7 @@
     "cockatiel": "^4.0.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "1.0.0-beta.22",
+    "gray-matter": "^4.0.3",
     "nestjs-pino": "^4.6.1",
     "pg": "^8.22.0",
     "pino-http": "^11.0.0",
@@ -70,6 +71,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "uuid": "^14.0.1",
+    "yaml": "^2.9.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {

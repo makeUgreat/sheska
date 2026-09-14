@@ -199,6 +199,7 @@ describe('entity API clients', () => {
         postId: published.postId,
         sourceId: uploaded.sourceId,
         title,
+        body: expect.any(String),
         viewCount: expect.any(Number),
         createdAt: expect.any(String),
         updatedAt: expect.any(String),

@@ -19,8 +19,11 @@ describe('SourceFromRepositoryLookup', () => {
     it('저장된 Source를 content/externalSourceId로 매핑해 반환한다', async () => {
       const source = Source.create({
         externalSourceId: 'external-1',
-        content: '# Source note',
+        body: '# Source note',
+        frontmatter: { title: 'Source note' },
+        title: 'Source note',
         fingerprint: 'fingerprint-1',
+        size: 50,
       });
       const repository = buildMockRepository({
         get: vi.fn().mockResolvedValue(source),
@@ -30,7 +33,8 @@ describe('SourceFromRepositoryLookup', () => {
       const result = await service.get('source-1');
 
       expect(result).toEqual({
-        content: '# Source note',
+        body: '# Source note',
+        title: 'Source note',
         externalSourceId: 'external-1',
       });
     });

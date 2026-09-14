@@ -7,6 +7,7 @@ import { ListSourcesUseCase } from '@contexts/sources/application/use-cases/list
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
 import { ApplyIngestionUpdateUseCase } from '@contexts/sources/application/use-cases/apply-ingestion-update.use-case';
 import { SourceSha256Fingerprinter } from '@contexts/sources/infrastructure/fingerprinter/source.sha256.fingerprinter';
+import { SourceDocumentYamlParser } from '@contexts/sources/infrastructure/parser/source-document.yaml.parser';
 import { SourcePgDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
 import { SourceSyncJobPgDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source-sync-job.pg-drizzle.repository';
 import { SourceEmbeddingFromIngestionLookup } from '@contexts/sources/acl/ingestion/source-embedding.from-ingestion.lookup';
@@ -22,6 +23,7 @@ import {
 } from '@contexts/ingestion';
 import {
   SOURCE_FINGERPRINTER,
+  SOURCE_DOCUMENT_PARSER,
   SOURCE_REPOSITORY,
   SOURCE_SYNC_JOB_REPOSITORY,
   SOURCE_EMBEDDING_LOOKUP,
@@ -42,6 +44,10 @@ export class SourcesModule {
         {
           provide: SOURCE_FINGERPRINTER,
           useClass: SourceSha256Fingerprinter,
+        },
+        {
+          provide: SOURCE_DOCUMENT_PARSER,
+          useClass: SourceDocumentYamlParser,
         },
         {
           provide: SOURCE_REPOSITORY,
