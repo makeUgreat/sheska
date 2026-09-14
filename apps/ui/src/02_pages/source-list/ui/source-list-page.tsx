@@ -5,6 +5,7 @@ import {
   type SyncJobSummary,
   useInfiniteListSources,
 } from '@/entities/source';
+import { formatBytes } from '@/shared/lib';
 
 function SourceSyncJobStatus({ syncJob }: { syncJob: SyncJobSummary | null }) {
   if (!syncJob) {
@@ -89,7 +90,7 @@ export function SourceListPage() {
                       {s.publishedPostId && <PublishedBadge />}
                       <SourceSyncJobStatus syncJob={s.latestSyncJob} />
                       <span className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
-                        {s.sizeBytes} bytes ·{' '}
+                        {formatBytes(s.sizeBytes)} ·{' '}
                         {new Date(s.updatedAt).toLocaleString()}
                       </span>
                     </div>

@@ -8,6 +8,40 @@ import {
   useSyncJob,
 } from '@/entities/source';
 import { PublishPostPanel } from '@/features/publish-post';
+import { formatBytes } from '@/shared/lib';
+
+function formatFrontmatterValue(value: unknown): string {
+  return typeof value === 'string' ? value : JSON.stringify(value);
+}
+
+function FrontmatterSection({
+  frontmatter,
+}: {
+  frontmatter: Record<string, unknown>;
+}) {
+  const entries = Object.entries(frontmatter);
+  if (entries.length === 0) return null;
+
+  return (
+    <section className="mb-8">
+      <h2 className="mb-3 text-base font-semibold text-gray-950">
+        Frontmatter
+      </h2>
+      <dl className="grid gap-4 rounded-lg border border-gray-200 bg-page-background p-5 sm:grid-cols-2">
+        {entries.map(([key, value]) => (
+          <div key={key}>
+            <dt className="text-xs font-medium uppercase text-gray-500">
+              {key}
+            </dt>
+            <dd className="mt-1 break-words text-sm text-gray-900">
+              {formatFrontmatterValue(value)}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
 
 function SyncJobSection({ syncJob }: { syncJob: SyncJobSummary | null }) {
   if (!syncJob) {
@@ -118,10 +152,13 @@ export function SourceDetailPage() {
               Source
             </p>
             <h1 className="break-words text-3xl font-bold text-gray-950">
-              {source.externalSourceId}
+              {source.title}
             </h1>
+            <p className="mt-1 break-words text-sm text-gray-500">
+              {source.externalSourceId}
+            </p>
             <p className="mt-3 text-sm text-gray-500">
-              {source.sizeBytes} bytes · Updated{' '}
+              {formatBytes(source.sizeBytes)} · Updated{' '}
               {new Date(source.updatedAt).toLocaleString()}
             </p>
           </header>
@@ -141,7 +178,7 @@ export function SourceDetailPage() {
                   Size
                 </dt>
                 <dd className="mt-1 text-sm text-gray-900">
-                  {source.sizeBytes} bytes
+                  {formatBytes(source.sizeBytes)}
                 </dd>
               </div>
               <div className="sm:col-span-2">
@@ -180,12 +217,14 @@ export function SourceDetailPage() {
             />
           </section>
 
+          <FrontmatterSection frontmatter={source.frontmatter} />
+
           <section>
             <h2 className="mb-3 text-base font-semibold text-gray-950">
               Content
             </h2>
             <pre className="max-h-[36rem] overflow-auto whitespace-pre-wrap rounded-lg border border-gray-200 bg-gray-950 p-5 text-sm leading-6 text-gray-100">
-              {source.content}
+              {source.body}
             </pre>
           </section>
         </>

@@ -24,7 +24,9 @@ const NOW = '2026-01-01T00:00:00.000Z';
 const MOCK_SOURCE: GetSourceResponse = {
   sourceId: 'source-1',
   externalSourceId: 'Notes/source.md',
-  content: '# Source note',
+  frontmatter: { tags: ['note', 'e2e'] },
+  title: 'Source note',
+  body: '# Source note',
   fingerprint: 'fingerprint-1',
   sizeBytes: 14,
   createdAt: NOW,
@@ -100,8 +102,11 @@ describe('SourceDetailPage', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('heading', { name: 'Notes/source.md' }),
+        screen.getByRole('heading', { name: 'Source note' }),
       ).toBeDefined();
+      expect(screen.getByText('Notes/source.md')).toBeDefined();
+      expect(screen.getByText('tags')).toBeDefined();
+      expect(screen.getByText('["note","e2e"]')).toBeDefined();
       expect(screen.getByText('# Source note')).toBeDefined();
       expect(screen.getByText('source-1')).toBeDefined();
       expect(screen.getByText('fingerprint-1')).toBeDefined();
