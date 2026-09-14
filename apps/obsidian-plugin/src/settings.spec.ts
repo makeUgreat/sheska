@@ -30,11 +30,13 @@ describe('DEFAULT_SETTINGS', () => {
 
 function makeTab(
   api = { health: vi.fn().mockResolvedValue({ status: 'ok' }) },
+  resetSyncCache = vi.fn().mockResolvedValue(undefined),
 ): SheskaSettingTab {
   const plugin = {
     settings: { ...DEFAULT_SETTINGS },
     saveSettings: vi.fn().mockResolvedValue(undefined),
     api,
+    resetSyncCache,
   };
   return new SheskaSettingTab({} as never, plugin as never);
 }
@@ -46,13 +48,13 @@ describe('SheskaSettingTab', () => {
       noticeMessages.length = 0;
     });
 
-    it('renders a row for each setting definition plus the ping button', () => {
+    it('renders a row for each setting definition plus the ping and reset buttons', () => {
       const tab = makeTab();
 
       tab.display();
 
       expect(renderedSettings).toHaveLength(
-        tab.getSettingDefinitions().length + 1,
+        tab.getSettingDefinitions().length + 2,
       );
     });
 
@@ -133,11 +135,11 @@ describe('SheskaSettingTab', () => {
     });
 
     describe('ping button', () => {
-      it('renders a ping button in the last row', () => {
+      it('renders a ping button in the second-to-last row', () => {
         const tab = makeTab();
         tab.display();
 
-        const pingRow = renderedSettings.at(-1)!;
+        const pingRow = renderedSettings.at(-2)!;
         expect(pingRow.name).toBe('Test connection');
         expect(pingRow.buttons[0].text).toBe('Ping');
       });
@@ -147,7 +149,7 @@ describe('SheskaSettingTab', () => {
         const tab = makeTab(api);
         tab.display();
 
-        await renderedSettings.at(-1)!.buttons[0].click();
+        await renderedSettings.at(-2)!.buttons[0].click();
 
         expect(noticeMessages).toContain('Sheska API is reachable.');
       });
@@ -159,7 +161,7 @@ describe('SheskaSettingTab', () => {
         const tab = makeTab(api);
         tab.display();
 
-        await renderedSettings.at(-1)!.buttons[0].click();
+        await renderedSettings.at(-2)!.buttons[0].click();
 
         expect(noticeMessages).toContain(
           'Failed to reach Sheska API. Check settings.',
@@ -171,9 +173,33 @@ describe('SheskaSettingTab', () => {
         const tab = makeTab(api);
         tab.display();
 
-        await renderedSettings.at(-1)!.buttons[0].click();
+        await renderedSettings.at(-2)!.buttons[0].click();
 
         expect(api.health).toHaveBeenCalledOnce();
+      });
+    });
+
+    describe('reset sync cache button', () => {
+      it('renders a reset button in the last row', () => {
+        const tab = makeTab();
+        tab.display();
+
+        const resetRow = renderedSettings.at(-1)!;
+        expect(resetRow.name).toBe('Reset sync cache');
+        expect(resetRow.buttons[0].text).toBe('Reset');
+      });
+
+      it('calls resetSyncCache and shows a Notice on click', async () => {
+        const resetSyncCache = vi.fn().mockResolvedValue(undefined);
+        const tab = makeTab(undefined, resetSyncCache);
+        tab.display();
+
+        await renderedSettings.at(-1)!.buttons[0].click();
+
+        expect(resetSyncCache).toHaveBeenCalledOnce();
+        expect(noticeMessages).toContain(
+          'Sheska sync cache cleared. All notes will re-sync.',
+        );
       });
     });
   });

@@ -22,6 +22,7 @@ interface PluginWithSettings extends Plugin {
   settings: SheskaSettings;
   saveSettings(): Promise<void>;
   api: { health(): Promise<unknown> };
+  resetSyncCache(): Promise<void>;
 }
 
 interface TextControl<Key extends keyof SheskaSettings> {
@@ -199,6 +200,24 @@ export class SheskaSettingTab extends PluginSettingTab {
               button.setDisabled(false);
             }, 3000);
           }
+        });
+      });
+
+    new Setting(containerEl)
+      .setName('Reset sync cache')
+      .setDesc(
+        'Clear the local sync cache so every note is treated as unsynced and re-uploaded on the next sync. Use this if sync state looks stuck or inconsistent.',
+      )
+      .addButton((button) => {
+        button.setButtonText('Reset').onClick(async () => {
+          button.setDisabled(true);
+          await this.pluginWithSettings.resetSyncCache();
+          button.setButtonText('✓ Cleared');
+          new Notice('Sheska sync cache cleared. All notes will re-sync.');
+          window.setTimeout(() => {
+            button.setButtonText('Reset');
+            button.setDisabled(false);
+          }, 3000);
         });
       });
   }

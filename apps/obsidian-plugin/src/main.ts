@@ -78,6 +78,14 @@ export default class SheskaPlugin extends Plugin {
     await this.persistData();
   }
 
+  async resetSyncCache(): Promise<void> {
+    this.autoSyncService.resetSyncCache();
+    this.lastNotifiedStatus.clear();
+    await this.saveSyncCache();
+    const activeFile = this.app.workspace.getActiveFile();
+    if (activeFile) this.updateSyncStatusBar(activeFile);
+  }
+
   private async persistData(): Promise<void> {
     this.syncCache = this.autoSyncService?.getSyncCache() ?? this.syncCache;
     await this.dataStore.save(this.settings, this.syncCache);
@@ -238,6 +246,15 @@ export default class SheskaPlugin extends Plugin {
           return;
         }
         await this.uploadFile(file);
+      },
+    });
+
+    this.addCommand({
+      id: 'sheska-reset-sync-cache',
+      name: 'Reset Sheska sync cache (force full re-sync)',
+      callback: async () => {
+        await this.resetSyncCache();
+        new Notice('Sheska sync cache cleared. All notes will re-sync.');
       },
     });
   }
