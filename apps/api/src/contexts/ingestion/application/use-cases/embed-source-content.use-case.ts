@@ -22,8 +22,8 @@ import {
 import { RecursiveCharacterChunker } from '@contexts/ingestion/application/services/recursive-character.chunker';
 
 export const EMBED_SOURCE_CONTENT_CALL_POLICY = {
-  deadlineMs: 5 * 60_000,
-  attemptTimeoutMs: 30_000,
+  deadlineMs: 15 * 60_000,
+  attemptTimeoutMs: 90_000,
 } as const satisfies CallPolicy;
 
 @Injectable()
