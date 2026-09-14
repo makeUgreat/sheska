@@ -5,7 +5,9 @@ import {
   SamplingBreaker,
   CircuitState as CockatielCircuitState,
   type CircuitBreakerPolicy as CockatielCircuitBreakerPolicy,
+  type FailureReason,
 } from 'cockatiel';
+import { type LoggerPort } from '@kernels/application';
 import { classifyInfrastructureRetry } from './retry-error.classifier';
 
 export type CircuitBreakerState = 'closed' | 'open' | 'half-open';
@@ -18,8 +20,17 @@ export interface CircuitBreakerPolicy {
 }
 
 export interface CircuitBreakerOptions {
+  readonly name?: string;
   readonly policy: CircuitBreakerPolicy;
   readonly isFailure?: (error: unknown) => boolean;
+  readonly logger?: LoggerPort;
+}
+
+function describeBreakReason(
+  reason: FailureReason<unknown> | { isolated: true },
+): unknown {
+  if ('isolated' in reason) return 'isolated';
+  return 'error' in reason ? reason.error : reason.value;
 }
 
 export class CircuitBreakerOpenError extends Error {
@@ -63,6 +74,30 @@ export class CircuitBreaker {
         minimumRps: minimumRequestCount / (evaluationWindowMs / 1000),
       }),
     });
+
+    const name = options.name ?? 'circuit-breaker';
+    const logger = options.logger;
+    if (logger) {
+      this.breaker.onBreak((reason) => {
+        logger.warn('Circuit breaker opened', {
+          name,
+          event: 'circuit_breaker.opened',
+          reason: describeBreakReason(reason),
+        });
+      });
+      this.breaker.onHalfOpen(() => {
+        logger.log('Circuit breaker half-open, trialing next request', {
+          name,
+          event: 'circuit_breaker.half_open',
+        });
+      });
+      this.breaker.onReset(() => {
+        logger.log('Circuit breaker closed', {
+          name,
+          event: 'circuit_breaker.closed',
+        });
+      });
+    }
   }
 
   get state(): CircuitBreakerState {

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
+import { type LoggerPort } from '@kernels/application';
 import { InfrastructureException } from '@kernels/infrastructure';
 import { OllamaHttpEmbedder } from '../ollama-http.embedder';
 
@@ -11,13 +12,22 @@ function buildContext(
   return { deadline: computeDeadline(remainingMs), attemptTimeoutMs };
 }
 
+function createLogger(): LoggerPort {
+  return {
+    log: vi.fn<LoggerPort['log']>(),
+    error: vi.fn<LoggerPort['error']>(),
+    warn: vi.fn<LoggerPort['warn']>(),
+    debug: vi.fn<LoggerPort['debug']>(),
+  };
+}
+
 describe('OllamaHttpEmbedder', () => {
   let client: OllamaHttpEmbedder;
   const baseUrl = 'http://localhost:11434';
   const model = 'qwen3-embedding:0.6b';
 
   beforeEach(() => {
-    client = new OllamaHttpEmbedder({ baseUrl });
+    client = new OllamaHttpEmbedder({ baseUrl }, createLogger());
   });
 
   it('성공 시 임베딩과 모델을 반환한다', async () => {
