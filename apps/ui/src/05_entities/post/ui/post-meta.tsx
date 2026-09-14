@@ -26,12 +26,7 @@ export function PostMeta({
       <span className="font-bold">{formatDate(updatedAt)}</span>
       <Separator />
       <span>{viewCount} views</span>
-      {similarity !== null && (
-        <>
-          <Separator />
-          <MatchBadge similarity={similarity} />
-        </>
-      )}
+      {similarity !== null && <MatchBadge similarity={similarity} />}
     </div>
   );
 }

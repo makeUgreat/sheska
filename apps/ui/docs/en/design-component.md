@@ -161,10 +161,10 @@ Props:
 
 ### `MatchBadge`
 
-Renders a `Tag` (`tone="accent"`) showing only the match percentage, e.g.
-`82% match`. Every search result carries a `similarity` value regardless of
-whether it matched by keyword or embedding — the match-type distinction is
-not surfaced in the UI.
+Renders only the match percentage (e.g. `82%`) as plain text with a small
+pulsing dot, not a boxed `Tag` — right-aligned within `PostMeta`'s row via
+`ml-auto`. `similarity` is only non-null for semantic/both matches (cosine
+distance); keyword-only matches have no percentage and render no badge.
 
 Props:
 

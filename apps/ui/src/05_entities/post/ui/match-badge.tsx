@@ -1,5 +1,11 @@
-import { Tag } from '@/shared/ui';
-
 export function MatchBadge({ similarity }: { similarity: number }) {
-  return <Tag tone="accent">{similarity}% match</Tag>;
+  return (
+    <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-xs font-bold text-accent/80">
+      <span
+        aria-hidden="true"
+        className="h-1.5 w-1.5 animate-[heartbeat_1.4s_ease-in-out_infinite] rounded-full bg-accent"
+      />
+      {similarity}%
+    </span>
+  );
 }

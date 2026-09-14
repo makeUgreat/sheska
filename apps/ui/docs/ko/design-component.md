@@ -157,9 +157,10 @@ Props:
 
 ### `MatchBadge`
 
-매치 퍼센트만 보여주는 `Tag`(`tone="accent"`)를 렌더링한다 (예: `82% match`).
-키워드로 매치됐든 임베딩으로 매치됐든 모든 검색 결과가 `similarity` 값을
-가지며, 매치 타입 구분은 UI에 노출하지 않는다.
+박스형 `Tag`가 아니라, 매치 퍼센트(예: `82%`)만 작은 pulsing dot과 함께
+plain text로 렌더링한다 — `PostMeta` row 안에서 `ml-auto`로 오른쪽 끝에
+정렬된다. `similarity`는 semantic/both 매치(코사인 거리 기반)일 때만
+값이 있고, keyword-only 매치는 퍼센트가 없어 배지 자체가 안 뜬다.
 
 Props:
 
