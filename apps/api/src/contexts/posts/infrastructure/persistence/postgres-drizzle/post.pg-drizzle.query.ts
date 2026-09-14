@@ -30,7 +30,7 @@ const TITLE_SEARCH_WEIGHT = 1;
 const CONTENT_SEARCH_WEIGHT = TITLE_SEARCH_WEIGHT * 0.4;
 const RRF_K = 60;
 const CANDIDATE_POOL_SIZE = 50;
-const EMBEDDING_MAX_DISTANCE = 0.5;
+const EMBEDDING_MAX_DISTANCE = 0.6;
 
 type PostWithSourceRow = {
   post_id: string;
