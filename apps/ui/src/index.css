@@ -32,3 +32,18 @@ select {
   font: inherit;
 }
 
+@keyframes radar-ping {
+  0%,
+  82%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+    text-shadow: none;
+  }
+  91% {
+    opacity: 0.95;
+    transform: scale(1.06);
+    text-shadow: 0 0 4px currentColor;
+  }
+}
+

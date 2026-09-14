@@ -36,7 +36,6 @@ export function PostCard({
           <PostMeta
             updatedAt={post.updatedAt}
             viewCount={post.viewCount}
-            matchReason={post.matchReason}
             similarity={post.similarity}
           />
           <h3 className="font-sans text-headline-md text-text-primary transition-colors group-hover:text-accent">

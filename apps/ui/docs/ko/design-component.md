@@ -146,26 +146,25 @@ Example:
 
 ### `PostMeta`
 
-Date와 view count를 mono metadata row로 렌더링한다. search match 정보가 있으면
-같은 row에 `MatchBadge`도 렌더링한다.
+Date와 view count를 mono metadata row로 렌더링한다. search `similarity`
+percentage가 있으면 같은 row에 `MatchBadge`도 렌더링한다.
 
 Props:
 
 - `updatedAt`: ISO timestamp string.
 - `viewCount`: numeric post views.
-- `matchReason`: optional `'keyword' | 'semantic' | 'both'` — search 결과가 아니면 생략.
-- `similarity`: optional `number | null` — `matchReason`이 `'semantic'` 또는 `'both'`일 때만 percentage로 표시.
+- `similarity`: optional `number | null` — search 결과가 아니면 생략하거나 `null`.
 
 ### `MatchBadge`
 
-검색 결과가 왜 매치됐는지를 나타내는 `Tag`를 렌더링한다: `'keyword'`는
-`tone="muted"`, `'semantic'`/`'both'`는 `tone="accent"`를 사용한다.
-`similarity`가 null이 아니면 `· {similarity}%`를 덧붙인다.
+박스형 `Tag`가 아니라, 매치 퍼센트(예: `82%`)만 작은 pulsing dot과 함께
+plain text로 렌더링한다 — `PostMeta` row 안에서 `ml-auto`로 오른쪽 끝에
+정렬된다. `similarity`는 semantic/both 매치(코사인 거리 기반)일 때만
+값이 있고, keyword-only 매치는 퍼센트가 없어 배지 자체가 안 뜬다.
 
 Props:
 
-- `matchReason`: `'keyword' | 'semantic' | 'both'`.
-- `similarity`: `number | null`.
+- `similarity`: `number`.
 
 ### `PostCard`
 

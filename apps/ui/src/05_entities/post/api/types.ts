@@ -1,5 +1,3 @@
-export type PostMatchReason = 'keyword' | 'semantic' | 'both';
-
 export interface PostSummary {
   postId: string;
   sourceId: string;
@@ -7,7 +5,6 @@ export interface PostSummary {
   viewCount: number;
   createdAt: string;
   updatedAt: string;
-  matchReason?: PostMatchReason;
   similarity?: number | null;
 }
 

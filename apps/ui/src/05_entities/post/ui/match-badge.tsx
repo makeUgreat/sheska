@@ -1,23 +1,7 @@
-import { Tag } from '@/shared/ui';
-import { type PostMatchReason } from '../api/types';
-
-const MATCH_REASON_LABEL: Record<PostMatchReason, string> = {
-  keyword: 'Keyword match',
-  semantic: 'Semantic match',
-  both: 'Keyword + Semantic',
-};
-
-export function MatchBadge({
-  matchReason,
-  similarity,
-}: {
-  matchReason: PostMatchReason;
-  similarity: number | null;
-}) {
+export function MatchBadge({ similarity }: { similarity: number }) {
   return (
-    <Tag tone={matchReason === 'keyword' ? 'muted' : 'accent'}>
-      {MATCH_REASON_LABEL[matchReason]}
-      {similarity !== null && ` · ${similarity}%`}
-    </Tag>
+    <span className="ml-auto inline-block animate-[radar-ping_6s_ease-in-out_infinite] font-mono text-xs font-bold text-accent/80">
+      {similarity}%
+    </span>
   );
 }
