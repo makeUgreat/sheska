@@ -24,13 +24,16 @@ export interface SourceSummary {
 }
 
 export interface ListSourcesParams {
-  cursor?: string;
-  limit?: number;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface ListSourcesResponse {
   sources: SourceSummary[];
-  nextCursor: string | null;
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
 }
 
 export interface EmbeddingInfo {

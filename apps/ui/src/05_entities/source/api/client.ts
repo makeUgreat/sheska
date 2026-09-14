@@ -11,8 +11,8 @@ export function listSources(
   params?: ListSourcesParams,
 ): Promise<ListSourcesResponse> {
   const queryParams: Record<string, string> = {};
-  if (params?.cursor) queryParams.cursor = params.cursor;
-  if (params?.limit) queryParams.limit = String(params.limit);
+  if (params?.page) queryParams.page = String(params.page);
+  if (params?.pageSize) queryParams.pageSize = String(params.pageSize);
 
   return http.get<ListSourcesResponse>(
     '/sources',
