@@ -13,6 +13,7 @@ export function listSources(
   const queryParams: Record<string, string> = {};
   if (params?.page) queryParams.page = String(params.page);
   if (params?.pageSize) queryParams.pageSize = String(params.pageSize);
+  if (params?.syncJobStatus) queryParams.syncJobStatus = params.syncJobStatus;
 
   return http.get<ListSourcesResponse>(
     '/sources',

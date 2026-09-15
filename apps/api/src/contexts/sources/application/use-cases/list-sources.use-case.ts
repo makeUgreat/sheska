@@ -8,6 +8,7 @@ import { SOURCE_QUERY } from '@contexts/sources/sources.di-tokens';
 export interface ListSourcesCommand {
   readonly page: number;
   readonly pageSize: number;
+  readonly syncJobStatus?: 'pending' | 'processing' | 'completed' | 'failed';
 }
 
 @Injectable()
@@ -23,6 +24,7 @@ export class ListSourcesUseCase {
     return this.sourceQuery.paginate({
       page: command.page,
       pageSize: command.pageSize,
+      syncJobStatus: command.syncJobStatus,
     });
   }
 }

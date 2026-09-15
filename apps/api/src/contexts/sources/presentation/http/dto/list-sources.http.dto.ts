@@ -1,9 +1,17 @@
 import { z } from 'zod';
 
+export const listSourcesSyncJobStatusSchema = z.enum([
+  'pending',
+  'processing',
+  'completed',
+  'failed',
+]);
+
 export const listSourcesHttpRequestSchema = z
   .object({
     page: z.coerce.number().int().positive().default(1),
     pageSize: z.coerce.number().int().positive().max(100).default(10),
+    syncJobStatus: listSourcesSyncJobStatusSchema.optional(),
   })
   .strict();
 
@@ -12,6 +20,7 @@ export class ListSourcesHttpRequest {
 
   readonly page!: number;
   readonly pageSize!: number;
+  readonly syncJobStatus?: 'pending' | 'processing' | 'completed' | 'failed';
 }
 
 export interface SyncJobSummaryHttpResponse {

@@ -1,6 +1,8 @@
+export type SyncJobStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
 export interface SyncJobSummary {
   syncJobId: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: SyncJobStatus;
   totalChunks: number | null;
   processedChunks: number;
   createdAt: string;
@@ -26,6 +28,7 @@ export interface SourceSummary {
 export interface ListSourcesParams {
   page?: number;
   pageSize?: number;
+  syncJobStatus?: SyncJobStatus;
 }
 
 export interface ListSourcesResponse {
