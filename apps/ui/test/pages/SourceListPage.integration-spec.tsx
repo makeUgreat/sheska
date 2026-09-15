@@ -24,7 +24,9 @@ function buildMockHttpClient(
   overrides: MockHttpClientOverrides = {},
 ): HttpClient {
   return {
-    get: vi.fn().mockResolvedValue({ sources: [], nextCursor: null }),
+    get: vi
+      .fn()
+      .mockResolvedValue({ sources: [], page: 1, pageSize: 10, totalCount: 0, totalPages: 0 }),
     post: vi.fn(),
     patch: vi.fn(),
     ...overrides,
@@ -57,7 +59,9 @@ describe('SourceListPage', () => {
 
   it('source 목록이 없으면 No sources yet. 메시지를 보여준다', async () => {
     const client = buildMockHttpClient({
-      get: vi.fn().mockResolvedValue({ sources: [] }),
+      get: vi
+        .fn()
+        .mockResolvedValue({ sources: [], page: 1, pageSize: 10, totalCount: 0, totalPages: 0 }),
     });
 
     renderPage(client);
@@ -89,7 +93,10 @@ describe('SourceListPage', () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockResolvedValue({
         sources: [source],
-        nextCursor: null,
+        page: 1,
+        pageSize: 10,
+        totalCount: 1,
+        totalPages: 1,
       }),
     });
 
@@ -126,7 +133,10 @@ describe('SourceListPage', () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockResolvedValue({
         sources: [source],
-        nextCursor: null,
+        page: 1,
+        pageSize: 10,
+        totalCount: 1,
+        totalPages: 1,
       }),
     });
 
@@ -156,7 +166,10 @@ describe('SourceListPage', () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockResolvedValue({
         sources: [source],
-        nextCursor: null,
+        page: 1,
+        pageSize: 10,
+        totalCount: 1,
+        totalPages: 1,
       }),
     });
 
@@ -183,7 +196,10 @@ describe('SourceListPage', () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockResolvedValue({
         sources: [source],
-        nextCursor: null,
+        page: 1,
+        pageSize: 10,
+        totalCount: 1,
+        totalPages: 1,
       }),
     });
 
@@ -210,7 +226,7 @@ describe('SourceListPage', () => {
     });
   });
 
-  it('다음 cursor가 있으면 추가 source를 불러온다', async () => {
+  it('페이지네이션 버튼을 클릭하면 다음 페이지의 source를 불러온다', async () => {
     const user = userEvent.setup();
     const now = '2026-01-01T00:00:00.000Z';
     const firstSource: SourceSummary = {
@@ -239,11 +255,17 @@ describe('SourceListPage', () => {
       .fn()
       .mockResolvedValueOnce({
         sources: [firstSource],
-        nextCursor: 'cursor-1',
+        page: 1,
+        pageSize: 10,
+        totalCount: 2,
+        totalPages: 2,
       })
       .mockResolvedValueOnce({
         sources: [secondSource],
-        nextCursor: null,
+        page: 2,
+        pageSize: 10,
+        totalCount: 2,
+        totalPages: 2,
       });
     const client = buildMockHttpClient({ get });
 
@@ -255,16 +277,14 @@ describe('SourceListPage', () => {
       ).toBeDefined();
     });
 
-    await user.click(screen.getByRole('button', { name: 'Load more' }));
+    await user.click(screen.getByRole('button', { name: '2' }));
 
     await waitFor(() => {
       expect(
         screen.getByRole('link', { name: 'Second Title' }),
       ).toBeDefined();
     });
-    expect(get).toHaveBeenNthCalledWith(1, '/sources', undefined);
-    expect(get).toHaveBeenNthCalledWith(2, '/sources', {
-      cursor: 'cursor-1',
-    });
+    expect(get).toHaveBeenNthCalledWith(1, '/sources', { page: '1' });
+    expect(get).toHaveBeenNthCalledWith(2, '/sources', { page: '2' });
   });
 });

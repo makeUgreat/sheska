@@ -1,11 +1,12 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   SyncJobBadge,
   SyncJobProgress,
   type SyncJobSummary,
-  useInfiniteListSources,
+  useListSources,
 } from '@/entities/source';
 import { formatBytes } from '@/shared/lib';
+import { Pagination } from '@/shared/ui';
 
 function SourceSyncJobStatus({ syncJob }: { syncJob: SyncJobSummary | null }) {
   if (!syncJob) {
@@ -31,15 +32,19 @@ function PublishedBadge() {
 }
 
 export function SourceListPage() {
-  const {
-    data,
-    isLoading,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteListSources();
-  const sources = data?.pages.flatMap((page) => page.sources) ?? [];
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = Math.max(1, Number(searchParams.get('page') ?? 1));
+
+  const { data, isLoading, error } = useListSources(page);
+  const sources = data?.sources ?? [];
+
+  function handlePageChange(nextPage: number) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('page', String(nextPage));
+      return next;
+    });
+  }
 
   return (
     <main className="min-h-screen bg-page-background px-4 py-20">
@@ -98,18 +103,11 @@ export function SourceListPage() {
                 </li>
               ))}
             </ul>
-            {hasNextPage && (
-              <div className="mt-8 flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => void fetchNextPage()}
-                  disabled={isFetchingNextPage}
-                  className="font-mono text-xs font-medium uppercase tracking-widest text-[#e06c75] transition-colors disabled:text-text-muted"
-                >
-                  {isFetchingNextPage ? 'Loading more...' : 'Load more'}
-                </button>
-              </div>
-            )}
+            <Pagination
+              page={page}
+              totalPages={data?.totalPages ?? 1}
+              onPageChange={handlePageChange}
+            />
           </>
         )}
       </div>

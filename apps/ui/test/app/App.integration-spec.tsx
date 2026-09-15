@@ -48,7 +48,13 @@ function buildMockHttpClient(
   return {
     get: vi.fn((path: string) => {
       if (path === '/sources') {
-        return Promise.resolve({ sources: [SOURCE_SUMMARY] });
+        return Promise.resolve({
+          sources: [SOURCE_SUMMARY],
+          page: 1,
+          pageSize: 10,
+          totalCount: 1,
+          totalPages: 1,
+        });
       }
       if (path === '/posts/count') {
         return Promise.resolve({ count: 0 });
@@ -83,7 +89,13 @@ describe('App', () => {
     const client = buildMockHttpClient({
       get: vi.fn((path: string) => {
         if (path === '/sources') {
-          return Promise.resolve({ sources: [SOURCE_SUMMARY] });
+          return Promise.resolve({
+          sources: [SOURCE_SUMMARY],
+          page: 1,
+          pageSize: 10,
+          totalCount: 1,
+          totalPages: 1,
+        });
         }
         return getSource(path) as Promise<unknown>;
       }),
