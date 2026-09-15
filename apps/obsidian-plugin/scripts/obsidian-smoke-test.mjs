@@ -157,6 +157,7 @@ async function prepareVault(apiBaseUrl) {
   await mkdir(pluginDir, { recursive: true });
   await copyFile('main.js', join(pluginDir, 'main.js'));
   await copyFile('manifest.json', join(pluginDir, 'manifest.json'));
+  await copyFile('styles.css', join(pluginDir, 'styles.css'));
   await writeFile(
     join(obsidianDir, 'community-plugins.json'),
     JSON.stringify([pluginId], null, 2),

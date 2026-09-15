@@ -210,6 +210,38 @@ describe('SheskaPlugin', () => {
     });
   });
 
+  describe('auto-sync intervals', () => {
+    it('registers separate file-sweep and sync-job reconcile intervals', async () => {
+      vi.useFakeTimers();
+      plugin = makePlugin({
+        healthCheckIntervalMinutes: 0,
+        autoSyncEnabled: true,
+        autoSyncSweepIntervalMinutes: 30,
+        syncJobReconcileIntervalMinutes: 1,
+      });
+
+      await plugin.onload();
+
+      expect(plugin.registerInterval).toHaveBeenCalledTimes(2);
+      vi.useRealTimers();
+    });
+
+    it('can disable sync-job reconciliation independently of the file sweep', async () => {
+      vi.useFakeTimers();
+      plugin = makePlugin({
+        healthCheckIntervalMinutes: 0,
+        autoSyncEnabled: true,
+        autoSyncSweepIntervalMinutes: 30,
+        syncJobReconcileIntervalMinutes: 0,
+      });
+
+      await plugin.onload();
+
+      expect(plugin.registerInterval).toHaveBeenCalledOnce();
+      vi.useRealTimers();
+    });
+  });
+
   describe('sheska-upload-note command', () => {
     async function getUploadCallback(): Promise<() => Promise<void>> {
       await plugin.onload();
@@ -296,6 +328,25 @@ describe('SheskaPlugin', () => {
 
       expect(fileMenuItems).toHaveLength(1);
       expect(fileMenuItems[0].title).toBe('Upload to Sheska');
+    });
+
+    it('labels the file-menu action as retry when sync needs attention', async () => {
+      plugin = makePlugin({
+        syncCache: {
+          'note.md': {
+            mtime: 1,
+            syncJobId: 'job-3',
+            status: 'needs-attention',
+            retryCount: 3,
+          },
+        },
+      });
+      await plugin.onload();
+      const menu = new Menu();
+
+      fileMenuHandler!(menu, new TFile('note.md'));
+
+      expect(fileMenuItems[0].title).toBe('Retry Sheska sync');
     });
 
     it('shows success Notice when file-menu upload succeeds', async () => {
@@ -409,6 +460,26 @@ describe('SheskaPlugin', () => {
       await plugin.onload();
 
       expect(statusBarItems[0].text).toBe('Sheska: ✓ Synced');
+    });
+
+    it('shows Needs attention after automatic retries are exhausted', async () => {
+      plugin = makePlugin({
+        syncCache: {
+          'a.md': {
+            mtime: 100,
+            syncJobId: 'job-3',
+            status: 'needs-attention',
+            retryCount: 3,
+          },
+        },
+      });
+      plugin.app.workspace.getActiveFile = vi
+        .fn()
+        .mockReturnValue(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }));
+
+      await plugin.onload();
+
+      expect(statusBarItems[0].text).toBe('Sheska: ⚠ Needs attention');
     });
 
     it('updates the status bar when the active file changes via file-open', async () => {

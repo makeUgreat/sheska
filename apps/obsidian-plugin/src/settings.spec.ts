@@ -26,6 +26,10 @@ describe('DEFAULT_SETTINGS', () => {
   it('defaults autoSyncSweepIntervalMinutes to 30', () => {
     expect(DEFAULT_SETTINGS.autoSyncSweepIntervalMinutes).toBe(30);
   });
+
+  it('defaults syncJobReconcileIntervalMinutes to 1', () => {
+    expect(DEFAULT_SETTINGS.syncJobReconcileIntervalMinutes).toBe(1);
+  });
 });
 
 function makeTab(
@@ -205,10 +209,10 @@ describe('SheskaSettingTab', () => {
   });
 
   describe('getSettingDefinitions', () => {
-    it('returns six definitions', () => {
+    it('returns seven definitions', () => {
       const tab = new SheskaSettingTab({} as never, {} as never);
 
-      expect(tab.getSettingDefinitions()).toHaveLength(6);
+      expect(tab.getSettingDefinitions()).toHaveLength(7);
     });
 
     it('defines the apiBaseUrl text control', () => {
@@ -271,6 +275,19 @@ describe('SheskaSettingTab', () => {
         control: {
           type: 'number',
           key: 'autoSyncSweepIntervalMinutes',
+          min: 0,
+        },
+      });
+    });
+
+    it('defines the syncJobReconcileIntervalMinutes number control', () => {
+      const tab = new SheskaSettingTab({} as never, {} as never);
+
+      expect(tab.getSettingDefinitions()[6]).toMatchObject({
+        name: 'Sync-job reconcile interval (minutes)',
+        control: {
+          type: 'number',
+          key: 'syncJobReconcileIntervalMinutes',
           min: 0,
         },
       });

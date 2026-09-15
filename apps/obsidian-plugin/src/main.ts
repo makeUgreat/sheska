@@ -2,19 +2,17 @@ import { Notice, Plugin, TFile } from 'obsidian';
 import type { TAbstractFile } from 'obsidian';
 import { SheskaApiClient } from '@/api/client';
 import { AutoSyncService } from '@/auto-sync';
+import {
+  FileExplorerSyncDecorator,
+  type FileExplorerSyncStatus,
+} from '@/file-explorer-sync-decorator';
 import { HealthCheckScheduler } from '@/health-check';
 import { SheskaSettingTab } from '@/settings';
 import type { SheskaSettings } from '@/settings';
 import { PluginDataStore } from '@/storage';
 import type { SyncCache } from '@/storage';
 
-type SyncStatus =
-  | 'synced'
-  | 'not-synced'
-  | 'uploading'
-  | 'accepted'
-  | 'processing'
-  | 'failed';
+type SyncStatus = FileExplorerSyncStatus;
 
 export default class SheskaPlugin extends Plugin {
   declare settings: SheskaSettings;
@@ -23,7 +21,9 @@ export default class SheskaPlugin extends Plugin {
   private syncCache: SyncCache = {};
   private healthCheckScheduler!: HealthCheckScheduler;
   private autoSyncService!: AutoSyncService;
+  private fileExplorerSyncDecorator!: FileExplorerSyncDecorator;
   private autoSyncSweepIntervalId: number | null = null;
+  private syncJobReconcileIntervalId: number | null = null;
   private syncStatusBarItem!: HTMLElement;
   private readonly lastNotifiedStatus = new Map<string, SyncStatus>();
 
@@ -37,19 +37,24 @@ export default class SheskaPlugin extends Plugin {
     this.registerFileMenu();
     this.registerAutoSyncEvents();
     this.registerSyncStatusBar();
+    this.registerFileExplorerSyncBadges();
 
     this.healthCheckScheduler.start();
     this.startAutoSyncSweepInterval();
+    this.startSyncJobReconcileInterval();
 
     if (this.settings.autoSyncEnabled) {
       void this.runSweep();
+      void this.runSyncJobReconcile();
     }
   }
 
   onunload(): void {
     this.healthCheckScheduler.stop();
     this.stopAutoSyncSweepInterval();
+    this.stopSyncJobReconcileInterval();
     this.autoSyncService.cancel();
+    this.fileExplorerSyncDecorator.destroy();
   }
 
   async loadSettings(): Promise<void> {
@@ -72,6 +77,8 @@ export default class SheskaPlugin extends Plugin {
     }
     this.stopAutoSyncSweepInterval();
     this.startAutoSyncSweepInterval();
+    this.stopSyncJobReconcileInterval();
+    this.startSyncJobReconcileInterval();
   }
 
   private async saveSyncCache(): Promise<void> {
@@ -82,6 +89,7 @@ export default class SheskaPlugin extends Plugin {
     this.autoSyncService.resetSyncCache();
     this.lastNotifiedStatus.clear();
     await this.saveSyncCache();
+    this.fileExplorerSyncDecorator.renderAll();
     const activeFile = this.app.workspace.getActiveFile();
     if (activeFile) this.updateSyncStatusBar(activeFile);
   }
@@ -112,8 +120,33 @@ export default class SheskaPlugin extends Plugin {
     }
   }
 
+  private startSyncJobReconcileInterval(): void {
+    if (!this.settings.autoSyncEnabled) return;
+    const minutes = this.settings.syncJobReconcileIntervalMinutes;
+    if (minutes <= 0) return;
+    this.syncJobReconcileIntervalId = this.registerInterval(
+      window.setInterval(
+        () => {
+          void this.runSyncJobReconcile();
+        },
+        minutes * 60 * 1000,
+      ),
+    );
+  }
+
+  private stopSyncJobReconcileInterval(): void {
+    if (this.syncJobReconcileIntervalId !== null) {
+      window.clearInterval(this.syncJobReconcileIntervalId);
+      this.syncJobReconcileIntervalId = null;
+    }
+  }
+
   private async runSweep(): Promise<void> {
     await this.autoSyncService.runSweep();
+  }
+
+  private async runSyncJobReconcile(): Promise<void> {
+    await this.autoSyncService.runReconcile();
   }
 
   private async uploadFile(file: TFile): Promise<void> {
@@ -139,12 +172,34 @@ export default class SheskaPlugin extends Plugin {
       settings: this.settings,
       syncCache: this.syncCache,
       saveSyncCache: async () => this.saveSyncCache(),
-      onSyncStart: (path) => this.refreshStatusBarIfActive(path),
-      onSyncFinished: (path) => this.refreshStatusBarIfActive(path),
-      onSyncStateChanged: (path) => this.refreshStatusBarIfActive(path),
+      onSyncStart: (path) => this.refreshSyncIndicators(path),
+      onSyncFinished: (path) => this.refreshSyncIndicators(path),
+      onSyncStateChanged: (path) => this.refreshSyncIndicators(path),
       shouldPollSyncJob: (path) =>
         this.app.workspace.getActiveFile()?.path === path,
     });
+  }
+
+  private registerFileExplorerSyncBadges(): void {
+    this.fileExplorerSyncDecorator = new FileExplorerSyncDecorator((path) =>
+      this.getFileExplorerSyncStatus(path),
+    );
+    this.fileExplorerSyncDecorator.start();
+  }
+
+  private getFileExplorerSyncStatus(
+    path: string,
+  ): FileExplorerSyncStatus | null {
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (!(file instanceof TFile)) return null;
+    if (this.autoSyncService.isSyncing(file)) return 'uploading';
+    if (!this.syncCache[path]) return null;
+    return this.getSyncStatus(file);
+  }
+
+  private refreshSyncIndicators(path: string): void {
+    this.refreshStatusBarIfActive(path);
+    this.fileExplorerSyncDecorator?.render(path);
   }
 
   private refreshStatusBarIfActive(path: string): void {
@@ -201,11 +256,17 @@ export default class SheskaPlugin extends Plugin {
           ? 'Sheska: ◷ Queued'
           : status === 'processing'
             ? 'Sheska: ⟳ Syncing...'
-            : status === 'failed'
-              ? 'Sheska: ✕ Failed'
-              : status === 'synced'
-                ? 'Sheska: ✓ Synced'
-                : 'Sheska: ○ Not synced';
+            : status === 'retrying'
+              ? 'Sheska: ⟳ Retrying...'
+              : status === 'unknown'
+                ? 'Sheska: ? Status unknown'
+                : status === 'needs-attention'
+                  ? 'Sheska: ⚠ Needs attention'
+                  : status === 'failed'
+                    ? 'Sheska: ✕ Failed'
+                    : status === 'synced'
+                      ? 'Sheska: ✓ Synced'
+                      : 'Sheska: ○ Not synced';
     this.syncStatusBarItem.setText(text);
     this.notifyStatusChange(file, status);
   }
@@ -263,10 +324,14 @@ export default class SheskaPlugin extends Plugin {
     this.registerEvent(
       this.app.workspace.on('file-menu', (menu, abstractFile) => {
         if (!(abstractFile instanceof TFile)) return;
+        const needsAttention =
+          this.syncCache[abstractFile.path]?.status === 'needs-attention';
         menu.addItem((item) => {
-          item.setTitle('Upload to Sheska').onClick(async () => {
-            await this.uploadFile(abstractFile);
-          });
+          item
+            .setTitle(needsAttention ? 'Retry Sheska sync' : 'Upload to Sheska')
+            .onClick(async () => {
+              await this.uploadFile(abstractFile);
+            });
         });
       }),
     );
@@ -284,7 +349,7 @@ export default class SheskaPlugin extends Plugin {
   private handleVaultFileChanged(file: TAbstractFile): void {
     this.autoSyncService.onVaultFileChanged(file);
     if (file instanceof TFile) {
-      this.refreshStatusBarIfActive(file.path);
+      this.refreshSyncIndicators(file.path);
     }
   }
 }

@@ -7,6 +7,7 @@ export interface SheskaSettings {
   autoSyncDirectories: string;
   autoSyncDebounceSeconds: number;
   autoSyncSweepIntervalMinutes: number;
+  syncJobReconcileIntervalMinutes: number;
 }
 
 export const DEFAULT_SETTINGS: SheskaSettings = {
@@ -16,6 +17,7 @@ export const DEFAULT_SETTINGS: SheskaSettings = {
   autoSyncDirectories: '09_Knowledge',
   autoSyncDebounceSeconds: 20,
   autoSyncSweepIntervalMinutes: 30,
+  syncJobReconcileIntervalMinutes: 1,
 };
 
 interface PluginWithSettings extends Plugin {
@@ -109,6 +111,15 @@ export class SheskaSettingTab extends PluginSettingTab {
         control: {
           type: 'number',
           key: 'autoSyncSweepIntervalMinutes',
+          min: 0,
+        },
+      },
+      {
+        name: 'Sync-job reconcile interval (minutes)',
+        desc: 'How often to refresh incomplete sync jobs and run due retries. Set to 0 to disable.',
+        control: {
+          type: 'number',
+          key: 'syncJobReconcileIntervalMinutes',
           min: 0,
         },
       },

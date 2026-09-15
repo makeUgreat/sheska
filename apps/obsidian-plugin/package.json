@@ -15,7 +15,7 @@
     "test": "vitest run",
     "test:obsidian-smoke": "node scripts/obsidian-smoke-test.mjs",
     "test:watch": "vitest",
-    "deploy:local": "pnpm build && mkdir -p \"/Users/a1234/Documents/Obsidian Vault/.obsidian/plugins/sheska\" && cp main.js manifest.json \"/Users/a1234/Documents/Obsidian Vault/.obsidian/plugins/sheska/\""
+    "deploy:local": "pnpm build && mkdir -p \"/Users/a1234/Documents/Obsidian Vault/.obsidian/plugins/sheska\" && cp main.js manifest.json styles.css \"/Users/a1234/Documents/Obsidian Vault/.obsidian/plugins/sheska/\""
   },
   "dependencies": {
     "obsidian": "latest"

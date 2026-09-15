@@ -24,6 +24,12 @@ function makeService(
   settings: Partial<SheskaSettings> = {},
   syncCache: SyncCache = {},
   shouldPollSyncJob?: (path: string) => boolean,
+  serviceOptions: {
+    syncJobPollInitialDelayMs?: number;
+    syncJobPollIntervalMs?: number;
+    syncJobPollTimeoutMs?: number;
+    maxAutoRetries?: number;
+  } = {},
 ) {
   const api = {
     uploadSource: vi.fn().mockResolvedValue({
@@ -36,6 +42,7 @@ function makeService(
   const vault = {
     read: vi.fn().mockResolvedValue('content'),
     getMarkdownFiles: vi.fn().mockReturnValue([]),
+    getAbstractFileByPath: vi.fn().mockReturnValue(null),
   };
   const saveSyncCache = vi.fn().mockResolvedValue(undefined);
   const service = new AutoSyncService({
@@ -49,6 +56,7 @@ function makeService(
     syncCache,
     saveSyncCache,
     shouldPollSyncJob,
+    ...serviceOptions,
   });
   return { api, saveSyncCache, service, vault };
 }
@@ -124,7 +132,10 @@ describe('AutoSyncService', () => {
     ).resolves.toBeUndefined();
     await vi.advanceTimersByTimeAsync(2_000);
 
-    expect(syncCache['note.md']).toMatchObject({ status: 'failed' });
+    expect(syncCache['note.md']).toMatchObject({
+      status: 'failed',
+      nextRetryAt: Date.now() + 60_000,
+    });
     expect(errorSpy).toHaveBeenCalled();
     errorSpy.mockRestore();
   });
@@ -147,7 +158,7 @@ describe('AutoSyncService', () => {
     expect(syncCache['note.md']).toMatchObject({ status: 'accepted' });
   });
 
-  it('does not re-upload an inactive file that already has a pending sync job', async () => {
+  it('reconciles an inactive pending job without re-uploading it', async () => {
     const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
     const { api, service, vault } = makeService(
       {},
@@ -161,12 +172,216 @@ describe('AutoSyncService', () => {
       },
       () => false,
     );
-    vault.getMarkdownFiles.mockReturnValue([file]);
+    vault.getAbstractFileByPath.mockReturnValue(file);
+    api.getSyncJob.mockResolvedValue({ status: 'pending' });
 
-    await service.runSweep();
+    await service.runReconcile();
 
     expect(api.uploadSource).not.toHaveBeenCalled();
-    expect(api.getSyncJob).not.toHaveBeenCalled();
+    expect(api.getSyncJob).toHaveBeenCalledWith('job-1');
+  });
+
+  it('marks an inactive job synced when reconciliation finds it completed', async () => {
+    const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+    const syncCache: SyncCache = {
+      'note.md': {
+        mtime: 123,
+        acceptedAt: 1,
+        syncJobId: 'job-1',
+        status: 'accepted',
+      },
+    };
+    const { api, service, vault } = makeService({}, syncCache, () => false);
+    vault.getAbstractFileByPath.mockReturnValue(file);
+    api.getSyncJob.mockResolvedValue({ status: 'completed' });
+
+    await service.runReconcile();
+    await service.runReconcile();
+
+    expect(api.uploadSource).not.toHaveBeenCalled();
+    expect(api.getSyncJob).toHaveBeenCalledOnce();
+    expect(syncCache['note.md']).toMatchObject({ status: 'synced' });
+    expect(syncCache['note.md'].syncJobId).toBeUndefined();
+  });
+
+  it('creates a new sync job one minute after reconciliation finds an initial failure', async () => {
+    const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+    const syncCache: SyncCache = {
+      'note.md': {
+        mtime: 123,
+        acceptedAt: 1,
+        syncJobId: 'job-1',
+        status: 'accepted',
+      },
+    };
+    const { api, service, vault } = makeService({}, syncCache, () => false);
+    vault.getAbstractFileByPath.mockReturnValue(file);
+    api.getSyncJob.mockResolvedValue({ status: 'failed' });
+    api.uploadSource.mockResolvedValue({
+      sourceId: 'source-1',
+      externalSourceId: 'note.md',
+      fingerprint: 'fingerprint',
+      syncJobId: 'job-2',
+    });
+
+    await service.runReconcile();
+
+    expect(api.uploadSource).not.toHaveBeenCalled();
+    expect(syncCache['note.md']).toMatchObject({
+      status: 'failed',
+      nextRetryAt: Date.now() + 60_000,
+    });
+
+    await vi.advanceTimersByTimeAsync(60_000);
+    await service.runReconcile();
+
+    expect(api.uploadSource).toHaveBeenCalledOnce();
+    expect(syncCache['note.md']).toMatchObject({
+      status: 'accepted',
+      syncJobId: 'job-2',
+      retryCount: 1,
+    });
+  });
+
+  it.each([
+    { retryCount: 1, delayMs: 5 * 60_000 },
+    { retryCount: 2, delayMs: 30 * 60_000 },
+  ])(
+    'waits $delayMs ms before retrying after $retryCount previous retries',
+    async ({ retryCount, delayMs }) => {
+      const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+      const syncCache: SyncCache = {
+        'note.md': {
+          mtime: 123,
+          syncJobId: `job-${retryCount}`,
+          status: 'accepted',
+          retryCount,
+        },
+      };
+      const { api, service, vault } = makeService({}, syncCache, () => false);
+      vault.getAbstractFileByPath.mockReturnValue(file);
+      api.getSyncJob.mockResolvedValue({ status: 'failed' });
+      api.uploadSource.mockResolvedValue({
+        sourceId: 'source-1',
+        externalSourceId: 'note.md',
+        fingerprint: 'fingerprint',
+        syncJobId: `job-${retryCount + 1}`,
+      });
+
+      await service.runReconcile();
+      await vi.advanceTimersByTimeAsync(delayMs - 1);
+      await service.runReconcile();
+      expect(api.uploadSource).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(1);
+      await service.runReconcile();
+
+      expect(api.getSyncJob).toHaveBeenCalledOnce();
+      expect(api.uploadSource).toHaveBeenCalledOnce();
+      expect(syncCache['note.md']).toMatchObject({
+        status: 'accepted',
+        retryCount: retryCount + 1,
+      });
+    },
+  );
+
+  it('requires manual attention after automatic retries are exhausted', async () => {
+    const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+    const syncCache: SyncCache = {
+      'note.md': {
+        mtime: 123,
+        acceptedAt: 1,
+        syncJobId: 'job-3',
+        status: 'accepted',
+        retryCount: 3,
+      },
+    };
+    const { api, service, vault } = makeService({}, syncCache, () => false);
+    vault.getAbstractFileByPath.mockReturnValue(file);
+    api.getSyncJob.mockResolvedValue({ status: 'failed' });
+
+    await service.runReconcile();
+    await service.runReconcile();
+
+    expect(api.uploadSource).not.toHaveBeenCalled();
+    expect(api.getSyncJob).toHaveBeenCalledOnce();
+    expect(syncCache['note.md']).toMatchObject({
+      status: 'needs-attention',
+      retryCount: 3,
+    });
+  });
+
+  it('keeps the cached state when sweep reconciliation cannot reach the API', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+    const syncCache: SyncCache = {
+      'note.md': {
+        mtime: 123,
+        syncJobId: 'job-1',
+        status: 'accepted',
+      },
+    };
+    const { api, service, vault } = makeService({}, syncCache, () => false);
+    vault.getAbstractFileByPath.mockReturnValue(file);
+    api.getSyncJob.mockRejectedValue(new Error('offline'));
+
+    await service.runReconcile();
+
+    expect(api.uploadSource).not.toHaveBeenCalled();
+    expect(syncCache['note.md']).toMatchObject({ status: 'accepted' });
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it('manual upload resets an exhausted automatic retry count', async () => {
+    const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+    const syncCache: SyncCache = {
+      'note.md': {
+        mtime: 123,
+        syncJobId: 'job-3',
+        status: 'needs-attention',
+        retryCount: 3,
+      },
+    };
+    const { api, service } = makeService({}, syncCache, () => false);
+    api.uploadSource.mockResolvedValue({
+      sourceId: 'source-1',
+      externalSourceId: 'note.md',
+      fingerprint: 'fingerprint',
+      syncJobId: 'job-4',
+    });
+
+    await service.uploadFile(asObsidianFile(file));
+
+    expect(syncCache['note.md']).toMatchObject({
+      status: 'accepted',
+      syncJobId: 'job-4',
+    });
+    expect(syncCache['note.md'].retryCount).toBeUndefined();
+  });
+
+  it('records an unknown status when active polling times out', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const syncCache: SyncCache = {};
+    const { api, service } = makeService({}, syncCache, undefined, {
+      syncJobPollInitialDelayMs: 0,
+      syncJobPollIntervalMs: 1,
+      syncJobPollTimeoutMs: 0,
+    });
+    api.uploadSource.mockResolvedValue({
+      sourceId: 'source-1',
+      externalSourceId: 'note.md',
+      fingerprint: 'fingerprint',
+      syncJobId: 'job-1',
+    });
+    api.getSyncJob.mockResolvedValue({ status: 'pending' });
+    const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+
+    await service.uploadFile(asObsidianFile(file));
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(syncCache['note.md']).toMatchObject({ status: 'unknown' });
+    errorSpy.mockRestore();
   });
 
   it('resumes polling a cached job when its note becomes active', async () => {

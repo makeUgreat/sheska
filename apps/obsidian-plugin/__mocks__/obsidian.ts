@@ -59,7 +59,9 @@ class MockWorkspace {
 
   on(
     event: string,
-    handler: ((menu: Menu, file: TFile) => void) | ((...args: unknown[]) => void),
+    handler:
+      | ((menu: Menu, file: TFile) => void)
+      | ((...args: unknown[]) => void),
   ): object {
     if (event === 'file-menu') {
       fileMenuHandler = handler as (menu: Menu, file: TFile) => void;
@@ -79,6 +81,7 @@ class MockVault {
   read = vi.fn().mockResolvedValue('');
   getFiles = vi.fn().mockReturnValue([]);
   getMarkdownFiles = vi.fn().mockReturnValue([]);
+  getAbstractFileByPath = vi.fn().mockReturnValue(null);
 
   on(event: string, handler: (...args: unknown[]) => void): object {
     vaultEventHandlers[event] = handler;
@@ -188,6 +191,10 @@ export class Notice {
   }
 }
 
+export function setIcon(parent: HTMLElement, iconId: string): void {
+  parent.setAttribute('data-icon', iconId);
+}
+
 // Tracks all Setting instances created during display() so tests can assert
 // which settings were rendered and how their controls were configured.
 export const renderedSettings: RenderedSetting[] = [];
@@ -286,14 +293,21 @@ export class Setting {
   }
 
   addButton(cb: (button: MockButtonComponent) => void): this {
-    const buttonRecord: RenderedButton = { text: '', disabled: false, click: async () => {} };
+    const buttonRecord: RenderedButton = {
+      text: '',
+      disabled: false,
+      click: async () => {},
+    };
     cb(new MockButtonComponent(buttonRecord));
     this.record.buttons.push(buttonRecord);
     return this;
   }
 
   addToggle(cb: (toggle: MockToggleComponent) => void): this {
-    const toggleRecord: RenderedToggle = { value: false, onChange: async () => {} };
+    const toggleRecord: RenderedToggle = {
+      value: false,
+      onChange: async () => {},
+    };
     cb(new MockToggleComponent(toggleRecord));
     this.record.toggles.push(toggleRecord);
     return this;
