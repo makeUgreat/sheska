@@ -35,7 +35,7 @@ export function SourceListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Math.max(1, Number(searchParams.get('page') ?? 1));
 
-  const { data, isLoading, error } = useListSources(page);
+  const { data, isLoading, isFetching, error } = useListSources(page);
   const sources = data?.sources ?? [];
 
   function handlePageChange(nextPage: number) {
@@ -78,19 +78,28 @@ export function SourceListPage() {
           </p>
         ) : (
           <>
-            <ul className="divide-y divide-outline-variant/10 border-y border-outline-variant/10">
+            <ul
+              className={`divide-y divide-outline-variant/10 border-y border-outline-variant/10 transition-opacity duration-200 ${
+                isFetching ? 'opacity-40' : 'opacity-100'
+              }`}
+            >
               {sources.map((s) => (
                 <li
                   key={s.sourceId}
                   className="group relative py-6 pl-5 before:absolute before:left-0 before:top-6 before:h-[calc(100%-48px)] before:w-0.5 before:bg-transparent hover:before:bg-[#e06c75]"
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <Link
-                      to={`/sources/${s.sourceId}`}
-                      className="break-words text-2xl font-semibold leading-snug text-text-primary transition-colors group-hover:text-[#e06c75]"
-                    >
-                      {s.title}
-                    </Link>
+                    <div className="min-w-0">
+                      <Link
+                        to={`/sources/${s.sourceId}`}
+                        className="break-words text-2xl font-semibold leading-snug text-text-primary transition-colors group-hover:text-[#e06c75]"
+                      >
+                        {s.title}
+                      </Link>
+                      <p className="mt-1 truncate font-mono text-xs text-text-secondary">
+                        {s.externalSourceId}
+                      </p>
+                    </div>
                     <div className="flex flex-wrap items-center gap-3">
                       {s.publishedPostId && <PublishedBadge />}
                       <SourceSyncJobStatus syncJob={s.latestSyncJob} />
