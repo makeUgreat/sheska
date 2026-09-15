@@ -32,14 +32,14 @@ Token 변경을 리뷰하거나 commit하기 전에는 `pnpm tokens:check`를 �
 
 ## 색상
 
-Palette는 deep charcoal과 black foundation을 중심으로 하며, desaturated rose red를 emphasis와 interactivity를 위한 유일한 수단으로 사용한다.
+Palette는 light하고 editorial한 page base와 dark하고 terminal-styled elevated surface를 함께 사용하며, desaturated rose red를 emphasis와 interactivity를 위한 유일한 수단으로 사용한다.
 
-- **Primary**: `#e06c75` (Rose Red). Primary action, active state, critical highlight에만 사용한다.
-- **Surface**: `#1a1d23` (Deep Charcoal). Primary background color다.
-- **Surface-Elevated**: `#282c34`. Card, modal, navigation element에서 subtle depth를 만들 때 사용한다.
-- **Text-Primary**: `#ffffff`. 최대 가독성을 위한 high-contrast white다.
-- **Text-Secondary**: `#abb2bf`. Metadata와 supportive text를 위한 muted gray다.
-- **Accent/Border**: `#3e4451`. Subtle structural border를 위한 cool gray다.
+- **Page Background**: `#ffffff` (`page-background`). Primary app background다. 대부분의 페이지는 이 light base 위에 바로 놓인다.
+- **Text-Primary**: `#101319` (`text-primary`). Light page background 위의 near-black text다.
+- **Text-Secondary**: `#43474f` (`text-secondary`). Light background 위 metadata와 supportive text를 위한 muted gray다.
+- **Surface family**: `#0b0e14`~`#32353b` (`surface`, `surface-container-lowest`~`surface-container-highest`). Page background가 아니라 hero terminal window, card, tag 같은 dark하고 terminal-styled elevated component 전용 deep charcoal tone이다.
+- **Accent**: `#e16d76` (`accent`). Light base와 dark elevated surface 양쪽 모두에서 primary action, active state, critical highlight에만 사용한다.
+- **Border**: `#564242` (`outline-variant` / `border-subtle`). Subtle structural separation을 위한 cool, low-contrast border다.
 
 모든 green, blue, yellow tone은 피한다. Success state는 green으로 색을 바꾸기보다 typography나 iconography로 전달한다.
 
@@ -63,9 +63,9 @@ Major section 사이에는 minimalist, editorial aesthetic을 강조하기 위�
 
 Depth는 전통적인 shadow가 아니라 **Tonal Layers**와 **Low-Contrast Outlines**로 전달한다.
 
-이 디자인 시스템에서는 사용자에게 가까운 object일수록 더 밝은 tone을 가진다. Base background는 가장 어두운 shade이고, modal과 floating card는 secondary charcoal (`#282c34`)을 사용한다.
+이 tonal-layer model은 light page base가 아니라 dark하고 terminal-styled elevated component 내부에 적용된다: 사용자에게 가까운 object일수록 더 밝은 tone을 가지며, 가장 어두운 surface (`surface-container-lowest`)가 `surface-container-high` 같은 더 elevated한 tone 뒤에 놓인다.
 
-Boundary를 정의할 때는 `#3e4451`의 1px solid border를 사용한다. Flat하고 technical한 외형을 유지하기 위해 drop shadow는 피한다. Active 또는 focused element는 border color를 primary Rose Red (`#e06c75`)로 바꿔 "glow-less" highlight를 만든다.
+Boundary를 정의할 때는 `#564242` (`outline-variant`)의 1px solid border를 사용한다. Flat하고 technical한 외형을 유지하기 위해 drop shadow는 피한다. Active 또는 focused element는 border나 text color를 primary Rose Red (`#e16d76`)로 바꿔 "glow-less" highlight를 만든다.
 
 ## Effects & Motion
 

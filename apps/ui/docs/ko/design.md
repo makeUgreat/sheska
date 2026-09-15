@@ -38,6 +38,8 @@ Brand identity는 엄격한 minimalism과 따뜻한 editorial edge 사이의 균
 
 Design style은 terminal environment와 high-end print design에서 영감을 받은 **Minimalist with a Technical Edge**다. 넓은 whitespace, 의도적인 high contrast, 하나의 accent color를 사용해 cognitive noise 없이 시선을 유도한다. 감성적 인상은 calm authority, precision, intellectual rigor다. 절제된 monochrome-first palette를 유지하기 위해 모든 green tone은 엄격히 제외한다.
 
+이 앱은 dark-mode UI가 아니다. 페이지는 near-black text가 있는 light하고 editorial한 page background 위에 놓이고, dark하고 terminal-styled한 charcoal tone은 base page가 아니라 특정 elevated component(hero terminal window, card, tag)에만 한정해서 사용한다. 정확한 구분은 [디자인 토큰](./design-token.md)의 색상 항목을 참고한다.
+
 ## 디자인 토큰
 
 [디자인 토큰](./design-token.md)을 참고한다.
