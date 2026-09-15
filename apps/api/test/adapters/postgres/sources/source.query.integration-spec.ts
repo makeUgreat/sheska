@@ -50,8 +50,8 @@ describe('SourcePgDrizzleQuery', () => {
     );
 
     const { sources: result } = await sourceQuery.paginate({
-      limit: 20,
-      cursor: null,
+      page: 1,
+      pageSize: 20,
     });
 
     const ids = result.map((s) => s.sourceId);
@@ -70,8 +70,8 @@ describe('SourcePgDrizzleQuery', () => {
     await syncJobs.save(syncJob);
 
     const { sources: result } = await sourceQuery.paginate({
-      limit: 20,
-      cursor: null,
+      page: 1,
+      pageSize: 20,
     });
 
     const found = result.find((s) => s.sourceId === source.id);
@@ -88,8 +88,8 @@ describe('SourcePgDrizzleQuery', () => {
     );
 
     const { sources: result } = await sourceQuery.paginate({
-      limit: 20,
-      cursor: null,
+      page: 1,
+      pageSize: 20,
     });
 
     const found = result.find((s) => s.sourceId === source.id);
@@ -105,8 +105,8 @@ describe('SourcePgDrizzleQuery', () => {
     await posts.save(post);
 
     const { sources: result } = await sourceQuery.paginate({
-      limit: 20,
-      cursor: null,
+      page: 1,
+      pageSize: 20,
     });
 
     const found = result.find((s) => s.sourceId === source.id);
@@ -119,8 +119,8 @@ describe('SourcePgDrizzleQuery', () => {
     );
 
     const { sources: result } = await sourceQuery.paginate({
-      limit: 20,
-      cursor: null,
+      page: 1,
+      pageSize: 20,
     });
 
     const found = result.find((s) => s.sourceId === source.id);
@@ -151,51 +151,44 @@ describe('SourcePgDrizzleQuery', () => {
     });
   });
 
-  describe('paginate — cursor pagination', () => {
-    it('limit보다 많은 source가 있으면 nextCursor를 반환한다', async () => {
+  describe('paginate — page pagination', () => {
+    it('pageSize보다 많은 source가 있으면 totalPages가 1보다 크다', async () => {
       await sources.save(
-        buildSource({ externalSourceId: 'Notes/sq-cursor-1.md' }),
+        buildSource({ externalSourceId: 'Notes/sq-page-1.md' }),
       );
       await sources.save(
-        buildSource({ externalSourceId: 'Notes/sq-cursor-2.md' }),
+        buildSource({ externalSourceId: 'Notes/sq-page-2.md' }),
       );
       await sources.save(
-        buildSource({ externalSourceId: 'Notes/sq-cursor-3.md' }),
+        buildSource({ externalSourceId: 'Notes/sq-page-3.md' }),
       );
 
-      const { sources: result, nextCursor } = await sourceQuery.paginate({
-        limit: 2,
-        cursor: null,
+      const { sources: result, totalPages } = await sourceQuery.paginate({
+        page: 1,
+        pageSize: 2,
       });
 
       expect(result).toHaveLength(2);
-      expect(nextCursor).not.toBeNull();
+      expect(totalPages).toBeGreaterThan(1);
     });
 
-    it('nextCursor로 다음 페이지를 가져온다', async () => {
+    it('다음 page를 요청하면 다른 source들이 반환된다', async () => {
       const s1 = await sources.save(
-        buildSource({ externalSourceId: 'Notes/sq-cursor-page-1.md' }),
+        buildSource({ externalSourceId: 'Notes/sq-page-list-1.md' }),
       );
       const s2 = await sources.save(
-        buildSource({ externalSourceId: 'Notes/sq-cursor-page-2.md' }),
+        buildSource({ externalSourceId: 'Notes/sq-page-list-2.md' }),
       );
       const s3 = await sources.save(
-        buildSource({ externalSourceId: 'Notes/sq-cursor-page-3.md' }),
+        buildSource({ externalSourceId: 'Notes/sq-page-list-3.md' }),
       );
 
-      const firstPage = await sourceQuery.paginate({
-        limit: 2,
-        cursor: null,
-      });
-      const secondPage = await sourceQuery.paginate({
-        limit: 2,
-        cursor: firstPage.nextCursor!,
-      });
+      const firstPage = await sourceQuery.paginate({ page: 1, pageSize: 2 });
+      const secondPage = await sourceQuery.paginate({ page: 2, pageSize: 2 });
 
       const firstIds = firstPage.sources.map((s) => s.sourceId);
       const secondIds = secondPage.sources.map((s) => s.sourceId);
       expect(firstIds).toHaveLength(2);
-      expect(secondIds.length).toBeGreaterThanOrEqual(1);
       expect(firstIds.some((id) => secondIds.includes(id))).toBe(false);
 
       const allIds = [...firstIds, ...secondIds];
@@ -204,37 +197,27 @@ describe('SourcePgDrizzleQuery', () => {
       expect(allIds).toContain(s3.id);
     });
 
-    it('마지막 source 이후의 cursor로 조회하면 nextCursor가 null이다', async () => {
-      const veryOldCursor = { id: '00000000-0000-0000-0000-000000000000' };
-
-      const { sources: result, nextCursor } = await sourceQuery.paginate({
-        limit: 10,
-        cursor: veryOldCursor,
+    it('마지막 page 이후를 조회하면 빈 배열을 반환한다', async () => {
+      const { sources: result } = await sourceQuery.paginate({
+        page: 1_000_000,
+        pageSize: 10,
       });
 
       expect(result).toHaveLength(0);
-      expect(nextCursor).toBeNull();
     });
 
-    it('cursor와 동일한 id를 가진 source는 결과에서 제외된다', async () => {
-      const source = await sources.save(
-        buildSource({ externalSourceId: 'Notes/sq-cursor-tie.md' }),
+    it('totalCount를 정확히 반환한다', async () => {
+      await sources.save(
+        buildSource({ externalSourceId: 'Notes/sq-total-count.md' }),
       );
 
-      const { sources: saved } = await sourceQuery.paginate({
-        limit: 100,
-        cursor: null,
-      });
-      const savedSource = saved.find((s) => s.sourceId === source.id)!;
-      const cursor = { id: savedSource.sourceId };
-
-      const { sources: result } = await sourceQuery.paginate({
-        limit: 10,
-        cursor,
+      const { totalCount, sources: firstPage } = await sourceQuery.paginate({
+        page: 1,
+        pageSize: 1,
       });
 
-      const ids = result.map((s) => s.sourceId);
-      expect(ids).not.toContain(source.id);
+      expect(totalCount).toBeGreaterThanOrEqual(1);
+      expect(firstPage).toHaveLength(1);
     });
   });
 });

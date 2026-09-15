@@ -15,7 +15,10 @@ function buildPaginateResult(
 ): SourceQueryPaginateResult {
   return {
     sources: [],
-    nextCursor: null,
+    page: 1,
+    pageSize: 10,
+    totalCount: 0,
+    totalPages: 0,
     ...overrides,
   };
 }
@@ -26,7 +29,7 @@ describe('ListSourcesUseCase', () => {
     sourceQuery.paginate.mockResolvedValue(buildPaginateResult());
     const useCase = new ListSourcesUseCase(sourceQuery);
 
-    const result = await useCase.execute({ limit: 20, cursor: null });
+    const result = await useCase.execute({ page: 1, pageSize: 10 });
 
     expect(result.sources).toEqual([]);
     expect(sourceQuery.paginate).toHaveBeenCalledOnce();
@@ -65,7 +68,7 @@ describe('ListSourcesUseCase', () => {
     );
     const useCase = new ListSourcesUseCase(sourceQuery);
 
-    const result = await useCase.execute({ limit: 20, cursor: null });
+    const result = await useCase.execute({ page: 1, pageSize: 10 });
 
     expect(result.sources).toHaveLength(2);
     expect(result.sources[0]).toMatchObject({
@@ -102,7 +105,7 @@ describe('ListSourcesUseCase', () => {
     );
     const useCase = new ListSourcesUseCase(sourceQuery);
 
-    const result = await useCase.execute({ limit: 20, cursor: null });
+    const result = await useCase.execute({ page: 1, pageSize: 10 });
 
     expect(result.sources[0]).not.toHaveProperty('content');
   });
@@ -113,7 +116,7 @@ describe('ListSourcesUseCase', () => {
     sourceQuery.paginate.mockRejectedValue(paginateFailure);
     const useCase = new ListSourcesUseCase(sourceQuery);
 
-    await expect(useCase.execute({ limit: 20, cursor: null })).rejects.toBe(
+    await expect(useCase.execute({ page: 1, pageSize: 10 })).rejects.toBe(
       paginateFailure,
     );
   });

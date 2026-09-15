@@ -102,7 +102,7 @@ const post = await this.posts.get({ id: command.postId });
 - Use the standard name that matches the result contract:
   - `get`: return one item and throw when absent.
   - `find`: return one item or `null` when absent.
-  - `paginate`: return a page and its next cursor.
+  - `paginate`: return a page of results (cursor- or page-number-based, per the caller's navigation needs).
   - `search`: return a relevance-ranked page for a query.
   - `count`: return the number of matching items.
   - `exists`: return whether at least one item matches.

@@ -11,7 +11,6 @@ import {
   classifyPostgresError,
   DATABASE_TOKENS,
   InfrastructureException,
-  sliceForCursor,
 } from '@kernels/infrastructure';
 import * as schema from './schema';
 
@@ -33,6 +32,7 @@ type SourceWithLatestJobRow = {
   sync_job_processed_chunks: number | null;
   sync_job_created_at: Date | null;
   published_post_id: string | null;
+  total_count: number;
 };
 
 @Injectable()
@@ -43,15 +43,11 @@ export class SourcePgDrizzleQuery implements SourceQuery {
   ) {}
 
   async paginate({
-    limit,
-    cursor,
+    page,
+    pageSize,
   }: SourceQueryPaginateOptions): Promise<SourceQueryPaginateResult> {
-    const isFirstPage = cursor === null;
-
     try {
-      const cursorCondition = isFirstPage
-        ? sql``
-        : sql`AND s.id < ${cursor.id}`;
+      const offset = (page - 1) * pageSize;
 
       const result = await this.db.execute<SourceWithLatestJobRow>(sql`
         SELECT s.id,
@@ -66,7 +62,8 @@ export class SourcePgDrizzleQuery implements SourceQuery {
           ssj.total_chunks      AS sync_job_total_chunks,
           ssj.processed_chunks  AS sync_job_processed_chunks,
           ssj.created_at        AS sync_job_created_at,
-          p.id                  AS published_post_id
+          p.id                  AS published_post_id,
+          COUNT(*) OVER()       AS total_count
         FROM sources s
         LEFT JOIN LATERAL (
           SELECT id, status, total_chunks, processed_chunks, created_at
@@ -76,12 +73,12 @@ export class SourcePgDrizzleQuery implements SourceQuery {
           LIMIT 1
         ) ssj ON true
         LEFT JOIN posts p ON p.source_id = s.id
-        WHERE true ${cursorCondition}
         ORDER BY s.id DESC
-        LIMIT ${limit + 1}
+        LIMIT ${pageSize}
+        OFFSET ${offset}
       `);
 
-      return this.toPaginateResult(result.rows, limit);
+      return this.toPaginateResult(result.rows, page, pageSize);
     } catch (error: unknown) {
       throw new InfrastructureException({
         kind: classifyPostgresError(error),
@@ -114,14 +111,13 @@ export class SourcePgDrizzleQuery implements SourceQuery {
 
   private toPaginateResult(
     rows: SourceWithLatestJobRow[],
-    limit: number,
+    page: number,
+    pageSize: number,
   ): SourceQueryPaginateResult {
-    const { data, nextCursor } = sliceForCursor(rows, limit, (row) => ({
-      id: row.id,
-    }));
+    const totalCount = rows[0] ? Number(rows[0].total_count) : 0;
 
     return {
-      sources: data.map(
+      sources: rows.map(
         (row): SourceQueryListItem => ({
           sourceId: row.id,
           externalSourceId: row.external_source_id,
@@ -143,7 +139,10 @@ export class SourcePgDrizzleQuery implements SourceQuery {
           publishedPostId: row.published_post_id,
         }),
       ),
-      nextCursor,
+      page,
+      pageSize,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize),
     };
   }
 }

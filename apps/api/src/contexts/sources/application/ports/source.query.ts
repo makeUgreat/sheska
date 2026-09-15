@@ -1,10 +1,6 @@
-export type SourceQueryCursor = {
-  readonly id: string;
-};
-
 export type SourceQueryPaginateOptions = {
-  readonly limit: number;
-  readonly cursor: SourceQueryCursor | null;
+  readonly page: number;
+  readonly pageSize: number;
 };
 
 export type SourceQuerySyncJobSummary = {
@@ -29,7 +25,10 @@ export type SourceQueryListItem = {
 
 export type SourceQueryPaginateResult = {
   readonly sources: ReadonlyArray<SourceQueryListItem>;
-  readonly nextCursor: SourceQueryCursor | null;
+  readonly page: number;
+  readonly pageSize: number;
+  readonly totalCount: number;
+  readonly totalPages: number;
 };
 
 export interface SourceQuery {
