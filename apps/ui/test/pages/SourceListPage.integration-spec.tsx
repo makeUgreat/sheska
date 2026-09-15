@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -114,8 +114,10 @@ describe('SourceListPage', () => {
       const link = screen.getByRole('link', { name: 'Source Title' });
       expect(link).toBeDefined();
       expect(link.getAttribute('href')).toBe('/sources/source-1');
-      expect(screen.getByText('completed')).toBeDefined();
-      expect(screen.getByText(/14 bytes/)).toBeDefined();
+      expect(
+        within(screen.getByRole('list')).getByText('completed'),
+      ).toBeDefined();
+      expect(screen.getByText(/0\.1 KB/)).toBeDefined();
     });
   });
 
@@ -151,7 +153,9 @@ describe('SourceListPage', () => {
     renderPage(client);
 
     await waitFor(() => {
-      expect(screen.getByText('processing')).toBeDefined();
+      expect(
+        within(screen.getByRole('list')).getByText('processing'),
+      ).toBeDefined();
       expect(screen.getByText('3/10 (30%)')).toBeDefined();
       const progressbar = screen.getByRole('progressbar');
       expect(progressbar.getAttribute('aria-valuenow')).toBe('30');
