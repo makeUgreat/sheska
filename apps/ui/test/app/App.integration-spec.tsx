@@ -90,12 +90,12 @@ describe('App', () => {
       get: vi.fn((path: string) => {
         if (path === '/sources') {
           return Promise.resolve({
-          sources: [SOURCE_SUMMARY],
-          page: 1,
-          pageSize: 10,
-          totalCount: 1,
-          totalPages: 1,
-        });
+            sources: [SOURCE_SUMMARY],
+            page: 1,
+            pageSize: 10,
+            totalCount: 1,
+            totalPages: 1,
+          });
         }
         return getSource(path) as Promise<unknown>;
       }),
@@ -103,9 +103,7 @@ describe('App', () => {
 
     renderApp(client);
 
-    await user.click(
-      await screen.findByRole('link', { name: 'Source note' }),
-    );
+    await user.click(await screen.findByRole('link', { name: 'Source note' }));
 
     await waitFor(() => {
       expect(getSource).toHaveBeenCalledWith('/sources/source-1');

@@ -24,9 +24,13 @@ function buildMockHttpClient(
   overrides: MockHttpClientOverrides = {},
 ): HttpClient {
   return {
-    get: vi
-      .fn()
-      .mockResolvedValue({ sources: [], page: 1, pageSize: 10, totalCount: 0, totalPages: 0 }),
+    get: vi.fn().mockResolvedValue({
+      sources: [],
+      page: 1,
+      pageSize: 10,
+      totalCount: 0,
+      totalPages: 0,
+    }),
     post: vi.fn(),
     patch: vi.fn(),
     ...overrides,
@@ -59,9 +63,13 @@ describe('SourceListPage', () => {
 
   it('source 목록이 없으면 No sources yet. 메시지를 보여준다', async () => {
     const client = buildMockHttpClient({
-      get: vi
-        .fn()
-        .mockResolvedValue({ sources: [], page: 1, pageSize: 10, totalCount: 0, totalPages: 0 }),
+      get: vi.fn().mockResolvedValue({
+        sources: [],
+        page: 1,
+        pageSize: 10,
+        totalCount: 0,
+        totalPages: 0,
+      }),
     });
 
     renderPage(client);
@@ -206,9 +214,7 @@ describe('SourceListPage', () => {
     renderPage(client);
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('link', { name: 'Source Title' }),
-      ).toBeDefined();
+      expect(screen.getByRole('link', { name: 'Source Title' })).toBeDefined();
     });
     expect(screen.queryByText('게시됨')).toBeNull();
   });
@@ -272,17 +278,13 @@ describe('SourceListPage', () => {
     renderPage(client);
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('link', { name: 'First Title' }),
-      ).toBeDefined();
+      expect(screen.getByRole('link', { name: 'First Title' })).toBeDefined();
     });
 
     await user.click(screen.getByRole('button', { name: '2' }));
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('link', { name: 'Second Title' }),
-      ).toBeDefined();
+      expect(screen.getByRole('link', { name: 'Second Title' })).toBeDefined();
     });
     expect(get).toHaveBeenNthCalledWith(1, '/sources', { page: '1' });
     expect(get).toHaveBeenNthCalledWith(2, '/sources', { page: '2' });
