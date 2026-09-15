@@ -43,8 +43,8 @@ export function Pagination({
           aria-current={pageNumber === page ? 'page' : undefined}
           className={
             pageNumber === page
-              ? 'px-2 py-1 text-[#e06c75]'
-              : 'px-2 py-1 text-text-secondary transition-colors hover:text-[#e06c75]'
+              ? 'inline-block w-[calc(3ch+1rem)] overflow-hidden px-2 py-1 text-center text-[#e06c75]'
+              : 'inline-block w-[calc(3ch+1rem)] overflow-hidden px-2 py-1 text-center text-text-secondary transition-colors hover:text-[#e06c75]'
           }
         >
           {pageNumber}
