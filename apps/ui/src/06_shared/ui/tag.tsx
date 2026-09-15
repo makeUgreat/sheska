@@ -3,7 +3,7 @@ import { type ReactNode } from 'react';
 type TagTone = 'accent' | 'muted';
 
 const toneClass: Record<TagTone, string> = {
-  accent: 'bg-accent text-white',
+  accent: 'border border-accent/20 bg-surface-container-high text-accent',
   muted:
     'border border-outline-variant/10 bg-surface-container-lowest text-text-secondary',
 };

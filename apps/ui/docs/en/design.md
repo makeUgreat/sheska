@@ -38,6 +38,8 @@ The brand identity centers on a high-precision, technical aesthetic that balance
 
 The design style is **Minimalist with a Technical Edge**, drawing inspiration from terminal environments and high-end print design. It utilizes heavy whitespace, intentional high contrast, and a single accent color to guide the eye without creating cognitive noise. The emotional response is one of calm authority, precision, and intellectual rigor. All green tones are strictly excluded to maintain a disciplined, monochrome-first palette.
 
+The app is not a dark-mode UI. Pages sit on a light, editorial page background with near-black text; the dark, terminal-styled charcoal tones are reserved for specific elevated components (the hero terminal window, cards, tags) rather than the base page. See [Design Tokens](./design-token.md) Colors for the exact split.
+
 ## Design Tokens
 
 See [Design Tokens](./design-token.md).

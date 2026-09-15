@@ -32,14 +32,14 @@ Do not copy the full token value list into this document; keep token values in J
 
 ## Colors
 
-The palette is anchored by a deep charcoal and black foundation, using a desaturated rose red as the sole vehicle for emphasis and interactivity.
+The palette pairs a light, editorial page base with dark, terminal-styled elevated surfaces, using a desaturated rose red as the sole vehicle for emphasis and interactivity.
 
-- **Primary**: `#e06c75` (Rose Red). Used exclusively for primary actions, active states, and critical highlights.
-- **Surface**: `#1a1d23` (Deep Charcoal). The primary background color.
-- **Surface-Elevated**: `#282c34`. Used for cards, modals, and navigation elements to create subtle depth.
-- **Text-Primary**: `#ffffff`. High-contrast white for maximum readability.
-- **Text-Secondary**: `#abb2bf`. A muted gray for metadata and supportive text.
-- **Accent/Border**: `#3e4451`. A cool gray for subtle structural borders.
+- **Page Background**: `#ffffff` (`page-background`). The primary app background. Most pages sit directly on this light base.
+- **Text-Primary**: `#101319` (`text-primary`). Near-black text on the light page background.
+- **Text-Secondary**: `#43474f` (`text-secondary`). Muted gray for metadata and supportive text on the light background.
+- **Surface family**: `#0b0e14`–`#32353b` (`surface`, `surface-container-lowest` through `surface-container-highest`). Deep charcoal tones reserved for dark, terminal-styled elevated components — the hero terminal window, cards, and tags — not the page background.
+- **Accent**: `#e16d76` (`accent`). Used exclusively for primary actions, active states, and critical highlights, on both the light base and the dark elevated surfaces.
+- **Border**: `#564242` (`outline-variant` / `border-subtle`). A cool, low-contrast border for subtle structural separation.
 
 Avoid all green, blue, or yellow tones. Success states should be communicated through typography or iconography rather than color shifts to green.
 
@@ -63,9 +63,9 @@ Use oversized margins (64px+) between major sections to emphasize the minimalist
 
 Depth is communicated through **Tonal Layers** and **Low-Contrast Outlines** rather than traditional shadows.
 
-In this design system, objects closer to the user are lighter in tone. The base background is the darkest shade, while modals and floating cards use the secondary charcoal (`#282c34`).
+This tonal-layer model applies within the dark, terminal-styled elevated components, not to the light page base: objects closer to the user are lighter in tone, with the darkest surface (`surface-container-lowest`) sitting behind more elevated tones such as `surface-container-high`.
 
-To define boundaries, use 1px solid borders in `#3e4451`. Avoid drop shadows entirely to maintain a flat, technical appearance. When an element is active or focused, the border color shifts to the primary Rose Red (`#e06c75`) to create a "glow-less" highlight.
+To define boundaries, use 1px solid borders in `#564242` (`outline-variant`). Avoid drop shadows entirely to maintain a flat, technical appearance. When an element is active or focused, the border or text color shifts to the primary Rose Red (`#e16d76`) to create a "glow-less" highlight.
 
 ## Effects & Motion
 
