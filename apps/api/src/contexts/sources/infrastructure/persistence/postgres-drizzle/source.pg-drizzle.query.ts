@@ -22,6 +22,7 @@ const ADAPTER = 'source.pg-drizzle';
 type SourceWithLatestJobRow = {
   id: string;
   external_source_id: string;
+  title: string;
   fingerprint: string;
   size_bytes: number;
   created_at: Date;
@@ -55,6 +56,7 @@ export class SourcePgDrizzleQuery implements SourceQuery {
       const result = await this.db.execute<SourceWithLatestJobRow>(sql`
         SELECT s.id,
           s.external_source_id,
+          s.title,
           s.fingerprint,
           s.size_bytes,
           s.created_at,
@@ -123,6 +125,7 @@ export class SourcePgDrizzleQuery implements SourceQuery {
         (row): SourceQueryListItem => ({
           sourceId: row.id,
           externalSourceId: row.external_source_id,
+          title: row.title,
           fingerprint: row.fingerprint,
           sizeBytes: row.size_bytes,
           createdAt: new Date(row.created_at),

@@ -41,6 +41,7 @@ describe('ListSourcesUseCase', () => {
           {
             sourceId: 'source-1',
             externalSourceId: 'Notes/source-1.md',
+            title: 'Source 1',
             fingerprint: 'fingerprint-1',
             sizeBytes: 100,
             createdAt: now,
@@ -51,6 +52,7 @@ describe('ListSourcesUseCase', () => {
           {
             sourceId: 'source-2',
             externalSourceId: 'Notes/source-2.md',
+            title: 'Source 2',
             fingerprint: 'fingerprint-2',
             sizeBytes: 200,
             createdAt: now,
@@ -87,6 +89,7 @@ describe('ListSourcesUseCase', () => {
           {
             sourceId: 'source-1',
             externalSourceId: 'Notes/source-1.md',
+            title: 'Source 1',
             fingerprint: 'fp',
             sizeBytes: 100,
             createdAt: now,

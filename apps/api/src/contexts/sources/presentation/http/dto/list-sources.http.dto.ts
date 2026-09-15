@@ -29,6 +29,7 @@ export interface SyncJobSummaryHttpResponse {
 export interface SourceSummaryHttpResponse {
   readonly sourceId: string;
   readonly externalSourceId: string;
+  readonly title: string;
   readonly fingerprint: string;
   readonly sizeBytes: number;
   readonly createdAt: string;
