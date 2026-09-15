@@ -1,9 +1,9 @@
 import { type SyncJobSummary } from '@/entities/source';
 
 const STATUS_STYLES: Record<SyncJobSummary['status'], string> = {
-  pending: 'bg-[#282c34] text-[#abb2bf]',
-  processing: 'bg-[#282c34] text-primary',
-  completed: 'bg-[#e06c75] text-white',
+  pending: 'bg-surface-container-high text-secondary',
+  processing: 'bg-surface-container-high text-primary',
+  completed: 'bg-accent text-white',
   failed: 'bg-error-container text-on-error-container',
 };
 
@@ -43,7 +43,7 @@ export function SyncJobProgress({ syncJob }: { syncJob: SyncJobSummary }) {
         className="h-1.5 w-20 overflow-hidden rounded-full bg-surface-variant"
       >
         <div
-          className="h-full rounded-full bg-[#e06c75] transition-all"
+          className="h-full rounded-full bg-accent transition-all"
           style={{ width: `${percent}%` }}
         />
       </div>
