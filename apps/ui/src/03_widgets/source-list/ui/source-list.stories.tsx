@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MemoryRouter } from 'react-router-dom';
 import { HttpClientProvider, type HttpClientType } from '@/shared/api';
 import { type ListSourcesResponse } from '@/entities/source';
-import { SourceListPage } from './source-list-page';
+import { SourceList } from './source-list';
 
 const sampleResponse: ListSourcesResponse = {
   sources: [
@@ -68,7 +68,9 @@ function renderWithProviders(
     <MemoryRouter initialEntries={['/sources']}>
       <QueryClientProvider client={queryClient}>
         <HttpClientProvider client={http}>
-          <SourceListPage />
+          <div className="mx-auto max-w-[800px] px-4 py-20">
+            <SourceList />
+          </div>
         </HttpClientProvider>
       </QueryClientProvider>
     </MemoryRouter>
@@ -76,13 +78,13 @@ function renderWithProviders(
 }
 
 const meta = {
-  title: 'Pages/SourceListPage',
-  component: SourceListPage,
+  title: 'Features/Sources/SourceList',
+  component: SourceList,
   tags: ['autodocs'],
   parameters: {
     layout: 'fullscreen',
   },
-} satisfies Meta<typeof SourceListPage>;
+} satisfies Meta<typeof SourceList>;
 
 export default meta;
 
@@ -104,7 +106,10 @@ export const FetchingNextPage: Story = {
   name: 'Fetching next page (fade transition)',
   render: () => {
     const queryClient = new QueryClient();
-    queryClient.setQueryData(['sources', 'list', 1, undefined], sampleResponse);
+    queryClient.setQueryData(
+      ['sources', 'list', 1, undefined, undefined],
+      sampleResponse,
+    );
     return renderWithProviders(
       createHttpClientStub(() => neverResolves()),
       queryClient,
