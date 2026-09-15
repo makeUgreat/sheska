@@ -36,6 +36,7 @@ export class SourcesHttpController {
     const result = await this.listSourcesUseCase.execute({
       page: query.page,
       pageSize: query.pageSize,
+      syncJobStatus: query.syncJobStatus,
     });
     return {
       sources: result.sources.map((s) => ({

@@ -45,9 +45,13 @@ export class SourcePgDrizzleQuery implements SourceQuery {
   async paginate({
     page,
     pageSize,
+    syncJobStatus,
   }: SourceQueryPaginateOptions): Promise<SourceQueryPaginateResult> {
     try {
       const offset = (page - 1) * pageSize;
+      const statusFilter = syncJobStatus
+        ? sql`WHERE ssj.status = ${syncJobStatus}`
+        : sql``;
 
       const result = await this.db.execute<SourceWithLatestJobRow>(sql`
         SELECT s.id,
@@ -73,6 +77,7 @@ export class SourcePgDrizzleQuery implements SourceQuery {
           LIMIT 1
         ) ssj ON true
         LEFT JOIN posts p ON p.source_id = s.id
+        ${statusFilter}
         ORDER BY s.id DESC
         LIMIT ${pageSize}
         OFFSET ${offset}

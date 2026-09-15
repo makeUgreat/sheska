@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -24,9 +24,13 @@ function buildMockHttpClient(
   overrides: MockHttpClientOverrides = {},
 ): HttpClient {
   return {
-    get: vi
-      .fn()
-      .mockResolvedValue({ sources: [], page: 1, pageSize: 10, totalCount: 0, totalPages: 0 }),
+    get: vi.fn().mockResolvedValue({
+      sources: [],
+      page: 1,
+      pageSize: 10,
+      totalCount: 0,
+      totalPages: 0,
+    }),
     post: vi.fn(),
     patch: vi.fn(),
     ...overrides,
@@ -59,9 +63,13 @@ describe('SourceListPage', () => {
 
   it('source 목록이 없으면 No sources yet. 메시지를 보여준다', async () => {
     const client = buildMockHttpClient({
-      get: vi
-        .fn()
-        .mockResolvedValue({ sources: [], page: 1, pageSize: 10, totalCount: 0, totalPages: 0 }),
+      get: vi.fn().mockResolvedValue({
+        sources: [],
+        page: 1,
+        pageSize: 10,
+        totalCount: 0,
+        totalPages: 0,
+      }),
     });
 
     renderPage(client);
@@ -106,8 +114,10 @@ describe('SourceListPage', () => {
       const link = screen.getByRole('link', { name: 'Source Title' });
       expect(link).toBeDefined();
       expect(link.getAttribute('href')).toBe('/sources/source-1');
-      expect(screen.getByText('completed')).toBeDefined();
-      expect(screen.getByText(/14 bytes/)).toBeDefined();
+      expect(
+        within(screen.getByRole('list')).getByText('completed'),
+      ).toBeDefined();
+      expect(screen.getByText(/0\.1 KB/)).toBeDefined();
     });
   });
 
@@ -143,7 +153,9 @@ describe('SourceListPage', () => {
     renderPage(client);
 
     await waitFor(() => {
-      expect(screen.getByText('processing')).toBeDefined();
+      expect(
+        within(screen.getByRole('list')).getByText('processing'),
+      ).toBeDefined();
       expect(screen.getByText('3/10 (30%)')).toBeDefined();
       const progressbar = screen.getByRole('progressbar');
       expect(progressbar.getAttribute('aria-valuenow')).toBe('30');
@@ -206,9 +218,7 @@ describe('SourceListPage', () => {
     renderPage(client);
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('link', { name: 'Source Title' }),
-      ).toBeDefined();
+      expect(screen.getByRole('link', { name: 'Source Title' })).toBeDefined();
     });
     expect(screen.queryByText('게시됨')).toBeNull();
   });
@@ -272,17 +282,13 @@ describe('SourceListPage', () => {
     renderPage(client);
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('link', { name: 'First Title' }),
-      ).toBeDefined();
+      expect(screen.getByRole('link', { name: 'First Title' })).toBeDefined();
     });
 
     await user.click(screen.getByRole('button', { name: '2' }));
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('link', { name: 'Second Title' }),
-      ).toBeDefined();
+      expect(screen.getByRole('link', { name: 'Second Title' })).toBeDefined();
     });
     expect(get).toHaveBeenNthCalledWith(1, '/sources', { page: '1' });
     expect(get).toHaveBeenNthCalledWith(2, '/sources', { page: '2' });

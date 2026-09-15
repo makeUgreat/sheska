@@ -110,6 +110,18 @@ describe('ListSourcesUseCase', () => {
     expect(result.sources[0]).not.toHaveProperty('content');
   });
 
+  it('syncJobStatus를 sourceQuery paginate에 전달한다', async () => {
+    const sourceQuery = createSourceQueryMock();
+    sourceQuery.paginate.mockResolvedValue(buildPaginateResult());
+    const useCase = new ListSourcesUseCase(sourceQuery);
+
+    await useCase.execute({ page: 1, pageSize: 10, syncJobStatus: 'failed' });
+
+    expect(sourceQuery.paginate).toHaveBeenCalledWith(
+      expect.objectContaining({ syncJobStatus: 'failed' }),
+    );
+  });
+
   it('sourceQuery paginate exception을 전파한다', async () => {
     const paginateFailure = new Error('Source Query operation failed');
     const sourceQuery = createSourceQueryMock();

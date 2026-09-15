@@ -1,12 +1,18 @@
-import {Inject, Injectable} from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   type ParsedSourceDocument,
   type SourceDocumentParser,
   type SourceFingerprinter,
 } from '@contexts/sources/application/ports';
-import {type SourceFrontmatterProps} from '@contexts/sources/domain';
-import {SOURCE_DOCUMENT_PARSER, SOURCE_FINGERPRINTER,} from '@contexts/sources/sources.di-tokens';
-import {APPLICATION_ERROR_KIND, ApplicationException,} from '@kernels/application';
+import { type SourceFrontmatterProps } from '@contexts/sources/domain';
+import {
+  SOURCE_DOCUMENT_PARSER,
+  SOURCE_FINGERPRINTER,
+} from '@contexts/sources/sources.di-tokens';
+import {
+  APPLICATION_ERROR_KIND,
+  ApplicationException,
+} from '@kernels/application';
 
 export interface SourceContentSnapshotCalculation {
   readonly frontmatter: SourceFrontmatterProps;
@@ -36,8 +42,15 @@ export class SourceContentSnapshotCalculator {
         kind: APPLICATION_ERROR_KIND.VALIDATION_FAILED,
         code: 'sources.invalid_frontmatter',
         message: 'Source frontmatter is invalid',
-        details:{
-          fields: [{path: 'frontmatter', messages: [error instanceof Error ? error.message : 'Unknown error']}]
+        details: {
+          fields: [
+            {
+              path: 'frontmatter',
+              messages: [
+                error instanceof Error ? error.message : 'Unknown error',
+              ],
+            },
+          ],
         },
       });
     }
