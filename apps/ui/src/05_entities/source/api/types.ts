@@ -14,6 +14,7 @@ export interface SyncJob extends SyncJobSummary {
 export interface SourceSummary {
   sourceId: string;
   externalSourceId: string;
+  title: string;
   fingerprint: string;
   sizeBytes: number;
   createdAt: string;

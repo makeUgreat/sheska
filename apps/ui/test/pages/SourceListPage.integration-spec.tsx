@@ -72,6 +72,7 @@ describe('SourceListPage', () => {
     const source: SourceSummary = {
       sourceId: 'source-1',
       externalSourceId: 'Notes/source.md',
+      title: 'Source Title',
       fingerprint: 'fingerprint-1',
       sizeBytes: 14,
       createdAt: now,
@@ -95,7 +96,7 @@ describe('SourceListPage', () => {
     renderPage(client);
 
     await waitFor(() => {
-      const link = screen.getByRole('link', { name: 'Notes/source.md' });
+      const link = screen.getByRole('link', { name: 'Source Title' });
       expect(link).toBeDefined();
       expect(link.getAttribute('href')).toBe('/sources/source-1');
       expect(screen.getByText('completed')).toBeDefined();
@@ -108,6 +109,7 @@ describe('SourceListPage', () => {
     const source: SourceSummary = {
       sourceId: 'source-1',
       externalSourceId: 'Notes/source.md',
+      title: 'Source Title',
       fingerprint: 'fingerprint-1',
       sizeBytes: 14,
       createdAt: now,
@@ -143,6 +145,7 @@ describe('SourceListPage', () => {
     const source: SourceSummary = {
       sourceId: 'source-1',
       externalSourceId: 'Notes/source.md',
+      title: 'Source Title',
       fingerprint: 'fingerprint-1',
       sizeBytes: 14,
       createdAt: now,
@@ -169,6 +172,7 @@ describe('SourceListPage', () => {
     const source: SourceSummary = {
       sourceId: 'source-1',
       externalSourceId: 'Notes/source.md',
+      title: 'Source Title',
       fingerprint: 'fingerprint-1',
       sizeBytes: 14,
       createdAt: now,
@@ -187,7 +191,7 @@ describe('SourceListPage', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('link', { name: 'Notes/source.md' }),
+        screen.getByRole('link', { name: 'Source Title' }),
       ).toBeDefined();
     });
     expect(screen.queryByText('게시됨')).toBeNull();
@@ -212,6 +216,7 @@ describe('SourceListPage', () => {
     const firstSource: SourceSummary = {
       sourceId: 'source-1',
       externalSourceId: 'Notes/first.md',
+      title: 'First Title',
       fingerprint: 'fingerprint-1',
       sizeBytes: 14,
       createdAt: now,
@@ -222,6 +227,7 @@ describe('SourceListPage', () => {
     const secondSource: SourceSummary = {
       sourceId: 'source-2',
       externalSourceId: 'Notes/second.md',
+      title: 'Second Title',
       fingerprint: 'fingerprint-2',
       sizeBytes: 15,
       createdAt: now,
@@ -245,7 +251,7 @@ describe('SourceListPage', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('link', { name: 'Notes/first.md' }),
+        screen.getByRole('link', { name: 'First Title' }),
       ).toBeDefined();
     });
 
@@ -253,7 +259,7 @@ describe('SourceListPage', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('link', { name: 'Notes/second.md' }),
+        screen.getByRole('link', { name: 'Second Title' }),
       ).toBeDefined();
     });
     expect(get).toHaveBeenNthCalledWith(1, '/sources', undefined);
