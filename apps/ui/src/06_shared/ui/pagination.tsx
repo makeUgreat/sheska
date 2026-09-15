@@ -11,12 +11,14 @@ export interface PaginationProps {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  disabled?: boolean;
 }
 
 export function Pagination({
   page,
   totalPages,
   onPageChange,
+  disabled = false,
 }: PaginationProps) {
   if (totalPages <= 1) return null;
 
@@ -30,8 +32,8 @@ export function Pagination({
       <button
         type="button"
         onClick={() => onPageChange(page - 1)}
-        disabled={page <= 1}
-        className="px-2 py-1 text-text-secondary transition-colors hover:text-[#e06c75] disabled:pointer-events-none disabled:opacity-40"
+        disabled={disabled || page <= 1}
+        className="px-2 py-1 text-text-secondary transition-colors hover:text-accent disabled:pointer-events-none disabled:opacity-40"
       >
         Prev
       </button>
@@ -40,11 +42,12 @@ export function Pagination({
           key={pageNumber}
           type="button"
           onClick={() => onPageChange(pageNumber)}
+          disabled={disabled}
           aria-current={pageNumber === page ? 'page' : undefined}
           className={
             pageNumber === page
-              ? 'inline-block w-[calc(3ch+1rem)] overflow-hidden px-2 py-1 text-center text-[#e06c75]'
-              : 'inline-block w-[calc(3ch+1rem)] overflow-hidden px-2 py-1 text-center text-text-secondary transition-colors hover:text-[#e06c75]'
+              ? 'inline-block w-[calc(3ch+1rem)] overflow-hidden px-2 py-1 text-center text-accent disabled:opacity-40'
+              : 'inline-block w-[calc(3ch+1rem)] overflow-hidden px-2 py-1 text-center text-text-secondary transition-colors hover:text-accent disabled:pointer-events-none disabled:opacity-40'
           }
         >
           {pageNumber}
@@ -53,8 +56,8 @@ export function Pagination({
       <button
         type="button"
         onClick={() => onPageChange(page + 1)}
-        disabled={page >= totalPages}
-        className="px-2 py-1 text-text-secondary transition-colors hover:text-[#e06c75] disabled:pointer-events-none disabled:opacity-40"
+        disabled={disabled || page >= totalPages}
+        className="px-2 py-1 text-text-secondary transition-colors hover:text-accent disabled:pointer-events-none disabled:opacity-40"
       >
         Next
       </button>
