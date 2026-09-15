@@ -1,0 +1,48 @@
+.nav-file-title > .sheska-sync-badge {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  justify-content: center;
+  margin-inline-start: auto;
+  padding-inline-start: var(--size-2-2);
+  pointer-events: none;
+}
+
+.nav-file-title > .sheska-sync-badge svg {
+  height: var(--icon-xs);
+  stroke-width: 2;
+  width: var(--icon-xs);
+}
+
+.sheska-sync-badge[data-status='synced'] {
+  color: var(--color-green);
+}
+
+.sheska-sync-badge[data-status='not-synced'],
+.sheska-sync-badge[data-status='accepted'],
+.sheska-sync-badge[data-status='unknown'] {
+  color: var(--text-muted);
+}
+
+.sheska-sync-badge[data-status='uploading'],
+.sheska-sync-badge[data-status='processing'],
+.sheska-sync-badge[data-status='retrying'] {
+  color: var(--interactive-accent);
+}
+
+.sheska-sync-badge[data-status='failed'],
+.sheska-sync-badge[data-status='needs-attention'] {
+  color: var(--color-red);
+}
+
+.sheska-sync-badge[data-status='uploading'] svg,
+.sheska-sync-badge[data-status='processing'] svg,
+.sheska-sync-badge[data-status='retrying'] svg {
+  animation: sheska-sync-spin 1s linear infinite;
+}
+
+@keyframes sheska-sync-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

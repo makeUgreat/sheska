@@ -17,7 +17,11 @@ interface AutoSyncServiceOptions {
   syncJobPollInitialDelayMs?: number;
   syncJobPollIntervalMs?: number;
   syncJobPollTimeoutMs?: number;
+  maxAutoRetries?: number;
 }
+
+export const AUTO_RETRY_BACKOFF_MS = [60_000, 5 * 60_000, 30 * 60_000];
+export const DEFAULT_MAX_AUTO_RETRIES = AUTO_RETRY_BACKOFF_MS.length;
 
 export class AutoSyncService {
   private api: SheskaApiClient;
@@ -26,6 +30,7 @@ export class AutoSyncService {
   private readonly dirtyFiles = new Map<string, TFile>();
   private readonly syncingFiles = new Set<string>();
   private readonly pollingFiles = new Set<string>();
+  private readonly reconcilingFiles = new Set<string>();
   private isFlushing = false;
   private cancelled = false;
   private flushDebounced: Debouncer<[], void>;
@@ -74,7 +79,14 @@ export class AutoSyncService {
 
   async runSweep(): Promise<void> {
     for (const file of this.options.vault.getMarkdownFiles()) {
-      await this.uploadIfChanged(file);
+      await this.uploadChangedDuringSweep(file);
+    }
+  }
+
+  async runReconcile(): Promise<void> {
+    for (const path of Object.keys(this.syncCache)) {
+      const file = this.options.vault.getAbstractFileByPath(path);
+      if (file instanceof TFile) await this.reconcileCachedFile(file);
     }
   }
 
@@ -100,7 +112,9 @@ export class AutoSyncService {
     if (
       !cached?.syncJobId ||
       cached.mtime !== file.stat.mtime ||
-      (cached.status !== 'accepted' && cached.status !== 'processing') ||
+      (cached.status !== 'accepted' &&
+        cached.status !== 'processing' &&
+        cached.status !== 'unknown') ||
       !this.shouldPollSyncJob(file.path) ||
       this.pollingFiles.has(file.path)
     ) {
@@ -142,7 +156,10 @@ export class AutoSyncService {
     }
   }
 
-  private async uploadFileCore(file: TFile): Promise<void> {
+  private async uploadFileCore(
+    file: TFile,
+    retryCount?: number,
+  ): Promise<void> {
     this.syncingFiles.add(file.path);
     this.options.onSyncStart?.(file.path);
     try {
@@ -171,6 +188,7 @@ export class AutoSyncService {
         syncJobId: upload.syncJobId,
         fingerprint: upload.fingerprint,
         status: 'accepted',
+        ...(retryCount === undefined ? {} : { retryCount }),
       };
       await this.options.saveSyncCache();
       this.options.onSyncStateChanged?.(file.path);
@@ -211,19 +229,13 @@ export class AutoSyncService {
       }
 
       if (job.status === 'completed') {
-        this.syncCache[path] = {
-          ...cached,
-          status: 'synced',
-          syncedAt: Date.now(),
-        };
+        this.markSynced(path, cached);
         await this.options.saveSyncCache();
         this.options.onSyncStateChanged?.(path);
         return;
       }
       if (job.status === 'failed') {
-        this.syncCache[path] = { ...cached, status: 'failed' };
-        await this.options.saveSyncCache();
-        this.options.onSyncStateChanged?.(path);
+        await this.recordServerFailure(path, cached);
         throw new Error(`Sheska sync job failed: ${syncJobId}`);
       }
 
@@ -240,7 +252,7 @@ export class AutoSyncService {
 
     const cached = this.syncCache[path];
     if (cached?.syncJobId === syncJobId && cached.mtime === mtime) {
-      this.syncCache[path] = { ...cached, status: 'failed' };
+      this.syncCache[path] = { ...cached, status: 'unknown' };
       await this.options.saveSyncCache();
       this.options.onSyncStateChanged?.(path);
     }
@@ -262,7 +274,9 @@ export class AutoSyncService {
     if (
       cached?.mtime === file.stat.mtime &&
       cached.syncJobId &&
-      (cached.status === 'accepted' || cached.status === 'processing')
+      (cached.status === 'accepted' ||
+        cached.status === 'processing' ||
+        cached.status === 'unknown')
     ) {
       if (this.shouldPollSyncJob(file.path)) {
         try {
@@ -276,11 +290,184 @@ export class AutoSyncService {
       }
       return;
     }
+    if (cached?.mtime === file.stat.mtime) return;
     try {
       await this.uploadFileCore(file);
     } catch (err) {
       console.error(`[Sheska] Auto-sync failed for "${file.path}":`, err);
     }
+  }
+
+  private async uploadChangedDuringSweep(file: TFile): Promise<void> {
+    if (!this.isInAutoSyncDirectory(file.path)) return;
+    const cached = this.syncCache[file.path];
+    if (cached?.mtime === file.stat.mtime) return;
+    if (this.syncingFiles.has(file.path)) return;
+    try {
+      await this.uploadFileCore(file);
+    } catch (err) {
+      console.error(`[Sheska] Auto-sync failed for "${file.path}":`, err);
+    }
+  }
+
+  private async reconcileCachedFile(file: TFile): Promise<void> {
+    if (!this.isInAutoSyncDirectory(file.path)) return;
+    if (!this.isInAutoSyncDirectory(file.path)) return;
+    if (
+      this.syncingFiles.has(file.path) ||
+      this.pollingFiles.has(file.path) ||
+      this.reconcilingFiles.has(file.path)
+    ) {
+      return;
+    }
+
+    this.reconcilingFiles.add(file.path);
+    try {
+      await this.reconcileCachedFileCore(file);
+    } finally {
+      this.reconcilingFiles.delete(file.path);
+    }
+  }
+
+  private async reconcileCachedFileCore(file: TFile): Promise<void> {
+    const cached = this.syncCache[file.path];
+    if (!cached || cached.mtime !== file.stat.mtime) return;
+    if (
+      !cached.syncJobId ||
+      cached.status === undefined ||
+      cached.status === 'synced' ||
+      cached.status === 'needs-attention'
+    ) {
+      return;
+    }
+    if (cached.status === 'failed' && cached.nextRetryAt !== undefined) {
+      if (Date.now() < cached.nextRetryAt) return;
+      await this.retryFailedSync(file, cached);
+      return;
+    }
+
+    try {
+      await this.reconcileSyncJob(file, cached.syncJobId, cached.mtime);
+    } catch (err) {
+      console.error(
+        `[Sheska] Sync job reconciliation failed for "${file.path}":`,
+        err,
+      );
+    }
+  }
+
+  private async reconcileSyncJob(
+    file: TFile,
+    syncJobId: string,
+    mtime: number,
+  ): Promise<void> {
+    const job = await this.api.getSyncJob(syncJobId);
+    const cached = this.syncCache[file.path];
+    if (!cached || cached.syncJobId !== syncJobId || cached.mtime !== mtime) {
+      return;
+    }
+
+    if (job.status === 'completed') {
+      this.markSynced(file.path, cached);
+      await this.options.saveSyncCache();
+      this.options.onSyncStateChanged?.(file.path);
+      return;
+    }
+    if (job.status === 'failed') {
+      await this.retryFailedSync(file, cached);
+      return;
+    }
+
+    const status = job.status === 'processing' ? 'processing' : 'accepted';
+    if (cached.status === status) return;
+    this.syncCache[file.path] = { ...cached, status };
+    await this.options.saveSyncCache();
+    this.options.onSyncStateChanged?.(file.path);
+  }
+
+  private async retryFailedSync(
+    file: TFile,
+    cached: SyncCache[string],
+  ): Promise<void> {
+    const retryCount = cached.retryCount ?? 0;
+    const maxAutoRetries =
+      this.options.maxAutoRetries ?? DEFAULT_MAX_AUTO_RETRIES;
+    if (retryCount >= maxAutoRetries) {
+      await this.recordServerFailure(file.path, cached);
+      return;
+    }
+
+    const now = Date.now();
+    if (cached.status !== 'failed' || cached.nextRetryAt === undefined) {
+      await this.recordServerFailure(file.path, cached);
+      return;
+    }
+    if (now < cached.nextRetryAt) return;
+
+    const nextRetryCount = retryCount + 1;
+    this.syncCache[file.path] = {
+      ...cached,
+      status: 'retrying',
+      retryCount: nextRetryCount,
+      nextRetryAt: undefined,
+    };
+    await this.options.saveSyncCache();
+    this.options.onSyncStateChanged?.(file.path);
+
+    try {
+      await this.uploadFileCore(file, nextRetryCount);
+    } catch (error) {
+      const current = this.syncCache[file.path];
+      if (current?.mtime === cached.mtime) {
+        this.syncCache[file.path] = {
+          ...current,
+          status:
+            nextRetryCount >= maxAutoRetries ? 'needs-attention' : 'failed',
+          nextRetryAt:
+            nextRetryCount >= maxAutoRetries
+              ? undefined
+              : Date.now() + this.retryDelayMs(nextRetryCount),
+        };
+        await this.options.saveSyncCache();
+        this.options.onSyncStateChanged?.(file.path);
+      }
+      throw error;
+    }
+  }
+
+  private retryDelayMs(retryCount: number): number {
+    return AUTO_RETRY_BACKOFF_MS[
+      Math.min(retryCount, AUTO_RETRY_BACKOFF_MS.length - 1)
+    ];
+  }
+
+  private async recordServerFailure(
+    path: string,
+    cached: SyncCache[string],
+  ): Promise<void> {
+    const retryCount = cached.retryCount ?? 0;
+    const maxAutoRetries =
+      this.options.maxAutoRetries ?? DEFAULT_MAX_AUTO_RETRIES;
+    const exhausted = retryCount >= maxAutoRetries;
+    this.syncCache[path] = {
+      ...cached,
+      status: exhausted ? 'needs-attention' : 'failed',
+      nextRetryAt: exhausted
+        ? undefined
+        : Date.now() + this.retryDelayMs(retryCount),
+    };
+    await this.options.saveSyncCache();
+    this.options.onSyncStateChanged?.(path);
+  }
+
+  private markSynced(path: string, cached: SyncCache[string]): void {
+    this.syncCache[path] = {
+      mtime: cached.mtime,
+      syncedAt: Date.now(),
+      sourceId: cached.sourceId,
+      fingerprint: cached.fingerprint,
+      status: 'synced',
+    };
   }
 
   private isInAutoSyncDirectory(filePath: string): boolean {

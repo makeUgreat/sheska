@@ -9,7 +9,16 @@ export interface SyncCacheEntry {
   sourceId?: string;
   syncJobId?: string;
   fingerprint?: string;
-  status?: 'accepted' | 'processing' | 'synced' | 'failed';
+  status?:
+    | 'accepted'
+    | 'processing'
+    | 'synced'
+    | 'failed'
+    | 'unknown'
+    | 'retrying'
+    | 'needs-attention';
+  retryCount?: number;
+  nextRetryAt?: number;
 }
 
 export type SyncCache = Record<string, SyncCacheEntry>;
