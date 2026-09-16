@@ -6,7 +6,7 @@ image:
   # live; embedder-deploy.yml overwrites it with the built commit's sha tag
   # on every successful image publish. This value only matters if the
   # deploy branch is ever recreated from master.
-  tag: "sha-9e3e98b5c614db3cd8c85e5228256ba168d8a180"
+  tag: "sha-60fee29692926ca299cbb0be0c43e490fbf67b53"
 service:
   type: ClusterIP
   port: 11434
