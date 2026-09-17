@@ -15,7 +15,10 @@ import {
   type SourceRepository,
   type SourceSyncJobRepository,
 } from '@contexts/sources/domain';
-import { EMBED_REQUESTS_QUEUE } from '@contexts/ingestion/application/ports';
+import {
+  SOURCE_EMBEDDING_CHUNK_QUEUE,
+  SOURCE_EMBEDDING_FINALIZATION_QUEUE,
+} from '@contexts/ingestion/application/ports';
 import { UploadSourceUseCase } from '@contexts/sources/application/use-cases/upload-source.use-case';
 import * as schema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
 import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
@@ -35,7 +38,8 @@ describe('UploadSourceUseCase', () => {
   let syncJobs: SourceSyncJobRepository;
   let useCase: UploadSourceUseCase;
   let outboxRelay: OutboxRelay;
-  let embedRequestsQueue: Queue;
+  let embeddingChunksQueue: Queue;
+  let embeddingFinalizeQueue: Queue;
   const fingerprints = new Map<string, string>();
   const sourceFingerprinter: SourceFingerprinter = {
     calculate(content: string) {
@@ -58,8 +62,14 @@ describe('UploadSourceUseCase', () => {
       .compile();
     app = moduleFixture.createNestApplication();
     await app.init();
-    embedRequestsQueue = app.get<Queue>(getQueueToken(EMBED_REQUESTS_QUEUE));
-    await embedRequestsQueue.pause();
+    embeddingChunksQueue = app.get<Queue>(
+      getQueueToken(SOURCE_EMBEDDING_CHUNK_QUEUE),
+    );
+    embeddingFinalizeQueue = app.get<Queue>(
+      getQueueToken(SOURCE_EMBEDDING_FINALIZATION_QUEUE),
+    );
+    await embeddingChunksQueue.pause();
+    await embeddingFinalizeQueue.pause();
     database = app.get<NodePgDatabase<typeof schema>>(
       DATABASE_TOKENS.drizzleDatabase,
     );
@@ -74,7 +84,8 @@ describe('UploadSourceUseCase', () => {
   });
 
   afterAll(async () => {
-    await embedRequestsQueue.obliterate({ force: true });
+    await embeddingChunksQueue.obliterate({ force: true });
+    await embeddingFinalizeQueue.obliterate({ force: true });
     await app.close();
   });
 
@@ -142,11 +153,14 @@ describe('UploadSourceUseCase', () => {
       .where(eq(outboxMessages.eventId, outboxMessage!.eventId));
     expect(publishedEvent?.publishedAt).toBeInstanceOf(Date);
 
-    const queuedJob = await embedRequestsQueue.getJob(outboxMessage!.eventId);
+    const queuedJob = await embeddingChunksQueue.getJob(
+      `${result.syncJobId!}-0`,
+    );
     expect(queuedJob?.data).toEqual({
       sourceId: result.sourceId,
       syncJobId: result.syncJobId,
-      content,
+      chunkIndex: 0,
+      chunkContent: content,
     });
   });
 

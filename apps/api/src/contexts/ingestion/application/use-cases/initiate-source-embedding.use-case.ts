@@ -23,7 +23,7 @@ export class InitiateSourceEmbeddingUseCase {
       chunkContent: chunk.content,
     }));
 
-    await this.workflowDispatcher.schedule({
+    await this.workflowDispatcher.dispatch({
       sourceId: command.sourceId,
       syncJobId: command.syncJobId,
       chunks,

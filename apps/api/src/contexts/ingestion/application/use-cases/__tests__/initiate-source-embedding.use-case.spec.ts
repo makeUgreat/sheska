@@ -8,9 +8,9 @@ import { InitiateSourceEmbeddingUseCase } from '../initiate-source-embedding.use
 
 describe('InitiateSourceEmbeddingUseCase', () => {
   it('content를 chunking하고 workflow를 등록한다', async () => {
-    const schedule = vi.fn().mockResolvedValue(undefined);
+    const dispatch = vi.fn().mockResolvedValue(undefined);
     const useCase = new InitiateSourceEmbeddingUseCase(
-      { schedule } satisfies EmbeddingWorkflowDispatcher,
+      { dispatch } satisfies EmbeddingWorkflowDispatcher,
       new RecursiveCharacterChunker({
         chunkSize: 7,
         chunkOverlap: 0,
@@ -24,7 +24,7 @@ describe('InitiateSourceEmbeddingUseCase', () => {
       content: 'abc\n\ndef\n\nghi',
     });
 
-    expect(schedule).toHaveBeenCalledWith({
+    expect(dispatch).toHaveBeenCalledWith({
       sourceId: 'source-1',
       syncJobId: 'sync-job-1',
       chunks: [
