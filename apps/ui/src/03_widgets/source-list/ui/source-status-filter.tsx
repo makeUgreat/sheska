@@ -1,7 +1,7 @@
-import { type SyncJobStatus } from '@/entities/source';
+import { type SyncJobSummaryStatus } from '@/entities/source';
 import { SYNC_JOB_STATUS_FILTERS } from '@/features/source-list-filters';
 
-const FILTER_OPTIONS: readonly (SyncJobStatus | undefined)[] = [
+const FILTER_OPTIONS: readonly (SyncJobSummaryStatus | undefined)[] = [
   undefined,
   ...SYNC_JOB_STATUS_FILTERS,
 ];
@@ -10,8 +10,8 @@ export function SourceStatusFilter({
   value,
   onChange,
 }: {
-  value: SyncJobStatus | undefined;
-  onChange: (status: SyncJobStatus | undefined) => void;
+  value: SyncJobSummaryStatus | undefined;
+  onChange: (status: SyncJobSummaryStatus | undefined) => void;
 }) {
   return (
     <div className="mb-8 flex flex-wrap items-center gap-2">

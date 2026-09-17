@@ -15,7 +15,6 @@ const sampleSource: SourceSummary = {
     syncJobId: 'sync-1',
     status: 'completed',
     totalChunks: 12,
-    processedChunks: 12,
     createdAt: '2026-08-05T08:30:00.000Z',
   },
   publishedPostId: null,
@@ -54,15 +53,14 @@ export const Published: Story = {
   },
 };
 
-export const Processing: Story = {
+export const Waiting: Story = {
   args: {
     source: {
       ...sampleSource,
       latestSyncJob: {
         syncJobId: 'sync-2',
-        status: 'processing',
+        status: 'waiting',
         totalChunks: 20,
-        processedChunks: 7,
         createdAt: '2026-08-05T08:30:00.000Z',
       },
     },

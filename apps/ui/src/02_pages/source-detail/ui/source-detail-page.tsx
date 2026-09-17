@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import {
   type EmbeddingInfo,
+  type SyncJob,
   type SyncJobSummary,
   SyncJobBadge,
   SyncJobProgress,
@@ -43,7 +44,11 @@ function FrontmatterSection({
   );
 }
 
-function SyncJobSection({ syncJob }: { syncJob: SyncJobSummary | null }) {
+function SyncJobSection({
+  syncJob,
+}: {
+  syncJob: SyncJob | SyncJobSummary | null;
+}) {
   if (!syncJob) {
     return (
       <>

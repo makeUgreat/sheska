@@ -1,13 +1,13 @@
-import { type SyncJobSummary } from '@/entities/source';
+import { type SyncJobStatus } from '@/entities/source';
 
-const STATUS_STYLES: Record<SyncJobSummary['status'], string> = {
-  pending: 'bg-surface-container-high text-secondary',
+const STATUS_STYLES: Record<SyncJobStatus, string> = {
+  waiting: 'bg-surface-container-high text-secondary',
   processing: 'bg-surface-container-high text-primary',
   completed: 'bg-accent text-white',
   failed: 'bg-error-container text-on-error-container',
 };
 
-export function SyncJobBadge({ status }: { status: SyncJobSummary['status'] }) {
+export function SyncJobBadge({ status }: { status: SyncJobStatus }) {
   const style = STATUS_STYLES[status] ?? 'bg-gray-100 text-gray-700';
 
   return (
@@ -19,11 +19,22 @@ export function SyncJobBadge({ status }: { status: SyncJobSummary['status'] }) {
   );
 }
 
-export function SyncJobProgress({ syncJob }: { syncJob: SyncJobSummary }) {
+export interface SyncJobProgressInfo {
+  status: SyncJobStatus;
+  totalChunks: number | null;
+  processedChunks?: number | null;
+}
+
+export function SyncJobProgress({
+  syncJob,
+}: {
+  syncJob: SyncJobProgressInfo;
+}) {
   if (
     syncJob.status !== 'processing' ||
     syncJob.totalChunks === null ||
-    syncJob.totalChunks === 0
+    syncJob.totalChunks === 0 ||
+    syncJob.processedChunks == null
   ) {
     return null;
   }

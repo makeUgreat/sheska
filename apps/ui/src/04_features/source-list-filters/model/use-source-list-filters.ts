@@ -1,14 +1,15 @@
 import { useSearchParams } from 'react-router-dom';
-import { type SyncJobStatus } from '@/entities/source';
+import { type SyncJobSummaryStatus } from '@/entities/source';
 
-export const SYNC_JOB_STATUS_FILTERS: readonly SyncJobStatus[] = [
-  'pending',
-  'processing',
+export const SYNC_JOB_STATUS_FILTERS: readonly SyncJobSummaryStatus[] = [
+  'waiting',
   'completed',
   'failed',
 ];
 
-function isSyncJobStatus(value: string | null): value is SyncJobStatus {
+function isSyncJobStatus(
+  value: string | null,
+): value is SyncJobSummaryStatus {
   return (SYNC_JOB_STATUS_FILTERS as readonly string[]).includes(value ?? '');
 }
 
@@ -31,7 +32,7 @@ export function useSourceListFilters() {
     });
   }
 
-  function setSyncJobStatus(nextStatus: SyncJobStatus | undefined) {
+  function setSyncJobStatus(nextStatus: SyncJobSummaryStatus | undefined) {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       if (nextStatus) {

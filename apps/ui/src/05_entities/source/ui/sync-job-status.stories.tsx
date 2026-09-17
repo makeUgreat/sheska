@@ -1,13 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { type SyncJobSummary } from '@/entities/source';
-import { SyncJobBadge, SyncJobProgress } from './sync-job-status';
+import { SyncJobBadge, SyncJobProgress, type SyncJobProgressInfo } from './sync-job-status';
 
-const processingJob: SyncJobSummary = {
-  syncJobId: 'sync-job-processing',
+const processingJob: SyncJobProgressInfo = {
   status: 'processing',
   totalChunks: 12,
   processedChunks: 7,
-  createdAt: '2026-08-05T09:30:00.000Z',
 };
 
 const meta = {
@@ -23,9 +20,9 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const PendingBadge: Story = {
+export const WaitingBadge: Story = {
   args: {
-    status: 'pending',
+    status: 'waiting',
   },
 };
 

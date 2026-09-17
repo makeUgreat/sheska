@@ -93,7 +93,6 @@ describe('SourceListPage', () => {
         syncJobId: 'sync-job-1',
         status: 'completed',
         totalChunks: 4,
-        processedChunks: 4,
         createdAt: now,
       },
       publishedPostId: null,
@@ -121,7 +120,7 @@ describe('SourceListPage', () => {
     });
   });
 
-  it('sync job이 processing 상태이면 진행률을 보여준다', async () => {
+  it('sync job이 waiting 상태이면 진행률 없이 상태만 보여준다', async () => {
     const now = '2026-01-01T00:00:00.000Z';
     const source: SourceSummary = {
       sourceId: 'source-1',
@@ -133,9 +132,8 @@ describe('SourceListPage', () => {
       updatedAt: now,
       latestSyncJob: {
         syncJobId: 'sync-job-1',
-        status: 'processing',
+        status: 'waiting',
         totalChunks: 10,
-        processedChunks: 3,
         createdAt: now,
       },
       publishedPostId: null,
@@ -154,11 +152,9 @@ describe('SourceListPage', () => {
 
     await waitFor(() => {
       expect(
-        within(screen.getByRole('list')).getByText('processing'),
+        within(screen.getByRole('list')).getByText('waiting'),
       ).toBeDefined();
-      expect(screen.getByText('3/10 (30%)')).toBeDefined();
-      const progressbar = screen.getByRole('progressbar');
-      expect(progressbar.getAttribute('aria-valuenow')).toBe('30');
+      expect(screen.queryByRole('progressbar')).toBeNull();
     });
   });
 

@@ -35,7 +35,6 @@ const MOCK_SOURCE: GetSourceResponse = {
     syncJobId: 'sync-job-1',
     status: 'completed',
     totalChunks: 4,
-    processedChunks: 4,
     createdAt: NOW,
   },
   embedding: {
@@ -118,6 +117,12 @@ describe('SourceDetailPage', () => {
   });
 
   it('sync job이 processing 상태이면 진행률을 렌더링한다', async () => {
+    const waitingSummary = {
+      syncJobId: 'sync-job-1',
+      status: 'waiting' as const,
+      totalChunks: 10,
+      createdAt: NOW,
+    };
     const processingJob = {
       syncJobId: 'sync-job-1',
       sourceId: 'source-1',
@@ -134,7 +139,7 @@ describe('SourceDetailPage', () => {
           Promise.resolve(
             path.startsWith('/sync-jobs/')
               ? processingJob
-              : { ...MOCK_SOURCE, latestSyncJob: processingJob },
+              : { ...MOCK_SOURCE, latestSyncJob: waitingSummary },
           ),
         ),
     });
@@ -154,8 +159,7 @@ describe('SourceDetailPage', () => {
       ...MOCK_SOURCE,
       latestSyncJob: {
         ...MOCK_SOURCE.latestSyncJob!,
-        status: 'processing' as const,
-        processedChunks: 2,
+        status: 'waiting' as const,
       },
       embedding: null,
     };
