@@ -25,11 +25,7 @@ export interface SyncJobProgressInfo {
   processedChunks?: number | null;
 }
 
-export function SyncJobProgress({
-  syncJob,
-}: {
-  syncJob: SyncJobProgressInfo;
-}) {
+export function SyncJobProgress({ syncJob }: { syncJob: SyncJobProgressInfo }) {
   if (
     syncJob.status !== 'processing' ||
     syncJob.totalChunks === null ||

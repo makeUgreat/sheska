@@ -125,7 +125,10 @@ export class SourcesModule {
         SourceSyncJobsHttpController,
         NotesHttpController,
       ],
-      providers: [ApplyIngestionUpdateUseCase, IngestionIntegrationEventConsumer],
+      providers: [
+        ApplyIngestionUpdateUseCase,
+        IngestionIntegrationEventConsumer,
+      ],
     };
   }
 }

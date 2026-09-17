@@ -7,9 +7,7 @@ export const SYNC_JOB_STATUS_FILTERS: readonly SyncJobSummaryStatus[] = [
   'failed',
 ];
 
-function isSyncJobStatus(
-  value: string | null,
-): value is SyncJobSummaryStatus {
+function isSyncJobStatus(value: string | null): value is SyncJobSummaryStatus {
   return (SYNC_JOB_STATUS_FILTERS as readonly string[]).includes(value ?? '');
 }
 

@@ -1,5 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { SyncJobBadge, SyncJobProgress, type SyncJobProgressInfo } from './sync-job-status';
+import {
+  SyncJobBadge,
+  SyncJobProgress,
+  type SyncJobProgressInfo,
+} from './sync-job-status';
 
 const processingJob: SyncJobProgressInfo = {
   status: 'processing',
