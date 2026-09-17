@@ -4,6 +4,7 @@ lang: en
 audience: both
 applies_to:
   - project Markdown documents
+  - source code comments
 translation: ../ko/documentation-guidelines.md
 related:
   - ./adr.md
@@ -27,6 +28,15 @@ Paired documents should describe the same policy.
 - Agent instruction files such as `AGENTS.md` are execution instructions rather than human-facing documentation, so language pairs are not required.
 - Temporary or hidden working notes, such as files under `.codex/temp/`, are excluded.
 - Generated documents, short local notes, and narrow tool-specific files may stay single-language when a paired document would add maintenance cost without improving project understanding.
+
+## Code Comments
+
+- Write code comments in Korean, in every app.
+  - This covers line comments, block comments, and doc comments, in production and test code alike.
+- Language pairing does not apply to code comments. They are single-language by design, so do not add an English counterpart.
+- Keep identifiers, type names, API names, error codes, file paths, and established technical terms in their original spelling inside a Korean comment.
+  - Translating them breaks the link between the comment and the code it describes.
+- Strings that reach a user or an operator, such as UI copy, API responses, and log messages, are not comments and are out of scope.
 
 ## Documentation Role
 
