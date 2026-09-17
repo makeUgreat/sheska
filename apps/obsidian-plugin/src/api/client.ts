@@ -17,7 +17,7 @@ export interface UploadSourceResponse {
 }
 
 export type SourceSyncJobStatus =
-  | 'pending'
+  | 'waiting'
   | 'processing'
   | 'completed'
   | 'failed';
@@ -28,7 +28,7 @@ export interface SourceSyncJobResponse {
   fingerprint: string;
   status: SourceSyncJobStatus;
   totalChunks: number | null;
-  processedChunks: number;
+  processedChunks: number | null;
   createdAt: string;
 }
 
