@@ -17,6 +17,7 @@ export {
   type InfrastructureErrorKind,
   type InfrastructureErrorSource,
   type InfrastructureInvalidDataDetails,
+  type InfrastructureTimeoutDetails,
 } from './error.base';
 export { InfrastructureException } from './infrastructure.exception';
 export { classifyPostgresError } from './postgres-error.classifier';

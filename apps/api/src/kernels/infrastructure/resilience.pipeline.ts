@@ -9,6 +9,7 @@ import {
 export interface ResilienceAttempt {
   readonly attempt: number;
   readonly signal: AbortSignal;
+  readonly deadlineBound: boolean;
 }
 
 export interface ResilienceExecutionOptions {
@@ -41,6 +42,7 @@ interface ExecutionContext extends ResilienceExecutionOptions {
   readonly attempt: number;
   readonly circuitTrial: boolean;
   readonly signal?: AbortSignal;
+  readonly deadlineBound?: boolean;
 }
 
 type Operation<T> = (context: ExecutionContext) => Promise<T>;
@@ -88,15 +90,17 @@ class Builder
 
   timeout(options: ResilienceExecutionOptions): ResiliencePipelineComplete {
     this.executionOptions = options;
-    this.policies.push(
-      (next) => (context) =>
-        next({
-          ...context,
-          signal: AbortSignal.timeout(
-            effectiveTimeoutMs(context.deadline, context.attemptTimeoutMs),
-          ),
-        }),
-    );
+    this.policies.push((next) => (context) => {
+      const timeoutMs = effectiveTimeoutMs(
+        context.deadline,
+        context.attemptTimeoutMs,
+      );
+      return next({
+        ...context,
+        signal: AbortSignal.timeout(timeoutMs),
+        deadlineBound: timeoutMs < context.attemptTimeoutMs,
+      });
+    });
     return this;
   }
 
@@ -107,6 +111,7 @@ class Builder
       return operation({
         attempt: context.attempt,
         signal: context.signal ?? new AbortController().signal,
+        deadlineBound: context.deadlineBound ?? false,
       });
     };
     const composed = this.policies.reduceRight<Operation<T>>(
