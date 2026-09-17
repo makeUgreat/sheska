@@ -7,6 +7,7 @@ import { AppModule } from '@platform/nest/app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   app.useLogger(app.get(Logger));
+  app.enableShutdownHooks();
   app.enableCors(
     process.env.NODE_ENV === 'production'
       ? { origin: ['app://obsidian.md', 'https://hash.meogle.co.kr'] }
