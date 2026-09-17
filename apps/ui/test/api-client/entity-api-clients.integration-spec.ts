@@ -80,7 +80,9 @@ describe('entity API clients', () => {
       expect.objectContaining({
         sourceId: uploaded.sourceId,
         externalSourceId,
-        content,
+        title: externalSourceId,
+        body: content,
+        frontmatter: {},
         fingerprint: uploaded.fingerprint,
         latestSyncJob: expect.objectContaining({
           syncJobId: uploaded.syncJobId,
