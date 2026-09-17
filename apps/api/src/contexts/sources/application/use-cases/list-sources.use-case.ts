@@ -8,7 +8,7 @@ import { SOURCE_QUERY } from '@contexts/sources/sources.di-tokens';
 export interface ListSourcesCommand {
   readonly page: number;
   readonly pageSize: number;
-  readonly syncJobStatus?: 'pending' | 'processing' | 'completed' | 'failed';
+  readonly syncJobStatus?: 'waiting' | 'completed' | 'failed';
 }
 
 @Injectable()

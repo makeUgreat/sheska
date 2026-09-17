@@ -27,11 +27,13 @@ import {
 import { SourceEmbeddingFromRepositoryLookup } from '@contexts/ingestion/application/services/source-embedding.from-repository.lookup';
 import { SourceEmbeddingPgDrizzleRepository } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/source-embedding.pg-drizzle.repository';
 import { IngestionPgDrizzleUnitOfWork } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/ingestion.pg-drizzle.unit-of-work';
+import { SourceEmbeddingWorkflowProgressBullMqLookup } from '@contexts/ingestion/infrastructure/queue/bullmq/source-embedding-workflow-progress.bullmq.lookup';
 import {
   EMBEDDER,
   SOURCE_EMBEDDING_REPOSITORY,
   SOURCE_EMBEDDING_LOOKUP,
   EMBEDDING_WORKFLOW_DISPATCHER,
+  EMBEDDING_WORKFLOW_PROGRESS_LOOKUP,
   INGESTION_UNIT_OF_WORK,
 } from './ingestion.di-tokens';
 
@@ -81,6 +83,10 @@ export class IngestionModule {
               separators: DEFAULT_SEPARATORS,
             }),
         },
+        {
+          provide: EMBEDDING_WORKFLOW_PROGRESS_LOOKUP,
+          useClass: SourceEmbeddingWorkflowProgressBullMqLookup,
+        },
       ],
       exports: [
         SOURCE_EMBEDDING_REPOSITORY,
@@ -88,6 +94,7 @@ export class IngestionModule {
         SOURCE_EMBEDDING_LOOKUP,
         EMBEDDER,
         RecursiveCharacterChunker,
+        EMBEDDING_WORKFLOW_PROGRESS_LOOKUP,
       ],
     };
   }

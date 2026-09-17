@@ -78,7 +78,7 @@ describe('SourcePgDrizzleQuery', () => {
     expect(found).toBeDefined();
     expect(found?.latestSyncJob).toMatchObject({
       syncJobId: syncJob.id,
-      status: 'pending',
+      status: 'waiting',
     });
   });
 

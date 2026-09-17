@@ -9,9 +9,8 @@ export function buildSourceSyncJobRow(
     id: params.id ?? 'source-sync-job-1',
     sourceId: params.sourceId ?? 'source-1',
     fingerprint: params.fingerprint ?? 'fingerprint-1',
-    status: params.status ?? 'pending',
+    status: params.status ?? 'waiting',
     totalChunks: params.totalChunks ?? null,
-    processedChunks: params.processedChunks ?? 0,
     createdAt: params.createdAt ?? persistedAt,
   };
 }

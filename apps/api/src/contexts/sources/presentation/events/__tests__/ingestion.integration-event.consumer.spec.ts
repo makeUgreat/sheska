@@ -5,30 +5,10 @@ import { IngestionIntegrationEventConsumer } from '../ingestion.integration-even
 describe('IngestionIntegrationEventConsumer', () => {
   it.each([
     {
-      method: 'onStarted' as const,
-      eventType: 'source.ingestion.started',
-      payload: { syncJobId: 'sync-job-1', totalChunks: 5 },
-      command: { kind: 'started', syncJobId: 'sync-job-1', totalChunks: 5 },
-    },
-    {
-      method: 'onProgress' as const,
-      eventType: 'source.ingestion.progress',
-      payload: {
-        syncJobId: 'sync-job-1',
-        processedChunks: 2,
-        totalChunks: 5,
-      },
-      command: {
-        kind: 'progress',
-        syncJobId: 'sync-job-1',
-        processedChunks: 2,
-      },
-    },
-    {
       method: 'onCompleted' as const,
       eventType: 'source.ingestion.completed',
-      payload: { syncJobId: 'sync-job-1' },
-      command: { kind: 'completed', syncJobId: 'sync-job-1' },
+      payload: { syncJobId: 'sync-job-1', totalChunks: 5 },
+      command: { kind: 'completed', syncJobId: 'sync-job-1', totalChunks: 5 },
     },
     {
       method: 'onFailed' as const,
@@ -56,6 +36,7 @@ describe('IngestionIntegrationEventConsumer', () => {
       consumer.onCompleted({
         ...buildIntegrationEvent('source.ingestion.completed', {
           syncJobId: 'sync-job-1',
+          totalChunks: 5,
         }),
         eventVersion: 2,
       }),

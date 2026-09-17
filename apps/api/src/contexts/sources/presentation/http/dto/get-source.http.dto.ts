@@ -2,7 +2,6 @@ export interface SyncJobHttpResponse {
   readonly syncJobId: string;
   readonly status: string;
   readonly totalChunks: number | null;
-  readonly processedChunks: number;
   readonly createdAt: string;
 }
 

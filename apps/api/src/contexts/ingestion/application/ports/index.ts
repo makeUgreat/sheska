@@ -15,3 +15,7 @@ export {
   type EmbeddingWorkflowPayload,
   type EmbeddingWorkflowDispatcher,
 } from './embedding-workflow.dispatcher';
+export {
+  type EmbeddingWorkflowProgress,
+  type EmbeddingWorkflowProgressLookup,
+} from './embedding-workflow-progress.lookup';

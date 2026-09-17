@@ -115,7 +115,6 @@ describe('SourcesHttpController', () => {
               syncJobId: 'sync-job-1',
               status: 'completed',
               totalChunks: 3,
-              processedChunks: 3,
               createdAt: now,
             },
             publishedPostId: 'post-1',
@@ -143,7 +142,6 @@ describe('SourcesHttpController', () => {
               syncJobId: 'sync-job-1',
               status: 'completed',
               totalChunks: 3,
-              processedChunks: 3,
               createdAt: now.toISOString(),
             },
             publishedPostId: 'post-1',
@@ -254,7 +252,6 @@ describe('SourcesHttpController', () => {
           syncJobId: 'sync-job-1',
           status: 'completed',
           totalChunks: 3,
-          processedChunks: 3,
           createdAt: now,
         },
         embedding: {
@@ -284,7 +281,6 @@ describe('SourcesHttpController', () => {
           syncJobId: 'sync-job-1',
           status: 'completed',
           totalChunks: 3,
-          processedChunks: 3,
           createdAt: now.toISOString(),
         },
         embedding: {

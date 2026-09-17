@@ -52,7 +52,6 @@ export class SourcesHttpController {
               syncJobId: s.latestSyncJob.syncJobId,
               status: s.latestSyncJob.status,
               totalChunks: s.latestSyncJob.totalChunks,
-              processedChunks: s.latestSyncJob.processedChunks,
               createdAt: s.latestSyncJob.createdAt.toISOString(),
             }
           : null,
@@ -84,7 +83,6 @@ export class SourcesHttpController {
             syncJobId: result.latestSyncJob.syncJobId,
             status: result.latestSyncJob.status,
             totalChunks: result.latestSyncJob.totalChunks,
-            processedChunks: result.latestSyncJob.processedChunks,
             createdAt: result.latestSyncJob.createdAt.toISOString(),
           }
         : null,

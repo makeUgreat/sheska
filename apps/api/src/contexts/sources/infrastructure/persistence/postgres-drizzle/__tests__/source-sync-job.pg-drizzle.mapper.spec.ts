@@ -8,7 +8,7 @@ describe('SourceSyncJobPgDrizzleMapper', () => {
     const row = buildSourceSyncJobRow({
       sourceId: 'source-1',
       fingerprint: 'fingerprint-1',
-      status: 'pending',
+      status: 'waiting',
     });
 
     const syncJob = SourceSyncJobPgDrizzleMapper.toDomain(row);
@@ -16,7 +16,7 @@ describe('SourceSyncJobPgDrizzleMapper', () => {
     expect(syncJob.id).toBe('source-sync-job-1');
     expect(syncJob.getProps()).toMatchObject({
       sourceId: 'source-1',
-      status: 'pending',
+      status: 'waiting',
     });
     expect(syncJob.getProps().fingerprint.unpack()).toBe('fingerprint-1');
   });
@@ -42,9 +42,8 @@ describe('SourceSyncJobPgDrizzleMapper', () => {
       id: syncJob.id,
       sourceId: 'source-1',
       fingerprint: 'fingerprint-1',
-      status: 'pending',
+      status: 'waiting',
       totalChunks: null,
-      processedChunks: 0,
     });
   });
 });

@@ -137,7 +137,7 @@ describe('UploadSourceUseCase', () => {
     expect(syncJobs.save).not.toHaveBeenCalled();
   });
 
-  it.each(['pending', 'processing'])(
+  it.each(['waiting'])(
     '같은 content snapshot의 최근 sync job이 %s이면 기존 job을 반환한다',
     async (status) => {
       const existingSource = restoreSource({
@@ -498,7 +498,7 @@ function createSourceSyncJobRepositoryMock(): SourceSyncJobRepositoryMock {
     get: vi
       .fn<SourceSyncJobRepository['get']>()
       .mockResolvedValue(
-        restoreSyncJob({ sourceId: 'source-1', status: 'pending' }),
+        restoreSyncJob({ sourceId: 'source-1', status: 'waiting' }),
       ),
     find: vi.fn<SourceSyncJobRepository['find']>().mockResolvedValue(null),
     findLatest: vi
@@ -573,7 +573,7 @@ function expectSyncJobSavedWith(
   expect(sourceSyncJobProps(savedSyncJob)).toMatchObject({
     sourceId: expected.sourceId,
     fingerprint: expected.fingerprint,
-    status: 'pending',
+    status: 'waiting',
   });
 }
 

@@ -4,16 +4,10 @@ import { SOURCE_SYNC_JOB_REPOSITORY } from '@contexts/sources/sources.di-tokens'
 
 export type ApplyIngestionUpdateCommand =
   | {
-      readonly kind: 'started';
+      readonly kind: 'completed';
       readonly syncJobId: string;
       readonly totalChunks: number;
     }
-  | {
-      readonly kind: 'progress';
-      readonly syncJobId: string;
-      readonly processedChunks: number;
-    }
-  | { readonly kind: 'completed'; readonly syncJobId: string }
   | { readonly kind: 'failed'; readonly syncJobId: string };
 
 @Injectable()
@@ -28,14 +22,8 @@ export class ApplyIngestionUpdateUseCase {
     if (!syncJob) return;
 
     switch (command.kind) {
-      case 'started':
-        syncJob.markProcessing(command.totalChunks);
-        break;
-      case 'progress':
-        syncJob.recordProgress(command.processedChunks);
-        break;
       case 'completed':
-        syncJob.markCompleted();
+        syncJob.markCompleted(command.totalChunks);
         break;
       case 'failed':
         syncJob.markFailed();
