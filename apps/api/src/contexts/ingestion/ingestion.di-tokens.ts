@@ -4,13 +4,15 @@ export const SOURCE_EMBEDDING_REPOSITORY = Symbol(
 );
 export const SOURCE_EMBEDDING_LOOKUP = Symbol('SOURCE_EMBEDDING_LOOKUP');
 export const EMBEDDER = Symbol('EMBEDDER');
-export const EMBED_REQUEST_DISPATCHER = Symbol('EMBED_REQUEST_DISPATCHER');
-export const EMBED_RESULT_DISPATCHER = Symbol('EMBED_RESULT_DISPATCHER');
+export const EMBEDDING_WORKFLOW_DISPATCHER = Symbol(
+  'EMBEDDING_WORKFLOW_DISPATCHER',
+);
+export const INGESTION_UNIT_OF_WORK = Symbol('INGESTION_UNIT_OF_WORK');
 
 export type { SourceEmbeddingRepository } from '@contexts/ingestion/domain';
 export type {
   Embedder,
   SourceEmbeddingLookup,
-  EmbedRequestDispatcher,
-  EmbedResultDispatcher,
+  EmbeddingWorkflowDispatcher,
+  IngestionUnitOfWork,
 } from '@contexts/ingestion/application/ports';

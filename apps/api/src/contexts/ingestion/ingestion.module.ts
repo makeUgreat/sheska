@@ -2,16 +2,16 @@ import { Module, type DynamicModule } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
 import {
-  EMBED_REQUESTS_QUEUE,
-  EMBED_RESULTS_QUEUE,
+  SOURCE_EMBEDDING_CHUNK_QUEUE,
+  SOURCE_EMBEDDING_FLOW_PRODUCER,
 } from '@contexts/ingestion/application/ports';
-import { EmbedSourceContentUseCase } from '@contexts/ingestion/application/use-cases/embed-source-content.use-case';
-import { SaveEmbeddingResultUseCase } from '@contexts/ingestion/application/use-cases/save-embedding-result.use-case';
-import { EmbedRequestBullMqConsumer } from '@contexts/ingestion/presentation/queue/bullmq/embed-request.bullmq.consumer';
-import { EmbedResultBullMqConsumer } from '@contexts/ingestion/presentation/queue/bullmq/embed-result.bullmq.consumer';
+import { EmbedSourceChunkUseCase } from '@contexts/ingestion/application/use-cases/embed-source-chunk.use-case';
+import { InitiateSourceEmbeddingUseCase } from '@contexts/ingestion/application/use-cases/initiate-source-embedding.use-case';
+import { FinalizeEmbeddingWorkflowUseCase } from '@contexts/ingestion/application/use-cases/finalize-embedding-workflow.use-case';
+import { SourceEmbeddingChunkBullMqConsumer } from '@contexts/ingestion/presentation/queue/bullmq/source-embedding-chunk.bullmq.consumer';
+import { SourceEmbeddingFinalizationBullMqConsumer } from '@contexts/ingestion/presentation/queue/bullmq/source-embedding-finalization.bullmq.consumer';
 import { SourceSyncJobCreatedIntegrationEventConsumer } from '@contexts/ingestion/presentation/events/source-sync-job-created.integration-event.consumer';
-import { EmbedRequestBullMqDispatcher } from '@contexts/ingestion/infrastructure/queue/bullmq/embed-request.bullmq.dispatcher';
-import { EmbedResultBullMqDispatcher } from '@contexts/ingestion/infrastructure/queue/bullmq/embed-result.bullmq.dispatcher';
+import { SourceEmbeddingWorkflowBullMqDispatcher } from '@contexts/ingestion/infrastructure/queue/bullmq/source-embedding-workflow.bullmq.dispatcher';
 import { OllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.embedder';
 import {
   OLLAMA_CONFIG,
@@ -25,12 +25,13 @@ import {
 } from '@contexts/ingestion/application/services/recursive-character.chunker';
 import { SourceEmbeddingFromRepositoryLookup } from '@contexts/ingestion/application/services/source-embedding.from-repository.lookup';
 import { SourceEmbeddingPgDrizzleRepository } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/source-embedding.pg-drizzle.repository';
+import { IngestionPgDrizzleUnitOfWork } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/ingestion.pg-drizzle.unit-of-work';
 import {
   EMBEDDER,
   SOURCE_EMBEDDING_REPOSITORY,
   SOURCE_EMBEDDING_LOOKUP,
-  EMBED_REQUEST_DISPATCHER,
-  EMBED_RESULT_DISPATCHER,
+  EMBEDDING_WORKFLOW_DISPATCHER,
+  INGESTION_UNIT_OF_WORK,
 } from './ingestion.di-tokens';
 
 export type IngestionModuleOptions = Record<string, never>;
@@ -44,6 +45,10 @@ export class IngestionModule {
         {
           provide: SOURCE_EMBEDDING_REPOSITORY,
           useClass: SourceEmbeddingPgDrizzleRepository,
+        },
+        {
+          provide: INGESTION_UNIT_OF_WORK,
+          useClass: IngestionPgDrizzleUnitOfWork,
         },
         {
           provide: SOURCE_EMBEDDING_LOOKUP,
@@ -73,6 +78,7 @@ export class IngestionModule {
       ],
       exports: [
         SOURCE_EMBEDDING_REPOSITORY,
+        INGESTION_UNIT_OF_WORK,
         SOURCE_EMBEDDING_LOOKUP,
         EMBEDDER,
         RecursiveCharacterChunker,
@@ -84,24 +90,23 @@ export class IngestionModule {
     return {
       module: IngestionModule,
       imports: [
-        BullModule.registerQueue({ name: EMBED_REQUESTS_QUEUE }),
-        BullModule.registerQueue({ name: EMBED_RESULTS_QUEUE }),
+        BullModule.registerQueue({ name: SOURCE_EMBEDDING_CHUNK_QUEUE }),
+        BullModule.registerFlowProducer({
+          name: SOURCE_EMBEDDING_FLOW_PRODUCER,
+        }),
         IngestionModule.forFeature(),
       ],
       providers: [
         SourceSyncJobCreatedIntegrationEventConsumer,
         {
-          provide: EMBED_REQUEST_DISPATCHER,
-          useClass: EmbedRequestBullMqDispatcher,
+          provide: EMBEDDING_WORKFLOW_DISPATCHER,
+          useClass: SourceEmbeddingWorkflowBullMqDispatcher,
         },
-        {
-          provide: EMBED_RESULT_DISPATCHER,
-          useClass: EmbedResultBullMqDispatcher,
-        },
-        EmbedSourceContentUseCase,
-        SaveEmbeddingResultUseCase,
-        EmbedRequestBullMqConsumer,
-        EmbedResultBullMqConsumer,
+        InitiateSourceEmbeddingUseCase,
+        EmbedSourceChunkUseCase,
+        FinalizeEmbeddingWorkflowUseCase,
+        SourceEmbeddingChunkBullMqConsumer,
+        SourceEmbeddingFinalizationBullMqConsumer,
       ],
     };
   }

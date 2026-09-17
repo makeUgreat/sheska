@@ -7,7 +7,6 @@ export {
   cursorQueryParamSchema,
 } from './cursor.codec';
 export { PresentationException } from './presentation.exception';
-export { type QueueJobFailureLogContext } from './queue-job-failure.context';
 export {
   PRESENTATION_ERROR_KIND,
   type PresentationErrorBase,
