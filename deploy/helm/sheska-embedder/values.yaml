@@ -18,6 +18,8 @@ resources:
     cpu: 500m
     memory: 2Gi
   limits:
+    # Changing this requires rebuilding the image: the model's baked-in
+    # num_thread must match it (see Dockerfile).
     cpu: 2000m
     memory: 5Gi
 

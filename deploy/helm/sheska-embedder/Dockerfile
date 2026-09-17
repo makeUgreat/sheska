@@ -3,9 +3,19 @@
 # needed a node-pinned local-path PVC and blocked scaling replicas across
 # nodes — see 632c843 for the same rationale applied to sheska-embedder).
 FROM ollama/ollama:latest AS model
+# Ollama sizes the inference threadpool from the node's visible core count
+# (nproc), which ignores this pod's CFS quota — a single embedding request
+# then oversubscribes the quota and spends most of every scheduling period
+# throttled. Baking num_thread into the tag rather than sending it per
+# request keeps every caller on one runner: Ollama keys loaded runners by
+# their options, so a request that omits the option would unload and reload
+# the runner.
+# Keep this equal to values.yaml resources.limits.cpu (2000m).
 RUN (ollama serve &) && \
     until ollama list >/dev/null 2>&1; do sleep 1; done && \
-    ollama pull qwen3-embedding:0.6b
+    ollama pull qwen3-embedding:0.6b && \
+    printf 'FROM qwen3-embedding:0.6b\nPARAMETER num_thread 2\n' > /tmp/Modelfile && \
+    ollama create qwen3-embedding:0.6b -f /tmp/Modelfile
 
 FROM ollama/ollama:latest
 
