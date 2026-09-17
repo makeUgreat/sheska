@@ -11,6 +11,7 @@ import { SourceDocumentYamlParser } from '@contexts/sources/infrastructure/parse
 import { SourcePgDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
 import { SourceSyncJobPgDrizzleRepository } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source-sync-job.pg-drizzle.repository';
 import { SourceEmbeddingFromIngestionLookup } from '@contexts/sources/acl/ingestion/source-embedding.from-ingestion.lookup';
+import { SyncJobProgressFromIngestionLookup } from '@contexts/sources/acl/ingestion/sync-job-progress.from-ingestion.lookup';
 import { SourcePgDrizzleQuery } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.query';
 import { NotePgDrizzleQuery } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/note.pg-drizzle.query';
 import { SourcesPgDrizzleUnitOfWork } from '@contexts/sources/infrastructure/persistence/postgres-drizzle/sources.pg-drizzle.unit-of-work';
@@ -23,6 +24,8 @@ import { IngestionIntegrationEventConsumer } from '@contexts/sources/presentatio
 import {
   type SourceEmbeddingLookup as IngestionSourceEmbeddingLookup,
   SOURCE_EMBEDDING_LOOKUP as INGESTION_SOURCE_EMBEDDING_LOOKUP,
+  EMBEDDING_WORKFLOW_PROGRESS_LOOKUP,
+  type EmbeddingWorkflowProgressLookup,
   IngestionModule,
 } from '@contexts/ingestion';
 import {
@@ -35,6 +38,7 @@ import {
   NOTE_QUERY,
   SOURCE_LOOKUP,
   SOURCES_UNIT_OF_WORK,
+  SYNC_JOB_PROGRESS_LOOKUP,
 } from './sources.di-tokens';
 
 export type SourcesModuleOptions = Record<string, never>;
@@ -84,6 +88,12 @@ export class SourcesModule {
           provide: SOURCE_LOOKUP,
           useClass: SourceFromRepositoryLookup,
         },
+        {
+          provide: SYNC_JOB_PROGRESS_LOOKUP,
+          useFactory: (progress: EmbeddingWorkflowProgressLookup) =>
+            new SyncJobProgressFromIngestionLookup(progress),
+          inject: [EMBEDDING_WORKFLOW_PROGRESS_LOOKUP],
+        },
         SourceContentSnapshotCalculator,
         ListSourcesUseCase,
         GetSourceUseCase,
@@ -115,10 +125,7 @@ export class SourcesModule {
         SourceSyncJobsHttpController,
         NotesHttpController,
       ],
-      providers: [
-        ApplyIngestionUpdateUseCase,
-        IngestionIntegrationEventConsumer,
-      ],
+      providers: [ApplyIngestionUpdateUseCase, IngestionIntegrationEventConsumer],
     };
   }
 }

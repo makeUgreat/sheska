@@ -75,7 +75,6 @@ export class SourceSyncJobPgDrizzleRepository implements SourceSyncJobRepository
           set: {
             status: insert.status,
             totalChunks: insert.totalChunks,
-            processedChunks: insert.processedChunks,
           },
         })
         .returning();

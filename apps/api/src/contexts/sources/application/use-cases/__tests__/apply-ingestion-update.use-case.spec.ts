@@ -9,52 +9,32 @@ type SourceSyncJobRepositoryMock = {
 };
 
 describe('ApplyIngestionUpdateUseCase', () => {
-  it('started update를 sync job에 적용한다', async () => {
+  it('completed update를 totalChunks와 함께 sync job에 적용한다', async () => {
     const syncJob = buildSourceSyncJob({ sourceId: 'source-1' });
     const syncJobs = createSyncJobRepositoryMock(syncJob);
     const useCase = createUseCase(syncJobs);
 
     await useCase.execute({
-      kind: 'started',
+      kind: 'completed',
       syncJobId: syncJob.id,
       totalChunks: 5,
     });
 
     expect(syncJob.getProps()).toMatchObject({
-      status: 'processing',
+      status: 'completed',
       totalChunks: 5,
-      processedChunks: 0,
     });
     expect(syncJobs.save).toHaveBeenCalledWith(syncJob);
   });
 
-  it('progress update를 sync job에 적용한다', async () => {
-    const syncJob = buildSourceSyncJob({ sourceId: 'source-1' });
-    syncJob.markProcessing(5);
-    const syncJobs = createSyncJobRepositoryMock(syncJob);
-    const useCase = createUseCase(syncJobs);
-
-    await useCase.execute({
-      kind: 'progress',
-      syncJobId: syncJob.id,
-      processedChunks: 2,
-    });
-
-    expect(syncJob.getProps().processedChunks).toBe(2);
-    expect(syncJobs.save).toHaveBeenCalledWith(syncJob);
-  });
-
-  it.each([
-    { kind: 'completed' as const, status: 'completed' },
-    { kind: 'failed' as const, status: 'failed' },
-  ])('$kind update를 sync job에 적용한다', async ({ kind, status }) => {
+  it('failed update를 sync job에 적용한다', async () => {
     const syncJob = buildSourceSyncJob({ sourceId: 'source-1' });
     const syncJobs = createSyncJobRepositoryMock(syncJob);
     const useCase = createUseCase(syncJobs);
 
-    await useCase.execute({ kind, syncJobId: syncJob.id });
+    await useCase.execute({ kind: 'failed', syncJobId: syncJob.id });
 
-    expect(syncJob.getProps().status).toBe(status);
+    expect(syncJob.getProps().status).toBe('failed');
     expect(syncJobs.save).toHaveBeenCalledWith(syncJob);
   });
 
@@ -65,6 +45,7 @@ describe('ApplyIngestionUpdateUseCase', () => {
     await useCase.execute({
       kind: 'completed',
       syncJobId: 'unknown',
+      totalChunks: 5,
     });
 
     expect(syncJobs.save).not.toHaveBeenCalled();

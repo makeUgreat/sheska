@@ -1,14 +1,13 @@
 export type SourceQueryPaginateOptions = {
   readonly page: number;
   readonly pageSize: number;
-  readonly syncJobStatus?: 'pending' | 'processing' | 'completed' | 'failed';
+  readonly syncJobStatus?: 'waiting' | 'completed' | 'failed';
 };
 
 export type SourceQuerySyncJobSummary = {
   readonly syncJobId: string;
   readonly status: string;
   readonly totalChunks: number | null;
-  readonly processedChunks: number;
   readonly createdAt: Date;
 };
 

@@ -10,10 +10,9 @@ interface SourceSyncJobProps {
   fingerprint: SourceFingerprint;
   status: SourceSyncJobStatus;
   totalChunks: number | null;
-  processedChunks: number;
 }
 
-type SourceSyncJobStatus = 'pending' | 'processing' | 'completed' | 'failed';
+type SourceSyncJobStatus = 'waiting' | 'completed' | 'failed';
 
 interface SourceSyncJobCreateParams {
   sourceId: string;
@@ -27,7 +26,6 @@ interface SourceSyncJobRestoreParams {
   fingerprint: string;
   status: string;
   totalChunks?: number | null;
-  processedChunks?: number;
   createdAt?: Date;
 }
 
@@ -43,9 +41,8 @@ export class SourceSyncJob extends AggregateRoot<
       props: {
         sourceId,
         fingerprint: SourceFingerprint.of(fingerprint),
-        status: 'pending',
+        status: 'waiting',
         totalChunks: null,
-        processedChunks: 0,
       },
     });
 
@@ -71,25 +68,14 @@ export class SourceSyncJob extends AggregateRoot<
         fingerprint: SourceFingerprint.of(fingerprint),
         status: status as SourceSyncJobStatus,
         totalChunks: params.totalChunks ?? null,
-        processedChunks: params.processedChunks ?? 0,
       },
       createdAt,
     });
   }
 
-  markProcessing(totalChunks: number): void {
-    this.props.status = 'processing';
-    this.props.totalChunks = totalChunks;
-    this.props.processedChunks = 0;
-  }
-
-  recordProgress(processedChunks: number): void {
-    this.props.processedChunks = processedChunks;
-    this.validate();
-  }
-
-  markCompleted(): void {
+  markCompleted(totalChunks: number): void {
     this.props.status = 'completed';
+    this.props.totalChunks = totalChunks;
   }
 
   markFailed(): void {
@@ -101,8 +87,7 @@ export class SourceSyncJob extends AggregateRoot<
   }
 
   isActiveFor(fingerprint: string): boolean {
-    const isActive =
-      this.props.status === 'pending' || this.props.status === 'processing';
+    const isActive = this.props.status === 'waiting';
     const hasSameFingerprint = this.props.fingerprint.unpack() === fingerprint;
 
     return isActive && hasSameFingerprint;
@@ -112,25 +97,11 @@ export class SourceSyncJob extends AggregateRoot<
     if (!SourceSyncJob.isStatus(this.props.status)) {
       throw new Error('Source sync job status is invalid');
     }
-    if (this.props.processedChunks < 0) {
-      throw new Error('Source sync job processed chunk count is invalid');
-    }
-    if (
-      this.props.totalChunks !== null &&
-      this.props.processedChunks > this.props.totalChunks
-    ) {
-      throw new Error(
-        'Source sync job processed chunk count exceeds total chunks',
-      );
-    }
   }
 
   private static isStatus(status: string): status is SourceSyncJobStatus {
     return (
-      status === 'pending' ||
-      status === 'processing' ||
-      status === 'completed' ||
-      status === 'failed'
+      status === 'waiting' || status === 'completed' || status === 'failed'
     );
   }
 }

@@ -34,7 +34,6 @@ export interface GetSourceResult {
     readonly syncJobId: string;
     readonly status: string;
     readonly totalChunks: number | null;
-    readonly processedChunks: number;
     readonly createdAt: Date;
   } | null;
   readonly embedding: SourceEmbeddingMetadata | null;
@@ -80,7 +79,6 @@ export class GetSourceUseCase {
             syncJobId: latestJob.id,
             status: latestJob.getProps().status,
             totalChunks: latestJob.getProps().totalChunks,
-            processedChunks: latestJob.getProps().processedChunks,
             createdAt: latestJob.createdAt,
           }
         : null,

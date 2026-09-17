@@ -26,3 +26,7 @@ export type {
   SourcesUnitOfWork,
   SourcesUnitOfWorkResources,
 } from './sources.unit-of-work';
+export type {
+  SyncJobProgress,
+  SyncJobProgressLookup,
+} from './sync-job-progress.lookup';

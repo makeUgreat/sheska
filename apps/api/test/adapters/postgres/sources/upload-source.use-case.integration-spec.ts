@@ -119,7 +119,7 @@ describe('UploadSourceUseCase', () => {
       id: result.syncJobId,
       sourceId: result.sourceId,
       fingerprint,
-      status: 'pending',
+      status: 'waiting',
     });
 
     const persistedMessages = await database
@@ -244,7 +244,7 @@ custom:
     const firstSyncJob = await syncJobs.findLatest({
       sourceId: firstResult.sourceId,
     });
-    firstSyncJob!.markCompleted();
+    firstSyncJob!.markCompleted(1);
     await syncJobs.save(firstSyncJob!);
 
     const secondResult = await useCase.execute({ externalSourceId, content });

@@ -4,6 +4,6 @@ export interface GetSourceSyncJobHttpResponse {
   readonly fingerprint: string;
   readonly status: string;
   readonly totalChunks: number | null;
-  readonly processedChunks: number;
+  readonly processedChunks: number | null;
   readonly createdAt: string;
 }

@@ -29,7 +29,6 @@ type SourceWithLatestJobRow = {
   sync_job_id: string | null;
   sync_job_status: string | null;
   sync_job_total_chunks: number | null;
-  sync_job_processed_chunks: number | null;
   sync_job_created_at: Date | null;
   published_post_id: string | null;
   total_count: number;
@@ -64,13 +63,12 @@ export class SourcePgDrizzleQuery implements SourceQuery {
           ssj.id                AS sync_job_id,
           ssj.status            AS sync_job_status,
           ssj.total_chunks      AS sync_job_total_chunks,
-          ssj.processed_chunks  AS sync_job_processed_chunks,
           ssj.created_at        AS sync_job_created_at,
           p.id                  AS published_post_id,
           COUNT(*) OVER()       AS total_count
         FROM sources s
         LEFT JOIN LATERAL (
-          SELECT id, status, total_chunks, processed_chunks, created_at
+          SELECT id, status, total_chunks, created_at
           FROM source_sync_jobs
           WHERE source_id = s.id
           ORDER BY created_at DESC
@@ -137,7 +135,6 @@ export class SourcePgDrizzleQuery implements SourceQuery {
                   syncJobId: row.sync_job_id,
                   status: row.sync_job_status,
                   totalChunks: row.sync_job_total_chunks,
-                  processedChunks: row.sync_job_processed_chunks ?? 0,
                   createdAt: new Date(row.sync_job_created_at),
                 }
               : null,

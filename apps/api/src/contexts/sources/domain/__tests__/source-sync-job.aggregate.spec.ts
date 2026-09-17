@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 describe('SourceSyncJob', () => {
   describe('create', () => {
-    it('pending 상태로 sync job을 생성한다', () => {
+    it('waiting 상태로 sync job을 생성한다', () => {
       const syncJob = SourceSyncJob.create({
         sourceId: 'source-1',
         content: '# Source note',
@@ -13,9 +13,8 @@ describe('SourceSyncJob', () => {
 
       expect(props).toMatchObject({
         sourceId: 'source-1',
-        status: 'pending',
+        status: 'waiting',
         totalChunks: null,
-        processedChunks: 0,
       });
       expect(props.id.length).toBeGreaterThan(0);
       expect(props.fingerprint.unpack()).toBe('fingerprint-1');
@@ -45,14 +44,14 @@ describe('SourceSyncJob', () => {
         id: ' source-sync-job-1 ',
         sourceId: 'source-1',
         fingerprint: ' fingerprint-1 ',
-        status: 'pending',
+        status: 'waiting',
       });
       const props = syncJob.getProps();
 
       expect(props.id).toBe(' source-sync-job-1 ');
       expect(props.sourceId).toBe('source-1');
       expect(props.fingerprint.unpack()).toBe('fingerprint-1');
-      expect(props.status).toBe('pending');
+      expect(props.status).toBe('waiting');
     });
 
     it('복원된 sync job은 domain event를 기록하지 않는다', () => {
@@ -60,7 +59,7 @@ describe('SourceSyncJob', () => {
         id: 'source-sync-job-1',
         sourceId: 'source-1',
         fingerprint: 'fingerprint-1',
-        status: 'pending',
+        status: 'waiting',
       });
 
       expect(syncJob.domainEvents).toEqual([]);
@@ -78,49 +77,19 @@ describe('SourceSyncJob', () => {
     });
   });
 
-  describe('markProcessing', () => {
-    it('processing 상태로 전환하고 totalChunks를 기록한다', () => {
+  describe('markCompleted', () => {
+    it('completed 상태로 전환한다', () => {
       const syncJob = SourceSyncJob.create({
         sourceId: 'source-1',
         content: '# Source note',
         fingerprint: 'fingerprint-1',
       });
-
-      syncJob.markProcessing(10);
+      syncJob.markCompleted(10);
 
       expect(syncJob.getProps()).toMatchObject({
-        status: 'processing',
+        status: 'completed',
         totalChunks: 10,
-        processedChunks: 0,
       });
-    });
-  });
-
-  describe('recordProgress', () => {
-    it('processedChunks를 갱신한다', () => {
-      const syncJob = SourceSyncJob.create({
-        sourceId: 'source-1',
-        content: '# Source note',
-        fingerprint: 'fingerprint-1',
-      });
-      syncJob.markProcessing(10);
-
-      syncJob.recordProgress(3);
-
-      expect(syncJob.getProps().processedChunks).toBe(3);
-    });
-
-    it('processedChunks가 totalChunks를 초과하면 throw한다', () => {
-      const syncJob = SourceSyncJob.create({
-        sourceId: 'source-1',
-        content: '# Source note',
-        fingerprint: 'fingerprint-1',
-      });
-      syncJob.markProcessing(2);
-
-      expect(() => syncJob.recordProgress(3)).toThrow(
-        'Source sync job processed chunk count exceeds total chunks',
-      );
     });
   });
 
@@ -131,12 +100,12 @@ describe('SourceSyncJob', () => {
         content: '# Source note',
         fingerprint: 'fingerprint-1',
       });
-      syncJob.markCompleted();
+      syncJob.markCompleted(10);
 
       expect(syncJob.isCompleted()).toBe(true);
     });
 
-    it.each(['pending', 'processing', 'failed'] as const)(
+    it.each(['waiting', 'failed'] as const)(
       'status가 %s면 false를 반환한다',
       (status) => {
         const syncJob = SourceSyncJob.restore({
@@ -152,19 +121,16 @@ describe('SourceSyncJob', () => {
   });
 
   describe('isActiveFor', () => {
-    it.each(['pending', 'processing'] as const)(
-      'status가 %s이고 fingerprint가 같으면 true를 반환한다',
-      (status) => {
-        const syncJob = SourceSyncJob.restore({
-          id: 'source-sync-job-1',
-          sourceId: 'source-1',
-          fingerprint: 'fingerprint-1',
-          status,
-        });
+    it('status가 waiting이고 fingerprint가 같으면 true를 반환한다', () => {
+      const syncJob = SourceSyncJob.restore({
+        id: 'source-sync-job-1',
+        sourceId: 'source-1',
+        fingerprint: 'fingerprint-1',
+        status: 'waiting',
+      });
 
-        expect(syncJob.isActiveFor('fingerprint-1')).toBe(true);
-      },
-    );
+      expect(syncJob.isActiveFor('fingerprint-1')).toBe(true);
+    });
 
     it('fingerprint가 다르면 false를 반환한다', () => {
       const syncJob = SourceSyncJob.create({

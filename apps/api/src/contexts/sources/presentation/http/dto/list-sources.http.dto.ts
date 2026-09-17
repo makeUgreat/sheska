@@ -1,8 +1,7 @@
 import { z } from 'zod';
 
 export const listSourcesSyncJobStatusSchema = z.enum([
-  'pending',
-  'processing',
+  'waiting',
   'completed',
   'failed',
 ]);
@@ -20,14 +19,13 @@ export class ListSourcesHttpRequest {
 
   readonly page!: number;
   readonly pageSize!: number;
-  readonly syncJobStatus?: 'pending' | 'processing' | 'completed' | 'failed';
+  readonly syncJobStatus?: 'waiting' | 'completed' | 'failed';
 }
 
 export interface SyncJobSummaryHttpResponse {
   readonly syncJobId: string;
   readonly status: string;
   readonly totalChunks: number | null;
-  readonly processedChunks: number;
   readonly createdAt: string;
 }
 

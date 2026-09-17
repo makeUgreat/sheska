@@ -49,7 +49,6 @@ export const sourceSyncJobs = pgTable(
     fingerprint: text('fingerprint').notNull(),
     status: text('status').notNull(),
     totalChunks: integer('total_chunks'),
-    processedChunks: integer('processed_chunks').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -57,7 +56,7 @@ export const sourceSyncJobs = pgTable(
   (table) => [
     uniqueIndex('source_sync_jobs_active_source_fingerprint_unique')
       .on(table.sourceId, table.fingerprint)
-      .where(sql`${table.status} IN ('pending', 'processing')`),
+      .where(sql`${table.status} = 'waiting'`),
   ],
 );
 

@@ -8,6 +8,10 @@ export const SOURCE_QUERY = Symbol('SOURCE_QUERY');
 export const NOTE_QUERY = Symbol('NOTE_QUERY');
 export const SOURCE_LOOKUP = Symbol('SOURCE_LOOKUP');
 export const SOURCES_UNIT_OF_WORK = Symbol('SOURCES_UNIT_OF_WORK');
+export const SYNC_JOB_PROGRESS_LOOKUP = Symbol('SYNC_JOB_PROGRESS_LOOKUP');
 
 export type { SourceRepository } from '@contexts/sources/domain';
-export type { SourceLookup } from '@contexts/sources/application/ports';
+export type {
+  SourceLookup,
+  SyncJobProgressLookup,
+} from '@contexts/sources/application/ports';

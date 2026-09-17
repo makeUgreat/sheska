@@ -47,7 +47,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
     expect(result.id).toBe(syncJob.id);
     expect(result.getProps()).toMatchObject({
       sourceId: source.id,
-      status: 'pending',
+      status: 'waiting',
     });
     expect(result.getProps().fingerprint.unpack()).toBe('fingerprint-2');
   });
@@ -95,7 +95,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
       fingerprint: 'fingerprint-retry',
     });
     await repository.save(first);
-    first.markCompleted();
+    first.markCompleted(1);
     await repository.save(first);
     const second = buildSourceSyncJob({
       sourceId: source.id,
