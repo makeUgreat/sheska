@@ -1,14 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import { type EmbedRequestDispatcher } from '@contexts/ingestion/application/ports';
+import { type InitiateSourceEmbeddingUseCase } from '@contexts/ingestion/application/use-cases/initiate-source-embedding.use-case';
 import { SourceSyncJobCreatedIntegrationEventConsumer } from '../source-sync-job-created.integration-event.consumer';
 
 describe('SourceSyncJobCreatedIntegrationEventConsumer', () => {
-  it('계약을 검증하고 event id를 멱등성 키로 전달한다', async () => {
-    const enqueue = vi.fn().mockResolvedValue(undefined);
-    const dispatcher: EmbedRequestDispatcher = { enqueue };
-    const consumer = new SourceSyncJobCreatedIntegrationEventConsumer(
-      dispatcher,
-    );
+  it('계약을 검증하고 workflow command로 변환한다', async () => {
+    const execute = vi.fn().mockResolvedValue(undefined);
+    const consumer = new SourceSyncJobCreatedIntegrationEventConsumer({
+      execute,
+    } as unknown as InitiateSourceEmbeddingUseCase);
     const message = {
       eventId: '01994ae9-3f45-7d86-845d-31f84d49cdb9',
       eventType: 'source.sync_job.created',
@@ -23,16 +22,16 @@ describe('SourceSyncJobCreatedIntegrationEventConsumer', () => {
 
     await consumer.handle(message);
 
-    expect(enqueue).toHaveBeenCalledWith(message.payload, {
-      idempotencyKey: message.eventId,
+    expect(execute).toHaveBeenCalledWith({
+      ...message.payload,
     });
   });
 
   it('지원하지 않는 version은 거부한다', async () => {
-    const dispatcher: EmbedRequestDispatcher = { enqueue: vi.fn() };
-    const consumer = new SourceSyncJobCreatedIntegrationEventConsumer(
-      dispatcher,
-    );
+    const useCase = {
+      execute: vi.fn(),
+    } as unknown as InitiateSourceEmbeddingUseCase;
+    const consumer = new SourceSyncJobCreatedIntegrationEventConsumer(useCase);
 
     await expect(
       consumer.handle({
