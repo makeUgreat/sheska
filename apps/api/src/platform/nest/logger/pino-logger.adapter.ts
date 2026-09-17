@@ -32,8 +32,26 @@ export class PinoLoggerAdapter implements LoggerPort {
     this.logger.error(errorOrContext ?? {}, message);
   }
 
-  warn(message: string, context?: Record<string, unknown>): void {
-    this.logger.warn(context ?? {}, message);
+  warn(message: string, context?: Record<string, unknown>): void;
+  warn(
+    message: string,
+    error: unknown,
+    context?: Record<string, unknown>,
+  ): void;
+  warn(
+    message: string,
+    errorOrContext?: unknown,
+    context?: Record<string, unknown>,
+  ): void {
+    if (arguments.length >= 3 || !isLogContext(errorOrContext)) {
+      this.logger.warn(
+        { ...context, ...toErrorLogContext(errorOrContext) },
+        message,
+      );
+      return;
+    }
+
+    this.logger.warn(errorOrContext ?? {}, message);
   }
 
   debug(message: string, context?: Record<string, unknown>): void {
