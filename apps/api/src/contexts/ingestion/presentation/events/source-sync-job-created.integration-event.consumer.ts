@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { InitiateSourceEmbeddingUseCase } from '@contexts/ingestion/application/use-cases/initiate-source-embedding.use-case';
-import { sourceSyncJobCreatedIntegrationEventSchema } from './schema/source-sync-job-created.integration-event.schema';
+import { sourceSyncJobCreatedIntegrationEventSchema } from './dto/source-sync-job-created.integration-event.dto';
 
 @Injectable()
 export class SourceSyncJobCreatedIntegrationEventConsumer {
