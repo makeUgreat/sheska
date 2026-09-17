@@ -173,7 +173,7 @@ describe('AutoSyncService', () => {
       () => false,
     );
     vault.getAbstractFileByPath.mockReturnValue(file);
-    api.getSyncJob.mockResolvedValue({ status: 'pending' });
+    api.getSyncJob.mockResolvedValue({ status: 'waiting' });
 
     await service.runReconcile();
 
@@ -374,7 +374,7 @@ describe('AutoSyncService', () => {
       fingerprint: 'fingerprint',
       syncJobId: 'job-1',
     });
-    api.getSyncJob.mockResolvedValue({ status: 'pending' });
+    api.getSyncJob.mockResolvedValue({ status: 'waiting' });
     const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
 
     await service.uploadFile(asObsidianFile(file));
