@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { type CallContext, type CallPolicy } from '@core/call-context';
+import { type CallContext } from '@core/call-context';
 import {
   INTEGRATION_EVENT_DISPATCHER,
   type IntegrationEventDispatcher,
@@ -22,11 +22,6 @@ export interface EmbedSourceChunkResult {
   readonly model: string;
   readonly embedding: number[];
 }
-
-export const EMBED_SOURCE_CHUNK_CALL_POLICY = {
-  deadlineMs: 90_000,
-  attemptTimeoutMs: 90_000,
-} as const satisfies CallPolicy;
 
 @Injectable()
 export class EmbedSourceChunkUseCase {
