@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
 import {
   SOURCE_EMBEDDING_CHUNK_QUEUE,
+  SOURCE_EMBEDDING_FINALIZATION_QUEUE,
   SOURCE_EMBEDDING_FLOW_PRODUCER,
 } from '@contexts/ingestion/application/ports';
 import { EmbedSourceChunkUseCase } from '@contexts/ingestion/application/use-cases/embed-source-chunk.use-case';
@@ -41,6 +42,11 @@ export class IngestionModule {
   static forFeature(): DynamicModule {
     return {
       module: IngestionModule,
+      imports: [
+        BullModule.registerQueue({
+          name: SOURCE_EMBEDDING_FINALIZATION_QUEUE,
+        }),
+      ],
       providers: [
         {
           provide: SOURCE_EMBEDDING_REPOSITORY,
