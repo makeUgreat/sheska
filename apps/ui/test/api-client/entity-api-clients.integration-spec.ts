@@ -128,7 +128,7 @@ describe('entity API clients', () => {
         sourceId: uploaded.sourceId,
         fingerprint: uploaded.fingerprint,
         status: expect.stringMatching(
-          /^(pending|processing|completed|failed)$/,
+          /^(waiting|processing|completed|failed)$/,
         ),
       }),
     );

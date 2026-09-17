@@ -19,7 +19,6 @@ const sampleResponse: ListSourcesResponse = {
         syncJobId: 'sync-1',
         status: 'completed',
         totalChunks: 12,
-        processedChunks: 12,
         createdAt: '2026-08-05T08:30:00.000Z',
       },
       publishedPostId: 'post-storybook-intro',
@@ -34,9 +33,8 @@ const sampleResponse: ListSourcesResponse = {
       updatedAt: '2026-08-04T09:30:00.000Z',
       latestSyncJob: {
         syncJobId: 'sync-2',
-        status: 'processing',
+        status: 'waiting',
         totalChunks: 20,
-        processedChunks: 7,
         createdAt: '2026-08-04T08:30:00.000Z',
       },
       publishedPostId: null,

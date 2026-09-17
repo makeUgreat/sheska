@@ -17,9 +17,9 @@ type Story = StoryObj<typeof meta>;
 
 export const AllSelected: Story = {};
 
-export const ProcessingSelected: Story = {
+export const WaitingSelected: Story = {
   args: {
-    value: 'processing',
+    value: 'waiting',
   },
 };
 

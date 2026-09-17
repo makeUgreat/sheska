@@ -1,16 +1,21 @@
-export type SyncJobStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type SyncJobSummaryStatus = 'waiting' | 'completed' | 'failed';
+export type SyncJobStatus = SyncJobSummaryStatus | 'processing';
 
 export interface SyncJobSummary {
   syncJobId: string;
-  status: SyncJobStatus;
+  status: SyncJobSummaryStatus;
   totalChunks: number | null;
-  processedChunks: number;
   createdAt: string;
 }
 
-export interface SyncJob extends SyncJobSummary {
+export interface SyncJob {
+  syncJobId: string;
   sourceId: string;
   fingerprint: string;
+  status: SyncJobStatus;
+  totalChunks: number | null;
+  processedChunks: number | null;
+  createdAt: string;
 }
 
 export interface SourceSummary {
@@ -28,7 +33,7 @@ export interface SourceSummary {
 export interface ListSourcesParams {
   page?: number;
   pageSize?: number;
-  syncJobStatus?: SyncJobStatus;
+  syncJobStatus?: SyncJobSummaryStatus;
 }
 
 export interface ListSourcesResponse {

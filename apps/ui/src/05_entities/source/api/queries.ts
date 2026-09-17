@@ -1,15 +1,15 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useHttpClient } from '@/shared/api';
 import { getSource, getSyncJob, listSources } from './client';
-import { type SyncJobStatus, type SyncJobSummary } from './types';
+import { type SyncJobSummary, type SyncJobSummaryStatus } from './types';
 
 const SYNC_JOB_POLL_INTERVAL_MS = 2000;
-const ACTIVE_SYNC_JOB_STATUSES = new Set(['pending', 'processing']);
+const ACTIVE_SYNC_JOB_STATUSES = new Set(['waiting', 'processing']);
 
 export interface UseListSourcesParams {
   page: number;
   pageSize?: number;
-  syncJobStatus?: SyncJobStatus;
+  syncJobStatus?: SyncJobSummaryStatus;
 }
 
 export function useListSources({
