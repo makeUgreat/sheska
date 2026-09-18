@@ -57,7 +57,7 @@ related:
 - API error, exception, masking, propagation, error response contract review 작업: [API 오류 정책](./operability/error.md)을 읽는다.
 - 로그 여부 결정, 로그 레벨, 어디서 로그를 남길지, 장애 로그 정책 작업: [API 로깅 정책](./operability/logging.md)을 읽는다.
 - OpenTelemetry 계측, trace/log/metric export 배선, 리소스 속성 결정: [API 옵저버빌리티 컨벤션](./operability/observability.md)을 읽는다.
-- 외부 의존성에 대한 retry, timeout/deadline, circuit breaker, 그 외 fault-tolerance 정책 결정: [API Fault Tolerance 인덱스](./operability/fault-tolerance/index.md)를 읽는다.
+- 외부 의존성에 대한 retry, timeout/deadline, 그 외 fault-tolerance 정책 결정: [API Fault Tolerance 인덱스](./operability/fault-tolerance/index.md)를 읽는다.
 
 ### Persistence
 

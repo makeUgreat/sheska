@@ -42,7 +42,7 @@ related:
 ### Dead Letter Queue And Redrive Policy
 
 - After a message has failed a defined number of times, isolate it rather than retrying it forever and blocking normal messages behind it (head-of-line blocking).
-- This plays the same role in messaging that [Max Retry](./retry.md#max-retry) plays for a single request, and that a circuit breaker plays for a synchronous call chain: give up and hand off instead of retrying indefinitely.
+- This plays the same role in messaging that [Max Retry](./retry.md#max-retry) plays for a single request: give up and hand off instead of retrying indefinitely.
 
 ## Workflow Retry
 

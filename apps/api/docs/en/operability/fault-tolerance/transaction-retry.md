@@ -6,7 +6,7 @@ applies_to:
   - apps/api
 translation: ../../../ko/operability/fault-tolerance/transaction-retry.md
 read_when:
-  - Deciding how a database transaction retry loop is structured, which layer owns it, or how it composes with optimistic-concurrency re-reads, circuit breaker, and retry budget.
+  - Deciding how a database transaction retry loop is structured, which layer owns it, or how it composes with optimistic-concurrency re-reads and retry budget.
 related:
   - ./index.md
   - ./retry.md
@@ -18,7 +18,7 @@ related:
 
 ## Scope
 
-- Use this document when deciding how a transaction retry loop is structured, which layer owns it, how its backoff differs from network-level retry, or how it composes with circuit breaker and retry budget.
+- Use this document when deciding how a transaction retry loop is structured, which layer owns it, how its backoff differs from network-level retry, or how it composes with retry budget.
 - What counts as a retryable database transaction conflict (a database-signaled concurrency conflict, an application-checked optimistic-concurrency conflict, or a non-retryable data constraint violation) is defined in [Database Transaction Conflict Classification](./retry.md#database-transaction-conflict-classification) in [API Retry Policy](./retry.md), not by this document.
 - Network-level retry ownership, count, and backoff for external dependency calls are defined in [API Retry Policy](./retry.md), not by this document.
 
@@ -41,12 +41,12 @@ related:
 - A transaction retry is cheap and short, unlike a network-level mutation retry that is gated to 0-1 attempts by the [Mutation Safety Gate](./retry.md#mutation-safety-gate).
   - A transaction's safety comes from atomicity (a failed attempt has no partial effect), not from idempotency, so it can afford more attempts than a non-idempotent network mutation.
 - Do not fix the exact retry count here.
-  - Tune it from observed conflict rates for the target table/workload, the same way [circuit breaker thresholds are tuned, not fixed](./circuit-breaker.md#thresholds-are-tuned-not-fixed).
+  - Tune it from observed conflict rates for the target table/workload, the same way [retry budget ratio and window are tuned, not fixed](./retry-budget.md#ratio-and-window-are-tuned-not-fixed).
 
-## Composition With Circuit Breaker And Retry Budget
+## Composition With Retry Budget
 
-- Circuit breaker and retry budget apply to calls to an external dependency (see [API Circuit Breaker Policy](./circuit-breaker.md) and [API Retry Budget Policy](./retry-budget.md)).
-  - A database transaction retry is not a call to an external dependency in that sense, so it is out of scope for both.
+- Retry budget applies to calls to an external dependency (see [API Retry Budget Policy](./retry-budget.md)).
+  - A database transaction retry is not a call to an external dependency in that sense, so it is out of scope.
 - Do not make an external call (another dependency, an external API) inside a transaction being retried this way.
   - Doing so holds database locks open for longer than necessary and couples an unrelated external failure to a database conflict retry; keep the transaction limited to database work.
 

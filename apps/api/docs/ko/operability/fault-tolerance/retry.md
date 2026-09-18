@@ -12,7 +12,6 @@ related:
   - ./index.md
   - ./timeout-deadline.md
   - ./async-workflow-retry.md
-  - ./circuit-breaker.md
   - ./idempotent-receiver.md
   - ./retry-budget.md
   - ./transaction-retry.md
@@ -29,8 +28,7 @@ related:
 
 - 이 문서는 누가, 몇 번, 얼마나 기다렸다가, 어떤 오류에 대해 재시도할지 판단할 때 사용한다.
 - timeout/deadline은 이 문서가 아니라 [API Timeout & Deadline 정책](./timeout-deadline.md)에 정의되어 있다.
-- circuit breaker 조합은 이 문서가 아니라 [API Circuit Breaker 정책](./circuit-breaker.md)에 정의되어 있다.
-- retry budget 비율, budget window, retry budget이 개별 호출 재시도·circuit breaker와 어떻게 조합되는지는 이 문서가 아니라 [API Retry Budget 정책](./retry-budget.md)에 정의되어 있다.
+- retry budget 비율, budget window, retry budget이 개별 호출 재시도와 어떻게 조합되는지는 이 문서가 아니라 [API Retry Budget 정책](./retry-budget.md)에 정의되어 있다.
 - idempotency의 mutation 재시도 게이트는 [재시도 대상 오류](#재시도-대상-오류)에 정의되어 있다. 더 넓은 idempotent receiver 정책(자연적 멱등성 판단 기준, idempotency key 생성·저장·중복 제거)은 이 문서가 아니라 [API Idempotent Receiver 정책](./idempotent-receiver.md)에 정의되어 있다.
 - 재시도 결정이 남겨야 하는 structured log 필드와 metric은 [관측성](#관측성)에 정의되어 있다.
   - 이벤트를 로그로 남길지, 어떤 레벨로 남길지는 [API 로깅 정책](../logging.md)을 따르고, 로그·메트릭을 어떻게 전송할지는 [API 옵저버빌리티 컨벤션](../observability.md)을 따른다. 이 문서는 재시도 고유의 내용만 정의한다.
@@ -162,11 +160,10 @@ retry_exhausted_total
 request_duration_ms
 ```
 
-- circuit breaker 상태와 전환에는 별도 metric이 있으며, [API Circuit Breaker 정책](./circuit-breaker.md)에 정의되어 있고 여기서 중복하지 않는다.
 - retry budget에는 별도 metric이 있으며, [API Retry Budget 정책](./retry-budget.md)에 정의되어 있고 여기서 중복하지 않는다.
 
 ## 다른 Fault-Tolerance 관심사와의 상호작용
 
 - 재시도 정책만으로는 완전한 회복성 전략이 되지 않는다.
-  - timeout/deadline, circuit breaker 조합, retry budget, idempotency mutation 재시도 게이트와 그 idempotent receiver 메커니즘, DB 트랜잭션 재시도, 재시도 관측성은 이미 다른 곳에서 다룬다.
-  - [Backoff와 Jitter](#backoff와-jitter), [재시도 대상 오류](#재시도-대상-오류), [관측성](#관측성), [API Circuit Breaker 정책](./circuit-breaker.md), [API Retry Budget 정책](./retry-budget.md), [API Idempotent Receiver 정책](./idempotent-receiver.md), [API 트랜잭션 재시도 정책](./transaction-retry.md) 참고.
+  - timeout/deadline, retry budget, idempotency mutation 재시도 게이트와 그 idempotent receiver 메커니즘, DB 트랜잭션 재시도, 재시도 관측성은 이미 다른 곳에서 다룬다.
+  - [Backoff와 Jitter](#backoff와-jitter), [재시도 대상 오류](#재시도-대상-오류), [관측성](#관측성), [API Retry Budget 정책](./retry-budget.md), [API Idempotent Receiver 정책](./idempotent-receiver.md), [API 트랜잭션 재시도 정책](./transaction-retry.md) 참고.
