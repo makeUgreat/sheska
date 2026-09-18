@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
-import { type LoggerPort } from '@kernels/application';
 import { InfrastructureException } from '@kernels/infrastructure';
 import { OllamaHttpEmbedder } from '../ollama-http.embedder';
 
@@ -12,22 +11,13 @@ function buildContext(remainingMs = 60_000, maxRetries = 2): CallContext {
   };
 }
 
-function createLogger(): LoggerPort {
-  return {
-    log: vi.fn<LoggerPort['log']>(),
-    error: vi.fn<LoggerPort['error']>(),
-    warn: vi.fn<LoggerPort['warn']>(),
-    debug: vi.fn<LoggerPort['debug']>(),
-  };
-}
-
 describe('OllamaHttpEmbedder', () => {
   let client: OllamaHttpEmbedder;
   const baseUrl = 'http://localhost:11434';
   const model = 'qwen3-embedding:0.6b';
 
   beforeEach(() => {
-    client = new OllamaHttpEmbedder({ baseUrl }, createLogger());
+    client = new OllamaHttpEmbedder({ baseUrl });
   });
 
   it('성공 시 임베딩과 모델을 반환한다', async () => {
@@ -259,30 +249,4 @@ describe('OllamaHttpEmbedder', () => {
       details: { statusCode: 404 },
     });
   });
-
-  it('재시도가 모두 소진되어 breaker의 실패율 threshold를 넘으면 이후 호출은 fetch를 호출하지 않고 CIRCUIT_OPEN InfrastructureException을 던진다', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error',
-      headers: new Headers(),
-    });
-    vi.stubGlobal('fetch', fetchMock);
-
-    // 운영 정책상 minimumRequestCount: 2, failureRateThreshold: 0.5이므로
-    // 재시도까지 모두 소진된 논리적 호출 2번이면 breaker가 열린다.
-    for (let i = 0; i < 2; i++) {
-      await expect(client.embed('hello', buildContext())).rejects.toMatchObject(
-        { kind: 'bad_response' },
-      );
-    }
-    fetchMock.mockClear();
-
-    await expect(client.embed('hello', buildContext())).rejects.toMatchObject({
-      kind: 'circuit_open',
-      code: 'ollama.circuit_open',
-      cause: expect.any(Error) as Error,
-    });
-    expect(fetchMock).not.toHaveBeenCalled();
-  }, 20_000);
 });

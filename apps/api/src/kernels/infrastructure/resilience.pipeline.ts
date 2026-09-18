@@ -1,5 +1,4 @@
 import { effectiveTimeoutMs, type Deadline } from '@core/deadline';
-import { type CircuitBreaker } from './circuit-breaker';
 import {
   SYSTEM_RETRY_RUNTIME,
   withRetryAttempts,
@@ -18,15 +17,8 @@ export interface ResilienceExecutionOptions {
 }
 
 export interface ResiliencePipelineStart {
-  circuitBreaker(breaker: CircuitBreaker): ResiliencePipelineAfterCircuit;
   retry(policy: RetryPolicy): ResiliencePipelineAfterRetry;
   timeout(options: ResilienceExecutionOptions): ResiliencePipelineComplete;
-}
-
-export interface ResiliencePipelineAfterCircuit {
-  retry(policy: RetryPolicy): ResiliencePipelineAfterRetry;
-  timeout(options: ResilienceExecutionOptions): ResiliencePipelineComplete;
-  execute<T>(operation: (attempt: ResilienceAttempt) => Promise<T>): Promise<T>;
 }
 
 export interface ResiliencePipelineAfterRetry {
@@ -40,7 +32,6 @@ export interface ResiliencePipelineComplete {
 
 interface ExecutionContext extends ResilienceExecutionOptions {
   readonly attempt: number;
-  readonly circuitTrial: boolean;
   readonly signal?: AbortSignal;
   readonly deadlineBound?: boolean;
 }
@@ -56,32 +47,18 @@ const UNBOUNDED_EXECUTION_OPTIONS: ResilienceExecutionOptions = {
 class Builder
   implements
     ResiliencePipelineStart,
-    ResiliencePipelineAfterCircuit,
     ResiliencePipelineAfterRetry,
     ResiliencePipelineComplete
 {
   private readonly policies: Policy[] = [];
   private executionOptions = UNBOUNDED_EXECUTION_OPTIONS;
 
-  circuitBreaker(breaker: CircuitBreaker): ResiliencePipelineAfterCircuit {
-    this.policies.push(
-      (next) => (context) =>
-        breaker.execute((circuitTrial) => next({ ...context, circuitTrial })),
-    );
-    return this;
-  }
-
   retry(policy: RetryPolicy): ResiliencePipelineAfterRetry {
     this.policies.push(
       (next) => (context) =>
         withRetryAttempts(
           (attempt) => next({ ...context, attempt }),
-          {
-            deadline: context.deadline,
-            policy: context.circuitTrial
-              ? { ...policy, maxRetries: 0 }
-              : policy,
-          },
+          { deadline: context.deadline, policy },
           SYSTEM_RETRY_RUNTIME,
         ),
     );
@@ -119,11 +96,7 @@ class Builder
       terminal,
     );
 
-    return composed({
-      ...this.executionOptions,
-      attempt: 0,
-      circuitTrial: false,
-    });
+    return composed({ ...this.executionOptions, attempt: 0 });
   }
 }
 
