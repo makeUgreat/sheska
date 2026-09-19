@@ -1,5 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { HttpClient } from './http';
+import { HttpClient, HttpError, isRetryableHttpError } from './http';
+
+function stubFailure(status: number, statusText: string, body = '') {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({
+      ok: false,
+      status,
+      statusText,
+      text: () => Promise.resolve(body),
+    }),
+  );
+}
 
 describe('HttpClient', () => {
   let client: HttpClient;
@@ -47,18 +59,69 @@ describe('HttpClient', () => {
     });
 
     it('응답이 ok가 아니면 throw한다', async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({
-          ok: false,
-          status: 500,
-          statusText: 'Internal Server Error',
-        }),
-      );
+      stubFailure(500, 'Internal Server Error');
 
       await expect(client.get('/sources')).rejects.toThrow(
         'HTTP error: 500 Internal Server Error',
       );
+    });
+
+    it('실패 응답의 status를 HttpError에 담는다', async () => {
+      stubFailure(404, 'Not Found');
+
+      await expect(client.get('/sources/unknown')).rejects.toMatchObject({
+        name: 'HttpError',
+        status: 404,
+      });
+    });
+
+    it('실패 응답 본문의 code를 HttpError에 담는다', async () => {
+      stubFailure(
+        422,
+        'Unprocessable Entity',
+        JSON.stringify({
+          statusCode: 422,
+          code: 'source.invalid_content',
+          message: 'Invalid content',
+          details: {},
+        }),
+      );
+
+      await expect(client.get('/sources')).rejects.toMatchObject({
+        status: 422,
+        code: 'source.invalid_content',
+      });
+    });
+
+    it('본문이 JSON이 아니면 code 없이 status만 담는다', async () => {
+      stubFailure(502, 'Bad Gateway', '<html>gateway</html>');
+
+      await expect(client.get('/sources')).rejects.toMatchObject({
+        status: 502,
+        code: undefined,
+      });
+    });
+  });
+
+  describe('isRetryableHttpError', () => {
+    it('429와 5xx는 재시도 대상이다', () => {
+      expect(
+        isRetryableHttpError(new HttpError(429, 'Too Many Requests')),
+      ).toBe(true);
+      expect(
+        isRetryableHttpError(new HttpError(503, 'Service Unavailable')),
+      ).toBe(true);
+    });
+
+    it('429를 제외한 4xx는 재시도 대상이 아니다', () => {
+      expect(isRetryableHttpError(new HttpError(404, 'Not Found'))).toBe(false);
+      expect(isRetryableHttpError(new HttpError(400, 'Bad Request'))).toBe(
+        false,
+      );
+    });
+
+    it('status를 알 수 없는 실패는 일시적일 수 있으므로 재시도 대상이다', () => {
+      expect(isRetryableHttpError(new TypeError('Failed to fetch'))).toBe(true);
     });
   });
 
