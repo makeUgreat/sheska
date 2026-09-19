@@ -59,6 +59,8 @@ export class SourceEmbeddingWorkflowBullMqDispatcher implements EmbeddingWorkflo
       opts: {
         jobId: `${syncJobId}-${chunk.chunkIndex}`,
         failParentOnFailure: true,
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 1_000, jitter: 1 },
       },
     }));
   }

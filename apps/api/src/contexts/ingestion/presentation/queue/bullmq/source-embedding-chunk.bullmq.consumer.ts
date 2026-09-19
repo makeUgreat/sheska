@@ -33,7 +33,7 @@ export class SourceEmbeddingChunkBullMqConsumer extends WorkerHost {
         chunkIndex: input.chunkIndex,
         chunkContent: input.chunkContent,
       },
-      callContext({ deadlineMs: 90_000, maxRetries: 2 }),
+      callContext({ deadlineMs: 90_000, maxRetries: 0 }),
     );
 
     await job.updateProgress(100);
@@ -53,11 +53,20 @@ export class SourceEmbeddingChunkBullMqConsumer extends WorkerHost {
   ): Promise<void> {
     if (!job) return;
 
-    this.logger.error(`${job.queueName} job failed`, error, {
+    const maxAttempts = job.opts.attempts ?? 1;
+    const context = {
       queueName: job.queueName,
       jobId: job.id,
-      attemptsMade: job.attemptsMade,
-    });
+      attempt: job.attemptsMade,
+      maxAttempts,
+    };
+
+    if (job.attemptsMade < maxAttempts) {
+      this.logger.warn(`${job.queueName} job attempt failed`, error, context);
+      return;
+    }
+
+    this.logger.error(`${job.queueName} job failed`, error, context);
     const input = embedSourceChunkJobInputSchema.parse(job.data);
     await this.embedSourceChunk.handleFailure({
       sourceId: input.sourceId,
