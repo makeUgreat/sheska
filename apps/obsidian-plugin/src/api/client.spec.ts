@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SheskaApiClient } from './client';
+import { isRetryableApiError, SheskaApiClient, SheskaApiError } from './client';
 
 describe('SheskaApiClient', () => {
   let client: SheskaApiClient;
@@ -58,6 +58,93 @@ describe('SheskaApiClient', () => {
       await expect(client.get('/health')).rejects.toThrow(
         'Sheska API error: 401 Unauthorized — invalid token',
       );
+    });
+  });
+
+  describe('error shape', () => {
+    it('carries the response status on the thrown error', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 503,
+          statusText: 'Service Unavailable',
+          text: () => Promise.resolve(''),
+        }),
+      );
+
+      await expect(client.get('/health')).rejects.toMatchObject({
+        name: 'SheskaApiError',
+        status: 503,
+      });
+    });
+
+    it('carries the failure code when the body is an API error response', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 422,
+          statusText: 'Unprocessable Entity',
+          text: () =>
+            Promise.resolve(
+              JSON.stringify({
+                statusCode: 422,
+                code: 'source.invalid_content',
+                message: 'Invalid content',
+                details: {},
+              }),
+            ),
+        }),
+      );
+
+      await expect(client.get('/sources')).rejects.toMatchObject({
+        status: 422,
+        code: 'source.invalid_content',
+      });
+    });
+
+    it('leaves the code undefined when the body is not JSON', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 502,
+          statusText: 'Bad Gateway',
+          text: () => Promise.resolve('<html>gateway</html>'),
+        }),
+      );
+
+      await expect(client.get('/sources')).rejects.toMatchObject({
+        status: 502,
+        code: undefined,
+      });
+    });
+  });
+
+  describe('isRetryableApiError', () => {
+    it('treats 429 and 5xx as retryable', () => {
+      expect(
+        isRetryableApiError(new SheskaApiError(429, 'Too Many Requests', '')),
+      ).toBe(true);
+      expect(
+        isRetryableApiError(new SheskaApiError(503, 'Service Unavailable', '')),
+      ).toBe(true);
+    });
+
+    it('treats 4xx other than 429 as non-retryable', () => {
+      expect(
+        isRetryableApiError(
+          new SheskaApiError(422, 'Unprocessable Entity', ''),
+        ),
+      ).toBe(false);
+      expect(
+        isRetryableApiError(new SheskaApiError(401, 'Unauthorized', '')),
+      ).toBe(false);
+    });
+
+    it('treats a failure without a status as retryable', () => {
+      expect(isRetryableApiError(new TypeError('Failed to fetch'))).toBe(true);
     });
   });
 
