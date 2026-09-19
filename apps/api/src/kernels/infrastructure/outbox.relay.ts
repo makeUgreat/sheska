@@ -1,5 +1,6 @@
 import { computeRetryDelayMs } from '@core/backoff';
 import {
+  OutboxDeadLetteredIntegrationEvent,
   type ClaimedOutboxMessage,
   type IntegrationEvent,
   type IntegrationEventDispatcher,
@@ -107,6 +108,29 @@ export class OutboxRelay {
       retryAllowed: false,
       retryBlockedReason: 'max_attempts_exhausted',
     });
+
+    await this.notifyDeadLettered(event, attemptCount);
+  }
+
+  private async notifyDeadLettered(
+    event: IntegrationEvent,
+    attemptCount: number,
+  ): Promise<void> {
+    try {
+      await this.dispatcher.dispatch(
+        new OutboxDeadLetteredIntegrationEvent({
+          deadLetteredEventId: event.eventId,
+          deadLetteredEventType: event.eventType,
+          deadLetteredPayload: event.payload,
+          attemptCount,
+        }),
+      );
+    } catch (error: unknown) {
+      this.logger.error('Dead-letter notification failed', error, {
+        eventId: event.eventId,
+        eventType: event.eventType,
+      });
+    }
   }
 }
 

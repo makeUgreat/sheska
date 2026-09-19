@@ -71,6 +71,8 @@ batchSize: 100
 
 - 이 값에서 격리까지의 창은 최대 약 57분이고, full jitter가 기댓값을 절반으로 줄이므로 평균은 그 절반 정도다. 약 한 시간보다 짧은 인프라 장애로는 정상 event가 격리되지 않도록 고른 값이다.
 - 이 값들을 고정 상수로 취급하지 않는다. 이유는 [Backoff와 Jitter](./retry.md#backoff와-jitter)가 말하는 것과 같다: 관측한 데이터로 측정해 조정하고, dispatch 경로의 동작이 바뀌면 다시 검토한다.
+- dead letter 알림은 그 자체를 하나의 integration event로 발행하고, 자기가 소유한 event를 어떻게 보상할지는 각 bounded context가 결정한다. relay는 격리된 event가 무슨 의미인지 알 수 없다.
+  - 이 알림은 best-effort이며 outbox에 적재하지 않는다(순환이 된다). durable한 기록은 dead letter 컬럼이다.
 - [API 로깅 정책](../logging.md)에 따라 재시도 예약은 `warn`으로, 격리는 `error`로 기록한다. 포함할 필드:
 
 ```text

@@ -21,6 +21,7 @@ import { GetNoteUseCase } from '@contexts/sources/application/use-cases/get-note
 import { ListNotesUseCase } from '@contexts/sources/application/use-cases/list-notes.use-case';
 import { SourceSyncJobsHttpController } from '@contexts/sources/presentation/http/source-sync-jobs.http.controller';
 import { IngestionIntegrationEventConsumer } from '@contexts/sources/presentation/events/ingestion.integration-event.consumer';
+import { OutboxDeadLetteredIntegrationEventConsumer } from '@contexts/sources/presentation/events/outbox-dead-lettered.integration-event.consumer';
 import {
   type SourceEmbeddingLookup as IngestionSourceEmbeddingLookup,
   SOURCE_EMBEDDING_LOOKUP as INGESTION_SOURCE_EMBEDDING_LOOKUP,
@@ -128,6 +129,7 @@ export class SourcesModule {
       providers: [
         ApplyIngestionUpdateUseCase,
         IngestionIntegrationEventConsumer,
+        OutboxDeadLetteredIntegrationEventConsumer,
       ],
     };
   }
