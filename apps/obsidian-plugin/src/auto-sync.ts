@@ -1,5 +1,6 @@
 import { TFile, debounce } from 'obsidian';
 import type { Debouncer, TAbstractFile, Vault } from 'obsidian';
+import { isRetryableApiError } from '@/api/client';
 import type { SheskaApiClient } from '@/api/client';
 import type { SheskaSettings } from '@/settings';
 import type { SyncCache } from '@/storage';
@@ -295,6 +296,7 @@ export class AutoSyncService {
       await this.uploadFileCore(file);
     } catch (err) {
       console.error(`[Sheska] Auto-sync failed for "${file.path}":`, err);
+      await this.recordUploadFailure(file, err);
     }
   }
 
@@ -307,6 +309,7 @@ export class AutoSyncService {
       await this.uploadFileCore(file);
     } catch (err) {
       console.error(`[Sheska] Auto-sync failed for "${file.path}":`, err);
+      await this.recordUploadFailure(file, err);
     }
   }
 
@@ -332,17 +335,24 @@ export class AutoSyncService {
   private async reconcileCachedFileCore(file: TFile): Promise<void> {
     const cached = this.syncCache[file.path];
     if (!cached || cached.mtime !== file.stat.mtime) return;
+    if (cached.status === 'failed' && cached.nextRetryAt !== undefined) {
+      if (Date.now() < cached.nextRetryAt) return;
+      try {
+        await this.retryFailedSync(file, cached);
+      } catch (err) {
+        console.error(
+          `[Sheska] Auto-sync retry failed for "${file.path}":`,
+          err,
+        );
+      }
+      return;
+    }
     if (
       !cached.syncJobId ||
       cached.status === undefined ||
       cached.status === 'synced' ||
       cached.status === 'needs-attention'
     ) {
-      return;
-    }
-    if (cached.status === 'failed' && cached.nextRetryAt !== undefined) {
-      if (Date.now() < cached.nextRetryAt) return;
-      await this.retryFailedSync(file, cached);
       return;
     }
 
@@ -433,6 +443,28 @@ export class AutoSyncService {
       }
       throw error;
     }
+  }
+
+  private async recordUploadFailure(
+    file: TFile,
+    error: unknown,
+  ): Promise<void> {
+    const retryCount = this.syncCache[file.path]?.retryCount ?? 0;
+    const maxAutoRetries =
+      this.options.maxAutoRetries ?? DEFAULT_MAX_AUTO_RETRIES;
+    const exhausted =
+      !isRetryableApiError(error) || retryCount >= maxAutoRetries;
+
+    this.syncCache[file.path] = {
+      mtime: file.stat.mtime,
+      status: exhausted ? 'needs-attention' : 'failed',
+      retryCount,
+      nextRetryAt: exhausted
+        ? undefined
+        : Date.now() + this.retryDelayMs(retryCount),
+    };
+    await this.options.saveSyncCache();
+    this.options.onSyncStateChanged?.(file.path);
   }
 
   private retryDelayMs(retryCount: number): number {
