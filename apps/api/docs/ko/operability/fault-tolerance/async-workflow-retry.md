@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../../../en/operability/fault-tolerance/async-workflow-retry.md
-last_synced: 2026-09-18
+last_synced: 2026-09-19
 read_when:
   - 메시지 큐 consumer, dead letter queue/redrive policy, 또는 여러 단계로 구성된 workflow, activity, saga의 재시도 동작을 정의, 구현, 리뷰할 때.
 related:
@@ -86,6 +86,23 @@ retryBlockedReason
 ```
 
   - 이는 [API 재시도 정책](./retry.md)의 [관측성](./retry.md#관측성) 필드를 의존성 호출이 아닌 event 기준으로 옮긴 것이다. 에러의 타입과 스택은 로깅 어댑터가 이미 남기므로 재시도 필드로 중복해서 넣지 않는다.
+
+### Embedding Chunk Job Retry
+
+- chunk job이 자신이 수행하는 임베딩 호출의 재시도를 소유한다. job 안에서 이루어지는 호출에 대해서는 embedder 자체의 호출 단위 재시도를 끈다(`maxRetries: 0`). [예외: workflow 단위 재시도](./retry.md#예외-workflow-단위-재시도)가 요구하는 바이며, 두 횟수가 곱해지지 않게 한다.
+- workflow가 아니라 실패한 chunk를 재시도한다. 실패한 job 하나만 다시 돌고, 이미 성공한 형제 chunk의 결과는 그대로 남아 재시도가 끝나면 parent가 모아 쓴다.
+  - 이것이 flow로는 가능하고 호출자 쪽 재업로드로는 불가능한 점이다. source 전체를 다시 올리면 새 sync job id가 생기므로 모든 chunk를 다시 임베딩한다.
+- `failParentOnFailure`가 걸린 parent는 자식이 **시도를 모두 소진한 뒤에만** 실패한다. 자식에게 재시도가 남아 있으면 job은 완료되지 않고 delayed로 이동하며 parent는 건드려지지 않는다.
+- 큐의 `failed` 이벤트는 재시도가 남은 시도에서도 **매번** 발생한다. `attemptsMade`가 job의 `attempts`에 도달했을 때만 종단 실패로 취급한다. 더 일찍 반응하면 재시도가 남아 있는데도 sync job 전체를 실패로 보고하게 된다.
+- 현재 값:
+
+```ts
+attempts: 3
+backoff: { type: 'exponential', delay: 1_000, jitter: 1 }
+```
+
+- `jitter: 1`이면 broker의 지수 backoff가 `[0, delay * 2 ** (attempt - 1)]` 구간 전체로 퍼지며, 이는 [Backoff와 Jitter](./retry.md#backoff와-jitter)가 요구하는 full jitter 공식과 같다. 공식의 `maxDelay` clamp는 시도 3회로는 도달할 수 없어 생략했다.
+- 시도 3회는 [Max Retry](./retry.md#max-retry)가 background job에 부여하는 횟수다.
 
 ## Workflow Retry
 

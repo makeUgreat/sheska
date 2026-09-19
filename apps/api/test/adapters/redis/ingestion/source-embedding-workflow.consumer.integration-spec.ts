@@ -138,6 +138,54 @@ describe('Embedding workflow consumers', () => {
     });
   });
 
+  it('실패한 chunk만 다시 시도하고 성공한 chunk는 다시 embed하지 않는다', async () => {
+    embed
+      .mockRejectedValueOnce(new Error('embedder unavailable'))
+      .mockResolvedValue({
+        embedding: VALID_EMBEDDING,
+        model: 'qwen3-embedding:0.6b',
+      });
+    save.mockResolvedValue(undefined);
+
+    await workflowDispatcher.dispatch({
+      sourceId: 'source-1',
+      syncJobId: 'sync-job-1',
+      chunks: [
+        { chunkIndex: 0, chunkContent: 'first' },
+        { chunkIndex: 1, chunkContent: 'second' },
+      ],
+    });
+
+    const parent = await finalizeQueue.getJob('sync-job-1');
+    await parent!.waitUntilFinished(finalizeQueueEvents);
+
+    // 첫 시도 1회 실패 + 재시도 1회 + 나머지 chunk 1회 = 3회.
+    expect(embed).toHaveBeenCalledTimes(3);
+    expect(save).toHaveBeenCalledOnce();
+    const retried = await chunkQueue.getJob('sync-job-1-0');
+    expect(retried?.attemptsMade).toBe(2);
+  });
+
+  it('chunk가 시도를 모두 소진해야 parent가 실패한다', async () => {
+    embed.mockRejectedValue(new Error('embedder unavailable'));
+
+    await workflowDispatcher.dispatch({
+      sourceId: 'source-1',
+      syncJobId: 'sync-job-1',
+      chunks: [{ chunkIndex: 0, chunkContent: 'first' }],
+    });
+
+    const parent = await finalizeQueue.getJob('sync-job-1');
+    await expect(
+      parent!.waitUntilFinished(finalizeQueueEvents),
+    ).rejects.toThrow();
+
+    expect(embed).toHaveBeenCalledTimes(3);
+    const child = await chunkQueue.getJob('sync-job-1-0');
+    expect(child?.attemptsMade).toBe(3);
+    expect(save).not.toHaveBeenCalled();
+  });
+
   it('같은 sync job으로 workflow를 다시 등록해도 job을 중복 생성하지 않는다', async () => {
     await chunkQueue.pause();
     await finalizeQueue.pause();
