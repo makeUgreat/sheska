@@ -73,6 +73,8 @@ batchSize: 100
 
 - These values put the isolation window at roughly 57 minutes at most, and roughly half that on average because full jitter halves the expected wait. The window is chosen so that an infrastructure outage shorter than about an hour does not dead-letter healthy events.
 - Do not treat these values as fixed constants, for the same reason [Backoff And Jitter](./retry.md#backoff-and-jitter) gives: measure and tune them from observed data, and revisit them when the dispatch path's behavior changes.
+- Publish a dead-letter notification as its own integration event, and let each bounded context decide how to compensate for an event it owns. The relay cannot know what a dead-lettered event means.
+  - The notification is best-effort and is not itself written to the outbox, which would be circular. The dead-letter column is the durable record.
 - Log a scheduled retry at `warn` and a dead-letter at `error`, per [API Logging Policy](../logging.md). Include:
 
 ```text

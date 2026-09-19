@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  OutboxDeadLetteredIntegrationEvent,
   type ClaimedOutboxMessage,
   type IntegrationEvent,
   type IntegrationEventDispatcher,
@@ -125,6 +126,61 @@ describe('OutboxRelay', () => {
         retryAllowed: false,
         retryBlockedReason: 'max_attempts_exhausted',
       },
+    );
+  });
+
+  it('격리한 event를 dead lettered 통합 이벤트로 알린다', async () => {
+    const event = buildIntegrationEvent();
+    const store = createStore([{ event, attemptCount: 3 }]);
+    const dispatcher = createDispatcher();
+    dispatcher.dispatch.mockRejectedValueOnce(
+      new Error('Dispatcher unavailable'),
+    );
+    const relay = new OutboxRelay(
+      store,
+      dispatcher,
+      createLogger(),
+      { random: () => 1 },
+      OPTIONS,
+    );
+
+    await relay.relayPending();
+
+    const notification = dispatcher.dispatch.mock
+      .calls[1]?.[0] as OutboxDeadLetteredIntegrationEvent;
+    expect(notification.eventType).toBe('outbox.message.dead_lettered');
+    expect(notification.payload).toEqual({
+      deadLetteredEventId: event.eventId,
+      deadLetteredEventType: event.eventType,
+      deadLetteredPayload: event.payload,
+      attemptCount: 3,
+    });
+  });
+
+  it('dead letter 알림 발행이 실패해도 예외를 밖으로 던지지 않는다', async () => {
+    const event = buildIntegrationEvent();
+    const store = createStore([{ event, attemptCount: 3 }]);
+    const notificationFailure = new Error('No listener registered');
+    const dispatcher = createDispatcher();
+    dispatcher.dispatch
+      .mockRejectedValueOnce(new Error('Dispatcher unavailable'))
+      .mockRejectedValueOnce(notificationFailure);
+    const logger = createLogger();
+    const relay = new OutboxRelay(
+      store,
+      dispatcher,
+      logger,
+      { random: () => 1 },
+      OPTIONS,
+    );
+
+    await expect(relay.relayPending()).resolves.toBeUndefined();
+
+    expect(store.markDeadLettered).toHaveBeenCalledOnce();
+    expect(logger.error).toHaveBeenCalledWith(
+      'Dead-letter notification failed',
+      notificationFailure,
+      { eventId: event.eventId, eventType: event.eventType },
     );
   });
 

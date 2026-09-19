@@ -18,6 +18,7 @@ export {
   INTEGRATION_EVENT_DISPATCHER,
   type IntegrationEventDispatcher,
 } from './integration-event.dispatcher';
+export { OutboxDeadLetteredIntegrationEvent } from './outbox-dead-lettered.integration-event';
 export {
   type ClaimedOutboxMessage,
   type OutboxRelayStore,
