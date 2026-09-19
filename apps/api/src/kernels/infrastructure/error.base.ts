@@ -80,6 +80,10 @@ export type InfrastructureInvalidDataDetails = {
   readonly fields: string[];
 };
 
+export type InfrastructureTimeoutDetails = {
+  readonly deadlineBound: boolean;
+};
+
 export type InfrastructureBadResponseDetails = {
   readonly statusCode: number;
   readonly retryAfterMs?: number;
@@ -91,4 +95,6 @@ export type InfrastructureErrorDetailsFor<
   ? InfrastructureInvalidDataDetails
   : Kind extends typeof INFRASTRUCTURE_ERROR_KIND.BAD_RESPONSE
     ? InfrastructureBadResponseDetails
-    : Record<string, unknown>;
+    : Kind extends typeof INFRASTRUCTURE_ERROR_KIND.TIMEOUT
+      ? InfrastructureTimeoutDetails
+      : Record<string, unknown>;
