@@ -10,6 +10,7 @@ import {
   DATABASE_TOKENS,
   OutboxRelay,
   PgDrizzleOutboxStore,
+  SYSTEM_RETRY_RUNTIME,
 } from '@kernels/infrastructure';
 import { type ApiDrizzleDatabase } from '../database/drizzle-postgres.provider';
 import {
@@ -35,7 +36,14 @@ const OUTBOX_RELAY_STORE = Symbol('OUTBOX_RELAY_STORE');
         store: OutboxRelayStore,
         dispatcher: IntegrationEventDispatcher,
         logger: LoggerPort,
-      ) => new OutboxRelay(store, dispatcher, logger, { batchSize: 100 }),
+      ) =>
+        new OutboxRelay(store, dispatcher, logger, SYSTEM_RETRY_RUNTIME, {
+          batchSize: 100,
+          maxAttempts: 14,
+          baseDelayMs: 1_000,
+          maxDelayMs: 600_000,
+          claimLeaseMs: 30_000,
+        }),
       inject: [OUTBOX_RELAY_STORE, INTEGRATION_EVENT_DISPATCHER, LOGGER],
     },
     {

@@ -23,7 +23,7 @@ related:
 - This document covers work that continues after the caller has already returned.
 - Retry budget, circuit breaker, idempotency, and observability are separate fault-tolerance concerns not yet promoted into a convention document.
   - Read [API Fault Tolerance Index](./index.md) for their current status.
-- This document states general principles only. Concrete mechanisms (specific broker/engine behavior, configuration, thresholds) are not yet defined here; add them once a specific implementation decision is made.
+- This document states general principles, except where a section names the concrete mechanism this project has already chosen, as [Outbox Relay Retry](#outbox-relay-retry) does. Add concrete configuration or thresholds for a mechanism only once its implementation decision has been made.
 
 ## Why This Is A Different Problem From Synchronous Retry
 
@@ -43,6 +43,49 @@ related:
 
 - After a message has failed a defined number of times, isolate it rather than retrying it forever and blocking normal messages behind it (head-of-line blocking).
 - This plays the same role in messaging that [Max Retry](./retry.md#max-retry) plays for a single request: give up and hand off instead of retrying indefinitely.
+
+### Outbox Relay Retry
+
+- The outbox relay owns the retry for an integration event's delivery. No other layer repeats that delivery, and the relay does not wrap the dispatcher call in an adapter-level retry of its own.
+  - A relay attempt re-runs everything the dispatch triggers, not only a network send, because the in-process dispatcher runs its listeners synchronously. Treat one relay attempt as a workflow-level retry in the sense of [Exception: Workflow-Level Retry](./retry.md#exception-workflow-level-retry).
+- Claim an event before dispatching it: increment its attempt count and push its next attempt time forward in the same statement, and skip rows another instance is already holding.
+  - Claiming before dispatch is what makes the relay safe to run on more than one instance. Selecting without claiming lets two instances dispatch the same event.
+  - The pushed-forward next attempt time doubles as a lease: a process that crashes mid-dispatch releases nothing, and the event becomes claimable again once the lease expires.
+- Space retries with exponential backoff and full jitter using the formula in [Backoff And Jitter](./retry.md#backoff-and-jitter). The polling interval decides how often due events are checked, never how long a failed delivery waits.
+- Isolate an event that has failed `maxAttempts` times by marking it dead-lettered instead of retrying it forever.
+  - A dead-lettered event stays in the outbox table and is excluded from the claim query. It is not moved to a separate table or queue: the table is the queue, so a state column achieves the isolation that moving a message achieves in a broker.
+  - Redrive is a deliberate manual decision, not an automatic one:
+
+```sql
+UPDATE outbox_messages SET dead_lettered_at = NULL, attempt_count = 0, next_attempt_at = now()
+WHERE event_id = '...'
+```
+
+- Current values:
+
+```ts
+maxAttempts: 14
+baseDelayMs: 1_000
+maxDelayMs: 600_000
+claimLeaseMs: 30_000
+batchSize: 100
+```
+
+- These values put the isolation window at roughly 57 minutes at most, and roughly half that on average because full jitter halves the expected wait. The window is chosen so that an infrastructure outage shorter than about an hour does not dead-letter healthy events.
+- Do not treat these values as fixed constants, for the same reason [Backoff And Jitter](./retry.md#backoff-and-jitter) gives: measure and tune them from observed data, and revisit them when the dispatch path's behavior changes.
+- Log a scheduled retry at `warn` and a dead-letter at `error`, per [API Logging Policy](../logging.md). Include:
+
+```text
+eventId
+eventType
+attempt
+maxAttempts
+delayMs
+retryAllowed
+retryBlockedReason
+```
+
+  - These are the [Observability](./retry.md#observability) fields of [API Retry Policy](./retry.md) named for an event rather than a dependency call. The error's own type and stack come from the logging adapter, so do not duplicate them as retry fields.
 
 ## Workflow Retry
 

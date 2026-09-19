@@ -1,5 +1,6 @@
-import { and, asc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, lte, sql } from 'drizzle-orm';
 import {
+  type ClaimedOutboxMessage,
   type IntegrationEvent,
   type OutboxRelayStore,
   type OutboxWriter,
@@ -38,28 +39,53 @@ export class PgDrizzleOutboxStore implements OutboxWriter, OutboxRelayStore {
     }
   }
 
-  async findPending(limit: number): Promise<IntegrationEvent[]> {
+  async claimDue(
+    limit: number,
+    leaseMs: number,
+  ): Promise<ClaimedOutboxMessage[]> {
     try {
-      const rows = await this.db
-        .select()
+      const dueEventIds = this.db
+        .select({ eventId: outboxSchema.outboxMessages.eventId })
         .from(outboxSchema.outboxMessages)
-        .where(isNull(outboxSchema.outboxMessages.publishedAt))
-        .orderBy(asc(outboxSchema.outboxMessages.createdAt))
-        .limit(limit);
+        .where(
+          and(
+            isNull(outboxSchema.outboxMessages.publishedAt),
+            isNull(outboxSchema.outboxMessages.deadLetteredAt),
+            lte(outboxSchema.outboxMessages.nextAttemptAt, sql`now()`),
+          ),
+        )
+        .orderBy(
+          asc(outboxSchema.outboxMessages.createdAt),
+          asc(outboxSchema.outboxMessages.eventId),
+        )
+        .limit(limit)
+        .for('update', { skipLocked: true });
 
-      return rows.map((row) => ({
-        eventId: row.eventId,
-        eventType: row.eventType,
-        eventVersion: row.eventVersion,
-        occurredAt: row.occurredAt,
-        payload: row.payload,
+      const rows = await this.db
+        .update(outboxSchema.outboxMessages)
+        .set({
+          attemptCount: sql`${outboxSchema.outboxMessages.attemptCount} + 1`,
+          nextAttemptAt: sql`now() + make_interval(secs => ${leaseMs}::float8 / 1000.0)`,
+        })
+        .where(inArray(outboxSchema.outboxMessages.eventId, dueEventIds))
+        .returning();
+
+      return rows.sort(byClaimOrder).map((row) => ({
+        event: {
+          eventId: row.eventId,
+          eventType: row.eventType,
+          eventVersion: row.eventVersion,
+          occurredAt: row.occurredAt,
+          payload: row.payload,
+        },
+        attemptCount: row.attemptCount,
       }));
     } catch (error: unknown) {
       throw new InfrastructureException({
         kind: classifyPostgresError(error),
-        code: 'outbox.find_pending_failed',
+        code: 'outbox.claim_due_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
-        message: 'Outbox pending event lookup failed',
+        message: 'Outbox due event claim failed',
         details: {},
         cause: error,
       });
@@ -88,4 +114,71 @@ export class PgDrizzleOutboxStore implements OutboxWriter, OutboxRelayStore {
       });
     }
   }
+
+  async scheduleRetry(
+    eventId: string,
+    delayMs: number,
+    lastFailureReason: string,
+  ): Promise<void> {
+    try {
+      await this.db
+        .update(outboxSchema.outboxMessages)
+        .set({
+          nextAttemptAt: sql`now() + make_interval(secs => ${delayMs}::float8 / 1000.0)`,
+          lastFailureReason,
+        })
+        .where(
+          and(
+            eq(outboxSchema.outboxMessages.eventId, eventId),
+            isNull(outboxSchema.outboxMessages.publishedAt),
+          ),
+        );
+    } catch (error: unknown) {
+      throw new InfrastructureException({
+        kind: classifyPostgresError(error),
+        code: 'outbox.schedule_retry_failed',
+        source: { boundary: 'persistence', adapter: ADAPTER },
+        message: 'Outbox retry schedule operation failed',
+        details: { eventId },
+        cause: error,
+      });
+    }
+  }
+
+  async markDeadLettered(
+    eventId: string,
+    lastFailureReason: string,
+  ): Promise<void> {
+    try {
+      await this.db
+        .update(outboxSchema.outboxMessages)
+        .set({ deadLetteredAt: sql`now()`, lastFailureReason })
+        .where(
+          and(
+            eq(outboxSchema.outboxMessages.eventId, eventId),
+            isNull(outboxSchema.outboxMessages.publishedAt),
+            isNull(outboxSchema.outboxMessages.deadLetteredAt),
+          ),
+        );
+    } catch (error: unknown) {
+      throw new InfrastructureException({
+        kind: classifyPostgresError(error),
+        code: 'outbox.mark_dead_lettered_failed',
+        source: { boundary: 'persistence', adapter: ADAPTER },
+        message: 'Outbox mark dead lettered operation failed',
+        details: { eventId },
+        cause: error,
+      });
+    }
+  }
+}
+
+function byClaimOrder(
+  left: outboxSchema.OutboxMessageRow,
+  right: outboxSchema.OutboxMessageRow,
+): number {
+  const createdAtOrder = left.createdAt.getTime() - right.createdAt.getTime();
+  return createdAtOrder !== 0
+    ? createdAtOrder
+    : left.eventId.localeCompare(right.eventId);
 }
