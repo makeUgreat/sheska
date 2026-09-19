@@ -34,22 +34,70 @@ related:
 
 ## Retry Ownership
 
+- A single request path must have exactly one retry owner: exactly one layer repeats a given failed call.
+  - Retry spends a dependency's capacity to raise one request's chance of success. That trade is cheap while failures are rare and transient, and harmful when the failure is caused by overload, because retries deepen the overload and hold load high after the original cause clears, delaying recovery.
+  - Retry counts multiply along a call path instead of adding up. A call through a 5-layer stack that ends in a database query, with every layer retrying 3 times, sends up to 243x the load to the database once the database starts failing, which makes recovery practically impossible.
+- Fix the retry owner at design time and leave retry code out of every other layer on the path.
+  - Fixed ownership is simple to reason about and can be verified by reading the code on the path.
+  - The alternative is signaled ownership: the layer directly above the failure retries, and when it gives up it propagates an explicit "overloaded; do not retry" signal that stops every layer above it from retrying. Signaled ownership wastes no completed work and still avoids multiplication, but it only holds when every layer on the path understands and honors the signal, so it is not available on a path that crosses code this project does not control.
+
+### Retries Already Enabled On The Path
+
+- Audit the whole call path for retries that are already enabled, and disable them everywhere except the retry owner, before tuning any retry value.
+  - Choosing a retry count is meaningless while a second layer on the same path silently retries the same failure, because the two counts multiply.
+  - The multiplication is hard to see: the retry this project wrote is visible in its own code, while the factor it multiplies with is usually code this project did not write.
+- Check at least the following for retry enabled by default:
+
+```text
+HTTP client library or vendor SDK defaults
+service mesh or sidecar proxy retry policy
+load balancer or gateway retry
+message queue redelivery
+browser or mobile client automatic re-request
+offline sync protocol
+```
+
+### Where The Owner Sits
+
 - Own retry at the client or adapter layer that directly calls the external dependency, not at an upper layer.
-  - A single request path must have exactly one retry owner. Multiple layers retrying the same failure causes retry amplification.
+  - The client/adapter layer is the layer closest to the failure, so a retry there discards no work already completed above it, requires only that layer's call to be idempotent, and is made with the most precise information about the failure.
 - An upper layer (application layer use case, or presentation layer entry point such as an HTTP controller or queue consumer) delegates to the client/adapter layer's retry policy instead of building its own retry loop.
   - Splitting the decision: the caller owns the retry budget (how many attempts and how long it can wait), while the client/adapter owns the retry loop and the error classification (which failures are worth repeating).
     - Carry the budget on the same call context that already carries the deadline, rather than hardcoding it in the adapter. One adapter instance often serves callers with very different time budgets, and a single hardcoded value cannot fit both.
     - Keep the error classification in the adapter. Which failures are transient is knowledge about the dependency, not about the caller.
     - This is not the upper-layer retry loop this section forbids: the caller supplies values, it does not repeat the call itself.
-  - Exception: an upper layer may retry when the unit of work is a whole workflow that only makes sense to re-run as a whole, not a single external call.
-    - Example: a saga or orchestration step that must be re-run atomically is retried by the saga/orchestrator, not by retrying one call inside it.
-    - Example: a BullMQ job-level retry (see the queue retry policy draft at `.claude/temp/embed-queue-retry-policy.ko.md`) re-runs the whole job, not just the external call that failed inside it.
-    - Example: a database transaction that conflicts with a concurrent transaction is retried by re-running the whole transaction, not by retrying one statement inside it.
-      - See [API Transaction Retry Policy](./transaction-retry.md) for how that retry loop is structured and owned.
-    - See [API Async & Workflow Retry Policy](./async-workflow-retry.md) for consumer retry, dead letter queue/redrive policy, workflow/activity retry, and saga retry in detail.
-  - When this exception applies, disable the client/adapter layer's own retry (`maxRetries: 0`) for external calls made inside the workflow-level retry attempt.
-  - Do not let workflow-level retry and client/adapter-level retry apply to the same call at the same time.
-    - The two counts multiply (for example, 3 workflow attempts x 3 adapter attempts = up to 9 calls), producing a far higher effective retry count than either layer intends on its own.
+- Revisit this placement for a specific call path when the axes below point the other way. The same failure retried at a different layer changes all of the following:
+
+| Axis | Retry at an upper layer | Retry at the layer closest to the failure |
+|---|---|---|
+| Discarded work | Large: every layer above re-runs its work | None: only the failed call is repeated |
+| Repeated side effects | Every intermediate layer must be idempotent | Only the layer closest to the failure must be idempotent |
+| Resource occupancy | Short and shallow | Long and deep: the whole chain waits for the attempts and the backoff between them |
+| Path diversity | A re-sent request can be routed to a different instance | The already-established connection and instance is used again |
+| Information for the decision | Usually a flattened error, such as a single 500 | The precise failure cause, such as connection refused, query timeout, deadlock, or overload rejection |
+| Visibility | Visible to the caller | Hidden from the caller |
+
+- Own retry at the layer closest to the failure when:
+  - work already completed by the layers above is expensive or has side effects, because an upper-layer retry re-runs and repeats all of it.
+  - the failure is confined to one downstream dependency, because re-sending the whole request buys nothing the closer retry does not already get.
+  - the retry finishes quickly without a long backoff, because a deep retry holds every layer above it for as long as it runs.
+- Own retry at an upper layer when:
+  - the call chain is shallow and each layer is cheap, such as a low-cost control-plane or data-plane operation, because little completed work is discarded.
+  - the downstream is replicated across instances, so routing a re-sent request to a different instance is worth something.
+  - the whole path is idempotent, because every intermediate layer's side effects repeat on each attempt.
+  - a long backoff is needed, because a deep retry holds a thread and connection at every layer above it until the deadline, which turns a failure in a small share of requests into a chain-wide outage.
+
+### Exception: Workflow-Level Retry
+
+- An upper layer may retry when the unit of work is a whole workflow that only makes sense to re-run as a whole, not a single external call.
+  - Example: a saga or orchestration step that must be re-run atomically is retried by the saga/orchestrator, not by retrying one call inside it.
+  - Example: a BullMQ job-level retry (see the queue retry policy draft at `.claude/temp/embed-queue-retry-policy.ko.md`) re-runs the whole job, not just the external call that failed inside it.
+  - Example: a database transaction that conflicts with a concurrent transaction is retried by re-running the whole transaction, not by retrying one statement inside it.
+    - See [API Transaction Retry Policy](./transaction-retry.md) for how that retry loop is structured and owned.
+  - See [API Async & Workflow Retry Policy](./async-workflow-retry.md) for consumer retry, dead letter queue/redrive policy, workflow/activity retry, and saga retry in detail.
+- When this exception applies, disable the client/adapter layer's own retry (`maxRetries: 0`) for external calls made inside the workflow-level retry attempt.
+- Do not let workflow-level retry and client/adapter-level retry apply to the same call at the same time.
+  - The two counts multiply (for example, 3 workflow attempts x 3 adapter attempts = up to 9 calls), producing a far higher effective retry count than either layer intends on its own.
 
 ## Max Retry
 
@@ -78,6 +126,8 @@ delay = random(0, min(maxDelay, baseDelay * 2 ** attempt))
   - These values depend heavily on the target dependency's actual latency and failure-recovery behavior.
   - Measure and tune these values from observed data instead of fixing them once.
   - Revisit the values when the dependency's behavior changes (for example, a slower downstream, a new rate limit, or a different traffic pattern), rather than treating them as set once.
+- Keep the backoff short while the retry owner is the client/adapter layer, and reconsider the retry owner instead of stretching a deep backoff.
+  - A backoff at the client/adapter layer holds a thread and a connection at every layer above it for the whole wait. The longer the backoff, the more that occupancy costs. See [Where The Owner Sits](#where-the-owner-sits).
 - Prefer a `Retry-After` response header over the computed delay when the response includes one.
 - Do not retry when the delay would exceed the time remaining until the call chain's deadline.
   - See [API Timeout & Deadline Policy](./timeout-deadline.md) for what a deadline is and how it is propagated across layers.
@@ -91,6 +141,8 @@ delay = random(0, min(maxDelay, baseDelay * 2 ** attempt))
 - A mutation is idempotent naturally, or made idempotent by an idempotent-receiver mechanism the server checks before applying the effect.
   - See [API Idempotent Receiver Policy](./idempotent-receiver.md) for what counts as naturally idempotent and how an idempotent receiver works.
 - When a mutation needs to be retried but is not naturally idempotent, make it idempotent (see [API Idempotent Receiver Policy](./idempotent-receiver.md)) instead of retrying it unsafely.
+- The idempotency this gate requires covers the whole unit of work that is repeated, not only the failed call.
+  - A retry owned by an upper layer repeats every intermediate layer's side effects, so each of those layers must satisfy this gate. See [Where The Owner Sits](#where-the-owner-sits).
 - See [Max Retry](#max-retry) for how this gate is reflected as a retry count per call category.
 
 ### Network-Level Classification
@@ -120,6 +172,10 @@ validation error
 authentication or permission error
 user cancellation
 ```
+
+- Classify the failure at the layer that can still see its cause, which is the client/adapter layer that made the call.
+  - The distinction between a client error and a server error blurs by the time the failure reaches an upper layer, where it is usually flattened into a single error.
+  - Eventual consistency blurs the distinction further: a request rejected as a client error now can succeed moments later.
 
 ### Database Transaction Conflict Classification
 
@@ -161,6 +217,7 @@ retryBlockedReason
 ```
 
 - `retryAllowed` and `retryBlockedReason` record why a retry did or did not happen (for example, blocked by the [Mutation Safety Gate](#mutation-safety-gate) or by an exhausted deadline), not just the fact that one did.
+- A retry owned by the client/adapter layer is invisible to the caller, so these fields are the only place the caller and the operator can see that a retry happened at all.
 
 ### Metrics
 
