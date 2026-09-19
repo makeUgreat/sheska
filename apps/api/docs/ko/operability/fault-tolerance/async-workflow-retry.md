@@ -40,7 +40,7 @@ related:
 ### Dead Letter Queue와 Redrive Policy
 
 - 일정 횟수 이상 실패한 메시지는 무한히 재시도하는 대신 격리한다. 그렇지 않으면 정상 메시지들의 처리까지 지연시킨다(head-of-line blocking).
-- 이는 메시징 환경에서 단일 요청에 대한 [Max Retry](./retry.md#max-retry), 동기 호출 체인에 대한 circuit breaker와 같은 역할을 한다: 포기하고 다음 단계로 넘기지, 무한히 재시도하지 않는다.
+- 이는 메시징 환경에서 단일 요청에 대한 [Max Retry](./retry.md#max-retry)와 같은 역할을 한다: 포기하고 다음 단계로 넘기지, 무한히 재시도하지 않는다.
 
 ## Workflow Retry
 

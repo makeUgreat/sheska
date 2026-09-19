@@ -20,7 +20,7 @@ related:
 
 - Use this document when deciding whether an operation is naturally idempotent, how an idempotency key is generated and scoped, how the server deduplicates on it, and what it returns for a duplicate.
 - The rule that a mutation is retryable only when idempotent is defined in [API Retry Policy's Mutation Safety Gate](./retry.md#mutation-safety-gate), not by this document. This document defines how that idempotency guarantee itself is provided.
-- Retry budget, circuit breaker, and observability compose with this policy but are defined in their own documents; see [API Fault Tolerance Index](./index.md).
+- Retry budget and observability compose with this policy but are defined in their own documents; see [API Fault Tolerance Index](./index.md).
 
 ## Natural Idempotency
 

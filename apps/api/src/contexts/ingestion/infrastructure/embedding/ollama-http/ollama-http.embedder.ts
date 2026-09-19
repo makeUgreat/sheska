@@ -1,10 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { z } from 'zod';
 import { type CallContext } from '@core/call-context';
-import { LOGGER, type LoggerPort } from '@kernels/application';
 import {
-  CircuitBreaker,
-  CircuitBreakerOpenError,
   INFRASTRUCTURE_ERROR_KIND,
   InfrastructureException,
   classifyInfrastructureRetry,
@@ -25,57 +22,28 @@ const OllamaEmbeddingsResponse = z.object({
 @Injectable()
 export class OllamaHttpEmbedder implements Embedder {
   private readonly model = OLLAMA_MODEL;
-  private readonly circuitBreaker: CircuitBreaker;
 
   constructor(
     @Inject(OLLAMA_CONFIG)
     private readonly config: OllamaConfig,
-    @Inject(LOGGER)
-    logger: LoggerPort,
-  ) {
-    this.circuitBreaker = new CircuitBreaker({
-      name: ADAPTER,
-      policy: {
-        failureRateThreshold: 0.5,
-        evaluationWindowMs: 60_000,
-        minimumRequestCount: 2,
-        openDurationMs: 30_000,
-      },
-      logger,
-    });
-  }
+  ) {}
 
   async embed(
     text: string,
     context: CallContext,
   ): Promise<{ embedding: number[]; model: string }> {
-    try {
-      return await resiliencePipeline()
-        .circuitBreaker(this.circuitBreaker)
-        .retry({
-          maxRetries: context.maxRetries,
-          baseDelayMs: 250,
-          maxDelayMs: 2_000,
-          classify: classifyInfrastructureRetry,
-        })
-        .timeout({
-          deadline: context.deadline,
-          attemptTimeoutMs: 60_000,
-        })
-        .execute((attempt) => this.embedOnce(text, attempt));
-    } catch (error) {
-      if (error instanceof CircuitBreakerOpenError) {
-        throw new InfrastructureException({
-          kind: INFRASTRUCTURE_ERROR_KIND.CIRCUIT_OPEN,
-          code: 'ollama.circuit_open',
-          source: { boundary: 'http-client', adapter: ADAPTER },
-          message: 'Ollama circuit breaker is open',
-          details: {},
-          cause: error,
-        });
-      }
-      throw error;
-    }
+    return resiliencePipeline()
+      .retry({
+        maxRetries: context.maxRetries,
+        baseDelayMs: 250,
+        maxDelayMs: 2_000,
+        classify: classifyInfrastructureRetry,
+      })
+      .timeout({
+        deadline: context.deadline,
+        attemptTimeoutMs: 60_000,
+      })
+      .execute((attempt) => this.embedOnce(text, attempt));
   }
 
   private async embedOnce(
