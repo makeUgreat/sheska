@@ -7,7 +7,6 @@ import {
   INFRASTRUCTURE_ERROR_KIND,
   InfrastructureException,
   resiliencePipeline,
-  type RetryPolicy,
 } from '@kernels/infrastructure';
 import {
   type SourceEmbedding,
@@ -18,16 +17,6 @@ import type { SourceEmbeddingInsert } from './schema';
 import { SourceEmbeddingPgDrizzleMapper } from './source-embedding.pg-drizzle.mapper';
 
 const ADAPTER = 'source-embedding.pg-drizzle';
-const SOURCE_EMBEDDING_SAVE_TRANSACTION_RETRY_POLICY: RetryPolicy = {
-  maxRetries: 3,
-  baseDelayMs: 20,
-  maxDelayMs: 20,
-  classify: (error) => ({
-    retryable:
-      InfrastructureException.is(error) &&
-      error.kind === INFRASTRUCTURE_ERROR_KIND.CONCURRENCY_CONFLICT,
-  }),
-};
 
 @Injectable()
 export class SourceEmbeddingPgDrizzleRepository implements SourceEmbeddingRepository {
@@ -53,7 +42,16 @@ export class SourceEmbeddingPgDrizzleRepository implements SourceEmbeddingReposi
     const { sourceId } = inserts[0];
 
     await resiliencePipeline()
-      .retry(SOURCE_EMBEDDING_SAVE_TRANSACTION_RETRY_POLICY)
+      .retry({
+        maxRetries: 3,
+        baseDelayMs: 20,
+        maxDelayMs: 20,
+        classify: (error) => ({
+          retryable:
+            InfrastructureException.is(error) &&
+            error.kind === INFRASTRUCTURE_ERROR_KIND.CONCURRENCY_CONFLICT,
+        }),
+      })
       .execute(() => this.saveOnce(sourceId, inserts));
   }
 
