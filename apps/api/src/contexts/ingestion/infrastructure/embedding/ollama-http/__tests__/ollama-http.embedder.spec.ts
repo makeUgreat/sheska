@@ -5,11 +5,11 @@ import { type LoggerPort } from '@kernels/application';
 import { InfrastructureException } from '@kernels/infrastructure';
 import { OllamaHttpEmbedder } from '../ollama-http.embedder';
 
-function buildContext(
-  remainingMs = 60_000,
-  attemptTimeoutMs = 30_000,
-): CallContext {
-  return { deadline: computeDeadline(remainingMs), attemptTimeoutMs };
+function buildContext(remainingMs = 60_000, maxRetries = 2): CallContext {
+  return {
+    deadline: computeDeadline(remainingMs),
+    maxRetries,
+  };
 }
 
 function createLogger(): LoggerPort {
@@ -101,7 +101,33 @@ describe('OllamaHttpEmbedder', () => {
     });
   });
 
-  it('호출자가 attemptTimeoutMs를 넘기면 그 값으로 attempt별 signal의 timeout이 bound된다', async () => {
+  it('호출자가 넘긴 maxRetries만큼만 재시도한다', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValue(new Error('connection refused'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      client.embed('hello', buildContext(60_000, 2)),
+    ).rejects.toMatchObject({ kind: 'unavailable' });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('호출자가 maxRetries를 0으로 넘기면 재시도하지 않는다', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValue(new Error('connection refused'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      client.embed('hello', buildContext(60_000, 0)),
+    ).rejects.toMatchObject({ kind: 'unavailable' });
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it('deadline에 여유가 있으면 어댑터 자신의 attempt timeout으로 signal을 bound한다', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ embedding: [0.1] }),
@@ -109,24 +135,24 @@ describe('OllamaHttpEmbedder', () => {
     vi.stubGlobal('fetch', fetchMock);
     const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
 
-    await client.embed('hello', buildContext(60_000, 5_000));
+    await client.embed('hello', buildContext(120_000));
 
-    expect(timeoutSpy).toHaveBeenCalledWith(5_000);
+    expect(timeoutSpy).toHaveBeenCalledWith(60_000);
     timeoutSpy.mockRestore();
   });
 
-  it('CallContext의 attemptTimeoutMs를 사용한다', async () => {
+  it('남은 deadline이 더 짧으면 그 값으로 signal이 bound된다', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ embedding: [0.1] }),
     });
     vi.stubGlobal('fetch', fetchMock);
-
     const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
 
-    await client.embed('hello', buildContext(60_000, 7_000));
+    await client.embed('hello', buildContext(1_000));
 
-    expect(timeoutSpy).toHaveBeenCalledWith(7_000);
+    expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Number));
+    expect(timeoutSpy.mock.calls[0]?.[0]).toBeLessThanOrEqual(1_000);
     timeoutSpy.mockRestore();
   });
 

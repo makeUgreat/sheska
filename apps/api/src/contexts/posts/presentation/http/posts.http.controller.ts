@@ -8,14 +8,11 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { createCallContext } from '@core/call-context';
+import { callContext } from '@core/call-context';
 import { PublishPostUseCase } from '@contexts/posts/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/posts/application/use-cases/get-post.use-case';
 import { ListPostsUseCase } from '@contexts/posts/application/use-cases/list-posts.use-case';
-import {
-  SEARCH_POSTS_CALL_POLICY,
-  SearchPostsUseCase,
-} from '@contexts/posts/application/use-cases/search-posts.use-case';
+import { SearchPostsUseCase } from '@contexts/posts/application/use-cases/search-posts.use-case';
 import { CountPostsUseCase } from '@contexts/posts/application/use-cases/count-posts.use-case';
 import {
   PublishPostHttpRequest,
@@ -88,14 +85,15 @@ export class PostsHttpController {
   async search(
     @Query() request: SearchPostsHttpRequest,
   ): Promise<SearchPostsHttpResponse> {
-    const context = createCallContext(SEARCH_POSTS_CALL_POLICY);
     const result = await this.searchPostsUseCase.execute(
       {
         query: request.q,
         cursor: request.cursor ?? null,
         limit: request.limit,
       },
-      context,
+      // 임베딩 검색이 실패하면 키워드 검색으로 fallback 한다.
+      // 검색은 사용자 경험이 중요하므로 임베딩을 차라리 일찍 포기한다.
+      callContext({ deadlineMs: 1_500, maxRetries: 1 }),
     );
 
     return {

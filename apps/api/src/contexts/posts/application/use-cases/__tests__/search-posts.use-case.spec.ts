@@ -7,15 +7,12 @@ import {
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
-import {
-  SEARCH_POSTS_CALL_POLICY,
-  SearchPostsUseCase,
-} from '../search-posts.use-case';
+import { SearchPostsUseCase } from '../search-posts.use-case';
 
 function buildContext(remainingMs = 60_000): CallContext {
   return {
     deadline: computeDeadline(remainingMs),
-    attemptTimeoutMs: SEARCH_POSTS_CALL_POLICY.attemptTimeoutMs,
+    maxRetries: 1,
   };
 }
 

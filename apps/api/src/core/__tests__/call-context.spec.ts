@@ -1,16 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { createCallContext } from '../call-context';
+import { callContext } from '../call-context';
 
-describe('createCallContext', () => {
-  it('call policy로 절대 deadline과 attempt timeout을 만든다', () => {
-    const context = createCallContext(
-      { deadlineMs: 5_000, attemptTimeoutMs: 1_000 },
-      10_000,
-    );
+describe('callContext', () => {
+  it('call policy의 상대 deadlineMs로 절대 deadline을 만들고 maxRetries를 그대로 전달한다', () => {
+    const context = callContext({ deadlineMs: 5_000, maxRetries: 2 }, 10_000);
 
     expect(context).toEqual({
       deadline: { deadlineAt: 15_000 },
-      attemptTimeoutMs: 1_000,
+      maxRetries: 2,
     });
   });
 });

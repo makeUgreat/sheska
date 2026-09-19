@@ -10,26 +10,12 @@ import {
   classifyInfrastructureRetry,
   parseRetryAfterMs,
   resiliencePipeline,
-  type CircuitBreakerPolicy,
-  type RetryPolicy,
 } from '@kernels/infrastructure';
 import type { Embedder } from '@contexts/ingestion/application/ports';
 import { OLLAMA_CONFIG, type OllamaConfig } from './ollama-http.config';
 
 const ADAPTER = 'ollama.embedder';
 const OLLAMA_MODEL = 'qwen3-embedding:0.6b';
-const OLLAMA_HTTP_EMBED_RETRY_POLICY: RetryPolicy = {
-  maxRetries: 2,
-  baseDelayMs: 250,
-  maxDelayMs: 2_000,
-  classify: classifyInfrastructureRetry,
-};
-const OLLAMA_HTTP_EMBED_CIRCUIT_BREAKER_POLICY: CircuitBreakerPolicy = {
-  failureRateThreshold: 0.5,
-  evaluationWindowMs: 60_000,
-  minimumRequestCount: 10,
-  openDurationMs: 30_000,
-};
 
 const OllamaEmbeddingsResponse = z.object({
   embedding: z.array(z.number()),
@@ -48,7 +34,12 @@ export class OllamaHttpEmbedder implements Embedder {
   ) {
     this.circuitBreaker = new CircuitBreaker({
       name: ADAPTER,
-      policy: OLLAMA_HTTP_EMBED_CIRCUIT_BREAKER_POLICY,
+      policy: {
+        failureRateThreshold: 0.5,
+        evaluationWindowMs: 60_000,
+        minimumRequestCount: 10,
+        openDurationMs: 30_000,
+      },
       logger,
     });
   }
@@ -60,10 +51,15 @@ export class OllamaHttpEmbedder implements Embedder {
     try {
       return await resiliencePipeline()
         .circuitBreaker(this.circuitBreaker)
-        .retry(OLLAMA_HTTP_EMBED_RETRY_POLICY)
+        .retry({
+          maxRetries: context.maxRetries,
+          baseDelayMs: 250,
+          maxDelayMs: 2_000,
+          classify: classifyInfrastructureRetry,
+        })
         .timeout({
           deadline: context.deadline,
-          attemptTimeoutMs: context.attemptTimeoutMs,
+          attemptTimeoutMs: 60_000,
         })
         .execute((attempt) => this.embedOnce(text, attempt.signal));
     } catch (error) {

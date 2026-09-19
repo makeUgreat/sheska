@@ -39,6 +39,10 @@ related:
 - Own retry at the client or adapter layer that directly calls the external dependency, not at an upper layer.
   - A single request path must have exactly one retry owner. Multiple layers retrying the same failure causes retry amplification.
 - An upper layer (application layer use case, or presentation layer entry point such as an HTTP controller or queue consumer) delegates to the client/adapter layer's retry policy instead of building its own retry loop.
+  - Splitting the decision: the caller owns the retry budget (how many attempts and how long it can wait), while the client/adapter owns the retry loop and the error classification (which failures are worth repeating).
+    - Carry the budget on the same call context that already carries the deadline, rather than hardcoding it in the adapter. One adapter instance often serves callers with very different time budgets, and a single hardcoded value cannot fit both.
+    - Keep the error classification in the adapter. Which failures are transient is knowledge about the dependency, not about the caller.
+    - This is not the upper-layer retry loop this section forbids: the caller supplies values, it does not repeat the call itself.
   - Exception: an upper layer may retry when the unit of work is a whole workflow that only makes sense to re-run as a whole, not a single external call.
     - Example: a saga or orchestration step that must be re-run atomically is retried by the saga/orchestrator, not by retrying one call inside it.
     - Example: a BullMQ job-level retry (see the queue retry policy draft at `.claude/temp/embed-queue-retry-policy.ko.md`) re-runs the whole job, not just the external call that failed inside it.

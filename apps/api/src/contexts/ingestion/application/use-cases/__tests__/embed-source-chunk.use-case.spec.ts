@@ -15,7 +15,7 @@ describe('EmbedSourceChunkUseCase', () => {
     );
     const context = {
       deadline: computeDeadline(1_000),
-      attemptTimeoutMs: 1_000,
+      maxRetries: 2,
     };
 
     await expect(

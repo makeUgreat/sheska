@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { type Job } from 'bullmq';
 import {
-  EMBED_SOURCE_CHUNK_CALL_POLICY,
   type EmbedSourceChunkCommand,
   type EmbedSourceChunkUseCase,
 } from '@contexts/ingestion/application/use-cases/embed-source-chunk.use-case';
@@ -59,7 +58,7 @@ describe('SourceEmbeddingChunkBullMqConsumer', () => {
       deadline: expect.objectContaining({
         deadlineAt: expect.any(Number) as number,
       }) as { deadlineAt: number },
-      attemptTimeoutMs: EMBED_SOURCE_CHUNK_CALL_POLICY.attemptTimeoutMs,
+      maxRetries: 2,
     });
     expect(updateProgress).toHaveBeenCalledWith(100);
   });
