@@ -32,6 +32,27 @@ export interface SourceSyncJobResponse {
   createdAt: string;
 }
 
+export class SheskaApiError extends Error {
+  readonly status: number;
+  readonly code?: string;
+
+  constructor(status: number, statusText: string, body: string, code?: string) {
+    super(
+      `Sheska API error: ${status} ${statusText}${body ? ` — ${body}` : ''}`,
+    );
+    this.name = 'SheskaApiError';
+    this.status = status;
+    this.code = code;
+  }
+}
+
+const RETRYABLE_STATUS = 429;
+
+export function isRetryableApiError(error: unknown): boolean {
+  if (!(error instanceof SheskaApiError)) return true;
+  return error.status === RETRYABLE_STATUS || error.status >= 500;
+}
+
 export class SheskaApiClient {
   constructor(private readonly baseUrl: string) {}
 
@@ -47,8 +68,11 @@ export class SheskaApiClient {
 
     if (!res.ok) {
       const body = await res.text().catch(() => '');
-      throw new Error(
-        `Sheska API error: ${res.status} ${res.statusText}${body ? ` — ${body}` : ''}`,
+      throw new SheskaApiError(
+        res.status,
+        res.statusText,
+        body,
+        readFailureCode(body),
       );
     }
 
@@ -78,5 +102,16 @@ export class SheskaApiClient {
     return this.get<SourceSyncJobResponse>(
       `/sync-jobs/${encodeURIComponent(syncJobId)}`,
     );
+  }
+}
+
+function readFailureCode(body: string): string | undefined {
+  try {
+    const parsed: unknown = JSON.parse(body);
+    if (typeof parsed !== 'object' || parsed === null) return undefined;
+    const { code } = parsed as { code?: unknown };
+    return typeof code === 'string' ? code : undefined;
+  } catch {
+    return undefined;
   }
 }
