@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TAbstractFile, TFile } from '../__mocks__/obsidian';
+import { SheskaApiError } from '@/api/client';
 import type { SheskaApiClient } from '@/api/client';
 import { AutoSyncService } from '@/auto-sync';
 import { DEFAULT_SETTINGS } from '@/settings';
@@ -284,6 +285,101 @@ describe('AutoSyncService', () => {
       });
     },
   );
+
+  it('records a retryable upload failure so the sweep stops re-uploading it', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+    const syncCache: SyncCache = {};
+    const { api, service, vault } = makeService({}, syncCache);
+    vault.getMarkdownFiles.mockReturnValue([file]);
+    api.uploadSource.mockRejectedValue(
+      new SheskaApiError(503, 'Service Unavailable', ''),
+    );
+
+    await service.runSweep();
+
+    expect(syncCache['note.md']).toEqual({
+      mtime: 123,
+      status: 'failed',
+      retryCount: 0,
+      nextRetryAt: Date.now() + 60_000,
+    });
+
+    await service.runSweep();
+
+    expect(api.uploadSource).toHaveBeenCalledOnce();
+    errorSpy.mockRestore();
+  });
+
+  it('sends an upload the server rejects straight to manual attention', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+    const syncCache: SyncCache = {};
+    const { api, service, vault } = makeService({}, syncCache);
+    vault.getMarkdownFiles.mockReturnValue([file]);
+    api.uploadSource.mockRejectedValue(
+      new SheskaApiError(400, 'Bad Request', ''),
+    );
+
+    await service.runSweep();
+
+    expect(syncCache['note.md']).toMatchObject({
+      status: 'needs-attention',
+      nextRetryAt: undefined,
+    });
+
+    await service.runSweep();
+
+    expect(api.uploadSource).toHaveBeenCalledOnce();
+    errorSpy.mockRestore();
+  });
+
+  it('retries a failed upload once its backoff elapses', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+    const syncCache: SyncCache = {};
+    const { api, service, vault } = makeService({}, syncCache, () => false);
+    vault.getMarkdownFiles.mockReturnValue([file]);
+    vault.getAbstractFileByPath.mockReturnValue(file);
+    api.uploadSource.mockRejectedValueOnce(
+      new SheskaApiError(503, 'Service Unavailable', ''),
+    );
+
+    await service.runSweep();
+    await vi.advanceTimersByTimeAsync(60_000 - 1);
+    await service.runReconcile();
+
+    expect(api.uploadSource).toHaveBeenCalledOnce();
+
+    await vi.advanceTimersByTimeAsync(1);
+    await service.runReconcile();
+
+    expect(api.uploadSource).toHaveBeenCalledTimes(2);
+    expect(syncCache['note.md']).toMatchObject({ status: 'synced' });
+    errorSpy.mockRestore();
+  });
+
+  it('stops retrying an upload after the automatic retries are exhausted', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const file = new TFile('note.md', { ctime: 0, mtime: 200, size: 1 });
+    const syncCache: SyncCache = {
+      'note.md': { mtime: 123, status: 'failed', retryCount: 3 },
+    };
+    const { api, service, vault } = makeService({}, syncCache);
+    vault.getMarkdownFiles.mockReturnValue([file]);
+    api.uploadSource.mockRejectedValue(
+      new SheskaApiError(503, 'Service Unavailable', ''),
+    );
+
+    await service.runSweep();
+
+    expect(syncCache['note.md']).toMatchObject({
+      mtime: 200,
+      status: 'needs-attention',
+      nextRetryAt: undefined,
+    });
+    errorSpy.mockRestore();
+  });
 
   it('requires manual attention after automatic retries are exhausted', async () => {
     const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
@@ -588,7 +684,10 @@ describe('AutoSyncService', () => {
     await vi.advanceTimersByTimeAsync(1000);
 
     expect(api.uploadSource).toHaveBeenCalledTimes(2);
-    expect(service.getSyncCache()).not.toHaveProperty('a.md');
+    expect(service.getSyncCache()['a.md']).toMatchObject({
+      mtime: 100,
+      status: 'failed',
+    });
     expect(service.getSyncCache()).toHaveProperty('b.md');
     expect(errorSpy).toHaveBeenCalled();
     errorSpy.mockRestore();
