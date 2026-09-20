@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from '@/app/shell';
-import { HttpClient, HttpClientProvider } from '@/shared/api';
+import { HttpClient, HttpClientProvider, shouldRetryQuery } from '@/shared/api';
 
 const apiBaseUrl =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';
@@ -14,7 +14,13 @@ if (!rootEl) throw new Error('Root element not found');
 createRoot(rootEl).render(
   <StrictMode>
     <BrowserRouter>
-      <QueryClientProvider client={new QueryClient()}>
+      <QueryClientProvider
+        client={
+          new QueryClient({
+            defaultOptions: { queries: { retry: shouldRetryQuery } },
+          })
+        }
+      >
         <HttpClientProvider client={new HttpClient(apiBaseUrl)}>
           <App />
         </HttpClientProvider>
