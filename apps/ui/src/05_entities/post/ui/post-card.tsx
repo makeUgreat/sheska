@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { type PostSummary } from '@/entities/post';
+import { type PostSummary } from '../api/types';
 import { PostMeta } from './post-meta';
 
 function Highlighted({ text, query }: { text: string; query: string }) {
