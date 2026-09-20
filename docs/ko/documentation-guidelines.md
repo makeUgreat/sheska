@@ -4,6 +4,7 @@ lang: ko
 audience: both
 applies_to:
   - project Markdown documents
+  - source code comments
 source: ../en/documentation-guidelines.md
 last_synced: 2026-09-08
 related:
@@ -28,6 +29,15 @@ related:
 - `AGENTS.md` 같은 agent instruction file은 사람이 읽는 문서가 아니라 실행 지시문이므로 언어 쌍을 요구하지 않는다.
 - `.codex/temp/` 아래 파일처럼 임시 또는 숨김 작업 노트는 제외한다.
 - 생성 문서, 짧은 local note, 범위가 좁은 tool-specific file은 쌍 문서가 프로젝트 이해를 개선하지 않고 유지보수 비용만 늘린다면 단일 언어로 둘 수 있다.
+
+## 코드 주석
+
+- 코드 주석은 앱을 가리지 않고 한글로 작성한다.
+  - line comment, block comment, doc comment를 모두 포함하며, 제품 코드와 테스트 코드에 동일하게 적용한다.
+- 코드 주석에는 언어 쌍 정책을 적용하지 않는다. 애초에 단일 언어이므로 영어 주석을 따로 달지 않는다.
+- 한글 주석 안에서도 식별자, type 이름, API 이름, 에러 코드, 파일 경로, 굳어진 기술 용어는 원래 표기 그대로 둔다.
+  - 이들을 번역하면 주석과 주석이 설명하는 코드 사이의 연결이 끊어진다.
+- UI 문구, API 응답, 로그 메시지처럼 사용자나 운영자에게 전달되는 문자열은 주석이 아니므로 적용 범위 밖이다.
 
 ## 문서의 역할
 
