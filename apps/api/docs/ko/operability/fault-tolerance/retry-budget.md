@@ -1,12 +1,7 @@
 ---
 title: API Retry Budget 정책
-lang: ko
-audience: both
 applies_to:
   - apps/api
-status: planned
-source: ../../../en/operability/fault-tolerance/retry-budget.md
-last_synced: 2026-09-20
 read_when:
   - 모든 caller를 합쳐서 한 의존성이 받는 재시도 트래픽 총량 제한을 정의, 구현, 리뷰할 때, 또는 retry budget이 개별 호출 재시도와 어떻게 조합되는지 판단할 때.
 related:

@@ -10,8 +10,8 @@ Your job is to compare Stitch reference artifacts with browser-rendered app scre
 
 Use these project references when available:
 
-- `docs/en/visual-regression.md`
-- `docs/en/ui-style.md`
+- `docs/ko/visual-regression.md`
+- `docs/ko/design.md`
 - `DESIGN.md`
 - Exported Stitch screenshots and generated code supplied by the caller
 - Playwright screenshots supplied by the caller

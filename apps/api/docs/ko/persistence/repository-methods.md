@@ -1,11 +1,7 @@
 ---
 title: Repository 메서드 사용 가이드
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../../en/persistence/repository-methods.md
-last_synced: 2026-09-07
 read_when:
   - 애플리케이션 호출부에서 repository 또는 query port 메서드를 선택할 때.
 related:

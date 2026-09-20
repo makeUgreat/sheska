@@ -1,11 +1,7 @@
 ---
 title: API DDD 컨벤션
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../../en/architecture/ddd.md
-last_synced: 2026-09-20
 related:
   - ./architecture.md
   - ./context-integration.md

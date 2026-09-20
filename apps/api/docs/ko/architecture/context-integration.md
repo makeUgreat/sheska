@@ -1,11 +1,7 @@
 ---
 title: API 컨텍스트 통합 컨벤션
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../../en/architecture/context-integration.md
-last_synced: 2026-09-14
 related:
   - ./ddd.md
   - ./source-dependency.md

@@ -1,11 +1,7 @@
 ---
 title: E2E 테스트 컨벤션
-lang: ko
-audience: both
 applies_to:
   - e2e
-source: ../en/test.md
-last_synced: 2026-07-15
 related:
   - ./index.md
 ---

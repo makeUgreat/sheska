@@ -1,11 +1,7 @@
 ---
 title: 모노레포 정책
-lang: ko
-audience: both
 applies_to:
   - repository
-source: ../en/monorepo.md
-last_synced: 2026-09-05
 ---
 
 # 모노레포 정책

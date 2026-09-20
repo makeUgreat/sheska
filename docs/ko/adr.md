@@ -1,12 +1,8 @@
 ---
 title: ADR 작성 가이드
-lang: ko
-audience: both
 applies_to:
   - repository
   - apps/*
-source: ../en/adr.md
-last_synced: 2026-09-05
 related:
   - ./documentation-guidelines.md
 ---
@@ -18,16 +14,15 @@ ADR(Architecture Decision Record)은 레포지토리 전역 또는 특정 앱의
 ## 언제 쓰는가
 
 - 이 가이드는 [문서 작성 가이드라인](./documentation-guidelines.md)을 ADR이라는 문서 종류에 특화한 것이다.
-  - 언어 쌍, metadata 같은 일반 문서 정책은 ADR에도 그대로 적용된다.
+  - 언어, metadata 같은 일반 문서 정책은 ADR에도 그대로 적용된다.
 - 미래의 독자에게 설명할 만한 실질적 tradeoff가 있는 durable한 설계 결정만 ADR로 기록한다.
 - 테스트로 이미 고정되는 통상적인 구현 선택에는 ADR을 쓰지 않는다.
 
 ## 위치와 번호
 
 - 채택된 순서대로 `0001`부터 번호를 매긴다.
-- 레포지토리 전역 결정은 `docs/en/adr/` 아래에 두고, `docs/ko/adr/`와 쌍을 이룬다.
-- 앱 범위 결정은 `apps/*/docs/en/adr/` 아래에 두고, `apps/*/docs/ko/adr/`와 쌍을 이룬다.
-- 쌍 맞추는 규칙 자체는 [언어 쌍](./documentation-guidelines.md#언어-쌍)을 따른다.
+- 레포지토리 전역 결정은 `docs/ko/adr/` 아래에 둔다.
+- 앱 범위 결정은 `apps/*/docs/ko/adr/` 아래에 둔다.
 
 ## 구조
 

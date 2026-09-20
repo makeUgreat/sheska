@@ -12,7 +12,9 @@ Sheska is organized as a pnpm monorepo.
 
 ## Documentation
 
-- Root conventions: `docs/en/index.md`, `docs/ko/index.md`
-- Monorepo policy: `docs/en/monorepo.md`, `docs/ko/monorepo.md`
-- API conventions: `apps/api/docs/en/index.md`, `apps/api/docs/ko/index.md`
-- UI conventions: `apps/ui/docs/en/index.md`, `apps/ui/docs/ko/index.md`
+Project conventions are written in Korean under `docs/ko/` and `apps/*/docs/ko/`.
+
+- Root conventions: `docs/ko/index.md`
+- Monorepo policy: `docs/ko/monorepo.md`
+- API conventions: `apps/api/docs/ko/index.md`
+- UI conventions: `apps/ui/docs/ko/index.md`

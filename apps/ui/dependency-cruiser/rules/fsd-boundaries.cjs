@@ -1,5 +1,5 @@
 const docs = {
-  structure: 'apps/ui/docs/en/structure.md',
+  structure: 'apps/ui/docs/ko/structure.md',
 };
 
 // FSD 레이어는 디렉터리 접두사 번호가 곧 순위다. 상위 번호가 상위 레이어.
@@ -25,7 +25,7 @@ function upwardImportRules() {
         severity: 'error',
         comment:
           `FSD dependencies point downward only (app -> pages -> widgets -> features -> entities -> shared). ` +
-          `See ${docs.structure}#layer-model.`,
+          `See ${docs.structure}#레이어-모델.`,
         from: {
           path: `^src/${layer}/`,
           pathNot: '\\.(spec|stories)\\.tsx?$',
@@ -44,7 +44,7 @@ function sliceIsolationRules() {
     severity: 'error',
     comment:
       'Slices in the same layer must not import each other; move shared code to a lower layer. ' +
-      `See ${docs.structure}#slices-and-segments.`,
+      `See ${docs.structure}#슬라이스와-세그먼트.`,
     from: {
       path: `^src/${layer}/([^/]+)/`,
       pathNot: '\\.(spec|stories)\\.tsx?$',
@@ -61,7 +61,7 @@ function publicApiRules() {
     severity: 'error',
     comment:
       "A slice exposes its public API from its root index.ts; do not import another slice's internals. " +
-      `See ${docs.structure}#slices-and-segments.`,
+      `See ${docs.structure}#슬라이스와-세그먼트.`,
     from: {
       path: '^src/',
       pathNot: [`^src/${layer}/([^/]+)/`, '\\.(spec|stories)\\.tsx?$'],

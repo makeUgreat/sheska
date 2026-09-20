@@ -1,11 +1,7 @@
 ---
 title: API 옵저버빌리티 컨벤션
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../../en/operability/observability.md
-last_synced: 2026-09-07
 read_when:
   - OpenTelemetry 계측, exporter, endpoint, 리소스 속성을 변경할 때.
   - `platform/otel/otel.bootstrap.ts`나 시작 순서를 변경할 때.

@@ -1,11 +1,7 @@
 ---
 title: API Runtime Wiring 컨벤션
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../../en/architecture/runtime-wiring.md
-last_synced: 2026-09-07
 related:
   - ./architecture.md
   - ./infrastructure.md

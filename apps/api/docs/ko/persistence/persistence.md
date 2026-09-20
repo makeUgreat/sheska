@@ -1,11 +1,7 @@
 ---
 title: API 영속성 정책
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../../en/persistence/persistence.md
-last_synced: 2026-09-20
 read_when:
   - 데이터베이스 스키마, migration, 영속성 어댑터, mapper, 저장소 제약을 변경할 때.
 related:

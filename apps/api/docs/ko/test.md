@@ -1,11 +1,7 @@
 ---
 title: API 테스트 컨벤션
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../en/test.md
-last_synced: 2026-09-07
 read_when:
   - API 테스트 종류, 위치, case 구조, test double, fixture, 명령을 선택할 때.
 related:

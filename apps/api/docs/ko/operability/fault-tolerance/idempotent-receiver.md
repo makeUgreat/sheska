@@ -1,12 +1,7 @@
 ---
 title: API Idempotent Receiver 정책
-lang: ko
-audience: both
 applies_to:
   - apps/api
-status: planned
-source: ../../../en/operability/fault-tolerance/idempotent-receiver.md
-last_synced: 2026-09-20
 read_when:
   - 어떤 operation이 자연적으로 멱등한지 판단하거나, idempotency key를 설계하거나, 안전하게 재시도 가능해야 하는 mutation의 서버 측 중복 제거를 구현할 때.
 related:

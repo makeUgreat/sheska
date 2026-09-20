@@ -1,11 +1,7 @@
 ---
 title: API Timeout & Deadline 정책
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../../../en/operability/fault-tolerance/timeout-deadline.md
-last_synced: 2026-09-20
 read_when:
   - 외부 의존성(외부 API, LLM, 네트워크 호출, 큐)에 닿는 call chain의 per-attempt timeout, 전체 deadline, 계층 간 deadline propagation을 정의, 구현, 리뷰할 때.
 related:

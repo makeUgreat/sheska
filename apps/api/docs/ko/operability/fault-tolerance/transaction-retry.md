@@ -1,11 +1,7 @@
 ---
 title: API 트랜잭션 재시도 정책
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../../../en/operability/fault-tolerance/transaction-retry.md
-last_synced: 2026-09-08
 read_when:
   - DB 트랜잭션 재시도 루프를 어떻게 구조화할지, 어느 계층이 소유할지, optimistic-concurrency 재읽기·retry budget과 어떻게 조합할지 결정할 때.
 related:

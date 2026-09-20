@@ -1,10 +1,7 @@
 ---
 title: UI 테스트 컨벤션
-lang: ko
-audience: both
 applies_to:
   - apps/ui
-source: ../en/test.md
 related:
   - ./index.md
   - ./visual-regression.md

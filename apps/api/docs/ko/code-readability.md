@@ -1,11 +1,7 @@
 ---
 title: API 코드 가독성 컨벤션
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../en/code-readability.md
-last_synced: 2026-09-11
 read_when:
   - API 코드의 조건식과 불리언 이름을 작성하거나 검토할 때
 ---

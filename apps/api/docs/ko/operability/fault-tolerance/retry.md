@@ -1,11 +1,7 @@
 ---
 title: API 재시도 정책
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../../../en/operability/fault-tolerance/retry.md
-last_synced: 2026-09-20
 read_when:
   - 외부 의존성(외부 API, LLM, 네트워크 호출, 큐) 호출에 대한 재시도 소유권, 재시도 횟수, backoff, 어떤 오류가 재시도 대상인지를 정의, 구현, 리뷰할 때.
 related:

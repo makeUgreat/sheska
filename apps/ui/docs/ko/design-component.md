@@ -1,10 +1,7 @@
 ---
 title: 디자인 컴포넌트
-lang: ko
-audience: both
 applies_to:
   - apps/ui
-source: ../en/design-component.md
 related:
   - ./design.md
   - ./design-token.md

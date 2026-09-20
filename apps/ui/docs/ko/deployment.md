@@ -1,11 +1,7 @@
 ---
 title: UI 배포
-lang: ko
-audience: both
 applies_to:
   - apps/ui
-source: ../en/deployment.md
-last_synced: 2026-07-16
 read_when: Dockerfile, Cloudflare Pages 설정, vite 빌드 설정을 변경하거나 검토할 때
 ---
 

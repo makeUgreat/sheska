@@ -1,11 +1,7 @@
 ---
 title: API 비동기 & Workflow 재시도 정책
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../../../en/operability/fault-tolerance/async-workflow-retry.md
-last_synced: 2026-09-20
 read_when:
   - 메시지 큐 consumer, dead letter queue/redrive policy, 또는 여러 단계로 구성된 workflow, activity, saga의 재시도 동작을 정의, 구현, 리뷰할 때.
 related:

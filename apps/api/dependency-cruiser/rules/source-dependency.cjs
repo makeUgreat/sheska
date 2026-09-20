@@ -146,7 +146,7 @@ module.exports = [
       "The Anti-Corruption Layer implements a consumer-owned port to reach across a context boundary. It may depend " +
       "only on core, this context's own application ports, and the producer context's public surface — never this " +
       "context's own domain or infrastructure internals, presentation, or platform. " +
-      `See ${docs.contextIntegration}#rule-2.`,
+      `See ${docs.contextIntegration}#구현-규칙.`,
     from: {
       path: '^src/contexts/([^/]+)/acl/',
     },
@@ -173,7 +173,7 @@ module.exports = [
     comment:
       "A context's root-level files (its *.di-tokens.ts and *.module.ts) are internal wiring, not a cross-context " +
       "contract. Other contexts may depend only on the producer's index.ts public surface. " +
-      `See ${docs.contextIntegration}#rule-2.`,
+      `See ${docs.contextIntegration}#구현-규칙.`,
     from: {
       path: '^src/contexts/([^/]+)/',
     },

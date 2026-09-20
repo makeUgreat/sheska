@@ -1,11 +1,7 @@
 ---
 title: API Fault Tolerance 인덱스
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../../../en/operability/fault-tolerance/index.md
-last_synced: 2026-09-20
 related:
   - ./retry.md
   - ./timeout-deadline.md
@@ -20,11 +16,6 @@ related:
 ## 목적
 
 이 인덱스는 외부 의존성(외부 API, LLM, 네트워크 호출, 큐) 호출 실패를 다루는 `apps/api` 컨벤션들을 묶는다: retry, timeout/deadline, 비동기/workflow/saga 재시도, idempotent receiver, retry budget, DB 트랜잭션 재시도.
-
-## 동기화 정책
-
-영어와 한글 `apps/api` fault-tolerance 문서는 같은 정책을 설명하는 쌍 문서다.
-두 문서가 충돌하면 영어와 한글 중 의도한 정책을 선택하고 같은 변경 단위에서 양쪽 문서를 모두 수정한다.
 
 ## 라우팅
 

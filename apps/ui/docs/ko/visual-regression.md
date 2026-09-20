@@ -1,10 +1,7 @@
 ---
 title: UI Visual Regression 컨벤션
-lang: ko
-audience: both
 applies_to:
   - apps/ui
-source: ../en/visual-regression.md
 related:
   - ./design.md
   - ./design-token.md

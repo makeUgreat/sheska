@@ -1,21 +1,12 @@
 ---
 title: E2E 컨벤션 인덱스
-lang: ko
-audience: both
 applies_to:
   - e2e
-source: ../en/index.md
-last_synced: 2026-07-15
 related:
   - ./test.md
 ---
 
 # E2E 컨벤션 인덱스
-
-## 동기화 정책
-
-영어 문서와 한글 문서는 같은 정책을 설명하는 쌍 문서다.
-두 문서가 충돌하면 영어와 한글 중 의도한 정책을 선택하고 같은 변경 단위에서 양쪽 문서를 모두 수정한다.
 
 ## 읽기 규칙
 
