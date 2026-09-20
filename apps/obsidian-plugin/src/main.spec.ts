@@ -748,7 +748,7 @@ describe('SheskaPlugin', () => {
       vi.useRealTimers();
     });
 
-    it('does not cache a failed upload and still uploads the rest of the batch', async () => {
+    it('records a failed upload as retryable and still uploads the rest of the batch', async () => {
       vi.useFakeTimers();
       vi.stubGlobal(
         'fetch',
@@ -780,7 +780,9 @@ describe('SheskaPlugin', () => {
         syncCache?: Record<string, unknown>;
       };
       expect(lastCall?.syncCache).toHaveProperty('b.md');
-      expect(lastCall?.syncCache).not.toHaveProperty('a.md');
+      expect(lastCall?.syncCache?.['a.md']).toMatchObject({
+        status: 'failed',
+      });
       expect(errorSpy).toHaveBeenCalled();
       vi.useRealTimers();
       errorSpy.mockRestore();
