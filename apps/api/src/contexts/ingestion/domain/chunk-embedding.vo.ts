@@ -1,8 +1,5 @@
-import {
-  DomainException,
-  DOMAIN_ERROR_KIND,
-  ValueObject,
-} from '@kernels/domain';
+import { InvariantViolationError } from '@core/errors';
+import { ValueObject } from '@kernels/domain';
 import { EmbeddingVector } from './embedding-vector.vo';
 
 interface ChunkEmbeddingProps {
@@ -18,8 +15,7 @@ export class ChunkEmbedding extends ValueObject<ChunkEmbeddingProps> {
 
   protected validate(props: ChunkEmbeddingProps): void {
     if (!Number.isInteger(props.chunkIndex) || props.chunkIndex < 0) {
-      throw new DomainException({
-        kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
+      throw new InvariantViolationError({
         code: 'ingestion.chunk_embedding.invalid_chunk_index',
         message: `Chunk index must be a non-negative integer, got ${props.chunkIndex}`,
         details: { fields: ['chunkIndex'] },

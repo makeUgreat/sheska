@@ -28,7 +28,7 @@ related:
 - 부재가 애플리케이션 흐름을 결정하는 예상 가능한 상태라면 `find`를 사용한다.
   - 일치하는 항목이 없으면 `null`을 반환한다.
 - 호출자가 항목의 존재를 요구한다면 `get`을 사용한다.
-  - 항목을 반환하거나 `kind: 'not_found'`인 `InfrastructureException`을 던진다.
+  - 항목을 반환하거나 `NotFoundError`를 던진다.
   - 반환 타입에 `null`을 포함하지 않는다.
 
 ### 분기에는 `find` 사용

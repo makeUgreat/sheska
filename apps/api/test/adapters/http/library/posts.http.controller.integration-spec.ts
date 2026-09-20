@@ -2,20 +2,13 @@ import { type Server } from 'node:http';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
+import { ConstraintViolationError, NotFoundError } from '@core/errors';
 import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/library/application/use-cases/get-post.use-case';
 import { ListPostsUseCase } from '@contexts/library/application/use-cases/list-posts.use-case';
 import { SearchPostsUseCase } from '@contexts/library/application/use-cases/search-posts.use-case';
 import { CountPostsUseCase } from '@contexts/library/application/use-cases/count-posts.use-case';
-import {
-  ApplicationException,
-  APPLICATION_ERROR_KIND,
-  LOGGER,
-} from '@kernels/application';
-import {
-  InfrastructureException,
-  INFRASTRUCTURE_ERROR_KIND,
-} from '@kernels/infrastructure';
+import { LOGGER } from '@kernels/application';
 import { PostsHttpController } from '@contexts/library/presentation/http/posts.http.controller';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
 import { ZodValidationPipe } from '@platform/nest/pipes/zod-validation.pipe';
@@ -142,10 +135,8 @@ describe('PostsHttpController', () => {
 
     it('source가 없으면 404 응답을 반환한다', async () => {
       publishPostUseCase.execute.mockRejectedValue(
-        new InfrastructureException({
-          kind: INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
+        new NotFoundError({
           code: 'source.not_found',
-          source: { boundary: 'persistence', adapter: 'source.pg-drizzle' },
           message: 'Source not found',
           details: {},
         }),
@@ -166,10 +157,8 @@ describe('PostsHttpController', () => {
 
     it('이미 게시된 source이면 409 응답을 반환한다', async () => {
       publishPostUseCase.execute.mockRejectedValue(
-        new InfrastructureException({
-          kind: INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
+        new ConstraintViolationError({
           code: 'post.already_exists',
-          source: { boundary: 'persistence', adapter: 'post.pg-drizzle' },
           message: 'A post for this source already exists',
           details: {},
         }),
@@ -539,8 +528,7 @@ describe('PostsHttpController', () => {
 
     it('post가 없으면 404 응답을 반환한다', async () => {
       getPostUseCase.execute.mockRejectedValue(
-        new ApplicationException({
-          kind: APPLICATION_ERROR_KIND.NOT_FOUND,
+        new NotFoundError({
           code: 'posts.post_not_found',
           message: 'Post not found',
           details: {},

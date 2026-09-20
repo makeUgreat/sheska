@@ -94,7 +94,7 @@ describe('SourceDrizzleRepository', () => {
     expect(result).toBeNull();
   });
 
-  it('존재하지 않는 id는 NOT_FOUND exception을 throw한다', async () => {
+  it('존재하지 않는 id는 NotFoundError를 throw한다', async () => {
     await expect(
       repository.get({ id: 'non-existent-id' }),
     ).rejects.toMatchObject({

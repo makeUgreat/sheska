@@ -1,13 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  InfrastructureException,
-  INFRASTRUCTURE_ERROR_KIND,
-} from '@kernels/infrastructure';
 import { buildSourceEmbedding } from '../../../../../../../test/support/domains/fixtures/source-embedding.fixture';
 import { SourceEmbeddingPgDrizzleRepository } from '../source-embedding.pg-drizzle.repository';
+import {
+  ConcurrencyConflictError,
+  ConstraintViolationError,
+  UnexpectedError,
+} from '@core/errors';
 
 describe('SourceEmbeddingPgDrizzleRepository', () => {
-  it('Postgres error는 CONFLICT exception으로 전파하고 재시도하지 않는다', async () => {
+  it('Postgres error는 ConstraintViolationError로 전파하고 재시도하지 않는다', async () => {
     const { db, transaction } = createSaveRejectingDb(
       createPostgresError('23505'),
     );
@@ -15,15 +16,14 @@ describe('SourceEmbeddingPgDrizzleRepository', () => {
 
     const result = repository.upsert(buildSourceEmbedding());
 
-    await expect(result).rejects.toBeInstanceOf(InfrastructureException);
+    await expect(result).rejects.toBeInstanceOf(ConstraintViolationError);
     await expect(result).rejects.toMatchObject({
-      kind: INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
       code: 'source_embedding.upsert_failed',
     });
     expect(transaction).toHaveBeenCalledOnce();
   });
 
-  it('unknown failure는 UNEXPECTED exception으로 전파하고 재시도하지 않는다', async () => {
+  it('unknown failure는 UnexpectedError로 전파하고 재시도하지 않는다', async () => {
     const { db, transaction } = createSaveRejectingDb(
       new Error('connection failed'),
     );
@@ -31,15 +31,14 @@ describe('SourceEmbeddingPgDrizzleRepository', () => {
 
     const result = repository.upsert(buildSourceEmbedding());
 
-    await expect(result).rejects.toBeInstanceOf(InfrastructureException);
+    await expect(result).rejects.toBeInstanceOf(UnexpectedError);
     await expect(result).rejects.toMatchObject({
-      kind: INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
       code: 'source_embedding.upsert_failed',
     });
     expect(transaction).toHaveBeenCalledOnce();
   });
 
-  it('CONCURRENCY_CONFLICT는 트랜잭션 전체를 재시도해서 결국 성공한다', async () => {
+  it('ConcurrencyConflictError는 트랜잭션 전체를 재시도해서 결국 성공한다', async () => {
     const { db, transaction } = createSaveFailingNTimesDb(
       createPostgresError('40001'),
       2,
@@ -51,15 +50,14 @@ describe('SourceEmbeddingPgDrizzleRepository', () => {
     expect(transaction).toHaveBeenCalledTimes(3);
   });
 
-  it('CONCURRENCY_CONFLICT가 재시도 정책을 소진하면 CONCURRENCY_CONFLICT exception으로 reject한다', async () => {
+  it('ConcurrencyConflictError가 재시도 정책을 소진하면 ConcurrencyConflictError로 reject한다', async () => {
     const { db } = createSaveRejectingDb(createPostgresError('40001'));
     const repository = new SourceEmbeddingPgDrizzleRepository(db);
 
     const result = repository.upsert(buildSourceEmbedding());
 
-    await expect(result).rejects.toBeInstanceOf(InfrastructureException);
+    await expect(result).rejects.toBeInstanceOf(ConcurrencyConflictError);
     await expect(result).rejects.toMatchObject({
-      kind: INFRASTRUCTURE_ERROR_KIND.CONCURRENCY_CONFLICT,
       code: 'source_embedding.upsert_failed',
     });
   });

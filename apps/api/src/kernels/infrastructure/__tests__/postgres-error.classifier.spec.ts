@@ -1,90 +1,90 @@
-import { INFRASTRUCTURE_ERROR_KIND } from '@kernels/infrastructure';
-import { classifyPostgresError } from '../postgres-error.classifier';
 import { describe, expect, it } from 'vitest';
+import { classifyPostgresError } from '../postgres-error.classifier';
+import {
+  ConcurrencyConflictError,
+  ConstraintViolationError,
+  TimeoutError,
+  UnavailableError,
+  UnexpectedError,
+} from '@core/errors';
 
 describe('classifyPostgresError', () => {
-  it('23505 (unique_violation) → CONSTRAINT_VIOLATION', () => {
+  it('23505 (unique_violation) → ConstraintViolationError', () => {
     expect(classifyPostgresError(createPostgresError('23505'))).toBe(
-      INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
+      ConstraintViolationError,
     );
   });
 
-  it('23503 (foreign_key_violation)은 코드 결함이므로 → UNEXPECTED', () => {
+  it('23503 (foreign_key_violation)은 코드 결함이므로 → UnexpectedError', () => {
     expect(classifyPostgresError(createPostgresError('23503'))).toBe(
-      INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
+      UnexpectedError,
     );
   });
 
-  it('23502 (not_null_violation)은 코드 결함이므로 → UNEXPECTED', () => {
+  it('23502 (not_null_violation)은 코드 결함이므로 → UnexpectedError', () => {
     expect(classifyPostgresError(createPostgresError('23502'))).toBe(
-      INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
+      UnexpectedError,
     );
   });
 
-  it('23514 (check_violation)은 코드 결함이므로 → UNEXPECTED', () => {
+  it('23514 (check_violation)은 코드 결함이므로 → UnexpectedError', () => {
     expect(classifyPostgresError(createPostgresError('23514'))).toBe(
-      INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
+      UnexpectedError,
     );
   });
 
-  it('40001 (serialization_failure) → CONCURRENCY_CONFLICT', () => {
+  it('40001 (serialization_failure) → ConcurrencyConflictError', () => {
     expect(classifyPostgresError(createPostgresError('40001'))).toBe(
-      INFRASTRUCTURE_ERROR_KIND.CONCURRENCY_CONFLICT,
+      ConcurrencyConflictError,
     );
   });
 
-  it('40P01 (deadlock_detected) → CONCURRENCY_CONFLICT', () => {
+  it('40P01 (deadlock_detected) → ConcurrencyConflictError', () => {
     expect(classifyPostgresError(createPostgresError('40P01'))).toBe(
-      INFRASTRUCTURE_ERROR_KIND.CONCURRENCY_CONFLICT,
+      ConcurrencyConflictError,
     );
   });
 
-  it('08006 (connection_failure) → UNAVAILABLE', () => {
+  it('08006 (connection_failure) → UnavailableError', () => {
     expect(classifyPostgresError(createPostgresError('08006'))).toBe(
-      INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
+      UnavailableError,
     );
   });
 
-  it('08000 (connection_exception) → UNAVAILABLE', () => {
+  it('08000 (connection_exception) → UnavailableError', () => {
     expect(classifyPostgresError(createPostgresError('08000'))).toBe(
-      INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
+      UnavailableError,
     );
   });
 
-  it('57014 (query_canceled) → TIMEOUT', () => {
+  it('57014 (query_canceled) → TimeoutError', () => {
     expect(classifyPostgresError(createPostgresError('57014'))).toBe(
-      INFRASTRUCTURE_ERROR_KIND.TIMEOUT,
+      TimeoutError,
     );
   });
 
-  it('알 수 없는 postgres 코드 → UNEXPECTED', () => {
+  it('알 수 없는 postgres 코드 → UnexpectedError', () => {
     expect(classifyPostgresError(createPostgresError('99999'))).toBe(
-      INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
+      UnexpectedError,
     );
   });
 
-  it('postgres code가 없는 Error → UNEXPECTED', () => {
+  it('postgres code가 없는 Error → UnexpectedError', () => {
     expect(classifyPostgresError(new Error('connection failed'))).toBe(
-      INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
+      UnexpectedError,
     );
   });
 
-  it('null → UNEXPECTED', () => {
-    expect(classifyPostgresError(null)).toBe(
-      INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
-    );
+  it('null → UnexpectedError', () => {
+    expect(classifyPostgresError(null)).toBe(UnexpectedError);
   });
 
-  it('code 프로퍼티가 없는 객체 → UNEXPECTED', () => {
-    expect(classifyPostgresError({ message: 'error' })).toBe(
-      INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
-    );
+  it('code 프로퍼티가 없는 객체 → UnexpectedError', () => {
+    expect(classifyPostgresError({ message: 'error' })).toBe(UnexpectedError);
   });
 
-  it('code가 string이 아닌 객체 → UNEXPECTED', () => {
-    expect(classifyPostgresError({ code: 23505 })).toBe(
-      INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
-    );
+  it('code가 string이 아닌 객체 → UnexpectedError', () => {
+    expect(classifyPostgresError({ code: 23505 })).toBe(UnexpectedError);
   });
 
   it('cause에 postgres 코드가 있으면 cause를 기준으로 분류한다 (drizzle wrapping)', () => {
@@ -93,9 +93,7 @@ describe('classifyPostgresError', () => {
       cause: pgError,
     });
 
-    expect(classifyPostgresError(wrappedError)).toBe(
-      INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
-    );
+    expect(classifyPostgresError(wrappedError)).toBe(ConstraintViolationError);
   });
 });
 

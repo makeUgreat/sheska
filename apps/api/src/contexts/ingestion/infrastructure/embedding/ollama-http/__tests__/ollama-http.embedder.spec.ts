@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { InvalidDataError, UnavailableError } from '@core/errors';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
-import { InfrastructureException } from '@kernels/infrastructure';
 import { OllamaHttpEmbedder } from '../ollama-http.embedder';
 
 function buildContext(remainingMs = 60_000, maxRetries = 2): CallContext {
@@ -41,7 +41,7 @@ describe('OllamaHttpEmbedder', () => {
     });
   });
 
-  it('요청이 타임아웃되면 TIMEOUT InfrastructureException을 던진다', async () => {
+  it('요청이 타임아웃되면 TimeoutError를 던진다', async () => {
     const timeoutError = Object.assign(new Error('The operation timed out'), {
       name: 'TimeoutError',
     });
@@ -54,17 +54,16 @@ describe('OllamaHttpEmbedder', () => {
     });
   });
 
-  it('fetch가 계속 실패하면 재시도가 소진된 뒤 UNAVAILABLE InfrastructureException을 던진다', async () => {
+  it('fetch가 계속 실패하면 재시도가 소진된 뒤 UnavailableError를 던진다', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockRejectedValue(new Error('Network error')),
     );
 
     await expect(client.embed('hello', buildContext())).rejects.toThrow(
-      InfrastructureException,
+      UnavailableError,
     );
     await expect(client.embed('hello', buildContext())).rejects.toMatchObject({
-      kind: 'unavailable',
       code: 'ollama.request_failed',
       cause: expect.objectContaining({
         name: expect.any(String) as string,
@@ -73,7 +72,7 @@ describe('OllamaHttpEmbedder', () => {
     });
   });
 
-  it('응답 형태가 올바르지 않으면 INVALID_DATA InfrastructureException을 던진다', async () => {
+  it('응답 형태가 올바르지 않으면 InvalidDataError를 던진다', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -83,10 +82,9 @@ describe('OllamaHttpEmbedder', () => {
     );
 
     await expect(client.embed('hello', buildContext())).rejects.toThrow(
-      InfrastructureException,
+      InvalidDataError,
     );
     await expect(client.embed('hello', buildContext())).rejects.toMatchObject({
-      kind: 'invalid_data',
       code: 'ollama.invalid_response',
     });
   });
@@ -200,7 +198,7 @@ describe('OllamaHttpEmbedder', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('Ollama가 계속 5xx를 반환하면 maxRetries만큼 재시도한 뒤 BAD_RESPONSE를 던진다', async () => {
+  it('Ollama가 계속 5xx를 반환하면 maxRetries만큼 재시도한 뒤 BadResponseError를 던진다', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
       status: 500,
@@ -232,7 +230,7 @@ describe('OllamaHttpEmbedder', () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
-  it('Ollama가 에러 상태로 응답하면 BAD_RESPONSE InfrastructureException의 details에 statusCode를 담는다', async () => {
+  it('Ollama가 에러 상태로 응답하면 BadResponseError의 details에 statusCode를 담는다', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({

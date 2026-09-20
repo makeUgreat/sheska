@@ -87,7 +87,6 @@ describe('PgDrizzleOutboxStore', () => {
 
     await expect(store.claimDue(50, 30_000)).rejects.toMatchObject({
       code: 'outbox.claim_due_failed',
-      source: { boundary: 'persistence', adapter: 'outbox.pg-drizzle' },
       cause: failure,
     });
   });

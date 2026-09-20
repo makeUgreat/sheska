@@ -1,9 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { z } from 'zod';
+import {
+  BadResponseError,
+  InvalidDataError,
+  TimeoutError,
+  UnavailableError,
+} from '@core/errors';
 import { type CallContext } from '@core/call-context';
 import {
-  INFRASTRUCTURE_ERROR_KIND,
-  InfrastructureException,
   classifyInfrastructureRetry,
   parseRetryAfterMs,
   resiliencePipeline,
@@ -12,8 +16,9 @@ import {
 import type { Embedder } from '@contexts/ingestion/application/ports';
 import { OLLAMA_CONFIG, type OllamaConfig } from './ollama-http.config';
 
-const ADAPTER = 'ollama.embedder';
 const OLLAMA_MODEL = 'qwen3-embedding:0.6b';
+// AbortSignal.timeout이 던지는 DOMException의 name. 이 프로젝트의 TimeoutError와는 다르다.
+const ABORT_TIMEOUT_ERROR_NAME = 'TimeoutError';
 
 const OllamaEmbeddingsResponse = z.object({
   embedding: z.array(z.number()),
@@ -60,20 +65,16 @@ export class OllamaHttpEmbedder implements Embedder {
         signal: attempt.signal,
       });
     } catch (error: unknown) {
-      if (error instanceof Error && error.name === 'TimeoutError') {
-        throw new InfrastructureException({
-          kind: INFRASTRUCTURE_ERROR_KIND.TIMEOUT,
+      if (error instanceof Error && error.name === ABORT_TIMEOUT_ERROR_NAME) {
+        throw new TimeoutError({
           code: 'ollama.request_timeout',
-          source: { boundary: 'http-client', adapter: ADAPTER },
           message: 'Ollama did not respond in time',
           details: { deadlineBound: attempt.deadlineBound },
           cause: error,
         });
       }
-      throw new InfrastructureException({
-        kind: INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
+      throw new UnavailableError({
         code: 'ollama.request_failed',
-        source: { boundary: 'http-client', adapter: ADAPTER },
         message: 'Ollama service is unavailable',
         details: {},
         cause: error,
@@ -81,10 +82,8 @@ export class OllamaHttpEmbedder implements Embedder {
     }
 
     if (!response.ok) {
-      throw new InfrastructureException({
-        kind: INFRASTRUCTURE_ERROR_KIND.BAD_RESPONSE,
+      throw new BadResponseError({
         code: 'ollama.bad_response',
-        source: { boundary: 'http-client', adapter: ADAPTER },
         message: `Ollama returned an error response: ${response.status} ${response.statusText}`,
         details: {
           statusCode: response.status,
@@ -95,10 +94,8 @@ export class OllamaHttpEmbedder implements Embedder {
 
     const parsed = OllamaEmbeddingsResponse.safeParse(await response.json());
     if (!parsed.success) {
-      throw new InfrastructureException({
-        kind: INFRASTRUCTURE_ERROR_KIND.INVALID_DATA,
+      throw new InvalidDataError({
         code: 'ollama.invalid_response',
-        source: { boundary: 'http-client', adapter: ADAPTER },
         message: 'Ollama response did not match expected shape',
         details: {
           fields: parsed.error.issues.map((i) => i.path.join('.')),

@@ -56,14 +56,14 @@ describe('PostPgDrizzleRepository', () => {
     expect(result.getProps().viewCount.unpack()).toBe(1);
   });
 
-  it('존재하지 않는 id는 NOT_FOUND exception을 throw한다', async () => {
+  it('존재하지 않는 id는 NotFoundError를 throw한다', async () => {
     await expect(posts.get({ id: 'non-existent-id' })).rejects.toMatchObject({
       kind: 'not_found',
       code: 'post.not_found',
     });
   });
 
-  it('존재하지 않는 post를 update하면 NOT_FOUND exception을 throw한다', async () => {
+  it('존재하지 않는 post를 update하면 NotFoundError를 throw한다', async () => {
     const source = await sources.insert(
       buildSource({ externalSourceId: 'Notes/post-repo-update-missing.md' }),
     );

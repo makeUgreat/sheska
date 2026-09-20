@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { StateConflictError } from '@core/errors';
 import {
-  APPLICATION_ERROR_KIND,
-  ApplicationException,
   INTEGRATION_EVENT_DISPATCHER,
   type IntegrationEventDispatcher,
 } from '@kernels/application';
@@ -64,8 +63,7 @@ export class FinalizeEmbeddingWorkflowUseCase {
     const models = [...new Set(chunks.map((chunk) => chunk.model))];
     const hasInconsistentModels = models.length > 1;
     if (hasInconsistentModels) {
-      throw new ApplicationException({
-        kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
+      throw new StateConflictError({
         code: 'ingestion.embedding_workflow_models_inconsistent',
         message: 'Embedding workflow returned inconsistent models',
         details: {
@@ -93,8 +91,7 @@ export class FinalizeEmbeddingWorkflowUseCase {
     const hasNoChunkResults = chunks.length === 0;
     const hasUnexpectedChunkCount = chunks.length !== command.totalChunks;
     if (hasNoChunkResults || hasUnexpectedChunkCount) {
-      throw new ApplicationException({
-        kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
+      throw new StateConflictError({
         code: 'ingestion.embedding_workflow_result_incomplete',
         message: 'Embedding workflow result is incomplete',
         details: {

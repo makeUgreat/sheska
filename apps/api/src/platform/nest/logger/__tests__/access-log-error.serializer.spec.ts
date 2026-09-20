@@ -23,13 +23,13 @@ describe('serializeAccessLogError', () => {
 
   it('type과 message는 유지한다', () => {
     const err = buildSerializedError({
-      type: 'InfrastructureException',
+      type: 'UnexpectedError',
       message:
         'Post paginate operation failed: relation "posts" does not exist',
     });
 
     expect(serializeAccessLogError(err)).toMatchObject({
-      type: 'InfrastructureException',
+      type: 'UnexpectedError',
       message:
         'Post paginate operation failed: relation "posts" does not exist',
     });

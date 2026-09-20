@@ -1,9 +1,5 @@
-import {
-  DomainException,
-  DOMAIN_ERROR_KIND,
-  ValueObject,
-  type DomainPrimitive,
-} from '@kernels/domain';
+import { InvariantViolationError } from '@core/errors';
+import { ValueObject, type DomainPrimitive } from '@kernels/domain';
 
 export class ExternalSourceId extends ValueObject<string> {
   constructor(props: DomainPrimitive<string>) {
@@ -18,8 +14,7 @@ export class ExternalSourceId extends ValueObject<string> {
 
   protected validate(props: DomainPrimitive<string>): void {
     if (ExternalSourceId.isEmpty(props)) {
-      throw new DomainException({
-        kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
+      throw new InvariantViolationError({
         code: 'source.empty_external_source_id',
         message: 'External source id cannot be empty',
         details: { fields: ['externalSourceId'] },

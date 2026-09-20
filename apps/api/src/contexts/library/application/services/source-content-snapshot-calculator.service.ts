@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { ValidationFailedError } from '@core/errors';
 import {
   type ParsedSourceDocument,
   type SourceDocumentParser,
@@ -9,10 +10,6 @@ import {
   SOURCE_DOCUMENT_PARSER,
   SOURCE_FINGERPRINTER,
 } from '@contexts/library/library.di-tokens';
-import {
-  APPLICATION_ERROR_KIND,
-  ApplicationException,
-} from '@kernels/application';
 
 export interface SourceContentSnapshotCalculation {
   readonly frontmatter: SourceFrontmatterProps;
@@ -38,8 +35,7 @@ export class SourceContentSnapshotCalculator {
     try {
       parsed = this.sourceDocumentParser.parse(content);
     } catch (error: unknown) {
-      throw new ApplicationException({
-        kind: APPLICATION_ERROR_KIND.VALIDATION_FAILED,
+      throw new ValidationFailedError({
         code: 'source.invalid_frontmatter',
         message: 'Source frontmatter is invalid',
         details: {

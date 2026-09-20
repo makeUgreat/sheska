@@ -6,14 +6,4 @@ export {
   decodeCursor,
   cursorQueryParamSchema,
 } from './cursor.codec';
-export { PresentationException } from './presentation.exception';
-export {
-  PRESENTATION_ERROR_KIND,
-  type PresentationError,
-  type PresentationErrorBase,
-  type PresentationErrorOf,
-  type PresentationErrorKind,
-  type PresentationValidationDetails,
-  type PresentationValidationFieldDetail,
-  type HttpFailure,
-} from './error.base';
+export { type HttpFailure } from './http-failure';

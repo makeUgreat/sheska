@@ -149,7 +149,7 @@ related:
   - ORM과 protocol 호환성.
   - Transaction, upsert, connection, 실제 failure 동작.
 - Adapter가 dependency error를 감쌀 때는 다음 규칙을 따른다.
-  - 결과 `InfrastructureException`의 kind, code, source, `cause` shape은 단위 테스트로 검증한다.
+  - 결과 error 클래스와 code, `cause` shape은 단위 테스트로 검증한다.
   - Dependency의 runtime error shape가 필요한 contract일 때만 실제 failure case를 추가한다.
   - Exception 소유권은 [오류 정책](./operability/error.md)을 따른다.
 - 같은 관찰 결과로 서로 다른 소유자의 책임을 증명한다면 제한적인 중복을 허용한다.

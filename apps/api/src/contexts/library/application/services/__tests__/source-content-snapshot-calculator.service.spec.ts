@@ -1,9 +1,9 @@
+import { ValidationFailedError } from '@core/errors';
 import {
   type SourceDocumentParser,
   type SourceFingerprinter,
 } from '@contexts/library/application/ports';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
-import { ApplicationException } from '@kernels/application';
 import { SourceContentSnapshotCalculator } from '../source-content-snapshot-calculator.service';
 
 type SourceFingerprinterMock = {
@@ -52,7 +52,7 @@ describe('SourceContentSnapshotCalculator', () => {
     );
   });
 
-  it('frontmatter 파싱 실패를 ApplicationException으로 변환한다', async () => {
+  it('frontmatter 파싱 실패를 ValidationFailedError로 변환한다', async () => {
     const failingParser: SourceDocumentParser = {
       parse: vi.fn().mockImplementation(() => {
         throw new Error('Frontmatter must be a YAML mapping');
@@ -65,7 +65,7 @@ describe('SourceContentSnapshotCalculator', () => {
     );
 
     await expect(calculator.calculate('# Source note')).rejects.toMatchObject({
-      kind: 'validation_failed',
+      name: 'ValidationFailedError',
       code: 'source.invalid_frontmatter',
       details: {
         fields: [
@@ -77,7 +77,7 @@ describe('SourceContentSnapshotCalculator', () => {
       },
     });
     await expect(calculator.calculate('# Source note')).rejects.toBeInstanceOf(
-      ApplicationException,
+      ValidationFailedError,
     );
   });
 });

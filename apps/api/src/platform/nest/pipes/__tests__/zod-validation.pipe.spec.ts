@@ -1,11 +1,8 @@
 import { type ArgumentMetadata } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import {
-  PresentationException,
-  PRESENTATION_ERROR_KIND,
-} from '@kernels/presentation';
 import { ZodValidationPipe } from '../zod-validation.pipe';
+import { ValidationFailedError } from '@core/errors';
 
 function buildMetadata(
   metatype?: ArgumentMetadata['metatype'],
@@ -81,20 +78,12 @@ describe('ZodValidationPipe', () => {
   });
 
   describe('유효하지 않은 값인 경우', () => {
-    it('VALIDATION_FAILED kind의 PresentationException을 던진다', () => {
+    it('ValidationFailedError를 던진다', () => {
       const pipe = new ZodValidationPipe();
 
       expect(() =>
         pipe.transform({ name: 123 }, buildMetadata(SchemaClass)),
-      ).toThrow(PresentationException);
-
-      try {
-        pipe.transform({ name: 123 }, buildMetadata(SchemaClass));
-      } catch (e) {
-        expect((e as PresentationException).kind).toBe(
-          PRESENTATION_ERROR_KIND.VALIDATION_FAILED,
-        );
-      }
+      ).toThrow(ValidationFailedError);
     });
 
     it('기본 error code를 사용한다', () => {
@@ -103,7 +92,7 @@ describe('ZodValidationPipe', () => {
       try {
         pipe.transform({ name: 123 }, buildMetadata(SchemaClass));
       } catch (e) {
-        expect((e as PresentationException).code).toBe(
+        expect((e as ValidationFailedError).code).toBe(
           'request.validation_failed',
         );
       }
@@ -115,7 +104,7 @@ describe('ZodValidationPipe', () => {
       try {
         pipe.transform({ name: 123 }, buildMetadata(SchemaClass));
       } catch (e) {
-        expect((e as PresentationException).message).toBe('Invalid request');
+        expect((e as ValidationFailedError).message).toBe('Invalid request');
       }
     });
 
@@ -126,9 +115,7 @@ describe('ZodValidationPipe', () => {
         try {
           pipe.transform({ name: 123 }, buildMetadata(SchemaClass));
         } catch (e) {
-          const details = (e as PresentationException).details as {
-            fields: { path: string; messages: string[] }[];
-          };
+          const { details } = e as ValidationFailedError;
           expect(details.fields[0].path).toBe('name');
         }
       });
@@ -142,9 +129,7 @@ describe('ZodValidationPipe', () => {
         try {
           pipe.transform(123, buildMetadata(TopLevelSchema));
         } catch (e) {
-          const details = (e as PresentationException).details as {
-            fields: { path: string; messages: string[] }[];
-          };
+          const { details } = e as ValidationFailedError;
           expect(details.fields[0].path).toBe('body');
         }
       });
@@ -166,9 +151,7 @@ describe('ZodValidationPipe', () => {
         try {
           pipe.transform({ value: 'ab' }, buildMetadata(MultiIssueSchema));
         } catch (e) {
-          const details = (e as PresentationException).details as {
-            fields: { path: string; messages: string[] }[];
-          };
+          const { details } = e as ValidationFailedError;
           const valueField = details.fields.find((f) => f.path === 'value');
           expect(valueField?.messages.length).toBeGreaterThan(1);
         }

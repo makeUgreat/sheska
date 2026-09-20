@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { count, desc, lt, sql, type SQL } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { NotFoundError } from '@core/errors';
 import {
   type PostQuery,
   type PostQueryFindCriteria,
@@ -17,15 +18,12 @@ import {
 import {
   classifyPostgresError,
   DATABASE_TOKENS,
-  INFRASTRUCTURE_ERROR_KIND,
-  InfrastructureException,
   sliceForCursor,
 } from '@kernels/infrastructure';
 import * as postsSchema from './schema';
 
 type QuerySchema = typeof postsSchema;
 
-const ADAPTER = 'post.pg-drizzle';
 const TITLE_SEARCH_WEIGHT = 1;
 const CONTENT_SEARCH_WEIGHT = TITLE_SEARCH_WEIGHT * 0.4;
 const RRF_K = 60;
@@ -73,10 +71,8 @@ export class PostPgDrizzleQuery implements PostQuery {
   async get(criteria: PostQueryFindCriteria): Promise<PostQueryResult> {
     const result = await this.find(criteria);
     if (result === null) {
-      throw new InfrastructureException({
-        kind: INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
+      throw new NotFoundError({
         code: 'post.not_found',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Post not found',
         details: { id: criteria.id },
       });
@@ -102,10 +98,9 @@ export class PostPgDrizzleQuery implements PostQuery {
       `);
       rows = result.rows;
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'post.get_with_source_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Post find query operation failed',
         details: { id: criteria.id },
         cause: error,
@@ -159,10 +154,9 @@ export class PostPgDrizzleQuery implements PostQuery {
 
       return this.toResult(data, nextCursor);
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'post.paginate_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Post paginate operation failed',
         details: {},
         cause: error,
@@ -177,10 +171,9 @@ export class PostPgDrizzleQuery implements PostQuery {
         .from(postsSchema.posts);
       return row?.count ?? 0;
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'post.count_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Post count operation failed',
         details: {},
         cause: error,
@@ -214,10 +207,9 @@ export class PostPgDrizzleQuery implements PostQuery {
 
       return this.toSearchResult(data, nextCursor, query);
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'post.search_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Post search operation failed',
         details: { query },
         cause: error,

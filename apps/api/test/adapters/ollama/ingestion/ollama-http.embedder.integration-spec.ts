@@ -1,7 +1,7 @@
 import { describe, beforeAll, it, expect } from 'vitest';
+import { UnavailableError } from '@core/errors';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
-import { InfrastructureException } from '@kernels/infrastructure';
 import { OllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.embedder';
 
 const OLLAMA_TEST_BASE_URL = 'http://127.0.0.1:11435';
@@ -58,14 +58,13 @@ describe('OllamaHttpEmbedder — 서비스 불가 (integration)', () => {
     });
   });
 
-  it('Ollama에 연결할 수 없으면 재시도가 소진된 뒤 cause가 직렬화된 InfrastructureException을 던진다', async () => {
+  it('Ollama에 연결할 수 없으면 재시도가 소진된 뒤 cause가 직렬화된 UnavailableError를 던진다', async () => {
     await expect(
       unreachableEmbedder.embed('hello', buildContext()),
-    ).rejects.toThrow(InfrastructureException);
+    ).rejects.toThrow(UnavailableError);
     await expect(
       unreachableEmbedder.embed('hello', buildContext()),
     ).rejects.toMatchObject({
-      kind: 'unavailable',
       code: 'ollama.request_failed',
       cause: expect.objectContaining({
         name: expect.any(String) as string,

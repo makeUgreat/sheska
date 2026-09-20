@@ -1,9 +1,5 @@
-import {
-  DomainException,
-  DOMAIN_ERROR_KIND,
-  ValueObject,
-  type DomainPrimitive,
-} from '@kernels/domain';
+import { InvariantViolationError } from '@core/errors';
+import { ValueObject, type DomainPrimitive } from '@kernels/domain';
 
 export class PostViewCount extends ValueObject<number> {
   constructor(props: DomainPrimitive<number>) {
@@ -16,8 +12,7 @@ export class PostViewCount extends ValueObject<number> {
 
   protected validate(props: DomainPrimitive<number>): void {
     if (!PostViewCount.isValid(props)) {
-      throw new DomainException({
-        kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
+      throw new InvariantViolationError({
         code: 'post.invalid_view_count',
         message: 'Post view count must be a non-negative integer',
         details: { fields: ['viewCount'] },

@@ -10,13 +10,10 @@ import {
 import {
   classifyPostgresError,
   DATABASE_TOKENS,
-  InfrastructureException,
 } from '@kernels/infrastructure';
 import * as schema from './schema';
 
 type QuerySchema = typeof schema;
-
-const ADAPTER = 'source.pg-drizzle';
 
 type SourceWithLatestJobRow = {
   id: string;
@@ -83,10 +80,9 @@ export class SourcePgDrizzleQuery implements SourceQuery {
 
       return this.toPaginateResult(result.rows, page, pageSize);
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'source.paginate_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source paginate operation failed',
         details: {},
         cause: error,
@@ -101,10 +97,9 @@ export class SourcePgDrizzleQuery implements SourceQuery {
       `);
       return result.rows[0]?.id ?? null;
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'source.find_published_post_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source find published post operation failed',
         details: { sourceId: criteria.sourceId },
         cause: error,
