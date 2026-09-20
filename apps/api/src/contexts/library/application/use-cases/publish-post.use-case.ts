@@ -41,7 +41,7 @@ export class PublishPostUseCase {
 
     return {
       postId: saved.id,
-      sourceId: props.sourceId,
+      sourceId: saved.sourceId,
       title: source.title,
       viewCount: props.viewCount.unpack(),
       createdAt: saved.createdAt,

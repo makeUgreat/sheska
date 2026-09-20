@@ -34,7 +34,6 @@ const EMBEDDING_MAX_DISTANCE = 0.6;
 
 type PostWithSourceRow = {
   post_id: string;
-  source_id: string;
   title: string;
   view_count: number;
   created_at: Date;
@@ -91,14 +90,13 @@ export class PostPgDrizzleQuery implements PostQuery {
     try {
       const result = await this.db.execute<PostWithSourceRow>(sql`
         SELECT p.id   AS post_id,
-          p.source_id,
           s.title,
           p.view_count,
           p.created_at,
           p.updated_at,
           s.body        AS source_body
         FROM posts p
-        INNER JOIN sources s ON p.source_id = s.id
+        INNER JOIN sources s ON p.id = s.id
         WHERE p.id = ${criteria.id}
         LIMIT 1
       `);
@@ -121,7 +119,7 @@ export class PostPgDrizzleQuery implements PostQuery {
 
     return {
       postId: row.post_id,
-      sourceId: row.source_id,
+      sourceId: row.post_id,
       title: row.title,
       viewCount: row.view_count,
       createdAt: new Date(row.created_at),
@@ -140,14 +138,14 @@ export class PostPgDrizzleQuery implements PostQuery {
       const baseQuery = this.db
         .select({
           id: postsSchema.posts.id,
-          sourceId: postsSchema.posts.sourceId,
+          sourceId: postsSchema.posts.id,
           title: sql<string>`s.title`,
           viewCount: postsSchema.posts.viewCount,
           createdAt: postsSchema.posts.createdAt,
           updatedAt: postsSchema.posts.updatedAt,
         })
         .from(postsSchema.posts)
-        .innerJoin(sql`sources s`, sql`${postsSchema.posts.sourceId} = s.id`)
+        .innerJoin(sql`sources s`, sql`${postsSchema.posts.id} = s.id`)
         .orderBy(desc(postsSchema.posts.id))
         .limit(limit + 1);
 
@@ -243,7 +241,7 @@ export class PostPgDrizzleQuery implements PostQuery {
 
     return this.db.execute<SearchPostRow>(sql`
       SELECT p.id  AS "id",
-        p.source_id  AS "sourceId",
+        p.id         AS "sourceId",
         s.title      AS "title",
         p.view_count AS "viewCount",
         p.created_at AS "createdAt",
@@ -253,7 +251,7 @@ export class PostPgDrizzleQuery implements PostQuery {
         NULL::double precision AS "embeddingDistance",
         s.body       AS "content"
       FROM posts p
-      INNER JOIN sources s ON p.source_id = s.id
+      INNER JOIN sources s ON p.id = s.id
       WHERE ${where}
       ORDER BY "searchScore" DESC, p.id DESC
       LIMIT ${limit + 1}
@@ -275,21 +273,21 @@ export class PostPgDrizzleQuery implements PostQuery {
     return this.db.execute<SearchPostRow>(sql`
       WITH fts_candidates AS (
         SELECT
-          p.id, p.source_id,
+          p.id,
           s.title,
           p.view_count, p.created_at, p.updated_at,
           s.body AS content,
           RANK() OVER (ORDER BY (${this.ftsRelevanceScore(tsQuery)}) DESC) AS fts_rank,
           (s.title_search_vector @@ ${tsQuery}) AS title_matched
         FROM posts p
-        INNER JOIN sources s ON p.source_id = s.id
+        INNER JOIN sources s ON p.id = s.id
         WHERE ${this.ftsMatchCondition(tsQuery)}
         ORDER BY fts_rank
         LIMIT ${CANDIDATE_POOL_SIZE}
       ),
       embedding_candidates AS (
         SELECT
-          p.id, p.source_id,
+          p.id,
           s.title,
           p.view_count, p.created_at, p.updated_at,
           RANK() OVER (
@@ -297,10 +295,10 @@ export class PostPgDrizzleQuery implements PostQuery {
           ) AS embedding_rank,
           MIN(se.embedding <=> ${embeddingLiteral}::vector) AS embedding_distance
         FROM posts p
-        INNER JOIN source_embeddings se ON se.source_id = p.source_id
-        INNER JOIN sources s ON s.id = p.source_id
+        INNER JOIN source_embeddings se ON se.source_id = p.id
+        INNER JOIN sources s ON s.id = p.id
         WHERE (se.embedding <=> ${embeddingLiteral}::vector) < ${EMBEDDING_MAX_DISTANCE}
-        GROUP BY p.id, p.source_id, s.title,
+        GROUP BY p.id, s.title,
           p.view_count, p.created_at, p.updated_at
         ORDER BY embedding_rank
         LIMIT ${CANDIDATE_POOL_SIZE}
@@ -308,7 +306,7 @@ export class PostPgDrizzleQuery implements PostQuery {
       fused AS (
         SELECT
           COALESCE(f.id, e.id)                 AS "id",
-          COALESCE(f.source_id, e.source_id)   AS "sourceId",
+          COALESCE(f.id, e.id)                 AS "sourceId",
           COALESCE(f.title, e.title)           AS "title",
           COALESCE(f.view_count, e.view_count) AS "viewCount",
           COALESCE(f.created_at, e.created_at) AS "createdAt",
