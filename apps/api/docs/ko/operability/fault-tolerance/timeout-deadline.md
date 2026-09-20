@@ -21,10 +21,7 @@ Timeout과 deadline은 둘 다 "얼마나 오래 걸려도 되는가"를 제한�
 - 재시도 소유권, 재시도 횟수, backoff, error classification은 이 문서가 아니라 [API 재시도 정책](./retry.md)에 정의되어 있다.
 - [프로세스/네트워크 경계를 넘을 때](#프로세스네트워크-경계를-넘을-때)는 호출 사슬이 이 프로세스를 벗어날 때만 해당하며, API는 현재 단일 프로세스로 동작한다.
   - 나머지 내용은 지금 존재하는 프로세스 내부 호출 사슬에 그대로 적용된다.
-- retry budget, idempotency, 관측성은 별개의 fault-tolerance 관심사이며 각자의 문서가 있다.
-  - [API Retry Budget 정책](./retry-budget.md), [API Idempotent Receiver 정책](./idempotent-receiver.md), [API 관측성 컨벤션](../observability.md)을 읽는다.
-- circuit breaker는 아직 컨벤션 문서가 없다.
-  - 현재 상태는 [API Fault Tolerance 인덱스](./index.md)에서 확인한다.
+- 로그·메트릭 전송 방식은 [API 관측성 컨벤션](../observability.md)을 따른다.
 
 ## Timeout과 Deadline은 서로 다른 축이다
 

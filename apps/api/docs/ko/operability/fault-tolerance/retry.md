@@ -8,8 +8,6 @@ related:
   - ./index.md
   - ./timeout-deadline.md
   - ./async-workflow-retry.md
-  - ./idempotent-receiver.md
-  - ./retry-budget.md
   - ./transaction-retry.md
   - ../error.md
   - ../logging.md
@@ -24,8 +22,7 @@ related:
 
 - 이 문서는 누가, 몇 번, 얼마나 기다렸다가, 어떤 오류에 대해 재시도할지 판단할 때 사용한다.
 - timeout/deadline은 이 문서가 아니라 [API Timeout & Deadline 정책](./timeout-deadline.md)에 정의되어 있다.
-- retry budget 비율, budget window, retry budget이 개별 호출 재시도와 어떻게 조합되는지는 이 문서가 아니라 [API Retry Budget 정책](./retry-budget.md)에 정의되어 있다.
-- idempotency의 mutation 재시도 게이트는 [재시도 대상 오류](#재시도-대상-오류)에 정의되어 있다. 더 넓은 idempotent receiver 정책(자연적 멱등성 판단 기준, idempotency key 생성·저장·중복 제거)은 이 문서가 아니라 [API Idempotent Receiver 정책](./idempotent-receiver.md)에 정의되어 있다.
+- mutation을 재시도해도 되는지 판단하는 게이트는 [재시도 대상 오류](#재시도-대상-오류)에 있다.
 - 재시도 결정이 남겨야 하는 structured log 필드와 metric은 [관측성](#관측성)에 정의되어 있다.
   - 이벤트를 로그로 남길지, 어떤 레벨로 남길지는 [API 로깅 정책](../logging.md)을 따르고, 로그·메트릭을 어떻게 전송할지는 [API 옵저버빌리티 컨벤션](../observability.md)을 따른다. 이 문서는 재시도 고유의 내용만 정의한다.
 
@@ -107,7 +104,7 @@ HTTP 클라이언트 라이브러리 또는 벤더 SDK의 기본 재시도
 | 내부/로컬 연산 | 0 |
 | 읽기 전용 외부 호출 (GET, metadata fetch, polling, LLM read) | 2, polling이 deadline으로 제한된다면 3-5 |
 | Mutation (`POST`/`PUT`/`PATCH`/`DELETE`) | 0, idempotency key가 있으면 1 |
-| background job (queue consumer 또는 scheduled job) | 3, retry budget을 엄격히 적용 |
+| background job (queue consumer 또는 scheduled job) | 3 |
 
 ## Backoff와 Jitter
 
@@ -136,9 +133,8 @@ delay = random(0, min(maxDelay, baseDelay * 2 ** attempt))
 
 - 이 게이트는 아래 모든 classification보다 우선한다: mutation(`POST`/`PUT`/`PATCH`/`DELETE`, 또는 side effect가 있는 모든 호출)은 어떤 오류로 실패했든 멱등할 때만 재시도한다.
   - 아래 섹션에서 재시도 가능으로 분류된 오류라도, 멱등하지 않은 mutation에는 재시도해서는 안 된다.
-- mutation은 자연스럽게 멱등하거나, 서버가 반영 전에 확인하는 idempotent receiver 메커니즘으로 멱등하게 만들어진 경우다.
-  - 무엇이 자연적으로 멱등한지, idempotent receiver가 어떻게 동작하는지는 [API Idempotent Receiver 정책](./idempotent-receiver.md)을 참고한다.
-- 재시도해야 하는 mutation이 자연스럽게 멱등하지 않다면, 안전하지 않게 재시도하는 대신 그 mutation을 멱등하게 만든다([API Idempotent Receiver 정책](./idempotent-receiver.md) 참고).
+- mutation은 같은 요청을 여러 번 보내도 결과가 한 번 보낸 것과 같을 때 멱등하다. 자연스럽게 그런 연산이거나, 서버가 반영 전에 중복을 확인하는 경우다.
+- 재시도해야 하는 mutation이 멱등하지 않다면, 안전하지 않게 재시도하는 대신 그 mutation을 멱등하게 만든다.
 - 이 게이트가 요구하는 멱등성의 범위는 실패한 호출 하나가 아니라 다시 실행되는 작업 단위 전체다.
   - 상위 계층이 재시도를 소유하면 중간 계층의 부작용이 전부 다시 일어나므로, 그 계층들이 각각 이 게이트를 만족해야 한다. [소유자의 위치](#소유자의-위치)를 참고한다.
 - 이 게이트가 호출 범주별 재시도 횟수로 어떻게 반영되는지는 [Max Retry](#max-retry)를 참고한다.
@@ -222,10 +218,8 @@ retry_exhausted_total
 request_duration_ms
 ```
 
-- retry budget에는 별도 metric이 있으며, [API Retry Budget 정책](./retry-budget.md)에 정의되어 있고 여기서 중복하지 않는다.
-
 ## 다른 Fault-Tolerance 관심사와의 상호작용
 
 - 재시도 정책만으로는 완전한 회복성 전략이 되지 않는다.
-  - timeout/deadline, retry budget, idempotency mutation 재시도 게이트와 그 idempotent receiver 메커니즘, DB 트랜잭션 재시도, 재시도 관측성은 이미 다른 곳에서 다룬다.
-  - [Backoff와 Jitter](#backoff와-jitter), [재시도 대상 오류](#재시도-대상-오류), [관측성](#관측성), [API Retry Budget 정책](./retry-budget.md), [API Idempotent Receiver 정책](./idempotent-receiver.md), [API 트랜잭션 재시도 정책](./transaction-retry.md) 참고.
+  - timeout/deadline, mutation 재시도 게이트, DB 트랜잭션 재시도, 재시도 관측성은 이미 다른 곳에서 다룬다.
+  - [Backoff와 Jitter](#backoff와-jitter), [재시도 대상 오류](#재시도-대상-오류), [관측성](#관측성), [API Timeout & Deadline 정책](./timeout-deadline.md), [API 트랜잭션 재시도 정책](./transaction-retry.md) 참고.

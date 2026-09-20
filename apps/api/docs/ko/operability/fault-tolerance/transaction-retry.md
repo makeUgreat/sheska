@@ -3,7 +3,7 @@ title: API 트랜잭션 재시도 정책
 applies_to:
   - apps/api
 read_when:
-  - DB 트랜잭션 재시도 루프를 어떻게 구조화할지, 어느 계층이 소유할지, optimistic-concurrency 재읽기·retry budget과 어떻게 조합할지 결정할 때.
+  - DB 트랜잭션 재시도 루프를 어떻게 구조화할지, 어느 계층이 소유할지, optimistic-concurrency 재읽기와 어떻게 조합할지 결정할 때.
 related:
   - ./index.md
   - ./retry.md
@@ -15,7 +15,7 @@ related:
 
 ## 적용 범위
 
-- 이 문서는 트랜잭션 재시도 루프를 어떻게 구조화할지, 어느 계층이 소유할지, network 수준 재시도와 backoff이 어떻게 다른지, retry budget과 어떻게 조합되는지 판단할 때 사용한다.
+- 이 문서는 트랜잭션 재시도 루프를 어떻게 구조화할지, 어느 계층이 소유할지, network 수준 재시도와 backoff이 어떻게 다른지 판단할 때 사용한다.
 - 무엇이 재시도 대상인 DB 트랜잭션 충돌인지(DB가 신호하는 concurrency conflict, 애플리케이션이 검사하는 optimistic-concurrency 충돌, 재시도 대상이 아닌 data constraint violation)는 이 문서가 아니라 [API 재시도 정책](./retry.md)의 [DB 트랜잭션 충돌 Classification](./retry.md#db-트랜잭션-충돌-classification)에 정의되어 있다.
 - 외부 의존성 호출에 대한 network 수준 재시도 소유권, 횟수, backoff은 이 문서가 아니라 [API 재시도 정책](./retry.md)에 정의되어 있다.
 
@@ -37,14 +37,11 @@ related:
 
 - [Mutation 안전성 게이트](./retry.md#mutation-안전성-게이트)로 0-1회로 제한되는 network 수준 mutation 재시도와 달리, 트랜잭션 재시도는 짧고 비용이 낮다.
   - 트랜잭션의 안전성은 idempotency가 아니라 atomicity(실패한 시도는 부분 반영이 없음)에서 나오므로, idempotent하지 않은 network mutation보다 더 많은 횟수를 시도할 수 있다.
-- 정확한 재시도 횟수를 여기서 못박지 않는다.
-  - [retry budget의 비율과 window를 고정하지 않고 조정하는 것](./retry-budget.md#비율과-window는-고정하지-않고-조정한다)과 같은 방식으로, 대상 테이블/워크로드에서 관측된 충돌 빈도로 조정한다.
+- 정확한 재시도 횟수를 여기서 못박지 않는다. 대상 테이블/워크로드에서 관측된 충돌 빈도로 조정한다.
 
-## Retry Budget과의 조합
+## 트랜잭션 안의 외부 호출
 
-- retry budget은 외부 의존성 호출에 적용된다([API Retry Budget 정책](./retry-budget.md) 참고).
-  - DB 트랜잭션 재시도는 그런 의미의 외부 의존성 호출이 아니므로 적용 범위 밖이다.
-- 이렇게 재시도되는 트랜잭션 안에서 (다른 의존성이나 외부 API 같은) 외부 호출을 하지 않는다.
+- 재시도되는 트랜잭션 안에서 (다른 의존성이나 외부 API 같은) 외부 호출을 하지 않는다.
   - 그렇게 하면 DB 락을 필요 이상으로 오래 잡게 되고, 무관한 외부 실패가 DB 충돌 재시도와 엮이게 된다. 트랜잭션은 DB 작업만으로 한정한다.
 
 ## 관측성
