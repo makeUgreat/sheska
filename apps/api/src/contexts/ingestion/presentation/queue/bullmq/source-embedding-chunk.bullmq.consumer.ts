@@ -1,13 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { type Job } from 'bullmq';
-import { createCallContext } from '@core/call-context';
+import { callContext } from '@core/call-context';
 import { LOGGER, type LoggerPort } from '@kernels/application';
 import { SOURCE_EMBEDDING_CHUNK_QUEUE } from '@contexts/ingestion/application/ports';
-import {
-  EMBED_SOURCE_CHUNK_CALL_POLICY,
-  EmbedSourceChunkUseCase,
-} from '@contexts/ingestion/application/use-cases/embed-source-chunk.use-case';
+import { EmbedSourceChunkUseCase } from '@contexts/ingestion/application/use-cases/embed-source-chunk.use-case';
 import {
   embedSourceChunkJobInputSchema,
   type EmbedSourceChunkJobInput,
@@ -36,8 +33,9 @@ export class SourceEmbeddingChunkBullMqConsumer extends WorkerHost {
         chunkIndex: input.chunkIndex,
         chunkContent: input.chunkContent,
       },
-      createCallContext(EMBED_SOURCE_CHUNK_CALL_POLICY),
+      callContext({ deadlineMs: 90_000, maxRetries: 2 }),
     );
+
     await job.updateProgress(100);
     return {
       kind: 'chunk',

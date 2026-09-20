@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { type CallContext, type CallPolicy } from '@core/call-context';
+import { type CallContext } from '@core/call-context';
 import {
   type PostQuery,
   type PostQuerySearchCursor,
@@ -10,13 +10,6 @@ import {
   POST_QUERY,
   SEARCH_QUERY_EMBEDDER,
 } from '@contexts/posts/posts.di-tokens';
-
-// Interactive search should feel snappy. Measured warm-state embedding
-// latency is ~470-500ms, so both budgets leave limited headroom.
-export const SEARCH_POSTS_CALL_POLICY = {
-  deadlineMs: 1_000,
-  attemptTimeoutMs: 1_000,
-} as const satisfies CallPolicy;
 
 export type SearchPostsCommand = {
   readonly query: string;

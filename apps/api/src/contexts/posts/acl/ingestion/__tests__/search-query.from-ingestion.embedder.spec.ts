@@ -5,7 +5,10 @@ import { type Embedder } from '@contexts/ingestion';
 import { SearchQueryFromIngestionEmbedder } from '../search-query.from-ingestion.embedder';
 
 function buildContext(remainingMs = 60_000): CallContext {
-  return { deadline: computeDeadline(remainingMs), attemptTimeoutMs: 1_000 };
+  return {
+    deadline: computeDeadline(remainingMs),
+    maxRetries: 0,
+  };
 }
 
 function createEmbedder(
