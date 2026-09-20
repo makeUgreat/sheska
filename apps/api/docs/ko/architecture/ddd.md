@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../../en/architecture/ddd.md
-last_synced: 2026-09-14
+last_synced: 2026-09-20
 related:
   - ./architecture.md
   - ./context-integration.md
@@ -96,7 +96,7 @@ await orderRepository.save(order);
 - Repository는 도메인 연산이 불변식을 검증하는 데 필요한 aggregate 상태를 완전하게 복원해야 한다.
   - Root 메서드가 내부 entity를 조회·변경한다면, 그 entity도 root와 함께 로딩되어 있어야 한다.
   - JOIN으로 조회할지 여부는 로딩 방식이며 infrastructure 구현 세부사항이지 도메인 규칙이 아니다.
-    [JOIN 정책](../persistence/repository-methods.md#join-policy)을 참조한다.
+    [JOIN 정책](../persistence/repository-methods.md#join-정책)을 참조한다.
 
 ### 경고 신호
 
@@ -177,13 +177,19 @@ await orderRepository.save(order);
 - `find`와 `get`의 검색 조건은 반드시 객체 타입이어야 한다.
   - `find(id: string)`이나 `get(sourceId: string)`처럼 원시 값을 직접 받는 것은 허용하지 않는다.
   - `find({ id })`, `get({ id })` 형태로 사용한다.
+  - 모든 조회가 같은 호출 형태를 가지므로, 어떤 필드로 찾는지 확인하지 않아도 repository 호출임을 알아볼 수 있다.
+  - 조회 조건이 늘어날 때 메서드를 추가하는 대신 검색 조건 타입을 확장하게 되므로, 필드 조합마다 메서드가 하나씩 생기는 일을 막는다.
+  - 필드에 이름이 붙으므로 같은 타입 인자끼리 순서가 바뀌는 실수가 사라진다. 이건 컴파일러가 잡아주지 못하는 종류의 실수다.
   - 검색 조건 객체는 하나의 리소스를 식별하는 고유 조회 조건만 표현해야 한다.
   - 여러 결과가 가능한 필터링은 `list`로 표현한다.
+- 조회 필드는 메서드 이름에 넣지 않고 검색 조건 객체로 표현한다.
+  - 예: `findBySourceId(sourceId)` 대신 `find({ sourceId })`.
+  - 이유는 위의 "필드 조합마다 메서드가 생기는 문제"다. `sourceId`는 도메인 개념이므로 `findBySourceId`가 저장 방식을 노출하는 것은 아니다.
 - `list`는 페이지네이션 없이 여러 aggregate를 반환한다.
   - 필터링이 필요하면 명시적인 검색 조건 객체를 받는 것이 좋다.
 - 저장 방식, 조회 구현, 테이블 형태를 노출하는 repository 메서드 이름은 피한다.
-  - 필드 이름을 메서드 이름에 포함하지 않고 검색 조건 객체의 필드로 표현한다.
-  - 예: `findBySourceId(sourceId)` 대신 `find({ sourceId })`.
+  - 피해야 할 이름의 예: `selectRows`, `findWithJoin`, `queryByIndex`, `upsertRow`.
+  - 이런 이름은 도메인이 소유한 계약을 저장 방식에 묶어버리므로, 저장 형태를 바꾸면 계약까지 바꿔야 한다.
 - 각 메서드를 호출 지점에서 언제 사용할지에 대한 가이드는 [Repository Method 사용 가이드](../persistence/repository-methods.md)를 참조한다.
 
 ## 도메인 캡슐화

@@ -41,6 +41,13 @@ related:
 
 ### Database Constraints
 
+- Decide whether a rule belongs in the database by asking whether the application can enforce it on its own under concurrent writes.
+  - A uniqueness rule cannot be enforced in application code: two concurrent transactions both read "no row exists" and both insert. Only the database can reject the second one.
+  - A rule decidable from the row being written, such as a non-empty string, a numeric range, or an allowed state value, is already guaranteed by the domain object before the write. A `CHECK` constraint restating it adds no guarantee and creates a second place to change the rule.
+  - This is the line between the two lists below. A database constraint closes a race the application cannot close, and it does not repeat a decision the domain has already made.
+- A business invariant MAY be enforced by a unique constraint when the invariant is itself a uniqueness rule.
+  - Example: "one active post per source" is a business rule, but a partial unique index is the only thing that holds it when two writes race.
+  - Enforcing it in the database does not move its meaning there. The domain still owns what the rule means and still checks it; the constraint exists because that check alone cannot win a race.
 - Structural constraints MAY include:
   - Primary keys and foreign keys.
   - Unique and not-null constraints.

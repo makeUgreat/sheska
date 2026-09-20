@@ -184,13 +184,19 @@ await orderRepository.save(order);
 - `find` and `get` criteria MUST be object types.
   - Primitive parameters such as `find(id: string)` or `get(sourceId: string)` are not allowed.
   - Use `find({ id })` or `get({ id })` instead.
+  - One call shape covers every lookup, so a reader recognizes a repository call without checking which field it looks up by.
+  - A new lookup field extends the criteria type instead of adding a method, which keeps the contract from growing one method per field combination.
+  - Named fields remove positional-argument mistakes between parameters of the same type, which a compiler cannot catch.
   - Criteria objects should express only unique lookups that identify one resource.
   - Use `list` for filtering that can return multiple results.
+- Express the lookup field through the criteria object rather than encoding it into the method name.
+  - Example: prefer `find({ sourceId })` over `findBySourceId(sourceId)`.
+  - The reason is the method-per-field growth above. `sourceId` is a domain concept, so `findBySourceId` is not a storage leak.
 - `list` returns multiple aggregates without pagination.
   - It SHOULD accept an explicit criteria object when filtering is needed.
 - Avoid repository method names that expose storage mechanics, query implementation, or table shape.
-  - Do not encode field names into method names; express them through criteria object fields instead.
-  - Example: prefer `find({ sourceId })` over `findBySourceId(sourceId)`.
+  - Examples of names to avoid: `selectRows`, `findWithJoin`, `queryByIndex`, `upsertRow`.
+  - Such a name commits a domain-owned contract to how the data is stored, so changing the storage shape forces a change to the contract.
 - For call-site guidance on when to use each method, see
   [Repository Method Usage Guide](../persistence/repository-methods.md).
 
