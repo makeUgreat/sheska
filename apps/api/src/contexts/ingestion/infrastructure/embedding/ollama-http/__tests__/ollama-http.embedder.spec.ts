@@ -156,6 +156,38 @@ describe('OllamaHttpEmbedder', () => {
     timeoutSpy.mockRestore();
   });
 
+  it('호출자 deadline이 attempt timeout보다 짧으면 timeout 에러에 deadlineBound를 남긴다', async () => {
+    const fetchMock = vi.fn(() => {
+      const error = new Error('aborted');
+      error.name = 'TimeoutError';
+      return Promise.reject(error);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      client.embed('hello', buildContext(1_000, 0)),
+    ).rejects.toMatchObject({
+      kind: 'timeout',
+      details: { deadlineBound: true },
+    });
+  });
+
+  it('deadline에 여유가 있으면 timeout 에러의 deadlineBound가 false다', async () => {
+    const fetchMock = vi.fn(() => {
+      const error = new Error('aborted');
+      error.name = 'TimeoutError';
+      return Promise.reject(error);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      client.embed('hello', buildContext(120_000, 0)),
+    ).rejects.toMatchObject({
+      kind: 'timeout',
+      details: { deadlineBound: false },
+    });
+  });
+
   it('Ollama가 재시도 가능한 5xx로 한 번 실패한 뒤 성공하면 재시도해서 결과를 반환한다', async () => {
     const fakeEmbedding = [0.1, 0.2, 0.3];
     const fetchMock = vi
@@ -237,10 +269,9 @@ describe('OllamaHttpEmbedder', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    // Production policy requires minimumRequestCount: 10 failing logical
-    // calls (each already retry-exhausted, 3 fetch attempts apiece) before
-    // the breaker trips at failureRateThreshold: 0.5.
-    for (let i = 0; i < 10; i++) {
+    // 운영 정책상 minimumRequestCount: 2, failureRateThreshold: 0.5이므로
+    // 재시도까지 모두 소진된 논리적 호출 2번이면 breaker가 열린다.
+    for (let i = 0; i < 2; i++) {
       await expect(client.embed('hello', buildContext())).rejects.toMatchObject(
         { kind: 'bad_response' },
       );

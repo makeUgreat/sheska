@@ -272,3 +272,45 @@ describe('CircuitBreaker', () => {
     expect(breaker.state).toBe('closed');
   });
 });
+
+describe('CircuitBreaker 기본 실패 분류', () => {
+  function buildTimeout(deadlineBound: boolean): InfrastructureException {
+    return new InfrastructureException({
+      kind: INFRASTRUCTURE_ERROR_KIND.TIMEOUT,
+      code: 'test.timeout',
+      source: { boundary: 'http-client', adapter: 'test' },
+      message: 'timed out',
+      details: { deadlineBound },
+    });
+  }
+
+  async function failWith(
+    breaker: CircuitBreaker,
+    error: InfrastructureException,
+    times: number,
+  ): Promise<void> {
+    for (let i = 0; i < times; i++) {
+      // breaker가 열린 뒤에는 원래 에러 대신 CircuitBreakerOpenError가 나므로
+      // 어떤 에러인지는 따지지 않는다.
+      await expect(
+        breaker.execute(() => Promise.reject(error)),
+      ).rejects.toThrow();
+    }
+  }
+
+  it('호출자 deadline에 잘린 timeout은 breaker를 열지 않는다', async () => {
+    const breaker = new CircuitBreaker({ policy: buildPolicy() });
+
+    await failWith(breaker, buildTimeout(true), 10);
+
+    expect(breaker.state).toBe('closed');
+  });
+
+  it('adapter 자신의 attempt timeout이 터진 경우는 breaker를 연다', async () => {
+    const breaker = new CircuitBreaker({ policy: buildPolicy() });
+
+    await failWith(breaker, buildTimeout(false), 10);
+
+    expect(breaker.state).toBe('open');
+  });
+});

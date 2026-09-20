@@ -8,6 +8,11 @@ import {
   type FailureReason,
 } from 'cockatiel';
 import { type LoggerPort } from '@kernels/application';
+import {
+  INFRASTRUCTURE_ERROR_KIND,
+  type InfrastructureTimeoutDetails,
+} from './error.base';
+import { InfrastructureException } from './infrastructure.exception';
 import { classifyInfrastructureRetry } from './retry-error.classifier';
 
 export type CircuitBreakerState = 'closed' | 'open' | 'half-open';
@@ -31,6 +36,14 @@ function describeBreakReason(
 ): unknown {
   if ('isolated' in reason) return 'isolated';
   return 'error' in reason ? reason.error : reason.value;
+}
+
+function isDeadlineBoundTimeout(error: unknown): boolean {
+  return (
+    InfrastructureException.is(error) &&
+    error.kind === INFRASTRUCTURE_ERROR_KIND.TIMEOUT &&
+    (error.details as InfrastructureTimeoutDetails).deadlineBound
+  );
 }
 
 export class CircuitBreakerOpenError extends Error {
@@ -58,7 +71,9 @@ export class CircuitBreaker {
   constructor(options: CircuitBreakerOptions) {
     const isFailure =
       options.isFailure ??
-      ((error: unknown) => classifyInfrastructureRetry(error).retryable);
+      ((error: unknown) =>
+        classifyInfrastructureRetry(error).retryable &&
+        !isDeadlineBoundTimeout(error));
     const {
       failureRateThreshold,
       evaluationWindowMs,

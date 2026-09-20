@@ -10,6 +10,7 @@ import {
   classifyInfrastructureRetry,
   parseRetryAfterMs,
   resiliencePipeline,
+  type ResilienceAttempt,
 } from '@kernels/infrastructure';
 import type { Embedder } from '@contexts/ingestion/application/ports';
 import { OLLAMA_CONFIG, type OllamaConfig } from './ollama-http.config';
@@ -37,7 +38,7 @@ export class OllamaHttpEmbedder implements Embedder {
       policy: {
         failureRateThreshold: 0.5,
         evaluationWindowMs: 60_000,
-        minimumRequestCount: 10,
+        minimumRequestCount: 2,
         openDurationMs: 30_000,
       },
       logger,
@@ -61,7 +62,7 @@ export class OllamaHttpEmbedder implements Embedder {
           deadline: context.deadline,
           attemptTimeoutMs: 60_000,
         })
-        .execute((attempt) => this.embedOnce(text, attempt.signal));
+        .execute((attempt) => this.embedOnce(text, attempt));
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
         throw new InfrastructureException({
@@ -79,7 +80,7 @@ export class OllamaHttpEmbedder implements Embedder {
 
   private async embedOnce(
     text: string,
-    signal: AbortSignal,
+    attempt: ResilienceAttempt,
   ): Promise<{ embedding: number[]; model: string }> {
     let response: Response;
 
@@ -88,7 +89,7 @@ export class OllamaHttpEmbedder implements Embedder {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ model: this.model, prompt: text }),
-        signal,
+        signal: attempt.signal,
       });
     } catch (error: unknown) {
       if (error instanceof Error && error.name === 'TimeoutError') {
@@ -97,7 +98,7 @@ export class OllamaHttpEmbedder implements Embedder {
           code: 'ollama.request_timeout',
           source: { boundary: 'http-client', adapter: ADAPTER },
           message: 'Ollama did not respond in time',
-          details: {},
+          details: { deadlineBound: attempt.deadlineBound },
           cause: error,
         });
       }
