@@ -6,28 +6,11 @@ import eslintConfig from '../../../eslint/config.mjs';
 const uiRoot = process.cwd();
 const configPath = path.join(uiRoot, 'eslint/config.mjs');
 
-function getConfiguredRules(config: unknown): Record<string, unknown> {
-  return (config as { rules?: Record<string, unknown> }).rules ?? {};
-}
-
-function createProjectEslint() {
-  return new ESLint({
-    cwd: uiRoot,
-    overrideConfigFile: configPath,
-  });
-}
-
-async function calculateConfigForFile(filePath: string): Promise<unknown> {
-  const eslint = createProjectEslint();
-
-  return eslint.calculateConfigForFile(filePath);
-}
-
 async function lintTextWithProjectConfig(
   code: string,
   filePath: string,
 ): Promise<ESLint.LintResult> {
-  const eslint = createProjectEslint();
+  const eslint = new ESLint({ cwd: uiRoot, overrideConfigFile: configPath });
   const results = await eslint.lintText(code, {
     filePath: path.join(uiRoot, filePath),
   });
@@ -40,9 +23,11 @@ async function lintTextWithProjectConfig(
   return result;
 }
 
-function findFsdBoundaryMessage(result: ESLint.LintResult) {
+function findRestrictedImportMessage(
+  result: ESLint.LintResult,
+): string | undefined {
   return result.messages.find(
-    (lintMessage) => lintMessage.ruleId === 'ui-local/fsd-boundaries',
+    (lintMessage) => lintMessage.ruleId === 'no-restricted-imports',
   )?.message;
 }
 
@@ -51,65 +36,7 @@ describe('eslint/config.mjs', () => {
     expect(Array.isArray(eslintConfig)).toBe(true);
   });
 
-  it('production source file에 FSD boundary rule을 적용한다', async () => {
-    const config = await calculateConfigForFile('src/02_pages/posts/index.ts');
-    const rules = getConfiguredRules(config);
-
-    expect(rules['ui-local/fsd-boundaries']).toBeDefined();
-  });
-
-  it('story file에는 FSD boundary rule을 적용하지 않는다', async () => {
-    const config = await calculateConfigForFile(
-      'src/05_entities/post/ui/post-card.stories.tsx',
-    );
-    const rules = getConfiguredRules(config);
-
-    expect(rules['ui-local/fsd-boundaries']).toBeUndefined();
-  });
-
-  it('하위 layer public API import를 허용한다', async () => {
-    const result = await lintTextWithProjectConfig(
-      `
-        import { PostCard } from '@/entities/post';
-        import { StatusMessage } from '@/shared/ui';
-
-        console.log(PostCard, StatusMessage);
-      `,
-      'src/03_widgets/posts-archive/ui/example.tsx',
-    );
-
-    expect(findFsdBoundaryMessage(result)).toBeUndefined();
-  });
-
-  it('app segment public API import를 허용한다', async () => {
-    const result = await lintTextWithProjectConfig(
-      `
-        import { App } from '@/app/shell';
-
-        console.log(App);
-      `,
-      'src/main.tsx',
-    );
-
-    expect(findFsdBoundaryMessage(result)).toBeUndefined();
-  });
-
-  it('app layer root import를 금지한다', async () => {
-    const result = await lintTextWithProjectConfig(
-      `
-        import { App } from '@/app';
-
-        console.log(App);
-      `,
-      'src/01_app/shell/ui/app.tsx',
-    );
-
-    expect(findFsdBoundaryMessage(result)).toContain(
-      'App layer imports must target a segment public API such as "@/app/shell".',
-    );
-  });
-
-  it('상위 layer import를 금지한다', async () => {
+  it('상위 layer import를 편집 중에 바로 막는다', async () => {
     const result = await lintTextWithProjectConfig(
       `
         import { PostsPage } from '@/pages/posts';
@@ -119,38 +46,21 @@ describe('eslint/config.mjs', () => {
       'src/04_features/posts-archive/model/use-posts-archive.ts',
     );
 
-    expect(findFsdBoundaryMessage(result)).toContain(
-      'features code must not import the upper pages layer.',
+    expect(findRestrictedImportMessage(result)).toContain(
+      'features must not depend on app or page composition.',
     );
   });
 
-  it('같은 layer의 다른 slice import를 금지한다', async () => {
+  it('하위 layer public API import는 막지 않는다', async () => {
     const result = await lintTextWithProjectConfig(
       `
-        import { SourceListPage } from '@/pages/source-list';
-
-        console.log(SourceListPage);
-      `,
-      'src/02_pages/posts/ui/posts-page.tsx',
-    );
-
-    expect(findFsdBoundaryMessage(result)).toContain(
-      'pages slices must not import each other directly',
-    );
-  });
-
-  it('다른 slice의 내부 segment import를 금지한다', async () => {
-    const result = await lintTextWithProjectConfig(
-      `
-        import { PostCard } from '@/entities/post/ui/post-card';
+        import { PostCard } from '@/entities/post';
 
         console.log(PostCard);
       `,
-      'src/03_widgets/posts-archive/ui/posts-list-section.tsx',
+      'src/03_widgets/posts-archive/ui/example.tsx',
     );
 
-    expect(findFsdBoundaryMessage(result)).toContain(
-      'Cross-slice imports must use the public API "@/entities/post".',
-    );
+    expect(findRestrictedImportMessage(result)).toBeUndefined();
   });
 });
