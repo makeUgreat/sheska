@@ -1,8 +1,5 @@
-import {
-  DomainException,
-  DOMAIN_ERROR_KIND,
-  ValueObject,
-} from '@kernels/domain';
+import { InvariantViolationError } from '@core/errors';
+import { ValueObject } from '@kernels/domain';
 import { EmbeddingModel } from './embedding-model.vo';
 
 interface EmbeddingVectorProps {
@@ -22,8 +19,7 @@ export class EmbeddingVector extends ValueObject<EmbeddingVectorProps> {
 
   protected validate(props: EmbeddingVectorProps): void {
     if (props.dimensions !== props.expectedDimensions) {
-      throw new DomainException({
-        kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
+      throw new InvariantViolationError({
         code: 'ingestion.embedding_vector.invalid_dimensions',
         message: `Embedding vector must have ${props.expectedDimensions} dimensions, got ${props.dimensions}`,
         details: { fields: ['embedding'] },

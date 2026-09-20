@@ -1,68 +1,61 @@
 import { describe, expect, it } from 'vitest';
-import {
-  InfrastructureException,
-  INFRASTRUCTURE_ERROR_KIND,
-} from '@kernels/infrastructure';
 import { buildSourceSyncJob } from '../../../../../../../test/support/domains/fixtures/source-sync-job.fixture';
 import { buildSource } from '../../../../../../../test/support/domains/fixtures/source.fixture';
 import { SourcePgDrizzleRepository } from '../source.pg-drizzle.repository';
 import { SourceSyncJobPgDrizzleRepository } from '../source-sync-job.pg-drizzle.repository';
+import { ConstraintViolationError, UnexpectedError } from '@core/errors';
 
 describe('SourcePgDrizzleRepository', () => {
-  it('unique violation은 CONSTRAINT_VIOLATION exception으로 전파한다', async () => {
+  it('unique violation은 ConstraintViolationError로 전파한다', async () => {
     const repository = new SourcePgDrizzleRepository(
       createSourceSaveRejectingDb(createPostgresError('23505')),
     );
 
     const result = repository.insert(buildSource());
 
-    await expect(result).rejects.toBeInstanceOf(InfrastructureException);
+    await expect(result).rejects.toBeInstanceOf(ConstraintViolationError);
     await expect(result).rejects.toMatchObject({
-      kind: INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
       code: 'source.external_source_id_already_exists',
     });
   });
 
-  it('unknown failure는 UNEXPECTED exception으로 전파한다', async () => {
+  it('unknown failure는 UnexpectedError로 전파한다', async () => {
     const repository = new SourcePgDrizzleRepository(
       createSourceSaveRejectingDb(new Error('connection failed')),
     );
 
     const result = repository.insert(buildSource());
 
-    await expect(result).rejects.toBeInstanceOf(InfrastructureException);
+    await expect(result).rejects.toBeInstanceOf(UnexpectedError);
     await expect(result).rejects.toMatchObject({
-      kind: INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
       code: 'source.insert_failed',
     });
   });
 });
 
 describe('SourceSyncJobPgDrizzleRepository', () => {
-  it('unique violation은 CONSTRAINT_VIOLATION exception으로 전파한다', async () => {
+  it('unique violation은 ConstraintViolationError로 전파한다', async () => {
     const repository = new SourceSyncJobPgDrizzleRepository(
       createSourceSyncJobSaveRejectingDb(createPostgresError('23505')),
     );
 
     const result = repository.insert(buildSourceSyncJob());
 
-    await expect(result).rejects.toBeInstanceOf(InfrastructureException);
+    await expect(result).rejects.toBeInstanceOf(ConstraintViolationError);
     await expect(result).rejects.toMatchObject({
-      kind: INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
       code: 'source_sync_job.already_active',
     });
   });
 
-  it('unknown failure는 UNEXPECTED exception으로 전파한다', async () => {
+  it('unknown failure는 UnexpectedError로 전파한다', async () => {
     const repository = new SourceSyncJobPgDrizzleRepository(
       createSourceSyncJobSaveRejectingDb(new Error('connection failed')),
     );
 
     const result = repository.insert(buildSourceSyncJob());
 
-    await expect(result).rejects.toBeInstanceOf(InfrastructureException);
+    await expect(result).rejects.toBeInstanceOf(UnexpectedError);
     await expect(result).rejects.toMatchObject({
-      kind: INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
       code: 'source_sync_job.insert_failed',
     });
   });

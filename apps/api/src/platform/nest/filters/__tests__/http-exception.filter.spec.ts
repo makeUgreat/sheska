@@ -1,22 +1,22 @@
 import { HttpException, HttpStatus, type ArgumentsHost } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import {
-  ApplicationException,
-  APPLICATION_ERROR_KIND,
-  type ApplicationErrorKind,
-  type ApplicationValidationDetails,
-  type LoggerPort,
-} from '@kernels/application';
-import { DomainException, DOMAIN_ERROR_KIND } from '@kernels/domain';
-import {
-  PresentationException,
-  PRESENTATION_ERROR_KIND,
-} from '@kernels/presentation';
-import {
-  InfrastructureException,
-  INFRASTRUCTURE_ERROR_KIND,
-  type InfrastructureErrorKind,
-} from '@kernels/infrastructure';
+  BadResponseError,
+  ConcurrencyConflictError,
+  ConstraintViolationError,
+  InvalidDataError,
+  InvariantViolationError,
+  NotFoundError,
+  StateConflictError,
+  TimeoutError,
+  UnavailableError,
+  UnexpectedError,
+  ValidationFailedError,
+  type InvalidDataDetails,
+  type SheskaErrorParams,
+  type ValidationFailedDetails,
+} from '@core/errors';
+import { type LoggerPort } from '@kernels/application';
 import { HttpExceptionFilter } from '../http-exception.filter';
 
 function buildMockHost(): {
@@ -47,126 +47,108 @@ function buildMockLogger() {
   } satisfies LoggerPort;
 }
 
-const INFRASTRUCTURE_EXCEPTION_BASE = {
+const persistenceParams = {
   code: 'source.get_failed',
-  source: { boundary: 'persistence', adapter: 'source.pg-drizzle' },
   message: 'Source get operation failed',
+  details: { id: 'source-1' },
   cause: new Error('raw db error'),
 } as const;
 
-function buildInfrastructureException(
-  kind: InfrastructureErrorKind,
-): InfrastructureException {
-  return kind === INFRASTRUCTURE_ERROR_KIND.BAD_RESPONSE
-    ? new InfrastructureException({
-        ...INFRASTRUCTURE_EXCEPTION_BASE,
-        kind,
-        details: { statusCode: 502 },
-      })
-    : new InfrastructureException({
-        ...INFRASTRUCTURE_EXCEPTION_BASE,
-        kind,
-        details: { id: 'source-1' },
-      });
-}
+const badResponseParams = {
+  code: 'ollama.bad_response',
+  message: 'Ollama returned an error response: 502 Bad Gateway',
+  details: { statusCode: 502 },
+} as const;
 
-function buildApplicationException(
-  kind: ApplicationErrorKind,
-): ApplicationException {
-  const base = { code: 'test.error', message: 'test' } as const;
+const invalidDataParams = {
+  code: 'ollama.invalid_response',
+  message: 'Ollama response did not match expected shape',
+  details: { fields: ['embedding'] },
+} satisfies SheskaErrorParams<InvalidDataDetails>;
 
-  return kind === APPLICATION_ERROR_KIND.VALIDATION_FAILED
-    ? new ApplicationException({ ...base, kind, details: { fields: [] } })
-    : new ApplicationException({ ...base, kind, details: undefined });
+function buildInvariantViolation(): InvariantViolationError {
+  return new InvariantViolationError({
+    code: 'source.empty_body',
+    message: 'Source body must not be empty',
+    details: { fields: ['body'] },
+  });
 }
 
 describe('HttpExceptionFilter', () => {
   describe('kind → status 매핑', () => {
     it.each([
-      [PRESENTATION_ERROR_KIND.VALIDATION_FAILED, HttpStatus.BAD_REQUEST],
-    ] as const)('presentation %s → %i', (kind, expectedStatus) => {
-      const { host, status } = buildMockHost();
-      const filter = new HttpExceptionFilter(buildMockLogger());
-
-      filter.catch(
-        new PresentationException({
-          kind,
+      {
+        error: new ValidationFailedError({
           code: 'request.validation_failed',
           message: 'Invalid request',
           details: { fields: [] },
         }),
-        host,
-      );
-
-      expect(status).toHaveBeenCalledWith(expectedStatus);
-    });
-
-    it.each([
-      [APPLICATION_ERROR_KIND.VALIDATION_FAILED, HttpStatus.BAD_REQUEST],
-      [APPLICATION_ERROR_KIND.NOT_FOUND, HttpStatus.NOT_FOUND],
-      [APPLICATION_ERROR_KIND.STATE_CONFLICT, HttpStatus.CONFLICT],
-    ] as const)('application %s → %i', (kind, expectedStatus) => {
-      const { host, status } = buildMockHost();
-      const filter = new HttpExceptionFilter(buildMockLogger());
-
-      filter.catch(buildApplicationException(kind), host);
-
-      expect(status).toHaveBeenCalledWith(expectedStatus);
-    });
-
-    it.each([
-      [INFRASTRUCTURE_ERROR_KIND.NOT_FOUND, HttpStatus.NOT_FOUND],
-      [INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION, HttpStatus.CONFLICT],
-      [INFRASTRUCTURE_ERROR_KIND.CONCURRENCY_CONFLICT, HttpStatus.CONFLICT],
-      [INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE],
-      [INFRASTRUCTURE_ERROR_KIND.TIMEOUT, HttpStatus.SERVICE_UNAVAILABLE],
-      [
-        INFRASTRUCTURE_ERROR_KIND.INVALID_DATA,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      ],
-      [
-        INFRASTRUCTURE_ERROR_KIND.BAD_RESPONSE,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      ],
-      [INFRASTRUCTURE_ERROR_KIND.UNEXPECTED, HttpStatus.INTERNAL_SERVER_ERROR],
-    ] as const)('infrastructure %s → %i', (kind, expectedStatus) => {
-      const { host, status } = buildMockHost();
-      const filter = new HttpExceptionFilter(buildMockLogger());
-
-      filter.catch(buildInfrastructureException(kind), host);
-
-      expect(status).toHaveBeenCalledWith(expectedStatus);
-    });
-
-    it('domain invariant_violation → 500', () => {
-      const { host, status } = buildMockHost();
-      const filter = new HttpExceptionFilter(buildMockLogger());
-
-      filter.catch(
-        new DomainException({
-          kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
-          code: 'source.empty_body',
-          message: 'Source body must not be empty',
-          details: { fields: ['body'] },
+        expectedStatus: HttpStatus.BAD_REQUEST,
+      },
+      {
+        error: new NotFoundError(persistenceParams),
+        expectedStatus: HttpStatus.NOT_FOUND,
+      },
+      {
+        error: new StateConflictError({
+          code: 'post.already_published',
+          message: 'Post is already published',
+          details: { postId: 'post-1' },
         }),
-        host,
-      );
+        expectedStatus: HttpStatus.CONFLICT,
+      },
+      {
+        error: new ConstraintViolationError(persistenceParams),
+        expectedStatus: HttpStatus.CONFLICT,
+      },
+      {
+        error: new ConcurrencyConflictError(persistenceParams),
+        expectedStatus: HttpStatus.CONFLICT,
+      },
+      {
+        error: buildInvariantViolation(),
+        expectedStatus: HttpStatus.INTERNAL_SERVER_ERROR,
+      },
+      {
+        error: new InvalidDataError(invalidDataParams),
+        expectedStatus: HttpStatus.INTERNAL_SERVER_ERROR,
+      },
+      {
+        error: new BadResponseError(badResponseParams),
+        expectedStatus: HttpStatus.INTERNAL_SERVER_ERROR,
+      },
+      {
+        error: new UnexpectedError(persistenceParams),
+        expectedStatus: HttpStatus.INTERNAL_SERVER_ERROR,
+      },
+      {
+        error: new UnavailableError(persistenceParams),
+        expectedStatus: HttpStatus.SERVICE_UNAVAILABLE,
+      },
+      {
+        error: new TimeoutError(persistenceParams),
+        expectedStatus: HttpStatus.SERVICE_UNAVAILABLE,
+      },
+    ])('$error.name → $expectedStatus', ({ error, expectedStatus }) => {
+      const { host, status } = buildMockHost();
+      const filter = new HttpExceptionFilter(buildMockLogger());
 
-      expect(status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
+      filter.catch(error, host);
+
+      expect(status).toHaveBeenCalledWith(expectedStatus);
     });
   });
 
   describe('노출 범위', () => {
-    it('validation_failed는 details까지 그대로 노출한다', () => {
+    it('ValidationFailedError는 details까지 그대로 노출한다', () => {
       const { host, json } = buildMockHost();
       const filter = new HttpExceptionFilter(buildMockLogger());
-      const details: ApplicationValidationDetails = {
+      const details: ValidationFailedDetails = {
         fields: [{ path: 'name', messages: ['필수 항목입니다'] }],
       };
 
       filter.catch(
-        new ApplicationException({
-          kind: APPLICATION_ERROR_KIND.VALIDATION_FAILED,
+        new ValidationFailedError({
           code: 'source.invalid',
           message: 'Invalid source',
           details,
@@ -187,8 +169,7 @@ describe('HttpExceptionFilter', () => {
       const filter = new HttpExceptionFilter(buildMockLogger());
 
       filter.catch(
-        new ApplicationException({
-          kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
+        new StateConflictError({
           code: 'post.already_exists',
           message: 'A post for this source already exists',
           details: { postId: 'post-1' },
@@ -205,14 +186,15 @@ describe('HttpExceptionFilter', () => {
     });
 
     it.each([
-      INFRASTRUCTURE_ERROR_KIND.INVALID_DATA,
-      INFRASTRUCTURE_ERROR_KIND.BAD_RESPONSE,
-      INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
-    ])('5xx가 되는 infrastructure %s는 code와 message를 마스킹한다', (kind) => {
+      new InvalidDataError(invalidDataParams),
+      new BadResponseError(badResponseParams),
+      new UnexpectedError(persistenceParams),
+      buildInvariantViolation(),
+    ])('500이 되는 $name은 code와 message를 마스킹한다', (error) => {
       const { host, json } = buildMockHost();
       const filter = new HttpExceptionFilter(buildMockLogger());
 
-      filter.catch(buildInfrastructureException(kind), host);
+      filter.catch(error, host);
 
       expect(json).toHaveBeenCalledWith({
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -223,117 +205,69 @@ describe('HttpExceptionFilter', () => {
     });
 
     it.each([
-      INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
-      INFRASTRUCTURE_ERROR_KIND.TIMEOUT,
-    ])(
-      '503이 되는 infrastructure %s는 어댑터 정보를 노출하지 않는다',
-      (kind) => {
-        const { host, json } = buildMockHost();
-        const filter = new HttpExceptionFilter(buildMockLogger());
-
-        filter.catch(buildInfrastructureException(kind), host);
-
-        expect(json).toHaveBeenCalledWith({
-          statusCode: HttpStatus.SERVICE_UNAVAILABLE,
-          code: 'internal.unavailable',
-          message: 'Service temporarily unavailable',
-          details: {},
-        });
-      },
-    );
-
-    it('domain error는 마스킹한다', () => {
+      new UnavailableError(persistenceParams),
+      new TimeoutError(persistenceParams),
+    ])('503이 되는 $name은 어댑터 정보를 노출하지 않는다', (error) => {
       const { host, json } = buildMockHost();
       const filter = new HttpExceptionFilter(buildMockLogger());
 
-      filter.catch(
-        new DomainException({
-          kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
-          code: 'source.empty_body',
-          message: 'Source body must not be empty',
-          details: { fields: ['body'] },
-        }),
-        host,
-      );
+      filter.catch(error, host);
 
-      expect(json).toHaveBeenCalledWith(
-        expect.objectContaining({ code: 'internal.unexpected' }),
-      );
+      expect(json).toHaveBeenCalledWith({
+        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
+        code: 'internal.unavailable',
+        message: 'Service temporarily unavailable',
+        details: {},
+      });
     });
   });
 
   describe('로그 레벨', () => {
     it.each([
-      APPLICATION_ERROR_KIND.NOT_FOUND,
-      APPLICATION_ERROR_KIND.STATE_CONFLICT,
-      APPLICATION_ERROR_KIND.VALIDATION_FAILED,
-    ])('비즈니스 실패인 application %s는 로그를 남기지 않는다', (kind) => {
+      new NotFoundError(persistenceParams),
+      new StateConflictError({
+        code: 'post.already_published',
+        message: 'Post is already published',
+        details: { postId: 'post-1' },
+      }),
+      new ValidationFailedError({
+        code: 'request.validation_failed',
+        message: 'Invalid request',
+        details: { fields: [] },
+      }),
+      new ConstraintViolationError(persistenceParams),
+    ])('4xx로 매핑되는 $name은 로그를 남기지 않는다', (error) => {
       const { host } = buildMockHost();
       const logger = buildMockLogger();
       const filter = new HttpExceptionFilter(logger);
 
-      filter.catch(buildApplicationException(kind), host);
+      filter.catch(error, host);
 
       expect(logger.error).not.toHaveBeenCalled();
       expect(logger.warn).not.toHaveBeenCalled();
     });
 
-    it('404로 매핑되는 infrastructure not_found는 로그를 남기지 않는다', () => {
+    it('409로 매핑되는 ConcurrencyConflictError는 warn으로 남긴다', () => {
       const { host } = buildMockHost();
       const logger = buildMockLogger();
       const filter = new HttpExceptionFilter(logger);
 
-      filter.catch(
-        buildInfrastructureException(INFRASTRUCTURE_ERROR_KIND.NOT_FOUND),
-        host,
-      );
-
-      expect(logger.error).not.toHaveBeenCalled();
-      expect(logger.warn).not.toHaveBeenCalled();
-    });
-
-    it('409로 매핑되는 infrastructure constraint_violation은 로그를 남기지 않는다', () => {
-      const { host } = buildMockHost();
-      const logger = buildMockLogger();
-      const filter = new HttpExceptionFilter(logger);
-
-      filter.catch(
-        buildInfrastructureException(
-          INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
-        ),
-        host,
-      );
-
-      expect(logger.error).not.toHaveBeenCalled();
-      expect(logger.warn).not.toHaveBeenCalled();
-    });
-
-    it('409로 매핑되는 infrastructure concurrency_conflict는 warn으로 남긴다', () => {
-      const { host } = buildMockHost();
-      const logger = buildMockLogger();
-      const filter = new HttpExceptionFilter(logger);
-
-      filter.catch(
-        buildInfrastructureException(
-          INFRASTRUCTURE_ERROR_KIND.CONCURRENCY_CONFLICT,
-        ),
-        host,
-      );
+      filter.catch(new ConcurrencyConflictError(persistenceParams), host);
 
       expect(logger.warn).toHaveBeenCalledOnce();
       expect(logger.error).not.toHaveBeenCalled();
     });
 
     it.each([
-      INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
-      INFRASTRUCTURE_ERROR_KIND.TIMEOUT,
-      INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
-    ])('5xx가 되는 infrastructure %s는 error로 남긴다', (kind) => {
+      new UnavailableError(persistenceParams),
+      new TimeoutError(persistenceParams),
+      new UnexpectedError(persistenceParams),
+    ])('5xx가 되는 $name은 error로 남긴다', (error) => {
       const { host } = buildMockHost();
       const logger = buildMockLogger();
       const filter = new HttpExceptionFilter(logger);
 
-      filter.catch(buildInfrastructureException(kind), host);
+      filter.catch(error, host);
 
       expect(logger.error).toHaveBeenCalledOnce();
     });
@@ -424,16 +358,16 @@ describe('HttpExceptionFilter', () => {
       );
     });
 
-    it('정책에 없는 kind는 500으로 마스킹하고 error로 남긴다', () => {
+    it('kind와 code만 흉내 낸 Error는 이 프로젝트 error로 보지 않는다', () => {
       const { host, status, json } = buildMockHost();
       const logger = buildMockLogger();
       const filter = new HttpExceptionFilter(logger);
-      const unregistered = Object.assign(new Error('unregistered kind'), {
-        kind: 'brand_new_kind',
-        code: 'sample.unregistered',
+      const lookalike = Object.assign(new Error('not a SheskaError'), {
+        kind: 'not_found',
+        code: 'sample.not_found',
       });
 
-      filter.catch(unregistered, host);
+      filter.catch(lookalike, host);
 
       expect(status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
       expect(json).toHaveBeenCalledWith(
@@ -447,13 +381,11 @@ describe('HttpExceptionFilter', () => {
     it('5xx면 원본 예외를 담는다', () => {
       const { host, response } = buildMockHost();
       const filter = new HttpExceptionFilter(buildMockLogger());
-      const exception = buildInfrastructureException(
-        INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
-      );
+      const error = new UnexpectedError(persistenceParams);
 
-      filter.catch(exception, host);
+      filter.catch(error, host);
 
-      expect(response.err).toBe(exception);
+      expect(response.err).toBe(error);
     });
 
     it('Error가 아닌 값을 throw해도 Error 인스턴스로 변환한다', () => {
@@ -467,30 +399,18 @@ describe('HttpExceptionFilter', () => {
     });
 
     it.each([
-      INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
-      INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
-    ])('4xx가 되는 infrastructure %s는 담지 않는다', (kind) => {
+      new NotFoundError(persistenceParams),
+      new ConstraintViolationError(persistenceParams),
+      new StateConflictError({
+        code: 'post.already_published',
+        message: 'Post is already published',
+        details: { postId: 'post-1' },
+      }),
+    ])('4xx가 되는 $name은 담지 않는다', (error) => {
       const { host, response } = buildMockHost();
       const filter = new HttpExceptionFilter(buildMockLogger());
 
-      filter.catch(buildInfrastructureException(kind), host);
-
-      expect(response.err).toBeUndefined();
-    });
-
-    it('application 비즈니스 실패는 담지 않는다', () => {
-      const { host, response } = buildMockHost();
-      const filter = new HttpExceptionFilter(buildMockLogger());
-
-      filter.catch(
-        new ApplicationException({
-          kind: APPLICATION_ERROR_KIND.NOT_FOUND,
-          code: 'source.not_found',
-          message: 'Source not found',
-          details: undefined,
-        }),
-        host,
-      );
+      filter.catch(error, host);
 
       expect(response.err).toBeUndefined();
     });

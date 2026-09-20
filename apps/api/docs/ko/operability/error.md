@@ -39,34 +39,34 @@ related:
   - 경계가 명시적으로 변환하지 않는 불변 조건 실패는 bug, 손상된 저장 상태 또는 부족한 경계 검증으로
     취급한다.
 
-### Error Shape 계약
+### Error 클래스 계약
 
-- 구조화된 error shape은 운반 채널과 독립적인 데이터 계약으로 정의한다.
-- 모든 error shape의 뿌리 계약은 `core`의 `SheskaError`다.
-  - `kind`와 `code`를 가진 `Error`를 이 프로젝트가 소유한 오류로 식별한다.
-  - 경계는 exception class가 아니라 이 계약으로 오류를 인식한다.
-- 각 kernel 레이어는 `error.base.ts`에 error shape을 정의한다.
-  - 기본 shape은 `DomainErrorBase`, `ApplicationErrorBase`, `InfrastructureErrorBase`,
-    `PresentationErrorBase`다.
-- 모든 error shape은 `kind`, `code`, `message`, `details`를 담는다.
-  - `kind`는 실패를 분류한다. 어휘는 `core`의 `ERROR_KIND` 한 곳에서만 정의한다.
-    - 각 kernel 레이어는 이 어휘의 부분집합을 `*_ERROR_KIND` view로 노출하고, 그 레이어의 exception은 자기
-      view에 있는 `kind`만 받는다.
-    - 두 레이어가 같은 `kind`를 노출할 수 있다. 같은 문자열은 같은 실패를 뜻하므로 경계에서 같은 정책을 받는다.
-    - 서로 다른 정책이 필요하면 같은 `kind`를 재사용하지 않고 새 `kind`를 추가한다.
+- 구조화된 error는 `core/errors`의 클래스 하나로 정의한다. shape 타입과 그것을 감싸는 exception wrapper를
+  따로 두지 않는다.
+- 모든 error의 뿌리는 `core/errors`의 추상 클래스 `SheskaError`이며 `Error`를 상속한다.
+  - 경계는 `instanceof SheskaError`로 이 프로젝트가 소유한 오류를 인식한다.
+  - `kind`와 `code`만 흉내 낸 값은 이 프로젝트의 error가 아니며 알 수 없는 실패로 마스킹한다.
+- `kind`는 필드가 아니라 구체 클래스다. 어휘는 `core/errors`의 `ERROR_KIND` 한 곳에서만 정의하고,
+  구체 클래스가 그중 하나를 고정한다.
+  - `InvariantViolationError`, `ValidationFailedError`, `NotFoundError`, `StateConflictError`,
+    `ConstraintViolationError`, `ConcurrencyConflictError`, `UnavailableError`, `TimeoutError`,
+    `InvalidDataError`, `BadResponseError`, `UnexpectedError`가 어휘 전체와 일대일로 대응한다.
+  - 던지는 쪽은 `kind`를 쓰지 않고 클래스를 고른다. 같은 실패 의미에는 같은 클래스를 쓰므로 경계에서 같은
+    정책을 받는다.
+  - 서로 다른 정책이 필요하면 기존 클래스를 재사용하지 않고 `ERROR_KIND`에 새 kind와 클래스를 추가한다.
+  - 레이어는 클래스로 나누지 않는다. 오류의 소유자는 클래스 이름이 아니라 그 오류를 던지는 위치와 `code`가
+    나타낸다.
+- 모든 error는 `kind`, `code`, `message`, `details`를 담고 `cause`를 추가할 수 있다.
   - `code`는 호출자와 기계가 실패를 안정적으로 식별하게 한다.
     - 실패 원인마다 다른 `code`를 쓴다. 같은 메서드가 던지더라도 연산 실패와 부재는 같은 `code`를
       공유하지 않는다.
-  - `details`를 읽는 소비자가 있는 `kind`는 payload를 닫힌 union으로 고정한다. 그 `kind`로 error를 만들 때
-    필요한 필드가 빠지면 컴파일이 실패한다. 읽는 곳이 없는 `kind`는 고정하지 않는다.
-  - Infrastructure error는 `source`를 추가로 담고 `cause`를 포함할 수 있다.
-- 지금 이 shape을 운반하는 채널은 exception뿐이다. shape 자체는 채널과 독립적으로 유지해서, 나중에 failure
-  계약을 추가하더라도 그대로 재사용할 수 있게 한다.
-  - Exception wrapper는 `DomainException`, `ApplicationException`, `InfrastructureException`,
-    `PresentationException`이다.
-  - 각 wrapper는 `message`를 `Error`에 전달하고 exception instance에 `kind`, `code`, `details`를 노출한다.
-  - `InfrastructureException`은 `source`도 노출하고 `Error`를 통해 `cause`를 보존한다.
-  - 경계가 구조화된 error를 식별하고 변환해야 할 때 exception wrapper를 사용한다.
+  - `details`를 읽는 소비자가 있는 클래스는 payload 타입을 고정한다. 그 클래스로 error를 만들 때 필요한
+    필드가 빠지면 컴파일이 실패한다. 읽는 곳이 없는 클래스는 `Record<string, unknown>`으로 열어 둔다.
+  - 어느 어댑터가 실패했는지는 별도 필드로 담지 않는다. `code` 앞머리와 stack이 이미 같은 정보를 준다.
+- 실패를 런타임에 분류하는 코드는 `kind` 문자열이 아니라 클래스 자체를 돌려준다.
+  - `classifyPostgresError`는 vendor error code를 error 클래스로 옮기고, 호출부가 그 클래스로 던진다.
+- 지금 이 error를 운반하는 채널은 exception뿐이다. 나중에 failure 계약을 추가하더라도 같은 클래스의
+  `kind`/`code`/`details`를 그대로 실어 나른다.
 
 ### Error 소유자
 
@@ -90,9 +90,9 @@ related:
 - 독립적인 바운디드 컨텍스트는 통신 계약을 통해 오류를 변환한다.
   - 크로스 컨텍스트 경계는 [context integration 컨벤션](../architecture/context-integration.md)을 따른다.
 - Protocol 경계는 인식한 오류를 변환하고 외부 계약이 허용하지 않는 정보를 마스킹한다.
-  - 경계는 `kind` 하나를 기준으로 status, 노출 범위, 로그 레벨을 결정한다. Exception class로 분기하지 않는다.
-    - Exception class는 오류의 출처와 형태를 나타내는 태그이며, 거동을 결정하지 않는다.
-    - 정책에 등록되지 않은 `kind`와 이 프로젝트가 소유하지 않은 실패는 내부 오류 response로 마스킹한다.
+  - 경계는 `kind` 하나를 기준으로 status, 노출 범위, 로그 레벨을 결정한다.
+    - 정책 표는 `ERROR_KIND` 전체를 빠짐없이 덮는다. kind를 추가하면 정책이 비어 컴파일이 실패한다.
+    - 이 프로젝트가 소유하지 않은 실패는 내부 오류 response로 마스킹한다.
   - 5xx로 매핑되는 `kind`는 `code`와 `message`까지 마스킹한다. 어댑터와 vendor 식별자를 외부에 노출하지 않는다.
   - 4xx로 매핑되는 `kind`는 `code`와 `message`를 노출한다. `details`는 호출자가 조치할 수 있을 때만 노출한다.
   - 로그 레벨은 같은 정책이 `kind`별로 정한다. 4xx로 매핑되는 비즈니스 실패는 장애 로그로 남기지 않는다.

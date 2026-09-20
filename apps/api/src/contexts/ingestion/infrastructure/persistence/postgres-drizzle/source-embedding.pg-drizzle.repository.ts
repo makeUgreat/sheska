@@ -1,11 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { ConcurrencyConflictError } from '@core/errors';
 import {
   classifyPostgresError,
   DATABASE_TOKENS,
-  INFRASTRUCTURE_ERROR_KIND,
-  InfrastructureException,
   resiliencePipeline,
 } from '@kernels/infrastructure';
 import {
@@ -15,8 +14,6 @@ import {
 import * as schema from './schema';
 import type { SourceEmbeddingInsert } from './schema';
 import { SourceEmbeddingPgDrizzleMapper } from './source-embedding.pg-drizzle.mapper';
-
-const ADAPTER = 'source-embedding.pg-drizzle';
 
 @Injectable()
 export class SourceEmbeddingPgDrizzleRepository implements SourceEmbeddingRepository {
@@ -47,9 +44,7 @@ export class SourceEmbeddingPgDrizzleRepository implements SourceEmbeddingReposi
         baseDelayMs: 20,
         maxDelayMs: 20,
         classify: (error) => ({
-          retryable:
-            InfrastructureException.is(error) &&
-            error.kind === INFRASTRUCTURE_ERROR_KIND.CONCURRENCY_CONFLICT,
+          retryable: error instanceof ConcurrencyConflictError,
         }),
       })
       .execute(() => this.replaceOnce(sourceId, inserts));
@@ -67,10 +62,9 @@ export class SourceEmbeddingPgDrizzleRepository implements SourceEmbeddingReposi
         await tx.insert(schema.sourceEmbeddings).values(inserts);
       });
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'source_embedding.upsert_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source embedding save operation failed',
         details: { sourceId },
         cause: error,

@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  APPLICATION_ERROR_KIND,
   type IntegrationEventDispatcher,
   type OutboxWriter,
 } from '@kernels/application';
@@ -79,8 +78,7 @@ describe('FinalizeEmbeddingWorkflowUseCase', () => {
     await expect(
       useCase.execute(payload, chunks.slice(0, 1)),
     ).rejects.toMatchObject({
-      name: 'ApplicationException',
-      kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
+      name: 'StateConflictError',
       code: 'ingestion.embedding_workflow_result_incomplete',
       message: 'Embedding workflow result is incomplete',
       details: {
@@ -102,8 +100,7 @@ describe('FinalizeEmbeddingWorkflowUseCase', () => {
     await expect(
       useCase.execute(payload, inconsistentChunks),
     ).rejects.toMatchObject({
-      name: 'ApplicationException',
-      kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
+      name: 'StateConflictError',
       code: 'ingestion.embedding_workflow_models_inconsistent',
       message: 'Embedding workflow returned inconsistent models',
       details: {

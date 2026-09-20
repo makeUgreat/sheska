@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import { UnavailableError } from '@core/errors';
 import { computeDeadline } from '@core/deadline';
-import { INFRASTRUCTURE_ERROR_KIND } from '../error.base';
-import { InfrastructureException } from '../infrastructure.exception';
 import { resiliencePipeline } from '../resilience.pipeline';
 import { classifyInfrastructureRetry } from '../retry-error.classifier';
 
@@ -12,11 +11,9 @@ const NO_DELAY_RETRY = {
   classify: classifyInfrastructureRetry,
 };
 
-function buildUnavailableError(): InfrastructureException {
-  return new InfrastructureException({
-    kind: INFRASTRUCTURE_ERROR_KIND.UNAVAILABLE,
+function buildUnavailableError(): UnavailableError {
+  return new UnavailableError({
     code: 'test.unavailable',
-    source: { boundary: 'http-client', adapter: 'test' },
     message: 'unavailable',
     details: {},
   });

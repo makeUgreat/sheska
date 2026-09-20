@@ -3,14 +3,13 @@ import {
   type ArgumentMetadata,
   type PipeTransform,
 } from '@nestjs/common';
-import {
-  PresentationException,
-  PRESENTATION_ERROR_KIND,
-  type PresentationValidationDetails,
-  type PresentationValidationFieldDetail,
-} from '@kernels/presentation';
 import { type z } from 'zod';
 import { type $ZodError, type $ZodIssue } from 'zod/v4/core';
+import {
+  ValidationFailedError,
+  type ValidationFailedDetails,
+  type ValidationFieldDetail,
+} from '@core/errors';
 
 interface ZodValidationMetadata {
   readonly zodSchema: z.ZodType;
@@ -28,8 +27,7 @@ export class ZodValidationPipe implements PipeTransform<unknown, unknown> {
     const result = validationMetadata.zodSchema.safeParse(value);
 
     if (!result.success) {
-      throw new PresentationException({
-        kind: PRESENTATION_ERROR_KIND.VALIDATION_FAILED,
+      throw new ValidationFailedError({
         code: 'request.validation_failed',
         message: 'Invalid request',
         details: this.toValidationDetails(result.error),
@@ -39,7 +37,7 @@ export class ZodValidationPipe implements PipeTransform<unknown, unknown> {
     return result.data;
   }
 
-  private toValidationDetails(error: $ZodError): PresentationValidationDetails {
+  private toValidationDetails(error: $ZodError): ValidationFailedDetails {
     return {
       fields: this.toValidationFieldDetails(error.issues),
     };
@@ -47,7 +45,7 @@ export class ZodValidationPipe implements PipeTransform<unknown, unknown> {
 
   private toValidationFieldDetails(
     issues: $ZodIssue[],
-  ): PresentationValidationFieldDetail[] {
+  ): ValidationFieldDetail[] {
     const fields = new Map<string, string[]>();
 
     for (const issue of issues) {

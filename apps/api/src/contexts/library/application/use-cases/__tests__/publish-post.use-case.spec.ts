@@ -1,12 +1,9 @@
+import { StateConflictError } from '@core/errors';
 import { type PostRepository } from '@contexts/library/domain';
 import {
   type SourceDocument,
   type SourceLookup,
 } from '@contexts/library/application/ports';
-import {
-  APPLICATION_ERROR_KIND,
-  ApplicationException,
-} from '@kernels/application';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { PublishPostUseCase } from '../publish-post.use-case';
 import { buildPost } from '../../../../../../test/support/domains/fixtures/post.fixture';
@@ -81,9 +78,8 @@ describe('PublishPostUseCase', () => {
     expect(posts.insert).not.toHaveBeenCalled();
   });
 
-  it('이미 발행된 source면 insert가 던진 STATE_CONFLICT를 전파한다', async () => {
-    const alreadyPublished = new ApplicationException({
-      kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
+  it('이미 발행된 source면 insert가 던진 StateConflictError를 전파한다', async () => {
+    const alreadyPublished = new StateConflictError({
       code: 'post.already_exists',
       message: 'A post for this source already exists',
       details: {},

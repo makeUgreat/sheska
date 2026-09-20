@@ -1,8 +1,5 @@
-import {
-  DomainException,
-  DOMAIN_ERROR_KIND,
-  ValueObject,
-} from '@kernels/domain';
+import { InvariantViolationError } from '@core/errors';
+import { ValueObject } from '@kernels/domain';
 import { Guard } from '@core/guard';
 
 export type SourceFrontmatterValue =
@@ -28,8 +25,7 @@ export class SourceFrontmatter extends ValueObject<SourceFrontmatterProps> {
 
   protected validate(props: SourceFrontmatterProps): void {
     if (!Guard.isPlainObject(props)) {
-      throw new DomainException({
-        kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
+      throw new InvariantViolationError({
         code: 'source.invalid_frontmatter',
         message: 'Source frontmatter must be a JSON object',
         details: { fields: ['frontmatter'] },

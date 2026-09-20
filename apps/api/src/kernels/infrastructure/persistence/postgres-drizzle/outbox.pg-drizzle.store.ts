@@ -5,12 +5,9 @@ import {
   type OutboxRelayStore,
   type OutboxWriter,
 } from '@kernels/application';
-import { InfrastructureException } from '../../infrastructure.exception';
 import { type PgDrizzleSession } from '../../pg-drizzle.session';
 import { classifyPostgresError } from '../../postgres-error.classifier';
 import * as outboxSchema from './outbox.pg-drizzle.schema';
-
-const ADAPTER = 'outbox.pg-drizzle';
 
 export class PgDrizzleOutboxStore implements OutboxWriter, OutboxRelayStore {
   constructor(private readonly db: PgDrizzleSession<typeof outboxSchema>) {}
@@ -25,10 +22,9 @@ export class PgDrizzleOutboxStore implements OutboxWriter, OutboxRelayStore {
         occurredAt: event.occurredAt,
       });
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'outbox.append_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Outbox append operation failed',
         details: {
           eventId: event.eventId,
@@ -81,10 +77,9 @@ export class PgDrizzleOutboxStore implements OutboxWriter, OutboxRelayStore {
         attemptCount: row.attemptCount,
       }));
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'outbox.claim_due_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Outbox due event claim failed',
         details: {},
         cause: error,
@@ -104,10 +99,9 @@ export class PgDrizzleOutboxStore implements OutboxWriter, OutboxRelayStore {
           ),
         );
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'outbox.mark_published_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Outbox mark published operation failed',
         details: { eventId },
         cause: error,
@@ -134,10 +128,9 @@ export class PgDrizzleOutboxStore implements OutboxWriter, OutboxRelayStore {
           ),
         );
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'outbox.schedule_retry_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Outbox retry schedule operation failed',
         details: { eventId },
         cause: error,
@@ -161,10 +154,9 @@ export class PgDrizzleOutboxStore implements OutboxWriter, OutboxRelayStore {
           ),
         );
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'outbox.mark_dead_lettered_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Outbox mark dead lettered operation failed',
         details: { eventId },
         cause: error,

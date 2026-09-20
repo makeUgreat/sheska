@@ -52,7 +52,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
     expect(result.getProps().fingerprint.unpack()).toBe('fingerprint-2');
   });
 
-  it('없는 sourceId로 저장하면 코드 결함이므로 UNEXPECTED로 전파한다', async () => {
+  it('없는 sourceId로 저장하면 코드 결함이므로 UnexpectedError로 전파한다', async () => {
     const syncJob = buildSourceSyncJob({
       sourceId: 'unknown-source',
       fingerprint: 'fingerprint-1',
@@ -139,7 +139,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
     expect(result).toBeNull();
   });
 
-  it('존재하지 않는 id는 NOT_FOUND exception을 throw한다', async () => {
+  it('존재하지 않는 id는 NotFoundError를 throw한다', async () => {
     await expect(
       repository.get({ id: 'non-existent-id' }),
     ).rejects.toMatchObject({

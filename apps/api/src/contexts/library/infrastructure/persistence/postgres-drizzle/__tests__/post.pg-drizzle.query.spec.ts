@@ -18,17 +18,16 @@ function createFailingSelectDb() {
 }
 
 describe('PostPgDrizzleQuery', () => {
-  it('find DB 오류를 InfrastructureException으로 래핑한다', async () => {
+  it('find DB 오류를 UnexpectedError로 래핑한다', async () => {
     const db = createFailingDb();
     const query = new PostPgDrizzleQuery(db as never);
 
     await expect(query.find({ id: 'post-1' })).rejects.toMatchObject({
       code: 'post.get_with_source_failed',
-      source: { boundary: 'persistence', adapter: 'post.pg-drizzle' },
     });
   });
 
-  it('paginate DB 오류를 InfrastructureException으로 래핑한다', async () => {
+  it('paginate DB 오류를 UnexpectedError로 래핑한다', async () => {
     const db = createFailingSelectDb();
     const query = new PostPgDrizzleQuery(db as never);
 
@@ -36,11 +35,10 @@ describe('PostPgDrizzleQuery', () => {
       query.paginate({ limit: 20, cursor: null }),
     ).rejects.toMatchObject({
       code: 'post.paginate_failed',
-      source: { boundary: 'persistence', adapter: 'post.pg-drizzle' },
     });
   });
 
-  it('search DB 오류를 InfrastructureException으로 래핑한다', async () => {
+  it('search DB 오류를 UnexpectedError로 래핑한다', async () => {
     const db = createFailingSelectDb();
     const query = new PostPgDrizzleQuery(db as never);
 
@@ -53,17 +51,15 @@ describe('PostPgDrizzleQuery', () => {
       }),
     ).rejects.toMatchObject({
       code: 'post.search_failed',
-      source: { boundary: 'persistence', adapter: 'post.pg-drizzle' },
     });
   });
 
-  it('count DB 오류를 InfrastructureException으로 래핑한다', async () => {
+  it('count DB 오류를 UnexpectedError로 래핑한다', async () => {
     const db = createFailingDb();
     const query = new PostPgDrizzleQuery(db as never);
 
     await expect(query.count()).rejects.toMatchObject({
       code: 'post.count_failed',
-      source: { boundary: 'persistence', adapter: 'post.pg-drizzle' },
     });
   });
 });

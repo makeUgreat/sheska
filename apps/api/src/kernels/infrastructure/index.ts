@@ -6,20 +6,8 @@ export {
 } from './cursor.paginator';
 export { DATABASE_TOKENS } from './database.tokens';
 export {
-  INFRASTRUCTURE_ERROR_KIND,
-  type InfrastructureError,
-  type InfrastructureErrorBase,
-  type InfrastructureErrorOf,
-  type InfrastructureErrorKind,
-  type InfrastructureErrorSource,
-  type InfrastructureBadResponseDetails,
-  type InfrastructureInvalidDataDetails,
-  type InfrastructureTimeoutDetails,
-} from './error.base';
-export { InfrastructureException } from './infrastructure.exception';
-export {
   classifyPostgresError,
-  type PostgresErrorKind,
+  type PostgresErrorClass,
 } from './postgres-error.classifier';
 export { type PgDrizzleSession } from './pg-drizzle.session';
 export {

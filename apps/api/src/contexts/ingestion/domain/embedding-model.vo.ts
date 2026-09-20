@@ -1,9 +1,5 @@
-import {
-  DomainException,
-  DOMAIN_ERROR_KIND,
-  ValueObject,
-  type DomainPrimitive,
-} from '@kernels/domain';
+import { InvariantViolationError } from '@core/errors';
+import { ValueObject, type DomainPrimitive } from '@kernels/domain';
 
 const EMBEDDING_MODEL_SPECS: Record<string, { dimensions: number }> = {
   'qwen3-embedding:0.6b': { dimensions: 1024 },
@@ -20,8 +16,7 @@ export class EmbeddingModel extends ValueObject<string> {
 
   protected validate(props: DomainPrimitive<string>): void {
     if (!(props.value in EMBEDDING_MODEL_SPECS)) {
-      throw new DomainException({
-        kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
+      throw new InvariantViolationError({
         code: 'ingestion.embedding_model.unsupported',
         message: `Unsupported embedding model: ${props.value}`,
         details: { fields: ['model'] },

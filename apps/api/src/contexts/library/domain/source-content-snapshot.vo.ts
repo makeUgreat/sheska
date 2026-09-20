@@ -1,8 +1,5 @@
-import {
-  DomainException,
-  DOMAIN_ERROR_KIND,
-  ValueObject,
-} from '@kernels/domain';
+import { InvariantViolationError } from '@core/errors';
+import { ValueObject } from '@kernels/domain';
 import { SourceFingerprint } from './source-fingerprint.vo';
 import { SourceContent } from './source-content.vo';
 import { SourceSize } from './source-size.vo';
@@ -76,8 +73,7 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
 
   protected validate(props: SourceContentSnapshotProps): void {
     if (props.title.trim().length === 0) {
-      throw new DomainException({
-        kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
+      throw new InvariantViolationError({
         code: 'source.invalid_title',
         message: 'Source title must not be blank',
         details: { fields: ['title'] },

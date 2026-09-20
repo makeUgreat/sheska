@@ -1,4 +1,4 @@
-import { isSheskaError } from '@core/sheska-error';
+import { SheskaError } from '@core/errors';
 
 function serializeCause(value: unknown): unknown {
   if (!(value instanceof Error)) return value;
@@ -26,27 +26,21 @@ export function toErrorLogContext(error: unknown): Record<string, unknown> {
     return { error: String(error) };
   }
 
-  if (isSheskaError(error)) {
-    const {
-      error: _error,
-      name: _name,
-      stack: _stack,
-      cause: _cause,
-      message,
-      ...rest
-    } = error as Record<string, unknown>;
+  if (!(error instanceof SheskaError)) {
     return {
       errorName: error.name,
-      error: message,
-      ...rest,
+      error: error.message,
       failure: { stack: stackWithCauses(error) },
-      ...(error.cause !== undefined && { cause: serializeCause(error.cause) }),
     };
   }
 
   return {
     errorName: error.name,
     error: error.message,
+    kind: error.kind,
+    code: error.code,
+    details: error.details,
     failure: { stack: stackWithCauses(error) },
+    ...(error.cause !== undefined && { cause: serializeCause(error.cause) }),
   };
 }

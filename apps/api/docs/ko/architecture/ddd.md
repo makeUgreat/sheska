@@ -178,7 +178,7 @@ await orderRepository.save(order);
   - 예: `find({ id })`, `find({ externalSourceId })`.
 - `get`은 호출자가 리소스가 존재한다고 기대한다는 의미다.
   - 반환 타입은 반드시 `Promise<T>`여야 하며, `Promise<T | null>`은 허용하지 않는다.
-  - 리소스가 없으면 구현체가 `InfrastructureException(NOT_FOUND)`을 던진다.
+  - 리소스가 없으면 구현체가 `NotFoundError`를 던진다.
   - `find`와 같은 객체 매개변수 명명 방식을 사용한다. 예: `get({ id })`.
 - `find`와 `get`의 검색 조건은 반드시 객체 타입이어야 한다.
   - `find(id: string)`이나 `get(sourceId: string)`처럼 원시 값을 직접 받는 것은 허용하지 않는다.

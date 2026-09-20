@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { NotFoundError } from '@core/errors';
 import {
   type NoteQuery,
   type NoteQueryListItem,
@@ -11,13 +12,9 @@ import { type SourceFrontmatterProps } from '@contexts/library/domain';
 import {
   classifyPostgresError,
   DATABASE_TOKENS,
-  INFRASTRUCTURE_ERROR_KIND,
-  InfrastructureException,
   sliceForCursor,
 } from '@kernels/infrastructure';
 import * as schema from './schema';
-
-const ADAPTER = 'note.pg-drizzle';
 
 type NoteRow = {
   id: string;
@@ -53,10 +50,9 @@ export class NotePgDrizzleQuery implements NoteQuery {
       `);
       row = result.rows[0];
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'note.get_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Note get query operation failed',
         details: { noteId: criteria.noteId },
         cause: error,
@@ -64,10 +60,8 @@ export class NotePgDrizzleQuery implements NoteQuery {
     }
 
     if (!row) {
-      throw new InfrastructureException({
-        kind: INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
+      throw new NotFoundError({
         code: 'note.not_found',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Note not found',
         details: { noteId: criteria.noteId },
       });
@@ -110,10 +104,9 @@ export class NotePgDrizzleQuery implements NoteQuery {
 
       return { notes: data.map((row) => this.toListItem(row)), nextCursor };
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'note.paginate_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Note paginate query operation failed',
         details: {},
         cause: error,

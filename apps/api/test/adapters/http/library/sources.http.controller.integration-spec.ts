@@ -2,13 +2,10 @@ import { type Server } from 'node:http';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
+import { NotFoundError, StateConflictError } from '@core/errors';
 import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upload-source.use-case';
 import { ListSourcesUseCase } from '@contexts/library/application/use-cases/list-sources.use-case';
 import { GetSourceUseCase } from '@contexts/library/application/use-cases/get-source.use-case';
-import {
-  ApplicationException,
-  APPLICATION_ERROR_KIND,
-} from '@kernels/application';
 import { SourcesHttpController } from '@contexts/library/presentation/http/sources.http.controller';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
 import { ZodValidationPipe } from '@platform/nest/pipes/zod-validation.pipe';
@@ -296,8 +293,7 @@ describe('SourcesHttpController', () => {
 
     it('source가 없으면 404 응답을 반환한다', async () => {
       getSourceUseCase.execute.mockRejectedValue(
-        new ApplicationException({
-          kind: APPLICATION_ERROR_KIND.NOT_FOUND,
+        new NotFoundError({
           code: 'sources.source_not_found',
           message: 'Source not found',
           details: {},
@@ -409,10 +405,9 @@ describe('SourcesHttpController', () => {
       });
     });
 
-    it('use case가 ApplicationException NOT_FOUND를 throw하면 404 응답을 반환한다', async () => {
+    it('use case가 NotFoundError를 throw하면 404 응답을 반환한다', async () => {
       uploadSourceUseCase.execute.mockRejectedValue(
-        new ApplicationException({
-          kind: APPLICATION_ERROR_KIND.NOT_FOUND,
+        new NotFoundError({
           code: 'sources.source_not_found',
           message: 'Source not found',
           details: {},
@@ -435,10 +430,9 @@ describe('SourcesHttpController', () => {
       });
     });
 
-    it('use case가 ApplicationException STATE_CONFLICT를 throw하면 409 응답을 반환한다', async () => {
+    it('use case가 StateConflictError를 throw하면 409 응답을 반환한다', async () => {
       uploadSourceUseCase.execute.mockRejectedValue(
-        new ApplicationException({
-          kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
+        new StateConflictError({
           code: 'sources.duplicate_external_source_id',
           message: 'Source already exists',
           details: {},

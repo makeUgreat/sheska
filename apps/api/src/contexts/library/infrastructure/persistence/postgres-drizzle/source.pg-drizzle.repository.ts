@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
+import { ConstraintViolationError, NotFoundError } from '@core/errors';
 import {
   type Source,
   type SourceRepository,
@@ -9,14 +10,10 @@ import {
 import {
   classifyPostgresError,
   DATABASE_TOKENS,
-  INFRASTRUCTURE_ERROR_KIND,
-  InfrastructureException,
   type PgDrizzleSession,
 } from '@kernels/infrastructure';
 import * as schema from './schema';
 import { SourcePgDrizzleMapper } from './source.pg-drizzle.mapper';
-
-const ADAPTER = 'source.pg-drizzle';
 
 @Injectable()
 export class SourcePgDrizzleRepository implements SourceRepository {
@@ -39,10 +36,9 @@ export class SourcePgDrizzleRepository implements SourceRepository {
         .where(condition)
         .limit(1);
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'source.find_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source find operation failed',
         details: criteria,
         cause: error,
@@ -66,10 +62,9 @@ export class SourcePgDrizzleRepository implements SourceRepository {
         .where(eq(schema.sources.id, criteria.id))
         .limit(1);
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'source.get_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source get operation failed',
         details: { id: criteria.id },
         cause: error,
@@ -77,10 +72,8 @@ export class SourcePgDrizzleRepository implements SourceRepository {
     }
 
     if (row === undefined) {
-      throw new InfrastructureException({
-        kind: INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
+      throw new NotFoundError({
         code: 'source.not_found',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source not found',
         details: { id: criteria.id },
       });
@@ -98,10 +91,9 @@ export class SourcePgDrizzleRepository implements SourceRepository {
         .from(schema.sources)
         .orderBy(desc(schema.sources.createdAt));
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'source.list_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source list operation failed',
         details: {},
         cause: error,
@@ -121,21 +113,17 @@ export class SourcePgDrizzleRepository implements SourceRepository {
         .values(sourceInsert)
         .returning();
     } catch (error: unknown) {
-      const kind = classifyPostgresError(error);
-      if (kind === INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION) {
-        throw new InfrastructureException({
-          kind,
+      const ErrorClass = classifyPostgresError(error);
+      if (ErrorClass === ConstraintViolationError) {
+        throw new ConstraintViolationError({
           code: 'source.external_source_id_already_exists',
-          source: { boundary: 'persistence', adapter: ADAPTER },
           message: 'A source with the same external source id already exists',
           details: { externalSourceId: sourceInsert.externalSourceId },
         });
       }
 
-      throw new InfrastructureException({
-        kind,
+      throw new ErrorClass({
         code: 'source.insert_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source insert operation failed',
         details: { id: sourceInsert.id },
         cause: error,
@@ -164,10 +152,9 @@ export class SourcePgDrizzleRepository implements SourceRepository {
         .where(eq(schema.sources.id, sourceInsert.id))
         .returning();
     } catch (error: unknown) {
-      throw new InfrastructureException({
-        kind: classifyPostgresError(error),
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
         code: 'source.update_failed',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source update operation failed',
         details: { id: sourceInsert.id },
         cause: error,
@@ -175,10 +162,8 @@ export class SourcePgDrizzleRepository implements SourceRepository {
     }
 
     if (row === undefined) {
-      throw new InfrastructureException({
-        kind: INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
+      throw new NotFoundError({
         code: 'source.not_found',
-        source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source not found',
         details: { id: sourceInsert.id },
       });

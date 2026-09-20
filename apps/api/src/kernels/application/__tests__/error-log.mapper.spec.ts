@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { APPLICATION_ERROR_KIND } from '../error.base';
-import { ApplicationException } from '../application.exception';
 import { toErrorLogContext } from '../error-log.mapper';
+import { NotFoundError, UnavailableError } from '@core/errors';
 
 describe('toErrorLogContext', () => {
   it('일반 Error의 이름과 메시지를 로그 context로 변환한다', () => {
@@ -14,39 +13,46 @@ describe('toErrorLogContext', () => {
     });
   });
 
-  it('구조화된 exception의 kind와 code를 로그 context에 포함한다', () => {
-    const exception = new ApplicationException({
-      kind: APPLICATION_ERROR_KIND.NOT_FOUND,
+  it('구조화된 error의 kind와 code를 로그 context에 포함한다', () => {
+    const error = new NotFoundError({
       code: 'source.not_found',
       message: 'Source not found',
       details: { sourceId: 'source-1' },
     });
 
-    expect(toErrorLogContext(exception)).toEqual({
-      errorName: 'ApplicationException',
+    expect(toErrorLogContext(error)).toEqual({
+      errorName: 'NotFoundError',
       error: 'Source not found',
-      kind: APPLICATION_ERROR_KIND.NOT_FOUND,
+      kind: 'not_found',
       code: 'source.not_found',
       details: { sourceId: 'source-1' },
       failure: { stack: expect.any(String) as string },
     });
   });
 
+  it('어댑터가 붙인 source를 로그 context에 포함한다', () => {
+    const error = new NotFoundError({
+      code: 'source.not_found',
+      message: 'Source not found',
+      details: { sourceId: 'source-1' },
+    });
+
+    expect(toErrorLogContext(error)).toMatchObject({});
+  });
+
   it('cause가 Error이면 직렬화 가능한 shape으로 변환한다', () => {
     const rootCause = new Error('connect ECONNREFUSED');
     const cause = new TypeError('fetch failed', { cause: rootCause });
 
-    const exception = Object.assign(
-      new Error('service unavailable', { cause }),
-      {
-        kind: 'unavailable',
-        code: 'service.request_failed',
-        details: {},
-      },
-    );
+    const error = new UnavailableError({
+      code: 'service.request_failed',
+      message: 'service unavailable',
+      details: {},
+      cause,
+    });
 
-    expect(toErrorLogContext(exception)).toEqual({
-      errorName: 'Error',
+    expect(toErrorLogContext(error)).toEqual({
+      errorName: 'UnavailableError',
       error: 'service unavailable',
       kind: 'unavailable',
       code: 'service.request_failed',
@@ -60,19 +66,6 @@ describe('toErrorLogContext', () => {
           message: 'connect ECONNREFUSED',
         },
       },
-    });
-  });
-
-  it('exception 내부 error shape으로 error 메시지를 덮어쓰지 않는다', () => {
-    const exception = new ApplicationException({
-      kind: APPLICATION_ERROR_KIND.NOT_FOUND,
-      code: 'source.not_found',
-      message: 'Source not found',
-      details: undefined,
-    });
-
-    expect(toErrorLogContext(exception)).toMatchObject({
-      error: 'Source not found',
     });
   });
 

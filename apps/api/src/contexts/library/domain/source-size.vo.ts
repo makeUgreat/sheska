@@ -1,9 +1,5 @@
-import {
-  DomainException,
-  DOMAIN_ERROR_KIND,
-  ValueObject,
-  type DomainPrimitive,
-} from '@kernels/domain';
+import { InvariantViolationError } from '@core/errors';
+import { ValueObject, type DomainPrimitive } from '@kernels/domain';
 
 export class SourceSize extends ValueObject<number> {
   constructor(props: DomainPrimitive<number>) {
@@ -16,8 +12,7 @@ export class SourceSize extends ValueObject<number> {
 
   protected validate(props: DomainPrimitive<number>): void {
     if (!SourceSize.isValid(props)) {
-      throw new DomainException({
-        kind: DOMAIN_ERROR_KIND.INVARIANT_VIOLATION,
+      throw new InvariantViolationError({
         code: 'source.invalid_size',
         message: 'Source size must be a non-negative integer',
         details: { fields: ['size'] },

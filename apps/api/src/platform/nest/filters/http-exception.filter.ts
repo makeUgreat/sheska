@@ -7,8 +7,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import { type Response } from 'express';
-import { ERROR_KIND, type ErrorKind } from '@core/error-kind';
-import { isSheskaError, type SheskaError } from '@core/sheska-error';
+import { ERROR_KIND, SheskaError, type ErrorKind } from '@core/errors';
 import { LOGGER, type LoggerPort } from '@kernels/application';
 import { type HttpFailure } from '@kernels/presentation';
 
@@ -84,12 +83,6 @@ const ERROR_KIND_POLICY: Record<ErrorKind, HttpFailurePolicy> = {
   },
 };
 
-const UNKNOWN_KIND_POLICY: HttpFailurePolicy = {
-  status: HttpStatus.INTERNAL_SERVER_ERROR,
-  exposure: 'masked',
-  logLevel: 'error',
-};
-
 const INTERNAL_ERROR_RESPONSE = {
   statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
   code: 'internal.unexpected',
@@ -145,8 +138,8 @@ function resolveFailure(exception: unknown): ResolvedFailure {
     };
   }
 
-  if (isSheskaError(exception)) {
-    const policy = policyForKind(exception.kind);
+  if (exception instanceof SheskaError) {
+    const policy = ERROR_KIND_POLICY[exception.kind];
     return {
       failure: toSheskaFailure(exception, policy),
       logLevel: policy.logLevel,
@@ -177,7 +170,7 @@ function toHttpExceptionFailure(exception: HttpException): HttpFailure {
 }
 
 function toSheskaFailure(
-  error: Error & SheskaError,
+  error: SheskaError,
   policy: HttpFailurePolicy,
 ): HttpFailure {
   if (policy.exposure === 'masked') {
@@ -190,13 +183,6 @@ function toSheskaFailure(
     message: error.message,
     details: policy.exposure === 'with_details' ? (error.details ?? {}) : {},
   };
-}
-
-function policyForKind(kind: string): HttpFailurePolicy {
-  const policies: Partial<Record<string, HttpFailurePolicy>> =
-    ERROR_KIND_POLICY;
-
-  return policies[kind] ?? UNKNOWN_KIND_POLICY;
 }
 
 function maskedResponse(status: number): HttpFailure {

@@ -4,11 +4,8 @@ import { APP_FILTER } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { NotFoundError } from '@core/errors';
 import { LOGGER } from '@kernels/application';
-import {
-  INFRASTRUCTURE_ERROR_KIND,
-  InfrastructureException,
-} from '@kernels/infrastructure';
 import { GetSourceSyncJobUseCase } from '@contexts/library/application/use-cases/get-source-sync-job.use-case';
 import { SourceSyncJobsHttpController } from '@contexts/library/presentation/http/source-sync-jobs.http.controller';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
@@ -73,13 +70,8 @@ describe('SourceSyncJobsHttpController', () => {
 
   it('sync job이 없으면 404 응답을 반환한다', async () => {
     execute.mockRejectedValue(
-      new InfrastructureException({
-        kind: INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
+      new NotFoundError({
         code: 'source_sync_job.not_found',
-        source: {
-          boundary: 'persistence',
-          adapter: 'source-sync-job.pg-drizzle',
-        },
         message: 'Source sync job not found',
         details: { id: 'missing' },
       }),
