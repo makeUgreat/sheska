@@ -30,3 +30,18 @@ export type {
   SyncJobProgress,
   SyncJobProgressLookup,
 } from './sync-job-progress.lookup';
+export type { SearchQueryEmbedder } from './search-query.embedder';
+export type {
+  PostQueryResult,
+  PostQueryFindCriteria,
+  PostQueryCursor,
+  PostQuerySearchCursor,
+  PostQueryPaginateOptions,
+  PostQuerySearchOptions,
+  PostQueryListItem,
+  PostMatchReason,
+  PostQuerySearchResultItem,
+  PostQueryPaginateResult,
+  PostQuerySearchResult,
+  PostQuery,
+} from './post.query';

@@ -6,13 +6,13 @@ import {
   type SourceRepository,
   type SourceSyncJobRepository,
 } from '@contexts/library/domain';
-import { type PostRepository } from '@contexts/posts/domain';
+import { type PostRepository } from '@contexts/library/domain';
 import {
   SOURCE_QUERY,
   SOURCE_REPOSITORY,
   SOURCE_SYNC_JOB_REPOSITORY,
 } from '@contexts/library/library.di-tokens';
-import { POST_REPOSITORY } from '@contexts/posts/posts.di-tokens';
+import { POST_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
 import { buildSource } from '../../../support/domains/fixtures/source.fixture';
 import { buildSourceSyncJob } from '../../../support/domains/fixtures/source-sync-job.fixture';

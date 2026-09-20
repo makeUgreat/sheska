@@ -9,9 +9,6 @@ export const NOTE_QUERY = Symbol('NOTE_QUERY');
 export const SOURCE_LOOKUP = Symbol('SOURCE_LOOKUP');
 export const LIBRARY_UNIT_OF_WORK = Symbol('LIBRARY_UNIT_OF_WORK');
 export const SYNC_JOB_PROGRESS_LOOKUP = Symbol('SYNC_JOB_PROGRESS_LOOKUP');
-
-export type { SourceRepository } from '@contexts/library/domain';
-export type {
-  SourceLookup,
-  SyncJobProgressLookup,
-} from '@contexts/library/application/ports';
+export const POST_REPOSITORY = Symbol('POST_REPOSITORY');
+export const POST_QUERY = Symbol('POST_QUERY');
+export const SEARCH_QUERY_EMBEDDER = Symbol('SEARCH_QUERY_EMBEDDER');

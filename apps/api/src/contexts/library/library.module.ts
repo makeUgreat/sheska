@@ -12,12 +12,21 @@ import { SourcePgDrizzleRepository } from '@contexts/library/infrastructure/pers
 import { SourceSyncJobPgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source-sync-job.pg-drizzle.repository';
 import { SourceEmbeddingFromIngestionLookup } from '@contexts/library/acl/ingestion/source-embedding.from-ingestion.lookup';
 import { SyncJobProgressFromIngestionLookup } from '@contexts/library/acl/ingestion/sync-job-progress.from-ingestion.lookup';
+import { SearchQueryFromIngestionEmbedder } from '@contexts/library/acl/ingestion/search-query.from-ingestion.embedder';
 import { SourcePgDrizzleQuery } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.query';
 import { NotePgDrizzleQuery } from '@contexts/library/infrastructure/persistence/postgres-drizzle/note.pg-drizzle.query';
+import { PostPgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.repository';
+import { PostPgDrizzleQuery } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.query';
 import { LibraryPgDrizzleUnitOfWork } from '@contexts/library/infrastructure/persistence/postgres-drizzle/library.pg-drizzle.unit-of-work';
 import { SourcesHttpController } from '@contexts/library/presentation/http/sources.http.controller';
+import { PostsHttpController } from '@contexts/library/presentation/http/posts.http.controller';
 import { NotesHttpController } from '@contexts/library/presentation/http/notes.http.controller';
 import { GetNoteUseCase } from '@contexts/library/application/use-cases/get-note.use-case';
+import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
+import { GetPostUseCase } from '@contexts/library/application/use-cases/get-post.use-case';
+import { ListPostsUseCase } from '@contexts/library/application/use-cases/list-posts.use-case';
+import { SearchPostsUseCase } from '@contexts/library/application/use-cases/search-posts.use-case';
+import { CountPostsUseCase } from '@contexts/library/application/use-cases/count-posts.use-case';
 import { ListNotesUseCase } from '@contexts/library/application/use-cases/list-notes.use-case';
 import { SourceSyncJobsHttpController } from '@contexts/library/presentation/http/source-sync-jobs.http.controller';
 import { IngestionIntegrationEventConsumer } from '@contexts/library/presentation/events/ingestion.integration-event.consumer';
@@ -27,6 +36,8 @@ import {
   SOURCE_EMBEDDING_LOOKUP as INGESTION_SOURCE_EMBEDDING_LOOKUP,
   EMBEDDING_WORKFLOW_PROGRESS_LOOKUP,
   type EmbeddingWorkflowProgressLookup,
+  type Embedder,
+  EMBEDDER,
   IngestionModule,
 } from '@contexts/ingestion';
 import {
@@ -40,6 +51,9 @@ import {
   SOURCE_LOOKUP,
   LIBRARY_UNIT_OF_WORK,
   SYNC_JOB_PROGRESS_LOOKUP,
+  POST_REPOSITORY,
+  POST_QUERY,
+  SEARCH_QUERY_EMBEDDER,
 } from './library.di-tokens';
 
 export type LibraryModuleOptions = Record<string, never>;
@@ -95,6 +109,20 @@ export class LibraryModule {
             new SyncJobProgressFromIngestionLookup(progress),
           inject: [EMBEDDING_WORKFLOW_PROGRESS_LOOKUP],
         },
+        {
+          provide: POST_REPOSITORY,
+          useClass: PostPgDrizzleRepository,
+        },
+        {
+          provide: POST_QUERY,
+          useClass: PostPgDrizzleQuery,
+        },
+        {
+          provide: SEARCH_QUERY_EMBEDDER,
+          useFactory: (embedder: Embedder) =>
+            new SearchQueryFromIngestionEmbedder(embedder),
+          inject: [EMBEDDER],
+        },
         SourceContentSnapshotCalculator,
         ListSourcesUseCase,
         GetSourceUseCase,
@@ -102,6 +130,11 @@ export class LibraryModule {
         UploadSourceUseCase,
         ListNotesUseCase,
         GetNoteUseCase,
+        PublishPostUseCase,
+        GetPostUseCase,
+        ListPostsUseCase,
+        SearchPostsUseCase,
+        CountPostsUseCase,
       ],
       exports: [
         SOURCE_REPOSITORY,
@@ -113,6 +146,11 @@ export class LibraryModule {
         UploadSourceUseCase,
         ListNotesUseCase,
         GetNoteUseCase,
+        PublishPostUseCase,
+        GetPostUseCase,
+        ListPostsUseCase,
+        SearchPostsUseCase,
+        CountPostsUseCase,
       ],
     };
   }
@@ -125,6 +163,7 @@ export class LibraryModule {
         SourcesHttpController,
         SourceSyncJobsHttpController,
         NotesHttpController,
+        PostsHttpController,
       ],
       providers: [
         ApplyIngestionUpdateUseCase,

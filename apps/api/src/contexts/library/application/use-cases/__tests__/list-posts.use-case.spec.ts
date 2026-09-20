@@ -1,0 +1,156 @@
+import {
+  type PostQuery,
+  type PostQueryPaginateResult,
+} from '@contexts/library/application/ports';
+import { describe, expect, it, type MockedFunction, vi } from 'vitest';
+import { ListPostsUseCase } from '../list-posts.use-case';
+
+type PostQueryMock = {
+  get: MockedFunction<PostQuery['get']>;
+  find: MockedFunction<PostQuery['find']>;
+  paginate: MockedFunction<PostQuery['paginate']>;
+  search: MockedFunction<PostQuery['search']>;
+  count: MockedFunction<PostQuery['count']>;
+};
+
+function buildPaginateResult(
+  overrides: Partial<PostQueryPaginateResult> = {},
+): PostQueryPaginateResult {
+  return {
+    posts: [],
+    nextCursor: null,
+    ...overrides,
+  };
+}
+
+describe('ListPostsUseCase', () => {
+  it('전체 post 목록을 반환한다', async () => {
+    const postQuery = createPostQueryMock();
+    postQuery.paginate.mockResolvedValue(
+      buildPaginateResult({
+        posts: [
+          {
+            postId: 'post-1',
+            sourceId: 'source-1',
+            title: '첫 번째 포스트',
+            viewCount: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            postId: 'post-2',
+            sourceId: 'source-2',
+            title: '두 번째 포스트',
+            viewCount: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+      }),
+    );
+    const useCase = new ListPostsUseCase(postQuery);
+
+    const result = await useCase.execute({ limit: 20, cursor: null });
+
+    expect(result.posts).toHaveLength(2);
+    expect(result.posts[0]).toMatchObject({
+      postId: 'post-1',
+      sourceId: 'source-1',
+      title: '첫 번째 포스트',
+      viewCount: 0,
+    });
+    expect(result.posts[1]).toMatchObject({
+      postId: 'post-2',
+      sourceId: 'source-2',
+      title: '두 번째 포스트',
+      viewCount: 0,
+    });
+    expect(postQuery.paginate).toHaveBeenCalledOnce();
+  });
+
+  it('post가 없으면 빈 배열을 반환한다', async () => {
+    const postQuery = createPostQueryMock();
+    postQuery.paginate.mockResolvedValue(buildPaginateResult());
+    const useCase = new ListPostsUseCase(postQuery);
+
+    const result = await useCase.execute({ limit: 20, cursor: null });
+
+    expect(result.posts).toHaveLength(0);
+  });
+
+  it('nextCursor가 있으면 그대로 반환한다', async () => {
+    const cursor = { id: 'post-cursor-id' };
+    const postQuery = createPostQueryMock();
+    postQuery.paginate.mockResolvedValue(
+      buildPaginateResult({
+        posts: [
+          {
+            postId: 'post-1',
+            sourceId: 'source-1',
+            title: '포스트',
+            viewCount: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+        nextCursor: cursor,
+      }),
+    );
+    const useCase = new ListPostsUseCase(postQuery);
+
+    const result = await useCase.execute({ limit: 20, cursor: null });
+
+    expect(result.nextCursor).toEqual(cursor);
+  });
+
+  it('nextCursor가 없으면 null을 반환한다', async () => {
+    const postQuery = createPostQueryMock();
+    postQuery.paginate.mockResolvedValue(
+      buildPaginateResult({ nextCursor: null }),
+    );
+    const useCase = new ListPostsUseCase(postQuery);
+
+    const result = await useCase.execute({ limit: 20, cursor: null });
+
+    expect(result.nextCursor).toBeNull();
+  });
+
+  it('command의 limit/cursor를 그대로 paginate에 전달한다', async () => {
+    const cursor = { id: 'post-cursor-id' };
+    const postQuery = createPostQueryMock();
+    postQuery.paginate.mockResolvedValue(buildPaginateResult());
+    const useCase = new ListPostsUseCase(postQuery);
+
+    await useCase.execute({ limit: 10, cursor });
+
+    expect(postQuery.paginate).toHaveBeenCalledWith({
+      limit: 10,
+      cursor,
+    });
+  });
+
+  it('postQuery paginate exception을 전파한다', async () => {
+    const paginateFailure = new Error('Post Query operation failed');
+    const postQuery = createPostQueryMock();
+    postQuery.paginate.mockRejectedValue(paginateFailure);
+    const useCase = new ListPostsUseCase(postQuery);
+
+    await expect(useCase.execute({ limit: 20, cursor: null })).rejects.toBe(
+      paginateFailure,
+    );
+  });
+});
+
+function createPostQueryMock(): PostQueryMock {
+  return {
+    get: vi.fn<PostQuery['get']>().mockResolvedValue(null as never),
+    find: vi.fn<PostQuery['find']>().mockResolvedValue(null),
+    paginate: vi
+      .fn<PostQuery['paginate']>()
+      .mockResolvedValue(buildPaginateResult()),
+    search: vi
+      .fn<PostQuery['search']>()
+      .mockResolvedValue({ posts: [], nextCursor: null }),
+    count: vi.fn<PostQuery['count']>().mockResolvedValue(0),
+  };
+}
