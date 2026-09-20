@@ -21,8 +21,18 @@ const POSTGRES_ERROR_CLASS_MAP: Record<string, PostgresErrorClass> = {
   '08003': UnavailableError,
   '08004': UnavailableError,
   '08006': UnavailableError,
-  // Class 57 — Operator Intervention (statement timeout)
-  '57014': TimeoutError,
+  // Class 53 — Insufficient Resources.
+  // Only connection exhaustion is transient. disk_full and out_of_memory leave
+  // the server unable to serve the same statement a second time, so they stay
+  // UNEXPECTED (500) instead of promising the caller a later retry.
+  '53300': UnavailableError, // too_many_connections
+  // Class 57 — Operator Intervention.
+  // A server that is shutting down, restarting or still starting up refuses
+  // this connection but not the next one.
+  '57P01': UnavailableError, // admin_shutdown
+  '57P02': UnavailableError, // crash_shutdown
+  '57P03': UnavailableError, // cannot_connect_now
+  '57014': TimeoutError, // query_canceled (statement timeout)
   // Class 23 — Integrity Constraint Violation.
   // Only uniqueness is an expected outcome the caller can act on. The rest mean
   // the code passed data the schema forbids, so they stay UnexpectedError (500).
