@@ -57,6 +57,34 @@ describe('classifyPostgresError', () => {
     );
   });
 
+  it('53300 (too_many_connections) → UnavailableError', () => {
+    expect(classifyPostgresError(createPostgresError('53300'))).toBe(
+      UnavailableError,
+    );
+  });
+
+  it.each([
+    ['57P01', 'admin_shutdown'],
+    ['57P02', 'crash_shutdown'],
+    ['57P03', 'cannot_connect_now'],
+  ])('%s (%s) → UnavailableError', (code) => {
+    expect(classifyPostgresError(createPostgresError(code))).toBe(
+      UnavailableError,
+    );
+  });
+
+  it.each([
+    ['53100', 'disk_full'],
+    ['53200', 'out_of_memory'],
+  ])(
+    '%s (%s)는 같은 statement를 다시 받을 수 없으므로 → UnexpectedError',
+    (code) => {
+      expect(classifyPostgresError(createPostgresError(code))).toBe(
+        UnexpectedError,
+      );
+    },
+  );
+
   it('57014 (query_canceled) → TimeoutError', () => {
     expect(classifyPostgresError(createPostgresError('57014'))).toBe(
       TimeoutError,
