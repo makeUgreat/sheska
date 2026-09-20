@@ -52,14 +52,14 @@ describe('SourceSyncJobDrizzleRepository', () => {
     expect(result.getProps().fingerprint.unpack()).toBe('fingerprint-2');
   });
 
-  it('없는 sourceId로 저장하면 exception으로 전파한다', async () => {
+  it('없는 sourceId로 저장하면 코드 결함이므로 UNEXPECTED로 전파한다', async () => {
     const syncJob = buildSourceSyncJob({
       sourceId: 'unknown-source',
       fingerprint: 'fingerprint-1',
     });
 
     await expect(repository.save(syncJob)).rejects.toMatchObject({
-      kind: 'conflict',
+      kind: 'unexpected',
       code: 'source_sync_job.save_failed',
     });
   });
@@ -80,7 +80,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
     await repository.save(first);
 
     await expect(repository.save(second)).rejects.toMatchObject({
-      kind: 'conflict',
+      kind: 'constraint_violation',
       code: 'source_sync_job.save_failed',
     });
   });

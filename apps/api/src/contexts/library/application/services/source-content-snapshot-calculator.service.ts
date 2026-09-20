@@ -40,7 +40,7 @@ export class SourceContentSnapshotCalculator {
     } catch (error: unknown) {
       throw new ApplicationException({
         kind: APPLICATION_ERROR_KIND.VALIDATION_FAILED,
-        code: 'sources.invalid_frontmatter',
+        code: 'source.invalid_frontmatter',
         message: 'Source frontmatter is invalid',
         details: {
           fields: [

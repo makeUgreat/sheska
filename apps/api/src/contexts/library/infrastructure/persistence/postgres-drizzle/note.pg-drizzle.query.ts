@@ -66,7 +66,7 @@ export class NotePgDrizzleQuery implements NoteQuery {
     if (!row) {
       throw new InfrastructureException({
         kind: INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
-        code: 'note.get_failed',
+        code: 'note.not_found',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Note not found',
         details: { noteId: criteria.noteId },

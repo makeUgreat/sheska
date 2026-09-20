@@ -1,7 +1,7 @@
-import { type PresentationErrorBase } from './error.base';
+import { type PresentationError } from './error.base';
 
 export class PresentationException<
-  F extends PresentationErrorBase = PresentationErrorBase,
+  F extends PresentationError = PresentationError,
 > extends Error {
   readonly kind: F['kind'];
   readonly code: F['code'];

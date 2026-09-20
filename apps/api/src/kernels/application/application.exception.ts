@@ -1,7 +1,7 @@
-import { type ApplicationErrorBase } from './error.base';
+import { type ApplicationError } from './error.base';
 
 export class ApplicationException<
-  F extends ApplicationErrorBase = ApplicationErrorBase,
+  F extends ApplicationError = ApplicationError,
 > extends Error {
   readonly kind: F['kind'];
   readonly code: F['code'];

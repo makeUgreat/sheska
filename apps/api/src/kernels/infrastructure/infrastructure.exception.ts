@@ -1,7 +1,7 @@
-import { type InfrastructureErrorBase } from './error.base';
+import { type InfrastructureError } from './error.base';
 
 export class InfrastructureException<
-  F extends InfrastructureErrorBase = InfrastructureErrorBase,
+  F extends InfrastructureError = InfrastructureError,
 > extends Error {
   readonly kind: F['kind'];
   readonly code: F['code'];

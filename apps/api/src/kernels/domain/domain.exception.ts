@@ -1,7 +1,7 @@
-import { type DomainErrorBase } from './error.base';
+import { type DomainError } from './error.base';
 
 export class DomainException<
-  F extends DomainErrorBase = DomainErrorBase,
+  F extends DomainError = DomainError,
 > extends Error {
   readonly kind: F['kind'];
   readonly code: F['code'];

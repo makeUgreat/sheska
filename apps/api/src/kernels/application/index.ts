@@ -2,6 +2,7 @@ export { ApplicationException } from './application.exception';
 export { toErrorLogContext } from './error-log.mapper';
 export {
   APPLICATION_ERROR_KIND,
+  type ApplicationError,
   type ApplicationErrorBase,
   type ApplicationErrorOf,
   type ApplicationErrorKind,

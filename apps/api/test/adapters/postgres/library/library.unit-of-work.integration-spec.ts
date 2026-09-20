@@ -94,7 +94,7 @@ describe('LibraryPgDrizzleUnitOfWork', () => {
         await resources.syncJobs.save(conflictingSyncJob);
       }),
     ).rejects.toMatchObject({
-      kind: 'conflict',
+      kind: 'constraint_violation',
       code: 'source_sync_job.save_failed',
     });
 

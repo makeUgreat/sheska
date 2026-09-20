@@ -9,7 +9,7 @@ import { SourcePgDrizzleRepository } from '../source.pg-drizzle.repository';
 import { SourceSyncJobPgDrizzleRepository } from '../source-sync-job.pg-drizzle.repository';
 
 describe('SourcePgDrizzleRepository', () => {
-  it('Postgres conflict는 CONFLICT exception으로 전파한다', async () => {
+  it('unique violation은 CONSTRAINT_VIOLATION exception으로 전파한다', async () => {
     const repository = new SourcePgDrizzleRepository(
       createSourceSaveRejectingDb(createPostgresError('23505')),
     );
@@ -18,7 +18,7 @@ describe('SourcePgDrizzleRepository', () => {
 
     await expect(result).rejects.toBeInstanceOf(InfrastructureException);
     await expect(result).rejects.toMatchObject({
-      kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+      kind: INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
       code: 'source.save_failed',
     });
   });
@@ -39,16 +39,16 @@ describe('SourcePgDrizzleRepository', () => {
 });
 
 describe('SourceSyncJobPgDrizzleRepository', () => {
-  it('Postgres conflict는 CONFLICT exception으로 전파한다', async () => {
+  it('unique violation은 CONSTRAINT_VIOLATION exception으로 전파한다', async () => {
     const repository = new SourceSyncJobPgDrizzleRepository(
-      createSourceSyncJobSaveRejectingDb(createPostgresError('23503')),
+      createSourceSyncJobSaveRejectingDb(createPostgresError('23505')),
     );
 
     const result = repository.save(buildSourceSyncJob());
 
     await expect(result).rejects.toBeInstanceOf(InfrastructureException);
     await expect(result).rejects.toMatchObject({
-      kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+      kind: INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
       code: 'source_sync_job.save_failed',
     });
   });

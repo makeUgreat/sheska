@@ -1,9 +1,8 @@
+import { ERROR_KIND } from '@core/error-kind';
 import { type SheskaError } from '@core/sheska-error';
 
 export const DOMAIN_ERROR_KIND = {
-  INVARIANT_VIOLATION: 'invariant_violation',
-  STATE_CONFLICT: 'state_conflict',
-  OPERATION_NOT_ALLOWED: 'operation_not_allowed',
+  INVARIANT_VIOLATION: ERROR_KIND.INVARIANT_VIOLATION,
 } as const;
 
 export type DomainErrorKind =
@@ -41,7 +40,6 @@ export type DomainErrorDetailsFor<Kind extends DomainErrorKind> =
     ? DomainValidationDetails
     : unknown;
 
-export type DomainError =
-  | DomainErrorOf<typeof DOMAIN_ERROR_KIND.INVARIANT_VIOLATION>
-  | DomainErrorOf<typeof DOMAIN_ERROR_KIND.STATE_CONFLICT>
-  | DomainErrorOf<typeof DOMAIN_ERROR_KIND.OPERATION_NOT_ALLOWED>;
+export type DomainError = DomainErrorOf<
+  typeof DOMAIN_ERROR_KIND.INVARIANT_VIOLATION
+>;

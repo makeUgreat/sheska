@@ -59,7 +59,7 @@ describe('PostPgDrizzleRepository', () => {
   it('존재하지 않는 id는 NOT_FOUND exception을 throw한다', async () => {
     await expect(posts.get({ id: 'non-existent-id' })).rejects.toMatchObject({
       kind: 'not_found',
-      code: 'post.get_failed',
+      code: 'post.not_found',
     });
   });
 
@@ -91,7 +91,7 @@ describe('PostPgDrizzleRepository', () => {
     await posts.save(post1);
 
     await expect(posts.save(post2)).rejects.toMatchObject({
-      kind: 'conflict',
+      kind: 'constraint_violation',
       code: 'post.save_failed',
     });
   });

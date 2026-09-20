@@ -144,7 +144,7 @@ describe('PostsHttpController', () => {
       publishPostUseCase.execute.mockRejectedValue(
         new InfrastructureException({
           kind: INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
-          code: 'source.get_failed',
+          code: 'source.not_found',
           source: { boundary: 'persistence', adapter: 'source.pg-drizzle' },
           message: 'Source not found',
           details: {},
@@ -158,7 +158,7 @@ describe('PostsHttpController', () => {
 
       expect(response.body).toEqual({
         statusCode: 404,
-        code: 'source.get_failed',
+        code: 'source.not_found',
         message: 'Source not found',
         details: {},
       });
