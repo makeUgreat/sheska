@@ -67,12 +67,30 @@ export class SourceEmbeddingChunkBullMqConsumer extends WorkerHost {
     }
 
     this.logger.error(`${job.queueName} job failed`, error, context);
-    const input = embedSourceChunkJobInputSchema.parse(job.data);
-    await this.embedSourceChunk.handleFailure({
-      sourceId: input.sourceId,
-      syncJobId: input.syncJobId,
-      chunkIndex: input.chunkIndex,
-      chunkContent: input.chunkContent,
-    });
+
+    const input = embedSourceChunkJobInputSchema.safeParse(job.data);
+    if (!input.success) {
+      this.logger.error(
+        `${job.queueName} job failure compensation skipped`,
+        input.error,
+        context,
+      );
+      return;
+    }
+
+    try {
+      await this.embedSourceChunk.handleFailure({
+        sourceId: input.data.sourceId,
+        syncJobId: input.data.syncJobId,
+        chunkIndex: input.data.chunkIndex,
+        chunkContent: input.data.chunkContent,
+      });
+    } catch (compensationError: unknown) {
+      this.logger.error(
+        `${job.queueName} job failure compensation failed`,
+        compensationError,
+        context,
+      );
+    }
   }
 }
