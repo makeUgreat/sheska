@@ -125,11 +125,11 @@ Push는 그 결합을 없애는 대신 최종적 일관성(eventual consistency)
 - **양쪽 포트 모두 `<Concept>Lookup`으로 이름 짓는다** (데이터 조회가 아니라 동작인 경우엔 평범한 동작 동사, 예: `Embedder`, `SearchQueryEmbedder`) — 빌려온 OOP 패턴 단어(`Service`, `Gateway`, `Facade` 등)가 아니라, 그 컨텍스트 자신의 도메인 언어로 "제공하는 기능"을 그대로 이름 짓는다.
   - 프로듀서 자신의 포트와 컨슈머 자신의 포트가 억지로 다른 단어를 쓸 필요는 없다. ACL의 폴더 위치(`contexts/A/acl/<B-name>/`)가 이미 "이건 컨텍스트 경계를 넘는다"는 걸 말해주고 있어서, 포트 이름이 그걸 또 말할 필요가 없다.
   - 토큰: `<CONCEPT>_LOOKUP`.
-- **양쪽이 같은 실제 개념을 가리키면 이름이 우연히 똑같아질 수 있다** (예: ingestion 자신의 포트와 sources 자신의 포트가 각자 자기 언어로 지었는데 둘 다 `SourceEmbeddingLookup`이 되는 경우). 이럴 땐 어느 한쪽 포트 이름을 억지로 바꾸는 대신, 양쪽을 동시에 보는 파일(ACL 어댑터, 그리고 컨슈머의 모듈 배선 팩토리) 딱 그 지점에서만 프로듀서 쪽 import에 alias를 붙인다:
+- **양쪽이 같은 실제 개념을 가리키면 이름이 우연히 똑같아질 수 있다** (예: ingestion 자신의 포트와 library 자신의 포트가 각자 자기 언어로 지었는데 둘 다 `SourceEmbeddingLookup`이 되는 경우). 이럴 땐 어느 한쪽 포트 이름을 억지로 바꾸는 대신, 양쪽을 동시에 보는 파일(ACL 어댑터, 그리고 컨슈머의 모듈 배선 팩토리) 딱 그 지점에서만 프로듀서 쪽 import에 alias를 붙인다:
 
 ```ts
 import { type SourceEmbeddingLookup as IngestionSourceEmbeddingLookup } from '@contexts/ingestion';
-import { type SourceEmbeddingLookup } from '@contexts/sources/application/ports';
+import { type SourceEmbeddingLookup } from '@contexts/library/application/ports';
 
 export class SourceEmbeddingFromIngestionLookup implements SourceEmbeddingLookup {
   constructor(
@@ -146,7 +146,8 @@ export class SourceEmbeddingFromIngestionLookup implements SourceEmbeddingLookup
   - 이게 유일하게 허용된 협력 대상은 아니다. 나중에 어떤 구현체가 캐시를 추가하거나 두 번째 의존성을 조합하게 되면, `from-repository`에 억지로 끼워 맞추거나 이름에 접미사를 계속 이어붙이지 말고 그 구현체가 실제로 협력하는 대상으로 새로 이름 짓는다 (예: projection 기반 구현체라면 `source-embedding.from-projection.lookup.ts`). 같은 포트의 여러 구현체는 각자 독립적으로 이름 짓는다 — 전부에 적용되는 단일 가운데 자리 규칙은 없다.
   - `Impl`만 붙이는 접미사는 절대 쓰지 않는다 — 그 클래스가 "어떻게" 동작하는지 아무것도 말해주지 않는다.
 - **반환 타입은 실제로 뭘 담고 있는지로 구체적으로 이름 짓는다** — `Info`, `Details`, `Data`나 포트 자신의 이름을 그대로 쓰는 것처럼 `Data`랑 다를 바 없는 일반적인 접미사 템플릿은 쓰지 않는다.
-  - 예: ingestion 자신의 개념은 `EmbeddingMetadata`(모델, 차원, 타임스탬프 — 임베딩 벡터가 아니라 임베딩에 대한 메타데이터). sources가 자기 언어로 갖는 사본은 `SourceEmbeddingMetadata`(이 source가 가진 임베딩 메타데이터). sources 자신의 콘텐츠 개념은 `SourceDocument`. posts가 자기 언어로 갖는 사본은 `PublishableSourceContent`(posts가 포스트를 만들 때 쓰는 콘텐츠).
+  - 예: ingestion 자신의 개념은 `EmbeddingMetadata`(모델, 차원, 타임스탬프 — 임베딩 벡터가 아니라 임베딩에 대한 메타데이터). library가 자기 언어로 갖는 사본은 `SourceEmbeddingMetadata`(이 source가 가진 임베딩 메타데이터).
+  - 계약이 모양까지 달라지기도 한다. ingestion의 `Embedder`는 `{ embedding, model }`을 반환하고 실패하면 예외를 던진다. library의 `SearchQueryEmbedder`는 `number[] | null`을 반환한다 — 검색은 임베딩이 없어도 FTS만으로 성립하므로, 컨슈머 언어에서는 임베딩 실패가 오류가 아니라 "벡터 후보 없음"이다. 이 번역이 ACL이 하는 일이다.
   - 프로듀서와 컨슈머의 모양이 지금은 우연히 똑같아도 두 반환 타입 이름은 구분해서 유지한다 — 나중에 각자 독립적으로 바뀔 수 있어야 한다. 포트 이름과 달리 여기는 import alias에 기대지 않는다 — 이 타입들은 그 한 곳의 접점 파일뿐 아니라 각자 자기 쪽 애플리케이션 코드 전체에서 쓰이기 때문이다.
 
 ## 구현 규칙
@@ -165,7 +166,7 @@ export class SourceEmbeddingFromIngestionLookup implements SourceEmbeddingLookup
 - 파일과 클래스 명명은 infrastructure 어댑터와 똑같은 세 자리 형태([infrastructure adapter 컨벤션](./infrastructure.md))인 `{domain-name}.{adapter-or-purpose}.{role}.ts`를 그대로 재사용한다.
   - 크로스 컨텍스트 Pull 어댑터는 `adapter-or-purpose` 자리에 `from-<B-name>`을 쓴다 (예: `source-embedding.from-ingestion.lookup.ts` → `SourceEmbeddingFromIngestionLookup`).
   - `from-` 접두사를 붙이면 폴더 경로를 보지 않아도 파일명만으로 크로스 컨텍스트 어댑터임을 알 수 있다.
-  - 도메인 이름과 프로듀서 컨텍스트 이름이 어휘적으로 비슷할 때도 모호함을 피할 수 있다 (예: `source` vs `sources`).
+  - 도메인 이름과 프로듀서 컨텍스트 이름이 어휘적으로 비슷할 때도 어느 쪽이 컨텍스트 이름인지 분명해진다.
 - A의 모듈 배선 코드를 제외하면, A에서 B를 import할 수 있는 파일은 이 어댑터뿐이다.
   - A의 모듈 배선 코드와 이 어댑터는 B의 공개 표면인 `contexts/B/index.ts`만 (bare alias `@contexts/B`로) import할 수 있다.
   - B의 루트 레벨 파일인 `B.di-tokens.ts`와 `B.module.ts`는 B의 내부 배선 파일이다. `domain/`, `infrastructure/`, `presentation/`, `acl/` 밖에 있어도 다른 컨텍스트가 이 파일들을 직접 import해서는 안 된다.
@@ -192,6 +193,17 @@ export class SourceEmbeddingFromIngestionLookup implements SourceEmbeddingLookup
 - `AModule.forRoot()`가 어댑터 provider를 선언하고 팩토리에서 B가 `contexts/B/index.ts`로 공개한 토큰을 주입한다.
 - A의 모듈 팩토리 안에서 B의 DI 토큰을 주입하는 것은 허용된다 — 이것은 ACL 배선이지 도메인 결합이 아니다.
 
+## 읽기 모델의 크로스 컨텍스트 SQL 예외
+
+- 읽기 전용 쿼리 어댑터는 다른 컨텍스트가 소유한 테이블을 SQL에서 직접 읽을 수 있다. 쓰기는 어떤 경우에도 허용하지 않는다.
+- 이 예외는 하나의 쿼리 안에서 랭킹이나 집계를 계산해야 하고, 그 계산을 포트 경계 너머로 나눌 수 없을 때만 쓴다.
+  - 지금 이 예외에 해당하는 것은 `library`의 포스트 검색 하나다. FTS 점수와 임베딩 거리를 RRF로 합치려면 두 값이 같은 쿼리 안에 있어야 하므로, `ingestion`이 소유한 `source_embeddings`를 직접 조인한다.
+  - 포트로 분리하면 후보를 애플리케이션 메모리로 가져와 재랭킹해야 하고, 그 순간 랭킹 품질과 페이지네이션이 모두 깨진다.
+- 단순 조회, 존재 확인, 화면 조립처럼 한 쿼리일 필요가 없는 경우에는 이 예외를 쓰지 않는다. Rule 1과 Rule 2를 따라 컨슈머 소유 포트와 ACL을 만든다.
+- 이 예외는 정적 검사가 잡지 못한다. SQL은 문자열이라 dependency-cruiser도 타입 체커도 테이블 참조를 보지 못한다.
+  - 그래서 프로듀서 쪽 테이블이나 컬럼을 바꿀 때 이 쿼리가 깨진다. 스키마를 바꾸는 변경 단위에서 이 예외 목록을 함께 확인한다.
+  - 예외를 늘릴 때는 위 조건(한 쿼리에서 계산되어야 함)을 실제로 만족하는지 확인하고, 이 절에 어느 쿼리인지 적는다.
+
 ## 검토 체크리스트
 
 - 크로스 컨텍스트 포트가 공통 모듈이나 프로듀서가 아닌 컨슈머 소유인지 확인한다.
@@ -201,3 +213,4 @@ export class SourceEmbeddingFromIngestionLookup implements SourceEmbeddingLookup
 - 포트가 B의 애그리거트나 값 객체가 아닌 A 자신의 타입을 반환하는지 확인한다.
 - 크로스 컨텍스트 데이터 조합이 컨트롤러가 아닌 유스 케이스에서 이루어지는지 확인한다.
 - Pull 전략이 여전히 맞는 선택인지, 또는 실제로 확인된 가용성/지연 문제로 Read Model 전환이 정당화되는지 확인한다.
+- 크로스 컨텍스트 SQL이 있다면 읽기 전용인지, 그리고 한 쿼리에서 계산되어야 하는 이유가 있는지 확인한다.

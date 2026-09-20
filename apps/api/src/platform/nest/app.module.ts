@@ -2,9 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { SourcesModule } from '@contexts/sources/sources.module';
+import { LibraryModule } from '@contexts/library/library.module';
 import { IngestionModule } from '@contexts/ingestion/ingestion.module';
-import { PostsModule } from '@contexts/posts/posts.module';
 import { DatabaseModule } from './database/database.module';
 import { IntegrationEventsModule } from './events/integration-events.module';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
@@ -26,9 +25,8 @@ import { QueueModule } from './queue/queue.module';
     QueueModule,
     DatabaseModule,
     HealthModule,
-    SourcesModule.forRoot(),
+    LibraryModule.forRoot(),
     IngestionModule.forRoot(),
-    PostsModule.forRoot(),
     OutboxModule,
   ],
   providers: [

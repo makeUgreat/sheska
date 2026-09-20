@@ -1,4 +1,4 @@
-import { Source, type SourceFrontmatterProps } from '@contexts/sources/domain';
+import { Source, type SourceFrontmatterProps } from '@contexts/library/domain';
 
 export function buildSource(
   params: {

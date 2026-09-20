@@ -1,12 +1,12 @@
 import { type OnModuleDestroy } from '@nestjs/common';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import * as sourcesSchema from '@contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
+import * as librarySchema from '@contexts/library/infrastructure/persistence/postgres-drizzle/schema';
 import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
 import { outboxSchema } from '@kernels/infrastructure';
 
 const schema = {
-  ...sourcesSchema,
+  ...librarySchema,
   ...ingestionSchema,
   ...outboxSchema,
 };

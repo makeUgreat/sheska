@@ -1,0 +1,12 @@
+import { Injectable } from '@nestjs/common';
+import { createHash } from 'node:crypto';
+import { type SourceFingerprinter } from '@contexts/library/application/ports';
+
+@Injectable()
+export class SourceSha256Fingerprinter implements SourceFingerprinter {
+  calculate(content: string): Promise<string> {
+    return Promise.resolve(
+      createHash('sha256').update(content, 'utf8').digest('hex'),
+    );
+  }
+}

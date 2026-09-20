@@ -9,8 +9,8 @@ import {
   INGESTION_UNIT_OF_WORK,
   SOURCE_EMBEDDING_REPOSITORY,
 } from '@contexts/ingestion/ingestion.di-tokens';
-import { type SourceRepository } from '@contexts/sources/domain';
-import { SOURCE_REPOSITORY } from '@contexts/sources/sources.di-tokens';
+import { type SourceRepository } from '@contexts/library/domain';
+import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { DATABASE_TOKENS, outboxMessages } from '@kernels/infrastructure';
 import { type ApiDrizzleDatabase } from '@platform/nest/database/drizzle-postgres.provider';
 import { AppModule } from '@platform/nest/app.module';

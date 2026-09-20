@@ -3,8 +3,8 @@ import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { sql } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { type SourceRepository } from '@contexts/sources/domain';
-import { SOURCE_REPOSITORY } from '@contexts/sources/sources.di-tokens';
+import { type SourceRepository } from '@contexts/library/domain';
+import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { DATABASE_TOKENS } from '@kernels/infrastructure';
 import { AppModule } from '@platform/nest/app.module';
 import {

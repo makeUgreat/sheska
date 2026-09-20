@@ -143,7 +143,7 @@ describe('eslint/config.mjs', () => {
           }
         }
       `,
-      'src/contexts/sources/application/use-cases/upload-source.use-case.ts',
+      'src/contexts/library/application/use-cases/upload-source.use-case.ts',
     );
 
     expect(
@@ -163,7 +163,7 @@ describe('eslint/config.mjs', () => {
           controller = Controller;
         }
       `,
-      'src/contexts/sources/application/use-cases/upload-source.use-case.ts',
+      'src/contexts/library/application/use-cases/upload-source.use-case.ts',
     );
 
     const message = result.messages.find(

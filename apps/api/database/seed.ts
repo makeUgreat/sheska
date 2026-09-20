@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import * as schema from '../src/contexts/sources/infrastructure/persistence/postgres-drizzle/schema';
+import * as schema from '../src/contexts/library/infrastructure/persistence/postgres-drizzle/schema';
 
 async function main(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL;
