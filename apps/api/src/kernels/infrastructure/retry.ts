@@ -1,6 +1,5 @@
-import { computeExponentialBackoffMs } from '@core/backoff';
+import { computeRetryDelayMs } from '@core/backoff';
 import { remainingMs, type Deadline } from '@core/deadline';
-import { applyFullJitter } from '@core/jitter';
 import { sleep as defaultSleep } from '@core/sleep';
 import { type RetryClassification } from './retry-error.classifier';
 
@@ -53,14 +52,7 @@ export async function withRetryAttempts<T>(
 
       const delay =
         classification.retryAfterMs ??
-        applyFullJitter(
-          computeExponentialBackoffMs(
-            attempt,
-            policy.baseDelayMs,
-            policy.maxDelayMs,
-          ),
-          random,
-        );
+        computeRetryDelayMs(attempt, policy, random);
 
       if (delay >= remainingMs(deadline, now())) {
         throw error;

@@ -20,11 +20,19 @@ export const outboxMessages = pgTable(
       .notNull()
       .defaultNow(),
     publishedAt: timestamp('published_at', { withTimezone: true }),
+    attemptCount: integer('attempt_count').notNull().default(0),
+    nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    deadLetteredAt: timestamp('dead_lettered_at', { withTimezone: true }),
+    lastFailureReason: text('last_failure_reason'),
   },
   (table) => [
-    index('outbox_messages_pending_created_at_idx')
-      .on(table.createdAt)
-      .where(sql`${table.publishedAt} IS NULL`),
+    index('outbox_messages_due_idx')
+      .on(table.nextAttemptAt, table.createdAt)
+      .where(
+        sql`${table.publishedAt} IS NULL AND ${table.deadLetteredAt} IS NULL`,
+      ),
   ],
 );
 

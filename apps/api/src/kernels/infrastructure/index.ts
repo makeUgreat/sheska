@@ -17,7 +17,11 @@ export {
 export { InfrastructureException } from './infrastructure.exception';
 export { classifyPostgresError } from './postgres-error.classifier';
 export { type PgDrizzleSession } from './pg-drizzle.session';
-export { OutboxRelay, type OutboxRelayOptions } from './outbox.relay';
+export {
+  OutboxRelay,
+  type OutboxRelayOptions,
+  type OutboxRelayRuntime,
+} from './outbox.relay';
 export { outboxMessages } from './persistence/postgres-drizzle/outbox.pg-drizzle.schema';
 export * as outboxSchema from './persistence/postgres-drizzle/outbox.pg-drizzle.schema';
 export { PgDrizzleOutboxStore } from './persistence/postgres-drizzle/outbox.pg-drizzle.store';
@@ -28,4 +32,4 @@ export {
   type ResilienceAttempt,
   type ResilienceExecutionOptions,
 } from './resilience.pipeline';
-export { type RetryPolicy } from './retry';
+export { SYSTEM_RETRY_RUNTIME, type RetryPolicy } from './retry';

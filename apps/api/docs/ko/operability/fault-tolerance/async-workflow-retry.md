@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../../../en/operability/fault-tolerance/async-workflow-retry.md
-last_synced: 2026-09-07
+last_synced: 2026-09-18
 read_when:
   - 메시지 큐 consumer, dead letter queue/redrive policy, 또는 여러 단계로 구성된 workflow, activity, saga의 재시도 동작을 정의, 구현, 리뷰할 때.
 related:
@@ -23,7 +23,7 @@ related:
 - [API 재시도 정책](./retry.md)과 [API Timeout & Deadline 정책](./timeout-deadline.md)은 호출자가 정해진 시간 안에서 동기적으로 응답을 기다리는 호출의 재시도를 다룬다. 이 문서는 호출자가 이미 응답을 받고 돌아간 뒤에도 계속되는 작업을 다룬다.
 - retry budget, circuit breaker, idempotency, 관측성은 별개의 fault-tolerance 관심사이며 아직 정식 컨벤션 문서로 승격되지 않았다.
   - 현재 승격 상태는 [API Fault Tolerance 인덱스](./index.md)에서 확인한다.
-- 이 문서는 일반 원칙만 다룬다. 구체적인 메커니즘(broker/엔진별 동작, 설정값, 임계치)은 아직 여기서 정의하지 않으며, 구현 방식이 정해지면 추가한다.
+- 이 문서는 일반 원칙을 다루되, [Outbox Relay Retry](#outbox-relay-retry)처럼 이 프로젝트가 이미 구현 방식을 정한 메커니즘은 해당 절에서 구체적으로 기술한다. 구체적인 설정값이나 임계치는 그 메커니즘의 구현 방식이 정해진 뒤에만 추가한다.
 
 ## 동기 재시도와 다른 문제인 이유
 
@@ -41,6 +41,49 @@ related:
 
 - 일정 횟수 이상 실패한 메시지는 무한히 재시도하는 대신 격리한다. 그렇지 않으면 정상 메시지들의 처리까지 지연시킨다(head-of-line blocking).
 - 이는 메시징 환경에서 단일 요청에 대한 [Max Retry](./retry.md#max-retry)와 같은 역할을 한다: 포기하고 다음 단계로 넘기지, 무한히 재시도하지 않는다.
+
+### Outbox Relay Retry
+
+- integration event 전달의 재시도 소유자는 outbox relay다. 다른 어떤 계층도 그 전달을 다시 시도하지 않으며, relay 자신도 dispatcher 호출을 어댑터 계층 재시도로 감싸지 않는다.
+  - in-process dispatcher가 리스너를 동기적으로 실행하므로, relay 시도 1회는 네트워크 전송만이 아니라 그 dispatch가 촉발하는 작업 전체를 다시 실행한다. relay 시도 1회를 [예외: Workflow 단위 재시도](./retry.md#예외-workflow-단위-재시도) 의미의 workflow 단위 재시도로 취급한다.
+- event를 dispatch하기 전에 먼저 claim한다: 같은 문장에서 시도 횟수를 올리고 다음 시도 시각을 앞으로 밀며, 다른 인스턴스가 이미 잡고 있는 row는 건너뛴다.
+  - dispatch 전에 claim하는 것이 relay를 여러 인스턴스에서 돌려도 안전하게 만드는 핵심이다. claim 없이 조회만 하면 두 인스턴스가 같은 event를 동시에 dispatch한다.
+  - 앞으로 민 다음 시도 시각은 lease 역할을 겸한다. dispatch 도중 프로세스가 죽어도 아무것도 반환되지 않지만, lease가 만료되면 그 event는 다시 claim 대상이 된다.
+- 재시도 간격은 [Backoff와 Jitter](./retry.md#backoff와-jitter)의 공식대로 지수 backoff + full jitter로 벌린다. 폴링 주기는 만기된 event를 얼마나 자주 확인하는지를 정할 뿐, 실패한 전달이 얼마나 기다리는지를 정하지 않는다.
+- `maxAttempts`만큼 실패한 event는 무한히 재시도하는 대신 dead letter로 표시해 격리한다.
+  - 격리된 event는 outbox 테이블에 그대로 남고 claim 쿼리에서만 제외된다. 별도 테이블이나 큐로 옮기지 않는다: 여기서는 테이블이 곧 큐이므로, broker에서 메시지를 옮겨 얻는 격리를 상태 컬럼으로 동일하게 얻는다.
+  - redrive는 자동이 아니라 의도적인 수동 결정이다:
+
+```sql
+UPDATE outbox_messages SET dead_lettered_at = NULL, attempt_count = 0, next_attempt_at = now()
+WHERE event_id = '...'
+```
+
+- 현재 값:
+
+```ts
+maxAttempts: 14
+baseDelayMs: 1_000
+maxDelayMs: 600_000
+claimLeaseMs: 30_000
+batchSize: 100
+```
+
+- 이 값에서 격리까지의 창은 최대 약 57분이고, full jitter가 기댓값을 절반으로 줄이므로 평균은 그 절반 정도다. 약 한 시간보다 짧은 인프라 장애로는 정상 event가 격리되지 않도록 고른 값이다.
+- 이 값들을 고정 상수로 취급하지 않는다. 이유는 [Backoff와 Jitter](./retry.md#backoff와-jitter)가 말하는 것과 같다: 관측한 데이터로 측정해 조정하고, dispatch 경로의 동작이 바뀌면 다시 검토한다.
+- [API 로깅 정책](../logging.md)에 따라 재시도 예약은 `warn`으로, 격리는 `error`로 기록한다. 포함할 필드:
+
+```text
+eventId
+eventType
+attempt
+maxAttempts
+delayMs
+retryAllowed
+retryBlockedReason
+```
+
+  - 이는 [API 재시도 정책](./retry.md)의 [관측성](./retry.md#관측성) 필드를 의존성 호출이 아닌 event 기준으로 옮긴 것이다. 에러의 타입과 스택은 로깅 어댑터가 이미 남기므로 재시도 필드로 중복해서 넣지 않는다.
 
 ## Workflow Retry
 
