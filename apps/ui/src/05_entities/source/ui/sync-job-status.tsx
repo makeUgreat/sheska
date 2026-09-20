@@ -1,4 +1,4 @@
-import { type SyncJobStatus } from '@/entities/source';
+import { type SyncJobStatus } from '../api/types';
 
 const STATUS_STYLES: Record<SyncJobStatus, string> = {
   waiting: 'bg-surface-container-high text-secondary',
