@@ -3,9 +3,9 @@ import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { type PostQuery } from '@contexts/posts/application/ports';
 import { type PostRepository } from '@contexts/posts/domain';
-import { type SourceRepository } from '@contexts/sources/domain';
+import { type SourceRepository } from '@contexts/library/domain';
 import { POST_QUERY, POST_REPOSITORY } from '@contexts/posts/posts.di-tokens';
-import { SOURCE_REPOSITORY } from '@contexts/sources/sources.di-tokens';
+import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
 import {
   type SourceEmbeddingRepository,
   SOURCE_EMBEDDING_REPOSITORY,

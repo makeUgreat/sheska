@@ -10,10 +10,10 @@ import { SourceFromSourcesLookup } from '@contexts/posts/acl/sources/source.from
 import { SearchQueryFromIngestionEmbedder } from '@contexts/posts/acl/ingestion/search-query.from-ingestion.embedder';
 import { PostsHttpController } from '@contexts/posts/presentation/http/posts.http.controller';
 import {
-  type SourceLookup as SourcesSourceLookup,
-  SOURCE_LOOKUP as SOURCES_SOURCE_LOOKUP,
-  SourcesModule,
-} from '@contexts/sources';
+  type SourceLookup as LibrarySourceLookup,
+  SOURCE_LOOKUP as LIBRARY_SOURCE_LOOKUP,
+  LibraryModule,
+} from '@contexts/library';
 import { type Embedder, EMBEDDER, IngestionModule } from '@contexts/ingestion';
 import {
   POST_QUERY,
@@ -29,7 +29,7 @@ export class PostsModule {
   static forRoot(_options: PostsModuleOptions = {}): DynamicModule {
     return {
       module: PostsModule,
-      imports: [SourcesModule.forFeature(), IngestionModule.forFeature()],
+      imports: [LibraryModule.forFeature(), IngestionModule.forFeature()],
       controllers: [PostsHttpController],
       providers: [
         {
@@ -42,9 +42,9 @@ export class PostsModule {
         },
         {
           provide: SOURCE_LOOKUP,
-          useFactory: (sourcesLookup: SourcesSourceLookup) =>
+          useFactory: (sourcesLookup: LibrarySourceLookup) =>
             new SourceFromSourcesLookup(sourcesLookup),
-          inject: [SOURCES_SOURCE_LOOKUP],
+          inject: [LIBRARY_SOURCE_LOOKUP],
         },
         {
           provide: SEARCH_QUERY_EMBEDDER,

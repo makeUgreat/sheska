@@ -1,4 +1,4 @@
-import { SourceSyncJob } from '@contexts/sources/domain';
+import { SourceSyncJob } from '@contexts/library/domain';
 
 export function buildSourceSyncJob(
   params: Partial<Parameters<typeof SourceSyncJob.create>[0]> = {},

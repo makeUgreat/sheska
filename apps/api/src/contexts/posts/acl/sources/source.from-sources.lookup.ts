@@ -1,11 +1,11 @@
-import { type SourceLookup as SourcesSourceLookup } from '@contexts/sources';
+import { type SourceLookup as LibrarySourceLookup } from '@contexts/library';
 import {
   type PublishableSource,
   type SourceLookup,
 } from '@contexts/posts/application/ports';
 
 export class SourceFromSourcesLookup implements SourceLookup {
-  constructor(private readonly sourcesLookup: SourcesSourceLookup) {}
+  constructor(private readonly sourcesLookup: LibrarySourceLookup) {}
 
   async get(sourceId: string): Promise<PublishableSource> {
     const source = await this.sourcesLookup.get(sourceId);

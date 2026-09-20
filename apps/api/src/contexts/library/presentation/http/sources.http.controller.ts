@@ -1,0 +1,118 @@
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upload-source.use-case';
+import { ListSourcesUseCase } from '@contexts/library/application/use-cases/list-sources.use-case';
+import { GetSourceUseCase } from '@contexts/library/application/use-cases/get-source.use-case';
+import {
+  UploadSourceHttpRequest,
+  type UploadSourceHttpResponse,
+} from './dto/upload-source.http.dto';
+import {
+  ListSourcesHttpRequest,
+  type ListSourcesHttpResponse,
+} from './dto/list-sources.http.dto';
+import { type GetSourceHttpResponse } from './dto/get-source.http.dto';
+
+@Controller('sources')
+export class SourcesHttpController {
+  constructor(
+    private readonly uploadSourceUseCase: UploadSourceUseCase,
+    private readonly listSourcesUseCase: ListSourcesUseCase,
+    private readonly getSourceUseCase: GetSourceUseCase,
+  ) {}
+
+  @Get()
+  async list(
+    @Query() query: ListSourcesHttpRequest,
+  ): Promise<ListSourcesHttpResponse> {
+    const result = await this.listSourcesUseCase.execute({
+      page: query.page,
+      pageSize: query.pageSize,
+      syncJobStatus: query.syncJobStatus,
+    });
+    return {
+      sources: result.sources.map((s) => ({
+        sourceId: s.sourceId,
+        externalSourceId: s.externalSourceId,
+        title: s.title,
+        fingerprint: s.fingerprint,
+        sizeBytes: s.sizeBytes,
+        createdAt: s.createdAt.toISOString(),
+        updatedAt: s.updatedAt.toISOString(),
+        latestSyncJob: s.latestSyncJob
+          ? {
+              syncJobId: s.latestSyncJob.syncJobId,
+              status: s.latestSyncJob.status,
+              totalChunks: s.latestSyncJob.totalChunks,
+              createdAt: s.latestSyncJob.createdAt.toISOString(),
+            }
+          : null,
+        publishedPostId: s.publishedPostId,
+      })),
+      page: result.page,
+      pageSize: result.pageSize,
+      totalCount: result.totalCount,
+      totalPages: result.totalPages,
+    };
+  }
+
+  @Get(':id')
+  async get(@Param('id') id: string): Promise<GetSourceHttpResponse> {
+    const result = await this.getSourceUseCase.execute({ sourceId: id });
+
+    return {
+      sourceId: result.sourceId,
+      externalSourceId: result.externalSourceId,
+      body: result.body,
+      frontmatter: result.frontmatter,
+      title: result.title,
+      fingerprint: result.fingerprint,
+      sizeBytes: result.sizeBytes,
+      createdAt: result.createdAt.toISOString(),
+      updatedAt: result.updatedAt.toISOString(),
+      latestSyncJob: result.latestSyncJob
+        ? {
+            syncJobId: result.latestSyncJob.syncJobId,
+            status: result.latestSyncJob.status,
+            totalChunks: result.latestSyncJob.totalChunks,
+            createdAt: result.latestSyncJob.createdAt.toISOString(),
+          }
+        : null,
+      embedding: result.embedding
+        ? {
+            model: result.embedding.model,
+            dimensions: result.embedding.dimensions,
+            createdAt: result.embedding.createdAt.toISOString(),
+            updatedAt: result.embedding.updatedAt.toISOString(),
+          }
+        : null,
+      publishedPostId: result.publishedPostId,
+    };
+  }
+
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  async upload(
+    @Body() request: UploadSourceHttpRequest,
+  ): Promise<UploadSourceHttpResponse> {
+    const result = await this.uploadSourceUseCase.execute({
+      externalSourceId: request.externalSourceId,
+      content: request.content,
+    });
+
+    return {
+      sourceId: result.sourceId,
+      externalSourceId: result.externalSourceId,
+      fingerprint: result.fingerprint,
+      syncJobId: result.syncJobId,
+    };
+  }
+}

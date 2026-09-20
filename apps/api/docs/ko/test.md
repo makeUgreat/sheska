@@ -70,7 +70,7 @@ related:
 ### 배치와 범위
 
 - 단위 spec은 대상 source file 옆의 `__tests__`에 둔다.
-  - 예: `src/contexts/sources/domain/__tests__/source-content.vo.spec.ts`.
+  - 예: `src/contexts/library/domain/__tests__/source-content.vo.spec.ts`.
 - 단위 테스트는 HTTP server, 실제 Nest application, 외부 I/O를 시작해서는 안 된다.
 - 대상을 직접 생성하고 collaborator는 가벼운 test double로 대체한다.
 - DI metadata나 module 설정이 검증 대상일 때만 Nest testing module을 사용한다.
@@ -123,7 +123,7 @@ related:
   - 현재 boundary는 `http`, `local`, `postgres`, `redis`, `ollama`다.
   - 앱 공용 platform 동작의 context에는 `platform`을 사용한다.
   - 파일 이름으로 대상을 식별하고 source layer directory를 그대로 만들지 않는다.
-  - 예: `test/adapters/postgres/sources/source.repository.integration-spec.ts`.
+  - 예: `test/adapters/postgres/library/source.repository.integration-spec.ts`.
 - Tool과 정적 정책 통합 spec은 `test/static/{tool}/`에 둔다.
 - 재사용하는 runtime orchestration은 `test/runtime/`에 둔다.
 

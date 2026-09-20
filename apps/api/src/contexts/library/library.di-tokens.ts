@@ -1,0 +1,17 @@
+// Tokens used for Dependency Injection
+export const SOURCE_FINGERPRINTER = Symbol('SOURCE_FINGERPRINTER');
+export const SOURCE_DOCUMENT_PARSER = Symbol('SOURCE_DOCUMENT_PARSER');
+export const SOURCE_REPOSITORY = Symbol('SOURCE_REPOSITORY');
+export const SOURCE_SYNC_JOB_REPOSITORY = Symbol('SOURCE_SYNC_JOB_REPOSITORY');
+export const SOURCE_EMBEDDING_LOOKUP = Symbol('SOURCE_EMBEDDING_LOOKUP');
+export const SOURCE_QUERY = Symbol('SOURCE_QUERY');
+export const NOTE_QUERY = Symbol('NOTE_QUERY');
+export const SOURCE_LOOKUP = Symbol('SOURCE_LOOKUP');
+export const LIBRARY_UNIT_OF_WORK = Symbol('LIBRARY_UNIT_OF_WORK');
+export const SYNC_JOB_PROGRESS_LOOKUP = Symbol('SYNC_JOB_PROGRESS_LOOKUP');
+
+export type { SourceRepository } from '@contexts/library/domain';
+export type {
+  SourceLookup,
+  SyncJobProgressLookup,
+} from '@contexts/library/application/ports';

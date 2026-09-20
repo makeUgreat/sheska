@@ -129,7 +129,7 @@ Push는 그 결합을 없애는 대신 최종적 일관성(eventual consistency)
 
 ```ts
 import { type SourceEmbeddingLookup as IngestionSourceEmbeddingLookup } from '@contexts/ingestion';
-import { type SourceEmbeddingLookup } from '@contexts/sources/application/ports';
+import { type SourceEmbeddingLookup } from '@contexts/library/application/ports';
 
 export class SourceEmbeddingFromIngestionLookup implements SourceEmbeddingLookup {
   constructor(
