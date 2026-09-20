@@ -66,7 +66,7 @@ describe('SourceContentSnapshotCalculator', () => {
 
     await expect(calculator.calculate('# Source note')).rejects.toMatchObject({
       kind: 'validation_failed',
-      code: 'sources.invalid_frontmatter',
+      code: 'source.invalid_frontmatter',
       details: {
         fields: [
           {

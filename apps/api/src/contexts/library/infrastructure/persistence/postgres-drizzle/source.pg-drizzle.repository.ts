@@ -9,6 +9,7 @@ import {
 import {
   classifyPostgresError,
   DATABASE_TOKENS,
+  INFRASTRUCTURE_ERROR_KIND,
   InfrastructureException,
   type PgDrizzleSession,
 } from '@kernels/infrastructure';
@@ -77,8 +78,8 @@ export class SourcePgDrizzleRepository implements SourceRepository {
 
     if (row === undefined) {
       throw new InfrastructureException({
-        kind: 'not_found',
-        code: 'source.get_failed',
+        kind: INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
+        code: 'source.not_found',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source not found',
         details: { id: criteria.id },

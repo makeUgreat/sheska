@@ -9,6 +9,7 @@ export {
 export { PresentationException } from './presentation.exception';
 export {
   PRESENTATION_ERROR_KIND,
+  type PresentationError,
   type PresentationErrorBase,
   type PresentationErrorOf,
   type PresentationErrorKind,

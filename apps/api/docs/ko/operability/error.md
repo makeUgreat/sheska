@@ -42,12 +42,23 @@ related:
 ### Error Shape 계약
 
 - 구조화된 error shape은 운반 채널과 독립적인 데이터 계약으로 정의한다.
+- 모든 error shape의 뿌리 계약은 `core`의 `SheskaError`다.
+  - `kind`와 `code`를 가진 `Error`를 이 프로젝트가 소유한 오류로 식별한다.
+  - 경계는 exception class가 아니라 이 계약으로 오류를 인식한다.
 - 각 kernel 레이어는 `error.base.ts`에 error shape을 정의한다.
   - 기본 shape은 `DomainErrorBase`, `ApplicationErrorBase`, `InfrastructureErrorBase`,
     `PresentationErrorBase`다.
 - 모든 error shape은 `kind`, `code`, `message`, `details`를 담는다.
-  - `kind`는 실패를 분류한다.
+  - `kind`는 실패를 분류한다. 어휘는 `core`의 `ERROR_KIND` 한 곳에서만 정의한다.
+    - 각 kernel 레이어는 이 어휘의 부분집합을 `*_ERROR_KIND` view로 노출하고, 그 레이어의 exception은 자기
+      view에 있는 `kind`만 받는다.
+    - 두 레이어가 같은 `kind`를 노출할 수 있다. 같은 문자열은 같은 실패를 뜻하므로 경계에서 같은 정책을 받는다.
+    - 서로 다른 정책이 필요하면 같은 `kind`를 재사용하지 않고 새 `kind`를 추가한다.
   - `code`는 호출자와 기계가 실패를 안정적으로 식별하게 한다.
+    - 실패 원인마다 다른 `code`를 쓴다. 같은 메서드가 던지더라도 연산 실패와 부재는 같은 `code`를
+      공유하지 않는다.
+  - `details`를 읽는 소비자가 있는 `kind`는 payload를 닫힌 union으로 고정한다. 그 `kind`로 error를 만들 때
+    필요한 필드가 빠지면 컴파일이 실패한다. 읽는 곳이 없는 `kind`는 고정하지 않는다.
   - Infrastructure error는 `source`를 추가로 담고 `cause`를 포함할 수 있다.
 - 지금 이 shape을 운반하는 채널은 exception뿐이다. shape 자체는 채널과 독립적으로 유지해서, 나중에 failure
   계약을 추가하더라도 그대로 재사용할 수 있게 한다.
@@ -79,9 +90,15 @@ related:
 - 독립적인 바운디드 컨텍스트는 통신 계약을 통해 오류를 변환한다.
   - 크로스 컨텍스트 경계는 [context integration 컨벤션](../architecture/context-integration.md)을 따른다.
 - Protocol 경계는 인식한 오류를 변환하고 외부 계약이 허용하지 않는 정보를 마스킹한다.
-  - `ApplicationErrorKind`는 protocol status로 매핑하고 application 소유 error shape을 노출한다.
-  - 인식한 `InfrastructureErrorKind`는 protocol status로 매핑하되 infrastructure `details`는 마스킹한다.
-  - Domain, vendor raw, system, unknown error는 안전한 내부 오류 response로 마스킹한다.
+  - 경계는 `kind` 하나를 기준으로 status, 노출 범위, 로그 레벨을 결정한다. Exception class로 분기하지 않는다.
+    - Exception class는 오류의 출처와 형태를 나타내는 태그이며, 거동을 결정하지 않는다.
+    - 정책에 등록되지 않은 `kind`와 이 프로젝트가 소유하지 않은 실패는 내부 오류 response로 마스킹한다.
+  - 5xx로 매핑되는 `kind`는 `code`와 `message`까지 마스킹한다. 어댑터와 vendor 식별자를 외부에 노출하지 않는다.
+  - 4xx로 매핑되는 `kind`는 `code`와 `message`를 노출한다. `details`는 호출자가 조치할 수 있을 때만 노출한다.
+  - 로그 레벨은 같은 정책이 `kind`별로 정한다. 4xx로 매핑되는 비즈니스 실패는 장애 로그로 남기지 않는다.
+    [로깅 정책](./logging.md)을 따른다.
+  - Presentation이 의도적으로 소유하는 protocol response는 `HttpFailure`를 담은 protocol exception으로 직접
+    던진다. 경계는 이 response를 변환하지 않고 그대로 전달한다.
 
 ## Error 흐름
 
@@ -142,6 +159,14 @@ flowchart TB
 
 - Vendor raw error는 외부 계약이다.
   - 구조화된 vendor 필드는 오류를 감싸거나 변환하기 전에 어댑터 경계에서 검증하고 정규화한다.
+- Adapter가 붙이는 `code`는 호출자의 의도가 아니라 데이터 사실을 서술한다.
+  - Adapter는 어떤 행이 이미 있는지는 알지만 호출자가 무엇을 하려 했는지는 모른다.
+  - 같은 adapter 메서드를 다른 use case가 호출해도 그대로 참인 이름을 쓴다.
+  - 비즈니스 맥락은 사람이 읽는 `message`에 담고, `code`는 중립적으로 유지한다.
+- Vendor 제약 위반은 호출자가 조치할 수 있는지를 기준으로 분류한다.
+  - 유일성 위반은 이미 존재하는 리소스를 다시 만들려 한 것이므로 `constraint_violation`으로 정규화한다.
+  - Foreign key, not-null, check 위반은 코드가 schema가 금지한 데이터를 넘긴 결과이므로 `unexpected`로
+    분류한다. 호출자가 조치할 수 없는 실패를 4xx로 노출하지 않는다.
 - 어댑터가 구조화된 vendor 필드에 의존한다면 `zod` schema를 사용하는 것이 좋다.
   - 데이터베이스 error code, constraint name, SDK error code, HTTP response metadata 등이 해당한다.
 - 외부 enum 형태의 code set은 `as const` 객체로 한 번 정의한다.

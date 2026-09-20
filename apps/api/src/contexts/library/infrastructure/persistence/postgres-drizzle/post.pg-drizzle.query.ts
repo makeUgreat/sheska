@@ -76,7 +76,7 @@ export class PostPgDrizzleQuery implements PostQuery {
     if (result === null) {
       throw new InfrastructureException({
         kind: INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
-        code: 'post.get_with_source_not_found',
+        code: 'post.not_found',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Post not found',
         details: { id: criteria.id },

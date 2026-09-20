@@ -99,7 +99,7 @@ describe('SourceDrizzleRepository', () => {
       repository.get({ id: 'non-existent-id' }),
     ).rejects.toMatchObject({
       kind: 'not_found',
-      code: 'source.get_failed',
+      code: 'source.not_found',
     });
   });
 
@@ -128,7 +128,7 @@ describe('SourceDrizzleRepository', () => {
     await repository.save(firstSource);
 
     await expect(repository.save(secondSource)).rejects.toMatchObject({
-      kind: 'conflict',
+      kind: 'constraint_violation',
       code: 'source.save_failed',
     });
   });

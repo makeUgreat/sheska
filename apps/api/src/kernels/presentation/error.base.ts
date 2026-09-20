@@ -1,7 +1,8 @@
+import { ERROR_KIND } from '@core/error-kind';
 import { type SheskaError } from '@core/sheska-error';
 
 export const PRESENTATION_ERROR_KIND = {
-  VALIDATION_FAILED: 'validation_failed',
+  VALIDATION_FAILED: ERROR_KIND.VALIDATION_FAILED,
 } as const;
 
 export type PresentationErrorKind =
@@ -43,6 +44,13 @@ export type PresentationErrorDetailsFor<Kind extends PresentationErrorKind> =
   Kind extends typeof PRESENTATION_ERROR_KIND.VALIDATION_FAILED
     ? PresentationValidationDetails
     : unknown;
+
+export type PresentationError = PresentationErrorOf<
+  typeof PRESENTATION_ERROR_KIND.VALIDATION_FAILED,
+  string,
+  string,
+  PresentationValidationDetails
+>;
 
 export interface HttpFailure<Code extends string = string, Details = unknown> {
   readonly statusCode: number;

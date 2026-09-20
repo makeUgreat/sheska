@@ -10,6 +10,7 @@ import {
 import {
   classifyPostgresError,
   DATABASE_TOKENS,
+  INFRASTRUCTURE_ERROR_KIND,
   InfrastructureException,
 } from '@kernels/infrastructure';
 import * as schema from './schema';
@@ -46,8 +47,8 @@ export class PostPgDrizzleRepository implements PostRepository {
 
     if (row === undefined) {
       throw new InfrastructureException({
-        kind: 'not_found',
-        code: 'post.get_failed',
+        kind: INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
+        code: 'post.not_found',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Post not found',
         details: { id: criteria.id },

@@ -7,7 +7,7 @@ import { buildSourceEmbedding } from '../../../../../../../test/support/domains/
 import { SourceEmbeddingPgDrizzleRepository } from '../source-embedding.pg-drizzle.repository';
 
 describe('SourceEmbeddingPgDrizzleRepository', () => {
-  it('Postgres error는 CONFLICT exception으로 전파하고 재시도하지 않는다', async () => {
+  it('Postgres error는 CONSTRAINT_VIOLATION exception으로 전파하고 재시도하지 않는다', async () => {
     const { db, transaction } = createSaveRejectingDb(
       createPostgresError('23505'),
     );
@@ -17,7 +17,7 @@ describe('SourceEmbeddingPgDrizzleRepository', () => {
 
     await expect(result).rejects.toBeInstanceOf(InfrastructureException);
     await expect(result).rejects.toMatchObject({
-      kind: INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+      kind: INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
       code: 'source_embedding.save_failed',
     });
     expect(transaction).toHaveBeenCalledOnce();
@@ -51,7 +51,7 @@ describe('SourceEmbeddingPgDrizzleRepository', () => {
     expect(transaction).toHaveBeenCalledTimes(3);
   });
 
-  it('CONCURRENCY_CONFLICT가 재시도 정책을 소진하면 CONCURRENCY_CONFLICT exception으로 reject한다', async () => {
+  it('CONCURRENCY_CONFLICT가 재시도 정책을 소진하면 CONCURRENCY_CONSTRAINT_VIOLATION exception으로 reject한다', async () => {
     const { db } = createSaveRejectingDb(createPostgresError('40001'));
     const repository = new SourceEmbeddingPgDrizzleRepository(db);
 

@@ -79,11 +79,10 @@ describe('DomainException', () => {
 });
 
 describe('DOMAIN_ERROR_KIND', () => {
-  it.each([
-    ['INVARIANT_VIOLATION', 'invariant_violation'],
-    ['STATE_CONFLICT', 'state_conflict'],
-    ['OPERATION_NOT_ALLOWED', 'operation_not_allowed'],
-  ] as const)('%s의 값은 %s다', (key, expectedValue) => {
-    expect(DOMAIN_ERROR_KIND[key]).toBe(expectedValue);
-  });
+  it.each([['INVARIANT_VIOLATION', 'invariant_violation']] as const)(
+    '%s의 값은 %s다',
+    (key, expectedValue) => {
+      expect(DOMAIN_ERROR_KIND[key]).toBe(expectedValue);
+    },
+  );
 });

@@ -1,14 +1,15 @@
+import { ERROR_KIND } from '@core/error-kind';
 import { type SheskaError } from '@core/sheska-error';
 
 export const APPLICATION_ERROR_KIND = {
-  VALIDATION_FAILED: 'validation_failed',
-  DEPENDENCY_UNAVAILABLE: 'dependency_unavailable',
-  NOT_FOUND: 'not_found',
-  STATE_CONFLICT: 'state_conflict',
-  PERMISSION_DENIED: 'permission_denied',
-  AUTHENTICATION_REQUIRED: 'authentication_required',
-  OPERATION_NOT_ALLOWED: 'operation_not_allowed',
-  RATE_LIMITED: 'rate_limited',
+  VALIDATION_FAILED: ERROR_KIND.VALIDATION_FAILED,
+  DEPENDENCY_UNAVAILABLE: ERROR_KIND.DEPENDENCY_UNAVAILABLE,
+  NOT_FOUND: ERROR_KIND.NOT_FOUND,
+  STATE_CONFLICT: ERROR_KIND.STATE_CONFLICT,
+  PERMISSION_DENIED: ERROR_KIND.PERMISSION_DENIED,
+  AUTHENTICATION_REQUIRED: ERROR_KIND.AUTHENTICATION_REQUIRED,
+  OPERATION_NOT_ALLOWED: ERROR_KIND.OPERATION_NOT_ALLOWED,
+  RATE_LIMITED: ERROR_KIND.RATE_LIMITED,
 } as const;
 
 export type ApplicationErrorKind =
@@ -50,3 +51,20 @@ export type ApplicationErrorDetailsFor<Kind extends ApplicationErrorKind> =
   Kind extends typeof APPLICATION_ERROR_KIND.VALIDATION_FAILED
     ? ApplicationValidationDetails
     : unknown;
+
+export type ApplicationError =
+  | ApplicationErrorOf<
+      typeof APPLICATION_ERROR_KIND.VALIDATION_FAILED,
+      string,
+      string,
+      ApplicationValidationDetails
+    >
+  | ApplicationErrorOf<
+      Exclude<
+        ApplicationErrorKind,
+        typeof APPLICATION_ERROR_KIND.VALIDATION_FAILED
+      >,
+      string,
+      string,
+      unknown
+    >;

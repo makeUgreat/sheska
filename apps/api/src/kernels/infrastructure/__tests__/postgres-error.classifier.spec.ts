@@ -3,27 +3,27 @@ import { classifyPostgresError } from '../postgres-error.classifier';
 import { describe, expect, it } from 'vitest';
 
 describe('classifyPostgresError', () => {
-  it('23505 (unique_violation) → CONFLICT', () => {
+  it('23505 (unique_violation) → CONSTRAINT_VIOLATION', () => {
     expect(classifyPostgresError(createPostgresError('23505'))).toBe(
-      INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+      INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
     );
   });
 
-  it('23503 (foreign_key_violation) → CONFLICT', () => {
+  it('23503 (foreign_key_violation)은 코드 결함이므로 → UNEXPECTED', () => {
     expect(classifyPostgresError(createPostgresError('23503'))).toBe(
-      INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+      INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
     );
   });
 
-  it('23502 (not_null_violation) → CONFLICT', () => {
+  it('23502 (not_null_violation)은 코드 결함이므로 → UNEXPECTED', () => {
     expect(classifyPostgresError(createPostgresError('23502'))).toBe(
-      INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+      INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
     );
   });
 
-  it('23514 (check_violation) → CONFLICT', () => {
+  it('23514 (check_violation)은 코드 결함이므로 → UNEXPECTED', () => {
     expect(classifyPostgresError(createPostgresError('23514'))).toBe(
-      INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+      INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
     );
   });
 
@@ -94,7 +94,7 @@ describe('classifyPostgresError', () => {
     });
 
     expect(classifyPostgresError(wrappedError)).toBe(
-      INFRASTRUCTURE_ERROR_KIND.CONFLICT,
+      INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
     );
   });
 });
