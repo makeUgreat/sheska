@@ -1,11 +1,7 @@
 ---
 title: API 비동기 & Workflow 재시도 정책
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../../../en/operability/fault-tolerance/async-workflow-retry.md
-last_synced: 2026-09-19
 read_when:
   - 메시지 큐 consumer, dead letter queue/redrive policy, 또는 여러 단계로 구성된 workflow, activity, saga의 재시도 동작을 정의, 구현, 리뷰할 때.
 related:
@@ -21,8 +17,7 @@ related:
 
 - 이 문서는 큐 consumer, dead letter queue(DLQ)/redrive policy, workflow·activity·saga 단계의 재시도 동작을 판단할 때 사용한다.
 - [API 재시도 정책](./retry.md)과 [API Timeout & Deadline 정책](./timeout-deadline.md)은 호출자가 정해진 시간 안에서 동기적으로 응답을 기다리는 호출의 재시도를 다룬다. 이 문서는 호출자가 이미 응답을 받고 돌아간 뒤에도 계속되는 작업을 다룬다.
-- retry budget, circuit breaker, idempotency, 관측성은 별개의 fault-tolerance 관심사이며 아직 정식 컨벤션 문서로 승격되지 않았다.
-  - 현재 승격 상태는 [API Fault Tolerance 인덱스](./index.md)에서 확인한다.
+- 로그·메트릭 전송 방식은 [API 관측성 컨벤션](../observability.md)을 따른다.
 - 이 문서는 일반 원칙을 다루되, [Outbox Relay Retry](#outbox-relay-retry)처럼 이 프로젝트가 이미 구현 방식을 정한 메커니즘은 해당 절에서 구체적으로 기술한다. 구체적인 설정값이나 임계치는 그 메커니즘의 구현 방식이 정해진 뒤에만 추가한다.
 
 ## 동기 재시도와 다른 문제인 이유

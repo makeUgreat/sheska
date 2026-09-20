@@ -1,10 +1,7 @@
 ---
 title: 디자인 토큰
-lang: ko
-audience: both
 applies_to:
   - apps/ui
-source: ../en/design-token.md
 related:
   - ./design.md
 ---
@@ -28,7 +25,7 @@ Token 변경을 리뷰하거나 commit하기 전에는 `pnpm tokens:check`를 �
 
 - `src/styles/design-tokens.json`: tool과 cross-platform exchange를 위한 source token data.
 - `src/styles/theme.css`: generated app-facing Tailwind v4 `@theme` adapter.
-- `docs/en/design-token.md`와 `docs/ko/design-token.md`: 사람이 읽는 token intent와 usage guidance.
+- `docs/ko/design-token.md`: 사람이 읽는 token intent와 usage guidance.
 
 ## 색상
 

@@ -1,11 +1,7 @@
 ---
 title: 개발 통합 도구
-lang: ko
-audience: both
 applies_to:
   - repository
-source: ../en/dev-integrations.md
-last_synced: 2026-09-05
 ---
 
 # 개발 통합 도구

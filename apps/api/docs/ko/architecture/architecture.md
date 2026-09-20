@@ -1,11 +1,7 @@
 ---
 title: API 아키텍처 컨벤션
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../../en/architecture/architecture.md
-last_synced: 2026-09-07
 related:
   - ../operability/error.md
   - ./ddd.md

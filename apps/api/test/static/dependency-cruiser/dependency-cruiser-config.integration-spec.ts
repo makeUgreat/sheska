@@ -351,12 +351,23 @@ async function writeFakeNestPackages(fixtureRoot: string): Promise<void> {
   ]);
 }
 
+// pnpm은 가상 스토어 디렉터리 이름에 peer dependency를 인코딩한다. @nestjs 패키지는 대부분
+// @nestjs/common에 peer로 의존하므로 그 이름이 경로에 나타나고, 규칙이 @nestjs/common을 느슨하게
+// 예외 처리하면 모든 @nestjs 패키지가 함께 빠져나간다. 픽스처가 이 형태를 재현해야 그 회귀를 잡는다.
+function pnpmStoreDirectory(packageName: string): string {
+  const packageDirectory = `@nestjs+${packageName}@0.0.0`;
+
+  return packageName === 'common'
+    ? packageDirectory
+    : `${packageDirectory}_@nestjs+common@0.0.0`;
+}
+
 async function writeFakeNestPackage(
   fixtureRoot: string,
   packageName: string,
   exports: Record<string, string>,
 ): Promise<void> {
-  const packageRoot = `node_modules/.pnpm/@nestjs+${packageName}@0.0.0/node_modules/@nestjs/${packageName}`;
+  const packageRoot = `node_modules/.pnpm/${pnpmStoreDirectory(packageName)}/node_modules/@nestjs/${packageName}`;
   const packageLink = path.join(
     fixtureRoot,
     `node_modules/@nestjs/${packageName}`,

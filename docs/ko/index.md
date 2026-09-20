@@ -1,11 +1,7 @@
 ---
 title: 루트 컨벤션 인덱스
-lang: ko
-audience: both
 applies_to:
   - repository
-source: ../en/index.md
-last_synced: 2026-07-07
 related:
   - ./documentation-guidelines.md
   - ./monorepo.md
@@ -13,11 +9,6 @@ related:
 ---
 
 # 루트 컨벤션 인덱스
-
-## 동기화 정책
-
-영어 문서와 한글 문서는 같은 정책을 설명하는 쌍 문서다.
-두 문서가 충돌하면 영어와 한글 중 의도한 정책을 선택하고 같은 변경 단위에서 양쪽 문서를 모두 수정한다.
 
 ## 읽기 규칙
 

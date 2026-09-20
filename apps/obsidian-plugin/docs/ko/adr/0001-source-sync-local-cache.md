@@ -1,11 +1,7 @@
 ---
 title: "ADR 0001: 소스 자동 동기화를 위한 로컬 mtime 캐시"
-lang: ko
-audience: both
 applies_to:
   - apps/obsidian-plugin
-source: ../../en/adr/0001-source-sync-local-cache.md
-last_synced: 2026-09-15
 related:
   - ../index.md
 ---

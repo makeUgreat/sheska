@@ -1,10 +1,7 @@
 ---
 title: 디자인 시스템
-lang: ko
-audience: both
 applies_to:
   - apps/ui
-source: ../en/design.md
 related:
   - ./design-token.md
   - ./design-component.md

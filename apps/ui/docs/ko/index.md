@@ -1,10 +1,7 @@
 ---
 title: UI 컨벤션 인덱스
-lang: ko
-audience: both
 applies_to:
   - apps/ui
-source: ../en/index.md
 related:
   - ./design.md
   - ./design-token.md
@@ -16,11 +13,6 @@ related:
 ---
 
 # UI 컨벤션 인덱스
-
-## 동기화 정책
-
-영어와 한국어 `apps/ui` 컨벤션 문서는 같은 정책을 설명하는 쌍 문서다.
-두 문서가 충돌하면 어느 한 언어를 자동으로 우선하지 말고 의도한 정책을 선택해 같은 변경 단위에서 두 문서를 함께 갱신한다.
 
 ## 읽기 규칙
 

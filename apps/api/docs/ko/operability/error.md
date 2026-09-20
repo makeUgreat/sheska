@@ -1,11 +1,7 @@
 ---
 title: API 오류 정책
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../../en/operability/error.md
-last_synced: 2026-09-07
 read_when:
   - API 오류와 시스템 오류를 정의, 매핑, 마스킹, 전파, 리뷰할 때.
 related:
@@ -36,7 +32,9 @@ related:
 - 복구하거나 경계 맥락을 추가하거나 protocol response로 변환할 때만 exception을 catch하는 것이 좋다.
 - Application 유스 케이스는 infrastructure, domain, system exception을 보통 그대로 전파한다.
 - `Result` 또는 failure 계열 계약을 기본으로 추가하지 않는다.
-  - 호출자에게 안정적이고 유용한 분기 동작이 있고 exception 전파보다 명확할 때만 failure 계약을 반환한다.
+  - 이 프로젝트에는 그런 계약이 아직 없다. 따라서 추가하는 것은 준비된 두 채널 중 하나를 고르는 일이 아니라
+    별도의 결정이다.
+  - 호출자에게 안정적이고 유용한 분기 동작이 있고 exception 전파보다 명확할 때만 failure 계약을 추가한다.
 - Domain 생성자와 factory는 exception을 던져 불변 조건을 보호한다.
   - 경계가 명시적으로 변환하지 않는 불변 조건 실패는 bug, 손상된 저장 상태 또는 부족한 경계 검증으로
     취급한다.
@@ -51,13 +49,13 @@ related:
   - `kind`는 실패를 분류한다.
   - `code`는 호출자와 기계가 실패를 안정적으로 식별하게 한다.
   - Infrastructure error는 `source`를 추가로 담고 `cause`를 포함할 수 있다.
-- 같은 error shape을 exception 채널이나 result 채널로 운반할 수 있다.
+- 지금 이 shape을 운반하는 채널은 exception뿐이다. shape 자체는 채널과 독립적으로 유지해서, 나중에 failure
+  계약을 추가하더라도 그대로 재사용할 수 있게 한다.
   - Exception wrapper는 `DomainException`, `ApplicationException`, `InfrastructureException`,
     `PresentationException`이다.
   - 각 wrapper는 `message`를 `Error`에 전달하고 exception instance에 `kind`, `code`, `details`를 노출한다.
   - `InfrastructureException`은 `source`도 노출하고 `Error`를 통해 `cause`를 보존한다.
   - 경계가 구조화된 error를 식별하고 변환해야 할 때 exception wrapper를 사용한다.
-  - 호출자가 안정적으로 분기해야 할 때만 `Result.err(error)`를 사용한다.
 
 ### Error 소유자
 

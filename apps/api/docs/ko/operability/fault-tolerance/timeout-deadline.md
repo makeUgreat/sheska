@@ -1,11 +1,7 @@
 ---
 title: API Timeout & Deadline 정책
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../../../en/operability/fault-tolerance/timeout-deadline.md
-last_synced: 2026-09-19
 read_when:
   - 외부 의존성(외부 API, LLM, 네트워크 호출, 큐)에 닿는 call chain의 per-attempt timeout, 전체 deadline, 계층 간 deadline propagation을 정의, 구현, 리뷰할 때.
 related:
@@ -23,8 +19,9 @@ Timeout과 deadline은 둘 다 "얼마나 오래 걸려도 되는가"를 제한�
   - per-attempt timeout이나 전체 deadline을 호출 종류별 고정 상수로 취급하지 않는다. 이 값들은 대상 의존성의 실제 latency·실패 양상에 크게 좌우되고 의존성마다 다르므로, 값을 미리 고정하지 말고 관측 데이터를 측정해서 조정한다.
   - 의존성의 동작이 바뀌면(예: downstream이 느려지거나, 새로운 rate limit이 생기거나, 트래픽 패턴이 달라지면) 한 번 정한 값을 고수하지 말고 다시 값을 조정한다.
 - 재시도 소유권, 재시도 횟수, backoff, error classification은 이 문서가 아니라 [API 재시도 정책](./retry.md)에 정의되어 있다.
-- retry budget, circuit breaker, idempotency, 관측성은 별개의 fault-tolerance 관심사이며 아직 정식 컨벤션 문서로 승격되지 않았다.
-  - 현재 승격 상태는 [API Fault Tolerance 인덱스](./index.md)에서 확인한다.
+- [프로세스/네트워크 경계를 넘을 때](#프로세스네트워크-경계를-넘을-때)는 호출 사슬이 이 프로세스를 벗어날 때만 해당하며, API는 현재 단일 프로세스로 동작한다.
+  - 나머지 내용은 지금 존재하는 프로세스 내부 호출 사슬에 그대로 적용된다.
+- 로그·메트릭 전송 방식은 [API 관측성 컨벤션](../observability.md)을 따른다.
 
 ## Timeout과 Deadline은 서로 다른 축이다
 

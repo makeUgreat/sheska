@@ -1,21 +1,12 @@
 ---
 title: Obsidian 플러그인 컨벤션 인덱스
-lang: ko
-audience: both
 applies_to:
   - apps/obsidian-plugin
-source: ../en/index.md
-last_synced: 2026-09-05
 related:
   - ./adr/0001-source-sync-local-cache.md
 ---
 
 # Obsidian 플러그인 컨벤션 인덱스
-
-## 동기화 정책
-
-`apps/obsidian-plugin`의 영/한 컨벤션 문서는 같은 정책을 설명하는 페어 문서다.
-서로 충돌하면 어느 한쪽에서 의도한 정책을 선택해 같은 변경 단위 안에서 양쪽 문서를 함께 갱신한다.
 
 ## 읽기 규칙
 

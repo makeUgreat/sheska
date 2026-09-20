@@ -1,11 +1,7 @@
 ---
 title: API Runtime Wiring 컨벤션
-lang: ko
-audience: both
 applies_to:
   - apps/api
-source: ../../en/architecture/runtime-wiring.md
-last_synced: 2026-09-07
 related:
   - ./architecture.md
   - ./infrastructure.md
@@ -78,10 +74,11 @@ flowchart TB
 
 - `src/main.ts`는 얇은 프로세스 진입점으로 유지한다.
 - `platform`은 애플리케이션 시작과 runtime 배선을 소유한다.
-  - NestJS 루트 모듈, 시작 함수, runtime 설정 로딩, 전역 filter, interceptor, guard, pipe,
-    앱 수준 provider 배선에는 `platform/nest`를 사용한다.
-  - `platform`은 바운디드 컨텍스트, 어댑터, kernel, `core`, framework, 외부 runtime library에 의존할 수 있다.
-  - `platform`은 비즈니스 규칙을 담아서는 안 된다.
+  - NestJS 루트 모듈, 시작 함수, runtime 설정 로딩, 전역 filter, interceptor, guard, pipe, 앱 수준 provider
+    배선에는 `platform/nest`를 사용한다.
+  - `platform`은 비즈니스 규칙을 담지 않는다.
+- `platform`이 무엇에 의존할 수 있고 누가 `platform`을 import할 수 있는지는
+  [source dependency 컨벤션](./source-dependency.md#source-area)에 있다.
 
 ## Environment Configuration
 
@@ -106,14 +103,13 @@ flowchart TB
 
 ### DI 경계
 
-- NestJS DI는 `platform/nest`, presentation 어댑터, infrastructure 어댑터, application 유스 케이스 또는
-  서비스의 runtime 배선에 사용할 수 있다.
-- NestJS DI 때문에 도메인 코드에서 NestJS로 소스 의존성이 생겨서는 안 된다.
-- Application 유스 케이스와 서비스는 생성자 주입을 위한 좁은 metadata를 사용할 수 있다.
-  - `@Injectable()`, `@Inject()`, provider token이 이에 해당한다.
-  - 유스 케이스는 명시적인 의존성으로 생성할 수 있는 일반 TypeScript 클래스로 유지하는 것이 좋다.
-  - 유스 케이스 동작은 request 객체, module reference, container lookup, lifecycle callback 또는 다른 NestJS
-    runtime API에 의존해서는 안 된다.
+- NestJS DI는 `platform/nest`, presentation 어댑터, infrastructure 어댑터, application 유스 케이스와 서비스의
+  runtime 배선에 사용한다. `core`, domain, kernel은 framework와 무관하게 유지한다.
+- Application 코드에서 DI는 생성자 주입을 설명하는 좁은 metadata(`@Injectable()`, `@Inject()`, provider token)까지만
+  사용한다.
+  - 유스 케이스는 명시적인 의존성만으로 생성되는 일반 TypeScript 클래스로 유지한다.
+  - 유스 케이스 동작이 request 객체, module reference, container lookup, lifecycle callback에 의존하기 시작하면
+    이미 그 선을 넘은 것이다.
 - Provider 등록과 모듈 조립은 `platform/nest` 또는 바운디드 컨텍스트 루트 모듈에 둔다.
   - 바운디드 컨텍스트 루트 모듈은 해당 컨텍스트의 application, presentation, infrastructure provider를
     조립할 수 있다.
