@@ -18,6 +18,10 @@ import type {
   IReporterOutput,
 } from 'dependency-cruiser';
 
+// fixture 는 alias 가 아니라 상대경로로 import 한다. fixture 해석기는 baseDir 밖의
+// tsconfig paths 를 적용하지 못해 alias import 가 의존성 그래프에서 통째로 누락되고,
+// 그러면 검사할 간선이 없어 "위반 없음" 단언이 공허하게 통과한다.
+// 규칙은 해석된 경로로 매칭하므로 상대경로로도 동일하게 검증된다.
 const apiRoot = process.cwd();
 const configPath = path.join(apiRoot, 'dependency-cruiser/config.cjs');
 
@@ -51,24 +55,24 @@ const validFiles: Record<string, string> = {
     export const domainKernel = 'domain-kernel';
   `,
   'src/kernels/application/index.ts': `
-    import { domainKernel } from '@kernels/domain';
+    import { domainKernel } from '../domain';
 
     export const applicationKernel = domainKernel;
   `,
   'src/kernels/infrastructure/index.ts': `
-    import { applicationKernel } from '@kernels/application';
-    import { domainKernel } from '@kernels/domain';
+    import { applicationKernel } from '../application';
+    import { domainKernel } from '../domain';
 
     export const infrastructureKernel = [applicationKernel, domainKernel];
   `,
   'src/kernels/presentation/index.ts': `
-    import { applicationKernel } from '@kernels/application';
+    import { applicationKernel } from '../application';
 
     export const presentationKernel = applicationKernel;
   `,
   'src/contexts/corrections/domain/index.ts': `
-    import { guard } from '@core/guard';
-    import { domainKernel } from '@kernels/domain';
+    import { guard } from '../../../core/guard';
+    import { domainKernel } from '../../../kernels/domain';
 
     export const correction = [guard, domainKernel].join(':');
   `,
@@ -82,7 +86,7 @@ const validFiles: Record<string, string> = {
   `,
   'src/contexts/corrections/application/use-case.ts': `
     import { Injectable } from '@nestjs/common';
-    import { correction } from '@contexts/corrections/domain';
+    import { correction } from '../domain';
     import { CORRECTION_REPOSITORY } from '../corrections.di-tokens';
     import type { CorrectionRepository } from './ports';
 
@@ -97,14 +101,14 @@ const validFiles: Record<string, string> = {
     }
   `,
   'src/contexts/corrections/infrastructure/repository.ts': `
-    import type { CorrectionRepository } from '@contexts/corrections/application/ports';
+    import type { CorrectionRepository } from '../application/ports';
 
     export class MemoryCorrectionRepository implements CorrectionRepository {
       save() {}
     }
   `,
   'src/contexts/corrections/presentation/http/controller.ts': `
-    import { CreateCorrectionUseCase } from '@contexts/corrections/application/use-case';
+    import { CreateCorrectionUseCase } from '../../application/use-case';
 
     export class CorrectionsController {
       constructor(private readonly useCase: CreateCorrectionUseCase) {}
@@ -117,17 +121,17 @@ const validFiles: Record<string, string> = {
     export const correctionsModule = [MemoryCorrectionRepository, CorrectionsController];
   `,
   'src/platform/nest/app.module.ts': `
-    import { correctionsModule } from '@contexts/corrections/corrections.module';
+    import { correctionsModule } from '../../contexts/corrections/corrections.module';
 
     export const appModule = correctionsModule;
   `,
   'src/main.ts': `
-    import { appModule } from '@platform/nest/app.module';
+    import { appModule } from './platform/nest/app.module';
 
     export const main = appModule;
   `,
   'test/support/helper.ts': `
-    import { appModule } from '@platform/nest/app.module';
+    import { appModule } from '../../src/platform/nest/app.module';
 
     export const testHelper = appModule;
   `,
