@@ -74,6 +74,10 @@ Paired documents should describe the same policy.
 - Durable convention documents SHOULD include YAML frontmatter or equivalent metadata that identifies the title, language, audience or scope, and paired document.
   - Identify the pair with `translation` in the English document and `source` plus `last_synced` in the Korean document.
 - Keep metadata keys consistent within a document family, but do not add keys that are not consumed by readers, tools, or maintenance workflow.
+- Include `status: planned` when a document specifies a mechanism the project has not built yet.
+  - A document with no `status` key describes a convention the current code already follows, so a reader can treat it as the rule in force.
+  - A `planned` document holds a decided policy waiting for implementation, not a draft. Follow it when building that mechanism, and do not cite it as a rule existing code violates.
+  - Remove the key in the same change unit that ships the mechanism.
 - Include `read_when` only when a document is routed from an index and the trigger is useful at the document itself.
 - Include `related` only when there are clear documents that should be read together.
 - Use relative paths in cross-document metadata links.

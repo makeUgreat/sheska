@@ -4,8 +4,9 @@ lang: ko
 audience: both
 applies_to:
   - apps/api
+status: planned
 source: ../../../en/operability/fault-tolerance/idempotent-receiver.md
-last_synced: 2026-09-07
+last_synced: 2026-09-20
 read_when:
   - 어떤 operation이 자연적으로 멱등한지 판단하거나, idempotency key를 설계하거나, 안전하게 재시도 가능해야 하는 mutation의 서버 측 중복 제거를 구현할 때.
 related:
@@ -19,6 +20,9 @@ related:
 
 ## 적용 범위
 
+- 이 프로젝트는 아직 idempotent receiver를 구현하지 않았다. idempotency key를 받는 엔드포인트도, key 저장소도 없다.
+  - 이 문서는 그 메커니즘을 만들 때 사용한다. 기존 엔드포인트가 위반하고 있는 규칙으로 읽지 않는다.
+  - [자연적 멱등성](#자연적-멱등성) 판단 기준은 지금도 그대로 적용된다. 만들어야 할 메커니즘이 아니라 operation 자체의 성질을 기술한 것이기 때문이다.
 - 이 문서는 어떤 operation이 자연적으로 멱등한지, idempotency key를 어떻게 생성·범위 지정하는지, 서버가 그 key로 어떻게 중복을 제거하는지, 중복 요청에 무엇을 반환하는지 판단할 때 사용한다.
 - mutation이 멱등할 때만 재시도 가능하다는 규칙은 이 문서가 아니라 [API 재시도 정책의 Mutation 안전성 게이트](./retry.md#mutation-안전성-게이트)에 정의되어 있다. 이 문서는 그 멱등성 보장 자체를 어떻게 제공하는지를 정의한다.
 - retry budget, 관측성은 이 정책과 상호작용하지만 각자의 문서에 정의되어 있다. [API Fault Tolerance 인덱스](./index.md) 참고.

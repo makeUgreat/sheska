@@ -4,6 +4,7 @@ lang: en
 audience: both
 applies_to:
   - apps/api
+status: planned
 translation: ../../../ko/operability/fault-tolerance/retry-budget.md
 read_when:
   - Defining, implementing, or reviewing a limit on the total retry traffic a dependency receives across all callers, or deciding how retry budget composes with per-call retry.
@@ -18,6 +19,8 @@ related:
 
 ## Scope
 
+- This project has not built a retry budget yet, so no call path enforces one today.
+  - Use this document when building that mechanism, not as a rule existing retry code violates.
 - Use this document when deciding the retry budget ratio, the window it is measured over, or how retry budget composes with per-call retry.
 - Retry ownership, per-call retry count, backoff, and error classification are defined in [API Retry Policy](./retry.md), not by this document.
 - Idempotency and observability are defined in [API Idempotent Receiver Policy](./idempotent-receiver.md) and [API Observability Convention](../observability.md), and referenced here, not duplicated.

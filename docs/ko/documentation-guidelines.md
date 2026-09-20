@@ -75,9 +75,13 @@ related:
 - 오래 유지되는 컨벤션 문서는 제목, 언어, audience 또는 scope, 쌍 문서를 식별하는 YAML frontmatter나 그에 준하는 metadata를 포함하는 것을 권장한다.
   - 쌍 문서 식별은 영어 문서에서 `translation`, 한글 문서에서 `source`와 `last_synced`로 한다.
 - 같은 문서군 안에서는 metadata key를 일관되게 유지하되, reader, tool, maintenance workflow가 사용하지 않는 key는 추가하지 않는다.
+- 아직 만들지 않은 메커니즘을 규정하는 문서에는 `status: planned`를 포함한다.
+  - `status` key가 없는 문서는 지금 코드가 따르고 있는 컨벤션을 기술한 것이므로, 읽는 쪽은 현재 유효한 규칙으로 취급하면 된다.
+  - `planned` 문서는 초안이 아니라 구현을 기다리는 확정된 정책이다. 그 메커니즘을 만들 때는 이 문서를 따르되, 기존 코드가 위반하고 있는 규칙으로 인용하지 않는다.
+  - 메커니즘을 실제로 반영하는 변경 단위에서 이 key를 제거한다.
 - `read_when`은 문서가 index에서 라우팅되고 그 trigger가 문서 자체에도 유용할 때만 포함한다.
 - `related`는 함께 읽어야 하는 문서가 명확할 때만 포함한다.
-- 문서 간 metadata link에는 상대 경로를 사용한다.로
+- 문서 간 metadata link에는 상대 경로를 사용한다.
 
 ## 문서 라우팅
 

@@ -4,6 +4,7 @@ lang: en
 audience: both
 applies_to:
   - apps/api
+status: planned
 translation: ../../../ko/operability/fault-tolerance/idempotent-receiver.md
 read_when:
   - Deciding whether an operation is naturally idempotent, designing an idempotency key, or implementing server-side deduplication for a mutation that must be safely retryable.
@@ -18,6 +19,9 @@ related:
 
 ## Scope
 
+- This project has not built an idempotent receiver yet: no endpoint accepts an idempotency key and no key store exists.
+  - Use this document when building that mechanism, not as a rule existing endpoints violate.
+  - The [Natural Idempotency](#natural-idempotency) criteria already apply today, because they describe an operation's own shape rather than a mechanism to build.
 - Use this document when deciding whether an operation is naturally idempotent, how an idempotency key is generated and scoped, how the server deduplicates on it, and what it returns for a duplicate.
 - The rule that a mutation is retryable only when idempotent is defined in [API Retry Policy's Mutation Safety Gate](./retry.md#mutation-safety-gate), not by this document. This document defines how that idempotency guarantee itself is provided.
 - Retry budget and observability compose with this policy but are defined in their own documents; see [API Fault Tolerance Index](./index.md).

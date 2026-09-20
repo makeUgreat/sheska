@@ -4,8 +4,9 @@ lang: ko
 audience: both
 applies_to:
   - apps/api
+status: planned
 source: ../../../en/operability/fault-tolerance/retry-budget.md
-last_synced: 2026-09-07
+last_synced: 2026-09-20
 read_when:
   - 모든 caller를 합쳐서 한 의존성이 받는 재시도 트래픽 총량 제한을 정의, 구현, 리뷰할 때, 또는 retry budget이 개별 호출 재시도와 어떻게 조합되는지 판단할 때.
 related:
@@ -19,6 +20,8 @@ related:
 
 ## 적용 범위
 
+- 이 프로젝트는 아직 retry budget을 구현하지 않았고, 현재 이를 적용하는 호출 경로는 없다.
+  - 이 문서는 그 메커니즘을 만들 때 사용한다. 기존 재시도 코드가 위반하고 있는 규칙으로 읽지 않는다.
 - 이 문서는 retry budget 비율, 측정 window, retry budget이 개별 호출 재시도와 어떻게 조합되는지 판단할 때 사용한다.
 - 재시도 소유권, 개별 호출의 재시도 횟수, backoff, error classification은 이 문서가 아니라 [API 재시도 정책](./retry.md)에 정의되어 있다.
 - idempotency와 관측성은 [API Idempotent Receiver 정책](./idempotent-receiver.md), [API 관측성 컨벤션](../observability.md)에 정의되어 있으며 여기서는 참조만 하고 중복하지 않는다.
