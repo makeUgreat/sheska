@@ -21,7 +21,7 @@ related:
 
 - 이 문서는 어떤 operation이 자연적으로 멱등한지, idempotency key를 어떻게 생성·범위 지정하는지, 서버가 그 key로 어떻게 중복을 제거하는지, 중복 요청에 무엇을 반환하는지 판단할 때 사용한다.
 - mutation이 멱등할 때만 재시도 가능하다는 규칙은 이 문서가 아니라 [API 재시도 정책의 Mutation 안전성 게이트](./retry.md#mutation-안전성-게이트)에 정의되어 있다. 이 문서는 그 멱등성 보장 자체를 어떻게 제공하는지를 정의한다.
-- retry budget, circuit breaker, 관측성은 이 정책과 상호작용하지만 각자의 문서에 정의되어 있다. [API Fault Tolerance 인덱스](./index.md) 참고.
+- retry budget, 관측성은 이 정책과 상호작용하지만 각자의 문서에 정의되어 있다. [API Fault Tolerance 인덱스](./index.md) 참고.
 
 ## 자연적 멱등성
 

@@ -54,7 +54,7 @@ related:
 - API error, exception, masking, propagation, or error response contract reviews: read [API Error Policy](./operability/error.md).
 - Logging decisions, log levels, where to log, or fault log policy: read [API Logging Policy](./operability/logging.md).
 - OpenTelemetry instrumentation, trace/log/metric export wiring, or resource attribute decisions: read [API Observability Convention](./operability/observability.md).
-- Retry, timeout/deadline, circuit breaker, or other fault-tolerance policy decisions for external dependencies: read [API Fault Tolerance Index](./operability/fault-tolerance/index.md).
+- Retry, timeout/deadline, or other fault-tolerance policy decisions for external dependencies: read [API Fault Tolerance Index](./operability/fault-tolerance/index.md).
 
 ### Persistence
 
