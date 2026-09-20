@@ -101,7 +101,7 @@ describe('Search vector Postgres functions', () => {
 
   describe('sources.title_search_vector', () => {
     it('source를 저장하면 title 기반으로 자동 계산된다', async () => {
-      const source = await sources.save(
+      const source = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/svf-title-insert.md',
           title: '고유한검색어제목',
@@ -118,7 +118,7 @@ describe('Search vector Postgres functions', () => {
     });
 
     it('title을 UPDATE하면 title_search_vector도 다시 계산된다', async () => {
-      const source = await sources.save(
+      const source = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/svf-title-update.md',
           title: '원래제목',
@@ -140,7 +140,7 @@ describe('Search vector Postgres functions', () => {
     });
 
     it('title_search_vector에 직접 쓰려고 하면 에러가 발생한다', async () => {
-      const source = await sources.save(
+      const source = await sources.insert(
         buildSource({ externalSourceId: 'Notes/svf-title-direct-write.md' }),
       );
       await expect(
@@ -153,7 +153,7 @@ describe('Search vector Postgres functions', () => {
 
   describe('sources.body_search_vector', () => {
     it('source를 저장하면 body 기반으로 자동 계산된다', async () => {
-      const source = await sources.save(
+      const source = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/svf-content-insert.md',
           content: '고유한검색어콘텐츠',
@@ -170,7 +170,7 @@ describe('Search vector Postgres functions', () => {
     });
 
     it('body를 UPDATE하면 body_search_vector도 다시 계산된다', async () => {
-      const source = await sources.save(
+      const source = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/svf-content-update.md',
           content: '원래콘텐츠',

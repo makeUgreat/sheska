@@ -28,7 +28,7 @@ describe('NotePgDrizzleQuery', () => {
   afterAll(async () => app.close());
 
   it('source를 정규화된 note 상세 read model로 반환한다', async () => {
-    const source = await sources.save(
+    const source = await sources.insert(
       buildSource({
         externalSourceId: 'Notes/note-query-get.md',
         body: '# Retry body',
@@ -59,7 +59,7 @@ describe('NotePgDrizzleQuery', () => {
   });
 
   it('frontmatter title이 없으면 externalSourceId를 title로 사용한다', async () => {
-    const source = await sources.save(
+    const source = await sources.insert(
       buildSource({ externalSourceId: 'Notes/note-without-title.md' }),
     );
 

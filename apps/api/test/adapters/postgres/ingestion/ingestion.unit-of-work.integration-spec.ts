@@ -42,7 +42,7 @@ describe('IngestionPgDrizzleUnitOfWork', () => {
   });
 
   it('source embedding과 completed event를 함께 commit한다', async () => {
-    const source = await sources.save(
+    const source = await sources.insert(
       buildSource({
         externalSourceId: 'Notes/ingestion-uow-commit.md',
       }),
@@ -54,7 +54,7 @@ describe('IngestionPgDrizzleUnitOfWork', () => {
     });
 
     await unitOfWork.execute(async (resources) => {
-      await resources.sourceEmbeddings.save(sourceEmbedding);
+      await resources.sourceEmbeddings.upsert(sourceEmbedding);
       await resources.outbox.append(completedEvent);
     });
 
@@ -67,7 +67,7 @@ describe('IngestionPgDrizzleUnitOfWork', () => {
   });
 
   it('transaction callback이 실패하면 embedding과 outbox event를 함께 rollback한다', async () => {
-    const source = await sources.save(
+    const source = await sources.insert(
       buildSource({
         externalSourceId: 'Notes/ingestion-uow-rollback.md',
       }),
@@ -81,7 +81,7 @@ describe('IngestionPgDrizzleUnitOfWork', () => {
 
     await expect(
       unitOfWork.execute(async (resources) => {
-        await resources.sourceEmbeddings.save(sourceEmbedding);
+        await resources.sourceEmbeddings.upsert(sourceEmbedding);
         await resources.outbox.append(completedEvent);
         throw transactionFailure;
       }),

@@ -9,7 +9,7 @@ const fakeEmbedding = Array.from({ length: 1024 }, () => 0.1);
 const fakeModel = 'qwen3-embedding:0.6b';
 
 function buildMockRepository(find = vi.fn()): SourceEmbeddingRepository {
-  return { find, save: vi.fn() } satisfies SourceEmbeddingRepository;
+  return { find, upsert: vi.fn() } satisfies SourceEmbeddingRepository;
 }
 
 describe('SourceEmbeddingFromRepositoryLookup', () => {

@@ -55,8 +55,8 @@ describe('LibraryPgDrizzleUnitOfWork', () => {
     });
 
     await unitOfWork.execute(async (resources) => {
-      await resources.sources.save(source);
-      await resources.syncJobs.save(syncJob);
+      await resources.sources.insert(source);
+      await resources.syncJobs.insert(syncJob);
     });
 
     await expect(sources.find({ id: source.id })).resolves.toMatchObject({
@@ -88,14 +88,14 @@ describe('LibraryPgDrizzleUnitOfWork', () => {
 
     await expect(
       unitOfWork.execute(async (resources) => {
-        await resources.sources.save(source);
-        await resources.syncJobs.save(firstSyncJob);
+        await resources.sources.insert(source);
+        await resources.syncJobs.insert(firstSyncJob);
         await resources.outbox.append(event);
-        await resources.syncJobs.save(conflictingSyncJob);
+        await resources.syncJobs.insert(conflictingSyncJob);
       }),
     ).rejects.toMatchObject({
       kind: 'constraint_violation',
-      code: 'source_sync_job.save_failed',
+      code: 'source_sync_job.already_active',
     });
 
     await expect(sources.find({ id: source.id })).resolves.toBeNull();

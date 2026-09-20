@@ -9,8 +9,8 @@ import { buildPost } from '../../../../../../test/support/domains/fixtures/post.
 
 type PostRepositoryMock = {
   get: MockedFunction<PostRepository['get']>;
-  find: MockedFunction<PostRepository['find']>;
-  save: MockedFunction<PostRepository['save']>;
+  insert: MockedFunction<PostRepository['insert']>;
+  update: MockedFunction<PostRepository['update']>;
 };
 
 type PostQueryMock = {
@@ -61,7 +61,7 @@ describe('GetPostUseCase', () => {
       viewCount: 1,
     });
     expect(posts.get).toHaveBeenCalledWith({ id: post.id });
-    expect(posts.save).toHaveBeenCalledOnce();
+    expect(posts.update).toHaveBeenCalledOnce();
     expect(postQuery.get).toHaveBeenCalledWith({ id: post.id });
   });
 
@@ -75,7 +75,7 @@ describe('GetPostUseCase', () => {
     await expect(useCase.execute({ postId: 'post-1' })).rejects.toBe(
       getFailure,
     );
-    expect(posts.save).not.toHaveBeenCalled();
+    expect(posts.update).not.toHaveBeenCalled();
   });
 
   it('repository save exception을 전파한다', async () => {
@@ -84,7 +84,7 @@ describe('GetPostUseCase', () => {
     const posts = createPostRepositoryMock();
     const postQuery = createPostQueryMock();
     posts.get.mockResolvedValue(post);
-    posts.save.mockRejectedValue(saveFailure);
+    posts.update.mockRejectedValue(saveFailure);
     const useCase = new GetPostUseCase(posts, postQuery);
 
     await expect(useCase.execute({ postId: post.id })).rejects.toBe(
@@ -110,9 +110,11 @@ describe('GetPostUseCase', () => {
 function createPostRepositoryMock(): PostRepositoryMock {
   return {
     get: vi.fn<PostRepository['get']>().mockResolvedValue(buildPost()),
-    find: vi.fn<PostRepository['find']>().mockResolvedValue(null),
-    save: vi
-      .fn<PostRepository['save']>()
+    insert: vi
+      .fn<PostRepository['insert']>()
+      .mockImplementation((post) => Promise.resolve(post)),
+    update: vi
+      .fn<PostRepository['update']>()
       .mockImplementation((post) => Promise.resolve(post)),
   };
 }

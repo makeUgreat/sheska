@@ -36,13 +36,13 @@ describe('SourceSyncJobDrizzleRepository', () => {
     const source = buildSource({
       externalSourceId: 'Notes/sync-job-source.md',
     });
-    await sourceRepository.save(source);
+    await sourceRepository.insert(source);
     const syncJob = buildSourceSyncJob({
       sourceId: source.id,
       fingerprint: 'fingerprint-2',
     });
 
-    const result = await repository.save(syncJob);
+    const result = await repository.insert(syncJob);
 
     expect(result.id).toBe(syncJob.id);
     expect(result.getProps()).toMatchObject({
@@ -58,9 +58,9 @@ describe('SourceSyncJobDrizzleRepository', () => {
       fingerprint: 'fingerprint-1',
     });
 
-    await expect(repository.save(syncJob)).rejects.toMatchObject({
+    await expect(repository.insert(syncJob)).rejects.toMatchObject({
       kind: 'unexpected',
-      code: 'source_sync_job.save_failed',
+      code: 'source_sync_job.insert_failed',
     });
   });
 
@@ -68,7 +68,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
     const source = buildSource({
       externalSourceId: 'Notes/sync-job-active-unique.md',
     });
-    await sourceRepository.save(source);
+    await sourceRepository.insert(source);
     const first = buildSourceSyncJob({
       sourceId: source.id,
       fingerprint: 'fingerprint-active',
@@ -77,11 +77,11 @@ describe('SourceSyncJobDrizzleRepository', () => {
       sourceId: source.id,
       fingerprint: 'fingerprint-active',
     });
-    await repository.save(first);
+    await repository.insert(first);
 
-    await expect(repository.save(second)).rejects.toMatchObject({
+    await expect(repository.insert(second)).rejects.toMatchObject({
       kind: 'constraint_violation',
-      code: 'source_sync_job.save_failed',
+      code: 'source_sync_job.already_active',
     });
   });
 
@@ -89,20 +89,20 @@ describe('SourceSyncJobDrizzleRepository', () => {
     const source = buildSource({
       externalSourceId: 'Notes/sync-job-retry-after-completed.md',
     });
-    await sourceRepository.save(source);
+    await sourceRepository.insert(source);
     const first = buildSourceSyncJob({
       sourceId: source.id,
       fingerprint: 'fingerprint-retry',
     });
-    await repository.save(first);
+    await repository.insert(first);
     first.markCompleted(1);
-    await repository.save(first);
+    await repository.update(first);
     const second = buildSourceSyncJob({
       sourceId: source.id,
       fingerprint: 'fingerprint-retry',
     });
 
-    await expect(repository.save(second)).resolves.toMatchObject({
+    await expect(repository.insert(second)).resolves.toMatchObject({
       id: second.id,
     });
   });
@@ -111,7 +111,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
     const source = buildSource({
       externalSourceId: 'Notes/sync-job-latest.md',
     });
-    await sourceRepository.save(source);
+    await sourceRepository.insert(source);
     const first = buildSourceSyncJob({
       sourceId: source.id,
       fingerprint: 'fingerprint-first',
@@ -120,9 +120,9 @@ describe('SourceSyncJobDrizzleRepository', () => {
       sourceId: source.id,
       fingerprint: 'fingerprint-second',
     });
-    await repository.save(first);
+    await repository.insert(first);
     await new Promise((resolve) => setTimeout(resolve, 5));
-    await repository.save(second);
+    await repository.insert(second);
 
     const result = await repository.findLatest({
       sourceId: source.id,

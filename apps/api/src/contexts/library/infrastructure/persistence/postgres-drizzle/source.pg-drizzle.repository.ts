@@ -111,7 +111,7 @@ export class SourcePgDrizzleRepository implements SourceRepository {
     return rows.map((row) => SourcePgDrizzleMapper.toDomain(row));
   }
 
-  async save(source: Source): Promise<Source> {
+  async insert(source: Source): Promise<Source> {
     const sourceInsert = SourcePgDrizzleMapper.toInsert(source);
     let row: schema.SourceRow;
 
@@ -119,27 +119,68 @@ export class SourcePgDrizzleRepository implements SourceRepository {
       [row] = await this.db
         .insert(schema.sources)
         .values(sourceInsert)
-        .onConflictDoUpdate({
-          target: schema.sources.id,
-          set: {
-            externalSourceId: sourceInsert.externalSourceId,
-            frontmatter: sourceInsert.frontmatter,
-            title: sourceInsert.title,
-            body: sourceInsert.body,
-            fingerprint: sourceInsert.fingerprint,
-            sizeBytes: sourceInsert.sizeBytes,
-            updatedAt: new Date(),
-          },
+        .returning();
+    } catch (error: unknown) {
+      const kind = classifyPostgresError(error);
+      if (kind === INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION) {
+        throw new InfrastructureException({
+          kind,
+          code: 'source.external_source_id_already_exists',
+          source: { boundary: 'persistence', adapter: ADAPTER },
+          message: 'A source with the same external source id already exists',
+          details: { externalSourceId: sourceInsert.externalSourceId },
+        });
+      }
+
+      throw new InfrastructureException({
+        kind,
+        code: 'source.insert_failed',
+        source: { boundary: 'persistence', adapter: ADAPTER },
+        message: 'Source insert operation failed',
+        details: { id: sourceInsert.id },
+        cause: error,
+      });
+    }
+
+    return SourcePgDrizzleMapper.toDomain(row);
+  }
+
+  async update(source: Source): Promise<Source> {
+    const sourceInsert = SourcePgDrizzleMapper.toInsert(source);
+    let row: schema.SourceRow | undefined;
+
+    try {
+      [row] = await this.db
+        .update(schema.sources)
+        .set({
+          externalSourceId: sourceInsert.externalSourceId,
+          frontmatter: sourceInsert.frontmatter,
+          title: sourceInsert.title,
+          body: sourceInsert.body,
+          fingerprint: sourceInsert.fingerprint,
+          sizeBytes: sourceInsert.sizeBytes,
+          updatedAt: new Date(),
         })
+        .where(eq(schema.sources.id, sourceInsert.id))
         .returning();
     } catch (error: unknown) {
       throw new InfrastructureException({
         kind: classifyPostgresError(error),
-        code: 'source.save_failed',
+        code: 'source.update_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
-        message: 'Source save operation failed',
+        message: 'Source update operation failed',
         details: { id: sourceInsert.id },
         cause: error,
+      });
+    }
+
+    if (row === undefined) {
+      throw new InfrastructureException({
+        kind: INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
+        code: 'source.not_found',
+        source: { boundary: 'persistence', adapter: ADAPTER },
+        message: 'Source not found',
+        details: { id: sourceInsert.id },
       });
     }
 

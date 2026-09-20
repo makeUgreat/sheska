@@ -32,7 +32,7 @@ export class GetPostUseCase {
   async execute(command: GetPostCommand): Promise<GetPostResult> {
     const post = await this.posts.get({ id: command.postId });
     post.incrementViewCount();
-    const saved = await this.posts.save(post);
+    const saved = await this.posts.update(post);
     return this.postQuery.get({ id: saved.id });
   }
 }

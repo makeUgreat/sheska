@@ -4,12 +4,8 @@ export type PostRepositoryGetCriteria = {
   readonly id: string;
 };
 
-export type PostRepositoryFindCriteria = {
-  readonly sourceId: string;
-};
-
 export interface PostRepository {
   get(criteria: PostRepositoryGetCriteria): Promise<Post>;
-  find(criteria: PostRepositoryFindCriteria): Promise<Post | null>;
-  save(post: Post): Promise<Post>;
+  insert(post: Post): Promise<Post>;
+  update(post: Post): Promise<Post>;
 }

@@ -3,15 +3,18 @@ import {
   type SourceDocument,
   type SourceLookup,
 } from '@contexts/library/application/ports';
-import { APPLICATION_ERROR_KIND } from '@kernels/application';
+import {
+  APPLICATION_ERROR_KIND,
+  ApplicationException,
+} from '@kernels/application';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { PublishPostUseCase } from '../publish-post.use-case';
 import { buildPost } from '../../../../../../test/support/domains/fixtures/post.fixture';
 
 type PostRepositoryMock = {
   get: MockedFunction<PostRepository['get']>;
-  find: MockedFunction<PostRepository['find']>;
-  save: MockedFunction<PostRepository['save']>;
+  insert: MockedFunction<PostRepository['insert']>;
+  update: MockedFunction<PostRepository['update']>;
 };
 
 type SourceLookupMock = {
@@ -48,8 +51,7 @@ describe('PublishPostUseCase', () => {
     });
     expect(result.postId.length).toBeGreaterThan(0);
     expect(sourceLookup.get).toHaveBeenCalledWith('source-1');
-    expect(posts.find).toHaveBeenCalledWith({ sourceId: 'source-1' });
-    expect(posts.save).toHaveBeenCalledOnce();
+    expect(posts.insert).toHaveBeenCalledOnce();
   });
 
   it('프론트매터 title이 없으면 externalSourceId를 title로 사용한다', async () => {
@@ -76,26 +78,26 @@ describe('PublishPostUseCase', () => {
     await expect(useCase.execute({ sourceId: 'non-existent' })).rejects.toBe(
       notFoundError,
     );
-    expect(posts.find).not.toHaveBeenCalled();
-    expect(posts.save).not.toHaveBeenCalled();
+    expect(posts.insert).not.toHaveBeenCalled();
   });
 
-  it('같은 sourceId로 이미 post가 있으면 STATE_CONFLICT exception을 throw한다', async () => {
-    const existingPost = buildPost({ sourceId: 'source-1' });
+  it('이미 발행된 source면 insert가 던진 STATE_CONFLICT를 전파한다', async () => {
+    const alreadyPublished = new ApplicationException({
+      kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
+      code: 'post.already_exists',
+      message: 'A post for this source already exists',
+      details: {},
+    });
     const posts = createPostRepositoryMock();
-    posts.find.mockResolvedValue(existingPost);
+    posts.insert.mockRejectedValue(alreadyPublished);
     const sourceLookup = createSourceLookupMock({
       sourceContent: sourceContentWithFrontmatter,
     });
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
-    await expect(
-      useCase.execute({ sourceId: 'source-1' }),
-    ).rejects.toMatchObject({
-      kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
-      code: 'posts.source_already_published',
-    });
-    expect(posts.save).not.toHaveBeenCalled();
+    await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(
+      alreadyPublished,
+    );
   });
 
   it('sourceLookup exception을 전파한다', async () => {
@@ -110,35 +112,20 @@ describe('PublishPostUseCase', () => {
     await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(
       lookupFailure,
     );
-    expect(posts.save).not.toHaveBeenCalled();
+    expect(posts.insert).not.toHaveBeenCalled();
   });
 
-  it('post 조회 exception을 전파한다', async () => {
-    const findFailure = new Error('Post Repository operation failed');
+  it('post insert exception을 전파한다', async () => {
+    const insertFailure = new Error('Post Repository operation failed');
     const posts = createPostRepositoryMock();
-    posts.find.mockRejectedValue(findFailure);
+    posts.insert.mockRejectedValue(insertFailure);
     const sourceLookup = createSourceLookupMock({
       sourceContent: sourceContentWithFrontmatter,
     });
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
     await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(
-      findFailure,
-    );
-    expect(posts.save).not.toHaveBeenCalled();
-  });
-
-  it('post 저장 exception을 전파한다', async () => {
-    const saveFailure = new Error('Post Repository operation failed');
-    const posts = createPostRepositoryMock();
-    posts.save.mockRejectedValue(saveFailure);
-    const sourceLookup = createSourceLookupMock({
-      sourceContent: sourceContentWithFrontmatter,
-    });
-    const useCase = new PublishPostUseCase(posts, sourceLookup);
-
-    await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(
-      saveFailure,
+      insertFailure,
     );
   });
 });
@@ -146,9 +133,11 @@ describe('PublishPostUseCase', () => {
 function createPostRepositoryMock(): PostRepositoryMock {
   return {
     get: vi.fn<PostRepository['get']>().mockResolvedValue(buildPost()),
-    find: vi.fn<PostRepository['find']>().mockResolvedValue(null),
-    save: vi
-      .fn<PostRepository['save']>()
+    insert: vi
+      .fn<PostRepository['insert']>()
+      .mockImplementation((post) => Promise.resolve(post)),
+    update: vi
+      .fn<PostRepository['update']>()
       .mockImplementation((post) => Promise.resolve(post)),
   };
 }

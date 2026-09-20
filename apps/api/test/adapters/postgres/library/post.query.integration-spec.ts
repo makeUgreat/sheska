@@ -47,7 +47,7 @@ describe('PostPgDrizzleQuery', () => {
   });
 
   it('post를 source body와 함께 id로 조회한다', async () => {
-    const source = await sources.save(
+    const source = await sources.insert(
       buildSource({
         externalSourceId: 'Notes/post-query-get.md',
         content: '# 조회 테스트 본문',
@@ -55,7 +55,7 @@ describe('PostPgDrizzleQuery', () => {
       }),
     );
     const post = buildPost({ sourceId: source.id, title: '조회 테스트' });
-    await posts.save(post);
+    await posts.insert(post);
 
     const result = await postQuery.find({ id: post.id });
 
@@ -75,14 +75,14 @@ describe('PostPgDrizzleQuery', () => {
   });
 
   it('viewCount 증가 후 getById가 갱신된 값을 반환한다', async () => {
-    const source = await sources.save(
+    const source = await sources.insert(
       buildSource({ externalSourceId: 'Notes/post-query-viewcount.md' }),
     );
     const post = buildPost({ sourceId: source.id });
-    await posts.save(post);
+    await posts.insert(post);
 
     post.incrementViewCount();
-    await posts.save(post);
+    await posts.update(post);
 
     const result = await postQuery.find({ id: post.id });
 
@@ -90,16 +90,16 @@ describe('PostPgDrizzleQuery', () => {
   });
 
   it('post 목록을 페이지네이션으로 반환한다', async () => {
-    const source1 = await sources.save(
+    const source1 = await sources.insert(
       buildSource({ externalSourceId: 'Notes/post-query-paginate-1.md' }),
     );
-    const source2 = await sources.save(
+    const source2 = await sources.insert(
       buildSource({ externalSourceId: 'Notes/post-query-paginate-2.md' }),
     );
     const post1 = buildPost({ sourceId: source1.id });
     const post2 = buildPost({ sourceId: source2.id });
-    await posts.save(post1);
-    await posts.save(post2);
+    await posts.insert(post1);
+    await posts.insert(post2);
 
     const { posts: result } = await postQuery.paginate({
       limit: 20,
@@ -113,18 +113,18 @@ describe('PostPgDrizzleQuery', () => {
 
   describe('paginate — cursor pagination', () => {
     it('limit보다 많은 포스트가 있으면 nextCursor를 반환한다', async () => {
-      const s1 = await sources.save(
+      const s1 = await sources.insert(
         buildSource({ externalSourceId: 'Notes/pq-cursor-1.md' }),
       );
-      const s2 = await sources.save(
+      const s2 = await sources.insert(
         buildSource({ externalSourceId: 'Notes/pq-cursor-2.md' }),
       );
-      const s3 = await sources.save(
+      const s3 = await sources.insert(
         buildSource({ externalSourceId: 'Notes/pq-cursor-3.md' }),
       );
-      await posts.save(buildPost({ sourceId: s1.id }));
-      await posts.save(buildPost({ sourceId: s2.id }));
-      await posts.save(buildPost({ sourceId: s3.id }));
+      await posts.insert(buildPost({ sourceId: s1.id }));
+      await posts.insert(buildPost({ sourceId: s2.id }));
+      await posts.insert(buildPost({ sourceId: s3.id }));
 
       const { posts: result, nextCursor } = await postQuery.paginate({
         limit: 2,
@@ -136,21 +136,21 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('nextCursor로 다음 페이지를 가져온다', async () => {
-      const s1 = await sources.save(
+      const s1 = await sources.insert(
         buildSource({ externalSourceId: 'Notes/pq-cursor-page-1.md' }),
       );
-      const s2 = await sources.save(
+      const s2 = await sources.insert(
         buildSource({ externalSourceId: 'Notes/pq-cursor-page-2.md' }),
       );
-      const s3 = await sources.save(
+      const s3 = await sources.insert(
         buildSource({ externalSourceId: 'Notes/pq-cursor-page-3.md' }),
       );
       const post1 = buildPost({ sourceId: s1.id });
       const post2 = buildPost({ sourceId: s2.id });
       const post3 = buildPost({ sourceId: s3.id });
-      await posts.save(post1);
-      await posts.save(post2);
-      await posts.save(post3);
+      await posts.insert(post1);
+      await posts.insert(post2);
+      await posts.insert(post3);
 
       const firstPage = await postQuery.paginate({ limit: 2, cursor: null });
       const secondPage = await postQuery.paginate({
@@ -166,10 +166,10 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('마지막 포스트 이후의 cursor로 조회하면 nextCursor가 null이다', async () => {
-      const s1 = await sources.save(
+      const s1 = await sources.insert(
         buildSource({ externalSourceId: 'Notes/pq-cursor-last-1.md' }),
       );
-      await posts.save(buildPost({ sourceId: s1.id }));
+      await posts.insert(buildPost({ sourceId: s1.id }));
 
       const veryOldCursor = { id: '00000000-0000-0000-0000-000000000000' };
       const { posts: result, nextCursor } = await postQuery.paginate({
@@ -182,11 +182,11 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('cursor와 동일한 id를 가진 포스트는 결과에서 제외된다', async () => {
-      const s1 = await sources.save(
+      const s1 = await sources.insert(
         buildSource({ externalSourceId: 'Notes/pq-cursor-tie-1.md' }),
       );
       const post1 = buildPost({ sourceId: s1.id });
-      await posts.save(post1);
+      await posts.insert(post1);
 
       const { posts: saved } = await postQuery.paginate({
         limit: 100,
@@ -202,16 +202,16 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('cursor 없이 호출하면 최신순으로 첫 페이지를 반환한다', async () => {
-      const s1 = await sources.save(
+      const s1 = await sources.insert(
         buildSource({ externalSourceId: 'Notes/pq-cursor-order-1.md' }),
       );
-      const s2 = await sources.save(
+      const s2 = await sources.insert(
         buildSource({ externalSourceId: 'Notes/pq-cursor-order-2.md' }),
       );
       const post1 = buildPost({ sourceId: s1.id });
       const post2 = buildPost({ sourceId: s2.id });
-      await posts.save(post1);
-      await posts.save(post2);
+      await posts.insert(post1);
+      await posts.insert(post2);
 
       const { posts: result } = await postQuery.paginate({
         limit: 2,
@@ -226,13 +226,13 @@ describe('PostPgDrizzleQuery', () => {
 
   describe('search', () => {
     it('title이 일치하는 post를 반환한다', async () => {
-      const source1 = await sources.save(
+      const source1 = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-trgm-match.md',
           title: 'TypeScript 입문 가이드',
         }),
       );
-      const source2 = await sources.save(
+      const source2 = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-trgm-nomatch.md',
           title: '파이썬 데이터 분석',
@@ -246,8 +246,8 @@ describe('PostPgDrizzleQuery', () => {
         sourceId: source2.id,
         title: '파이썬 데이터 분석',
       });
-      await posts.save(matchingPost);
-      await posts.save(unrelatedPost);
+      await posts.insert(matchingPost);
+      await posts.insert(unrelatedPost);
 
       const { posts: result } = await postQuery.search({
         query: 'TypeScript',
@@ -262,7 +262,7 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('오타가 포함된 query로도 유사한 title을 가진 post를 반환한다', async () => {
-      const source = await sources.save(
+      const source = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-trgm-typo.md',
           title: 'TypeScript 입문 가이드',
@@ -272,7 +272,7 @@ describe('PostPgDrizzleQuery', () => {
         sourceId: source.id,
         title: 'TypeScript 입문 가이드',
       });
-      await posts.save(post);
+      await posts.insert(post);
 
       const { posts: result } = await postQuery.search({
         query: 'TypeScirpt',
@@ -286,7 +286,7 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('짧은 query가 긴 title의 일부 단어와 일치하면 post를 반환한다', async () => {
-      const source = await sources.save(
+      const source = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-trgm-word.md',
           title: '소켓은 애플리케이션 계층과 전송계층간의 인터페이스이다',
@@ -296,7 +296,7 @@ describe('PostPgDrizzleQuery', () => {
         sourceId: source.id,
         title: '소켓은 애플리케이션 계층과 전송계층간의 인터페이스이다',
       });
-      await posts.save(post);
+      await posts.insert(post);
 
       const { posts: result } = await postQuery.search({
         query: '소켓',
@@ -310,13 +310,13 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('유사도 높은 순서로 결과를 반환한다', async () => {
-      const source1 = await sources.save(
+      const source1 = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-trgm-order-1.md',
           title: 'TypeScript',
         }),
       );
-      const source2 = await sources.save(
+      const source2 = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-trgm-order-2.md',
           title: 'TypeScript 입문 가이드 완벽 정리',
@@ -330,8 +330,8 @@ describe('PostPgDrizzleQuery', () => {
         sourceId: source2.id,
         title: 'TypeScript 입문 가이드 완벽 정리',
       });
-      await posts.save(exactPost);
-      await posts.save(partialPost);
+      await posts.insert(exactPost);
+      await posts.insert(partialPost);
 
       const { posts: result } = await postQuery.search({
         query: 'TypeScript',
@@ -347,27 +347,27 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('검색 결과를 nextCursor로 다음 페이지 조회한다', async () => {
-      const s1 = await sources.save(
+      const s1 = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-search-cursor-1.md',
           title: 'TypeScript A',
         }),
       );
-      const s2 = await sources.save(
+      const s2 = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-search-cursor-2.md',
           title: 'TypeScript B',
         }),
       );
-      const s3 = await sources.save(
+      const s3 = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-search-cursor-3.md',
           title: 'TypeScript C',
         }),
       );
-      await posts.save(buildPost({ sourceId: s1.id, title: 'TypeScript A' }));
-      await posts.save(buildPost({ sourceId: s2.id, title: 'TypeScript B' }));
-      await posts.save(buildPost({ sourceId: s3.id, title: 'TypeScript C' }));
+      await posts.insert(buildPost({ sourceId: s1.id, title: 'TypeScript A' }));
+      await posts.insert(buildPost({ sourceId: s2.id, title: 'TypeScript B' }));
+      await posts.insert(buildPost({ sourceId: s3.id, title: 'TypeScript C' }));
 
       const firstPage = await postQuery.search({
         query: 'TypeScript',
@@ -391,7 +391,7 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('content이 일치하는 post를 title 검색어 없이도 반환한다', async () => {
-      const source = await sources.save(
+      const source = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-content-match.md',
           content: '이 문서는 리액트훅에 대한 심화 설명을 담고 있다',
@@ -402,7 +402,7 @@ describe('PostPgDrizzleQuery', () => {
         sourceId: source.id,
         title: '프론트엔드 스터디 노트',
       });
-      await posts.save(post);
+      await posts.insert(post);
 
       const { posts: result } = await postQuery.search({
         query: '리액트훅',
@@ -416,14 +416,14 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('title 일치가 content 일치보다 높은 순위로 반환된다', async () => {
-      const titleSource = await sources.save(
+      const titleSource = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-weight-title.md',
           content: '관련 없는 본문',
           title: '쿠버네티스',
         }),
       );
-      const contentSource = await sources.save(
+      const contentSource = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-weight-content.md',
           content: '쿠버네티스 클러스터 운영 경험을 공유합니다',
@@ -438,8 +438,8 @@ describe('PostPgDrizzleQuery', () => {
         sourceId: contentSource.id,
         title: '운영 회고',
       });
-      await posts.save(titleMatch);
-      await posts.save(contentMatch);
+      await posts.insert(titleMatch);
+      await posts.insert(contentMatch);
 
       const { posts: result } = await postQuery.search({
         query: '쿠버네티스',
@@ -466,7 +466,7 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('제목만 키워드 매치하고 임베딩이 없어도 하이브리드 쿼리에서 반환된다', async () => {
-      const source = await sources.save(
+      const source = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-hybrid-fts-only.md',
           title: 'RustLang 동시성 모델',
@@ -476,7 +476,7 @@ describe('PostPgDrizzleQuery', () => {
         sourceId: source.id,
         title: 'RustLang 동시성 모델',
       });
-      await posts.save(post);
+      await posts.insert(post);
 
       const { posts: result } = await postQuery.search({
         query: 'RustLang',
@@ -490,7 +490,7 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('키워드 겹침 없이 임베딩만 근접해도 하이브리드 쿼리에서 반환된다', async () => {
-      const source = await sources.save(
+      const source = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-hybrid-vector-only.md',
           title: '완전히 무관한 제목',
@@ -500,9 +500,9 @@ describe('PostPgDrizzleQuery', () => {
         sourceId: source.id,
         title: '완전히 무관한 제목',
       });
-      await posts.save(post);
+      await posts.insert(post);
       const queryEmbedding = Array.from({ length: 1024 }, () => 1);
-      await sourceEmbeddings.save(
+      await sourceEmbeddings.upsert(
         buildSourceEmbedding({
           sourceId: source.id,
           chunks: [
@@ -527,13 +527,13 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('FTS와 벡터 둘 다 강한 post가 하나만 강한 post보다 상위 순위로 반환된다', async () => {
-      const bothSource = await sources.save(
+      const bothSource = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-hybrid-rrf-both.md',
           title: 'GraphQL 스키마 설계',
         }),
       );
-      const ftsOnlySource = await sources.save(
+      const ftsOnlySource = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-hybrid-rrf-fts-only.md',
           title: 'GraphQL 스키마 설계',
@@ -547,10 +547,10 @@ describe('PostPgDrizzleQuery', () => {
         sourceId: ftsOnlySource.id,
         title: 'GraphQL 스키마 설계',
       });
-      await posts.save(bothPost);
-      await posts.save(ftsOnlyPost);
+      await posts.insert(bothPost);
+      await posts.insert(ftsOnlyPost);
       const queryEmbedding = Array.from({ length: 1024 }, () => 1);
-      await sourceEmbeddings.save(
+      await sourceEmbeddings.upsert(
         buildSourceEmbedding({
           sourceId: bothSource.id,
           chunks: [
@@ -562,7 +562,7 @@ describe('PostPgDrizzleQuery', () => {
           ],
         }),
       );
-      await sourceEmbeddings.save(
+      await sourceEmbeddings.upsert(
         buildSourceEmbedding({
           sourceId: ftsOnlySource.id,
           chunks: [
@@ -589,13 +589,13 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('제목 매치 keyword-only가 본문 매치 both보다 상위 순위로 반환된다', async () => {
-      const titleOnlySource = await sources.save(
+      const titleOnlySource = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-title-boost-title-only.md',
           title: '완전탐색알고리즘 정리',
         }),
       );
-      const contentBothSource = await sources.save(
+      const contentBothSource = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-title-boost-content-both.md',
           content: '# 완전탐색알고리즘 설명',
@@ -610,10 +610,10 @@ describe('PostPgDrizzleQuery', () => {
         sourceId: contentBothSource.id,
         title: '무관한 제목',
       });
-      await posts.save(titleOnlyPost);
-      await posts.save(contentBothPost);
+      await posts.insert(titleOnlyPost);
+      await posts.insert(contentBothPost);
       const queryEmbedding = Array.from({ length: 1024 }, () => 1);
-      await sourceEmbeddings.save(
+      await sourceEmbeddings.upsert(
         buildSourceEmbedding({
           sourceId: contentBothSource.id,
           chunks: [
@@ -640,7 +640,7 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('본문에 검색어가 그대로 있으면 앞뒤 문맥이 포함된 snippet을 반환한다', async () => {
-      const source = await sources.save(
+      const source = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-snippet-content-match.md',
           content:
@@ -649,7 +649,7 @@ describe('PostPgDrizzleQuery', () => {
         }),
       );
       const post = buildPost({ sourceId: source.id, title: '자료구조 정리' });
-      await posts.save(post);
+      await posts.insert(post);
 
       const { posts: result } = await postQuery.search({
         query: '이진탐색트리',
@@ -666,7 +666,7 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('제목만 매치하고 본문에 검색어가 그대로 없으면 snippet이 null이다', async () => {
-      const source = await sources.save(
+      const source = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-snippet-no-content-match.md',
           content: '이 글은 다른 주제를 다루는 본문이다.',
@@ -677,7 +677,7 @@ describe('PostPgDrizzleQuery', () => {
         sourceId: source.id,
         title: '자바스크립트클로저정리',
       });
-      await posts.save(post);
+      await posts.insert(post);
 
       const { posts: result } = await postQuery.search({
         query: '자바스크립트클로저정리',
@@ -691,7 +691,7 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('semantic-only 매치는 snippet이 null이다', async () => {
-      const source = await sources.save(
+      const source = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-snippet-semantic-only.md',
           content: '완전히 무관한 본문 내용이다.',
@@ -699,9 +699,9 @@ describe('PostPgDrizzleQuery', () => {
         }),
       );
       const post = buildPost({ sourceId: source.id, title: '무관한 제목' });
-      await posts.save(post);
+      await posts.insert(post);
       const queryEmbedding = Array.from({ length: 1024 }, () => 1);
-      await sourceEmbeddings.save(
+      await sourceEmbeddings.upsert(
         buildSourceEmbedding({
           sourceId: source.id,
           chunks: [
@@ -727,27 +727,27 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('하이브리드 검색 결과를 nextCursor로 다음 페이지 조회한다', async () => {
-      const hs1 = await sources.save(
+      const hs1 = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-hybrid-cursor-1.md',
           title: 'Kotlin A',
         }),
       );
-      const hs2 = await sources.save(
+      const hs2 = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-hybrid-cursor-2.md',
           title: 'Kotlin B',
         }),
       );
-      const hs3 = await sources.save(
+      const hs3 = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-hybrid-cursor-3.md',
           title: 'Kotlin C',
         }),
       );
-      await posts.save(buildPost({ sourceId: hs1.id, title: 'Kotlin A' }));
-      await posts.save(buildPost({ sourceId: hs2.id, title: 'Kotlin B' }));
-      await posts.save(buildPost({ sourceId: hs3.id, title: 'Kotlin C' }));
+      await posts.insert(buildPost({ sourceId: hs1.id, title: 'Kotlin A' }));
+      await posts.insert(buildPost({ sourceId: hs2.id, title: 'Kotlin B' }));
+      await posts.insert(buildPost({ sourceId: hs3.id, title: 'Kotlin C' }));
       const queryEmbedding = Array.from({ length: 1024 }, () => 1);
 
       const firstPage = await postQuery.search({
@@ -775,10 +775,10 @@ describe('PostPgDrizzleQuery', () => {
   describe('count', () => {
     it('post를 저장하면 전체 갯수가 증가한다', async () => {
       const before = await postQuery.count();
-      const source = await sources.save(
+      const source = await sources.insert(
         buildSource({ externalSourceId: 'Notes/post-query-count.md' }),
       );
-      await posts.save(buildPost({ sourceId: source.id }));
+      await posts.insert(buildPost({ sourceId: source.id }));
 
       const after = await postQuery.count();
 

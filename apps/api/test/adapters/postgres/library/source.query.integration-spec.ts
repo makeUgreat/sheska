@@ -42,10 +42,10 @@ describe('SourcePgDrizzleQuery', () => {
   });
 
   it('source 목록을 반환한다', async () => {
-    const source1 = await sources.save(
+    const source1 = await sources.insert(
       buildSource({ externalSourceId: 'Notes/sq-list-1.md' }),
     );
-    const source2 = await sources.save(
+    const source2 = await sources.insert(
       buildSource({ externalSourceId: 'Notes/sq-list-2.md' }),
     );
 
@@ -60,14 +60,14 @@ describe('SourcePgDrizzleQuery', () => {
   });
 
   it('latestSyncJob이 있는 source를 반환한다', async () => {
-    const source = await sources.save(
+    const source = await sources.insert(
       buildSource({ externalSourceId: 'Notes/sq-with-sync-job.md' }),
     );
     const syncJob = buildSourceSyncJob({
       sourceId: source.id,
       fingerprint: 'fingerprint-2',
     });
-    await syncJobs.save(syncJob);
+    await syncJobs.insert(syncJob);
 
     const { sources: result } = await sourceQuery.paginate({
       page: 1,
@@ -83,7 +83,7 @@ describe('SourcePgDrizzleQuery', () => {
   });
 
   it('sync job이 없는 source의 latestSyncJob은 null이다', async () => {
-    const source = await sources.save(
+    const source = await sources.insert(
       buildSource({ externalSourceId: 'Notes/sq-no-sync-job.md' }),
     );
 
@@ -98,11 +98,11 @@ describe('SourcePgDrizzleQuery', () => {
   });
 
   it('post가 게시된 source의 publishedPostId를 반환한다', async () => {
-    const source = await sources.save(
+    const source = await sources.insert(
       buildSource({ externalSourceId: 'Notes/sq-published.md' }),
     );
     const post = buildPost({ sourceId: source.id });
-    await posts.save(post);
+    await posts.insert(post);
 
     const { sources: result } = await sourceQuery.paginate({
       page: 1,
@@ -114,7 +114,7 @@ describe('SourcePgDrizzleQuery', () => {
   });
 
   it('post가 없는 source의 publishedPostId는 null이다', async () => {
-    const source = await sources.save(
+    const source = await sources.insert(
       buildSource({ externalSourceId: 'Notes/sq-not-published.md' }),
     );
 
@@ -129,11 +129,11 @@ describe('SourcePgDrizzleQuery', () => {
 
   describe('find', () => {
     it('post가 게시된 source는 postId를 반환한다', async () => {
-      const source = await sources.save(
+      const source = await sources.insert(
         buildSource({ externalSourceId: 'Notes/sq-find-published.md' }),
       );
       const post = buildPost({ sourceId: source.id });
-      await posts.save(post);
+      await posts.insert(post);
 
       const result = await sourceQuery.find({ sourceId: source.id });
 
@@ -141,7 +141,7 @@ describe('SourcePgDrizzleQuery', () => {
     });
 
     it('post가 없는 source는 null을 반환한다', async () => {
-      const source = await sources.save(
+      const source = await sources.insert(
         buildSource({ externalSourceId: 'Notes/sq-find-not-published.md' }),
       );
 
@@ -153,13 +153,13 @@ describe('SourcePgDrizzleQuery', () => {
 
   describe('paginate — page pagination', () => {
     it('pageSize보다 많은 source가 있으면 totalPages가 1보다 크다', async () => {
-      await sources.save(
+      await sources.insert(
         buildSource({ externalSourceId: 'Notes/sq-page-1.md' }),
       );
-      await sources.save(
+      await sources.insert(
         buildSource({ externalSourceId: 'Notes/sq-page-2.md' }),
       );
-      await sources.save(
+      await sources.insert(
         buildSource({ externalSourceId: 'Notes/sq-page-3.md' }),
       );
 
@@ -173,13 +173,13 @@ describe('SourcePgDrizzleQuery', () => {
     });
 
     it('다음 page를 요청하면 다른 source들이 반환된다', async () => {
-      const s1 = await sources.save(
+      const s1 = await sources.insert(
         buildSource({ externalSourceId: 'Notes/sq-page-list-1.md' }),
       );
-      const s2 = await sources.save(
+      const s2 = await sources.insert(
         buildSource({ externalSourceId: 'Notes/sq-page-list-2.md' }),
       );
-      const s3 = await sources.save(
+      const s3 = await sources.insert(
         buildSource({ externalSourceId: 'Notes/sq-page-list-3.md' }),
       );
 
@@ -207,7 +207,7 @@ describe('SourcePgDrizzleQuery', () => {
     });
 
     it('totalCount를 정확히 반환한다', async () => {
-      await sources.save(
+      await sources.insert(
         buildSource({ externalSourceId: 'Notes/sq-total-count.md' }),
       );
 

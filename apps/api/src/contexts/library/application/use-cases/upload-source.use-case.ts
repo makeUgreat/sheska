@@ -59,6 +59,7 @@ export class UploadSourceUseCase {
     if (!source) {
       return this.persistChange(
         Source.create({ externalSourceId, ...snapshot }),
+        'insert',
       );
     }
 
@@ -73,10 +74,13 @@ export class UploadSourceUseCase {
       }
     }
 
-    return this.persistChange(source);
+    return this.persistChange(source, 'update');
   }
 
-  private async persistChange(source: Source): Promise<UploadSourceResult> {
+  private async persistChange(
+    source: Source,
+    sourceWrite: 'insert' | 'update',
+  ): Promise<UploadSourceResult> {
     const { body, fingerprint } = source.getProps().contentSnapshot.unpack();
 
     const syncJob = SourceSyncJob.create({
@@ -95,8 +99,11 @@ export class UploadSourceUseCase {
     );
 
     const result = await this.unitOfWork.execute(async (resources) => {
-      const savedSource = await resources.sources.save(source);
-      const savedSyncJob = await resources.syncJobs.save(syncJob);
+      const savedSource =
+        sourceWrite === 'insert'
+          ? await resources.sources.insert(source)
+          : await resources.sources.update(source);
+      const savedSyncJob = await resources.syncJobs.insert(syncJob);
 
       for (const integrationEvent of integrationEvents) {
         await resources.outbox.append(integrationEvent);

@@ -12,5 +12,6 @@ export interface SourceRepository {
   find(criteria: SourceRepositoryFindCriteria): Promise<Source | null>;
   get(criteria: SourceRepositoryGetCriteria): Promise<Source>;
   list(): Promise<Source[]>;
-  save(source: Source): Promise<Source>;
+  insert(source: Source): Promise<Source>;
+  update(source: Source): Promise<Source>;
 }

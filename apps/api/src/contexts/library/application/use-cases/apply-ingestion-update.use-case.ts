@@ -30,6 +30,6 @@ export class ApplyIngestionUpdateUseCase {
         break;
     }
 
-    await this.syncJobs.save(syncJob);
+    await this.syncJobs.update(syncJob);
   }
 }

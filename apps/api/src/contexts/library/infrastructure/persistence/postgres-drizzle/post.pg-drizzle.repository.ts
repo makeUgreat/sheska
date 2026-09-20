@@ -4,7 +4,6 @@ import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   type Post,
   type PostRepository,
-  type PostRepositoryFindCriteria,
   type PostRepositoryGetCriteria,
 } from '@contexts/library/domain';
 import {
@@ -58,57 +57,65 @@ export class PostPgDrizzleRepository implements PostRepository {
     return PostPgDrizzleMapper.toDomain(row);
   }
 
-  async find(criteria: PostRepositoryFindCriteria): Promise<Post | null> {
-    let row: schema.PostRow | undefined;
+  async insert(post: Post): Promise<Post> {
+    const postInsert = PostPgDrizzleMapper.toInsert(post);
+    let row: schema.PostRow;
 
     try {
-      [row] = await this.db
-        .select()
-        .from(schema.posts)
-        .where(eq(schema.posts.sourceId, criteria.sourceId))
-        .limit(1);
+      [row] = await this.db.insert(schema.posts).values(postInsert).returning();
     } catch (error: unknown) {
+      const kind = classifyPostgresError(error);
+      if (kind === INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION) {
+        throw new InfrastructureException({
+          kind,
+          code: 'post.already_exists',
+          source: { boundary: 'persistence', adapter: ADAPTER },
+          message: 'A post for this source already exists',
+          details: { id: postInsert.id },
+        });
+      }
+
       throw new InfrastructureException({
-        kind: classifyPostgresError(error),
-        code: 'post.find_failed',
+        kind,
+        code: 'post.insert_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
-        message: 'Post find operation failed',
-        details: { sourceId: criteria.sourceId },
+        message: 'Post insert operation failed',
+        details: { id: postInsert.id },
         cause: error,
       });
-    }
-
-    if (row === undefined) {
-      return null;
     }
 
     return PostPgDrizzleMapper.toDomain(row);
   }
 
-  async save(post: Post): Promise<Post> {
+  async update(post: Post): Promise<Post> {
     const postInsert = PostPgDrizzleMapper.toInsert(post);
-    let row: schema.PostRow;
+    let row: schema.PostRow | undefined;
 
     try {
       [row] = await this.db
-        .insert(schema.posts)
-        .values(postInsert)
-        .onConflictDoUpdate({
-          target: schema.posts.id,
-          set: {
-            viewCount: postInsert.viewCount,
-            updatedAt: new Date(),
-          },
-        })
+        .update(schema.posts)
+        .set({ viewCount: postInsert.viewCount, updatedAt: new Date() })
+        .where(eq(schema.posts.id, postInsert.id))
         .returning();
     } catch (error: unknown) {
       throw new InfrastructureException({
         kind: classifyPostgresError(error),
-        code: 'post.save_failed',
+        code: 'post.update_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
-        message: 'Post save operation failed',
+        message: 'Post update operation failed',
         details: { id: postInsert.id },
         cause: error,
+      });
+    }
+
+    if (row === undefined) {
+      throw new InfrastructureException({
+        kind: INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
+        code: 'post.not_found',
+        source: { boundary: 'persistence', adapter: ADAPTER },
+        message: 'Post not found',
+        details: { id: postInsert.id },
       });
     }
 
