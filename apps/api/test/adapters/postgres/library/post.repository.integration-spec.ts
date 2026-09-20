@@ -29,12 +29,12 @@ describe('PostPgDrizzleRepository', () => {
   });
 
   it('post를 저장하고 id로 조회한다', async () => {
-    const source = await sources.save(
+    const source = await sources.insert(
       buildSource({ externalSourceId: 'Notes/post-repo-get.md' }),
     );
     const post = buildPost({ sourceId: source.id, title: '조회 테스트' });
 
-    await posts.save(post);
+    await posts.insert(post);
     const result = await posts.get({ id: post.id });
 
     expect(result.id).toBe(post.id);
@@ -43,14 +43,14 @@ describe('PostPgDrizzleRepository', () => {
   });
 
   it('post를 갱신한다', async () => {
-    const source = await sources.save(
+    const source = await sources.insert(
       buildSource({ externalSourceId: 'Notes/post-repo-update.md' }),
     );
     const post = buildPost({ sourceId: source.id });
-    await posts.save(post);
+    await posts.insert(post);
 
     post.incrementViewCount();
-    await posts.save(post);
+    await posts.update(post);
     const result = await posts.get({ id: post.id });
 
     expect(result.getProps().viewCount.unpack()).toBe(1);
@@ -63,36 +63,29 @@ describe('PostPgDrizzleRepository', () => {
     });
   });
 
-  it('sourceId로 post를 조회한다', async () => {
-    const source = await sources.save(
-      buildSource({ externalSourceId: 'Notes/post-repo-find-by-source.md' }),
+  it('존재하지 않는 post를 update하면 NOT_FOUND exception을 throw한다', async () => {
+    const source = await sources.insert(
+      buildSource({ externalSourceId: 'Notes/post-repo-update-missing.md' }),
     );
     const post = buildPost({ sourceId: source.id });
-    await posts.save(post);
 
-    const result = await posts.find({ sourceId: source.id });
-
-    expect(result?.id).toBe(post.id);
-    expect(result?.getProps().sourceId).toBe(source.id);
+    await expect(posts.update(post)).rejects.toMatchObject({
+      kind: 'not_found',
+      code: 'post.not_found',
+    });
   });
 
-  it('게시되지 않은 sourceId는 null을 반환한다', async () => {
-    const result = await posts.find({ sourceId: 'non-existent-source-id' });
-
-    expect(result).toBeNull();
-  });
-
-  it('같은 sourceId로 두 번 저장하면 conflict exception을 발생시킨다', async () => {
-    const source = await sources.save(
+  it('같은 sourceId로 두 번 insert하면 constraint_violation exception을 발생시킨다', async () => {
+    const source = await sources.insert(
       buildSource({ externalSourceId: 'Notes/post-repo-conflict.md' }),
     );
     const post1 = buildPost({ sourceId: source.id });
     const post2 = buildPost({ sourceId: source.id });
-    await posts.save(post1);
+    await posts.insert(post1);
 
-    await expect(posts.save(post2)).rejects.toMatchObject({
+    await expect(posts.insert(post2)).rejects.toMatchObject({
       kind: 'constraint_violation',
-      code: 'post.save_failed',
+      code: 'post.already_exists',
     });
   });
 });

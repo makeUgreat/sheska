@@ -245,7 +245,7 @@ custom:
       sourceId: firstResult.sourceId,
     });
     firstSyncJob!.markCompleted(1);
-    await syncJobs.save(firstSyncJob!);
+    await syncJobs.update(firstSyncJob!);
 
     const secondResult = await useCase.execute({ externalSourceId, content });
 

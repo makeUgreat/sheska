@@ -35,12 +35,12 @@ describe('Embedding workflow consumers', () => {
   let workflowDispatcher: EmbeddingWorkflowDispatcher;
   const embed =
     vi.fn<(text: string) => Promise<{ embedding: number[]; model: string }>>();
-  const save = vi.fn();
+  const upsert = vi.fn();
   const append = vi.fn();
 
   beforeEach(async () => {
     embed.mockReset();
-    save.mockReset();
+    upsert.mockReset();
     append.mockReset();
 
     const moduleFixture = await Test.createTestingModule({
@@ -71,7 +71,7 @@ describe('Embedding workflow consumers', () => {
           useValue: {
             execute: (work) =>
               work({
-                sourceEmbeddings: { save, find: vi.fn() },
+                sourceEmbeddings: { upsert, find: vi.fn() },
                 outbox: { append },
               }),
           } satisfies IngestionUnitOfWork,
@@ -116,7 +116,7 @@ describe('Embedding workflow consumers', () => {
       embedding: VALID_EMBEDDING,
       model: 'qwen3-embedding:0.6b',
     });
-    save.mockResolvedValue(undefined);
+    upsert.mockResolvedValue(undefined);
 
     await workflowDispatcher.dispatch({
       sourceId: 'source-1',
@@ -131,7 +131,7 @@ describe('Embedding workflow consumers', () => {
     await parent!.waitUntilFinished(finalizeQueueEvents);
 
     expect(embed).toHaveBeenCalledTimes(2);
-    expect(save).toHaveBeenCalledOnce();
+    expect(upsert).toHaveBeenCalledOnce();
     expect(append).toHaveBeenCalledOnce();
     await expect(chunkQueue.getJob('sync-job-1-0')).resolves.toMatchObject({
       progress: 100,
@@ -145,7 +145,7 @@ describe('Embedding workflow consumers', () => {
         embedding: VALID_EMBEDDING,
         model: 'qwen3-embedding:0.6b',
       });
-    save.mockResolvedValue(undefined);
+    upsert.mockResolvedValue(undefined);
 
     await workflowDispatcher.dispatch({
       sourceId: 'source-1',
@@ -161,7 +161,7 @@ describe('Embedding workflow consumers', () => {
 
     // 첫 시도 1회 실패 + 재시도 1회 + 나머지 chunk 1회 = 3회.
     expect(embed).toHaveBeenCalledTimes(3);
-    expect(save).toHaveBeenCalledOnce();
+    expect(upsert).toHaveBeenCalledOnce();
     const retried = await chunkQueue.getJob('sync-job-1-0');
     expect(retried?.attemptsMade).toBe(2);
   });
@@ -183,7 +183,7 @@ describe('Embedding workflow consumers', () => {
     expect(embed).toHaveBeenCalledTimes(3);
     const child = await chunkQueue.getJob('sync-job-1-0');
     expect(child?.attemptsMade).toBe(3);
-    expect(save).not.toHaveBeenCalled();
+    expect(upsert).not.toHaveBeenCalled();
   });
 
   it('같은 sync job으로 workflow를 다시 등록해도 job을 중복 생성하지 않는다', async () => {

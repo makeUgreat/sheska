@@ -43,7 +43,7 @@ export class FinalizeEmbeddingWorkflowUseCase {
     });
 
     await this.unitOfWork.execute(async ({ sourceEmbeddings, outbox }) => {
-      await sourceEmbeddings.save(sourceEmbedding);
+      await sourceEmbeddings.upsert(sourceEmbedding);
       await outbox.append(completedEvent);
     });
   }

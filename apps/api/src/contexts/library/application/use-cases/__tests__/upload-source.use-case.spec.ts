@@ -24,14 +24,16 @@ type SourceRepositoryMock = {
   find: MockedFunction<SourceRepository['find']>;
   get: MockedFunction<SourceRepository['get']>;
   list: MockedFunction<SourceRepository['list']>;
-  save: MockedFunction<SourceRepository['save']>;
+  insert: MockedFunction<SourceRepository['insert']>;
+  update: MockedFunction<SourceRepository['update']>;
 };
 
 type SourceSyncJobRepositoryMock = {
   get: MockedFunction<SourceSyncJobRepository['get']>;
   find: MockedFunction<SourceSyncJobRepository['find']>;
   findLatest: MockedFunction<SourceSyncJobRepository['findLatest']>;
-  save: MockedFunction<SourceSyncJobRepository['save']>;
+  insert: MockedFunction<SourceSyncJobRepository['insert']>;
+  update: MockedFunction<SourceSyncJobRepository['update']>;
 };
 
 type OutboxWriterMock = {
@@ -77,10 +79,10 @@ describe('UploadSourceUseCase', () => {
       fingerprint: 'fingerprint-1',
     });
     expectSyncJobSavedWith(syncJobs, {
-      sourceId: sources.save.mock.calls[0]?.[0]?.id,
+      sourceId: sourceWriteCalls(sources)[0]?.[0]?.id,
       fingerprint: 'fingerprint-1',
     });
-    const savedSyncJob = syncJobs.save.mock.calls[0]?.[0];
+    const savedSyncJob = syncJobs.insert.mock.calls[0]?.[0];
     expect(outbox.append).toHaveBeenCalledOnce();
     const appendedMessage = outbox.append.mock.calls[0]?.[0];
     expect(appendedMessage).toMatchObject({
@@ -133,8 +135,8 @@ describe('UploadSourceUseCase', () => {
       externalSourceId: 'Notes/source.md',
       fingerprint: 'fingerprint-1',
     });
-    expect(sources.save).not.toHaveBeenCalled();
-    expect(syncJobs.save).not.toHaveBeenCalled();
+    expect(sourceWriteCalls(sources)).toHaveLength(0);
+    expect(syncJobs.insert).not.toHaveBeenCalled();
   });
 
   it.each(['waiting'])(
@@ -173,8 +175,8 @@ describe('UploadSourceUseCase', () => {
       });
 
       expect(result.syncJobId).toBe('sync-job-1');
-      expect(sources.save).not.toHaveBeenCalled();
-      expect(syncJobs.save).not.toHaveBeenCalled();
+      expect(sourceWriteCalls(sources)).toHaveLength(0);
+      expect(syncJobs.insert).not.toHaveBeenCalled();
     },
   );
 
@@ -309,8 +311,8 @@ describe('UploadSourceUseCase', () => {
     ).rejects.toThrow('External source id cannot be empty');
     expect(contentSnapshotCalculator.calculate).not.toHaveBeenCalled();
     expect(sources.find).not.toHaveBeenCalled();
-    expect(sources.save).not.toHaveBeenCalled();
-    expect(syncJobs.save).not.toHaveBeenCalled();
+    expect(sourceWriteCalls(sources)).toHaveLength(0);
+    expect(syncJobs.insert).not.toHaveBeenCalled();
   });
 
   it('content snapshot 계산 exception을 전파한다', async () => {
@@ -333,8 +335,8 @@ describe('UploadSourceUseCase', () => {
 
     await expect(result).rejects.toBe(calculationFailure);
     expect(sources.find).not.toHaveBeenCalled();
-    expect(sources.save).not.toHaveBeenCalled();
-    expect(syncJobs.save).not.toHaveBeenCalled();
+    expect(sourceWriteCalls(sources)).toHaveLength(0);
+    expect(syncJobs.insert).not.toHaveBeenCalled();
   });
 
   it('source 조회 exception을 전파한다', async () => {
@@ -356,15 +358,16 @@ describe('UploadSourceUseCase', () => {
     });
 
     await expect(result).rejects.toThrow('Source Repository operation failed');
-    expect(sources.save).not.toHaveBeenCalled();
-    expect(syncJobs.save).not.toHaveBeenCalled();
+    expect(sourceWriteCalls(sources)).toHaveLength(0);
+    expect(syncJobs.insert).not.toHaveBeenCalled();
   });
 
   it('source 저장 exception을 전파하고 sync job은 저장하지 않는다', async () => {
     const saveFailure = new Error('Source Repository operation failed');
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
     const sources = createSourceRepositoryMock();
-    sources.save.mockRejectedValue(saveFailure);
+    sources.insert.mockRejectedValue(saveFailure);
+    sources.update.mockRejectedValue(saveFailure);
     const syncJobs = createSourceSyncJobRepositoryMock();
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
@@ -379,7 +382,7 @@ describe('UploadSourceUseCase', () => {
     });
 
     await expect(result).rejects.toThrow('Source Repository operation failed');
-    expect(syncJobs.save).not.toHaveBeenCalled();
+    expect(syncJobs.insert).not.toHaveBeenCalled();
   });
 
   it('sync job 저장 exception을 전파한다', async () => {
@@ -389,7 +392,7 @@ describe('UploadSourceUseCase', () => {
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
-    syncJobs.save.mockRejectedValue(syncJobSaveFailure);
+    syncJobs.insert.mockRejectedValue(syncJobSaveFailure);
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
       sources,
@@ -405,7 +408,7 @@ describe('UploadSourceUseCase', () => {
     await expect(result).rejects.toThrow(
       'Source Sync Job Repository operation failed',
     );
-    expect(sources.save).toHaveBeenCalledOnce();
+    expect(sourceWriteCalls(sources)).toHaveLength(1);
   });
 
   it('outbox 저장 exception을 전파하고 domain event를 유지한다', async () => {
@@ -428,9 +431,9 @@ describe('UploadSourceUseCase', () => {
     });
 
     await expect(result).rejects.toBe(outboxFailure);
-    expect(sources.save).toHaveBeenCalledOnce();
-    expect(syncJobs.save).toHaveBeenCalledOnce();
-    expect(syncJobs.save.mock.calls[0]?.[0]?.domainEvents).toHaveLength(1);
+    expect(sourceWriteCalls(sources)).toHaveLength(1);
+    expect(syncJobs.insert).toHaveBeenCalledOnce();
+    expect(syncJobs.insert.mock.calls[0]?.[0]?.domainEvents).toHaveLength(1);
   });
 
   it('domain이 source snapshot을 거부하면 저장하지 않고 throw한다', async () => {
@@ -453,8 +456,8 @@ describe('UploadSourceUseCase', () => {
     });
 
     await expect(result).rejects.toThrow('Source fingerprint cannot be empty');
-    expect(sources.save).not.toHaveBeenCalled();
-    expect(syncJobs.save).not.toHaveBeenCalled();
+    expect(sourceWriteCalls(sources)).toHaveLength(0);
+    expect(syncJobs.insert).not.toHaveBeenCalled();
   });
 });
 
@@ -487,8 +490,11 @@ function createSourceRepositoryMock(): SourceRepositoryMock {
     find: vi.fn<SourceRepository['find']>().mockResolvedValue(null),
     get: vi.fn<SourceRepository['get']>().mockResolvedValue(buildSource()),
     list: vi.fn<SourceRepository['list']>().mockResolvedValue([]),
-    save: vi
-      .fn<SourceRepository['save']>()
+    insert: vi
+      .fn<SourceRepository['insert']>()
+      .mockImplementation((source) => Promise.resolve(source)),
+    update: vi
+      .fn<SourceRepository['update']>()
       .mockImplementation((source) => Promise.resolve(source)),
   };
 }
@@ -504,10 +510,17 @@ function createSourceSyncJobRepositoryMock(): SourceSyncJobRepositoryMock {
     findLatest: vi
       .fn<SourceSyncJobRepository['findLatest']>()
       .mockResolvedValue(null),
-    save: vi
-      .fn<SourceSyncJobRepository['save']>()
+    insert: vi
+      .fn<SourceSyncJobRepository['insert']>()
+      .mockImplementation((syncJob) => Promise.resolve(syncJob)),
+    update: vi
+      .fn<SourceSyncJobRepository['update']>()
       .mockImplementation((syncJob) => Promise.resolve(syncJob)),
   };
+}
+
+function sourceWriteCalls(sources: SourceRepositoryMock) {
+  return [...sources.insert.mock.calls, ...sources.update.mock.calls];
 }
 
 function createLibraryUnitOfWorkMock(
@@ -547,8 +560,8 @@ function expectSourceSavedWith(
     fingerprint: string;
   },
 ) {
-  expect(sources.save).toHaveBeenCalledOnce();
-  const savedSource = sources.save.mock.calls[0]?.[0];
+  expect(sourceWriteCalls(sources)).toHaveLength(1);
+  const savedSource = sourceWriteCalls(sources)[0]?.[0];
   expect(savedSource?.getProps().externalSourceId.unpack()).toBe(
     expected.externalSourceId,
   );
@@ -568,8 +581,8 @@ function expectSyncJobSavedWith(
     fingerprint: string;
   },
 ) {
-  expect(syncJobs.save).toHaveBeenCalledOnce();
-  const savedSyncJob = syncJobs.save.mock.calls[0]?.[0];
+  expect(syncJobs.insert).toHaveBeenCalledOnce();
+  const savedSyncJob = syncJobs.insert.mock.calls[0]?.[0];
   expect(sourceSyncJobProps(savedSyncJob)).toMatchObject({
     sourceId: expected.sourceId,
     fingerprint: expected.fingerprint,

@@ -37,7 +37,7 @@ export class SourceEmbeddingPgDrizzleRepository implements SourceEmbeddingReposi
       : null;
   }
 
-  async save(sourceEmbedding: SourceEmbedding): Promise<void> {
+  async upsert(sourceEmbedding: SourceEmbedding): Promise<void> {
     const inserts = SourceEmbeddingPgDrizzleMapper.toInserts(sourceEmbedding);
     const { sourceId } = inserts[0];
 
@@ -52,10 +52,10 @@ export class SourceEmbeddingPgDrizzleRepository implements SourceEmbeddingReposi
             error.kind === INFRASTRUCTURE_ERROR_KIND.CONCURRENCY_CONFLICT,
         }),
       })
-      .execute(() => this.saveOnce(sourceId, inserts));
+      .execute(() => this.replaceOnce(sourceId, inserts));
   }
 
-  private async saveOnce(
+  private async replaceOnce(
     sourceId: string,
     inserts: SourceEmbeddingInsert[],
   ): Promise<void> {
@@ -69,7 +69,7 @@ export class SourceEmbeddingPgDrizzleRepository implements SourceEmbeddingReposi
     } catch (error: unknown) {
       throw new InfrastructureException({
         kind: classifyPostgresError(error),
-        code: 'source_embedding.save_failed',
+        code: 'source_embedding.upsert_failed',
         source: { boundary: 'persistence', adapter: ADAPTER },
         message: 'Source embedding save operation failed',
         details: { sourceId },

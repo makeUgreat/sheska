@@ -1,8 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  APPLICATION_ERROR_KIND,
-  ApplicationException,
-} from '@kernels/application';
+
 import { Post, type PostRepository } from '@contexts/library/domain';
 import {
   POST_REPOSITORY,
@@ -35,22 +32,11 @@ export class PublishPostUseCase {
   async execute(command: PublishPostCommand): Promise<PublishPostResult> {
     const source = await this.sourceLookup.get(command.sourceId);
 
-    const existing = await this.posts.find({ sourceId: command.sourceId });
-
-    if (existing) {
-      throw new ApplicationException({
-        kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
-        code: 'posts.source_already_published',
-        message: 'This source already has a published post',
-        details: {},
-      });
-    }
-
     const post = Post.create({
       sourceId: command.sourceId,
     });
 
-    const saved = await this.posts.save(post);
+    const saved = await this.posts.insert(post);
     const props = saved.getProps();
 
     return {

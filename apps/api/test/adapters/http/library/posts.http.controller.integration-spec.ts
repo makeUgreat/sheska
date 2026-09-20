@@ -166,10 +166,11 @@ describe('PostsHttpController', () => {
 
     it('이미 게시된 source이면 409 응답을 반환한다', async () => {
       publishPostUseCase.execute.mockRejectedValue(
-        new ApplicationException({
-          kind: APPLICATION_ERROR_KIND.STATE_CONFLICT,
-          code: 'posts.source_already_published',
-          message: 'This source already has a published post',
+        new InfrastructureException({
+          kind: INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
+          code: 'post.already_exists',
+          source: { boundary: 'persistence', adapter: 'post.pg-drizzle' },
+          message: 'A post for this source already exists',
           details: {},
         }),
       );
@@ -181,8 +182,8 @@ describe('PostsHttpController', () => {
 
       expect(response.body).toEqual({
         statusCode: 409,
-        code: 'posts.source_already_published',
-        message: 'This source already has a published post',
+        code: 'post.already_exists',
+        message: 'A post for this source already exists',
         details: {},
       });
     });

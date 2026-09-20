@@ -5,7 +5,8 @@ import { ApplyIngestionUpdateUseCase } from '../apply-ingestion-update.use-case'
 
 type SourceSyncJobRepositoryMock = {
   find: MockedFunction<SourceSyncJobRepository['find']>;
-  save: MockedFunction<SourceSyncJobRepository['save']>;
+  insert: MockedFunction<SourceSyncJobRepository['insert']>;
+  update: MockedFunction<SourceSyncJobRepository['update']>;
 };
 
 describe('ApplyIngestionUpdateUseCase', () => {
@@ -24,7 +25,7 @@ describe('ApplyIngestionUpdateUseCase', () => {
       status: 'completed',
       totalChunks: 5,
     });
-    expect(syncJobs.save).toHaveBeenCalledWith(syncJob);
+    expect(syncJobs.update).toHaveBeenCalledWith(syncJob);
   });
 
   it('failed update를 sync job에 적용한다', async () => {
@@ -35,7 +36,7 @@ describe('ApplyIngestionUpdateUseCase', () => {
     await useCase.execute({ kind: 'failed', syncJobId: syncJob.id });
 
     expect(syncJob.getProps().status).toBe('failed');
-    expect(syncJobs.save).toHaveBeenCalledWith(syncJob);
+    expect(syncJobs.update).toHaveBeenCalledWith(syncJob);
   });
 
   it('sync job이 없으면 update를 무시한다', async () => {
@@ -48,7 +49,7 @@ describe('ApplyIngestionUpdateUseCase', () => {
       totalChunks: 5,
     });
 
-    expect(syncJobs.save).not.toHaveBeenCalled();
+    expect(syncJobs.update).not.toHaveBeenCalled();
   });
 });
 
@@ -63,8 +64,11 @@ function createSyncJobRepositoryMock(
 ): SourceSyncJobRepositoryMock {
   return {
     find: vi.fn<SourceSyncJobRepository['find']>().mockResolvedValue(syncJob),
-    save: vi
-      .fn<SourceSyncJobRepository['save']>()
+    insert: vi
+      .fn<SourceSyncJobRepository['insert']>()
+      .mockImplementation((job) => Promise.resolve(job)),
+    update: vi
+      .fn<SourceSyncJobRepository['update']>()
       .mockImplementation((job) => Promise.resolve(job)),
   };
 }

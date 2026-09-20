@@ -9,7 +9,8 @@ function buildMockRepository(
     find: vi.fn(),
     get: vi.fn(),
     list: vi.fn(),
-    save: vi.fn(),
+    insert: vi.fn(),
+    update: vi.fn(),
     ...overrides,
   } satisfies SourceRepository;
 }

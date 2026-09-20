@@ -30,7 +30,7 @@ describe('SourceDrizzleRepository', () => {
     const externalSourceId = 'Notes/find-source.md';
     const source = buildSource({ externalSourceId });
 
-    const saveResult = await repository.save(source);
+    const saveResult = await repository.insert(source);
     const findResult = await repository.find({ externalSourceId });
 
     expect(saveResult.id).toBe(source.id);
@@ -47,7 +47,7 @@ describe('SourceDrizzleRepository', () => {
   it('source를 갱신한다', async () => {
     const externalSourceId = 'Notes/update-source.md';
     const source = buildSource({ externalSourceId });
-    await repository.save(source);
+    await repository.insert(source);
 
     source.syncContentSnapshot({
       body: '# Changed source note',
@@ -57,7 +57,7 @@ describe('SourceDrizzleRepository', () => {
       size: sourceContentByteSize('# Changed source note'),
     });
 
-    const saveResult = await repository.save(source);
+    const saveResult = await repository.update(source);
     const findResult = await repository.find({ externalSourceId });
 
     expect(saveResult.id).toBe(source.id);
@@ -74,7 +74,7 @@ describe('SourceDrizzleRepository', () => {
     const source = buildSource({
       externalSourceId: 'Notes/find-source-by-id.md',
     });
-    await repository.save(source);
+    await repository.insert(source);
 
     const result = await repository.find({ id: source.id });
 
@@ -106,8 +106,8 @@ describe('SourceDrizzleRepository', () => {
   it('source 목록을 반환한다', async () => {
     const source1 = buildSource({ externalSourceId: 'Notes/list-source-1.md' });
     const source2 = buildSource({ externalSourceId: 'Notes/list-source-2.md' });
-    await repository.save(source1);
-    await repository.save(source2);
+    await repository.insert(source1);
+    await repository.insert(source2);
 
     const result = await repository.list();
 
@@ -125,11 +125,11 @@ describe('SourceDrizzleRepository', () => {
       fingerprint: 'fingerprint-2',
     });
 
-    await repository.save(firstSource);
+    await repository.insert(firstSource);
 
-    await expect(repository.save(secondSource)).rejects.toMatchObject({
+    await expect(repository.insert(secondSource)).rejects.toMatchObject({
       kind: 'constraint_violation',
-      code: 'source.save_failed',
+      code: 'source.external_source_id_already_exists',
     });
   });
 });

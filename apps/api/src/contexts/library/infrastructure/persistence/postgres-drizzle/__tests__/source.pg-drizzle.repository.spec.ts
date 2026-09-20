@@ -14,12 +14,12 @@ describe('SourcePgDrizzleRepository', () => {
       createSourceSaveRejectingDb(createPostgresError('23505')),
     );
 
-    const result = repository.save(buildSource());
+    const result = repository.insert(buildSource());
 
     await expect(result).rejects.toBeInstanceOf(InfrastructureException);
     await expect(result).rejects.toMatchObject({
       kind: INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
-      code: 'source.save_failed',
+      code: 'source.external_source_id_already_exists',
     });
   });
 
@@ -28,12 +28,12 @@ describe('SourcePgDrizzleRepository', () => {
       createSourceSaveRejectingDb(new Error('connection failed')),
     );
 
-    const result = repository.save(buildSource());
+    const result = repository.insert(buildSource());
 
     await expect(result).rejects.toBeInstanceOf(InfrastructureException);
     await expect(result).rejects.toMatchObject({
       kind: INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
-      code: 'source.save_failed',
+      code: 'source.insert_failed',
     });
   });
 });
@@ -44,12 +44,12 @@ describe('SourceSyncJobPgDrizzleRepository', () => {
       createSourceSyncJobSaveRejectingDb(createPostgresError('23505')),
     );
 
-    const result = repository.save(buildSourceSyncJob());
+    const result = repository.insert(buildSourceSyncJob());
 
     await expect(result).rejects.toBeInstanceOf(InfrastructureException);
     await expect(result).rejects.toMatchObject({
       kind: INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
-      code: 'source_sync_job.save_failed',
+      code: 'source_sync_job.already_active',
     });
   });
 
@@ -58,12 +58,12 @@ describe('SourceSyncJobPgDrizzleRepository', () => {
       createSourceSyncJobSaveRejectingDb(new Error('connection failed')),
     );
 
-    const result = repository.save(buildSourceSyncJob());
+    const result = repository.insert(buildSourceSyncJob());
 
     await expect(result).rejects.toBeInstanceOf(InfrastructureException);
     await expect(result).rejects.toMatchObject({
       kind: INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
-      code: 'source_sync_job.save_failed',
+      code: 'source_sync_job.insert_failed',
     });
   });
 });
@@ -74,9 +74,7 @@ function createSourceSaveRejectingDb(
   return {
     insert: () => ({
       values: () => ({
-        onConflictDoUpdate: () => ({
-          returning: () => Promise.reject(error),
-        }),
+        returning: () => Promise.reject(error),
       }),
     }),
   } as unknown as ConstructorParameters<typeof SourcePgDrizzleRepository>[0];
@@ -88,9 +86,7 @@ function createSourceSyncJobSaveRejectingDb(
   return {
     insert: () => ({
       values: () => ({
-        onConflictDoUpdate: () => ({
-          returning: () => Promise.reject(error),
-        }),
+        returning: () => Promise.reject(error),
       }),
     }),
   } as unknown as ConstructorParameters<

@@ -37,18 +37,18 @@ const chunks: EmbedSourceChunkResult[] = [
 ];
 
 function buildUseCase() {
-  const save = vi.fn().mockResolvedValue(undefined);
+  const upsert = vi.fn().mockResolvedValue(undefined);
   const append = vi.fn<OutboxWriter['append']>().mockResolvedValue(undefined);
   const unitOfWork: IngestionUnitOfWork = {
     execute: (work) =>
-      work({ sourceEmbeddings: { save, find: vi.fn() }, outbox: { append } }),
+      work({ sourceEmbeddings: { upsert, find: vi.fn() }, outbox: { append } }),
   };
   const dispatch = vi
     .fn<IntegrationEventDispatcher['dispatch']>()
     .mockResolvedValue(undefined);
   return {
     useCase: new FinalizeEmbeddingWorkflowUseCase(unitOfWork, { dispatch }),
-    save,
+    upsert,
     append,
     dispatch,
   };
@@ -56,11 +56,11 @@ function buildUseCase() {
 
 describe('FinalizeEmbeddingWorkflowUseCase', () => {
   it('child 결과를 index 순으로 저장하고 completed를 outbox에 기록한다', async () => {
-    const { useCase, save, append, dispatch } = buildUseCase();
+    const { useCase, upsert, append, dispatch } = buildUseCase();
 
     await useCase.execute(payload, chunks);
 
-    const saved = save.mock.calls[0][0] as SourceEmbedding;
+    const saved = upsert.mock.calls[0][0] as SourceEmbedding;
     expect(
       saved.getProps().chunks.map((chunk) => chunk.unpack().chunkIndex),
     ).toEqual([0, 1]);
@@ -74,7 +74,7 @@ describe('FinalizeEmbeddingWorkflowUseCase', () => {
   });
 
   it('누락된 child 결과는 저장하지 않는다', async () => {
-    const { useCase, save } = buildUseCase();
+    const { useCase, upsert } = buildUseCase();
 
     await expect(
       useCase.execute(payload, chunks.slice(0, 1)),
@@ -89,11 +89,11 @@ describe('FinalizeEmbeddingWorkflowUseCase', () => {
         actualChunks: 1,
       },
     });
-    expect(save).not.toHaveBeenCalled();
+    expect(upsert).not.toHaveBeenCalled();
   });
 
   it('서로 다른 model 결과는 저장하지 않는다', async () => {
-    const { useCase, save } = buildUseCase();
+    const { useCase, upsert } = buildUseCase();
     const inconsistentChunks = [
       chunks[0],
       { ...chunks[1], model: 'another-model' },
@@ -111,7 +111,7 @@ describe('FinalizeEmbeddingWorkflowUseCase', () => {
         models: ['qwen3-embedding:0.6b', 'another-model'],
       },
     });
-    expect(save).not.toHaveBeenCalled();
+    expect(upsert).not.toHaveBeenCalled();
   });
 
   it('finalize 실패를 sync job 실패 이벤트로 변환한다', async () => {

@@ -34,27 +34,27 @@ describe('SourceEmbeddingDrizzleRepository', () => {
   });
 
   it('source embedding을 저장한다', async () => {
-    const source = await sourceRepository.save(
+    const source = await sourceRepository.insert(
       buildSource({
         externalSourceId: 'Notes/source-embedding-source.md',
       }),
     );
     const sourceEmbedding = buildSourceEmbedding({ sourceId: source.id });
 
-    await expect(repository.save(sourceEmbedding)).resolves.not.toThrow();
+    await expect(repository.upsert(sourceEmbedding)).resolves.not.toThrow();
   });
 
   it('같은 sourceId로 다시 저장하면 청크를 교체한다', async () => {
-    const source = await sourceRepository.save(
+    const source = await sourceRepository.insert(
       buildSource({
         externalSourceId: 'Notes/source-embedding-upsert.md',
       }),
     );
     const updatedEmbedding = VALID_EMBEDDING.map((v) => v + 0.001);
 
-    await repository.save(buildSourceEmbedding({ sourceId: source.id }));
+    await repository.upsert(buildSourceEmbedding({ sourceId: source.id }));
     await expect(
-      repository.save(
+      repository.upsert(
         buildSourceEmbedding({
           sourceId: source.id,
           chunks: [
@@ -70,7 +70,7 @@ describe('SourceEmbeddingDrizzleRepository', () => {
   });
 
   it('복수 청크를 저장하고 chunkIndex 오름차순으로 반환한다', async () => {
-    const source = await sourceRepository.save(
+    const source = await sourceRepository.insert(
       buildSource({
         externalSourceId: 'Notes/source-embedding-multi-chunk.md',
       }),
@@ -83,7 +83,7 @@ describe('SourceEmbeddingDrizzleRepository', () => {
         { chunkIndex: 2, chunkContent: 'third chunk' },
       ],
     });
-    await repository.save(sourceEmbedding);
+    await repository.upsert(sourceEmbedding);
 
     const result = await repository.find({ sourceId: source.id });
 
@@ -98,13 +98,13 @@ describe('SourceEmbeddingDrizzleRepository', () => {
   });
 
   it('sourceId로 source embedding을 반환한다', async () => {
-    const source = await sourceRepository.save(
+    const source = await sourceRepository.insert(
       buildSource({
         externalSourceId: 'Notes/source-embedding-find.md',
       }),
     );
     const sourceEmbedding = buildSourceEmbedding({ sourceId: source.id });
-    await repository.save(sourceEmbedding);
+    await repository.upsert(sourceEmbedding);
 
     const result = await repository.find({ sourceId: source.id });
 
