@@ -1,8 +1,7 @@
-import { AggregateRoot, newId } from '@kernels/domain';
+import { AggregateRoot } from '@kernels/domain';
 import { PostViewCount } from './post-view-count.vo';
 
 interface PostProps {
-  sourceId: string;
   viewCount: PostViewCount;
 }
 
@@ -12,18 +11,21 @@ interface PostCreateParams {
 
 interface PostRestoreParams {
   id: string;
-  sourceId: string;
   viewCount: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 export class Post extends AggregateRoot<PostProps> {
+  // Post는 Source와 1:1이므로 식별자를 공유한다.
+  get sourceId(): string {
+    return this.id;
+  }
+
   static create(params: PostCreateParams): Post {
     return new Post({
-      id: newId(),
+      id: params.sourceId,
       props: {
-        sourceId: params.sourceId,
         viewCount: PostViewCount.of(0),
       },
     });
@@ -33,7 +35,6 @@ export class Post extends AggregateRoot<PostProps> {
     return new Post({
       id: params.id,
       props: {
-        sourceId: params.sourceId,
         viewCount: PostViewCount.of(params.viewCount),
       },
       createdAt: params.createdAt,

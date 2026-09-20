@@ -74,7 +74,7 @@ export class SourcePgDrizzleQuery implements SourceQuery {
           ORDER BY created_at DESC
           LIMIT 1
         ) ssj ON true
-        LEFT JOIN posts p ON p.source_id = s.id
+        LEFT JOIN posts p ON p.id = s.id
         ${statusFilter}
         ORDER BY s.id DESC
         LIMIT ${pageSize}
@@ -97,7 +97,7 @@ export class SourcePgDrizzleQuery implements SourceQuery {
   async find(criteria: { sourceId: string }): Promise<string | null> {
     try {
       const result = await this.db.execute<{ id: string }>(sql`
-        SELECT id FROM posts WHERE source_id = ${criteria.sourceId} LIMIT 1
+        SELECT id FROM posts WHERE id = ${criteria.sourceId} LIMIT 1
       `);
       return result.rows[0]?.id ?? null;
     } catch (error: unknown) {

@@ -9,8 +9,8 @@ describe('PostPgDrizzleMapper', () => {
 
     const post = PostPgDrizzleMapper.toDomain(row);
 
-    expect(post.id).toBe('post-1');
-    expect(post.getProps().sourceId).toBe('source-1');
+    expect(post.id).toBe('source-1');
+    expect(post.sourceId).toBe('source-1');
     expect(post.getProps().viewCount.unpack()).toBe(5);
   });
 
@@ -21,7 +21,6 @@ describe('PostPgDrizzleMapper', () => {
 
     expect(row).toEqual({
       id: post.id,
-      sourceId: 'source-1',
       viewCount: 0,
     });
   });

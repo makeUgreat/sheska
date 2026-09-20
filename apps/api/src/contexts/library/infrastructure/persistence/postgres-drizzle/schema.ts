@@ -67,7 +67,6 @@ export type SourceSyncJobInsert = typeof sourceSyncJobs.$inferInsert;
 
 export const posts = pgTable('posts', {
   id: text('id').primaryKey(),
-  sourceId: text('source_id').notNull().unique(),
   viewCount: integer('view_count').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()

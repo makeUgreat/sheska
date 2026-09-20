@@ -38,7 +38,7 @@ describe('PostPgDrizzleRepository', () => {
     const result = await posts.get({ id: post.id });
 
     expect(result.id).toBe(post.id);
-    expect(result.getProps().sourceId).toBe(source.id);
+    expect(result.sourceId).toBe(source.id);
     expect(result.getProps().viewCount.unpack()).toBe(0);
   });
 
