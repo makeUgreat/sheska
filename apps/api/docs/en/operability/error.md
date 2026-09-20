@@ -35,7 +35,9 @@ related:
 - Catch an exception only to recover, add boundary context, or translate it into a protocol response.
 - Application use cases should normally let infrastructure, domain, and system exceptions propagate.
 - Do not add `Result` or failure-family contracts by default.
-  - Return a failure contract only when callers have stable, useful branching behavior that is clearer than exception
+  - No such contract exists in this project today, so adding one is a deliberate decision rather than a choice
+    between two available channels.
+  - Add a failure contract only when callers have stable, useful branching behavior that is clearer than exception
     propagation.
 - Domain constructors and factories guard invariants by throwing.
   - Treat invariant failures as bugs, corrupted persisted state, or insufficient boundary validation unless a
@@ -51,13 +53,13 @@ related:
   - `kind` classifies the failure.
   - `code` identifies the failure stably for callers and machines.
   - Infrastructure errors additionally carry `source` and may carry `cause`.
-- The same error shape may travel through an exception channel or a result channel.
+- Exceptions are the only channel that carries these shapes today, and the shapes stay channel-independent so a
+  failure contract added later can reuse them unchanged.
   - Exception wrappers are `DomainException`, `ApplicationException`, `InfrastructureException`, and
     `PresentationException`.
   - Each wrapper passes `message` to `Error` and exposes `kind`, `code`, and `details` on the exception instance.
   - `InfrastructureException` additionally exposes `source` and preserves `cause` through `Error`.
   - Use an exception wrapper when a boundary must identify and translate a structured error.
-  - Use `Result.err(error)` only when the caller needs stable branching behavior.
 
 ### Error Owners
 
