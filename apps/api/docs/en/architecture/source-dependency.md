@@ -121,11 +121,14 @@ flowchart TB
 - The application layer owns use cases and application flow.
 - Application code MAY depend on `core`, domain code, `kernels/application`, and same-context `*.di-tokens.ts` files.
 - Application code MAY use narrow NestJS DI APIs only when they describe object construction.
-  - Provider decorators and injection tokens are allowed.
+  - `@nestjs/common` is the only NestJS package application code may import, and only for provider decorators and
+    injection tokens.
   - Keep dependencies explicit in constructors so use cases remain constructible as plain TypeScript classes.
-- As an explicit framework-dependency exception, application code MAY depend on `@nestjs/event-emitter` only to
-  publish application or integration events.
-  - This exception does not permit unrelated NestJS runtime dependencies in application code.
+- Reach a framework capability through a contract application code already owns, instead of importing the package
+  that provides the capability.
+  - Application code publishes an integration event through the application-kernel `IntegrationEventDispatcher`
+    contract. The adapter that holds the event emitter lives in `platform`.
+  - The `api-application-not-to-non-di-nest-frameworks` dependency-cruiser rule enforces the package restriction.
 - Application behavior MUST NOT depend on infrastructure implementations, presentation DTOs, platform concrete types,
   module configuration, container lookups, or framework lifecycle callbacks.
 - Application code SHOULD propagate domain, infrastructure, and system exceptions unless it can recover or add

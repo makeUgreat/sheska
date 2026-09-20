@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../../en/architecture/source-dependency.md
-last_synced: 2026-09-14
+last_synced: 2026-09-20
 related:
   - ./architecture.md
   - ./ddd.md
@@ -123,11 +123,14 @@ flowchart TB
 - Application 코드는 `core`, domain 코드, `kernels/application`, 같은 컨텍스트의 `*.di-tokens.ts`에
   의존할 수 있다.
 - Application 코드는 객체 생성만 설명하는 좁은 NestJS DI API를 사용할 수 있다.
-  - Provider decorator와 injection token이 이에 해당한다.
+  - Application 코드가 import할 수 있는 NestJS 패키지는 `@nestjs/common` 하나뿐이고, 용도도 provider
+    decorator와 injection token으로 한정된다.
   - 유스 케이스를 일반 TypeScript 클래스로 생성할 수 있도록 의존성을 생성자에 명시한다.
-- Framework 의존성의 명시적 예외로, application 코드는 application event나 integration event를 발행할
-  때만 `@nestjs/event-emitter`에 의존할 수 있다.
-  - 이 예외는 application 코드에서 다른 NestJS runtime 의존성을 허용하지 않는다.
+- Framework 기능이 필요하면 그 기능을 제공하는 패키지를 import하지 말고, application 코드가 이미 소유한
+  계약을 통해 접근한다.
+  - Integration event 발행은 application 커널의 `IntegrationEventDispatcher` 계약을 통한다. event emitter를
+    들고 있는 어댑터는 `platform`에 있다.
+  - 패키지 제한은 `api-application-not-to-non-di-nest-frameworks` dependency-cruiser 규칙이 강제한다.
 - Application 동작은 infrastructure 구현체, presentation DTO, platform 구체 타입, 모듈 설정, container
   lookup 또는 framework lifecycle callback에 의존해서는 안 된다.
 - Application 코드는 복구하거나 application 소유 맥락을 추가할 수 없다면 domain, infrastructure, system
