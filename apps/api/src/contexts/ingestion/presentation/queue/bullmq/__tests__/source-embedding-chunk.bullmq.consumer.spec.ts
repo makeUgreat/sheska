@@ -135,4 +135,18 @@ describe('SourceEmbeddingChunkBullMqConsumer', () => {
     expect(logger.error).toHaveBeenCalledOnce();
     expect(handleFailure).toHaveBeenCalledWith(job.data);
   });
+  it('worker 내부 error를 기록하고 throw하지 않는다', () => {
+    const { useCase, logger } = buildDependencies();
+    const consumer = new SourceEmbeddingChunkBullMqConsumer(useCase, logger);
+
+    expect(() =>
+      consumer.onError(new Error('redis connection lost')),
+    ).not.toThrow();
+
+    expect(logger.error).toHaveBeenCalledWith(
+      'source-embedding-chunk worker error',
+      expect.any(Error) as Error,
+      { queueName: 'source-embedding-chunk' },
+    );
+  });
 });

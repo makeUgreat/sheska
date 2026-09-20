@@ -93,4 +93,11 @@ export class SourceEmbeddingChunkBullMqConsumer extends WorkerHost {
       );
     }
   }
+
+  @OnWorkerEvent('error')
+  onError(error: Error): void {
+    this.logger.error(`${SOURCE_EMBEDDING_CHUNK_QUEUE} worker error`, error, {
+      queueName: SOURCE_EMBEDDING_CHUNK_QUEUE,
+    });
+  }
 }

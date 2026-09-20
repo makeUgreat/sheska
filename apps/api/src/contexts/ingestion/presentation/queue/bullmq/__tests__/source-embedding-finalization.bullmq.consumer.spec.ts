@@ -115,4 +115,21 @@ describe('SourceEmbeddingFinalizationBullMqConsumer', () => {
       expect.anything(),
     );
   });
+  it('worker 내부 error를 기록하고 throw하지 않는다', () => {
+    const { useCase, logger } = buildDependencies();
+    const consumer = new SourceEmbeddingFinalizationBullMqConsumer(
+      useCase,
+      logger,
+    );
+
+    expect(() =>
+      consumer.onError(new Error('redis connection lost')),
+    ).not.toThrow();
+
+    expect(logger.error).toHaveBeenCalledWith(
+      'source-embedding-finalization worker error',
+      expect.any(Error) as Error,
+      { queueName: 'source-embedding-finalization' },
+    );
+  });
 });
