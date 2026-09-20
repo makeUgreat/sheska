@@ -78,13 +78,8 @@ describe('ApplicationException', () => {
 describe('APPLICATION_ERROR_KIND', () => {
   it.each([
     ['VALIDATION_FAILED', 'validation_failed'],
-    ['DEPENDENCY_UNAVAILABLE', 'dependency_unavailable'],
     ['NOT_FOUND', 'not_found'],
     ['STATE_CONFLICT', 'state_conflict'],
-    ['PERMISSION_DENIED', 'permission_denied'],
-    ['AUTHENTICATION_REQUIRED', 'authentication_required'],
-    ['OPERATION_NOT_ALLOWED', 'operation_not_allowed'],
-    ['RATE_LIMITED', 'rate_limited'],
   ] as const)('%s의 값은 %s다', (key, expectedValue) => {
     expect(APPLICATION_ERROR_KIND[key]).toBe(expectedValue);
   });

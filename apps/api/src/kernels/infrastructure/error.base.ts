@@ -21,7 +21,6 @@ export const INFRASTRUCTURE_ERROR_KIND = {
   // Data returned from or stored in an infrastructure dependency is invalid.
   INVALID_DATA: ERROR_KIND.INVALID_DATA,
   // Persisted data could not be restored into the expected model.
-  RESTORE_FAILED: ERROR_KIND.RESTORE_FAILED,
   // An http-client boundary call returned a response that cannot be used
   // (non-2xx status, unparseable body). See details.statusCode for retry
   // classification (429/5xx retryable, other 4xx not).

@@ -32,16 +32,6 @@ const ERROR_KIND_POLICY: Record<ErrorKind, HttpFailurePolicy> = {
     exposure: 'with_details',
     logLevel: null,
   },
-  [ERROR_KIND.AUTHENTICATION_REQUIRED]: {
-    status: HttpStatus.UNAUTHORIZED,
-    exposure: 'code_only',
-    logLevel: null,
-  },
-  [ERROR_KIND.PERMISSION_DENIED]: {
-    status: HttpStatus.FORBIDDEN,
-    exposure: 'code_only',
-    logLevel: null,
-  },
   [ERROR_KIND.NOT_FOUND]: {
     status: HttpStatus.NOT_FOUND,
     exposure: 'code_only',
@@ -62,27 +52,12 @@ const ERROR_KIND_POLICY: Record<ErrorKind, HttpFailurePolicy> = {
     exposure: 'code_only',
     logLevel: 'warn',
   },
-  [ERROR_KIND.OPERATION_NOT_ALLOWED]: {
-    status: HttpStatus.UNPROCESSABLE_ENTITY,
-    exposure: 'code_only',
-    logLevel: null,
-  },
-  [ERROR_KIND.RATE_LIMITED]: {
-    status: HttpStatus.TOO_MANY_REQUESTS,
-    exposure: 'code_only',
-    logLevel: null,
-  },
   [ERROR_KIND.INVARIANT_VIOLATION]: {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
     exposure: 'masked',
     logLevel: 'error',
   },
   [ERROR_KIND.INVALID_DATA]: {
-    status: HttpStatus.INTERNAL_SERVER_ERROR,
-    exposure: 'masked',
-    logLevel: 'error',
-  },
-  [ERROR_KIND.RESTORE_FAILED]: {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
     exposure: 'masked',
     logLevel: 'error',
@@ -95,11 +70,6 @@ const ERROR_KIND_POLICY: Record<ErrorKind, HttpFailurePolicy> = {
   [ERROR_KIND.UNEXPECTED]: {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
     exposure: 'masked',
-    logLevel: 'error',
-  },
-  [ERROR_KIND.DEPENDENCY_UNAVAILABLE]: {
-    status: HttpStatus.SERVICE_UNAVAILABLE,
-    exposure: 'code_only',
     logLevel: 'error',
   },
   [ERROR_KIND.UNAVAILABLE]: {
