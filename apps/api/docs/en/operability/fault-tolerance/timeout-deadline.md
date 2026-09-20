@@ -36,6 +36,13 @@ related:
   - Example: an upper layer has already spent 3s of its own 5s budget before calling a lower layer. If the lower layer starts its own independent 5s timeout from zero, it may keep running for up to 5 more seconds even though only 2s of the upper layer's total budget remains. The two clocks disagree about how much time is actually left.
 - A deadline avoids this by sharing one absolute time value across every layer, instead of letting each layer restart its own relative clock.
 
+### When A Single Attempt Collapses The Two Axes
+
+- The two axes coincide when a call is limited to one attempt, because the "entire call chain including retries" that the deadline bounds is that one attempt. This is the case for a call whose retry owner sits above it and therefore passes `maxRetries: 0` (see [Exception: Workflow-Level Retry](./retry.md#exception-workflow-level-retry)).
+- The effective bound is then the smaller of the two values, and the larger one is slack that is never enforced.
+- Do not force the two values to be equal to remove that slack. They express different knowledge and have different owners: the deadline is the caller's budget, and the per-attempt timeout is the adapter's judgement about the dependency it calls. Collapsing them into one number makes whichever side changes later carry a value it does not own.
+- Read the slack from [Observability](./retry.md#observability) instead of reasoning about it: `deadlineRemainingMs` staying near the full budget on every attempt means the deadline never bound, and the per-attempt timeout is the only bound in effect. Treat that as the signal to retune, per the measurement rule in [Scope](#scope).
+
 ## Deadline Propagation
 
 - The layer that first accepts a request (the top-level entry point for that call chain) computes the deadline once, as `deadlineAt = now + deadlineMs`.

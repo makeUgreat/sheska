@@ -89,6 +89,23 @@ retryBlockedReason
 
   - These are the [Observability](./retry.md#observability) fields of [API Retry Policy](./retry.md) named for an event rather than a dependency call. The error's own type and stack come from the logging adapter, so do not duplicate them as retry fields.
 
+### Embedding Chunk Job Retry
+
+- A chunk job owns the retry for the embedding call it makes. The embedder's own per-call retry is disabled for calls made inside the job (`maxRetries: 0`), as [Exception: Workflow-Level Retry](./retry.md#exception-workflow-level-retry) requires, so the two counts cannot multiply.
+- Retry the failed chunk rather than the workflow. The job that failed is the only one repeated; sibling chunks that already succeeded keep their results, and the parent collects them when the retry completes.
+  - This is what the flow makes possible and a caller-side re-upload does not: re-sending the whole source produces a new sync job id, so every chunk is embedded again.
+- A parent marked `failParentOnFailure` is failed by its child only once that child has exhausted its attempts, not on the child's first failure. A retry left on the child moves it to delayed instead of finishing it, and the parent is not touched.
+- The queue's own `failed` event fires on every attempt, including ones that will be retried. Treat an attempt as terminal only when `attemptsMade` has reached the job's `attempts`; acting earlier reports the whole sync job as failed while retries are still pending.
+- Current values:
+
+```ts
+attempts: 3
+backoff: { type: 'exponential', delay: 1_000, jitter: 1 }
+```
+
+- `jitter: 1` makes the broker's exponential backoff span the full `[0, delay * 2 ** (attempt - 1)]` range, which is the full-jitter formula [Backoff And Jitter](./retry.md#backoff-and-jitter) requires. The formula's `maxDelay` clamp is left out because three attempts cannot reach it.
+- Three attempts is the count [Max Retry](./retry.md#max-retry) gives a background job.
+
 ## Workflow Retry
 
 ### Durable Execution

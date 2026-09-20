@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../../../en/operability/fault-tolerance/timeout-deadline.md
-last_synced: 2026-09-07
+last_synced: 2026-09-19
 read_when:
   - 외부 의존성(외부 API, LLM, 네트워크 호출, 큐)에 닿는 call chain의 per-attempt timeout, 전체 deadline, 계층 간 deadline propagation을 정의, 구현, 리뷰할 때.
 related:
@@ -34,6 +34,13 @@ Timeout과 deadline은 둘 다 "얼마나 오래 걸려도 되는가"를 제한�
   - 각 계층이 독립적으로 자신만의 상대적 timeout clock을 시작하면, 그 계층은 상위 계층이 이미 얼마나 시간을 썼는지 알 수 없다.
   - 예: 상위 계층이 자신의 5초 예산 중 3초를 이미 쓴 상태에서 하위 계층을 호출했다고 하자. 하위 계층이 0부터 시작하는 독립적인 5초 timeout을 새로 시작하면, 상위 계층의 전체 예산은 2초밖에 남지 않았는데도 하위 계층은 최대 5초를 더 실행할 수 있다. 두 clock이 실제로 남은 시간에 대해 서로 다른 답을 갖게 된다.
 - Deadline은 각 계층이 자신만의 상대적 clock을 새로 시작하는 대신, 모든 계층이 하나의 절대 시각 값을 공유하게 만들어서 이 문제를 피한다.
+
+### 단일 시도에서는 두 축이 겹친다
+
+- 호출이 단일 시도로 제한되면 두 축이 겹친다. deadline이 제한하는 "재시도를 포함한 call chain 전체"가 그 한 번의 시도와 같아지기 때문이다. 재시도 소유자가 상위에 있어 `maxRetries: 0`을 넘기는 호출이 이 경우다([예외: workflow 단위 재시도](./retry.md#예외-workflow-단위-재시도) 참고).
+- 이때 실효 상한은 두 값 중 작은 쪽이고, 큰 쪽은 강제되지 않는 여유(slack)로 남는다.
+- 그 여유를 없애려고 두 값을 억지로 같게 만들지 않는다. 두 값은 서로 다른 지식을 표현하고 소유자도 다르다: deadline은 호출자의 예산이고, per-attempt timeout은 어댑터가 자신이 호출하는 의존성에 대해 내린 판단이다. 하나의 숫자로 합치면 나중에 변경되는 쪽이 자기 소유가 아닌 값을 들고 있게 된다.
+- 여유가 얼마인지는 추론하지 말고 [관측성](./retry.md#관측성)에서 읽는다. 매 시도마다 `deadlineRemainingMs`가 예산 전액에 가깝다면 deadline이 한 번도 바인딩되지 않았다는 뜻이고, per-attempt timeout만이 실효 상한이라는 신호다. [적용 범위](#적용-범위)의 측정 규칙에 따라 값을 다시 조정할 신호로 취급한다.
 
 ## Deadline Propagation
 
