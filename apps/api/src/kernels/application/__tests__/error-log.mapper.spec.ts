@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { toErrorLogContext } from '../error-log.mapper';
-import { NotFoundError, UnavailableError } from '@core/errors';
+import { NotFoundError, UnavailableError, UnexpectedError } from '@core/errors';
 
 describe('toErrorLogContext', () => {
   it('일반 Error의 이름과 메시지를 로그 context로 변환한다', () => {
@@ -99,6 +99,43 @@ describe('toErrorLogContext', () => {
       const err = context.failure as { stack: string };
 
       expect(err.stack).toContain('Error: circular');
+    });
+  });
+
+  describe('cause', () => {
+    it('cause 체인이 순환해도 무한루프 없이 종료한다', () => {
+      const cause = new Error('cyclic cause');
+      Object.assign(cause, { cause });
+      const error = new UnexpectedError({
+        code: 'source.get_failed',
+        message: 'Source get operation failed',
+        details: {},
+        cause,
+      });
+
+      expect(toErrorLogContext(error)).toMatchObject({
+        cause: { name: 'Error', message: 'cyclic cause' },
+      });
+    });
+
+    it('서로를 가리키는 두 error도 한 번씩만 직렬화한다', () => {
+      const first = new Error('first');
+      const second = new Error('second', { cause: first });
+      Object.assign(first, { cause: second });
+      const error = new UnexpectedError({
+        code: 'source.get_failed',
+        message: 'Source get operation failed',
+        details: {},
+        cause: first,
+      });
+
+      expect(toErrorLogContext(error)).toMatchObject({
+        cause: {
+          name: 'Error',
+          message: 'first',
+          cause: { name: 'Error', message: 'second' },
+        },
+      });
     });
   });
 });

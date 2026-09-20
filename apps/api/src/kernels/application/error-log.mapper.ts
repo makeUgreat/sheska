@@ -1,11 +1,18 @@
 import { SheskaError } from '@core/errors';
 
-function serializeCause(value: unknown): unknown {
+function serializeCause(value: unknown, seen = new Set<Error>()): unknown {
   if (!(value instanceof Error)) return value;
+  if (seen.has(value)) {
+    return { name: value.name, message: value.message };
+  }
+  seen.add(value);
+
   return {
     name: value.name,
     message: value.message,
-    ...(value.cause instanceof Error && { cause: serializeCause(value.cause) }),
+    ...(value.cause instanceof Error && {
+      cause: serializeCause(value.cause, seen),
+    }),
   };
 }
 
