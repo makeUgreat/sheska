@@ -6,7 +6,7 @@ module.exports = [
     severity: 'error',
     comment:
       'Core contains project-independent primitives and must not import API layers, contexts, platform, or shared domain concepts. ' +
-      `See ${docs.sourceDependency}#core.`,
+      `See ${docs.sourceDependency}#source-area.`,
     from: {
       path: '^src/core/',
     },
@@ -19,7 +19,7 @@ module.exports = [
     severity: 'error',
     comment:
       'The domain kernel may depend only on core and its own files. ' +
-      `See ${docs.sourceDependency}#kernel-directories.`,
+      `See ${docs.sourceDependency}#source-area.`,
     from: {
       path: '^src/kernels/domain/',
     },
@@ -33,7 +33,7 @@ module.exports = [
     severity: 'error',
     comment:
       'The application kernel may depend only on core, the domain kernel, and its own files. ' +
-      `See ${docs.sourceDependency}#kernel-directories.`,
+      `See ${docs.sourceDependency}#source-area.`,
     from: {
       path: '^src/kernels/application/',
     },
@@ -47,7 +47,7 @@ module.exports = [
     severity: 'error',
     comment:
       'The infrastructure kernel may depend inward on core, domain-kernel, and application-kernel contracts, but not on presentation, contexts, or platform. ' +
-      `See ${docs.sourceDependency}#kernel-directories.`,
+      `See ${docs.sourceDependency}#source-area.`,
     from: {
       path: '^src/kernels/infrastructure/',
     },
@@ -62,7 +62,7 @@ module.exports = [
     severity: 'error',
     comment:
       'The presentation kernel may depend inward on core and application-kernel contracts, but not on domain, infrastructure, contexts, or platform. ' +
-      `See ${docs.sourceDependency}#kernel-directories.`,
+      `See ${docs.sourceDependency}#source-area.`,
     from: {
       path: '^src/kernels/presentation/',
     },
@@ -76,7 +76,7 @@ module.exports = [
     severity: 'error',
     comment:
       'Cross-kernel imports must use the target kernel public surface; keep implementation details private to their owning kernel. ' +
-      `See ${docs.sourceDependency}#public-surface-policy.`,
+      `See ${docs.sourceDependency}#public-surface.`,
     from: {
       path: '^src/kernels/([^/]+)/',
     },
@@ -89,7 +89,7 @@ module.exports = [
     severity: 'error',
     comment:
       'Domain code must stay independent of application, infrastructure, presentation, platform, and framework concerns. ' +
-      `See ${docs.sourceDependency}#domain-layer.`,
+      `See ${docs.sourceDependency}#source-area.`,
     from: {
       path: '^src/contexts/([^/]+)/domain/',
     },
@@ -103,7 +103,7 @@ module.exports = [
     severity: 'error',
     comment:
       'Application code may use domain contracts and application policy, but must not import outer adapters or platform code. ' +
-      `See ${docs.sourceDependency}#application-layer.`,
+      `See ${docs.sourceDependency}#source-area.`,
     from: {
       path: '^src/contexts/([^/]+)/application/',
     },
@@ -118,7 +118,7 @@ module.exports = [
     severity: 'error',
     comment:
       'Infrastructure adapters implement technical details and must not depend on presentation adapters, the ACL, or platform wiring. ' +
-      `See ${docs.sourceDependency}#infrastructure-layer.`,
+      `See ${docs.sourceDependency}#source-area.`,
     from: {
       path: '^src/contexts/[^/]+/infrastructure/',
     },
@@ -131,7 +131,7 @@ module.exports = [
     severity: 'error',
     comment:
       'Presentation should call application use cases and map protocol concerns; it must not reach into domain internals, infrastructure adapters, the ACL, or platform wiring. ' +
-      `See ${docs.sourceDependency}#presentation-layer.`,
+      `See ${docs.sourceDependency}#source-area.`,
     from: {
       path: '^src/contexts/([^/]+)/presentation/',
     },
@@ -159,7 +159,7 @@ module.exports = [
     severity: 'error',
     comment:
       'Bounded contexts must not depend on another context internal model or adapter. Communicate through IDs, DTOs, events, ports, or public application contracts. ' +
-      `See ${docs.sourceDependency}#source-direction.`,
+      `See ${docs.sourceDependency}#public-surface.`,
     from: {
       path: '^src/contexts/([^/]+)/',
     },
@@ -187,7 +187,7 @@ module.exports = [
     severity: 'error',
     comment:
       'Production code outside kernels must import kernel contracts through the kernel public surface. ' +
-      `See ${docs.sourceDependency}#import-path-policy.`,
+      `See ${docs.sourceDependency}#public-surface.`,
     from: {
       path: '^src/',
       pathNot: '^src/kernels/',
@@ -201,7 +201,7 @@ module.exports = [
     severity: 'error',
     comment:
       'Production code outside a domain directory must import domain contracts through the domain public surface. ' +
-      `See ${docs.sourceDependency}#import-path-policy.`,
+      `See ${docs.sourceDependency}#public-surface.`,
     from: {
       path: '^src/',
       pathNot: '^src/contexts/[^/]+/domain/',
@@ -215,7 +215,7 @@ module.exports = [
     severity: 'error',
     comment:
       'Production code outside application ports must import port contracts through the ports public surface. ' +
-      `See ${docs.sourceDependency}#import-path-policy.`,
+      `See ${docs.sourceDependency}#public-surface.`,
     from: {
       path: '^src/',
       pathNot: '^src/contexts/[^/]+/application/ports/',

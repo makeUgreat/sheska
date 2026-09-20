@@ -161,7 +161,7 @@ export class SourceEmbeddingFromIngestionLookup implements SourceEmbeddingLookup
 
 ### Rule 2 — 어댑터는 컨슈머의 ACL에 둔다
 
-- 위치: `contexts/A/acl/<B-name>/` (`<B-name>`은 프로듀서 컨텍스트 이름). ACL은 `infrastructure/`와 분리된 전용 레이어다 — 바운디드 컨텍스트 경계를 넘는 것은 구체적인 기술에 접근하는 것과는 다른 종류의 외부 의존이기 때문이다. 자세한 건 [source dependency 컨벤션](./source-dependency.md#anti-corruption-layer-acl)을 참고한다.
+- 위치: `contexts/A/acl/<B-name>/` (`<B-name>`은 프로듀서 컨텍스트 이름). ACL은 `infrastructure/`와 분리된 전용 레이어다 — 바운디드 컨텍스트 경계를 넘는 것은 구체적인 기술에 접근하는 것과는 다른 종류의 외부 의존이기 때문이다. 자세한 건 [source dependency 컨벤션](./source-dependency.md#source-area)을 참고한다.
 - 파일과 클래스 명명은 infrastructure 어댑터와 똑같은 세 자리 형태([infrastructure adapter 컨벤션](./infrastructure.md))인 `{domain-name}.{adapter-or-purpose}.{role}.ts`를 그대로 재사용한다.
   - 크로스 컨텍스트 Pull 어댑터는 `adapter-or-purpose` 자리에 `from-<B-name>`을 쓴다 (예: `source-embedding.from-ingestion.lookup.ts` → `SourceEmbeddingFromIngestionLookup`).
   - `from-` 접두사를 붙이면 폴더 경로를 보지 않아도 파일명만으로 크로스 컨텍스트 어댑터임을 알 수 있다.
