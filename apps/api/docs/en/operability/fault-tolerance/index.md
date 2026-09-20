@@ -20,8 +20,7 @@ related:
 
 - This index groups `apps/api` conventions for handling failures when calling external dependencies.
   - External dependencies include external APIs, LLMs, network calls, and queues.
-  - Covered convention topics include retry, timeout/deadline, async/workflow/saga retry, idempotent receiver, retry budget, database transaction retry, and related mechanisms.
-  - Related mechanisms include circuit breaker, bulkhead, fallback, graceful degradation, and health-check-based failover as they are formalized into convention documents.
+  - Covered convention topics are retry, timeout/deadline, async/workflow/saga retry, idempotent receiver, retry budget, and database transaction retry.
 
 ## Synchronization Policy
 
@@ -37,6 +36,5 @@ related:
 - Retry budget ratio, budget window, or how retry budget composes with per-call retry: read [API Retry Budget Policy](./retry-budget.md).
 - Database transaction retry loop structure, ownership, or how it composes with retry budget: read [API Transaction Retry Policy](./transaction-retry.md).
 
-- A policy draft covering the remaining topics exists at `.claude/temp/retry-resilience-policy.ko.md` but has not been finalized as a convention document.
-- Once a topic is finalized, add a routing entry here in the same style as the parent [API Convention Index](../../index.md), for example:
-  - Bulkhead, fallback, graceful degradation, or health-check-based failover policy: read the relevant document (link once created).
+- Circuit breaker, bulkhead, fallback, graceful degradation, and health-check-based failover belong to this group but have no convention document yet.
+  - Add a routing entry above, in the same style as the entries already there, once one of them is decided.

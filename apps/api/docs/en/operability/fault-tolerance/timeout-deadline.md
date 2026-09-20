@@ -24,8 +24,12 @@ related:
   - Measure and tune timeout and deadline values from observed data instead of fixing them once.
   - Revisit the values when the dependency's behavior changes (for example, a slower downstream, a new rate limit, or a different traffic pattern), rather than treating them as set once.
 - Retry ownership, retry count, backoff, and error classification are defined in [API Retry Policy](./retry.md), not by this document.
-- Retry budget, circuit breaker, idempotency, and observability are separate fault-tolerance concerns not yet promoted into a convention document.
-  - Read [API Fault Tolerance Index](./index.md) for their current status.
+- [Crossing A Process Or Network Boundary](#crossing-a-process-or-network-boundary) applies only to a call chain that leaves this process, and the API currently runs as a single process.
+  - The rest of this document applies to the in-process call chains that exist today.
+- Retry budget, idempotency, and observability are separate fault-tolerance concerns that each have their own document.
+  - Read [API Retry Budget Policy](./retry-budget.md), [API Idempotent Receiver Policy](./idempotent-receiver.md), and [API Observability Convention](../observability.md).
+- Circuit breaker has no convention document yet.
+  - Read [API Fault Tolerance Index](./index.md) for its current status.
 
 ## Timeout And Deadline Are Different Axes
 

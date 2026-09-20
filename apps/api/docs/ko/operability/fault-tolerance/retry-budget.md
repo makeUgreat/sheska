@@ -21,7 +21,8 @@ related:
 
 - 이 문서는 retry budget 비율, 측정 window, retry budget이 개별 호출 재시도와 어떻게 조합되는지 판단할 때 사용한다.
 - 재시도 소유권, 개별 호출의 재시도 횟수, backoff, error classification은 이 문서가 아니라 [API 재시도 정책](./retry.md)에 정의되어 있다.
-- fault-tolerance 주제 전반에 공유되는 idempotency·관측성 컨벤션은 [API 재시도 정책](./retry.md)에 정의되어 있으며 여기서는 참조만 하고 중복하지 않는다.
+- idempotency와 관측성은 [API Idempotent Receiver 정책](./idempotent-receiver.md), [API 관측성 컨벤션](../observability.md)에 정의되어 있으며 여기서는 참조만 하고 중복하지 않는다.
+  - 그중 재시도에 한정된 부분(mutation 안전성 게이트, 재시도 로그 필드와 메트릭)은 [API 재시도 정책](./retry.md)이 소유한다.
 
 ## Retry Budget이 필요한 이유
 

@@ -21,8 +21,10 @@ related:
 - Use this document when deciding retry behavior for a queue consumer, a dead letter queue (DLQ) or redrive policy, or a workflow, activity, or saga step.
 - [API Retry Policy](./retry.md) and [API Timeout & Deadline Policy](./timeout-deadline.md) cover retry for a call where the caller waits synchronously within a bounded time.
 - This document covers work that continues after the caller has already returned.
-- Retry budget, circuit breaker, idempotency, and observability are separate fault-tolerance concerns not yet promoted into a convention document.
-  - Read [API Fault Tolerance Index](./index.md) for their current status.
+- Retry budget, idempotency, and observability are separate fault-tolerance concerns that each have their own document.
+  - Read [API Retry Budget Policy](./retry-budget.md), [API Idempotent Receiver Policy](./idempotent-receiver.md), and [API Observability Convention](../observability.md).
+- Circuit breaker has no convention document yet.
+  - Read [API Fault Tolerance Index](./index.md) for its current status.
 - This document states general principles, except where a section names the concrete mechanism this project has already chosen, as [Outbox Relay Retry](#outbox-relay-retry) does. Add concrete configuration or thresholds for a mechanism only once its implementation decision has been made.
 
 ## Why This Is A Different Problem From Synchronous Retry

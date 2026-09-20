@@ -20,7 +20,8 @@ related:
 
 - Use this document when deciding the retry budget ratio, the window it is measured over, or how retry budget composes with per-call retry.
 - Retry ownership, per-call retry count, backoff, and error classification are defined in [API Retry Policy](./retry.md), not by this document.
-- Idempotency and observability conventions shared across fault-tolerance topics are defined in [API Retry Policy](./retry.md) and referenced here, not duplicated.
+- Idempotency and observability are defined in [API Idempotent Receiver Policy](./idempotent-receiver.md) and [API Observability Convention](../observability.md), and referenced here, not duplicated.
+  - [API Retry Policy](./retry.md) owns the retry-specific parts of both: the mutation safety gate and the retry log fields and metrics.
 
 ## Why A Retry Budget
 

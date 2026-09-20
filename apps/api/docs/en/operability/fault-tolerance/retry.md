@@ -91,7 +91,8 @@ offline sync protocol
 
 - An upper layer may retry when the unit of work is a whole workflow that only makes sense to re-run as a whole, not a single external call.
   - Example: a saga or orchestration step that must be re-run atomically is retried by the saga/orchestrator, not by retrying one call inside it.
-  - Example: a BullMQ job-level retry (see the queue retry policy draft at `.claude/temp/embed-queue-retry-policy.ko.md`) re-runs the whole job, not just the external call that failed inside it.
+  - Example: a BullMQ job-level retry re-runs the whole job, not just the external call that failed inside it.
+    - See [Embedding Chunk Job Retry](./async-workflow-retry.md#embedding-chunk-job-retry) for the chunk job this project runs that way.
   - Example: a database transaction that conflicts with a concurrent transaction is retried by re-running the whole transaction, not by retrying one statement inside it.
     - See [API Transaction Retry Policy](./transaction-retry.md) for how that retry loop is structured and owned.
   - See [API Async & Workflow Retry Policy](./async-workflow-retry.md) for consumer retry, dead letter queue/redrive policy, workflow/activity retry, and saga retry in detail.

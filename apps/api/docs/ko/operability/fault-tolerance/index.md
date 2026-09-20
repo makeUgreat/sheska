@@ -5,7 +5,7 @@ audience: both
 applies_to:
   - apps/api
 source: ../../../en/operability/fault-tolerance/index.md
-last_synced: 2026-09-08
+last_synced: 2026-09-20
 related:
   - ./retry.md
   - ./timeout-deadline.md
@@ -19,7 +19,7 @@ related:
 
 ## 목적
 
-이 인덱스는 외부 의존성(외부 API, LLM, 네트워크 호출, 큐) 호출 실패를 다루는 `apps/api` 컨벤션들을 묶는다: retry, timeout/deadline, 비동기/workflow/saga 재시도, idempotent receiver, retry budget, DB 트랜잭션 재시도, 그리고 앞으로 정식 컨벤션 문서로 확정될 circuit breaker, bulkhead, fallback, graceful degradation, health-check 기반 failover 등의 메커니즘.
+이 인덱스는 외부 의존성(외부 API, LLM, 네트워크 호출, 큐) 호출 실패를 다루는 `apps/api` 컨벤션들을 묶는다: retry, timeout/deadline, 비동기/workflow/saga 재시도, idempotent receiver, retry budget, DB 트랜잭션 재시도.
 
 ## 동기화 정책
 
@@ -35,6 +35,4 @@ related:
 - retry budget 비율, budget window, retry budget이 개별 호출 재시도와 어떻게 조합되는지 결정: [API Retry Budget 정책](./retry-budget.md)을 읽는다.
 - DB 트랜잭션 재시도 루프 구조, 소유권, retry budget과의 조합 방식 결정: [API 트랜잭션 재시도 정책](./transaction-retry.md)을 읽는다.
 
-나머지 주제를 다루는 정책 초안이 `.claude/temp/retry-resilience-policy.ko.md`에 있지만, 아직 정식 컨벤션 문서로 확정되지 않았다. 특정 주제가 확정되면, 상위 [API 컨벤션 인덱스](../../index.md)와 같은 형식으로 여기에 라우팅 항목을 추가한다. 예:
-
-  - Bulkhead, fallback, graceful degradation, health-check 기반 failover 정책 결정: 관련 문서를 읽는다 (문서 생성 후 링크).
+circuit breaker, bulkhead, fallback, graceful degradation, health-check 기반 failover도 이 묶음에 속하지만 아직 컨벤션 문서가 없다. 그중 하나가 확정되면 위 라우팅 목록에 같은 형식으로 항목을 추가한다.
