@@ -104,7 +104,6 @@ describe('INFRASTRUCTURE_ERROR_KIND', () => {
     ['TIMEOUT', 'timeout'],
     ['CONSTRAINT_VIOLATION', 'constraint_violation'],
     ['INVALID_DATA', 'invalid_data'],
-    ['RESTORE_FAILED', 'restore_failed'],
     ['BAD_RESPONSE', 'bad_response'],
     ['NOT_FOUND', 'not_found'],
     ['UNEXPECTED', 'unexpected'],

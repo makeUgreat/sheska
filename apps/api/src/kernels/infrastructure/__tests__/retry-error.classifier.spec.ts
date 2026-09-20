@@ -80,7 +80,6 @@ describe('classifyInfrastructureRetry', () => {
     INFRASTRUCTURE_ERROR_KIND.INVALID_DATA,
     INFRASTRUCTURE_ERROR_KIND.CONSTRAINT_VIOLATION,
     INFRASTRUCTURE_ERROR_KIND.NOT_FOUND,
-    INFRASTRUCTURE_ERROR_KIND.RESTORE_FAILED,
     INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
   ])('%s kind는 재시도 불가하다', (kind) => {
     expect(classifyInfrastructureRetry(buildException(kind))).toEqual({

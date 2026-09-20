@@ -103,19 +103,8 @@ describe('HttpExceptionFilter', () => {
 
     it.each([
       [APPLICATION_ERROR_KIND.VALIDATION_FAILED, HttpStatus.BAD_REQUEST],
-      [APPLICATION_ERROR_KIND.AUTHENTICATION_REQUIRED, HttpStatus.UNAUTHORIZED],
-      [APPLICATION_ERROR_KIND.PERMISSION_DENIED, HttpStatus.FORBIDDEN],
       [APPLICATION_ERROR_KIND.NOT_FOUND, HttpStatus.NOT_FOUND],
       [APPLICATION_ERROR_KIND.STATE_CONFLICT, HttpStatus.CONFLICT],
-      [
-        APPLICATION_ERROR_KIND.OPERATION_NOT_ALLOWED,
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      ],
-      [APPLICATION_ERROR_KIND.RATE_LIMITED, HttpStatus.TOO_MANY_REQUESTS],
-      [
-        APPLICATION_ERROR_KIND.DEPENDENCY_UNAVAILABLE,
-        HttpStatus.SERVICE_UNAVAILABLE,
-      ],
     ] as const)('application %s → %i', (kind, expectedStatus) => {
       const { host, status } = buildMockHost();
       const filter = new HttpExceptionFilter(buildMockLogger());
@@ -133,10 +122,6 @@ describe('HttpExceptionFilter', () => {
       [INFRASTRUCTURE_ERROR_KIND.TIMEOUT, HttpStatus.SERVICE_UNAVAILABLE],
       [
         INFRASTRUCTURE_ERROR_KIND.INVALID_DATA,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      ],
-      [
-        INFRASTRUCTURE_ERROR_KIND.RESTORE_FAILED,
         HttpStatus.INTERNAL_SERVER_ERROR,
       ],
       [
@@ -221,7 +206,6 @@ describe('HttpExceptionFilter', () => {
 
     it.each([
       INFRASTRUCTURE_ERROR_KIND.INVALID_DATA,
-      INFRASTRUCTURE_ERROR_KIND.RESTORE_FAILED,
       INFRASTRUCTURE_ERROR_KIND.BAD_RESPONSE,
       INFRASTRUCTURE_ERROR_KIND.UNEXPECTED,
     ])('5xx가 되는 infrastructure %s는 code와 message를 마스킹한다', (kind) => {
@@ -283,7 +267,6 @@ describe('HttpExceptionFilter', () => {
       APPLICATION_ERROR_KIND.NOT_FOUND,
       APPLICATION_ERROR_KIND.STATE_CONFLICT,
       APPLICATION_ERROR_KIND.VALIDATION_FAILED,
-      APPLICATION_ERROR_KIND.RATE_LIMITED,
     ])('비즈니스 실패인 application %s는 로그를 남기지 않는다', (kind) => {
       const { host } = buildMockHost();
       const logger = buildMockLogger();
