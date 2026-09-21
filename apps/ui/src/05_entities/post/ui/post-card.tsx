@@ -41,14 +41,14 @@ export function PostCard({
           <h3 className="font-sans text-headline-md text-text-primary transition-colors group-hover:text-accent">
             <Highlighted text={post.title} query={highlight} />
           </h3>
-          <p className="line-clamp-2 text-base leading-relaxed text-text-secondary">
+          <p className="line-clamp-2 text-body-md text-text-secondary">
             {post.snippet ? (
               <Highlighted text={post.snippet} query={highlight} />
             ) : (
               'A saved note from the HASH index, ready for focused reading and revision.'
             )}
           </p>
-          <span className="mt-2 inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-accent-strong">
+          <span className="mt-2 inline-flex items-center gap-2 font-mono text-label-sm font-bold uppercase text-accent-strong">
             <span>Read Note</span>
             <span
               aria-hidden="true"

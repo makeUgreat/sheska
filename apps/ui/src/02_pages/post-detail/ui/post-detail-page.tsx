@@ -30,35 +30,35 @@ export function PostDetailPage() {
                 <div className="text-2xl font-semibold text-white">
                   {post.viewCount}
                 </div>
-                <div className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+                <div className="font-mono text-label-sm uppercase text-text-secondary">
                   views
                 </div>
               </div>
             </div>
-            <p className="mt-4 font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+            <p className="mt-4 font-mono text-label-sm uppercase text-text-secondary">
               Updated {new Date(post.updatedAt).toLocaleString()}
             </p>
           </header>
 
           <dl className="grid gap-4 rounded border border-outline-variant/10 bg-page-background p-5 sm:grid-cols-2">
             <div>
-              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+              <dt className="font-mono text-label-sm uppercase text-text-secondary">
                 Post ID
               </dt>
-              <dd className="mt-1 break-all font-mono text-sm text-text-primary">
+              <dd className="mt-1 break-all font-mono text-code-snippet text-text-primary">
                 {post.postId}
               </dd>
             </div>
             <div>
-              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+              <dt className="font-mono text-label-sm uppercase text-text-secondary">
                 Source ID
               </dt>
-              <dd className="mt-1 break-all font-mono text-sm text-text-primary">
+              <dd className="mt-1 break-all font-mono text-code-snippet text-text-primary">
                 {post.sourceId}
               </dd>
             </div>
             <div>
-              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+              <dt className="font-mono text-label-sm uppercase text-text-secondary">
                 View Count
               </dt>
               <dd className="mt-1 text-sm text-text-primary">
@@ -66,7 +66,7 @@ export function PostDetailPage() {
               </dd>
             </div>
             <div>
-              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+              <dt className="font-mono text-label-sm uppercase text-text-secondary">
                 Created
               </dt>
               <dd className="mt-1 text-sm text-text-primary">
@@ -74,7 +74,7 @@ export function PostDetailPage() {
               </dd>
             </div>
             <div className="sm:col-span-2">
-              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+              <dt className="font-mono text-label-sm uppercase text-text-secondary">
                 Updated
               </dt>
               <dd className="mt-1 text-sm text-text-primary">
@@ -85,7 +85,7 @@ export function PostDetailPage() {
 
           {post.body && (
             <section className="mt-8">
-              <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+              <h2 className="mb-3 font-mono text-label-sm uppercase text-text-secondary">
                 Content
               </h2>
               <div className="prose prose-neutral max-w-none rounded border border-outline-variant/10 bg-page-background p-5">

@@ -48,7 +48,7 @@ export function PostsListSection({
         <div className="mb-6 flex justify-end">
           <Link
             to="/"
-            className="shrink-0 font-mono text-xs font-medium uppercase tracking-widest text-text-muted transition-colors hover:text-accent-strong"
+            className="shrink-0 font-mono text-label-sm uppercase text-text-muted transition-colors hover:text-accent-strong"
           >
             Back to top
           </Link>
@@ -57,7 +57,7 @@ export function PostsListSection({
           <div className="flex items-center gap-2 border-b border-accent/30 pb-2 transition-colors focus-within:border-accent">
             <label
               htmlFor="posts-archive-search"
-              className="shrink-0 font-mono text-xs font-bold uppercase tracking-widest text-accent-strong"
+              className="shrink-0 font-mono text-label-sm font-bold uppercase text-accent-strong"
             >
               Search by title or content:
             </label>
@@ -67,7 +67,7 @@ export function PostsListSection({
               placeholder="Search title or content"
               value={search.query}
               onChange={(e) => search.onQueryChange(e.target.value)}
-              className="w-full border-0 bg-transparent p-0 font-mono text-sm text-accent-strong caret-accent outline-none placeholder:text-text-muted focus:ring-0"
+              className="w-full border-0 bg-transparent p-0 font-mono text-code-snippet text-accent-strong caret-accent outline-none placeholder:text-text-muted focus:ring-0"
             />
             <span className="h-4 w-2 shrink-0 animate-pulse bg-accent" />
             <button
@@ -78,7 +78,7 @@ export function PostsListSection({
             </button>
           </div>
           {isSearching && search.mode !== null && (
-            <div className="mt-3 font-mono text-xs font-bold uppercase tracking-widest text-text-muted">
+            <div className="mt-3 font-mono text-label-sm font-bold uppercase text-text-muted">
               Search mode:{' '}
               <span className="text-accent-strong">
                 {search.mode === 'smart' ? 'Smart' : 'Basic'}

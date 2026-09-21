@@ -75,6 +75,28 @@ describe('generateThemeCss', () => {
     );
   });
 
+  it('emits letter spacing when a typography token defines it', () => {
+    const css = generateThemeCss({
+      ...baseTokens,
+      typography: {
+        ...baseTokens.typography,
+        label: {
+          $type: 'typography',
+          $value: {
+            fontFamily: '{typography.font-family.mono}',
+            fontSize: '12px',
+            fontWeight: '500',
+            lineHeight: '1.3333333333',
+            letterSpacing: '0.1em',
+          },
+        },
+      },
+    });
+
+    expect(css).toContain('--text-label--letter-spacing: 0.1em;');
+    expect(css).not.toContain('--text-body--letter-spacing');
+  });
+
   it('throws when a token reference cannot be resolved', () => {
     expect(() => {
       generateThemeCss({

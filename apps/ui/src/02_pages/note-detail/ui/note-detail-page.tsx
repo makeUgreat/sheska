@@ -35,30 +35,30 @@ export function NoteDetailPage() {
                 ))}
               </ul>
             )}
-            <p className="mt-4 font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+            <p className="mt-4 font-mono text-label-sm uppercase text-text-secondary">
               Updated {new Date(note.updatedAt).toLocaleString()}
             </p>
           </header>
 
           <dl className="grid gap-4 rounded border border-outline-variant/10 bg-page-background p-5 sm:grid-cols-2">
             <div>
-              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+              <dt className="font-mono text-label-sm uppercase text-text-secondary">
                 Note ID
               </dt>
-              <dd className="mt-1 break-all font-mono text-sm text-text-primary">
+              <dd className="mt-1 break-all font-mono text-code-snippet text-text-primary">
                 {note.noteId}
               </dd>
             </div>
             <div>
-              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+              <dt className="font-mono text-label-sm uppercase text-text-secondary">
                 External Source ID
               </dt>
-              <dd className="mt-1 break-all font-mono text-sm text-text-primary">
+              <dd className="mt-1 break-all font-mono text-code-snippet text-text-primary">
                 {note.externalSourceId}
               </dd>
             </div>
             <div>
-              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+              <dt className="font-mono text-label-sm uppercase text-text-secondary">
                 Created
               </dt>
               <dd className="mt-1 text-sm text-text-primary">
@@ -66,7 +66,7 @@ export function NoteDetailPage() {
               </dd>
             </div>
             <div>
-              <dt className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+              <dt className="font-mono text-label-sm uppercase text-text-secondary">
                 Updated
               </dt>
               <dd className="mt-1 text-sm text-text-primary">
@@ -77,7 +77,7 @@ export function NoteDetailPage() {
 
           {note.body && (
             <section className="mt-8">
-              <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+              <h2 className="mb-3 font-mono text-label-sm uppercase text-text-secondary">
                 Content
               </h2>
               <div className="prose prose-neutral max-w-none rounded border border-outline-variant/10 bg-page-background p-5">

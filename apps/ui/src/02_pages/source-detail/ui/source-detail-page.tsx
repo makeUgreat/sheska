@@ -79,7 +79,7 @@ function SyncJobSection({
       <dt className="text-xs font-medium uppercase text-gray-500">
         Sync Job ID
       </dt>
-      <dd className="break-all font-mono text-sm text-gray-900">
+      <dd className="break-all font-mono text-code-snippet text-gray-900">
         {syncJob.syncJobId}
       </dd>
     </>
@@ -153,7 +153,7 @@ export function SourceDetailPage() {
       ) : source ? (
         <>
           <header className="mb-8 border-b border-outline-variant/10 pb-6">
-            <p className="mb-2 font-mono text-xs font-medium uppercase tracking-widest text-accent-hover">
+            <p className="mb-2 font-mono text-label-sm uppercase text-accent-hover">
               Source
             </p>
             <h1 className="break-words text-3xl font-bold text-gray-950">
@@ -174,7 +174,7 @@ export function SourceDetailPage() {
                 <dt className="text-xs font-medium uppercase text-gray-500">
                   ID
                 </dt>
-                <dd className="mt-1 break-all font-mono text-sm text-gray-900">
+                <dd className="mt-1 break-all font-mono text-code-snippet text-gray-900">
                   {source.sourceId}
                 </dd>
               </div>
@@ -190,7 +190,7 @@ export function SourceDetailPage() {
                 <dt className="text-xs font-medium uppercase text-gray-500">
                   Fingerprint
                 </dt>
-                <dd className="mt-1 break-all font-mono text-sm text-gray-900">
+                <dd className="mt-1 break-all font-mono text-code-snippet text-gray-900">
                   {source.fingerprint}
                 </dd>
               </div>
