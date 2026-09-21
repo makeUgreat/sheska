@@ -153,7 +153,7 @@ export function SourceDetailPage() {
       ) : source ? (
         <>
           <header className="mb-8 border-b border-outline-variant/10 pb-6">
-            <p className="mb-2 font-mono text-xs font-medium uppercase tracking-widest text-[#e06c75]">
+            <p className="mb-2 font-mono text-xs font-medium uppercase tracking-widest text-accent-hover">
               Source
             </p>
             <h1 className="break-words text-3xl font-bold text-gray-950">

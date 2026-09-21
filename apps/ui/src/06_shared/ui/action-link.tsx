@@ -10,7 +10,7 @@ export function ActionLink({
     <Link
       {...props}
       className={[
-        'group/action inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-accent',
+        'group/action inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-accent-strong',
         className,
       ]
         .filter(Boolean)

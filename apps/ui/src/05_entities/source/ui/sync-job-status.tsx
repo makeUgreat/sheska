@@ -3,7 +3,7 @@ import { type SyncJobStatus } from '../api/types';
 const STATUS_STYLES: Record<SyncJobStatus, string> = {
   waiting: 'bg-surface-container-high text-secondary',
   processing: 'bg-surface-container-high text-primary',
-  completed: 'bg-accent text-white',
+  completed: 'bg-accent-strong text-white',
   failed: 'bg-error-container text-on-error-container',
 };
 

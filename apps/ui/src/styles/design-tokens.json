@@ -341,11 +341,23 @@
     },
     "accent": {
       "$description": "Interactive rose accent used by current implemented routes.",
-      "$value": "{color.primary-container}"
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.8824, 0.4275, 0.4627],
+        "hex": "#e16d76"
+      }
     },
     "accent-hover": {
-      "$description": "Darker rose used for hover and inverse-primary emphasis.",
-      "$value": "{color.inverse-primary}"
+      "$description": "Hover ink for the wordmark and footer links. Same value as accent-strong.",
+      "$value": "{color.accent-strong}"
+    },
+    "accent-strong": {
+      "$description": "Accent for small text and for fills that carry white text (6.46:1 both ways). Use accent itself for 24px+ text, borders, focus rings, and anything on a dark surface.",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.6314, 0.2353, 0.2745],
+        "hex": "#a13c46"
+      }
     },
     "text-primary": {
       "$value": "{color.surface}"
@@ -354,7 +366,12 @@
       "$value": "{color.on-secondary-fixed-variant}"
     },
     "text-muted": {
-      "$value": "{color.on-surface-variant}"
+      "$description": "Low-emphasis label ink on page-background (5.04:1). Previously an alias of on-surface-variant, a dark-theme ink that measured 1.7:1 here.",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.4196, 0.4353, 0.4706],
+        "hex": "#6b6f78"
+      }
     },
     "border-subtle": {
       "$value": "{color.outline-variant}"

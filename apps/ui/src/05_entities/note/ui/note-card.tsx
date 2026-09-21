@@ -26,7 +26,7 @@ export function NoteCard({ note }: { note: NoteSummary }) {
             {tags.map((tag) => (
               <li
                 key={tag}
-                className="rounded-full bg-accent/10 px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wide text-accent"
+                className="rounded-full bg-accent/10 px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wide text-accent-strong"
               >
                 {tag}
               </li>

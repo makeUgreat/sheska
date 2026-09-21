@@ -5,7 +5,7 @@ type TagTone = 'accent' | 'muted';
 const toneClass: Record<TagTone, string> = {
   accent: 'border border-accent/20 bg-surface-container-high text-accent',
   muted:
-    'border border-outline-variant/10 bg-surface-container-lowest text-text-secondary',
+    'border border-outline-variant/10 bg-surface-container-lowest text-secondary',
 };
 
 export function Tag({

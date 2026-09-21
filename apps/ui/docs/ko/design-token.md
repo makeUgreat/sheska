@@ -34,8 +34,11 @@ Palette는 light하고 editorial한 page base와 dark하고 terminal-styled elev
 - **Page Background**: `#ffffff` (`page-background`). Primary app background다. 대부분의 페이지는 이 light base 위에 바로 놓인다.
 - **Text-Primary**: `#101319` (`text-primary`). Light page background 위의 near-black text다.
 - **Text-Secondary**: `#43474f` (`text-secondary`). Light background 위 metadata와 supportive text를 위한 muted gray다.
+- **Text-Muted**: `#6b6f78` (`text-muted`). Light page background 위 low-emphasis label ink다 (5.04:1). Dark theme ink를 alias하지 않는다.
 - **Surface family**: `#0b0e14`~`#32353b` (`surface`, `surface-container-lowest`~`surface-container-highest`). Page background가 아니라 hero terminal window, card, tag 같은 dark하고 terminal-styled elevated component 전용 deep charcoal tone이다.
-- **Accent**: `#e16d76` (`accent`). Light base와 dark elevated surface 양쪽 모두에서 primary action, active state, critical highlight에만 사용한다.
+- **Accent**: `#e16d76` (`accent`). Light page background 위에서 3.16:1이므로 large text(24px 이상), border, focus ring 같은 non-text contrast에만 쓴다. Dark elevated surface 위에서는 제한 없이 쓴다.
+- **Accent-Strong**: `#a13c46` (`accent-strong`). Light page background 위 small text와, white text를 얹는 fill에 쓴다. 두 경우 모두 6.46:1이다.
+- **Accent-Hover**: `accent-strong`과 같은 값의 alias다. Wordmark와 footer link의 hover ink로 사용한다.
 - **Border**: `#564242` (`outline-variant` / `border-subtle`). Subtle structural separation을 위한 cool, low-contrast border다.
 
 모든 green, blue, yellow tone은 피한다. Success state는 green으로 색을 바꾸기보다 typography나 iconography로 전달한다.
