@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { type NoteSummary } from '../api/types';
 
+const VISIBLE_KEYWORD_LIMIT = 3;
+
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString('en-US', {
     month: 'short',
@@ -9,17 +11,8 @@ function formatDate(value: string) {
   });
 }
 
-type TagItem = { value: string; kind: 'alias' | 'keyword' };
-
-function toTagItems(note: NoteSummary): TagItem[] {
-  return [
-    ...note.aliases.map((value): TagItem => ({ value, kind: 'alias' })),
-    ...note.keywords.map((value): TagItem => ({ value, kind: 'keyword' })),
-  ];
-}
-
-function TagLine({ items }: { items: TagItem[] }) {
-  if (items.length === 0) {
+function KeywordLine({ keywords }: { keywords: string[] }) {
+  if (keywords.length === 0) {
     return (
       <span
         className="font-mono text-label-sm text-text-muted"
@@ -30,23 +23,25 @@ function TagLine({ items }: { items: TagItem[] }) {
     );
   }
 
+  const visible = keywords.slice(0, VISIBLE_KEYWORD_LIMIT);
+  const hiddenCount = keywords.length - visible.length;
+
   return (
-    <span className="font-mono text-label-sm">
-      {items.map((item, index) => (
-        <span key={`${item.kind}-${item.value}`}>
-          {index > 0 && <span className="text-text-muted"> / </span>}
-          <span
-            className={
-              item.kind === 'alias'
-                ? 'text-accent-strong'
-                : 'text-text-secondary'
-            }
-          >
-            {item.value}
+    <>
+      <span className="min-w-0 truncate font-mono text-label-sm">
+        {visible.map((keyword, index) => (
+          <span key={keyword}>
+            {index > 0 && <span className="text-text-muted"> / </span>}
+            <span className="text-text-secondary">{keyword}</span>
           </span>
+        ))}
+      </span>
+      {hiddenCount > 0 && (
+        <span className="shrink-0 font-mono text-label-sm text-text-muted">
+          +{hiddenCount}
         </span>
-      ))}
-    </span>
+      )}
+    </>
   );
 }
 
@@ -59,11 +54,11 @@ export function NoteCard({ note }: { note: NoteSummary }) {
       <span className="block font-mono text-label-sm uppercase text-text-muted">
         {formatDate(note.updatedAt)}
       </span>
-      <h3 className="mt-2.5 font-sans text-headline-md text-text-primary transition-colors group-hover:text-accent-strong">
+      <h3 className="mt-2.5 line-clamp-2 font-sans text-headline-md text-text-primary transition-colors group-hover:text-accent-strong">
         {note.title}
       </h3>
-      <p className="mt-3">
-        <TagLine items={toTagItems(note)} />
+      <p className="mt-3 flex items-baseline gap-2">
+        <KeywordLine keywords={note.keywords} />
       </p>
     </Link>
   );
