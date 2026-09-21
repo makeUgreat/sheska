@@ -1,15 +1,8 @@
 import { Link } from 'react-router-dom';
+import { formatDate } from '@/shared/lib';
 import { type NoteSummary } from '../api/types';
 
 const VISIBLE_KEYWORD_LIMIT = 3;
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
 
 function KeywordLine({ keywords }: { keywords: string[] }) {
   if (keywords.length === 0) {

@@ -1,12 +1,5 @@
+import { formatDate } from '@/shared/lib';
 import { MatchBadge } from './match-badge';
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
 
 function Separator() {
   return <span className="h-1 w-1 rounded-full bg-outline-variant" />;
