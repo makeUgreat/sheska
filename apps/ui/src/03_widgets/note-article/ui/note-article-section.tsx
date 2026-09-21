@@ -36,8 +36,8 @@ export function NoteArticleSection({ state }: { state: NoteArticleState }) {
   const { note, outline, activeHeadingId } = state;
 
   return (
-    <div className="grid gap-14 lg:grid-cols-[minmax(0,680px)_200px] lg:justify-center">
-      <article className="min-w-0">
+    <>
+      <article>
         <NoteHeader note={note} />
 
         {note.body && <NoteBody body={note.body} outline={outline} />}
@@ -50,13 +50,9 @@ export function NoteArticleSection({ state }: { state: NoteArticleState }) {
       </article>
 
       {outline.length >= OUTLINE_MINIMUM_HEADINGS && (
-        <div className="hidden lg:block">
-          <div className="sticky top-[calc(var(--spacing-header)+var(--spacing-gutter))]">
-            <NoteOutline headings={outline} activeId={activeHeadingId} />
-          </div>
-        </div>
+        <NoteOutline headings={outline} activeId={activeHeadingId} />
       )}
-    </div>
+    </>
   );
 }
 
