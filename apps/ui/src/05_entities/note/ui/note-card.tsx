@@ -9,34 +9,62 @@ function formatDate(value: string) {
   });
 }
 
-export function NoteCard({ note }: { note: NoteSummary }) {
-  const tags = [...note.aliases, ...note.keywords].slice(0, 3);
+type TagItem = { value: string; kind: 'alias' | 'keyword' };
 
+function toTagItems(note: NoteSummary): TagItem[] {
+  return [
+    ...note.aliases.map((value): TagItem => ({ value, kind: 'alias' })),
+    ...note.keywords.map((value): TagItem => ({ value, kind: 'keyword' })),
+  ];
+}
+
+function TagLine({ items }: { items: TagItem[] }) {
+  if (items.length === 0) {
+    return (
+      <span
+        className="font-mono text-label-sm text-text-muted"
+        aria-hidden="true"
+      >
+        —
+      </span>
+    );
+  }
+
+  return (
+    <span className="font-mono text-label-sm">
+      {items.map((item, index) => (
+        <span key={`${item.kind}-${item.value}`}>
+          {index > 0 && <span className="text-text-muted"> / </span>}
+          <span
+            className={
+              item.kind === 'alias'
+                ? 'text-accent-strong'
+                : 'text-text-secondary'
+            }
+          >
+            {item.value}
+          </span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+export function NoteCard({ note }: { note: NoteSummary }) {
   return (
     <Link
       to={`/notes/${note.noteId}`}
-      className="group flex h-full flex-col justify-between gap-3 rounded-lg border border-outline-variant/10 bg-surface-container-lowest p-5 transition-all duration-300 hover:border-accent/40 hover:bg-surface-container-lowest/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+      className="group block h-full border-t border-outline-variant/20 py-6 transition-colors hover:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4 focus-visible:ring-offset-white"
     >
-      <h3 className="line-clamp-3 font-sans text-headline-md text-text-primary transition-colors group-hover:text-accent">
+      <span className="block font-mono text-label-sm uppercase text-text-muted">
+        {formatDate(note.updatedAt)}
+      </span>
+      <h3 className="mt-2.5 font-sans text-headline-md text-text-primary transition-colors group-hover:text-accent-strong">
         {note.title}
       </h3>
-      <div className="flex flex-col gap-3">
-        {tags.length > 0 && (
-          <ul className="flex flex-wrap gap-1.5">
-            {tags.map((tag) => (
-              <li
-                key={tag}
-                className="rounded-full bg-accent/10 px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wide text-accent-strong"
-              >
-                {tag}
-              </li>
-            ))}
-          </ul>
-        )}
-        <span className="font-mono text-label-sm uppercase text-text-secondary">
-          {formatDate(note.updatedAt)}
-        </span>
-      </div>
+      <p className="mt-3">
+        <TagLine items={toTagItems(note)} />
+      </p>
     </Link>
   );
 }
