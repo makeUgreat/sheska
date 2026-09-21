@@ -47,7 +47,7 @@ function renderPage(client: HttpClient) {
 }
 
 describe('PostsPage', () => {
-  it('렌더링 즉시 post 목록을 로딩하며 loading posts를 보여준다', async () => {
+  it('렌더링 즉시 post 목록을 로딩하며 Loading 텍스트를 보여준다', async () => {
     const client = buildMockHttpClient({
       listPosts: vi.fn().mockReturnValue(new Promise(() => {})),
     });
@@ -55,7 +55,7 @@ describe('PostsPage', () => {
     renderPage(client);
 
     await waitFor(() => {
-      expect(screen.getAllByText('Loading posts...').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Loading').length).toBeGreaterThan(0);
     });
   });
 

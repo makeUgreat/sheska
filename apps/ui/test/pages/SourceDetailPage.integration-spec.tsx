@@ -81,7 +81,7 @@ function renderPage(client: HttpClient, sourceId = 'source-1') {
 }
 
 describe('SourceDetailPage', () => {
-  it('로딩 중에 Loading... 텍스트를 보여준다', () => {
+  it('로딩 중에 Loading 텍스트를 보여준다', () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockReturnValue(new Promise(() => {})),
     });
@@ -91,7 +91,7 @@ describe('SourceDetailPage', () => {
     expect(
       screen.getByRole('link', { name: '← Back to sources' }),
     ).toBeDefined();
-    expect(screen.getByText('Loading...')).toBeDefined();
+    expect(screen.getByText('Loading')).toBeDefined();
   });
 
   it('source 상세 정보를 렌더링한다', async () => {

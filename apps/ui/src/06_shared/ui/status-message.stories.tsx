@@ -17,13 +17,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Empty: Story = {};
 
-export const Loading: Story = {
-  args: {
-    tone: 'loading',
-    children: 'Loading posts',
-  },
-};
-
 export const Error: Story = {
   args: {
     tone: 'error',
