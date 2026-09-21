@@ -65,7 +65,7 @@ const meta = {
       sources: sampleSources,
       page: 1,
       totalPages: 3,
-      isFetching: false,
+      isPlaceholder: false,
     },
   },
 } satisfies Meta<typeof SourceListSection>;
@@ -114,15 +114,15 @@ export const ErrorState: Story = {
   },
 };
 
-export const FetchingNextPage: Story = {
-  name: 'Fetching next page (fade transition)',
+export const ShowingPreviousPage: Story = {
+  name: 'Showing previous page while the next one loads (fade transition)',
   args: {
     state: {
       status: 'success',
       sources: sampleSources,
       page: 2,
       totalPages: 3,
-      isFetching: true,
+      isPlaceholder: true,
     },
   },
 };

@@ -8,26 +8,26 @@ function getSourceListState({
   sources,
   page,
   totalPages,
-  isFetching,
+  isPlaceholder,
 }: {
   isLoading: boolean;
   error: Error | null;
   sources: SourceSummary[];
   page: number;
   totalPages: number;
-  isFetching: boolean;
+  isPlaceholder: boolean;
 }): SourceListState {
   if (isLoading) return { status: 'loading' };
   if (error) return { status: 'error', error };
   if (sources.length === 0) return { status: 'empty' };
 
-  return { status: 'success', sources, page, totalPages, isFetching };
+  return { status: 'success', sources, page, totalPages, isPlaceholder };
 }
 
 export function SourceList() {
   const { page, syncJobStatus, setPage, setSyncJobStatus } =
     useSourceListFilters();
-  const { data, isLoading, isFetching, error } = useListSources({
+  const { data, isLoading, isPlaceholderData, error } = useListSources({
     page,
     syncJobStatus,
   });
@@ -37,7 +37,7 @@ export function SourceList() {
     sources: data?.sources ?? [],
     page,
     totalPages: data?.totalPages ?? 1,
-    isFetching,
+    isPlaceholder: isPlaceholderData,
   });
 
   return (
