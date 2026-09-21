@@ -1,7 +1,13 @@
 import { useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { usePost } from '@/entities/post';
-import { ActionLink, ErrorState, LoadingState, Tag } from '@/shared/ui';
+import {
+  ActionLink,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  Tag,
+} from '@/shared/ui';
 
 export function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -94,7 +100,9 @@ export function PostDetailPage() {
             </section>
           )}
         </article>
-      ) : null}
+      ) : (
+        <EmptyState label="No post here." className="py-24" />
+      )}
     </main>
   );
 }
