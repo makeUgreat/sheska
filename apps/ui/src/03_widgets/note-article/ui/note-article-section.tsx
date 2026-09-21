@@ -53,7 +53,7 @@ export function NoteArticleSection({ state }: { state: NoteArticleState }) {
 
       {outline.length >= OUTLINE_MINIMUM_HEADINGS && (
         <div className="hidden lg:block">
-          <div className="sticky top-14">
+          <div className="sticky top-[calc(var(--spacing-header)+var(--spacing-gutter))]">
             <NoteOutline headings={outline} activeId={activeHeadingId} />
           </div>
         </div>
