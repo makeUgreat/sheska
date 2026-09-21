@@ -7,6 +7,7 @@ import { type GetSourceResponse } from '@/entities/source';
 import { SourceDetailPage } from '@/pages/source-detail';
 import {
   HttpClientProvider,
+  HttpError,
   type HttpClientType as HttpClient,
 } from '@/shared/api';
 
@@ -209,16 +210,33 @@ describe('SourceDetailPage', () => {
     });
   });
 
-  it('에러가 발생하면 에러 메시지를 보여준다', async () => {
+  it('에러가 발생하면 상태 코드와 실패한 대상을 보여준다', async () => {
     const client = buildMockHttpClient({
-      get: vi.fn().mockRejectedValue(new Error('Source not found')),
+      get: vi.fn().mockRejectedValue(new HttpError(503, 'Service Unavailable')),
     });
 
     renderPage(client);
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeDefined();
-      expect(screen.getByText('Error: Source not found')).toBeDefined();
+      expect(screen.getByText('503')).toBeDefined();
+      expect(
+        screen.getByText('Something went wrong while loading.'),
+      ).toBeDefined();
+    });
+  });
+
+  it('source가 없으면 빈 상태 메시지를 보여준다', async () => {
+    const client = buildMockHttpClient({
+      get: vi.fn().mockResolvedValue(null),
+    });
+
+    renderPage(client);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('This page does not exist, or it was removed.'),
+      ).toBeDefined();
     });
   });
 
