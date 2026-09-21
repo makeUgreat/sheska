@@ -18,7 +18,7 @@ export type NotesGridState =
 export function NotesGridSection({ state }: { state: NotesGridState }) {
   return (
     <section className="min-h-screen bg-white px-4 py-20">
-      <div className="mx-auto max-w-[1400px]">
+      <div className="mx-auto max-w-[1280px]">
         <h1 className="mb-12 font-sans text-headline-lg text-text-primary">
           Notes
         </h1>
@@ -46,7 +46,7 @@ export function NotesGridSection({ state }: { state: NotesGridState }) {
 
 function NoteGrid({ notes }: { notes: NoteSummary[] }) {
   return (
-    <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4 xl:grid-cols-5">
+    <ul className="grid grid-cols-1 gap-x-11 md:grid-cols-2 xl:grid-cols-3">
       {notes.map((note) => (
         <li key={note.noteId}>
           <NoteCard note={note} />
