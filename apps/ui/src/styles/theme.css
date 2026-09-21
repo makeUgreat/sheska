@@ -66,6 +66,7 @@
   --spacing-margin-mobile: 16px;
   --spacing-margin-desktop: 64px;
   --container-content: 1280px;
+  --spacing-measure: 680px;
   --spacing-container-terminal: 1100px;
   --spacing-header: 84px;
 }

@@ -31,7 +31,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 bg-surface">
       <div className="h-11 border-b border-white/5 bg-surface-container-low/80 px-4">
-        <div className="mx-auto flex h-full max-w-[1280px] items-center justify-between gap-6">
+        <div className="mx-auto flex h-full max-w-content items-center justify-between gap-3 sm:gap-6">
           <div className="flex items-center gap-2">
             <span className="flex items-center gap-2" aria-hidden="true">
               {TRAFFIC_LIGHTS.map((light) => (
@@ -48,7 +48,7 @@ export function Header() {
 
           <nav
             aria-label="Sections"
-            className="flex gap-6 font-mono text-label-sm"
+            className="flex gap-3 font-mono text-label-sm sm:gap-6"
           >
             {SECTIONS.map(({ href, label }) => {
               const current = isCurrent(pathname, href);
@@ -72,7 +72,7 @@ export function Header() {
       </div>
 
       <div className="h-10 px-4">
-        <div className="mx-auto flex h-full max-w-[1280px] items-center font-mono text-code-snippet">
+        <div className="mx-auto flex h-full max-w-content items-center font-mono text-code-snippet">
           <span className="text-secondary">visitor@hash:~$</span>
           <span className="ml-2 text-white">{toCommand(pathname)}</span>
           <span

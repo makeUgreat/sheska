@@ -58,6 +58,7 @@ Layout philosophy는 desktop에서는 **Fixed Grid**, mobile에서는 **Fluid Gr
 - **Desktop**: 최대 container width 1280px의 12-column grid. Gutter는 content block을 명확히 분리하기 위해 24px로 고정한다.
 - **Mobile**: 16px side margin을 가진 4-column fluid grid.
 - **Spacing Rhythm**: 모든 margin과 padding은 4px base unit의 배수여야 한다.
+- **Reading Measure**: Prose를 읽는 컬럼은 `--spacing-measure`(680px)를 넘지 않는다. Note 본문과 post 본문이 이 값을 공유하므로, 한쪽만 바꾸면 두 화면의 줄 길이가 어긋난다.
 
 Major section 사이에는 minimalist, editorial aesthetic을 강조하기 위해 64px 이상의 넓은 margin을 사용한다. Content는 붐비지 않고 의도적으로 배치된 느낌이어야 한다.
 
