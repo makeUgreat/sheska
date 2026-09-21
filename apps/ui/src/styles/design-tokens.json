@@ -291,7 +291,11 @@
     "container-max": {
       "$value": "1280px"
     },
-    "container-terminal": {
+    "measure": {
+   "$description": "Maximum reading column width for prose. Note and post bodies cap at this so the line length stays readable at every viewport.",
+   "$value": "680px"
+  },
+  "container-terminal": {
       "$description": "Terminal hero container max width.",
       "$value": "1100px"
     },
