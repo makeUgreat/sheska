@@ -30,7 +30,7 @@ export function NoteArticleSection({ state }: { state: NoteArticleState }) {
   }
 
   if (state.status === 'empty') {
-    return <EmptyState label="No note here." className="py-24" />;
+    return <EmptyState variant="document" className="py-24" />;
   }
 
   const { note, outline, activeHeadingId } = state;

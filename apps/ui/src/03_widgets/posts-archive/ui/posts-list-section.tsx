@@ -93,14 +93,15 @@ export function PostsListSection({
         ) : state.status === 'error' ? (
           <ErrorState error={state.error} />
         ) : state.status === 'empty' ? (
-          <EmptyState
-            label={
-              isSearching
-                ? `No results for "${search.normalizedQuery}".`
-                : 'No posts yet.'
-            }
-            className={ARCHIVE_SPACING}
-          />
+          isSearching ? (
+            <EmptyState
+              variant="search"
+              query={search.normalizedQuery}
+              className={ARCHIVE_SPACING}
+            />
+          ) : (
+            <EmptyState variant="list" className={ARCHIVE_SPACING} />
+          )
         ) : (
           <>
             <PostList

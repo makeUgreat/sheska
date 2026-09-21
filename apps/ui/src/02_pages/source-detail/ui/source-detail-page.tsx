@@ -10,7 +10,7 @@ import {
 } from '@/entities/source';
 import { PublishPostPanel } from '@/features/publish-post';
 import { formatBytes } from '@/shared/lib';
-import { LoadingState } from '@/shared/ui';
+import { EmptyState, ErrorState, LoadingState } from '@/shared/ui';
 
 function formatFrontmatterValue(value: unknown): string {
   return typeof value === 'string' ? value : JSON.stringify(value);
@@ -145,12 +145,7 @@ export function SourceDetailPage() {
       {isLoading ? (
         <LoadingState className="py-24" />
       ) : error ? (
-        <p
-          role="alert"
-          className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700"
-        >
-          Error: {error.message}
-        </p>
+        <ErrorState error={error} />
       ) : source ? (
         <>
           <header className="mb-8 border-b border-outline-variant/10 pb-6">
@@ -234,7 +229,9 @@ export function SourceDetailPage() {
             </pre>
           </section>
         </>
-      ) : null}
+      ) : (
+        <EmptyState variant="document" className="py-24" />
+      )}
     </main>
   );
 }

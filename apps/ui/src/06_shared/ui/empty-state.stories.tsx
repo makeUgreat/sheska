@@ -6,7 +6,7 @@ const meta = {
   component: EmptyState,
   tags: ['autodocs'],
   args: {
-    label: 'No posts yet.',
+    variant: 'grid',
   },
 } satisfies Meta<typeof EmptyState>;
 
@@ -14,16 +14,20 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const Posts: Story = {};
+export const NotesGrid: Story = {};
+
+export const PostsList: Story = {
+  args: { variant: 'list' },
+};
 
 export const SearchResults: Story = {
-  args: {
-    label: 'No results for "terminal".',
-  },
+  args: { variant: 'search', query: 'generative ui' },
+};
+
+export const Document: Story = {
+  args: { variant: 'document' },
 };
 
 export const WithArchiveSpacing: Story = {
-  args: {
-    className: 'mt-16 pt-12',
-  },
+  args: { className: 'mt-16 pt-12' },
 };

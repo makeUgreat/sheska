@@ -29,7 +29,7 @@ export function NotesGridSection({ state }: { state: NotesGridState }) {
         ) : state.status === 'error' ? (
           <ErrorState error={state.error} />
         ) : state.status === 'empty' ? (
-          <EmptyState label="No notes yet." className={ARCHIVE_SPACING} />
+          <EmptyState variant="grid" className={ARCHIVE_SPACING} />
         ) : (
           <>
             <NoteGrid notes={state.notes} />
