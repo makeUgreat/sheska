@@ -298,6 +298,29 @@ describe('SourceDetailPage', () => {
       });
     });
 
+    it('게시 성공 후 source를 다시 불러와도 안내 문구는 하나만 표시된다', async () => {
+      const user = userEvent.setup();
+      const getSource = vi
+        .fn()
+        .mockResolvedValueOnce(MOCK_SOURCE)
+        .mockResolvedValue({ ...MOCK_SOURCE, publishedPostId: 'post-1' });
+      const client = buildMockHttpClient({ get: getSource });
+
+      renderPage(client);
+
+      await waitFor(() => screen.getByRole('heading', { name: '게시하기' }));
+
+      await user.click(screen.getByRole('button', { name: '게시하기' }));
+
+      await waitFor(() => {
+        expect(getSource).toHaveBeenCalledTimes(2);
+      });
+      expect(
+        screen.getAllByRole('link', { name: '게시된 포스트 보기' }),
+      ).toHaveLength(1);
+      expect(screen.queryByText(/이미 게시되었습니다/)).toBeNull();
+    });
+
     it('이미 게시된 source는 게시하기 버튼 대신 게시된 포스트 링크를 보여준다', async () => {
       const client = buildMockHttpClient({
         get: vi.fn().mockResolvedValue({

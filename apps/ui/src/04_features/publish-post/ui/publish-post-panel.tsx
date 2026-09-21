@@ -9,15 +9,21 @@ export function PublishPostPanel({
   publishedPostId: string | null;
 }) {
   const publishPost = usePublishPost();
+  const justPublishedPostId = publishPost.isSuccess
+    ? publishPost.data.postId
+    : null;
+  const postId = justPublishedPostId ?? publishedPostId;
 
   return (
     <section className="rounded-lg border border-gray-200 bg-gray-50 p-5">
       <h2 className="text-base font-semibold text-gray-950">게시하기</h2>
-      {publishedPostId ? (
+      {postId ? (
         <p className="mt-4 text-sm text-gray-700">
-          이미 게시되었습니다.{' '}
+          {justPublishedPostId
+            ? '포스트가 게시되었습니다.'
+            : '이미 게시되었습니다.'}{' '}
           <Link
-            to={`/posts/${publishedPostId}`}
+            to={`/posts/${postId}`}
             className="font-medium text-accent-hover underline"
           >
             게시된 포스트 보기
@@ -33,17 +39,6 @@ export function PublishPostPanel({
             {publishPost.isPending ? '게시 중...' : '게시하기'}
           </button>
         </div>
-      )}
-      {publishPost.isSuccess && (
-        <p className="mt-4 text-sm text-accent-hover">
-          포스트가 게시되었습니다.{' '}
-          <Link
-            to={`/posts/${publishPost.data.postId}`}
-            className="font-medium underline"
-          >
-            게시된 포스트 보기
-          </Link>
-        </p>
       )}
       {publishPost.isError && (
         <p
