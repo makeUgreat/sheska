@@ -52,16 +52,47 @@ export class SourceEmbeddingFinalizationBullMqConsumer extends WorkerHost {
   ): Promise<void> {
     if (!job) return;
 
-    this.logger.error(`${job.queueName} job failed`, error, {
+    const context = {
       queueName: job.queueName,
       jobId: job.id,
       attemptsMade: job.attemptsMade,
-    });
-    const input = finalizeEmbeddingWorkflowJobInputSchema.parse(job.data);
-    await this.finalizeEmbeddingWorkflow.handleFailure({
-      sourceId: input.sourceId,
-      syncJobId: input.syncJobId,
-      totalChunks: input.totalChunks,
-    });
+    };
+
+    this.logger.error(`${job.queueName} job failed`, error, context);
+
+    const input = finalizeEmbeddingWorkflowJobInputSchema.safeParse(job.data);
+    if (!input.success) {
+      this.logger.error(
+        `${job.queueName} job failure compensation skipped`,
+        input.error,
+        context,
+      );
+      return;
+    }
+
+    try {
+      await this.finalizeEmbeddingWorkflow.handleFailure({
+        sourceId: input.data.sourceId,
+        syncJobId: input.data.syncJobId,
+        totalChunks: input.data.totalChunks,
+      });
+    } catch (compensationError: unknown) {
+      this.logger.error(
+        `${job.queueName} job failure compensation failed`,
+        compensationError,
+        context,
+      );
+    }
+  }
+
+  @OnWorkerEvent('error')
+  onError(error: Error): void {
+    this.logger.error(
+      `${SOURCE_EMBEDDING_FINALIZATION_QUEUE} worker error`,
+      error,
+      {
+        queueName: SOURCE_EMBEDDING_FINALIZATION_QUEUE,
+      },
+    );
   }
 }

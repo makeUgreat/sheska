@@ -74,4 +74,62 @@ describe('SourceEmbeddingFinalizationBullMqConsumer', () => {
     expect(logger.error).toHaveBeenCalledOnce();
     expect(handleFailure).toHaveBeenCalledWith(job.data);
   });
+
+  it('job payload를 쓸 수 없으면 보상을 건너뛰되 reject하지 않는다', async () => {
+    const { useCase, handleFailure, logger } = buildDependencies();
+    const consumer = new SourceEmbeddingFinalizationBullMqConsumer(
+      useCase,
+      logger,
+    );
+    const job = buildJob();
+    (job as { data: unknown }).data = { sourceId: 'source-1' };
+
+    await expect(
+      consumer.onFailed(job, new Error('save failed')),
+    ).resolves.toBeUndefined();
+
+    expect(handleFailure).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith(
+      'source-embedding-finalization job failure compensation skipped',
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
+  it('보상 자체가 실패해도 reject하지 않고 error로 남긴다', async () => {
+    const { useCase, handleFailure, logger } = buildDependencies();
+    handleFailure.mockRejectedValue(new Error('outbox unavailable'));
+    const consumer = new SourceEmbeddingFinalizationBullMqConsumer(
+      useCase,
+      logger,
+    );
+    const job = buildJob();
+
+    await expect(
+      consumer.onFailed(job, new Error('save failed')),
+    ).resolves.toBeUndefined();
+
+    expect(logger.error).toHaveBeenCalledWith(
+      'source-embedding-finalization job failure compensation failed',
+      expect.any(Error) as Error,
+      expect.anything(),
+    );
+  });
+  it('worker 내부 error를 기록하고 throw하지 않는다', () => {
+    const { useCase, logger } = buildDependencies();
+    const consumer = new SourceEmbeddingFinalizationBullMqConsumer(
+      useCase,
+      logger,
+    );
+
+    expect(() =>
+      consumer.onError(new Error('redis connection lost')),
+    ).not.toThrow();
+
+    expect(logger.error).toHaveBeenCalledWith(
+      'source-embedding-finalization worker error',
+      expect.any(Error) as Error,
+      { queueName: 'source-embedding-finalization' },
+    );
+  });
 });

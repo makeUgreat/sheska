@@ -90,6 +90,41 @@ describe('SourceEmbeddingChunkBullMqConsumer', () => {
     expect(handleFailure).toHaveBeenCalledWith(job.data);
   });
 
+  it('job payload를 쓸 수 없으면 보상을 건너뛰되 reject하지 않는다', async () => {
+    const { useCase, handleFailure, logger } = buildDependencies();
+    const consumer = new SourceEmbeddingChunkBullMqConsumer(useCase, logger);
+    const job = buildJob(undefined, { attemptsMade: 3, maxAttempts: 3 });
+    (job as { data: unknown }).data = { sourceId: 'source-1' };
+
+    await expect(
+      consumer.onFailed(job, new Error('terminal')),
+    ).resolves.toBeUndefined();
+
+    expect(handleFailure).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith(
+      'source-embedding-chunk job failure compensation skipped',
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
+  it('보상 자체가 실패해도 reject하지 않고 error로 남긴다', async () => {
+    const { useCase, handleFailure, logger } = buildDependencies();
+    handleFailure.mockRejectedValue(new Error('outbox unavailable'));
+    const consumer = new SourceEmbeddingChunkBullMqConsumer(useCase, logger);
+    const job = buildJob(undefined, { attemptsMade: 3, maxAttempts: 3 });
+
+    await expect(
+      consumer.onFailed(job, new Error('terminal')),
+    ).resolves.toBeUndefined();
+
+    expect(logger.error).toHaveBeenCalledWith(
+      'source-embedding-chunk job failure compensation failed',
+      expect.any(Error) as Error,
+      expect.anything(),
+    );
+  });
+
   it('job에 attempts가 없으면 1회 시도로 보고 곧바로 실패 처리한다', async () => {
     const { useCase, handleFailure, logger } = buildDependencies();
     const consumer = new SourceEmbeddingChunkBullMqConsumer(useCase, logger);
@@ -99,5 +134,19 @@ describe('SourceEmbeddingChunkBullMqConsumer', () => {
 
     expect(logger.error).toHaveBeenCalledOnce();
     expect(handleFailure).toHaveBeenCalledWith(job.data);
+  });
+  it('worker 내부 error를 기록하고 throw하지 않는다', () => {
+    const { useCase, logger } = buildDependencies();
+    const consumer = new SourceEmbeddingChunkBullMqConsumer(useCase, logger);
+
+    expect(() =>
+      consumer.onError(new Error('redis connection lost')),
+    ).not.toThrow();
+
+    expect(logger.error).toHaveBeenCalledWith(
+      'source-embedding-chunk worker error',
+      expect.any(Error) as Error,
+      { queueName: 'source-embedding-chunk' },
+    );
   });
 });
