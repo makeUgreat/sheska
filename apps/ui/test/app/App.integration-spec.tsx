@@ -129,6 +129,41 @@ describe('App', () => {
     });
   });
 
+  it('landing hero의 Scroll For Articles는 리로드 없이 Posts 페이지로 이동한다', async () => {
+    const user = userEvent.setup();
+    const client = buildMockHttpClient();
+
+    renderApp(client, '/');
+
+    await user.click(screen.getByRole('link', { name: /Scroll For Articles/ }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'Back to top' })).toBeDefined();
+    });
+  });
+
+  it('landing hero의 Browse Notes는 리로드 없이 Notes 페이지로 이동한다', async () => {
+    const user = userEvent.setup();
+    const listNotes = vi
+      .fn()
+      .mockResolvedValue({ notes: [], nextCursor: null });
+    const client = buildMockHttpClient({
+      get: vi.fn((path: string) => {
+        if (path === '/posts/count') return Promise.resolve({ count: 0 });
+        if (path === '/notes') return listNotes() as Promise<unknown>;
+        return Promise.reject(new Error(`Unexpected GET ${path}`));
+      }),
+    });
+
+    renderApp(client, '/');
+
+    await user.click(screen.getByRole('link', { name: /Browse Notes/ }));
+
+    await waitFor(() => {
+      expect(listNotes).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('header nav의 posts 링크를 클릭하면 Posts 페이지로 이동한다', async () => {
     const user = userEvent.setup();
     const client = buildMockHttpClient();
