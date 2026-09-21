@@ -27,7 +27,7 @@ export function Pagination({
   return (
     <nav
       aria-label="Pagination"
-      className="mt-8 flex items-center justify-center gap-2 font-mono text-xs font-medium uppercase tracking-widest"
+      className="mt-8 flex items-center justify-center gap-2 font-mono text-label-sm uppercase"
     >
       <button
         type="button"

@@ -22,7 +22,7 @@ export function PostMeta({
   similarity?: number | null;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-4 font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+    <div className="flex flex-wrap items-center gap-4 font-mono text-label-sm uppercase text-text-secondary">
       <span className="font-bold">{formatDate(updatedAt)}</span>
       <Separator />
       <span>{viewCount} views</span>

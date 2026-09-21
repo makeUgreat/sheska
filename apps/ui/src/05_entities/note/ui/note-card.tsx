@@ -33,7 +33,7 @@ export function NoteCard({ note }: { note: NoteSummary }) {
             ))}
           </ul>
         )}
-        <span className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+        <span className="font-mono text-label-sm uppercase text-text-secondary">
           {formatDate(note.updatedAt)}
         </span>
       </div>

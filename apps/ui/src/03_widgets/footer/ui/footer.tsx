@@ -11,11 +11,9 @@ export function Footer() {
           >
             HASH
           </Link>
-          <p className="mt-1 text-base leading-relaxed text-text-secondary">
-            Backend dev.
-          </p>
+          <p className="mt-1 text-body-md text-text-secondary">Backend dev.</p>
         </div>
-        <nav className="flex gap-6 text-base leading-relaxed text-text-secondary">
+        <nav className="flex gap-6 text-body-md text-text-secondary">
           <Link
             to="/posts"
             className="transition-colors hover:text-accent-hover"

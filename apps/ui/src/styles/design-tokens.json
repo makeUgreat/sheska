@@ -465,9 +465,10 @@
         "fontFamily": "{typography.font-family.mono}",
         "fontSize": "12px",
         "fontWeight": "500",
-        "lineHeight": "1",
-        "letterSpacing": "0.05em"
-      }
+        "lineHeight": "1.3333333333",
+        "letterSpacing": "0.1em"
+      },
+      "$description": "The uppercase mono label idiom. Values match what the components shipped as text-xs + tracking-widest, so text-label-sm renders identically."
     },
     "code-snippet": {
       "$type": "typography",

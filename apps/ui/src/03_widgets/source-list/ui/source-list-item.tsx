@@ -50,7 +50,7 @@ export function SourceListItem({ source }: { source: SourceSummary }) {
         <div className="flex flex-wrap items-center gap-3">
           {source.publishedPostId && <PublishedBadge />}
           <SourceSyncJobStatus syncJob={source.latestSyncJob} />
-          <span className="font-mono text-xs font-medium uppercase tracking-widest text-text-secondary">
+          <span className="font-mono text-label-sm uppercase text-text-secondary">
             {formatBytes(source.sizeBytes)} ·{' '}
             {new Date(source.updatedAt).toLocaleString()}
           </span>

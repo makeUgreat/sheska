@@ -133,6 +133,14 @@ export function generateThemeCss(tokens) {
         value.fontWeight,
       );
     }
+
+    if ('letterSpacing' in value) {
+      pushVariable(
+        lines,
+        `--text-${name}--letter-spacing`,
+        value.letterSpacing,
+      );
+    }
   }
 
   lines.push('');
