@@ -55,6 +55,20 @@ function renderPage(client: HttpClient, postId = 'post-1') {
   );
 }
 
+function renderPageWithoutId(client: HttpClient) {
+  return render(
+    <MemoryRouter initialEntries={['/posts']}>
+      <QueryClientProvider client={createTestQueryClient()}>
+        <HttpClientProvider client={client}>
+          <Routes>
+            <Route path="/posts" element={<PostDetailPage />} />
+          </Routes>
+        </HttpClientProvider>
+      </QueryClientProvider>
+    </MemoryRouter>,
+  );
+}
+
 describe('PostDetailPage', () => {
   it('로딩 중에 Loading 텍스트를 보여준다', () => {
     const client = buildMockHttpClient({
@@ -95,6 +109,15 @@ describe('PostDetailPage', () => {
       expect(screen.getByRole('alert')).toBeDefined();
       expect(screen.getByText('Error: Post not found')).toBeDefined();
     });
+  });
+
+  it('post id가 없으면 빈 상태 메시지를 보여준다', () => {
+    const getPost = vi.fn();
+
+    renderPageWithoutId(buildMockHttpClient({ get: getPost }));
+
+    expect(screen.getByText('No post here.')).toBeDefined();
+    expect(getPost).not.toHaveBeenCalled();
   });
 
   it('getPost를 올바른 id로 호출한다', async () => {

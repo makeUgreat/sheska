@@ -5,7 +5,7 @@ import {
   type Heading,
 } from '@/entities/note';
 import { formatDate } from '@/shared/lib';
-import { LoadingState, StatusMessage } from '@/shared/ui';
+import { EmptyState, ErrorState, LoadingState } from '@/shared/ui';
 
 const OUTLINE_MINIMUM_HEADINGS = 2;
 
@@ -26,13 +26,11 @@ export function NoteArticleSection({ state }: { state: NoteArticleState }) {
   }
 
   if (state.status === 'error') {
-    return (
-      <StatusMessage tone="error">Error: {state.error.message}</StatusMessage>
-    );
+    return <ErrorState error={state.error} />;
   }
 
   if (state.status === 'empty') {
-    return <StatusMessage tone="empty">No note here.</StatusMessage>;
+    return <EmptyState label="No note here." className="py-24" />;
   }
 
   const { note, outline, activeHeadingId } = state;
