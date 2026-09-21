@@ -101,7 +101,7 @@ export function PostDetailPage() {
           )}
         </article>
       ) : (
-        <EmptyState label="No post here." className="py-24" />
+        <EmptyState variant="document" className="py-24" />
       )}
     </main>
   );

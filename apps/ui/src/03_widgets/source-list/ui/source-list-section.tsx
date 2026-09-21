@@ -39,10 +39,11 @@ export function SourceListSection({
       ) : state.status === 'error' ? (
         <ErrorState error={state.error} />
       ) : state.status === 'empty' ? (
-        <EmptyState
-          label={filter.value ? 'No matching sources.' : 'No sources yet.'}
-          className="py-24"
-        />
+        filter.value ? (
+          <EmptyState variant="search" query={filter.value} className="py-24" />
+        ) : (
+          <EmptyState variant="list" className="py-24" />
+        )
       ) : (
         <>
           <SourceItemList

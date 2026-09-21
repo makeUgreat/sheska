@@ -6,6 +6,7 @@ import { type GetNoteResponse } from '@/entities/note';
 import { NoteDetailPage } from '@/pages/note-detail';
 import {
   HttpClientProvider,
+  HttpError,
   type HttpClientType as HttpClient,
 } from '@/shared/api';
 
@@ -150,9 +151,9 @@ describe('NoteDetailPage', () => {
     expect(screen.getByText('fsd')).toBeDefined();
   });
 
-  it('에러가 발생하면 에러 메시지를 보여준다', async () => {
+  it('에러가 발생하면 상태 코드와 실패한 대상을 보여준다', async () => {
     const client = buildMockHttpClient({
-      get: vi.fn().mockRejectedValue(new Error('Note not found')),
+      get: vi.fn().mockRejectedValue(new HttpError(503, 'Service Unavailable')),
     });
 
     renderPage(client);
@@ -160,7 +161,10 @@ describe('NoteDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeDefined();
     });
-    expect(screen.getByText('Error: Note not found')).toBeDefined();
+    expect(screen.getByText('503')).toBeDefined();
+    expect(
+      screen.getByText('Something went wrong while loading.'),
+    ).toBeDefined();
   });
 
   it('getNote를 올바른 id로 호출한다', async () => {

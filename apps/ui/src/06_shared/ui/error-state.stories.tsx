@@ -1,12 +1,22 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { HttpError } from '@/shared/api';
 import { ErrorState } from './error-state';
+
+const PAGE_COLUMN = 'w-screen max-w-[880px]';
 
 const meta = {
   title: 'Shared UI/ErrorState',
   component: ErrorState,
   tags: ['autodocs'],
+  decorators: [
+    (Story) => (
+      <div className={PAGE_COLUMN}>
+        <Story />
+      </div>
+    ),
+  ],
   args: {
-    error: new Error('Failed to load posts. Please try again.'),
+    error: new HttpError(503, 'Service Unavailable'),
   },
 } satisfies Meta<typeof ErrorState>;
 
@@ -14,12 +24,16 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const Failed: Story = {};
+export const ServiceUnavailable: Story = {};
 
-export const LongMessage: Story = {
-  args: {
-    error: new Error(
-      'Request to /posts failed with status 500 after 3 retries. The upstream service did not respond in time.',
-    ),
-  },
+export const ServerError: Story = {
+  args: { error: new HttpError(500, 'Internal Server Error') },
+};
+
+export const NotFound: Story = {
+  args: { error: new HttpError(404, 'Not Found') },
+};
+
+export const ServerUnreachable: Story = {
+  args: { error: new TypeError('Failed to fetch') },
 };

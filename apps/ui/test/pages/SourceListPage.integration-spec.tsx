@@ -7,6 +7,7 @@ import { type SourceSummary } from '@/entities/source';
 import { SourceListPage } from '@/pages/source-list';
 import {
   HttpClientProvider,
+  HttpError,
   type HttpClientType as HttpClient,
 } from '@/shared/api';
 
@@ -64,7 +65,7 @@ describe('SourceListPage', () => {
     expect(screen.getByText('Loading')).toBeDefined();
   });
 
-  it('source 목록이 없으면 No sources yet. 메시지를 보여준다', async () => {
+  it('source 목록이 없으면 빈 상태 메시지를 보여준다', async () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockResolvedValue({
         sources: [],
@@ -78,7 +79,7 @@ describe('SourceListPage', () => {
     renderPage(client);
 
     await waitFor(() => {
-      expect(screen.getByText('No sources yet.')).toBeDefined();
+      expect(screen.getByText('Nothing has been collected yet.')).toBeDefined();
     });
   });
 
@@ -268,16 +269,21 @@ describe('SourceListPage', () => {
     expect((nextButton as HTMLButtonElement).disabled).toBe(false);
   });
 
-  it('에러가 발생하면 에러 메시지를 보여준다', async () => {
+  it('에러가 발생하면 상태 코드와 실패한 대상을 보여준다', async () => {
     const client = buildMockHttpClient({
-      get: vi.fn().mockRejectedValue(new Error('API unavailable')),
+      get: vi
+        .fn()
+        .mockRejectedValue(new HttpError(500, 'Internal Server Error')),
     });
 
     renderPage(client);
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeDefined();
-      expect(screen.getByText('Error: API unavailable')).toBeDefined();
+      expect(screen.getByText('500')).toBeDefined();
+      expect(
+        screen.getByText('Something went wrong while loading.'),
+      ).toBeDefined();
     });
   });
 

@@ -1,8 +1,12 @@
 export { ActionLink } from './action-link';
 export { CardLink, CARD_LINK_TITLE } from './card-link';
-export { EmptyState } from './empty-state';
+export {
+  EmptyState,
+  type EmptyStateProps,
+  type EmptyVariant,
+} from './empty-state';
 export { EndOfList } from './end-of-list';
-export { ErrorState } from './error-state';
+export { ErrorState, type ErrorStateProps } from './error-state';
 export { LoadingDots } from './loading-dots';
 export { LoadingState } from './loading-state';
 export { Pagination } from './pagination';
