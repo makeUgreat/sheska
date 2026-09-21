@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { CARD_LINK_TITLE, CardLink } from '@/shared/ui';
 import { type PostSummary } from '../api/types';
 import { PostMeta } from './post-meta';
 
@@ -28,17 +28,16 @@ export function PostCard({
 }) {
   return (
     <article>
-      <Link
-        to={`/posts/${post.postId}`}
-        className="group -mx-6 block rounded-lg p-6 transition-all duration-300 hover:bg-surface-container-lowest focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-white"
-      >
+      <CardLink to={`/posts/${post.postId}`} className="-mx-6 p-6">
         <div className="flex flex-col gap-2">
           <PostMeta
             updatedAt={post.updatedAt}
             viewCount={post.viewCount}
             similarity={post.similarity}
           />
-          <h3 className="font-sans text-headline-md text-text-primary transition-colors group-hover:text-accent">
+          <h3
+            className={`font-sans text-headline-md text-text-primary ${CARD_LINK_TITLE}`}
+          >
             <Highlighted text={post.title} query={highlight} />
           </h3>
           <p className="line-clamp-2 text-body-md text-text-secondary">
@@ -52,13 +51,13 @@ export function PostCard({
             <span>Read Note</span>
             <span
               aria-hidden="true"
-              className="transition-transform group-hover:translate-x-1"
+              className="transition-transform group-hover/card:translate-x-1"
             >
               -&gt;
             </span>
           </span>
         </div>
-      </Link>
+      </CardLink>
     </article>
   );
 }

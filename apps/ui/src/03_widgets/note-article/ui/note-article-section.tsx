@@ -40,8 +40,6 @@ export function NoteArticleSection({ state }: { state: NoteArticleState }) {
       <article className="min-w-0">
         <NoteHeader note={note} />
 
-        <hr className="mb-10 border-outline-variant/20" />
-
         {note.body && <NoteBody body={note.body} outline={outline} />}
 
         {note.keywords.length > 0 && (
@@ -64,7 +62,7 @@ export function NoteArticleSection({ state }: { state: NoteArticleState }) {
 
 function NoteHeader({ note }: { note: GetNoteResponse }) {
   return (
-    <header className="mb-9">
+    <header className="mb-20">
       <h1 className="break-words font-sans text-headline-lg text-text-primary">
         {note.title}
       </h1>

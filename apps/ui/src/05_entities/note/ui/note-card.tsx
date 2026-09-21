@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
 import { formatDate } from '@/shared/lib';
+import { CARD_LINK_TITLE, CardLink } from '@/shared/ui';
 import { type NoteSummary } from '../api/types';
 
 const VISIBLE_KEYWORD_LIMIT = 3;
@@ -40,19 +40,21 @@ function KeywordLine({ keywords }: { keywords: string[] }) {
 
 export function NoteCard({ note }: { note: NoteSummary }) {
   return (
-    <Link
+    <CardLink
       to={`/notes/${note.noteId}`}
-      className="group block h-full border-t border-outline-variant/20 py-6 transition-colors hover:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+      className="-mx-3.5 h-full px-3.5 py-6"
     >
       <span className="block font-mono text-label-sm uppercase text-text-muted">
         {formatDate(note.updatedAt)}
       </span>
-      <h3 className="mt-2.5 line-clamp-2 font-sans text-headline-md text-text-primary transition-colors group-hover:text-accent-strong">
+      <h3
+        className={`mt-2.5 line-clamp-2 font-sans text-headline-md text-text-primary ${CARD_LINK_TITLE}`}
+      >
         {note.title}
       </h3>
       <p className="mt-3 flex items-baseline gap-2">
         <KeywordLine keywords={note.keywords} />
       </p>
-    </Link>
+    </CardLink>
   );
 }

@@ -69,15 +69,21 @@ Depth는 전통적인 shadow가 아니라 **Tonal Layers**와 **Low-Contrast Out
 
 Boundary를 정의할 때는 `#564242` (`outline-variant`)의 1px solid border를 사용한다. Flat하고 technical한 외형을 유지하기 위해 drop shadow는 피한다. Active 또는 focused element는 border나 text color를 primary Rose Red (`#e16d76`)로 바꿔 "glow-less" highlight를 만든다.
 
+Static shadow 금지에는 예외가 하나 있다. Light page 위의 interactive card surface는 hover 동안에만 `--shadow-card-hover`를 쓴다. 이 shadow는 1px offset에 `outline-variant` 18% 농도라서 카드가 머무는 동안의 미세한 보강일 뿐이고, 깊이를 만드는 주된 수단은 여전히 tone과 outline이다. Resting state에는 어떤 shadow도 두지 않으며, 이 값을 hover 밖으로 확장하지 않는다.
+
 ## Effects & Motion
 
-현재 custom effect/motion token은 없다. Hover와 motion interaction은 token을 거치지 않고 Tailwind utility class를 그대로 사용한다. 예:
+Hover와 motion interaction은 generated token을 거치지 않고 Tailwind utility class를 그대로 사용한다. 예:
 
-- **Garden card hover**: 카드 배경만 `duration-300`으로 tint 변경, border나 shadow 변화 없음.
+- **Card hover**: `@/shared/ui`의 `CardLink`가 소유한다. 200ms `ease-out`으로 1px lift, `accent` 5% tint, `--shadow-card-hover`, 제목 ink의 `accent-strong` 전환을 함께 건다. `prefers-reduced-motion`에서는 transition과 lift를 끈다.
 - **Action link hover**: 화살표에만 `translate-x-1`.
 - **Text link hover**: accent color로의 단순 color transition.
 
-새 effect나 motion token을 추가하기 전에는 실제로 그 값을 쓰는 구현 지점을 확인한다. 추측이나 브랜드에 "어울릴 것 같은" 값으로 token을 만들지 않는다. 구현의 특정 줄을 가리킬 수 없는 token은 추가하지 않는다.
+Note, post, source card는 모두 `CardLink` 위에 놓인다. Card처럼 전체가 클릭되는 새 surface를 만들 때는 hover recipe를 다시 선언하지 말고 `CardLink`를 쓴다. Card hover 자체를 바꾸려면 `card-link.tsx` 한 곳만 고친다.
+
+Effect variable은 `design-tokens.json`이 아니라 `src/index.css`의 `@theme` block에 둔다. Generated token file은 color, typography, radius, spacing만 담는다. Effect는 지금 `CardLink` 하나가 쓰는 값이라 cross-platform token exchange 대상이 아니고, generator에 새 token group을 여는 대신 실제 사용처 옆에 둔다. Effect가 여러 primitive로 퍼지면 그때 `design-tokens.json`으로 승격한다.
+
+새 effect나 motion 값을 추가하기 전에는 실제로 그 값을 쓰는 구현 지점을 확인한다. 추측이나 브랜드에 "어울릴 것 같은" 값으로 값을 만들지 않는다. 구현의 특정 줄을 가리킬 수 없는 값은 추가하지 않는다.
 
 ## 형태
 
