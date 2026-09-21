@@ -110,7 +110,7 @@
       }
     },
     "accent-hover": {
-      "$description": "Hover ink for the wordmark and footer links. Same value as accent-strong.",
+      "$description": "Hover ink for inline links. Same value as accent-strong.",
       "$value": "{color.accent-strong}"
     },
     "accent-strong": {

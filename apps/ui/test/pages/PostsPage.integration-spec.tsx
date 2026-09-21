@@ -153,14 +153,6 @@ describe('PostsPage', () => {
     });
   });
 
-  it('footer가 항상 렌더링되어 있다', () => {
-    const client = buildMockHttpClient();
-
-    renderPage(client);
-
-    expect(screen.getByRole('link', { name: 'HASH' })).toBeDefined();
-  });
-
   it('Back to top 링크는 홈으로 이동한다', () => {
     const client = buildMockHttpClient();
 
