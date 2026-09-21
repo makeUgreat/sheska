@@ -129,14 +129,4 @@ describe('FileExplorerSyncDecorator', () => {
 
     expect(root.titles[0].badges).toHaveLength(0);
   });
-
-  it('renders the manual-attention state as a warning badge', () => {
-    statuses['note.md'] = 'needs-attention';
-
-    decorator.renderAll();
-
-    const [badge] = root.titles[0].badges;
-    expect(badge.attributes.get('data-icon')).toBe('alert-octagon');
-    expect(badge.attributes.get('title')).toBe('Sheska: Needs attention');
-  });
 });

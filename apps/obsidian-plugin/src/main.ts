@@ -260,13 +260,11 @@ export default class SheskaPlugin extends Plugin {
               ? 'Sheska: ⟳ Retrying...'
               : status === 'unknown'
                 ? 'Sheska: ? Status unknown'
-                : status === 'needs-attention'
-                  ? 'Sheska: ⚠ Needs attention'
-                  : status === 'failed'
-                    ? 'Sheska: ✕ Failed'
-                    : status === 'synced'
-                      ? 'Sheska: ✓ Synced'
-                      : 'Sheska: ○ Not synced';
+                : status === 'failed'
+                  ? 'Sheska: ✕ Failed'
+                  : status === 'synced'
+                    ? 'Sheska: ✓ Synced'
+                    : 'Sheska: ○ Not synced';
     this.syncStatusBarItem.setText(text);
     this.notifyStatusChange(file, status);
   }
@@ -324,14 +322,10 @@ export default class SheskaPlugin extends Plugin {
     this.registerEvent(
       this.app.workspace.on('file-menu', (menu, abstractFile) => {
         if (!(abstractFile instanceof TFile)) return;
-        const needsAttention =
-          this.syncCache[abstractFile.path]?.status === 'needs-attention';
         menu.addItem((item) => {
-          item
-            .setTitle(needsAttention ? 'Retry Sheska sync' : 'Upload to Sheska')
-            .onClick(async () => {
-              await this.uploadFile(abstractFile);
-            });
+          item.setTitle('Upload to Sheska').onClick(async () => {
+            await this.uploadFile(abstractFile);
+          });
         });
       }),
     );

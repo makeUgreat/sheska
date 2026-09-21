@@ -311,7 +311,7 @@ describe('AutoSyncService', () => {
     errorSpy.mockRestore();
   });
 
-  it('sends an upload the server rejects straight to manual attention', async () => {
+  it('keeps an upload the server rejects scheduled for another retry', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
     const syncCache: SyncCache = {};
@@ -323,14 +323,8 @@ describe('AutoSyncService', () => {
 
     await service.runSweep();
 
-    expect(syncCache['note.md']).toMatchObject({
-      status: 'needs-attention',
-      nextRetryAt: undefined,
-    });
-
-    await service.runSweep();
-
-    expect(api.uploadSource).toHaveBeenCalledOnce();
+    expect(syncCache['note.md']).toMatchObject({ status: 'failed' });
+    expect(syncCache['note.md'].nextRetryAt).toEqual(expect.any(Number));
     errorSpy.mockRestore();
   });
 
@@ -359,7 +353,7 @@ describe('AutoSyncService', () => {
     errorSpy.mockRestore();
   });
 
-  it('stops retrying an upload after the automatic retries are exhausted', async () => {
+  it('keeps retrying an upload past the old attempt limit', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const file = new TFile('note.md', { ctime: 0, mtime: 200, size: 1 });
     const syncCache: SyncCache = {
@@ -375,13 +369,13 @@ describe('AutoSyncService', () => {
 
     expect(syncCache['note.md']).toMatchObject({
       mtime: 200,
-      status: 'needs-attention',
-      nextRetryAt: undefined,
+      status: 'failed',
     });
+    expect(syncCache['note.md'].nextRetryAt).toEqual(expect.any(Number));
     errorSpy.mockRestore();
   });
 
-  it('requires manual attention after automatic retries are exhausted', async () => {
+  it('schedules another retry when the server reports a failed sync job', async () => {
     const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
     const syncCache: SyncCache = {
       'note.md': {
@@ -402,9 +396,10 @@ describe('AutoSyncService', () => {
     expect(api.uploadSource).not.toHaveBeenCalled();
     expect(api.getSyncJob).toHaveBeenCalledOnce();
     expect(syncCache['note.md']).toMatchObject({
-      status: 'needs-attention',
+      status: 'failed',
       retryCount: 3,
     });
+    expect(syncCache['note.md'].nextRetryAt).toEqual(expect.any(Number));
   });
 
   it('keeps the cached state when sweep reconciliation cannot reach the API', async () => {
@@ -429,13 +424,13 @@ describe('AutoSyncService', () => {
     errorSpy.mockRestore();
   });
 
-  it('manual upload resets an exhausted automatic retry count', async () => {
+  it('manual upload resets an accumulated automatic retry count', async () => {
     const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
     const syncCache: SyncCache = {
       'note.md': {
         mtime: 123,
         syncJobId: 'job-3',
-        status: 'needs-attention',
+        status: 'failed',
         retryCount: 3,
       },
     };

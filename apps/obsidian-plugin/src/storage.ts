@@ -15,8 +15,7 @@ export interface SyncCacheEntry {
     | 'synced'
     | 'failed'
     | 'unknown'
-    | 'retrying'
-    | 'needs-attention';
+    | 'retrying';
   retryCount?: number;
   nextRetryAt?: number;
 }

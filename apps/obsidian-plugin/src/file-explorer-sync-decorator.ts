@@ -26,10 +26,6 @@ const BADGE_PRESENTATIONS: Record<
   failed: { icon: 'alert-triangle', label: 'Sheska: Failed' },
   unknown: { icon: 'help-circle', label: 'Sheska: Status unknown' },
   retrying: { icon: 'refresh-cw', label: 'Sheska: Retrying' },
-  'needs-attention': {
-    icon: 'alert-octagon',
-    label: 'Sheska: Needs attention',
-  },
 };
 
 export class FileExplorerSyncDecorator {
