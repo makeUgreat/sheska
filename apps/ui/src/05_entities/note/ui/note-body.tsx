@@ -89,7 +89,9 @@ function createMarkdownComponents(idByLine: Map<number, string>): Components {
         {children}
       </blockquote>
     ),
-    hr: () => <hr className="my-10 border-outline-variant/20" />,
+    hr: () => (
+      <hr className="mx-auto my-12 h-px w-18 border-0 bg-outline-variant/30" />
+    ),
     a: ({ children, href }) => (
       <a
         href={href}
