@@ -33,7 +33,7 @@ export function Pagination({
         type="button"
         onClick={() => onPageChange(page - 1)}
         disabled={disabled || page <= 1}
-        className="px-2 py-1 text-text-secondary transition-colors hover:text-accent disabled:pointer-events-none disabled:opacity-40"
+        className="px-2 py-1 text-text-secondary transition-colors hover:text-accent-strong disabled:pointer-events-none disabled:opacity-40"
       >
         Prev
       </button>
@@ -46,8 +46,8 @@ export function Pagination({
           aria-current={pageNumber === page ? 'page' : undefined}
           className={
             pageNumber === page
-              ? 'inline-block w-[calc(3ch+1rem)] overflow-hidden px-2 py-1 text-center text-accent disabled:opacity-40'
-              : 'inline-block w-[calc(3ch+1rem)] overflow-hidden px-2 py-1 text-center text-text-secondary transition-colors hover:text-accent disabled:pointer-events-none disabled:opacity-40'
+              ? 'inline-block w-[calc(3ch+1rem)] overflow-hidden px-2 py-1 text-center text-accent-strong disabled:opacity-40'
+              : 'inline-block w-[calc(3ch+1rem)] overflow-hidden px-2 py-1 text-center text-text-secondary transition-colors hover:text-accent-strong disabled:pointer-events-none disabled:opacity-40'
           }
         >
           {pageNumber}
@@ -57,7 +57,7 @@ export function Pagination({
         type="button"
         onClick={() => onPageChange(page + 1)}
         disabled={disabled || page >= totalPages}
-        className="px-2 py-1 text-text-secondary transition-colors hover:text-accent disabled:pointer-events-none disabled:opacity-40"
+        className="px-2 py-1 text-text-secondary transition-colors hover:text-accent-strong disabled:pointer-events-none disabled:opacity-40"
       >
         Next
       </button>

@@ -23,8 +23,8 @@ export function SourceStatusFilter({
           onClick={() => onChange(status)}
           className={`rounded px-2 py-0.5 font-mono text-xs font-medium transition-colors ${
             value === status
-              ? 'bg-accent text-white'
-              : 'bg-surface-container-high text-text-secondary hover:text-text-primary'
+              ? 'bg-accent-strong text-white'
+              : 'bg-surface-container-high text-secondary hover:text-on-surface'
           }`}
         >
           {status ?? 'all'}

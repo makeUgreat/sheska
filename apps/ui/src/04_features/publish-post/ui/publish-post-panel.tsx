@@ -18,7 +18,7 @@ export function PublishPostPanel({
           이미 게시되었습니다.{' '}
           <Link
             to={`/posts/${publishedPostId}`}
-            className="font-medium text-[#e06c75] underline"
+            className="font-medium text-accent-hover underline"
           >
             게시된 포스트 보기
           </Link>
@@ -35,7 +35,7 @@ export function PublishPostPanel({
         </div>
       )}
       {publishPost.isSuccess && (
-        <p className="mt-4 text-sm text-[#e06c75]">
+        <p className="mt-4 text-sm text-accent-hover">
           포스트가 게시되었습니다.{' '}
           <Link
             to={`/posts/${publishPost.data.postId}`}

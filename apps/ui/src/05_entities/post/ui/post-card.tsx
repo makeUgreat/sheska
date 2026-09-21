@@ -11,7 +11,7 @@ function Highlighted({ text, query }: { text: string; query: string }) {
   return (
     <>
       {text.slice(0, index)}
-      <mark className="bg-accent text-white">
+      <mark className="bg-accent-strong text-white">
         {text.slice(index, index + query.length)}
       </mark>
       {text.slice(index + query.length)}
@@ -48,7 +48,7 @@ export function PostCard({
               'A saved note from the HASH index, ready for focused reading and revision.'
             )}
           </p>
-          <span className="mt-2 inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-accent">
+          <span className="mt-2 inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-accent-strong">
             <span>Read Note</span>
             <span
               aria-hidden="true"

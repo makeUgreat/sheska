@@ -50,9 +50,10 @@
   --color-page-background: #ffffff;
   --color-accent: #e16d76;
   --color-accent-hover: #a13c46;
+  --color-accent-strong: #a13c46;
   --color-text-primary: #101319;
   --color-text-secondary: #43474f;
-  --color-text-muted: #dcc0c0;
+  --color-text-muted: #6b6f78;
   --color-border-subtle: #564242;
   --color-terminal-red: #ff5f57;
   --color-terminal-yellow: #ffbd2e;

@@ -5,7 +5,7 @@ export function SourceListPage() {
     <main className="min-h-screen bg-page-background px-4 py-20">
       <div className="mx-auto max-w-[800px]">
         <div className="mb-16">
-          <p className="font-mono text-xs font-medium uppercase tracking-widest text-accent">
+          <p className="font-mono text-xs font-medium uppercase tracking-widest text-accent-strong">
             /sources
           </p>
           <h1 className="mt-3 text-4xl font-bold leading-tight tracking-tight text-text-primary sm:text-5xl">

@@ -14,7 +14,7 @@ export function PostsLoading({
         .join(' ')}
     >
       <LoadingDots />
-      <span className="font-mono text-xs font-medium uppercase tracking-widest text-text-muted opacity-60">
+      <span className="font-mono text-xs font-medium uppercase tracking-widest text-text-muted">
         {label}
       </span>
     </div>
@@ -24,7 +24,7 @@ export function PostsLoading({
 export function EndOfPosts() {
   return (
     <div className="mt-24 flex flex-col items-center gap-4 pt-12">
-      <span className="font-mono text-xs font-medium uppercase tracking-widest text-text-muted opacity-60">
+      <span className="font-mono text-xs font-medium uppercase tracking-widest text-text-muted">
         End of posts
       </span>
     </div>

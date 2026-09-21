@@ -7,7 +7,7 @@ export function Footer() {
         <div className="text-center md:text-left">
           <Link
             to="/"
-            className="text-2xl font-semibold leading-tight text-text-primary hover:text-[#e06c75]"
+            className="text-2xl font-semibold leading-tight text-text-primary hover:text-accent-hover"
           >
             HASH
           </Link>
@@ -16,15 +16,21 @@ export function Footer() {
           </p>
         </div>
         <nav className="flex gap-6 text-base leading-relaxed text-text-secondary">
-          <Link to="/posts" className="transition-colors hover:text-[#e06c75]">
+          <Link
+            to="/posts"
+            className="transition-colors hover:text-accent-hover"
+          >
             Posts
           </Link>
-          <Link to="/notes" className="transition-colors hover:text-[#e06c75]">
+          <Link
+            to="/notes"
+            className="transition-colors hover:text-accent-hover"
+          >
             Notes
           </Link>
           <Link
             to="/sources"
-            className="transition-colors hover:text-[#e06c75]"
+            className="transition-colors hover:text-accent-hover"
           >
             Sources
           </Link>

@@ -74,7 +74,7 @@ export function LandingHero({
 
         <a
           href={notesHref}
-          className="absolute -right-4 top-1/2 z-10 flex -translate-y-1/2 items-center gap-2 text-on-secondary/30 transition-colors duration-300 ease-out animate-[bounce-x_1.5s_infinite] hover:text-accent"
+          className="absolute -right-4 top-1/2 z-10 flex -translate-y-1/2 items-center gap-2 text-on-secondary/30 transition-colors duration-300 ease-out animate-[bounce-x_1.5s_infinite] hover:text-accent-strong"
         >
           <span
             className="font-mono text-xs font-medium uppercase tracking-widest"
@@ -98,7 +98,7 @@ export function LandingHero({
 
       <a
         href={articlesHref}
-        className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-on-secondary/30 transition-colors duration-300 ease-out animate-bounce hover:text-accent"
+        className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-on-secondary/30 transition-colors duration-300 ease-out animate-bounce hover:text-accent-strong"
       >
         <span className="font-mono text-xs font-medium uppercase tracking-widest">
           Scroll For Articles

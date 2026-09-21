@@ -9,7 +9,7 @@ import { formatBytes } from '@/shared/lib';
 
 function PublishedBadge() {
   return (
-    <span className="rounded bg-accent px-2 py-0.5 font-mono text-xs font-medium text-white">
+    <span className="rounded bg-accent-strong px-2 py-0.5 font-mono text-xs font-medium text-white">
       게시됨
     </span>
   );
