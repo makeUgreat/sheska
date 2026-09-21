@@ -1,6 +1,6 @@
 import { type Ref } from 'react';
 import { NoteCard, type NoteSummary } from '@/entities/note';
-import { EndOfList, LoadingState, StatusMessage } from '@/shared/ui';
+import { EmptyState, EndOfList, ErrorState, LoadingState } from '@/shared/ui';
 
 const ARCHIVE_SPACING = 'mt-16 pt-12';
 
@@ -27,11 +27,9 @@ export function NotesGridSection({ state }: { state: NotesGridState }) {
         {state.status === 'loading' ? (
           <LoadingState className={ARCHIVE_SPACING} />
         ) : state.status === 'error' ? (
-          <StatusMessage tone="error">
-            Error: {state.error.message}
-          </StatusMessage>
+          <ErrorState error={state.error} />
         ) : state.status === 'empty' ? (
-          <StatusMessage tone="empty">No notes yet.</StatusMessage>
+          <EmptyState label="No notes yet." className={ARCHIVE_SPACING} />
         ) : (
           <>
             <NoteGrid notes={state.notes} />

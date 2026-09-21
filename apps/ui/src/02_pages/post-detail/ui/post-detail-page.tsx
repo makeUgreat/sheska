@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { usePost } from '@/entities/post';
-import { ActionLink, LoadingState, StatusMessage, Tag } from '@/shared/ui';
+import { ActionLink, ErrorState, LoadingState, Tag } from '@/shared/ui';
 
 export function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -15,7 +15,7 @@ export function PostDetailPage() {
       {isLoading ? (
         <LoadingState className="py-24" />
       ) : error ? (
-        <StatusMessage tone="error">Error: {error.message}</StatusMessage>
+        <ErrorState error={error} />
       ) : post ? (
         <article>
           <header className="mb-10 border-b border-outline-variant/10 pb-8">

@@ -1,7 +1,7 @@
 import { type FormEvent, type Ref } from 'react';
 import { Link } from 'react-router-dom';
 import { PostCard, type PostSummary } from '@/entities/post';
-import { EndOfList, LoadingState, StatusMessage } from '@/shared/ui';
+import { EmptyState, EndOfList, ErrorState, LoadingState } from '@/shared/ui';
 
 const ARCHIVE_SPACING = 'mt-24 pt-12';
 
@@ -91,15 +91,16 @@ export function PostsListSection({
         {state.status === 'loading' ? (
           <LoadingState className={ARCHIVE_SPACING} />
         ) : state.status === 'error' ? (
-          <StatusMessage tone="error">
-            Error: {state.error.message}
-          </StatusMessage>
+          <ErrorState error={state.error} />
         ) : state.status === 'empty' ? (
-          <StatusMessage tone="empty">
-            {isSearching
-              ? `No results for "${search.normalizedQuery}".`
-              : 'No posts yet.'}
-          </StatusMessage>
+          <EmptyState
+            label={
+              isSearching
+                ? `No results for "${search.normalizedQuery}".`
+                : 'No posts yet.'
+            }
+            className={ARCHIVE_SPACING}
+          />
         ) : (
           <>
             <PostList
