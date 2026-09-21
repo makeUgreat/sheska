@@ -21,6 +21,8 @@ Token 변경을 리뷰하거나 commit하기 전에는 `pnpm tokens:check`를 �
 이 명령은 `theme.css`가 `design-tokens.json`과 동기화되지 않았을 때 실패한다.
 전체 token value 목록은 이 문서에 복사하지 않는다. Token value는 JSON에 두고, 이 문서는 사용 의도를 설명한다.
 
+`design-tokens.json`은 구현이 실제로 참조하는 token만 담는다. 나중에 쓸지도 모른다는 이유로 palette 전체를 옮겨두지 않는다. 쓰이지 않는 token은 어떤 값이 실제 화면을 결정하는지 가리고, 잘못된 값으로 alias해도 아무도 알아채지 못하게 만든다.
+
 ## 파일 역할
 
 - `src/styles/design-tokens.json`: tool과 cross-platform exchange를 위한 source token data.
@@ -35,11 +37,11 @@ Palette는 light하고 editorial한 page base와 dark하고 terminal-styled elev
 - **Text-Primary**: `#101319` (`text-primary`). Light page background 위의 near-black text다.
 - **Text-Secondary**: `#43474f` (`text-secondary`). Light background 위 metadata와 supportive text를 위한 muted gray다.
 - **Text-Muted**: `#6b6f78` (`text-muted`). Light page background 위 low-emphasis label ink다 (5.04:1). Dark theme ink를 alias하지 않는다.
-- **Surface family**: `#0b0e14`~`#32353b` (`surface`, `surface-container-lowest`~`surface-container-highest`). Page background가 아니라 hero terminal window, card, tag 같은 dark하고 terminal-styled elevated component 전용 deep charcoal tone이다.
+- **Surface family**: `#0b0e14`~`#32353b` (`surface`, `surface-container-lowest`, `surface-container-low`, `surface-container-high`, `surface-variant`). Page background가 아니라 hero terminal window, card, tag 같은 dark하고 terminal-styled elevated component 전용 deep charcoal tone이다.
 - **Accent**: `#e16d76` (`accent`). Light page background 위에서 3.16:1이므로 large text(24px 이상), border, focus ring 같은 non-text contrast에만 쓴다. Dark elevated surface 위에서는 제한 없이 쓴다.
 - **Accent-Strong**: `#a13c46` (`accent-strong`). Light page background 위 small text와, white text를 얹는 fill에 쓴다. 두 경우 모두 6.46:1이다.
 - **Accent-Hover**: `accent-strong`과 같은 값의 alias다. Wordmark와 footer link의 hover ink로 사용한다.
-- **Border**: `#564242` (`outline-variant` / `border-subtle`). Subtle structural separation을 위한 cool, low-contrast border다.
+- **Border**: `#564242` (`outline-variant`). Subtle structural separation을 위한 cool, low-contrast border다.
 
 모든 green, blue, yellow tone은 피한다. Success state는 green으로 색을 바꾸기보다 typography나 iconography로 전달한다.
 
