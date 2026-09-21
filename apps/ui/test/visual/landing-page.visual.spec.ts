@@ -71,9 +71,7 @@ async function prepareLandingPage(page: Page) {
 }
 
 test.describe('Landing page visual fidelity', () => {
-  test('Stitch landing page layout matches the design reference', async ({
-    page,
-  }) => {
+  test('landing page layout matches the design reference', async ({ page }) => {
     await prepareLandingPage(page);
 
     await expect(page).toHaveScreenshot('landing-page.png', {

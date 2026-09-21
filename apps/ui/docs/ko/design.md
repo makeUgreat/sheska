@@ -11,22 +11,11 @@ read_when: visual design, CSS structure, design token, typography, color, spacin
 
 ## 출처
 
-`apps/ui`는 앱에 선택된 활성 Stitch 디자인 시스템을 따른다.
-향후 디자인 작업에서 명시적으로 교체하기 전까지 Stitch를 시각 방향의 source of truth로 사용한다.
+이 문서와 [디자인 토큰](./design-token.md)이 `apps/ui` 시각 방향의 source of truth다.
+외부 design tool을 authoritative reference로 삼지 않는다.
 
-현재 활성 Stitch source는 다음과 같다.
-
-- Project: `MacOS Terminal AI Blog`
-- Project ID: `18218865311785006442`
-- Project URL: `https://stitch.withgoogle.com/projects/18218865311785006442`
-- Main page screen: `Main Blog Page (Ember & Ash Theme)`, screen ID `2311ec2a1a4c4a15ae5eedb5b64c0b03`
-- Design system screen: `Design System`, screen ID `asset-stub-assets_275de50dde8e4051a9394169751633de`
-
-Stitch project가 변경되면 해당 project와 screen에 대해 사용자가 최신으로 제공한 Stitch Instructions를 authoritative access path로 사용한다.
-Reference artifact를 갱신해야 할 때는 Stitch Instructions의 hosted URL을 그대로 사용하고 `curl -L`로 다운로드한다.
-
-Stitch를 구현할 때는 맥락 없이 개별 시각 detail만 복사하지 말고 선택된 디자인 시스템의 의도된 톤을 보존한다.
-Stitch 디자인 시스템과 local implementation이 어긋나면 구현을 맞추거나 디자인 시스템 변경을 명시적으로 문서화한다.
+개별 시각 detail을 맥락 없이 복사하지 말고 아래 기술한 의도된 톤을 보존한다.
+구현이 이 문서와 어긋나면 구현을 맞추거나, 의도한 변경이라면 같은 변경 단위에서 이 문서를 갱신한다.
 
 ## 브랜드와 스타일
 

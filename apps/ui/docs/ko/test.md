@@ -59,9 +59,9 @@ Story는 rendering을 검토하고, 누락된 state를 발견하고, 향후 brow
 ### Visual Design Check
 
 `jsdom` 기반 Vitest는 behavior, accessibility-oriented structure, data state, routing을 검증하기 위한 도구다.
-실제 layout/rendering engine을 실행하지 않기 때문에 Stitch와 pixel-level 또는 perceptual alignment가 맞는지는 증명할 수 없다.
+실제 layout/rendering engine을 실행하지 않기 때문에 design reference와 pixel-level 또는 perceptual alignment가 맞는지는 증명할 수 없다.
 
-변경이 Stitch design 구현을 목표로 한다면 automated `jsdom` test는 loading, empty, error, navigation, form interaction, accessible label 같은 관찰 가능한 동작에 집중한다.
+변경이 design 구현을 목표로 한다면 automated `jsdom` test는 loading, empty, error, navigation, form interaction, accessible label 같은 관찰 가능한 동작에 집중한다.
 Visual alignment는 [디자인 시스템](./design.md)에 설명된 browser 기반 review로 확인한다.
 
 Vitest `jsdom` suite에는 screenshot 또는 pixel-diff assertion을 추가하지 않는다.
