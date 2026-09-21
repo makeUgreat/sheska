@@ -6,7 +6,6 @@ import { PostDetailPage } from '@/pages/post-detail';
 import { PostsPage } from '@/pages/posts';
 import { SourceDetailPage } from '@/pages/source-detail';
 import { SourceListPage } from '@/pages/source-list';
-import { Footer } from '@/widgets/footer';
 import { Header } from '@/widgets/header';
 
 export function App() {
@@ -14,10 +13,6 @@ export function App() {
 
   /** The hero is its own terminal window; a second one on top would repeat it. */
   const isLanding = location.pathname === '/';
-  const ownsFooter =
-    location.pathname === '/' ||
-    location.pathname === '/posts' ||
-    location.pathname === '/notes';
 
   return (
     <div className="min-h-screen bg-page-background text-text-primary">
@@ -31,7 +26,6 @@ export function App() {
         <Route path="/notes" element={<NotesPage />} />
         <Route path="/notes/:id" element={<NoteDetailPage />} />
       </Routes>
-      {!ownsFooter && <Footer />}
     </div>
   );
 }

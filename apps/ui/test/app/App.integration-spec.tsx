@@ -129,26 +129,26 @@ describe('App', () => {
     });
   });
 
-  it('nav의 Posts 링크를 클릭하면 Posts 페이지로 이동한다', async () => {
+  it('header nav의 posts 링크를 클릭하면 Posts 페이지로 이동한다', async () => {
     const user = userEvent.setup();
     const client = buildMockHttpClient();
 
     renderApp(client);
 
-    await user.click(screen.getByRole('link', { name: 'Posts' }));
+    await user.click(screen.getByRole('link', { name: 'posts' }));
 
     await waitFor(() => {
       expect(screen.getByRole('link', { name: 'Back to top' })).toBeDefined();
     });
   });
 
-  it('nav의 Sources 링크를 클릭하면 Sources 페이지로 이동한다', async () => {
+  it('header nav의 sources 링크를 클릭하면 Sources 페이지로 이동한다', async () => {
     const user = userEvent.setup();
     const client = buildMockHttpClient();
 
     renderApp(client, '/sources/source-1');
 
-    await user.click(screen.getByRole('link', { name: 'Sources' }));
+    await user.click(screen.getByRole('link', { name: 'sources' }));
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Sources' })).toBeDefined();
