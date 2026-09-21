@@ -1,4 +1,5 @@
 export { ActionLink } from './action-link';
+export { CardLink, CARD_LINK_TITLE } from './card-link';
 export { EmptyState } from './empty-state';
 export { EndOfList } from './end-of-list';
 export { ErrorState } from './error-state';

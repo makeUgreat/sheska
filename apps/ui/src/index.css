@@ -3,6 +3,11 @@
 @import "./styles/theme.css";
 @plugin "@tailwindcss/typography";
 
+@theme {
+  --shadow-card-hover: 0 1px 2px -1px
+    color-mix(in srgb, var(--color-outline-variant) 18%, transparent);
+}
+
 :root {
   color: var(--color-text-primary);
   background: var(--color-page-background);

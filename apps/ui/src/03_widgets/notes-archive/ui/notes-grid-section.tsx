@@ -51,7 +51,7 @@ function NoteGrid({ notes }: { notes: NoteSummary[] }) {
   return (
     <ul className="grid grid-cols-1 gap-x-11 md:grid-cols-2 xl:grid-cols-3">
       {notes.map((note) => (
-        <li key={note.noteId}>
+        <li key={note.noteId} className="border-t border-outline-variant/12">
           <NoteCard note={note} />
         </li>
       ))}
