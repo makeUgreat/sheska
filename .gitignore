@@ -64,6 +64,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 .codex/temp/
 .claude/temp/
 .playwright-mcp/
+Claude outputs/
 
 # Development integration settings (contains secrets)
 .dev-integrations.env
