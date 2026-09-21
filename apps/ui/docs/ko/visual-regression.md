@@ -5,7 +5,6 @@ applies_to:
 related:
   - ./design.md
   - ./design-token.md
-  - ./design-component.md
   - ./test.md
 read_when: Playwright screenshot, pixel-diff, Stitch visual fidelity, visual baseline, browser-rendered design regression check를 결정하거나 작성하거나 리뷰하거나 갱신할 때
 ---
@@ -45,7 +44,6 @@ Visual regression test는 화면을 deterministic하게 만들기 위해 control
 
 - Design-system style intent는 `design.md`를 사용한다.
 - Design-system token은 `design-token.md`를 사용한다.
-- Design-system component guidance는 `design-component.md`를 사용한다.
 - Screen-level comparison에는 exported Stitch screenshot을 사용한다.
 - Component structure나 layout behavior를 명확히 해야 할 때는 exported Stitch generated code를 사용한다.
 
@@ -70,7 +68,7 @@ Agent에는 다음을 제공한다.
 
 - 사용할 수 있다면 대상 screen과 viewport의 Stitch screenshot.
 - 같은 route와 viewport에 대해 Playwright가 생성한 app screenshot.
-- 의도한 design을 명확히 하는 `design.md`, `design-token.md`, `design-component.md`, exported Stitch generated code.
+- 의도한 design을 명확히 하는 `design.md`, `design-token.md`, exported Stitch generated code.
 - Route, viewport, state, fixture data, 의도적으로 허용한 차이.
 
 Agent는 정확한 구현 동일성이 아니라 perceptual alignment를 평가한다.
