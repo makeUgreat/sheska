@@ -4,6 +4,7 @@ applies_to:
   - apps/ui
 related:
   - ./design.md
+  - ./responsive.md
 ---
 
 # 디자인 토큰
@@ -58,7 +59,7 @@ Layout philosophy는 desktop에서는 **Fixed Grid**, mobile에서는 **Fluid Gr
 - **Desktop**: 최대 container width 1280px의 12-column grid. Gutter는 content block을 명확히 분리하기 위해 24px로 고정한다.
 - **Mobile**: 16px side margin을 가진 4-column fluid grid.
 - **Spacing Rhythm**: 모든 margin과 padding은 4px base unit의 배수여야 한다.
-- **Reading Measure**: Prose를 읽는 컬럼은 `--spacing-measure`(680px)를 넘지 않는다. Note 본문과 post 본문이 이 값을 공유하므로, 한쪽만 바꾸면 두 화면의 줄 길이가 어긋난다.
+- **Reading Measure**: Prose를 읽는 컬럼은 `--spacing-measure`(680px)를 넘지 않는다. Note 본문과 post 본문이 이 값을 공유하므로, 한쪽만 바꾸면 두 화면의 줄 길이가 어긋난다. 이 상한을 어떻게 거는지는 [반응형 레이아웃](./responsive.md)을 따른다.
 
 Major section 사이에는 minimalist, editorial aesthetic을 강조하기 위해 64px 이상의 넓은 margin을 사용한다. Content는 붐비지 않고 의도적으로 배치된 느낌이어야 한다.
 
@@ -77,7 +78,7 @@ Hover와 motion interaction은 generated token을 거치지 않고 Tailwind util
 - **Card hover**: `@/shared/ui`의 `CardLink`가 소유한다. 200ms `ease-out`으로 1px lift, `accent` 5% tint, `--shadow-card-hover`, 제목 ink의 `accent-strong` 전환을 함께 건다. `prefers-reduced-motion`에서는 transition과 lift를 끈다.
 - **Action link hover**: 화살표에만 `translate-x-1`.
 - **Text link hover**: accent color로의 단순 color transition.
-- **Note outline 펼침**: `--breakpoint-toc`(1200px) 이상에서는 제목이 보이는 상태로 고정한다. 그 아래에서는 섹션당 선 하나짜리 눈금으로 접고 hover 또는 `focus-within`에 200ms `ease-out` opacity로 펼친다. 접힌 눈금은 `aria-hidden`이고 제목 링크는 항상 DOM에 남으므로, 보조기술에는 시각 상태와 무관하게 전체 목차가 읽힌다. Hover가 없는 기기(`@media (hover: none)`)에서는 펼치는 수단이 없으므로 펼친 상태로 둔다. 펼친 목차가 본문을 덮는 구간에서는 `--shadow-floating-panel`로 layer임을 드러내고, 여백에 여유가 생기는 `--breakpoint-toc` 이상에서는 그림자를 끈다. `prefers-reduced-motion`에서는 transition과 `scroll-behavior: smooth`를 모두 끈다.
+- **Note outline 펼침**: `--breakpoint-toc`(1200px) 이상에서는 제목이 보이는 상태로 고정한다. 그 아래에서는 섹션당 선 하나짜리 눈금으로 접고 hover 또는 `focus-within`에 200ms `ease-out` opacity로 펼친다. 접힌 눈금은 `aria-hidden`이고 제목 링크는 항상 DOM에 남으므로, 보조기술에는 시각 상태와 무관하게 전체 목차가 읽힌다. Hover가 없는 기기(`@media (hover: none)`)에서는 펼치는 수단이 없으므로 펼친 상태로 둔다. 펼친 목차가 본문을 덮는 구간에서는 `--shadow-floating-panel`로 layer임을 드러내고, 여백에 여유가 생기는 `--breakpoint-toc` 이상에서는 그림자를 끈다. 목차의 가로 위치 계산은 [반응형 레이아웃](./responsive.md)에 있다. `prefers-reduced-motion`에서는 transition과 `scroll-behavior: smooth`를 모두 끈다.
 
 Note, post, source card는 모두 `CardLink` 위에 놓인다. Card처럼 전체가 클릭되는 새 surface를 만들 때는 hover recipe를 다시 선언하지 말고 `CardLink`를 쓴다. Card hover 자체를 바꾸려면 `card-link.tsx` 한 곳만 고친다.
 
