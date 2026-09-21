@@ -63,13 +63,11 @@ Major section 사이에는 minimalist, editorial aesthetic을 강조하기 위�
 
 ## Elevation & Depth
 
-Depth는 전통적인 shadow가 아니라 **Tonal Layers**와 **Low-Contrast Outlines**로 전달한다.
+Depth의 주된 수단은 **Tonal Layers**와 **Low-Contrast Outlines**다.
 
 이 tonal-layer model은 light page base가 아니라 dark하고 terminal-styled elevated component 내부에 적용된다: 사용자에게 가까운 object일수록 더 밝은 tone을 가지며, 가장 어두운 surface (`surface-container-lowest`)가 `surface-container-high` 같은 더 elevated한 tone 뒤에 놓인다.
 
-Boundary를 정의할 때는 `#564242` (`outline-variant`)의 1px solid border를 사용한다. Flat하고 technical한 외형을 유지하기 위해 drop shadow는 피한다. Active 또는 focused element는 border나 text color를 primary Rose Red (`#e16d76`)로 바꿔 "glow-less" highlight를 만든다.
-
-Static shadow 금지에는 예외가 하나 있다. Light page 위의 interactive card surface는 hover 동안에만 `--shadow-card-hover`를 쓴다. 이 shadow는 1px offset에 `outline-variant` 18% 농도라서 카드가 머무는 동안의 미세한 보강일 뿐이고, 깊이를 만드는 주된 수단은 여전히 tone과 outline이다. Resting state에는 어떤 shadow도 두지 않으며, 이 값을 hover 밖으로 확장하지 않는다.
+Boundary를 정의할 때는 `#564242` (`outline-variant`)의 1px solid border를 사용한다. Active 또는 focused element는 border나 text color를 primary Rose Red (`#e16d76`)로 바꿔 "glow-less" highlight를 만든다.
 
 ## Effects & Motion
 
