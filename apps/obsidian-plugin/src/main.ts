@@ -14,6 +14,17 @@ import type { SyncCache } from '@/storage';
 
 type SyncStatus = FileExplorerSyncStatus;
 
+const SYNC_STATUS_BAR_TEXTS: Record<SyncStatus, string> = {
+  uploading: 'Sheska: ⟳ Uploading...',
+  accepted: 'Sheska: ◷ Queued',
+  processing: 'Sheska: ⟳ Syncing...',
+  retrying: 'Sheska: ⟳ Retrying...',
+  unknown: 'Sheska: ? Status unknown',
+  failed: 'Sheska: ✕ Failed',
+  synced: 'Sheska: ✓ Synced',
+  'not-synced': 'Sheska: ○ Not synced',
+};
+
 export default class SheskaPlugin extends Plugin {
   declare settings: SheskaSettings;
   declare api: SheskaApiClient;
@@ -249,22 +260,7 @@ export default class SheskaPlugin extends Plugin {
       return;
     }
     const status = this.getSyncStatus(file);
-    const text =
-      status === 'uploading'
-        ? 'Sheska: ⟳ Uploading...'
-        : status === 'accepted'
-          ? 'Sheska: ◷ Queued'
-          : status === 'processing'
-            ? 'Sheska: ⟳ Syncing...'
-            : status === 'retrying'
-              ? 'Sheska: ⟳ Retrying...'
-              : status === 'unknown'
-                ? 'Sheska: ? Status unknown'
-                : status === 'failed'
-                  ? 'Sheska: ✕ Failed'
-                  : status === 'synced'
-                    ? 'Sheska: ✓ Synced'
-                    : 'Sheska: ○ Not synced';
+    const text = SYNC_STATUS_BAR_TEXTS[status];
     this.syncStatusBarItem.setText(text);
     this.notifyStatusChange(file, status);
   }
