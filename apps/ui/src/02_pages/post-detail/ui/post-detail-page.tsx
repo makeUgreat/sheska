@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { usePost } from '@/entities/post';
 import {
   ActionLink,
@@ -94,8 +95,10 @@ export function PostDetailPage() {
               <h2 className="mb-3 font-mono text-label-sm uppercase text-text-secondary">
                 Content
               </h2>
-              <div className="prose prose-neutral max-w-none rounded border border-outline-variant/10 bg-page-background p-5">
-                <ReactMarkdown>{post.body}</ReactMarkdown>
+              <div className="prose prose-neutral max-w-none break-words rounded border border-outline-variant/10 bg-page-background p-5 [&_table]:block [&_table]:w-max [&_table]:max-w-full [&_table]:overflow-x-auto">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {post.body}
+                </ReactMarkdown>
               </div>
             </section>
           )}
