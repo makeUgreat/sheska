@@ -7,7 +7,7 @@ export function NoteDetailPage() {
 
   return (
     <main className="min-h-screen bg-page-background px-4 py-14">
-      <div className="mx-auto max-w-[1120px]">
+      <div className="mx-auto max-w-[var(--spacing-measure)]">
         <ActionLink to="/notes" className="mb-10">
           Back to notes
         </ActionLink>
