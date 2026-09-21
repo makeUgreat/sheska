@@ -15,7 +15,7 @@ export type SourceListState =
       sources: SourceSummary[];
       page: number;
       totalPages: number;
-      isFetching: boolean;
+      isPlaceholder: boolean;
     };
 
 export function SourceListSection({
@@ -47,13 +47,13 @@ export function SourceListSection({
         <>
           <SourceItemList
             sources={state.sources}
-            isFetching={state.isFetching}
+            isPlaceholder={state.isPlaceholder}
           />
           <Pagination
             page={state.page}
             totalPages={state.totalPages}
             onPageChange={onPageChange}
-            disabled={state.isFetching}
+            disabled={state.isPlaceholder}
           />
         </>
       )}
@@ -63,15 +63,15 @@ export function SourceListSection({
 
 function SourceItemList({
   sources,
-  isFetching,
+  isPlaceholder,
 }: {
   sources: SourceSummary[];
-  isFetching: boolean;
+  isPlaceholder: boolean;
 }) {
   return (
     <ul
       className={`divide-y divide-outline-variant/10 border-y border-outline-variant/10 transition-opacity duration-200 ${
-        isFetching ? 'opacity-40' : 'opacity-100'
+        isPlaceholder ? 'opacity-40' : 'opacity-100'
       }`}
     >
       {sources.map((source) => (

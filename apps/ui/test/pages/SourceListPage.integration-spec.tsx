@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -37,10 +37,13 @@ function buildMockHttpClient(
   } as unknown as HttpClient;
 }
 
-function renderPage(client: HttpClient) {
+function renderPage(
+  client: HttpClient,
+  queryClient: QueryClient = createTestQueryClient(),
+) {
   return render(
     <MemoryRouter>
-      <QueryClientProvider client={createTestQueryClient()}>
+      <QueryClientProvider client={queryClient}>
         <HttpClientProvider client={client}>
           <SourceListPage />
         </HttpClientProvider>
@@ -217,6 +220,52 @@ describe('SourceListPage', () => {
       expect(screen.getByRole('link', { name: 'Source Title' })).toBeDefined();
     });
     expect(screen.queryByText('게시됨')).toBeNull();
+  });
+
+  it('백그라운드 재조회 중에는 목록을 흐리게 하거나 페이지 이동을 막지 않는다', async () => {
+    const now = '2026-01-01T00:00:00.000Z';
+    const source: SourceSummary = {
+      sourceId: 'source-1',
+      externalSourceId: 'Notes/source.md',
+      title: 'Source Title',
+      fingerprint: 'fingerprint-1',
+      sizeBytes: 14,
+      createdAt: now,
+      updatedAt: now,
+      latestSyncJob: {
+        syncJobId: 'sync-job-1',
+        status: 'waiting',
+        totalChunks: 10,
+        createdAt: now,
+      },
+      publishedPostId: null,
+    };
+    const listSources = vi.fn().mockResolvedValue({
+      sources: [source],
+      page: 1,
+      pageSize: 10,
+      totalCount: 12,
+      totalPages: 2,
+    });
+    const queryClient = createTestQueryClient();
+
+    renderPage(buildMockHttpClient({ get: listSources }), queryClient);
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'Source Title' })).toBeDefined();
+    });
+
+    listSources.mockReturnValueOnce(new Promise(() => {}));
+    act(() => {
+      void queryClient.refetchQueries({ queryKey: ['sources', 'list'] });
+    });
+
+    await waitFor(() => {
+      expect(listSources).toHaveBeenCalledTimes(2);
+    });
+    expect(screen.getByRole('list').className).not.toContain('opacity-40');
+    const nextButton = screen.getByRole('button', { name: 'Next' });
+    expect((nextButton as HTMLButtonElement).disabled).toBe(false);
   });
 
   it('에러가 발생하면 에러 메시지를 보여준다', async () => {
