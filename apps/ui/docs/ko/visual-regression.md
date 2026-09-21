@@ -6,12 +6,12 @@ related:
   - ./design.md
   - ./design-token.md
   - ./test.md
-read_when: Playwright screenshot, pixel-diff, Stitch visual fidelity, visual baseline, browser-rendered design regression check를 결정하거나 작성하거나 리뷰하거나 갱신할 때
+read_when: Playwright screenshot, pixel-diff, visual baseline, browser-rendered design regression check를 결정하거나 작성하거나 리뷰하거나 갱신할 때
 ---
 
 # UI Visual Regression 컨벤션
 
-UI visual regression test는 browser에 렌더링된 UI가 활성 Stitch design reference와 시각적으로 일치하는지 검증한다.
+UI visual regression test는 browser에 렌더링된 UI가 승인된 visual baseline과 계속 일치하는지 검증한다.
 Business-flow user journey test를 소유하는 repository `e2e` workspace와는 분리한다.
 
 ## 적용 범위
@@ -20,7 +20,7 @@ Visual fidelity, layout integrity, responsive rendering, design effect를 검증
 
 다음에 대한 신뢰가 필요하면 visual regression test 범위에 포함한다.
 
-- Route가 활성 Stitch screen의 visual intent와 계속 맞는지 확인하는 경우.
+- Route가 [디자인 시스템](./design.md)이 기술한 visual intent와 계속 맞는지 확인하는 경우.
 - Design-system token, font, spacing, color, animation, responsive layout 변경이 시각적으로 회귀하지 않았는지 확인하는 경우.
 - 실제 browser rendering에서 content가 읽기 쉽고, 정렬되어 있고, 겹치지 않는지 확인하는 경우.
 
@@ -40,56 +40,22 @@ Visual regression test는 화면을 deterministic하게 만들기 위해 control
 
 ## 참조 소스
 
-기대 시각 기준에는 Stitch export를 우선 사용한다.
+기대 시각 기준은 다음 순서로 확인한다.
 
-- Design-system style intent는 `design.md`를 사용한다.
-- Design-system token은 `design-token.md`를 사용한다.
-- Screen-level comparison에는 exported Stitch screenshot을 사용한다.
-- Component structure나 layout behavior를 명확히 해야 할 때는 exported Stitch generated code를 사용한다.
+- Design-system style intent는 [디자인 시스템](./design.md)을 사용한다.
+- Design-system token은 [디자인 토큰](./design-token.md)을 사용한다.
+- Screen-level comparison에는 승인된 baseline screenshot을 사용한다.
 
-활성 Stitch project와 screen ID는 [디자인 시스템](./design.md)을 따른다.
-Reference를 갱신할 때는 사용자가 최신으로 제공한 Stitch Instructions를 사용하고 hosted artifact를 `curl -L`로 다운로드한다.
-활성 Stitch source와 충돌한다면 오래된 chat screenshot, stale local export, baseline screenshot을 source of truth로 보지 않는다.
+Baseline은 그 자체로 design intent의 근거가 아니라, 사람이 한 번 리뷰해서 승인한 현재 상태의 기록이다.
+Baseline과 design 문서가 어긋나면 design 문서를 기준으로 판단하고, baseline을 갱신하거나 구현을 고친다.
 
-Stitch가 의도적으로 변경되면 reference artifact와 screenshot baseline을 구현 변경과 같은 변경 단위에서 갱신한다.
+Design이 의도적으로 변경되면 design 문서와 screenshot baseline을 구현 변경과 같은 변경 단위에서 갱신한다.
 Design change를 확인하지 않고 실패한 visual test를 통과시키기 위해 baseline만 갱신하지 않는다.
-
-## Stitch 정합성 리뷰 Agent
-
-Stitch 기반 screen에 대해 새 visual baseline을 승인하거나 기존 baseline을 갱신할 때는 Stitch 정합성 리뷰 agent를 사용한다.
-Agent의 역할은 Stitch reference와 app-rendered screenshot을 비교하고, 사람이 리뷰할 design-alignment finding을 보고하는 것이다.
-
-공식 project-scoped agent 정의를 사용한다.
-
-- Codex custom agent: `.codex/agents/stitch-fidelity-reviewer.toml`
-- Claude project subagent: `.claude/agents/stitch-fidelity-reviewer.md`
-
-Agent에는 다음을 제공한다.
-
-- 사용할 수 있다면 대상 screen과 viewport의 Stitch screenshot.
-- 같은 route와 viewport에 대해 Playwright가 생성한 app screenshot.
-- 의도한 design을 명확히 하는 `design.md`, `design-token.md`, exported Stitch generated code.
-- Route, viewport, state, fixture data, 의도적으로 허용한 차이.
-
-Agent는 정확한 구현 동일성이 아니라 perceptual alignment를 평가한다.
-Layout hierarchy, spacing, typography, color treatment, component shape, visual effect, responsive behavior, 누락된 element, overflow, clipping, text overlap의 차이를 지적해야 한다.
-
-App screenshot은 determinism을 위해 animation을 얼리므로, Stitch reference에 있는 motion effect(bounce, pulse, transition)가 실제로 구현되었는지는 screenshot만으로 알 수 없다.
-Agent는 motion effect를 screenshot이 아니라 Stitch reference의 generated code나 live preview와 대조해야 하며, motion class가 누락되었다면 mismatch로 표시해야 한다.
-
-Agent는 finding을 다음처럼 분류한다.
-
-- Blocking mismatch: 구현이 Stitch design intent를 보존하지 못한 경우.
-- Review mismatch: 차이가 허용될 수도 있지만 사람의 결정이 필요한 경우.
-- Accepted difference: product data, platform constraint, 의도한 local adaptation 때문에 설명되는 차이.
-
-Agent는 사람의 승인을 대체하지 않는다.
-Agent finding이 리뷰되고, 허용된 차이가 PR 또는 handoff note에 기록된 뒤에만 baseline을 생성하거나 갱신할 수 있다.
 
 ## 테스트 설계
 
 넓은 screenshot coverage보다 신호가 큰 소수의 visual test를 선호한다.
-Stitch screen을 직접 구현한 route나 shared layout primitive부터 시작한다.
+Design 문서가 직접 기술하는 route나 shared layout primitive부터 시작한다.
 
 각 visual test는 다음을 만족해야 한다.
 
@@ -99,11 +65,11 @@ Stitch screen을 직접 구현한 route나 shared layout primitive부터 시작�
 - Target state에 필요한 font, image, animation, network activity가 준비될 때까지 기다린다.
 - Design assertion과 무관한 dynamic content는 mask하거나 disable한다.
 
-Page-level Stitch implementation은 최소 하나의 desktop viewport와 하나의 mobile-sized viewport를 커버한다.
+Page-level design implementation은 최소 하나의 desktop viewport와 하나의 mobile-sized viewport를 커버한다.
 Design에 회귀 가능성이 있는 의미 있는 breakpoint가 있을 때만 viewport를 더 추가한다.
 
 Screenshot을 deterministic하게 만들기 위해 animation과 transition duration을 얼리면, motion effect가 애초에 존재하는지 여부도 screenshot에서 구분할 수 없게 된다. Animation utility class가 있든 없든 정지 프레임은 동일하게 보이기 때문이다.
-Stitch reference에 motion effect(bounce, pulse, transition)가 포함되어 있다면, screenshot만으로는 회귀를 잡을 수 없으므로 visual test와 별개로 해당 element의 class list나 animation property를 확인하는 저렴한 `jsdom` assertion으로 존재 여부를 보호한다.
+Design이 motion effect(bounce, pulse, transition)를 요구한다면, screenshot만으로는 회귀를 잡을 수 없으므로 visual test와 별개로 해당 element의 class list나 animation property를 확인하는 저렴한 `jsdom` assertion으로 존재 여부를 보호한다.
 
 ## Assertion
 
@@ -138,7 +104,6 @@ Visual regression 변경을 리뷰할 때는 다음을 확인한다.
 
 - Screenshot 유지보수 비용을 감당할 만큼 가치 있는 design surface를 보호하는가.
 - Fixture data가 deterministic하며 visual test를 business-flow test로 바꾸지 않는가.
-- Baseline update가 의도한 Stitch 또는 implementation 변경과 연결되어 있는가.
-- 새로 만들거나 갱신한 Stitch 기반 baseline에 Stitch 정합성 리뷰 agent 비교가 포함되어 있는가.
+- Baseline update가 의도한 design 또는 implementation 변경과 연결되어 있는가.
 - 테스트한 viewport가 design risk와 맞는가.
 - CI가 통과했다는 이유만으로 diff를 받아들이지 않고 시각적으로 검사했는가.

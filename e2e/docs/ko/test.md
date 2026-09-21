@@ -84,7 +84,7 @@ E2E 테스트는 이를 중복해서는 안 된다.
 | HTTP 응답 shape와 상태 코드 | API HTTP 통합 테스트 |
 | API client 역직렬화와 파싱 | UI API client 통합 테스트 |
 | 주어진 props로 컴포넌트 렌더링 | UI 단위 테스트 |
-| Stitch visual fidelity, screenshot baseline, pixel diff | UI visual regression test |
+| Visual fidelity, screenshot baseline, pixel diff | UI visual regression test |
 | 비즈니스 로직과 도메인 불변식 | API 단위 테스트 |
 | 실제 어댑터 동작 (DB, 큐, 임베더) | API 어댑터 통합 테스트 |
 | 외부 액터 앱의 동작 | 해당 액터 앱의 자체 테스트 |

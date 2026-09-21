@@ -71,13 +71,13 @@ Boundary를 정의할 때는 `#564242` (`outline-variant`)의 1px solid border�
 
 ## Effects & Motion
 
-현재 custom effect/motion token은 없다. Hover와 motion interaction은 token을 거치지 않고 Stitch의 실제 Tailwind utility class를 그대로 사용한다. 예:
+현재 custom effect/motion token은 없다. Hover와 motion interaction은 token을 거치지 않고 Tailwind utility class를 그대로 사용한다. 예:
 
 - **Garden card hover**: 카드 배경만 `duration-300`으로 tint 변경, border나 shadow 변화 없음.
 - **Action link hover**: 화살표에만 `translate-x-1`.
 - **Text link hover**: accent color로의 단순 color transition.
 
-새 effect나 motion token을 추가하기 전에는 활성 Stitch project의 exported code에서 정확한 class와 값을 확인한다. 추측, 오래된 export, 또는 브랜드에 "어울릴 것 같은" 값으로 token을 만들지 않는다. 현재 Stitch export의 특정 줄을 가리킬 수 없는 token은 Stitch를 출처로 주장해서는 안 된다.
+새 effect나 motion token을 추가하기 전에는 실제로 그 값을 쓰는 구현 지점을 확인한다. 추측이나 브랜드에 "어울릴 것 같은" 값으로 token을 만들지 않는다. 구현의 특정 줄을 가리킬 수 없는 token은 추가하지 않는다.
 
 ## 형태
 

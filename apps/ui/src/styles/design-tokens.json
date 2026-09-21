@@ -233,7 +233,7 @@
       }
     },
     "display-terminal": {
-      "$description": "Terminal prompt/body text. Intentionally smaller than the current Stitch export (24px); Stitch has not been updated to match.",
+      "$description": "Terminal prompt/body text.",
       "$type": "typography",
       "$value": {
         "fontFamily": "{typography.font-family.mono}",
@@ -292,7 +292,7 @@
       "$value": "1280px"
     },
     "container-terminal": {
-      "$description": "Terminal hero container max width. Intentionally wider than the current Stitch export (1000px); Stitch has not been updated to match.",
+      "$description": "Terminal hero container max width.",
       "$value": "1100px"
     }
   }
