@@ -37,29 +37,10 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-export const AliasesOnly: Story = {
+export const WithoutKeywords: Story = {
   args: {
     note: {
       ...sampleNote,
-      keywords: [],
-    },
-  },
-};
-
-export const KeywordsOnly: Story = {
-  args: {
-    note: {
-      ...sampleNote,
-      aliases: [],
-    },
-  },
-};
-
-export const WithoutTags: Story = {
-  args: {
-    note: {
-      ...sampleNote,
-      aliases: [],
       keywords: [],
     },
   },
@@ -70,17 +51,30 @@ export const LongTitle: Story = {
     note: {
       ...sampleNote,
       title:
-        'A long note title that should remain readable when the archive card wraps across multiple lines',
+        'A long note title that should stay clamped to two lines instead of stretching the archive card',
     },
   },
 };
 
-export const ManyTags: Story = {
+export const ManyKeywords: Story = {
   args: {
     note: {
       ...sampleNote,
-      aliases: ['Storybook Intro', 'UI Fixtures'],
       keywords: ['storybook', 'ui', 'component', 'fixture', 'review'],
+    },
+  },
+};
+
+export const LongKeywords: Story = {
+  args: {
+    note: {
+      ...sampleNote,
+      keywords: [
+        'design-system-documentation',
+        'visual-regression-baseline',
+        'component-review-workflow',
+        'archive',
+      ],
     },
   },
 };
