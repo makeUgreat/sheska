@@ -1,0 +1,133 @@
+import { Children, type ReactNode, useMemo } from 'react';
+import ReactMarkdown, { type Components } from 'react-markdown';
+import { type Heading } from '../lib/parse-outline';
+import { parseWikiLinks } from '../lib/parse-wiki-links';
+
+/**
+ * 모든 wiki link는 API가 resolved target을 돌려주기 전까지 unresolved 상태다.
+ * Vault에서 unresolved link는 오류가 아니라 정상 상태이므로 숨기지 않고 표시한다.
+ */
+function UnresolvedWikiLink({ label }: { label: string }) {
+  return (
+    <span
+      title={`${label} — no note yet`}
+      className="text-accent-strong underline decoration-dotted underline-offset-2"
+    >
+      {label}
+    </span>
+  );
+}
+
+function withWikiLinks(children: ReactNode): ReactNode {
+  return Children.map(children, (child) => {
+    if (typeof child !== 'string') return child;
+
+    const tokens = parseWikiLinks(child);
+    if (tokens.every((token) => token.kind === 'text')) return child;
+
+    return (
+      <>
+        {tokens.map((token, index) =>
+          token.kind === 'text' ? (
+            token.value
+          ) : (
+            <UnresolvedWikiLink key={`${index}-${token.label}`} {...token} />
+          ),
+        )}
+      </>
+    );
+  });
+}
+
+function createMarkdownComponents(idByLine: Map<number, string>): Components {
+  const headingId = (
+    node: { position?: { start: { line: number } } } | undefined,
+  ) => (node?.position ? idByLine.get(node.position.start.line) : undefined);
+
+  const SectionHeading: Components['h2'] = ({ children, node }) => (
+    <h2
+      id={headingId(node)}
+      className="mt-12 mb-4 scroll-mt-20 font-sans text-headline-md text-text-primary"
+    >
+      {withWikiLinks(children)}
+    </h2>
+  );
+
+  return {
+    h1: SectionHeading,
+    h2: SectionHeading,
+    h3: ({ children, node }) => (
+      <h3
+        id={headingId(node)}
+        className="mt-8 mb-3 scroll-mt-20 font-sans text-body-lg font-semibold text-text-primary"
+      >
+        {withWikiLinks(children)}
+      </h3>
+    ),
+    p: ({ children }) => (
+      <p className="mb-5 text-body-md text-text-secondary">
+        {withWikiLinks(children)}
+      </p>
+    ),
+    li: ({ children }) => <li>{withWikiLinks(children)}</li>,
+    ul: ({ children }) => (
+      <ul className="mb-5 list-disc space-y-2 pl-5 text-body-md text-text-secondary marker:text-outline-variant">
+        {children}
+      </ul>
+    ),
+    ol: ({ children }) => (
+      <ol className="mb-5 list-decimal space-y-2 pl-5 text-body-md text-text-secondary marker:text-outline-variant">
+        {children}
+      </ol>
+    ),
+    blockquote: ({ children }) => (
+      <blockquote className="my-7 border-l-2 border-accent/40 pl-5 text-body-md italic text-text-secondary">
+        {children}
+      </blockquote>
+    ),
+    hr: () => <hr className="my-10 border-outline-variant/20" />,
+    a: ({ children, href }) => (
+      <a
+        href={href}
+        className="text-accent-strong underline underline-offset-2 transition-colors hover:text-accent-hover"
+      >
+        {children}
+      </a>
+    ),
+    pre: ({ children }) => (
+      <pre className="my-7 overflow-x-auto rounded-lg bg-surface p-5 font-mono text-code-snippet text-on-surface">
+        {children}
+      </pre>
+    ),
+    code: ({ className, children }) =>
+      className?.startsWith('language-') ? (
+        <code className="font-mono text-code-snippet">{children}</code>
+      ) : (
+        <code className="rounded bg-outline-variant/10 px-1.5 py-0.5 font-mono text-code-snippet text-accent-strong">
+          {children}
+        </code>
+      ),
+  };
+}
+
+export function NoteBody({
+  body,
+  outline,
+}: {
+  body: string;
+  outline: readonly Heading[];
+}) {
+  const components = useMemo(
+    () =>
+      createMarkdownComponents(
+        new Map(outline.map((heading) => [heading.line, heading.id])),
+      ),
+    [outline],
+  );
+
+  return (
+    <div className="break-words">
+      <ReactMarkdown components={components}>{body}</ReactMarkdown>
+    </div>
+  );
+}
