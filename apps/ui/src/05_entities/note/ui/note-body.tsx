@@ -1,5 +1,6 @@
 import { Children, type ReactNode, useMemo } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { type Heading } from '../lib/parse-outline';
 import { parseWikiLinks } from '../lib/parse-wiki-links';
 
@@ -73,12 +74,52 @@ function createMarkdownComponents(idByLine: Map<number, string>): Components {
         {withWikiLinks(children)}
       </p>
     ),
-    li: ({ children }) => <li>{withWikiLinks(children)}</li>,
-    ul: ({ children }) => (
-      <ul className="mb-5 list-disc space-y-2 pl-5 text-body-md text-text-secondary marker:text-outline-variant">
-        {children}
-      </ul>
+    li: ({ className, children }) =>
+      className?.includes('task-list-item') ? (
+        <li className="flex items-start gap-2">{withWikiLinks(children)}</li>
+      ) : (
+        <li>{withWikiLinks(children)}</li>
+      ),
+    input: ({ checked }) => (
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled
+        className="mt-1 h-3.5 w-3.5 shrink-0 accent-accent-strong"
+      />
     ),
+    del: ({ children }) => (
+      <del className="text-text-muted line-through">
+        {withWikiLinks(children)}
+      </del>
+    ),
+    table: ({ children }) => (
+      <div className="my-7 overflow-x-auto">
+        <table className="w-full border-collapse text-left text-body-md text-text-secondary">
+          {children}
+        </table>
+      </div>
+    ),
+    th: ({ children }) => (
+      <th className="border-b border-outline-variant/20 px-3 py-2 first:pl-0 last:pr-0 font-mono text-label-sm font-normal uppercase text-text-muted">
+        {withWikiLinks(children)}
+      </th>
+    ),
+    td: ({ children }) => (
+      <td className="border-b border-outline-variant/10 px-3 py-2 first:pl-0 last:pr-0 align-top">
+        {withWikiLinks(children)}
+      </td>
+    ),
+    ul: ({ className, children }) =>
+      className?.includes('contains-task-list') ? (
+        <ul className="mb-5 list-none space-y-2 pl-0 text-body-md text-text-secondary">
+          {children}
+        </ul>
+      ) : (
+        <ul className="mb-5 list-disc space-y-2 pl-5 text-body-md text-text-secondary marker:text-outline-variant">
+          {children}
+        </ul>
+      ),
     ol: ({ children }) => (
       <ol className="mb-5 list-decimal space-y-2 pl-5 text-body-md text-text-secondary marker:text-outline-variant">
         {children}
@@ -133,7 +174,9 @@ export function NoteBody({
 
   return (
     <div className="break-words">
-      <ReactMarkdown components={components}>{body}</ReactMarkdown>
+      <ReactMarkdown components={components} remarkPlugins={[remarkGfm]}>
+        {body}
+      </ReactMarkdown>
     </div>
   );
 }
