@@ -4,7 +4,6 @@ applies_to:
   - apps/ui
 related:
   - ./design-token.md
-  - ./design-component.md
 read_when: visual design, CSS structure, design token, typography, color, spacing, component styling을 변경하거나 검토할 때
 ---
 
@@ -40,7 +39,3 @@ Design style은 terminal environment와 high-end print design에서 영감을 �
 ## 디자인 토큰
 
 [디자인 토큰](./design-token.md)을 참고한다.
-
-## 컴포넌트
-
-[디자인 컴포넌트](./design-component.md)를 참고한다.
