@@ -50,7 +50,7 @@ function renderPage(client: HttpClient) {
 }
 
 describe('SourceListPage', () => {
-  it('로딩 중에 Loading... 텍스트를 보여준다', () => {
+  it('로딩 중에 Loading 텍스트를 보여준다', () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockReturnValue(new Promise(() => {})),
     });
@@ -58,7 +58,7 @@ describe('SourceListPage', () => {
     renderPage(client);
 
     expect(screen.getByRole('heading', { name: 'Sources' })).toBeDefined();
-    expect(screen.getByText('Loading...')).toBeDefined();
+    expect(screen.getByText('Loading')).toBeDefined();
   });
 
   it('source 목록이 없으면 No sources yet. 메시지를 보여준다', async () => {

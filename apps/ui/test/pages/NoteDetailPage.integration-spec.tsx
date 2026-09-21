@@ -69,7 +69,7 @@ function renderPage(client: HttpClient, noteId = 'note-1') {
 }
 
 describe('NoteDetailPage', () => {
-  it('로딩 중에 Loading... 텍스트를 보여준다', () => {
+  it('로딩 중에 Loading 텍스트를 보여준다', () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockReturnValue(new Promise(() => {})),
     });
@@ -77,7 +77,7 @@ describe('NoteDetailPage', () => {
     renderPage(client);
 
     expect(screen.getByRole('link', { name: 'Back to notes' })).toBeDefined();
-    expect(screen.getByText('Loading...')).toBeDefined();
+    expect(screen.getByText('Loading')).toBeDefined();
   });
 
   it('note 제목과 alias, 갱신 일자를 렌더링한다', async () => {

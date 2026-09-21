@@ -1,6 +1,6 @@
 import { useListSources } from '@/entities/source';
 import { useSourceListFilters } from '@/features/source-list-filters';
-import { Pagination, StatusMessage } from '@/shared/ui';
+import { LoadingState, Pagination, StatusMessage } from '@/shared/ui';
 import { SourceListItem } from './source-list-item';
 import { SourceStatusFilter } from './source-status-filter';
 
@@ -18,7 +18,7 @@ export function SourceList() {
       <SourceStatusFilter value={syncJobStatus} onChange={setSyncJobStatus} />
 
       {isLoading ? (
-        <StatusMessage tone="loading">Loading...</StatusMessage>
+        <LoadingState className="py-24" />
       ) : error ? (
         <StatusMessage tone="error">Error: {error.message}</StatusMessage>
       ) : sources.length === 0 ? (

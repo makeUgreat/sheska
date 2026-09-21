@@ -56,7 +56,7 @@ function renderPage(client: HttpClient, postId = 'post-1') {
 }
 
 describe('PostDetailPage', () => {
-  it('로딩 중에 Loading... 텍스트를 보여준다', () => {
+  it('로딩 중에 Loading 텍스트를 보여준다', () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockReturnValue(new Promise(() => {})),
     });
@@ -64,7 +64,7 @@ describe('PostDetailPage', () => {
     renderPage(client);
 
     expect(screen.getByRole('link', { name: 'Back to posts' })).toBeDefined();
-    expect(screen.getByText('Loading...')).toBeDefined();
+    expect(screen.getByText('Loading')).toBeDefined();
   });
 
   it('post 상세 정보를 렌더링한다', async () => {

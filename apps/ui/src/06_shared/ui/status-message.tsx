@@ -1,9 +1,8 @@
 import { type ReactNode } from 'react';
 
-type StatusMessageTone = 'loading' | 'empty' | 'error';
+type StatusMessageTone = 'empty' | 'error';
 
 const toneClass: Record<StatusMessageTone, string> = {
-  loading: 'font-mono text-label-sm uppercase text-text-muted',
   empty: 'text-body-md text-text-secondary',
   error:
     'rounded bg-error-container px-4 py-3 font-mono text-code-snippet text-on-error-container',

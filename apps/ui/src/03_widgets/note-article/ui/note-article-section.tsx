@@ -5,7 +5,7 @@ import {
   type Heading,
 } from '@/entities/note';
 import { formatDate } from '@/shared/lib';
-import { StatusMessage } from '@/shared/ui';
+import { LoadingState, StatusMessage } from '@/shared/ui';
 
 const OUTLINE_MINIMUM_HEADINGS = 2;
 
@@ -22,7 +22,7 @@ export type NoteArticleState =
 
 export function NoteArticleSection({ state }: { state: NoteArticleState }) {
   if (state.status === 'loading') {
-    return <StatusMessage tone="loading">Loading...</StatusMessage>;
+    return <LoadingState className="py-24" />;
   }
 
   if (state.status === 'error') {

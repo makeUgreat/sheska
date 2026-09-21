@@ -1,8 +1,9 @@
 import { type FormEvent, type Ref } from 'react';
 import { Link } from 'react-router-dom';
 import { PostCard, type PostSummary } from '@/entities/post';
-import { StatusMessage } from '@/shared/ui';
-import { EndOfPosts, PostsLoading } from './posts-loading';
+import { EndOfList, LoadingState, StatusMessage } from '@/shared/ui';
+
+const ARCHIVE_SPACING = 'mt-24 pt-12';
 
 export type PostsSearchMode = 'smart' | 'basic' | null;
 
@@ -88,7 +89,7 @@ export function PostsListSection({
         </form>
 
         {state.status === 'loading' ? (
-          <PostsLoading label="Loading posts..." />
+          <LoadingState className={ARCHIVE_SPACING} />
         ) : state.status === 'error' ? (
           <StatusMessage tone="error">
             Error: {state.error.message}
@@ -106,8 +107,12 @@ export function PostsListSection({
               highlight={isSearching ? search.normalizedQuery : ''}
             />
             <div ref={state.sentinelRef} className="h-px" aria-hidden="true" />
-            {state.isFetchingNextPage && <PostsLoading />}
-            {!state.hasNextPage && <EndOfPosts />}
+            {state.isFetchingNextPage && (
+              <LoadingState className={ARCHIVE_SPACING} />
+            )}
+            {!state.hasNextPage && (
+              <EndOfList label="End of posts" className={ARCHIVE_SPACING} />
+            )}
           </>
         )}
       </div>

@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { usePost } from '@/entities/post';
-import { ActionLink, StatusMessage, Tag } from '@/shared/ui';
+import { ActionLink, LoadingState, StatusMessage, Tag } from '@/shared/ui';
 
 export function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -13,7 +13,7 @@ export function PostDetailPage() {
         Back to posts
       </ActionLink>
       {isLoading ? (
-        <StatusMessage tone="loading">Loading...</StatusMessage>
+        <LoadingState className="py-24" />
       ) : error ? (
         <StatusMessage tone="error">Error: {error.message}</StatusMessage>
       ) : post ? (

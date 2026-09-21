@@ -10,6 +10,7 @@ import {
 } from '@/entities/source';
 import { PublishPostPanel } from '@/features/publish-post';
 import { formatBytes } from '@/shared/lib';
+import { LoadingState } from '@/shared/ui';
 
 function formatFrontmatterValue(value: unknown): string {
   return typeof value === 'string' ? value : JSON.stringify(value);
@@ -142,7 +143,7 @@ export function SourceDetailPage() {
         ← Back to sources
       </Link>
       {isLoading ? (
-        <p className="text-gray-500">Loading...</p>
+        <LoadingState className="py-24" />
       ) : error ? (
         <p
           role="alert"

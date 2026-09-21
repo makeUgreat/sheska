@@ -1,7 +1,8 @@
 import { type Ref } from 'react';
 import { NoteCard, type NoteSummary } from '@/entities/note';
-import { StatusMessage } from '@/shared/ui';
-import { EndOfNotes, NotesLoading } from './notes-loading';
+import { EndOfList, LoadingState, StatusMessage } from '@/shared/ui';
+
+const ARCHIVE_SPACING = 'mt-16 pt-12';
 
 export type NotesGridState =
   | { status: 'loading' }
@@ -24,7 +25,7 @@ export function NotesGridSection({ state }: { state: NotesGridState }) {
         </h1>
 
         {state.status === 'loading' ? (
-          <NotesLoading label="Loading notes..." />
+          <LoadingState className={ARCHIVE_SPACING} />
         ) : state.status === 'error' ? (
           <StatusMessage tone="error">
             Error: {state.error.message}
@@ -35,8 +36,12 @@ export function NotesGridSection({ state }: { state: NotesGridState }) {
           <>
             <NoteGrid notes={state.notes} />
             <div ref={state.sentinelRef} className="h-px" aria-hidden="true" />
-            {state.isFetchingNextPage && <NotesLoading />}
-            {!state.hasNextPage && <EndOfNotes />}
+            {state.isFetchingNextPage && (
+              <LoadingState className={ARCHIVE_SPACING} />
+            )}
+            {!state.hasNextPage && (
+              <EndOfList label="End of notes" className={ARCHIVE_SPACING} />
+            )}
           </>
         )}
       </div>
