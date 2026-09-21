@@ -294,6 +294,10 @@
     "container-terminal": {
       "$description": "Terminal hero container max width.",
       "$value": "1100px"
+    },
+    "header": {
+      "$description": "Height of the sticky terminal header. Anything that must clear it — sticky rails, scroll-margin on anchor targets — offsets from this.",
+      "$value": "84px"
     }
   }
 }

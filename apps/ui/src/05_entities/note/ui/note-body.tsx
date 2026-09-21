@@ -39,6 +39,10 @@ function withWikiLinks(children: ReactNode): ReactNode {
   });
 }
 
+/** Heading anchors must land below the sticky header, not under it. */
+const BELOW_HEADER =
+  'scroll-mt-[calc(var(--spacing-header)+var(--spacing-gutter))]';
+
 function createMarkdownComponents(idByLine: Map<number, string>): Components {
   const headingId = (
     node: { position?: { start: { line: number } } } | undefined,
@@ -47,7 +51,7 @@ function createMarkdownComponents(idByLine: Map<number, string>): Components {
   const SectionHeading: Components['h2'] = ({ children, node }) => (
     <h2
       id={headingId(node)}
-      className="mt-12 mb-4 scroll-mt-20 font-sans text-headline-md text-text-primary"
+      className={`mt-12 mb-4 ${BELOW_HEADER} font-sans text-headline-md text-text-primary`}
     >
       {withWikiLinks(children)}
     </h2>
@@ -59,7 +63,7 @@ function createMarkdownComponents(idByLine: Map<number, string>): Components {
     h3: ({ children, node }) => (
       <h3
         id={headingId(node)}
-        className="mt-8 mb-3 scroll-mt-20 font-sans text-body-lg font-semibold text-text-primary"
+        className={`mt-8 mb-3 ${BELOW_HEADER} font-sans text-body-lg font-semibold text-text-primary`}
       >
         {withWikiLinks(children)}
       </h3>
