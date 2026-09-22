@@ -4,7 +4,6 @@ applies_to:
   - apps/ui
 related:
   - ./index.md
-  - ./visual-regression.md
 ---
 
 # UI 테스트 컨벤션
@@ -15,7 +14,7 @@ UI 앱은 `jsdom` 기반 Vitest를 사용하며 단위 테스트와 통합 테�
 ## 적용 범위
 
 - UI test type, test file naming, test setup shape, UI test command를 선택할 때 이 문서를 사용한다.
-- Browser-rendered visual regression test는 [UI Visual Regression 컨벤션](./visual-regression.md)에서 다룬다.
+- Layout engine이 있어야 증명되는 browser test는 아래 [Layout 테스트](#layout-테스트)에서 다룬다.
 - Business-flow browser E2E test는 `e2e` workspace 컨벤션에서 다룬다.
 
 ## 테스트 도구
@@ -56,16 +55,18 @@ Story는 rendering을 검토하고, 누락된 state를 발견하고, 향후 brow
 - Story를 behavior 증명으로 취급하지 않는다. 중요한 관찰 가능한 동작과 accessibility contract는 Vitest coverage를 추가한다.
 - UI component story가 변경됐다면 `pnpm --filter @sheska/ui build-storybook`을 실행해 Storybook이 story set을 render할 수 있는지 확인한다.
 
-### Visual Design Check
+### Layout 테스트
 
 `jsdom` 기반 Vitest는 behavior, accessibility-oriented structure, data state, routing을 검증하기 위한 도구다.
-실제 layout/rendering engine을 실행하지 않기 때문에 design reference와 pixel-level 또는 perceptual alignment가 맞는지는 증명할 수 없다.
+실제 layout engine을 실행하지 않기 때문에 폭에 따라 배치가 어떻게 되는지는 증명할 수 없다.
 
-변경이 design 구현을 목표로 한다면 automated `jsdom` test는 loading, empty, error, navigation, form interaction, accessible label 같은 관찰 가능한 동작에 집중한다.
-Visual alignment는 [디자인 시스템](./design.md)에 설명된 browser 기반 review로 확인한다.
+Layout engine이 있어야만 증명되는 것은 `test/layout`의 Playwright test에 둔다.
+Layout 테스트 파일은 `*.layout.spec.ts`를 사용하고 `pnpm test:layout`으로 실행하며, `pnpm test`와는 분리한다.
 
-Vitest `jsdom` suite에는 screenshot 또는 pixel-diff assertion을 추가하지 않는다.
-Screenshot 또는 pixel-diff coverage가 필요하면 UI visual regression 정책을 사용한다.
+이 layer는 값을 읽어 비교한다. 요소의 폭, 요소 사이의 간격, 줄 수, 페이지 가로 스크롤이 대상이다.
+자동화할 규칙이 생기면 먼저 숫자로 잴 수 있는 형태로 바꾼다.
+
+Design reference와 맞는지는 [디자인 시스템](./design.md)과 [디자인 토큰](./design-token.md)을 기준으로 사람이 browser에서 확인한다.
 
 ### 단위 테스트
 
@@ -103,6 +104,7 @@ pnpm --filter @sheska/ui test:unit          # 단위 테스트
 pnpm --filter @sheska/ui test:integration   # Vitest/jsdom UI 통합 테스트
 pnpm --filter @sheska/ui test:integration:api-client # API test runtime을 대상으로 하는 API client 통합 테스트
 pnpm --filter @sheska/ui test               # 단위 테스트, 그 다음 통합 테스트
+pnpm --filter @sheska/ui test:layout        # Playwright layout 측정 테스트
 pnpm --filter @sheska/ui test:watch         # 단위 테스트용 Vitest watch mode
 pnpm --filter @sheska/ui storybook          # Component review용 Storybook dev server
 pnpm --filter @sheska/ui build-storybook    # Storybook production build check
