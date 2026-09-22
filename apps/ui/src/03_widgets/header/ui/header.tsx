@@ -33,14 +33,17 @@ export function Header() {
       <div className="h-11 border-b border-white/5 bg-surface-container-low/80 px-4">
         <div className="mx-auto flex h-full max-w-content items-center justify-between gap-3 sm:gap-6">
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-2" aria-hidden="true">
+            <span
+              className="mr-2 hidden items-center gap-2 sm:flex"
+              aria-hidden="true"
+            >
               {TRAFFIC_LIGHTS.map((light) => (
                 <span key={light} className={`h-3 w-3 rounded-full ${light}`} />
               ))}
             </span>
             <Link
               to="/"
-              className={`ml-2 font-sans text-body-lg font-semibold text-on-surface transition-colors hover:text-accent ${FOCUS_RING}`}
+              className={`font-sans text-body-lg font-semibold text-on-surface transition-colors hover:text-accent ${FOCUS_RING}`}
             >
               HASH
             </Link>

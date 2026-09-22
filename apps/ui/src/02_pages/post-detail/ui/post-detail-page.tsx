@@ -29,7 +29,7 @@ export function PostDetailPage() {
             <header className="mb-10 border-b border-outline-variant/10 pb-8">
               <Tag className="mb-3 inline-block">Post</Tag>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <h1 className="break-words text-4xl font-bold leading-tight tracking-tight text-text-primary">
                     {post.title}
                   </h1>

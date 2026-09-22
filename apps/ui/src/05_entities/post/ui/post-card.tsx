@@ -28,7 +28,7 @@ export function PostCard({
 }) {
   return (
     <article>
-      <CardLink to={`/posts/${post.postId}`} className="-mx-6 p-6">
+      <CardLink to={`/posts/${post.postId}`} className="-mx-4 px-4 py-6">
         <div className="flex flex-col gap-2">
           <PostMeta
             updatedAt={post.updatedAt}
@@ -36,7 +36,7 @@ export function PostCard({
             similarity={post.similarity}
           />
           <h3
-            className={`font-sans text-headline-md text-text-primary ${CARD_LINK_TITLE}`}
+            className={`break-words font-sans text-headline-md text-text-primary ${CARD_LINK_TITLE}`}
           >
             <Highlighted text={post.title} query={highlight} />
           </h3>

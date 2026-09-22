@@ -5,6 +5,7 @@ applies_to:
 related:
   - ./design.md
   - ./design-token.md
+  - ./responsive.md
   - ./test.md
 read_when: Playwright screenshot, pixel-diff, visual baseline, browser-rendered design regression check를 결정하거나 작성하거나 리뷰하거나 갱신할 때
 ---
@@ -78,6 +79,10 @@ Behavior assertion은 screenshot을 찍기 전 target state가 준비되었는�
 
 보호하려는 contract가 CSS property 자체인 경우가 아니라면 visual test에서 정확한 CSS property 값을 assertion하는 것은 피한다.
 Browser screenshot 없이 Vitest에서 안정적으로 증명할 수 있는 behavior는 더 저렴한 test layer에 둔다.
+
+Layout engine이 있어야만 증명되지만 baseline image가 필요 없는 contract는 screenshot 대신 측정값으로 assertion한다.
+예를 들어 페이지 가로 스크롤 여부는 `documentElement`의 `scrollWidth`와 `clientWidth` 비교로 끝나며, 승인할 그림이 없으므로 baseline을 만들지 않는다.
+이런 test는 font rendering 차이에 흔들리지 않으므로 screenshot보다 먼저 고려한다. 기준은 [반응형 레이아웃](./responsive.md)에 있다.
 
 ## Baseline And Diff 정책
 

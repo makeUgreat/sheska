@@ -58,7 +58,7 @@ Note outline의 가로 위치다. 화면이 넓으면 본문 기준, 여백이 �
 | 접두사 | 폭 | 이 앱에서 하는 일 |
 | --- | --- | --- |
 | 없음 | 320px~ | 기본. 단일 컬럼 |
-| `sm:` | 640px~ | 쌓인 block을 나란히 배치 (2열 grid, 가로 flex) |
+| `sm:` | 640px~ | 쌓인 block을 나란히 배치 (2열 grid, 가로 flex), header의 terminal 신호등 등장 |
 | `md:` | 768px~ | 카드 grid 2열, landing hero 타이포 확대 |
 | `lg:` | 1024px~ | Note outline 등장, source 상세 사이드 패널 |
 | `toc:` | 1200px~ | Note outline을 펼친 상태로 고정 |
@@ -98,6 +98,32 @@ Note outline의 가로 위치다. 화면이 넓으면 본문 기준, 여백이 �
 
 **페이지 자체에는 가로 스크롤이 생기지 않아야 한다.** 이것이 반응형 회귀를 판단하는 가장 단순한 기준이다.
 
+### `break-words`는 항목을 줄여주지 않는다
+
+Flex 항목과 grid 항목의 기본 최소 크기는 `min-content`다.
+`break-words`(`overflow-wrap: break-word`)는 이미 좁아진 상자 안에서 단어를 끊을 뿐, 항목의 `min-content`를 줄이지 않는다.
+그래서 제목이나 frontmatter 값에 긴 토큰 하나만 들어와도 항목이 버티면서 컬럼째로 화면을 밀어낸다.
+
+항목에 `min-w-0`을 함께 준다. 상자가 먼저 줄어들 수 있어야 `break-words`가 동작한다.
+
+```
+<div className="min-w-0 flex-1">   제목이 들어가는 flex 항목
+<div className="min-w-0">          임의의 값이 들어가는 grid 항목
+```
+
+`break-all`은 `min-content` 자체를 줄이므로 ID, fingerprint처럼 어디서 끊겨도 되는 값에만 쓴다.
+
+### 여백으로 번지는 표면은 페이지 여백 안에 머문다
+
+Card hover 표면처럼 음수 margin으로 컨테이너 밖까지 번지는 요소가 있다.
+번지는 폭이 페이지 좌우 여백(16px)보다 크면 그 차이만큼 화면 밖으로 나가고, 화면이 좁을수록 그대로 가로 스크롤이 된다.
+
+```
+-mx-4 px-4      번지는 폭 16px = 페이지 좌우 여백 16px
+```
+
+번지는 폭은 페이지 좌우 여백과 같거나 작게 잡는다. 페이지 여백을 늘려서 맞추지 않는다. 16px는 [디자인 토큰](./design-token.md)이 정한 mobile side margin이다.
+
 ## 검증
 
 `jsdom` 테스트는 layout engine을 실행하지 않으므로 폭에 따른 배치를 증명할 수 없다.
@@ -107,6 +133,9 @@ Note outline의 가로 위치다. 화면이 넓으면 본문 기준, 여백이 �
 - 읽기 컬럼이 어떤 폭에서도 `--spacing-measure`를 넘지 않는지.
 - Breakpoint 경계의 양쪽(예: 1199px과 1200px)에서 배치가 의도대로 바뀌는지. 경계 한쪽만 보면 전환 자체를 놓친다.
 - 같은 페이지 안에서 정렬선이 맞는지. 본문과 나란히 놓이는 back link, 제목, 구분선이 같은 왼쪽 기준을 공유해야 한다.
+
+가로 스크롤 0은 `test/visual/page-horizontal-scroll.visual.spec.ts`가 320px, 640px, 1280px에서 모든 route를 훑어 자동으로 확인한다.
+Fixture는 긴 토큰이 섞인 제목과 값을 쓴다. 짧은 예시 데이터만으로는 항목이 줄어드는지 증명할 수 없기 때문이다.
 
 Screenshot baseline은 [UI Visual Regression 컨벤션](./visual-regression.md)을 따른다.
 반응형 변경은 최소한 mobile 폭 하나와 desktop 폭 하나를 덮고, 형태가 바뀌는 breakpoint가 있으면 그 경계를 추가한다.
@@ -118,3 +147,4 @@ Screenshot baseline은 [UI Visual Regression 컨벤션](./visual-regression.md)�
 - 상한선이 breakpoint 안에 갇혀 있지 않은가.
 - 여러 화면이 공유하는 폭 값이 리터럴로 흩어져 있지 않고 token 하나를 보는가.
 - 새로 추가한 콘텐츠 중 줄어들지 않는 것이 페이지를 가로로 밀어내지 않는가.
+- 긴 토큰이 들어갈 수 있는 flex, grid 항목에 `min-w-0`이 있는가.

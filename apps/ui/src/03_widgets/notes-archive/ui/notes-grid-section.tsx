@@ -19,7 +19,7 @@ export type NotesGridState =
 export function NotesGridSection({ state }: { state: NotesGridState }) {
   return (
     <section className="min-h-screen bg-white px-4 py-20">
-      <div className="mx-auto max-w-[1280px]">
+      <div className="mx-auto max-w-content">
         <h1 className="mb-12 font-sans text-headline-lg text-text-primary">
           Notes
         </h1>
