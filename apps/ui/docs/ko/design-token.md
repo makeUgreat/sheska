@@ -79,7 +79,9 @@ Depth의 주된 수단은 **Tonal Layers**와 **Low-Contrast Outlines**다.
 
 Boundary를 정의할 때는 `#564242` (`outline-variant`)의 1px solid border를 사용한다. Active 또는 focused element는 border나 text color를 primary Rose Red (`#e16d76`)로 바꿔 "glow-less" highlight를 만든다.
 
-Light page background 위에서 block 하나를 구분해야 하는데 border를 두르면 과한 경우에는 `outline-variant`를 4% opacity tint로 깐다 (`bg-outline-variant/4`). Note와 post 상세의 article header가 이 tint를 쓰며, `@/shared/ui`의 `ArticleLayout`이 소유한다. Dark elevated surface의 tonal layer와 달리 이 tint는 light page 위 grouping 수단이므로 `surface` 계열로 대체하지 않는다. Elevated dark surface가 필요한 자리인지, 같은 page 평면에서 묶기만 하면 되는 자리인지로 둘을 구분한다.
+Light page background 위에서 두 영역을 갈라야 하는데 block 전체를 칠하면 과한 경우에는 가로로 옅어지는 1px rule을 쓴다. Note와 post 상세에서 article header와 본문 사이가 여기 해당하며, `@/shared/ui`의 `ArticleLayout`이 소유한다. 글줄이 시작하는 쪽은 `outline-variant` 26%로 또렷하고 끝나는 쪽은 투명으로 사라지므로, 같은 페이지의 다른 선과 혼동되지 않는다. Markdown의 `---`는 가운데 짧은 선이고 footer rule은 폭을 꽉 채우는 균일한 선이다.
+
+이 rule은 light page 위에서 영역을 가르는 수단이므로 dark elevated surface의 tonal layer로 대체하지 않는다. Elevated dark surface가 필요한 자리인지, 같은 page 평면에서 경계만 그으면 되는 자리인지로 둘을 구분한다.
 
 ## 코드 펜스
 
