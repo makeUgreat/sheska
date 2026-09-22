@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { type Components } from 'react-markdown';
+import { CodeBlock, useInsideCodeBlock } from './code-block';
 
 /** Heading anchor로 이동할 때 sticky header 아래에 멈추게 한다. */
 const BELOW_HEADER =
@@ -15,6 +16,23 @@ const LIST_BASE =
   '[&_li>p]:mb-0 [&_ul]:mt-1.5 [&_ul]:mb-0 [&_ol]:mt-1.5 [&_ol]:mb-0';
 
 type MarkdownNode = { position?: { start: { line: number } } };
+
+/** Fence 안의 code는 highlighter가 붙인 class를 그대로 들고 가야 token ink가 걸린다. */
+function CodeText({
+  className,
+  children,
+}: {
+  className?: string;
+  children?: ReactNode;
+}) {
+  return useInsideCodeBlock() ? (
+    <code className={className}>{children}</code>
+  ) : (
+    <code className="rounded bg-outline-variant/10 px-1.5 py-0.5 font-mono text-code-snippet text-accent-strong">
+      {children}
+    </code>
+  );
+}
 
 export type MarkdownComponentOptions = {
   /** 모든 inline text 자리를 감싼다. 본문마다 다른 link 문법을 여기서 처리한다. */
@@ -121,18 +139,7 @@ export function createMarkdownComponents({
         {children}
       </a>
     ),
-    pre: ({ children }) => (
-      <pre className="my-7 overflow-x-auto rounded-lg bg-surface p-5 font-mono text-code-snippet text-on-surface">
-        {children}
-      </pre>
-    ),
-    code: ({ className, children }) =>
-      className?.startsWith('language-') ? (
-        <code className="font-mono text-code-snippet">{children}</code>
-      ) : (
-        <code className="rounded bg-outline-variant/10 px-1.5 py-0.5 font-mono text-code-snippet text-accent-strong">
-          {children}
-        </code>
-      ),
+    pre: CodeBlock,
+    code: CodeText,
   };
 }

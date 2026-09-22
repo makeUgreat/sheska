@@ -5,6 +5,7 @@
   --color-surface-container-low: #191c22;
   --color-surface-container-high: #272a30;
   --color-on-surface: #e1e2ea;
+  --color-on-surface-muted: #7e828c;
   --color-outline-variant: #564242;
   --color-primary: #ffb3b6;
   --color-secondary: #c3c6d1;
@@ -47,6 +48,9 @@
   --text-code-snippet: 14px;
   --text-code-snippet--line-height: 1.5;
   --text-code-snippet--font-weight: 400;
+  --text-code-block: 14px;
+  --text-code-block--line-height: 1.7;
+  --text-code-block--font-weight: 400;
   --text-display-terminal: 18px;
   --text-display-terminal--line-height: 1.6;
   --text-display-terminal--font-weight: 500;

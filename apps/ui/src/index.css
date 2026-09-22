@@ -1,6 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 @import "./styles/theme.css";
+@import "./styles/code-highlight.css";
 
 @theme {
   --breakpoint-toc: 1200px;

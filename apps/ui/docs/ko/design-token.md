@@ -42,6 +42,8 @@ Palette는 light하고 editorial한 page base와 dark하고 terminal-styled elev
 - **Accent**: `#e16d76` (`accent`). Light page background 위에서 3.16:1이므로 large text(24px 이상), border, focus ring 같은 non-text contrast에만 쓴다. Dark elevated surface 위에서는 제한 없이 쓴다.
 - **Accent-Strong**: `#a13c46` (`accent-strong`). Light page background 위 small text와, white text를 얹는 fill에 쓴다. 두 경우 모두 6.46:1이다.
 - **Accent-Hover**: `accent-strong`과 같은 값의 alias다. Wordmark와 footer link의 hover ink로 사용한다.
+- **On-Surface-Muted**: `#7e828c` (`on-surface-muted`). Dark elevated surface 위 low-emphasis ink다 (`surface` 위 4.83:1).
+  Code fence의 주석과 chrome이 쓴다. Light page의 `text-muted`는 `surface` 위에서 1.4:1이므로 서로 대체하지 않는다.
 - **Border**: `#564242` (`outline-variant`). Subtle structural separation을 위한 cool, low-contrast border다.
 
 모든 green, blue, yellow tone은 피한다. Success state는 green으로 색을 바꾸기보다 typography나 iconography로 전달한다.
@@ -72,6 +74,32 @@ Depth의 주된 수단은 **Tonal Layers**와 **Low-Contrast Outlines**다.
 Boundary를 정의할 때는 `#564242` (`outline-variant`)의 1px solid border를 사용한다. Active 또는 focused element는 border나 text color를 primary Rose Red (`#e16d76`)로 바꿔 "glow-less" highlight를 만든다.
 
 Light page background 위에서 block 하나를 구분해야 하는데 border를 두르면 과한 경우에는 `outline-variant`를 4% opacity tint로 깐다 (`bg-outline-variant/4`). Note와 post 상세의 article header가 이 tint를 쓰며, `@/shared/ui`의 `ArticleLayout`이 소유한다. Dark elevated surface의 tonal layer와 달리 이 tint는 light page 위 grouping 수단이므로 `surface` 계열로 대체하지 않는다. Elevated dark surface가 필요한 자리인지, 같은 page 평면에서 묶기만 하면 되는 자리인지로 둘을 구분한다.
+
+## 코드 펜스
+
+Markdown code fence는 highlight.js를 거쳐 token마다 class를 얻고, `src/styles/code-highlight.css`가 그 class에 ink를 건다.
+Fence 전체는 `@/shared/ui`의 `CodeBlock`이 소유한다.
+
+- Token ink는 색상이 아니라 `surface` 위 밝기 네 단계로 역할을 나눈다.
+  - Palette가 monochrome-first이고 green, blue, yellow를 쓰지 않으므로 다색 syntax theme을 그대로 들여올 수 없다.
+  - 밝기로 나누면 색을 구분하지 못하는 조건에서도 같은 층위가 남는다.
+
+| 역할 | Token | `surface` 대비 |
+| --- | --- | --- |
+| 식별자, 함수 이름, 연산자 (기본 ink) | `on-surface` | 14.4:1 |
+| 문자열, 숫자, 속성 이름 | `primary` | 11.0:1 |
+| Keyword, 타입, built-in, tag | `accent` | 5.9:1 |
+| 주석 (italic) | `on-surface-muted` | 4.8:1 |
+
+- Token 구분이 더 필요하면 색을 새로 들이지 말고 밝기 단계, italic, weight로 나눈다.
+- Fence에는 언어 표기와 복사 버튼을 얹은 한 줄 chrome을 함께 둔다.
+  - Highlighting만으로는 본문 사이에서 코드 블록임이 충분히 드러나지 않는다.
+- 복사 결과는 아이콘 교체와 `role="status"`로 알린다.
+  - 클립보드 복사는 화면에 결과를 남기지 않고, `navigator.clipboard`가 없는 컨텍스트에서는 실제로 실패한다.
+    표시가 없으면 성공과 실패가 같아 보인다.
+  - 이모지는 쓰지 않는다. 글리프에 색이 박혀 있어 `currentColor`를 따르지 않고, 성공 표시 이모지는 green이다.
+- Fence 본문은 `code-block`, 본문 사이의 inline code는 `code-snippet`을 쓴다.
+  - 크기는 같고 line height만 다르다. Fence는 줄 단위로 읽고 inline code는 본문 한 줄에 얹힌다.
 
 ## Effects & Motion
 
