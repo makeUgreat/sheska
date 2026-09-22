@@ -102,12 +102,14 @@ describe('SourceDetailPage', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('heading', { name: 'Source note' }),
+        screen.getByRole('heading', { name: 'Source note', level: 1 }),
       ).toBeDefined();
       expect(screen.getByText('Notes/source.md')).toBeDefined();
       expect(screen.getByText('tags')).toBeDefined();
       expect(screen.getByText('["note","e2e"]')).toBeDefined();
-      expect(screen.getByText('# Source note')).toBeDefined();
+      expect(
+        screen.getByRole('heading', { name: 'Source note', level: 2 }),
+      ).toBeDefined();
       expect(screen.getByText('source-1')).toBeDefined();
       expect(screen.getByText('fingerprint-1')).toBeDefined();
       expect(screen.getByText('completed')).toBeDefined();
