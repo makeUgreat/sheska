@@ -72,5 +72,7 @@
   --container-content: 1280px;
   --spacing-measure: 680px;
   --spacing-container-terminal: 1100px;
+  --spacing-toc-min: 200px;
+  --spacing-toc-max: 320px;
   --spacing-header: 84px;
 }

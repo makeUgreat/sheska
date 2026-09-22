@@ -42,12 +42,17 @@ mx-auto max-w-measure
 두 기준 중 하나를 골라야 하는 위치 계산도 breakpoint 없이 `min()` / `max()` / `clamp()`로 쓴다.
 
 ```
-right: max(var(--spacing-gutter), calc(50% - var(--spacing-measure)/2 - var(--spacing-gutter) - 200px))
+--toc-width: clamp(var(--spacing-toc-min), calc(50% - var(--spacing-measure)/2 - 2 * var(--spacing-gutter)), var(--spacing-toc-max))
+right: max(var(--spacing-gutter), calc(50% - var(--spacing-measure)/2 - var(--spacing-gutter) - var(--toc-width)))
 ```
 
-Article outline의 가로 위치다. 화면이 넓으면 본문 기준, 여백이 부족해지면 화면 기준으로 브라우저가 매 순간 고른다.
+Article outline의 폭과 가로 위치다. 본문 옆에 남은 여백을 그대로 폭으로 쓰되 `toc-min`과 `toc-max` 사이에 가둔다.
+위치는 화면이 넓으면 본문 기준, 여백이 부족해지면 화면 기준으로 브라우저가 매 순간 고른다.
 전환점을 사람이 계산해서 적지 않으므로 본문 폭을 바꿔도 전환점이 따라온다.
 같은 동작을 media query로 쓰면 전환점 숫자가 본문 폭과 따로 놀다가 어긋난다.
+
+두 식은 같은 `50%`를 본다. `fixed` 요소의 `%`는 뷰포트를 기준으로 하므로 본문을 가운데 놓는 계산과 같은 척도이고,
+`vw`로 바꾸면 scrollbar 폭만큼 어긋나 여백이 좌우 비대칭으로 남는다.
 
 따라서 breakpoint는 **값이 변하는 지점이 아니라 형태가 변하는 지점**에만 쓴다.
 컬럼 수가 바뀌거나, 요소가 나타나고 사라지거나, 배치 축이 세로에서 가로로 바뀔 때다.
@@ -122,9 +127,19 @@ Source 상세의 사이드 패널(`PublishPostPanel`)처럼 좁은 자리에 놓
 | 표 | `overflow-x-auto` wrapper로 감싼다 |
 | 긴 URL, 긴 단어 | 본문 컨테이너에 `break-words` |
 | 화면보다 긴 목차 | `max-h-[calc(100vh - ...)]` + `overflow-y-auto` |
+| 목차 폭보다 긴 제목 | 항목에 `truncate` + 전체 문구를 `title`로 |
 | 이미지 | Tailwind preflight의 `img { max-width: 100% }`가 처리하므로 추가 작업이 없다 |
 
 **페이지 자체에는 가로 스크롤이 생기지 않아야 한다.** 이것이 반응형 회귀를 판단하는 가장 단순한 기준이다.
+
+### 훑어보는 목록은 줄바꿈이 아니라 잘라서 맞춘다
+
+본문은 줄이 늘어나도 읽을 수 있으므로 `break-words`로 접는다. 한눈에 구조를 보는 목록은 다르다.
+Article outline 항목이 두세 줄로 접히면 항목 사이 간격과 줄 간격이 비슷해져서 몇 개의 섹션인지가 먼저 읽히지 않는다.
+이런 목록은 항목당 한 줄을 고정하고 넘치는 문구를 `truncate`로 자른다.
+
+자른 문구는 화면에서 사라지므로 전체를 `title`에 남긴다. 목차 링크는 `aria-hidden`이 아니라서
+보조기술에는 제목 전체가 그대로 읽히고, `truncate`는 시각 표현만 줄인다.
 
 ### `break-words`는 항목을 줄여주지 않는다
 
@@ -165,7 +180,10 @@ Card hover 표면처럼 음수 margin으로 컨테이너 밖까지 번지는 요
 가로 스크롤 0은 `test/layout/page-horizontal-scroll.layout.spec.ts`가 320px, 640px, 1280px에서 모든 route를 훑어 자동으로 확인한다.
 Fixture는 긴 토큰이 섞인 제목과 값을 쓴다. 짧은 예시 데이터만으로는 항목이 줄어드는지 증명할 수 없기 때문이다.
 
-나머지 항목은 사람이 browser에서 확인한다. 자동으로 지키고 싶어지면 [UI 테스트 컨벤션](./test.md)의 layout 테스트로 옮긴다.
+Article outline의 폭과 정렬은 `test/layout/article-outline.layout.spec.ts`가 1024px부터 1920px까지 확인한다.
+폭, 본문과의 간격, 항목당 줄 수, 접힌 목차 아래 본문에 닿는지를 모두 숫자로 잰다.
+
+나머지 두 항목은 아직 사람이 browser에서 확인한다. 자동으로 지키고 싶어지면 [UI 테스트 컨벤션](./test.md)의 layout 테스트로 옮긴다.
 
 ## 리뷰 체크
 
@@ -173,6 +191,7 @@ Fixture는 긴 토큰이 섞인 제목과 값을 쓴다. 짧은 예시 데이터
 - 상한선이나 `min()` / `max()` / `clamp()`로 대체할 수 있는 breakpoint인가.
 - 상한선이 breakpoint 안에 갇혀 있지 않은가.
 - 여러 화면이 공유하는 폭 값이 리터럴로 흩어져 있지 않고 token 하나를 보는가.
+- 한눈에 훑는 목록의 항목이 폭이 줄어들 때 줄바꿈으로 늘어나지 않는가.
 - 재사용 컴포넌트의 breakpoint가 뷰포트를 봐야 하는 것이 맞는가, 놓인 자리의 폭을 봐야 하는 것인가.
 - 새로 추가한 콘텐츠 중 줄어들지 않는 것이 페이지를 가로로 밀어내지 않는가.
 - 긴 토큰이 들어갈 수 있는 flex, grid 항목에 `min-w-0`이 있는가.
