@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { usePost } from '@/entities/post';
 import {
-  ActionLink,
+  BackLink,
   EmptyState,
   ErrorState,
   LoadingState,
@@ -17,9 +17,9 @@ export function PostDetailPage() {
   return (
     <main className="mx-auto min-h-screen max-w-content bg-page-background px-4 py-14">
       <div className="mx-auto max-w-measure">
-        <ActionLink to="/posts" className="mb-8">
+        <BackLink to="/posts" className="mb-8">
           Back to posts
-        </ActionLink>
+        </BackLink>
         {isLoading ? (
           <LoadingState className="py-24" />
         ) : error ? (
