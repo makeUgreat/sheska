@@ -108,9 +108,8 @@ describe('App', () => {
     await waitFor(() => {
       expect(getSource).toHaveBeenCalledWith('/sources/source-1');
       expect(
-        screen.getByRole('heading', { name: 'Source note' }),
+        screen.getByRole('heading', { name: 'Source note', level: 1 }),
       ).toBeDefined();
-      expect(screen.getByText('# Source note')).toBeDefined();
     });
   });
 

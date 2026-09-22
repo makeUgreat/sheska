@@ -77,7 +77,9 @@ Note 본문과 post 본문은 같은 markdown 규약을 쓴다. Post는 note와 
 이 규약의 구현은 `shared`가 소유한다.
 
 - `@/shared/lib`: `parseOutline`(heading을 outline으로), `parseWikiLinks`(`[[target|label]]` 분해), `useArticleOutline`(본문에서 outline과 현재 heading을 계산).
-- `@/shared/ui`: `MarkdownBody`(본문 렌더링), `ArticleOutline`(목차), `ArticleLayout`(article header + 본문 + footer + 목차 배치).
+- `@/shared/ui`: `Markdown`과 `createMarkdownComponents`(모든 본문이 공유하는 typography), `MarkdownBody`(거기에 wiki link와 heading anchor를 얹은 상세 화면 본문), `ArticleOutline`(목차), `ArticleLayout`(article header + 본문 + footer + 목차 배치).
+
+목차나 wiki link가 필요 없는 짧은 본문은 `Markdown`을 그대로 쓴다. 상세 화면 본문은 `MarkdownBody`를 쓴다.
 
 Wiki link는 특정 entity의 표현이 아니라 이 앱 markdown 본문의 문법이므로 `shared`에 둔다. API가 resolved target을 돌려주기 전까지 모든 wiki link는 unresolved 상태이며, note 본문이든 post 본문이든 label만 남기고 점선 underline으로 표시한다. Vault에서 unresolved link는 오류가 아니라 정상 상태이므로 숨기지 않는다.
 
