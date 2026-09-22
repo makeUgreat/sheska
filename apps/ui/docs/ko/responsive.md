@@ -31,7 +31,7 @@ px-4 sm:px-6      모든 폭에서 16px, 640px 이상에서만 24px
 크기 문제는 대부분 breakpoint가 아니라 **상한선 하나**로 끝난다.
 
 ```
-mx-auto max-w-[var(--spacing-measure)]
+mx-auto max-w-measure
 ```
 
 컨테이너가 상한보다 좁으면 알아서 줄고, 넓으면 상한에서 멈춘다. 320px부터 2560px까지 이 한 줄이 처리한다.

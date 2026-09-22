@@ -16,7 +16,7 @@ export function PostDetailPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-content bg-page-background px-4 py-14">
-      <div className="mx-auto max-w-[var(--spacing-measure)]">
+      <div className="mx-auto max-w-measure">
         <ActionLink to="/posts" className="mb-8">
           Back to posts
         </ActionLink>

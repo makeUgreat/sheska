@@ -45,7 +45,7 @@ export function PostsListSection({
       className="min-h-screen scroll-mt-0 bg-white px-4 py-20 outline-none"
       tabIndex={-1}
     >
-      <div className="mx-auto max-w-[var(--spacing-measure)]">
+      <div className="mx-auto max-w-measure">
         <div className="mb-6 flex justify-end">
           <Link
             to="/"
