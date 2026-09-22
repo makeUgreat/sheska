@@ -44,7 +44,11 @@ export function NoteCard({ note }: { note: NoteSummary }) {
       to={`/notes/${note.noteId}`}
       className="-mx-3.5 h-full px-3.5 py-6"
     >
-      <span className="block font-mono text-label-sm uppercase text-text-muted">
+      <span className="flex items-center gap-2.5 font-mono text-label-sm uppercase text-text-muted">
+        <span
+          aria-hidden="true"
+          className="h-1.5 w-1.5 shrink-0 rounded-[1px] bg-accent"
+        />
         {formatDate(note.updatedAt)}
       </span>
       <h3
