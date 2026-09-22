@@ -31,7 +31,6 @@
     "test:runtime:stop": "tsx test/runtime/stop.ts"
   },
   "dependencies": {
-    "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.2",
     "@tanstack/react-query": "^5.101.2",
     "react": "^18.3.1",

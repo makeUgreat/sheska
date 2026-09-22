@@ -10,7 +10,7 @@ import {
 } from '@/entities/source';
 import { PublishPostPanel } from '@/features/publish-post';
 import { formatBytes } from '@/shared/lib';
-import { EmptyState, ErrorState, LoadingState } from '@/shared/ui';
+import { EmptyState, ErrorState, LoadingState, Markdown } from '@/shared/ui';
 
 function formatFrontmatterValue(value: unknown): string {
   return typeof value === 'string' ? value : JSON.stringify(value);
@@ -224,9 +224,10 @@ export function SourceDetailPage() {
             <h2 className="mb-3 text-base font-semibold text-gray-950">
               Content
             </h2>
-            <pre className="max-h-[36rem] overflow-auto whitespace-pre-wrap rounded-lg border border-gray-200 bg-gray-950 p-5 text-sm leading-6 text-gray-100">
-              {source.body}
-            </pre>
+            <Markdown
+              body={source.body}
+              className="max-h-[36rem] overflow-auto rounded-lg border border-outline-variant/10 bg-page-background p-5"
+            />
           </section>
         </>
       ) : (

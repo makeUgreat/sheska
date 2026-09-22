@@ -11,6 +11,11 @@ export { EndOfList } from './end-of-list';
 export { ErrorState, type ErrorStateProps } from './error-state';
 export { LoadingDots } from './loading-dots';
 export { LoadingState } from './loading-state';
+export { Markdown } from './markdown';
 export { MarkdownBody } from './markdown-body';
+export {
+  createMarkdownComponents,
+  type MarkdownComponentOptions,
+} from './markdown-components';
 export { Pagination } from './pagination';
 export { Tag } from './tag';
