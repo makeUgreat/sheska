@@ -54,6 +54,11 @@ Palette는 light하고 editorial한 page base와 dark하고 terminal-styled elev
 
 Headline은 minimal background 위에서 강한 visual hierarchy를 만들 수 있도록 tight tracking과 bold weight를 사용한다. Body text는 넉넉한 line height로 가독성을 우선한다. Label은 항상 monospace로 설정하며, "metadata" 느낌을 위해 자주 대문자로 사용한다.
 
+`label-sm`의 넓은 tracking(`0.1em`)은 대문자 label을 전제로 한 값이다. 대문자는 글자 폭이 고르고 단어 경계가 약해서 자간이 그 역할을 대신한다.
+같은 크기를 대문자가 아닌 문구에 쓸 때는 tracking을 `normal`로 되돌린다. Article outline의 제목 링크가 여기에 해당한다.
+자간은 단어 경계를 만들어주지 못하면서 폭만 먹고, 폭이 좁고 한 줄로 잘리는 자리에서는 그만큼 글자가 덜 보인다.
+같은 320px 목차에서 한글 26자가 29자, 영문 33자가 38자가 된다.
+
 ## 레이아웃과 간격
 
 Layout philosophy는 desktop에서는 **Fixed Grid**, mobile에서는 **Fluid Grid** model을 따른다.
@@ -62,6 +67,7 @@ Layout philosophy는 desktop에서는 **Fixed Grid**, mobile에서는 **Fluid Gr
 - **Mobile**: 16px side margin을 가진 4-column fluid grid.
 - **Spacing Rhythm**: 모든 margin과 padding은 4px base unit의 배수여야 한다.
 - **Reading Measure**: Prose를 읽는 컬럼은 `--spacing-measure`(680px)를 넘지 않는다. Note 본문과 post 본문이 이 값을 공유하므로, 한쪽만 바꾸면 두 화면의 줄 길이가 어긋난다. 이 상한을 어떻게 거는지는 [반응형 레이아웃](./responsive.md)을 따른다.
+- **Outline Width**: Article outline은 본문 옆에 남는 여백을 `--spacing-toc-min`(200px)과 `--spacing-toc-max`(320px) 사이에서 폭으로 쓴다. 하한은 `--breakpoint-toc`(1200px)를 유도한 값이므로 둘은 함께 움직인다. 상한은 목차가 두 번째 읽기 컬럼처럼 보이지 않게 막는다.
 
 Major section 사이에는 minimalist, editorial aesthetic을 강조하기 위해 64px 이상의 넓은 margin을 사용한다. Content는 붐비지 않고 의도적으로 배치된 느낌이어야 한다.
 
@@ -108,7 +114,9 @@ Hover와 motion interaction은 generated token을 거치지 않고 Tailwind util
 - **Card hover**: `@/shared/ui`의 `CardLink`가 소유한다. 200ms `ease-out`으로 1px lift, `accent` 5% tint, `--shadow-card-hover`, 제목 ink의 `accent-strong` 전환을 함께 건다. `prefers-reduced-motion`에서는 transition과 lift를 끈다.
 - **Action link hover**: 화살표에만 `translate-x-1`.
 - **Text link hover**: accent color로의 단순 color transition.
-- **Article outline 펼침**: `--breakpoint-toc`(1200px) 이상에서는 제목이 보이는 상태로 고정한다. 그 아래에서는 섹션당 선 하나짜리 눈금으로 접고 hover 또는 `focus-within`에 200ms `ease-out` opacity로 펼친다. 접힌 눈금은 `aria-hidden`이고 제목 링크는 항상 DOM에 남으므로, 보조기술에는 시각 상태와 무관하게 전체 목차가 읽힌다. Hover가 없는 기기(`@media (hover: none)`)에서는 펼치는 수단이 없으므로 펼친 상태로 둔다. 펼친 목차가 본문을 덮는 구간에서는 `--shadow-floating-panel`로 layer임을 드러내고, 여백에 여유가 생기는 `--breakpoint-toc` 이상에서는 그림자를 끈다. 목차의 가로 위치 계산은 [반응형 레이아웃](./responsive.md)에 있다. `prefers-reduced-motion`에서는 transition과 `scroll-behavior: smooth`를 모두 끈다.
+- **Article outline 펼침**: `--breakpoint-toc`(1200px) 이상에서는 제목이 보이는 상태로 고정한다. 그 아래에서는 섹션당 선 하나짜리 눈금으로 접고 hover 또는 `focus-within`에 200ms `ease-out` opacity로 펼친다. 접힌 눈금은 `aria-hidden`이고 제목 링크는 항상 DOM에 남으므로, 보조기술에는 시각 상태와 무관하게 전체 목차가 읽힌다. Hover가 없는 기기(`@media (hover: none)`)에서는 펼치는 수단이 없으므로 펼친 상태로 둔다. 펼친 목차가 본문을 덮는 구간에서는 `--shadow-floating-panel`로 layer임을 드러내고, 여백에 여유가 생기는 `--breakpoint-toc` 이상에서는 그림자를 끈다. 목차의 폭과 가로 위치 계산은 [반응형 레이아웃](./responsive.md)에 있다. `prefers-reduced-motion`에서는 transition과 `scroll-behavior: smooth`를 모두 끈다.
+- **Article outline 한 줄**: 목차는 문서 구조를 한눈에 보여주는 것이 목적이므로 항목마다 한 줄만 쓴다. 폭은 본문 옆 여백을 따라 넓어지고, 그래도 넘치는 제목은 줄을 늘리지 않고 끝을 자른다. 목차가 담는 것은 제목 전문이 아니라 섹션의 개수와 깊이다. 잘린 제목의 전문은 `title`에 남는다. 제목 링크는 대문자가 아니므로 `label-sm`의 tracking을 `normal`로 되돌린다. `ON THIS PAGE` label은 대문자이므로 그대로 둔다.
+- **Article outline 적중 범위**: 목차 상자 전체는 pointer에 투명하다(`pointer-events: none`). 상자가 목차 폭만큼 넓어서, 접힌 구간에서 본문 위를 덮는 부분이 본문 선택을 가로막지 않아야 한다. Pointer를 받는 것은 펼치는 눈금과 펼쳐진 목차뿐이다.
 
 Note, post, source card는 모두 `CardLink` 위에 놓인다. Card처럼 전체가 클릭되는 새 surface를 만들 때는 hover recipe를 다시 선언하지 말고 `CardLink`를 쓴다. Card hover 자체를 바꾸려면 `card-link.tsx` 한 곳만 고친다.
 

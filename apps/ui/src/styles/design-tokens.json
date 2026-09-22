@@ -317,6 +317,14 @@
       "$description": "Terminal hero container max width.",
       "$value": "1100px"
     },
+    "toc-min": {
+      "$description": "Minimum width of the article outline panel. Below this the panel stops shrinking and overlaps the reading column, which is what `--breakpoint-toc` (1200px) is derived from: measure + 2 gutters + this width.",
+      "$value": "200px"
+    },
+    "toc-max": {
+      "$description": "Maximum width of the article outline panel. The panel grows into the margin beside the reading column up to this width; past it the extra margin stays empty so the outline never reads as a second column.",
+      "$value": "320px"
+    },
     "header": {
       "$description": "Height of the sticky terminal header. Anything that must clear it — sticky rails, scroll-margin on anchor targets — offsets from this.",
       "$value": "84px"
