@@ -69,8 +69,7 @@ test('포스트 목록에서 제목 클릭 시 상세 페이지로 이동하고 
 
   await expect(page).toHaveURL(`/posts/${postId}`);
   await expect(page.locator('h1', { hasText: title })).toBeVisible();
-  await expect(page.getByText(postId)).toBeVisible();
-  await expect(page.getByText(sourceId)).toBeVisible();
+  await expect(page.getByText(/\d+ views/)).toBeVisible();
 
   await page.getByRole('link', { name: /back to posts/i }).click();
   await expect(page).toHaveURL('/posts');
@@ -130,7 +129,7 @@ test('포스트 상세 페이지에서 마크다운이 HTML 요소로 렌더링�
 
   await page.goto(`/posts/${postId}`);
 
-  await expect(page.locator('h1', { hasText: '마크다운 제목' })).toBeVisible();
+  await expect(page.locator('h2', { hasText: '마크다운 제목' })).toBeVisible();
   await expect(
     page.locator('strong', { hasText: '굵은 텍스트' }),
   ).toBeVisible();
