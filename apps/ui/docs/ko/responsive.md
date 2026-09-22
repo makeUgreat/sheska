@@ -4,7 +4,6 @@ applies_to:
   - apps/ui
 related:
   - ./design-token.md
-  - ./visual-regression.md
 read_when: breakpoint, viewport별 layout, 본문 폭, overflow 처리를 결정하거나 변경하거나 리뷰할 때
 ---
 
@@ -163,11 +162,10 @@ Card hover 표면처럼 음수 margin으로 컨테이너 밖까지 번지는 요
 - Breakpoint 경계의 양쪽(예: 1199px과 1200px)에서 배치가 의도대로 바뀌는지. 경계 한쪽만 보면 전환 자체를 놓친다.
 - 같은 페이지 안에서 정렬선이 맞는지. 본문과 나란히 놓이는 back link, 제목, 구분선이 같은 왼쪽 기준을 공유해야 한다.
 
-가로 스크롤 0은 `test/visual/page-horizontal-scroll.visual.spec.ts`가 320px, 640px, 1280px에서 모든 route를 훑어 자동으로 확인한다.
+가로 스크롤 0은 `test/layout/page-horizontal-scroll.layout.spec.ts`가 320px, 640px, 1280px에서 모든 route를 훑어 자동으로 확인한다.
 Fixture는 긴 토큰이 섞인 제목과 값을 쓴다. 짧은 예시 데이터만으로는 항목이 줄어드는지 증명할 수 없기 때문이다.
 
-Screenshot baseline은 [UI Visual Regression 컨벤션](./visual-regression.md)을 따른다.
-반응형 변경은 최소한 mobile 폭 하나와 desktop 폭 하나를 덮고, 형태가 바뀌는 breakpoint가 있으면 그 경계를 추가한다.
+나머지 항목은 사람이 browser에서 확인한다. 자동으로 지키고 싶어지면 [UI 테스트 컨벤션](./test.md)의 layout 테스트로 옮긴다.
 
 ## 리뷰 체크
 

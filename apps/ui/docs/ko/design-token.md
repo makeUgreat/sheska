@@ -41,7 +41,7 @@ Palette는 light하고 editorial한 page base와 dark하고 terminal-styled elev
 - **Surface family**: `#0b0e14`~`#32353b` (`surface`, `surface-container-lowest`, `surface-container-low`, `surface-container-high`, `surface-variant`). Page background가 아니라 hero terminal window, card, tag 같은 dark하고 terminal-styled elevated component 전용 deep charcoal tone이다.
 - **Accent**: `#e16d76` (`accent`). Light page background 위에서 3.16:1이므로 large text(24px 이상), border, focus ring 같은 non-text contrast에만 쓴다. Dark elevated surface 위에서는 제한 없이 쓴다.
 - **Accent-Strong**: `#a13c46` (`accent-strong`). Light page background 위 small text와, white text를 얹는 fill에 쓴다. 두 경우 모두 6.46:1이다.
-- **Accent-Hover**: `accent-strong`과 같은 값의 alias다. Wordmark와 footer link의 hover ink로 사용한다.
+- **Accent-Hover**: `accent-strong`과 같은 값의 alias다. 본문 inline link의 hover ink로 사용한다.
 - **On-Surface-Muted**: `#7e828c` (`on-surface-muted`). Dark elevated surface 위 low-emphasis ink다 (`surface` 위 4.83:1).
   Code fence의 주석과 chrome이 쓴다. Light page의 `text-muted`는 `surface` 위에서 1.4:1이므로 서로 대체하지 않는다.
 - **Border**: `#564242` (`outline-variant`). Subtle structural separation을 위한 cool, low-contrast border다.
