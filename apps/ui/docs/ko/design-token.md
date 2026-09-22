@@ -78,6 +78,7 @@ Light page background 위에서 block 하나를 구분해야 하는데 border를
 ## 코드 펜스
 
 Markdown code fence는 highlight.js를 거쳐 token마다 class를 얻고, `src/styles/code-highlight.css`가 그 class에 ink를 건다.
+Fence 전체는 `@/shared/ui`의 `CodeBlock`이 소유한다.
 
 - Token ink는 색상이 아니라 `surface` 위 밝기 네 단계로 역할을 나눈다.
   - Palette가 monochrome-first이고 green, blue, yellow를 쓰지 않으므로 다색 syntax theme을 그대로 들여올 수 없다.
@@ -91,6 +92,12 @@ Markdown code fence는 highlight.js를 거쳐 token마다 class를 얻고, `src/
 | 주석 (italic) | `on-surface-muted` | 4.8:1 |
 
 - Token 구분이 더 필요하면 색을 새로 들이지 말고 밝기 단계, italic, weight로 나눈다.
+- Fence에는 언어 표기와 복사 버튼을 얹은 한 줄 chrome을 함께 둔다.
+  - Highlighting만으로는 본문 사이에서 코드 블록임이 충분히 드러나지 않는다.
+- 복사 결과는 아이콘 교체와 `role="status"`로 알린다.
+  - 클립보드 복사는 화면에 결과를 남기지 않고, `navigator.clipboard`가 없는 컨텍스트에서는 실제로 실패한다.
+    표시가 없으면 성공과 실패가 같아 보인다.
+  - 이모지는 쓰지 않는다. 글리프에 색이 박혀 있어 `currentColor`를 따르지 않고, 성공 표시 이모지는 green이다.
 - Fence 본문은 `code-block`, 본문 사이의 inline code는 `code-snippet`을 쓴다.
   - 크기는 같고 line height만 다르다. Fence는 줄 단위로 읽고 inline code는 본문 한 줄에 얹힌다.
 

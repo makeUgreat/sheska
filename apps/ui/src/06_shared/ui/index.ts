@@ -2,6 +2,7 @@ export { ArticleLayout } from './article-layout';
 export { ArticleOutline } from './article-outline';
 export { BackLink } from './back-link';
 export { CardLink, CARD_LINK_TITLE } from './card-link';
+export { CodeBlock } from './code-block';
 export {
   EmptyState,
   type EmptyStateProps,

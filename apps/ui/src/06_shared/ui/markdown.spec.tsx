@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Markdown } from './markdown';
 import { createMarkdownComponents } from './markdown-components';
 
@@ -92,6 +93,12 @@ async function renderFence(body: string) {
 }
 
 describe('Markdown 코드 펜스', () => {
+  it('fence에 적은 언어를 라벨로 보여준다', async () => {
+    await renderFence(fence('ts', 'const retry = 3;'));
+
+    expect(screen.getByText('ts')).toBeDefined();
+  });
+
   it('등록한 언어의 keyword를 highlight token으로 쪼갠다', async () => {
     const { container } = await renderFence(fence('ts', 'const retry = 3;'));
 
@@ -107,10 +114,29 @@ describe('Markdown 코드 펜스', () => {
     expect(screen.getByText('+[----->+++<]>+.')).toBeDefined();
   });
 
-  it('inline code는 highlighting 대상이 아니다', () => {
-    const { container } = render(<Markdown body="옵션은 `retry`다" />);
+  it('복사 버튼이 fence 원문을 클립보드에 넣는다', async () => {
+    const user = userEvent.setup();
+    await renderFence(fence('ts', 'const retry = 3;'));
 
-    expect(container.querySelector('.hljs')).toBe(null);
+    await user.click(screen.getByRole('button', { name: 'Copy code' }));
+
+    expect(await navigator.clipboard.readText()).toBe('const retry = 3;\n');
+  });
+
+  it('복사한 뒤 결과를 status로 알린다', async () => {
+    const user = userEvent.setup();
+    await renderFence(fence('ts', 'const retry = 3;'));
+
+    expect(screen.getByRole('status').textContent).toBe('');
+    await user.click(screen.getByRole('button', { name: 'Copy code' }));
+
+    expect((await screen.findByRole('status')).textContent).toBe('Copied');
+  });
+
+  it('inline code에는 코드 블록 chrome을 붙이지 않는다', () => {
+    render(<Markdown body="옵션은 `retry`다" />);
+
+    expect(screen.queryByRole('button', { name: 'Copy code' })).toBe(null);
     expect(screen.getByText('retry').tagName).toBe('CODE');
   });
 });
