@@ -78,11 +78,11 @@ Hover와 motion interaction은 generated token을 거치지 않고 Tailwind util
 - **Card hover**: `@/shared/ui`의 `CardLink`가 소유한다. 200ms `ease-out`으로 1px lift, `accent` 5% tint, `--shadow-card-hover`, 제목 ink의 `accent-strong` 전환을 함께 건다. `prefers-reduced-motion`에서는 transition과 lift를 끈다.
 - **Action link hover**: 화살표에만 `translate-x-1`.
 - **Text link hover**: accent color로의 단순 color transition.
-- **Note outline 펼침**: `--breakpoint-toc`(1200px) 이상에서는 제목이 보이는 상태로 고정한다. 그 아래에서는 섹션당 선 하나짜리 눈금으로 접고 hover 또는 `focus-within`에 200ms `ease-out` opacity로 펼친다. 접힌 눈금은 `aria-hidden`이고 제목 링크는 항상 DOM에 남으므로, 보조기술에는 시각 상태와 무관하게 전체 목차가 읽힌다. Hover가 없는 기기(`@media (hover: none)`)에서는 펼치는 수단이 없으므로 펼친 상태로 둔다. 펼친 목차가 본문을 덮는 구간에서는 `--shadow-floating-panel`로 layer임을 드러내고, 여백에 여유가 생기는 `--breakpoint-toc` 이상에서는 그림자를 끈다. 목차의 가로 위치 계산은 [반응형 레이아웃](./responsive.md)에 있다. `prefers-reduced-motion`에서는 transition과 `scroll-behavior: smooth`를 모두 끈다.
+- **Article outline 펼침**: `--breakpoint-toc`(1200px) 이상에서는 제목이 보이는 상태로 고정한다. 그 아래에서는 섹션당 선 하나짜리 눈금으로 접고 hover 또는 `focus-within`에 200ms `ease-out` opacity로 펼친다. 접힌 눈금은 `aria-hidden`이고 제목 링크는 항상 DOM에 남으므로, 보조기술에는 시각 상태와 무관하게 전체 목차가 읽힌다. Hover가 없는 기기(`@media (hover: none)`)에서는 펼치는 수단이 없으므로 펼친 상태로 둔다. 펼친 목차가 본문을 덮는 구간에서는 `--shadow-floating-panel`로 layer임을 드러내고, 여백에 여유가 생기는 `--breakpoint-toc` 이상에서는 그림자를 끈다. 목차의 가로 위치 계산은 [반응형 레이아웃](./responsive.md)에 있다. `prefers-reduced-motion`에서는 transition과 `scroll-behavior: smooth`를 모두 끈다.
 
 Note, post, source card는 모두 `CardLink` 위에 놓인다. Card처럼 전체가 클릭되는 새 surface를 만들 때는 hover recipe를 다시 선언하지 말고 `CardLink`를 쓴다. Card hover 자체를 바꾸려면 `card-link.tsx` 한 곳만 고친다.
 
-Effect variable은 `design-tokens.json`이 아니라 `src/index.css`의 `@theme` block에 둔다. Generated token file은 color, typography, radius, spacing만 담는다. Effect는 지금 `CardLink`와 note outline이 쓰는 값이라 cross-platform token exchange 대상이 아니고, generator에 새 token group을 여는 대신 실제 사용처 옆에 둔다. Effect가 여러 primitive로 퍼지면 그때 `design-tokens.json`으로 승격한다.
+Effect variable은 `design-tokens.json`이 아니라 `src/index.css`의 `@theme` block에 둔다. Generated token file은 color, typography, radius, spacing만 담는다. Effect는 지금 `CardLink`와 article outline이 쓰는 값이라 cross-platform token exchange 대상이 아니고, generator에 새 token group을 여는 대신 실제 사용처 옆에 둔다. Effect가 여러 primitive로 퍼지면 그때 `design-tokens.json`으로 승격한다.
 
 새 effect나 motion 값을 추가하기 전에는 실제로 그 값을 쓰는 구현 지점을 확인한다. 추측이나 브랜드에 "어울릴 것 같은" 값으로 값을 만들지 않는다. 구현의 특정 줄을 가리킬 수 없는 값은 추가하지 않는다.
 

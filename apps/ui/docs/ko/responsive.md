@@ -46,7 +46,7 @@ mx-auto max-w-measure
 right: max(var(--spacing-gutter), calc(50% - var(--spacing-measure)/2 - var(--spacing-gutter) - 200px))
 ```
 
-Note outline의 가로 위치다. 화면이 넓으면 본문 기준, 여백이 부족해지면 화면 기준으로 브라우저가 매 순간 고른다.
+Article outline의 가로 위치다. 화면이 넓으면 본문 기준, 여백이 부족해지면 화면 기준으로 브라우저가 매 순간 고른다.
 전환점을 사람이 계산해서 적지 않으므로 본문 폭을 바꿔도 전환점이 따라온다.
 같은 동작을 media query로 쓰면 전환점 숫자가 본문 폭과 따로 놀다가 어긋난다.
 
@@ -60,8 +60,8 @@ Note outline의 가로 위치다. 화면이 넓으면 본문 기준, 여백이 �
 | 없음 | 320px~ | 기본. 단일 컬럼 |
 | `sm:` | 640px~ | 쌓인 block을 나란히 배치 (2열 grid, 가로 flex), header의 terminal 신호등 등장 |
 | `md:` | 768px~ | 카드 grid 2열, landing hero 타이포 확대 |
-| `lg:` | 1024px~ | Note outline 등장, source 상세 사이드 패널 |
-| `toc:` | 1200px~ | Note outline을 펼친 상태로 고정 |
+| `lg:` | 1024px~ | Article outline 등장, source 상세 사이드 패널 |
+| `toc:` | 1200px~ | Article outline을 펼친 상태로 고정 |
 | `xl:` | 1280px~ | 카드 grid 3열 |
 
 `sm` `md` `lg` `xl`은 Tailwind 기본값이다. `toc`는 `src/index.css`의 `@theme`에서 정의한다.

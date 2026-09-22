@@ -1,4 +1,4 @@
-import { slugify } from '@/shared/lib';
+import { slugify } from './slugify';
 
 const HEADING = /^(#{1,3})\s+(.+?)\s*$/;
 const FENCE = /^\s*(```|~~~)/;

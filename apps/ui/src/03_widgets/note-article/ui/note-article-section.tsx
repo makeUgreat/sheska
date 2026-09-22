@@ -1,13 +1,11 @@
+import { type GetNoteResponse } from '@/entities/note';
+import { formatDate, type Heading } from '@/shared/lib';
 import {
-  NoteBody,
-  NoteOutline,
-  type GetNoteResponse,
-  type Heading,
-} from '@/entities/note';
-import { formatDate } from '@/shared/lib';
-import { EmptyState, ErrorState, LoadingState } from '@/shared/ui';
-
-const OUTLINE_MINIMUM_HEADINGS = 2;
+  ArticleLayout,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+} from '@/shared/ui';
 
 export type NoteArticleState =
   | { status: 'loading' }
@@ -36,29 +34,25 @@ export function NoteArticleSection({ state }: { state: NoteArticleState }) {
   const { note, outline, activeHeadingId } = state;
 
   return (
-    <>
-      <article>
-        <NoteHeader note={note} />
-
-        {note.body && <NoteBody body={note.body} outline={outline} />}
-
-        {note.keywords.length > 0 && (
+    <ArticleLayout
+      header={<NoteHeader note={note} />}
+      body={note.body}
+      outline={outline}
+      activeHeadingId={activeHeadingId}
+      footer={
+        note.keywords.length > 0 && (
           <footer className="mt-14 border-t border-outline-variant/20 pt-6">
             <MetaLine label="topics" values={note.keywords} />
           </footer>
-        )}
-      </article>
-
-      {outline.length >= OUTLINE_MINIMUM_HEADINGS && (
-        <NoteOutline headings={outline} activeId={activeHeadingId} />
-      )}
-    </>
+        )
+      }
+    />
   );
 }
 
 function NoteHeader({ note }: { note: GetNoteResponse }) {
   return (
-    <header className="mb-20">
+    <>
       <h1 className="break-words font-sans text-headline-lg text-text-primary">
         {note.title}
       </h1>
@@ -75,7 +69,7 @@ function NoteHeader({ note }: { note: GetNoteResponse }) {
       <p className="mt-3 font-mono text-label-sm uppercase text-text-muted">
         {formatDate(note.updatedAt)}
       </p>
-    </header>
+    </>
   );
 }
 

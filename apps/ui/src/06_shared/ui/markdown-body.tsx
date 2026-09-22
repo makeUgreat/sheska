@@ -1,7 +1,8 @@
 import { Children, type ReactNode, useMemo } from 'react';
-import { Markdown, createMarkdownComponents } from '@/shared/ui';
 import { type Heading } from '../lib/parse-outline';
 import { parseWikiLinks } from '../lib/parse-wiki-links';
+import { Markdown } from './markdown';
+import { createMarkdownComponents } from './markdown-components';
 
 /**
  * 모든 wiki link는 API가 resolved target을 돌려주기 전까지 unresolved 상태다.
@@ -39,7 +40,8 @@ function withWikiLinks(children: ReactNode): ReactNode {
   });
 }
 
-export function NoteBody({
+/** 상세 화면 본문은 이 컴포넌트를 거쳐 wiki link와 heading anchor를 함께 얻는다. */
+export function MarkdownBody({
   body,
   outline,
 }: {

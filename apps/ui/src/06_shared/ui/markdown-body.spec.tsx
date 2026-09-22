@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { parseOutline } from '../lib/parse-outline';
-import { NoteBody } from './note-body';
+import { MarkdownBody } from './markdown-body';
 
 function renderBody(body: string) {
-  return render(<NoteBody body={body} outline={parseOutline(body)} />);
+  return render(<MarkdownBody body={body} outline={parseOutline(body)} />);
 }
 
-describe('NoteBody', () => {
+describe('MarkdownBody', () => {
   it('wiki link를 unresolved 표기로 바꾼다', () => {
     renderBody('[[feature-sliced-design|FSD]]를 따른다');
 

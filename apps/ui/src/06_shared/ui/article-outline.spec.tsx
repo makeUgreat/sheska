@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { type Heading } from '../lib/parse-outline';
-import { NoteOutline } from './note-outline';
+import { ArticleOutline } from './article-outline';
 
 const HEADINGS: Heading[] = [
   { depth: 2, text: '배경', id: 'background', line: 1 },
@@ -10,11 +10,11 @@ const HEADINGS: Heading[] = [
 ];
 
 function renderOutline(activeId: string | null = null) {
-  render(<NoteOutline headings={HEADINGS} activeId={activeId} />);
+  render(<ArticleOutline headings={HEADINGS} activeId={activeId} />);
   return screen.getByRole('navigation', { name: 'On this page' });
 }
 
-describe('NoteOutline', () => {
+describe('ArticleOutline', () => {
   it('접힌 상태에서도 모든 heading을 링크로 노출한다', () => {
     const outline = renderOutline();
 

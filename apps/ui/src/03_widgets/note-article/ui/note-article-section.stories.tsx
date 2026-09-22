@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { parseOutline, type GetNoteResponse } from '@/entities/note';
+import { type GetNoteResponse } from '@/entities/note';
+import { parseOutline } from '@/shared/lib';
 import { NoteArticleSection } from './note-article-section';
 
 const body = [

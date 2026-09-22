@@ -1,11 +1,5 @@
-import { useMemo } from 'react';
-import {
-  parseOutline,
-  useNote,
-  type GetNoteResponse,
-  type Heading,
-} from '@/entities/note';
-import { useActiveHeading } from '@/shared/lib';
+import { useNote, type GetNoteResponse } from '@/entities/note';
+import { useArticleOutline, type Heading } from '@/shared/lib';
 import {
   NoteArticleSection,
   type NoteArticleState,
@@ -33,10 +27,7 @@ function getNoteArticleState({
 
 export function NoteArticle({ noteId }: { noteId: string | undefined }) {
   const { data: note, isLoading, error } = useNote(noteId);
-  const outline = useMemo(() => parseOutline(note?.body ?? ''), [note?.body]);
-  const activeHeadingId = useActiveHeading(
-    outline.map((heading) => heading.id),
-  );
+  const { outline, activeHeadingId } = useArticleOutline(note?.body);
   const state = getNoteArticleState({
     isLoading,
     error,
