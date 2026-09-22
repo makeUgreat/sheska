@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import ReactMarkdown, { type Components } from 'react-markdown';
+import ReactMarkdown, { type Components, type Options } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { createMarkdownComponents } from './markdown-components';
 import { type RehypePlugins } from './markdown-highlight';
@@ -7,6 +7,10 @@ import { type RehypePlugins } from './markdown-highlight';
 const DEFAULT_COMPONENTS = createMarkdownComponents();
 
 const NO_PLUGINS: RehypePlugins = [];
+
+type RemarkPlugins = NonNullable<Options['remarkPlugins']>;
+
+const NO_REMARK_PLUGINS: RemarkPlugins = [];
 
 /** Fence는 줄 맨 앞에서 최대 3칸까지 들여쓸 수 있고 물결표로도 연다. */
 const CODE_FENCE = /^ {0,3}(```|~~~)/m;
@@ -41,17 +45,19 @@ const BODY = 'break-words [&>*:first-child]:mt-0';
 export function Markdown({
   body,
   components = DEFAULT_COMPONENTS,
+  remarkPlugins = NO_REMARK_PLUGINS,
   className = '',
 }: {
   body: string;
   components?: Components;
+  remarkPlugins?: RemarkPlugins;
   className?: string;
 }) {
   return (
     <div className={[BODY, className].filter(Boolean).join(' ')}>
       <ReactMarkdown
         components={components}
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, ...remarkPlugins]}
         rehypePlugins={useHighlightPlugins(body)}
       >
         {body}

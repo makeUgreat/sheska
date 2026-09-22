@@ -14,12 +14,25 @@ describe('MarkdownBody', () => {
     expect(screen.getByTitle('FSD — no note yet')).toBeDefined();
   });
 
+  it('강조 안의 wiki link도 unresolved 표기로 바꾼다', () => {
+    renderBody('- **[[feature-sliced-design|FSD]]**');
+
+    expect(screen.getByTitle('FSD — no note yet')).toBeDefined();
+  });
+
   it('표 안의 wiki link도 unresolved 표기로 바꾼다', () => {
     renderBody(
       ['| Note |', '| --- |', '| [[feature-sliced-design\\|FSD]] |'].join('\n'),
     );
 
     expect(screen.getByTitle('FSD — no note yet')).toBeDefined();
+  });
+
+  it('code fence 안의 wiki link 문법은 원문 그대로 둔다', () => {
+    renderBody(['```txt', '[[feature-sliced-design|FSD]]', '```'].join('\n'));
+
+    expect(screen.queryByTitle('FSD — no note yet')).toBe(null);
+    expect(screen.getByText('[[feature-sliced-design|FSD]]')).toBeDefined();
   });
 
   it('outline이 가진 heading id를 anchor로 붙인다', () => {
