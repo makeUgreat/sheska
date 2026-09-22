@@ -5,6 +5,8 @@ import { MarkdownBody } from './markdown-body';
 
 const OUTLINE_MINIMUM_HEADINGS = 2;
 
+const BLEEDS_INTO_THE_PAGE_GUTTER = '-mx-4 px-4';
+
 export function ArticleLayout({
   header,
   body,
@@ -21,7 +23,11 @@ export function ArticleLayout({
   return (
     <>
       <article>
-        <header className="mb-20">{header}</header>
+        <header
+          className={`mb-12 rounded-lg bg-outline-variant/4 py-7 ${BLEEDS_INTO_THE_PAGE_GUTTER}`}
+        >
+          {header}
+        </header>
 
         {body && <MarkdownBody body={body} outline={outline} />}
 
