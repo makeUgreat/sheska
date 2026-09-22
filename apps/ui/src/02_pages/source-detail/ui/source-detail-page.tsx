@@ -31,7 +31,7 @@ function FrontmatterSection({
       </h2>
       <dl className="grid gap-4 rounded-lg border border-gray-200 bg-page-background p-5 sm:grid-cols-2">
         {entries.map(([key, value]) => (
-          <div key={key}>
+          <div key={key} className="min-w-0">
             <dt className="text-xs font-medium uppercase text-gray-500">
               {key}
             </dt>

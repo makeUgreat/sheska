@@ -45,7 +45,7 @@ export function PostsListSection({
       className="min-h-screen scroll-mt-0 bg-white px-4 py-20 outline-none"
       tabIndex={-1}
     >
-      <div className="mx-auto max-w-[720px]">
+      <div className="mx-auto max-w-[var(--spacing-measure)]">
         <div className="mb-6 flex justify-end">
           <Link
             to="/"
@@ -55,28 +55,30 @@ export function PostsListSection({
           </Link>
         </div>
         <form className="group mb-12" role="search" onSubmit={handleSubmit}>
-          <div className="flex items-center gap-2 border-b border-accent/30 pb-2 transition-colors focus-within:border-accent">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-accent/30 pb-2 transition-colors focus-within:border-accent">
             <label
               htmlFor="posts-archive-search"
               className="shrink-0 font-mono text-label-sm font-bold uppercase text-accent-strong"
             >
               Search by title or content:
             </label>
-            <input
-              id="posts-archive-search"
-              type="search"
-              placeholder="Search title or content"
-              value={search.query}
-              onChange={(e) => search.onQueryChange(e.target.value)}
-              className="w-full border-0 bg-transparent p-0 font-mono text-code-snippet text-accent-strong caret-accent outline-none placeholder:text-text-muted focus:ring-0"
-            />
-            <span className="h-4 w-2 shrink-0 animate-pulse bg-accent" />
-            <button
-              type="submit"
-              className="shrink-0 font-mono text-xs font-bold uppercase text-accent-strong/85 transition-colors hover:text-accent-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
-            >
-              Search
-            </button>
+            <div className="flex min-w-[12rem] flex-1 items-center gap-2">
+              <input
+                id="posts-archive-search"
+                type="search"
+                placeholder="Search title or content"
+                value={search.query}
+                onChange={(e) => search.onQueryChange(e.target.value)}
+                className="w-full min-w-0 border-0 bg-transparent p-0 font-mono text-code-snippet text-accent-strong caret-accent outline-none placeholder:text-text-muted focus:ring-0"
+              />
+              <span className="h-4 w-2 shrink-0 animate-pulse bg-accent" />
+              <button
+                type="submit"
+                className="shrink-0 font-mono text-xs font-bold uppercase text-accent-strong/85 transition-colors hover:text-accent-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+              >
+                Search
+              </button>
+            </div>
           </div>
           {isSearching && search.mode !== null && (
             <div className="mt-3 font-mono text-label-sm font-bold uppercase text-text-muted">
