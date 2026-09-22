@@ -53,19 +53,6 @@ describe('Markdown', () => {
 });
 
 describe('createMarkdownComponents', () => {
-  it('decorateText로 감싼 inline text를 그대로 사용한다', () => {
-    render(
-      <Markdown
-        body="첫 문장"
-        components={createMarkdownComponents({
-          decorateText: (children) => <mark>{children}</mark>,
-        })}
-      />,
-    );
-
-    expect(screen.getByText('첫 문장').tagName).toBe('MARK');
-  });
-
   it('headingId가 돌려준 값을 heading anchor로 붙인다', () => {
     render(
       <Markdown

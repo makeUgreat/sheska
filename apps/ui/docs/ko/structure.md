@@ -77,11 +77,13 @@ Note 본문과 post 본문은 같은 markdown 규약을 쓴다. Post는 note와 
 이 규약의 구현은 `shared`가 소유한다.
 
 - `@/shared/lib`: `parseOutline`(heading을 outline으로), `parseWikiLinks`(`[[target|label]]` 분해), `useArticleOutline`(본문에서 outline과 현재 heading을 계산).
-- `@/shared/ui`: `Markdown`과 `createMarkdownComponents`(모든 본문이 공유하는 typography), `MarkdownBody`(거기에 wiki link와 heading anchor를 얹은 상세 화면 본문), `ArticleOutline`(목차), `ArticleLayout`(article header + 본문 + footer + 목차 배치).
+- `@/shared/ui`: `Markdown`과 `createMarkdownComponents`(모든 본문이 공유하는 typography), `remarkWikiLink`와 `WikiLink`(wiki link 문법), `MarkdownBody`(거기에 wiki link와 heading anchor를 얹은 상세 화면 본문), `ArticleOutline`(목차), `ArticleLayout`(article header + 본문 + footer + 목차 배치).
 
 목차나 wiki link가 필요 없는 짧은 본문은 `Markdown`을 그대로 쓴다. 상세 화면 본문은 `MarkdownBody`를 쓴다.
 
 Wiki link는 특정 entity의 표현이 아니라 이 앱 markdown 본문의 문법이므로 `shared`에 둔다. API가 resolved target을 돌려주기 전까지 모든 wiki link는 unresolved 상태이며, note 본문이든 post 본문이든 label만 남기고 점선 underline으로 표시한다. Vault에서 unresolved link는 오류가 아니라 정상 상태이므로 숨기지 않는다.
+
+문법 확장은 rendering 결과를 훑는 것이 아니라 remark plugin으로 markdown AST 단계에서 처리한다. 강조나 표처럼 어떤 문법이 감싸고 있든 같게 동작해야 하고, 내용을 node value로 들고 있는 code fence는 건드리지 않아야 하기 때문이다. Component mapping은 plugin이 만든 element만 그리고, 문법 자체를 다시 해석하지 않는다.
 
 상세 화면 widget은 이 규약을 다시 구현하지 않는다. Entity마다 다른 것은 data fetching과 header, footer의 내용뿐이며, 나머지는 `ArticleLayout`에 넘긴다. 같은 layer의 `note-article`과 `post-article`은 서로 import할 수 없으므로, 공유할 것이 생기면 이 규약처럼 `shared`로 내린다.
 

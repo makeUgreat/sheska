@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { type Components } from 'react-markdown';
 import { CodeBlock, useInsideCodeBlock } from './code-block';
+import { WIKI_LINK_ELEMENT, WikiLink } from './markdown-wiki-link';
 
 /** Heading anchor로 이동할 때 sticky header 아래에 멈추게 한다. */
 const BELOW_HEADER =
@@ -35,13 +36,10 @@ function CodeText({
 }
 
 export type MarkdownComponentOptions = {
-  /** 모든 inline text 자리를 감싼다. 본문마다 다른 link 문법을 여기서 처리한다. */
-  decorateText?: (children: ReactNode) => ReactNode;
   headingId?: (node?: MarkdownNode) => string | undefined;
 };
 
 export function createMarkdownComponents({
-  decorateText = (children) => children,
   headingId = () => undefined,
 }: MarkdownComponentOptions = {}): Components {
   /** 본문은 page 제목 아래에 놓이므로 최상위 heading을 h2로 낮춘다. */
@@ -50,11 +48,11 @@ export function createMarkdownComponents({
       id={headingId(node)}
       className={`mt-12 mb-4 ${BELOW_HEADER} font-sans text-headline-md text-text-primary`}
     >
-      {decorateText(children)}
+      {children}
     </h2>
   );
 
-  return {
+  const components: Components = {
     h1: SectionHeading,
     h2: SectionHeading,
     h3: ({ children, node }) => (
@@ -62,19 +60,17 @@ export function createMarkdownComponents({
         id={headingId(node)}
         className={`mt-8 mb-3 ${BELOW_HEADER} font-sans text-body-lg font-semibold text-text-primary`}
       >
-        {decorateText(children)}
+        {children}
       </h3>
     ),
     p: ({ children }) => (
-      <p className="mb-5 text-body-md text-text-secondary">
-        {decorateText(children)}
-      </p>
+      <p className="mb-5 text-body-md text-text-secondary">{children}</p>
     ),
     li: ({ className, children }) =>
       className?.includes('task-list-item') ? (
-        <li className="flex items-start gap-2">{decorateText(children)}</li>
+        <li className="flex items-start gap-2">{children}</li>
       ) : (
-        <li>{decorateText(children)}</li>
+        <li>{children}</li>
       ),
     input: ({ checked }) => (
       <input
@@ -85,9 +81,7 @@ export function createMarkdownComponents({
       />
     ),
     del: ({ children }) => (
-      <del className="text-text-muted line-through">
-        {decorateText(children)}
-      </del>
+      <del className="text-text-muted line-through">{children}</del>
     ),
     table: ({ children }) => (
       <div className="my-7 overflow-x-auto">
@@ -98,12 +92,12 @@ export function createMarkdownComponents({
     ),
     th: ({ children }) => (
       <th className="border-b border-outline-variant/20 px-3 py-2 first:pl-0 last:pr-0 font-mono text-label-sm font-normal uppercase text-text-muted">
-        {decorateText(children)}
+        {children}
       </th>
     ),
     td: ({ children }) => (
       <td className="border-b border-outline-variant/10 px-3 py-2 first:pl-0 last:pr-0 align-top">
-        {decorateText(children)}
+        {children}
       </td>
     ),
     ul: ({ className, children }) =>
@@ -142,4 +136,6 @@ export function createMarkdownComponents({
     pre: CodeBlock,
     code: CodeText,
   };
+
+  return { ...components, [WIKI_LINK_ELEMENT]: WikiLink } as Components;
 }
