@@ -41,7 +41,7 @@ function DashRail({
   );
 }
 
-export function NoteOutline({
+export function ArticleOutline({
   headings,
   activeId,
 }: {

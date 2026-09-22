@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { parseOutline } from '../lib/parse-outline';
-import { NoteBody } from './note-body';
+import { MarkdownBody } from './markdown-body';
 
 function renderBody(body: string) {
-  return render(<NoteBody body={body} outline={parseOutline(body)} />);
+  return render(<MarkdownBody body={body} outline={parseOutline(body)} />);
 }
 
-describe('NoteBody', () => {
+describe('MarkdownBody', () => {
   it('GFM 표 문법을 table로 렌더한다', () => {
     renderBody(
       ['| Option | Default |', '| --- | --- |', '| retry | 3 |'].join('\n'),
@@ -40,6 +40,20 @@ describe('NoteBody', () => {
     expect(
       screen.getByRole('link', { name: 'https://example.com/docs' }),
     ).toBeDefined();
+  });
+
+  it('언어 표기가 없는 코드 펜스도 inline code 강조색을 쓰지 않는다', () => {
+    const { container } = renderBody(['```', 'fd 5 준비됨', '```'].join('\n'));
+
+    const code = container.querySelector('pre code');
+    expect(code?.className).toBe('');
+  });
+
+  it('inline code는 강조색으로 구분한다', () => {
+    const { container } = renderBody('`read()`를 호출한다');
+
+    const code = container.querySelector('code');
+    expect(code?.className).toContain('text-accent-strong');
   });
 
   it('표 안의 wiki link도 unresolved 표기로 바꾼다', () => {

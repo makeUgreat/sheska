@@ -1,4 +1,10 @@
-import { Children, type ReactNode, useMemo } from 'react';
+import {
+  Children,
+  createContext,
+  type ReactNode,
+  useContext,
+  useMemo,
+} from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { type Heading } from '../lib/parse-outline';
@@ -38,6 +44,18 @@ function withWikiLinks(children: ReactNode): ReactNode {
       </>
     );
   });
+}
+
+const FencedCodeContext = createContext(false);
+
+function MarkdownCode({ children }: { children: ReactNode }) {
+  return useContext(FencedCodeContext) ? (
+    <code>{children}</code>
+  ) : (
+    <code className="rounded bg-outline-variant/10 px-1.5 py-0.5 font-mono text-code-snippet text-accent-strong">
+      {children}
+    </code>
+  );
 }
 
 /** Heading anchors must land below the sticky header, not under it. */
@@ -142,22 +160,17 @@ function createMarkdownComponents(idByLine: Map<number, string>): Components {
       </a>
     ),
     pre: ({ children }) => (
-      <pre className="my-7 overflow-x-auto rounded-lg bg-surface p-5 font-mono text-code-snippet text-on-surface">
-        {children}
-      </pre>
-    ),
-    code: ({ className, children }) =>
-      className?.startsWith('language-') ? (
-        <code className="font-mono text-code-snippet">{children}</code>
-      ) : (
-        <code className="rounded bg-outline-variant/10 px-1.5 py-0.5 font-mono text-code-snippet text-accent-strong">
+      <FencedCodeContext.Provider value={true}>
+        <pre className="my-7 overflow-x-auto rounded-lg bg-surface p-5 font-mono text-code-snippet text-on-surface">
           {children}
-        </code>
-      ),
+        </pre>
+      </FencedCodeContext.Provider>
+    ),
+    code: MarkdownCode,
   };
 }
 
-export function NoteBody({
+export function MarkdownBody({
   body,
   outline,
 }: {
