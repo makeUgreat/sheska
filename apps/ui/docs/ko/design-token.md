@@ -71,6 +71,8 @@ Depth의 주된 수단은 **Tonal Layers**와 **Low-Contrast Outlines**다.
 
 Boundary를 정의할 때는 `#564242` (`outline-variant`)의 1px solid border를 사용한다. Active 또는 focused element는 border나 text color를 primary Rose Red (`#e16d76`)로 바꿔 "glow-less" highlight를 만든다.
 
+Light page background 위에서 block 하나를 구분해야 하는데 border를 두르면 과한 경우에는 `outline-variant`를 4% opacity tint로 깐다 (`bg-outline-variant/4`). Note와 post 상세의 article header가 이 tint를 쓰며, `@/shared/ui`의 `ArticleLayout`이 소유한다. Dark elevated surface의 tonal layer와 달리 이 tint는 light page 위 grouping 수단이므로 `surface` 계열로 대체하지 않는다. Elevated dark surface가 필요한 자리인지, 같은 page 평면에서 묶기만 하면 되는 자리인지로 둘을 구분한다.
+
 ## Effects & Motion
 
 Hover와 motion interaction은 generated token을 거치지 않고 Tailwind utility class를 그대로 사용한다. 예:
