@@ -37,6 +37,14 @@
         "hex": "#e1e2ea"
       }
     },
+    "on-surface-muted": {
+      "$description": "Low-emphasis ink on the dark elevated surfaces (4.83:1 on surface). Code fence comments and code fence chrome use it. text-muted is the light-page counterpart and measures 1.4:1 here.",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.4941, 0.5098, 0.549],
+        "hex": "#7e828c"
+      }
+    },
     "outline-variant": {
       "$value": {
         "colorSpace": "srgb",
@@ -230,6 +238,16 @@
         "fontSize": "14px",
         "fontWeight": "400",
         "lineHeight": "1.5"
+      }
+    },
+    "code-block": {
+      "$description": "Multi-line code fence body. Same size as code-snippet with looser leading, because a fence is read line by line while an inline snippet sits in a prose line.",
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.font-family.mono}",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "1.7"
       }
     },
     "display-terminal": {

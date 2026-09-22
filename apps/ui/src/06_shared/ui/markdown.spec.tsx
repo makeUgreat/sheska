@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { Markdown } from './markdown';
 import { createMarkdownComponents } from './markdown-components';
 
@@ -74,5 +74,43 @@ describe('createMarkdownComponents', () => {
     );
 
     expect(screen.getByRole('heading', { level: 2 }).id).toBe('install');
+  });
+});
+
+function fence(language: string, ...lines: string[]) {
+  return ['```' + language, ...lines, '```'].join('\n');
+}
+
+/** Highlighter는 나중에 도착하므로 fence에 hljs class가 붙을 때까지 기다린다. */
+async function renderFence(body: string) {
+  const view = render(<Markdown body={body} />);
+
+  await waitFor(() =>
+    expect(view.container.querySelector('.hljs')).not.toBe(null),
+  );
+  return view;
+}
+
+describe('Markdown 코드 펜스', () => {
+  it('등록한 언어의 keyword를 highlight token으로 쪼갠다', async () => {
+    const { container } = await renderFence(fence('ts', 'const retry = 3;'));
+
+    expect(container.querySelector('.hljs-keyword')?.textContent).toBe('const');
+  });
+
+  it('등록하지 않은 언어는 원문 그대로 둔다', async () => {
+    const { container } = await renderFence(
+      fence('brainfuck', '+[----->+++<]>+.'),
+    );
+
+    expect(container.querySelector('.hljs-keyword')).toBe(null);
+    expect(screen.getByText('+[----->+++<]>+.')).toBeDefined();
+  });
+
+  it('inline code는 highlighting 대상이 아니다', () => {
+    const { container } = render(<Markdown body="옵션은 `retry`다" />);
+
+    expect(container.querySelector('.hljs')).toBe(null);
+    expect(screen.getByText('retry').tagName).toBe('CODE');
   });
 });

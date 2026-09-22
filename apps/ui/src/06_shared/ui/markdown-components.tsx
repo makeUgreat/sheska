@@ -122,13 +122,14 @@ export function createMarkdownComponents({
       </a>
     ),
     pre: ({ children }) => (
-      <pre className="my-7 overflow-x-auto rounded-lg bg-surface p-5 font-mono text-code-snippet text-on-surface">
+      <pre className="my-7 overflow-x-auto rounded-lg bg-surface p-5 font-mono text-code-block text-on-surface">
         {children}
       </pre>
     ),
+    /** Fence 안의 code는 highlighter가 붙인 class를 그대로 들고 가야 token ink가 걸린다. */
     code: ({ className, children }) =>
-      className?.startsWith('language-') ? (
-        <code className="font-mono text-code-snippet">{children}</code>
+      className?.includes('language-') ? (
+        <code className={className}>{children}</code>
       ) : (
         <code className="rounded bg-outline-variant/10 px-1.5 py-0.5 font-mono text-code-snippet text-accent-strong">
           {children}

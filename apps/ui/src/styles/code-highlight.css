@@ -1,0 +1,50 @@
+/*
+ * highlight.js가 code fence 안에 심는 token class의 ink다. 밝기 네 단계로 역할을
+ * 나누는 이유는 docs/ko/design-token.md의 "코드 펜스"에 있다.
+ */
+.hljs .hljs-string,
+.hljs .hljs-regexp,
+.hljs .hljs-number,
+.hljs .hljs-attr,
+.hljs .hljs-attribute,
+.hljs .hljs-variable,
+.hljs .hljs-template-variable,
+.hljs .hljs-link,
+.hljs .hljs-addition {
+  color: var(--color-primary);
+}
+
+.hljs .hljs-keyword,
+.hljs .hljs-built_in,
+.hljs .hljs-literal,
+.hljs .hljs-type,
+.hljs .hljs-selector-tag,
+.hljs .hljs-name,
+.hljs .hljs-tag,
+.hljs .hljs-meta,
+.hljs .hljs-doctag,
+.hljs .hljs-symbol,
+.hljs .hljs-bullet,
+.hljs .hljs-section {
+  color: var(--color-accent);
+}
+
+.hljs .hljs-comment,
+.hljs .hljs-quote,
+.hljs .hljs-deletion {
+  color: var(--color-on-surface-muted);
+  font-style: italic;
+}
+
+/* Template literal 안의 ${...}는 문자열이 아니라 식이므로 base ink로 되돌린다. */
+.hljs .hljs-subst {
+  color: var(--color-on-surface);
+}
+
+.hljs .hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs .hljs-strong {
+  font-weight: 500;
+}

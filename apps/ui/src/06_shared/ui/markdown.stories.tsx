@@ -59,3 +59,34 @@ export const TableAndCode: Story = {
     ].join('\n'),
   },
 };
+
+export const CodeFences: Story = {
+  args: {
+    body: [
+      '등록한 언어는 token ink 네 단계로 나뉘고, 언어를 적지 않은 fence는 그대로 둔다.',
+      '',
+      '```ts',
+      '// 재시도 횟수만 바꾼다',
+      "import { createClient } from '@sheska/api';",
+      '',
+      'export async function loadPost(id: number) {',
+      '  const client = createClient({ retry: 3 });',
+      '  return client.get(`/posts/${id}`);',
+      '}',
+      '```',
+      '',
+      '```bash',
+      '# 정적 검사를 한 번에 돌린다',
+      'pnpm --filter @sheska/ui harness:static',
+      '```',
+      '',
+      '```json',
+      '{ "retry": 3, "timeout": "30s" }',
+      '```',
+      '',
+      '```',
+      'GET /posts/293 200 41ms',
+      '```',
+    ].join('\n'),
+  },
+};
