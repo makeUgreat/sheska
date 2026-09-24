@@ -1,4 +1,4 @@
-import { ValidationFailedError } from '@core/errors';
+import { InvalidDataError, ValidationFailedError } from '@core/errors';
 import {
   type SourceDocumentParser,
   type SourceFingerprinter,
@@ -52,10 +52,14 @@ describe('SourceContentSnapshotCalculator', () => {
     );
   });
 
-  it('frontmatter 파싱 실패를 ValidationFailedError로 변환한다', async () => {
+  it('문서가 잘못된 parser 실패를 ValidationFailedError로 변환한다', async () => {
     const failingParser: SourceDocumentParser = {
       parse: vi.fn().mockImplementation(() => {
-        throw new Error('Frontmatter must be a YAML mapping');
+        throw new InvalidDataError({
+          code: 'source_document.frontmatter_not_mapping',
+          message: 'Frontmatter must be a YAML mapping',
+          details: { fields: ['frontmatter'] },
+        });
       }),
     };
     const fingerprinter = createSourceFingerprinterMock();
@@ -79,6 +83,21 @@ describe('SourceContentSnapshotCalculator', () => {
     await expect(calculator.calculate('# Source note')).rejects.toBeInstanceOf(
       ValidationFailedError,
     );
+  });
+
+  it('문서 문제가 아닌 parser 실패는 변환하지 않고 전파한다', async () => {
+    const parserBug = new TypeError('Cannot read properties of undefined');
+    const brokenParser: SourceDocumentParser = {
+      parse: vi.fn().mockImplementation(() => {
+        throw parserBug;
+      }),
+    };
+    const calculator = new SourceContentSnapshotCalculator(
+      createSourceFingerprinterMock(),
+      brokenParser,
+    );
+
+    await expect(calculator.calculate('# Source note')).rejects.toBe(parserBug);
   });
 });
 
