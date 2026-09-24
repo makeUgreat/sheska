@@ -1,7 +1,6 @@
 import { InvariantViolationError } from '@core/errors';
 import { ValueObject } from '@kernels/domain';
 import { SourceFingerprint } from './source-fingerprint.vo';
-import { SourceContent } from './source-content.vo';
 import { SourceSize } from './source-size.vo';
 import {
   SourceFrontmatter,
@@ -25,7 +24,7 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
     const { body, frontmatter, title, fingerprint, size } = value;
 
     return new SourceContentSnapshot({
-      body: SourceContent.of(body).unpack(),
+      body,
       frontmatter: SourceFrontmatter.of(frontmatter).unpack(),
       title,
       fingerprint: SourceFingerprint.of(fingerprint).unpack(),
