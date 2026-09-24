@@ -42,7 +42,7 @@ export class Source extends AggregateRoot<SourceProps> {
       id: newId(),
       props: {
         externalSourceId: sourceId,
-        contentSnapshot: SourceContentSnapshot.create({
+        contentSnapshot: SourceContentSnapshot.of({
           ...snapshot,
           title: snapshot.title ?? sourceId.unpack(),
         }),
@@ -67,7 +67,7 @@ export class Source extends AggregateRoot<SourceProps> {
       id,
       props: {
         externalSourceId: ExternalSourceId.of(externalSourceId),
-        contentSnapshot: SourceContentSnapshot.restore({
+        contentSnapshot: SourceContentSnapshot.of({
           body,
           frontmatter,
           title,
@@ -87,7 +87,7 @@ export class Source extends AggregateRoot<SourceProps> {
     fingerprint: string;
     size: number;
   }): SyncContentSnapshotResult {
-    const contentSnapshot = SourceContentSnapshot.create({
+    const contentSnapshot = SourceContentSnapshot.of({
       ...params,
       title: params.title ?? this.props.externalSourceId.unpack(),
     });

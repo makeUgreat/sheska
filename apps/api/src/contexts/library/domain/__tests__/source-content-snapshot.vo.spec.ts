@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 describe('SourceContentSnapshot', () => {
   it('파싱된 본문과 전체 frontmatter를 보존한다', () => {
-    const snapshot = SourceContentSnapshot.create({
+    const snapshot = SourceContentSnapshot.of({
       body: '# Source note',
       frontmatter: { title: 'Source note', custom: { enabled: true } },
       title: 'Source note',
@@ -21,7 +21,7 @@ describe('SourceContentSnapshot', () => {
   });
 
   it('빈 본문과 size 0을 허용한다', () => {
-    const snapshot = SourceContentSnapshot.create({
+    const snapshot = SourceContentSnapshot.of({
       body: '',
       frontmatter: {},
       title: 'Notes/empty.md',
@@ -34,7 +34,7 @@ describe('SourceContentSnapshot', () => {
 
   it('fingerprint가 공백뿐이면 throw한다', () => {
     expect(() =>
-      SourceContentSnapshot.create({
+      SourceContentSnapshot.of({
         body: '# Source note',
         frontmatter: {},
         title: 'Notes/source.md',
