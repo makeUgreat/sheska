@@ -1,3 +1,4 @@
+import { SourceContentSnapshot } from '@contexts/library/domain';
 import { describe, expect, it } from 'vitest';
 import {
   buildSource,
@@ -19,13 +20,15 @@ describe('SourcePgDrizzleMapper', () => {
 
     expect(source.id).toBe('source-1');
     expect(source.getProps().externalSourceId.unpack()).toBe('Notes/source.md');
-    expect(source.getProps().contentSnapshot.unpack()).toEqual({
-      body: '안녕',
-      frontmatter: { title: '인사' },
-      title: '인사',
-      fingerprint: 'fingerprint-1',
-      size: sourceContentByteSize('안녕'),
-    });
+    expect(source.getProps().contentSnapshot).toEqual(
+      SourceContentSnapshot.of({
+        body: '안녕',
+        frontmatter: { title: '인사' },
+        title: '인사',
+        fingerprint: 'fingerprint-1',
+        size: sourceContentByteSize('안녕'),
+      }),
+    );
   });
 
   it('source row의 title이 공백이면 domain invariant error를 throw한다', () => {

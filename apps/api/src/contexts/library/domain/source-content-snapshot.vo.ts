@@ -8,6 +8,14 @@ import {
 } from './source-frontmatter.vo';
 
 interface SourceContentSnapshotProps {
+  frontmatter: SourceFrontmatter;
+  title: string;
+  body: string;
+  fingerprint: SourceFingerprint;
+  size: SourceSize;
+}
+
+interface RawSourceContentSnapshot {
   frontmatter: SourceFrontmatterProps;
   title: string;
   body: string;
@@ -20,23 +28,20 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
     super(props);
   }
 
-  static of(value: SourceContentSnapshotProps): SourceContentSnapshot {
+  static of(value: RawSourceContentSnapshot): SourceContentSnapshot {
     const { body, frontmatter, title, fingerprint, size } = value;
 
     return new SourceContentSnapshot({
       body,
-      frontmatter: SourceFrontmatter.of(frontmatter).unpack(),
+      frontmatter: SourceFrontmatter.of(frontmatter),
       title,
-      fingerprint: SourceFingerprint.of(fingerprint).unpack(),
-      size: SourceSize.of(size).unpack(),
+      fingerprint: SourceFingerprint.of(fingerprint),
+      size: SourceSize.of(size),
     });
   }
 
   hasSameContentAs(other: SourceContentSnapshot): boolean {
-    const current = this.unpack();
-    const next = other.unpack();
-
-    return current.fingerprint === next.fingerprint;
+    return this.props.fingerprint.equals(other.props.fingerprint);
   }
 
   protected validate(props: SourceContentSnapshotProps): void {

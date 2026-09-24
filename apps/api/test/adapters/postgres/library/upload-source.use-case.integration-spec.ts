@@ -14,6 +14,7 @@ import { type SourceFingerprinter } from '@contexts/library/application/ports';
 import {
   type SourceRepository,
   type SourceSyncJobRepository,
+  SourceContentSnapshot,
 } from '@contexts/library/domain';
 import {
   SOURCE_EMBEDDING_CHUNK_QUEUE,
@@ -105,13 +106,15 @@ describe('UploadSourceUseCase', () => {
 
     const source = await sources.find({ externalSourceId });
     expect(source?.id).toBe(result.sourceId);
-    expect(source?.getProps().contentSnapshot.unpack()).toEqual({
-      body: content,
-      frontmatter: {},
-      title: externalSourceId,
-      fingerprint,
-      size: sourceContentByteSize(content),
-    });
+    expect(source?.getProps().contentSnapshot).toEqual(
+      SourceContentSnapshot.of({
+        body: content,
+        frontmatter: {},
+        title: externalSourceId,
+        fingerprint,
+        size: sourceContentByteSize(content),
+      }),
+    );
 
     const [syncJob] = await findSyncJobsBySourceId(result.sourceId);
 
@@ -201,17 +204,19 @@ custom:
     const result = await useCase.execute({ externalSourceId, content });
 
     const source = await sources.get({ id: result.sourceId });
-    expect(source.getProps().contentSnapshot.unpack()).toEqual({
-      body: '# Retry body',
-      frontmatter: {
+    expect(source.getProps().contentSnapshot).toEqual(
+      SourceContentSnapshot.of({
+        body: '# Retry body',
+        frontmatter: {
+          title: 'Retry Amplification',
+          aliases: ['Nested Retries'],
+          custom: { status: 'draft' },
+        },
         title: 'Retry Amplification',
-        aliases: ['Nested Retries'],
-        custom: { status: 'draft' },
-      },
-      title: 'Retry Amplification',
-      fingerprint,
-      size: sourceContentByteSize(content),
-    });
+        fingerprint,
+        size: sourceContentByteSize(content),
+      }),
+    );
 
     const messages = await database
       .select()
@@ -286,13 +291,15 @@ custom:
     expect(secondResult.syncJobId?.length).toBeGreaterThan(0);
 
     const source = await sources.find({ externalSourceId });
-    expect(source?.getProps().contentSnapshot.unpack()).toEqual({
-      body: newContent,
-      frontmatter: {},
-      title: externalSourceId,
-      fingerprint: newFingerprint,
-      size: sourceContentByteSize(newContent),
-    });
+    expect(source?.getProps().contentSnapshot).toEqual(
+      SourceContentSnapshot.of({
+        body: newContent,
+        frontmatter: {},
+        title: externalSourceId,
+        fingerprint: newFingerprint,
+        size: sourceContentByteSize(newContent),
+      }),
+    );
 
     const persistedSyncJobs = await findSyncJobsBySourceId(
       firstResult.sourceId,
