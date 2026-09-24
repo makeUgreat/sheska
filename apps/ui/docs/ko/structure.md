@@ -83,13 +83,13 @@ Note 본문과 post 본문은 같은 markdown 규약을 쓴다. Post는 note와 
 
 Obsidian 문법 코드는 `obsidian/` 하위 폴더에 모은다. 표준 Markdown과 GFM은 라이브러리가 읽지만 vault 문법은 직접 구현해야 해서 markdown 코드 대부분이 여기서 나온다. 폴더로 나눠 두면 어떤 복잡도가 vault 문법 때문인지 경로만 보고 알 수 있다. 하위 폴더는 `markdown/` 모듈의 내부이므로 모듈 밖에서는 여전히 `markdown/index.ts`로만 import한다.
 
-- `shared/ui`: `ArticleOutline`(목차), `ArticleLayout`(article header + 본문 + footer + 목차 배치). Markdown 문법이 아니라 article 배치를 다루므로 `markdown/` 밖에 둔다.
+- `shared/ui`: `TableOfContents`(목차), `ArticleLayout`(article header + 본문 + footer + 목차 배치). Markdown 문법이 아니라 article 배치를 다루므로 `markdown/` 밖에 둔다.
 
 Note, post, source 본문은 모두 같은 vault 파일이므로 `Markdown` 하나로 같은 문법을 거쳐 그린다. 화면마다 문법을 다르게 두면 같은 본문이 어떤 화면에서는 wiki link로, 어떤 화면에서는 날것의 괄호로 보인다.
 
 Wiki link는 특정 entity의 표현이 아니라 이 앱 markdown 본문의 문법이므로 `shared`에 둔다. Target 없이 anchor만 있는 `[[#^id|label]]`은 같은 본문 안의 block을 가리키므로 API 없이 그 자리에서 이어진다. 다른 노트를 가리키는 link는 API가 resolved target을 돌려주기 전까지 unresolved 상태이며, note 본문이든 post 본문이든 label만 남기고 점선 underline으로 표시한다. Vault에서 unresolved link는 오류가 아니라 정상 상태이므로 숨기지 않는다.
 
-Page 제목이 `<h1>`이므로 본문 heading은 그 아래 단계에 놓인다. 본문의 heading은 모두 한 단계씩 낮춰 `#`은 `<h2>`, `#####`는 `<h6>`로 렌더한다. HTML heading은 `<h6>`까지뿐이라 `######`는 `#####`와 같은 `<h6>`에 둔다. 두 단계는 어딘가에서 합쳐야 하는데, vault는 `#`을 `##`의 상위 섹션으로 자주 쓰므로 거의 쓰지 않는 가장 깊은 단계를 합친다. Vault는 heading을 구조가 아니라 크기로 쓰는 경우가 많아서 `####`만 쓰는 노트가 흔한데, 얕은 단계로 끌어올리면 저자가 나눈 구조가 무너진다.
+Page 제목이 `<h1>`이므로 본문 heading은 그 아래 단계에 놓인다. 본문의 heading은 모두 한 단계씩 낮춰 `#`은 `<h2>`, `#####`는 `<h6>`로 렌더한다. HTML heading은 `<h6>`까지뿐이라 `######`는 `#####`와 같은 `<h6>`에 둔다. 두 단계는 어딘가에서 합쳐야 하는데, vault는 `#`을 `##`의 상위 섹션으로 자주 쓰므로 거의 쓰지 않는 가장 깊은 단계를 합친다. Vault는 heading을 구조가 아니라 크기로 쓰는 경우가 많아서 `####`만 쓰는 노트가 흔한데, 얕은 단계로 끌어올리면 저자가 나눈 구조가 무너진다. 목차도 같은 이유로 여섯 단계를 모두 담고, 들여쓰기만 그 본문이 실제로 쓴 가장 얕은 단계를 기준으로 계산한다.
 
 Vault는 block 표시(`^c58057`)로 본문의 한 block에 이름을 붙인다. `remarkBlockAnchor`가 이 표시를 본문에서 지우고 그 block에 anchor id를 남긴다. 표시가 어떤 block에 붙었는지는 문법에 따라 달라서, callout 마지막 줄에 붙으면 인용 한 덩어리를, 표 바로 뒤에 붙으면 표 전체를, tight list 항목 끝에 붙으면 그 항목을 가리킨다. 이어질 anchor가 본문에 없는 block reference는 이동할 곳이 없으므로 unresolved로 남긴다.
 

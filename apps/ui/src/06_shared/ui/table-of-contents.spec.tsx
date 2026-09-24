@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { type Heading } from '../lib/markdown';
-import { ArticleOutline } from './article-outline';
+import { TableOfContents } from './table-of-contents';
 
 const HEADINGS: Heading[] = [
   { depth: 2, text: '배경', id: 'background' },
@@ -10,12 +10,12 @@ const HEADINGS: Heading[] = [
 ];
 
 function renderOutline(activeId: string | null = null) {
-  render(<ArticleOutline headings={HEADINGS} activeId={activeId} />);
+  render(<TableOfContents headings={HEADINGS} activeId={activeId} />);
   return screen.getByRole('navigation', { name: 'On this page' });
 }
 
-describe('ArticleOutline', () => {
-  it('접힌 상태에서도 모든 heading을 링크로 노출한다', () => {
+describe('TableOfContents', () => {
+  it('모든 heading을 링크로 노출한다', () => {
     const outline = renderOutline();
 
     expect(
@@ -23,14 +23,6 @@ describe('ArticleOutline', () => {
         .getAllByRole('link')
         .map((link) => link.textContent),
     ).toEqual(['배경', '기존 방식', '결론']);
-  });
-
-  it('접힌 상태를 표시하는 눈금은 보조기술에 중복으로 읽히지 않는다', () => {
-    const outline = renderOutline();
-
-    expect(within(outline).getAllByRole('listitem')).toHaveLength(
-      HEADINGS.length,
-    );
   });
 
   it('한 줄에 담기지 않는 제목도 전체를 읽을 수 있게 title로 남긴다', () => {
@@ -56,16 +48,31 @@ describe('ArticleOutline', () => {
     ).toBeNull();
   });
 
-  /**
-   * 펼침 motion은 정지된 화면에서는 드러나지 않는다. jsdom은 실제 transition을
-   * 실행하지 않으므로 값 대신 선언이 남아 있는지로 지킨다.
-   */
-  it('펼침은 opacity transition으로 하고 motion-reduce에서 끈다', () => {
-    const outline = renderOutline();
-    const panel = within(outline).getByText('On this page').parentElement;
+  it('본문이 쓴 가장 얕은 단계를 기준으로 들여쓴다', () => {
+    const deepOnly: Heading[] = [
+      { depth: 4, text: '첫 절', id: 'first' },
+      { depth: 5, text: '그 아래', id: 'second' },
+    ];
+    render(<TableOfContents headings={deepOnly} activeId={null} />);
 
-    expect(panel?.className).toContain('transition-opacity');
-    expect(panel?.className).toContain('motion-reduce:transition-none');
+    expect(screen.getByRole('link', { name: '첫 절' }).className).not.toContain(
+      'pl-',
+    );
+    expect(screen.getByRole('link', { name: '그 아래' }).className).toContain(
+      'pl-3',
+    );
+  });
+
+  it('`#` 아래의 `##`을 한 단계 들여쓴다', () => {
+    const fromTop: Heading[] = [
+      { depth: 1, text: '개요', id: 'overview' },
+      { depth: 2, text: '설치', id: 'install' },
+    ];
+    render(<TableOfContents headings={fromTop} activeId={null} />);
+
+    expect(screen.getByRole('link', { name: '설치' }).className).toContain(
+      'pl-3',
+    );
   });
 
   it('heading id를 anchor로 연결한다', () => {

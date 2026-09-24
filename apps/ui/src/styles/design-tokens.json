@@ -318,11 +318,11 @@
       "$value": "1100px"
     },
     "toc-min": {
-      "$description": "Minimum width of the article outline panel. Below this the panel stops shrinking and overlaps the reading column, which is what `--breakpoint-toc` (1200px) is derived from: measure + 2 gutters + this width.",
+      "$description": "Minimum width of the table of contents panel. `--breakpoint-toc` (1200px) is derived from it. The reading column is centred, so both margins must hold this width plus a gutter on each side: measure + 2 × (this width + 2 gutters) = 1176px, about 1191px with the reserved scrollbar gutter, rounded up to 1200px. The table of contents is only shown where the margin can hold at least this much without covering the reading column.",
       "$value": "200px"
     },
     "toc-max": {
-      "$description": "Maximum width of the article outline panel. The panel grows into the margin beside the reading column up to this width; past it the extra margin stays empty so the outline never reads as a second column.",
+      "$description": "Maximum width of the table of contents panel. The panel grows into the margin beside the reading column up to this width; past it the extra margin stays empty so the outline never reads as a second column.",
       "$value": "320px"
     },
     "header": {
