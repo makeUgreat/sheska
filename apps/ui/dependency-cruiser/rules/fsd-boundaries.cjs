@@ -73,8 +73,49 @@ function publicApiRules() {
   }));
 }
 
+// shared는 slice가 없지만 segment 안의 폴더(`shared/lib/markdown/`)가 한 모듈을 이룬다.
+const SHARED_MODULE = '^src/06_shared/[^/]+/[^/]+/';
+const SHARED_MODULE_INDEX = '^src/06_shared/[^/]+/[^/]+/index\\.tsx?$';
+const TEST_OR_STORY = '\\.(spec|stories)\\.tsx?$';
+
+function sharedModuleRules() {
+  const comment =
+    'A shared module folder exposes its API from its index.ts; import the folder, not its files. ' +
+    `See ${docs.structure}#markdown-본문-규약.`;
+
+  return [
+    {
+      name: 'ui-06_shared-modules-only-through-index',
+      severity: 'error',
+      comment,
+      from: {
+        path: '^src/',
+        pathNot: [SHARED_MODULE, TEST_OR_STORY],
+      },
+      to: {
+        path: SHARED_MODULE,
+        pathNot: SHARED_MODULE_INDEX,
+      },
+    },
+    {
+      name: 'ui-06_shared-modules-reach-each-other-through-index',
+      severity: 'error',
+      comment,
+      from: {
+        path: '^src/06_shared/([^/]+/[^/]+)/',
+        pathNot: TEST_OR_STORY,
+      },
+      to: {
+        path: '^src/06_shared/(?!$1/)[^/]+/[^/]+/',
+        pathNot: SHARED_MODULE_INDEX,
+      },
+    },
+  ];
+}
+
 module.exports = [
   ...upwardImportRules(),
   ...sliceIsolationRules(),
   ...publicApiRules(),
+  ...sharedModuleRules(),
 ];

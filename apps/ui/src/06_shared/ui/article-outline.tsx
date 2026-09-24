@@ -1,4 +1,4 @@
-import { type Heading } from '../lib/parse-outline';
+import { type Heading } from '../lib/markdown';
 
 /**
  * Fills the margin beside the reading column, between `toc-min` and `toc-max`.

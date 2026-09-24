@@ -34,10 +34,35 @@ const fsdRuleNames = [
   'ui-03_widgets-only-through-slice-public-api',
   'ui-04_features-only-through-slice-public-api',
   'ui-05_entities-only-through-slice-public-api',
+  'ui-06_shared-modules-only-through-index',
+  'ui-06_shared-modules-reach-each-other-through-index',
 ];
 
 const validFiles: Record<string, string> = {
+  'src/06_shared/lib/markdown/parse.ts': `
+    export const parse = (body: string) => body;
+  `,
+  'src/06_shared/lib/markdown/index.ts': `
+    export { parse } from './parse';
+  `,
+  'src/06_shared/lib/index.ts': `
+    export { parse } from './markdown';
+  `,
+  'src/06_shared/ui/markdown/view.ts': `
+    import { parse } from '../../lib/markdown';
+
+    export const view = parse;
+  `,
+  'src/06_shared/ui/markdown/index.ts': `
+    export { view } from './view';
+  `,
+  'src/06_shared/ui/layout.ts': `
+    import { view } from './markdown';
+
+    export const layout = view;
+  `,
   'src/06_shared/ui/index.ts': `
+    export { layout } from './layout';
     export const Button = 'button';
   `,
   'src/05_entities/post/api/types.ts': `
@@ -168,6 +193,17 @@ const invalidFiles: Record<string, string> = {
     import { postsPageView } from '../../02_pages/posts/ui/page';
 
     export const value = postsPageView;
+  `,
+  // shared 모듈 폴더의 내부 파일 직접 import
+  'src/06_shared/ui/module-internal.ts': `
+    import { view } from './markdown/view';
+
+    export const value = view;
+  `,
+  'src/06_shared/ui/markdown/other-module-internal.ts': `
+    import { parse } from '../../lib/markdown/parse';
+
+    export const value = parse;
   `,
 };
 

@@ -54,6 +54,8 @@ Palette는 light하고 editorial한 page base와 dark하고 terminal-styled elev
 
 Headline은 minimal background 위에서 강한 visual hierarchy를 만들 수 있도록 tight tracking과 bold weight를 사용한다. Body text는 넉넉한 line height로 가독성을 우선한다. Label은 항상 monospace로 설정하며, "metadata" 느낌을 위해 자주 대문자로 사용한다.
 
+본문 heading은 `h2`부터 `h6`까지 다섯 단계를 쓰는데 크기 token은 그만큼 없다. `h4` 이하는 크기 token을 새로 들이지 말고 weight와 ink 단계로 나눈다. `h6`은 가장 낮은 단계이므로 label처럼 monospace 대문자로 둔다.
+
 `label-sm`의 넓은 tracking(`0.1em`)은 대문자 label을 전제로 한 값이다. 대문자는 글자 폭이 고르고 단어 경계가 약해서 자간이 그 역할을 대신한다.
 같은 크기를 대문자가 아닌 문구에 쓸 때는 tracking을 `normal`로 되돌린다. Article outline의 제목 링크가 여기에 해당한다.
 자간은 단어 경계를 만들어주지 못하면서 폭만 먹고, 폭이 좁고 한 줄로 잘리는 자리에서는 그만큼 글자가 덜 보인다.
