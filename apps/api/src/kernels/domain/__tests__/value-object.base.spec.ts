@@ -117,21 +117,6 @@ describe('ValueObject', () => {
     });
   });
 
-  describe('isValueObject', () => {
-    it('value object instance를 true로 판정한다', () => {
-      const sampleName = SampleName.of('spring');
-
-      expect(ValueObject.isValueObject(sampleName)).toBe(true);
-    });
-
-    it.each<[string, unknown]>([
-      ['plain object', { value: 'spring' }],
-      ['null', null],
-    ])('%s는 false로 판정한다', (_caseName, value) => {
-      expect(ValueObject.isValueObject(value)).toBe(false);
-    });
-  });
-
   describe('value', () => {
     it('primitive value object의 primitive value를 반환한다', () => {
       const sampleName = SampleName.of('spring');

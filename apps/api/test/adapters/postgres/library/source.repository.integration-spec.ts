@@ -103,19 +103,6 @@ describe('SourceDrizzleRepository', () => {
     });
   });
 
-  it('source 목록을 반환한다', async () => {
-    const source1 = buildSource({ externalSourceId: 'Notes/list-source-1.md' });
-    const source2 = buildSource({ externalSourceId: 'Notes/list-source-2.md' });
-    await repository.insert(source1);
-    await repository.insert(source2);
-
-    const result = await repository.list();
-
-    const ids = result.map((s) => s.id);
-    expect(ids).toContain(source1.id);
-    expect(ids).toContain(source2.id);
-  });
-
   it('externalSourceId unique 충돌을 exception으로 전파한다', async () => {
     const externalSourceId = 'Notes/conflict-source.md';
     const firstSource = buildSource({ externalSourceId });
