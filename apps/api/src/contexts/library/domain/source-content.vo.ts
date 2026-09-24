@@ -1,7 +1,7 @@
 import { ValueObject, type DomainPrimitive } from '@kernels/domain';
 
 export class SourceContent extends ValueObject<string> {
-  constructor(props: DomainPrimitive<string>) {
+  private constructor(props: DomainPrimitive<string>) {
     super(props);
   }
 
