@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
-import { type Heading } from '../lib/parse-outline';
+import { type Heading } from '../lib/markdown';
 import { ArticleOutline } from './article-outline';
 
 const HEADINGS: Heading[] = [
-  { depth: 2, text: '배경', id: 'background', line: 1 },
-  { depth: 3, text: '기존 방식', id: 'prior-art', line: 5 },
-  { depth: 2, text: '결론', id: 'conclusion', line: 9 },
+  { depth: 2, text: '배경', id: 'background' },
+  { depth: 3, text: '기존 방식', id: 'prior-art' },
+  { depth: 2, text: '결론', id: 'conclusion' },
 ];
 
 function renderOutline(activeId: string | null = null) {

@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
-import { type Heading } from '../lib/parse-outline';
+import { type Heading } from '../lib/markdown';
+import { Markdown } from './markdown';
 import { ArticleOutline } from './article-outline';
-import { MarkdownBody } from './markdown-body';
 
 const OUTLINE_MINIMUM_HEADINGS = 2;
 
@@ -28,7 +28,7 @@ export function ArticleLayout({
 
         <hr className={`mb-12 h-px border-0 ${FADE_RULE}`} />
 
-        {body && <MarkdownBody body={body} outline={outline} />}
+        {body && <Markdown body={body} />}
 
         {footer}
       </article>

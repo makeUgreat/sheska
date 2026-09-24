@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { parseOutline } from '../lib/parse-outline';
+import { parseOutline } from '../lib/markdown';
 import { ArticleLayout } from './article-layout';
 
 const TWO_HEADINGS = ['## 배경', '', '본문', '', '## 결론', '', '본문'].join(

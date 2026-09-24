@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { parseOutline, type Heading } from './parse-outline';
-import { useActiveHeading } from './use-active-heading';
+import { useActiveHeading } from '../use-active-heading';
 
 export function useArticleOutline(body: string | undefined): {
   outline: Heading[];
