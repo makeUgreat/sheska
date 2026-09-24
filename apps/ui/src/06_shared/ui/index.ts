@@ -1,5 +1,4 @@
 export { ArticleLayout } from './article-layout';
-export { ArticleOutline } from './article-outline';
 export { BackLink } from './back-link';
 export { CardLink, CARD_LINK_TITLE } from './card-link';
 export {
@@ -13,4 +12,5 @@ export { LoadingDots } from './loading-dots';
 export { LoadingState } from './loading-state';
 export { CodeBlock, Markdown } from './markdown';
 export { Pagination } from './pagination';
+export { TableOfContents } from './table-of-contents';
 export { Tag } from './tag';

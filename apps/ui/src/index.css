@@ -2,17 +2,13 @@
 @import "tailwindcss";
 @import "./styles/theme.css";
 @import "./styles/code-highlight.css";
+@import "./styles/table-of-contents.css";
 
 @theme {
   --breakpoint-toc: 1200px;
 
   --shadow-card-hover: 0 1px 2px -1px
     color-mix(in srgb, var(--color-outline-variant) 18%, transparent);
-  --shadow-floating-panel:
-    0 4px 12px -2px
-      color-mix(in srgb, var(--color-outline-variant) 22%, transparent),
-    0 1px 3px -1px
-      color-mix(in srgb, var(--color-outline-variant) 16%, transparent);
 }
 
 :root {

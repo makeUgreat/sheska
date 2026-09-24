@@ -46,8 +46,10 @@ mx-auto max-w-measure
 right: max(var(--spacing-gutter), calc(50% - var(--spacing-measure)/2 - var(--spacing-gutter) - var(--toc-width)))
 ```
 
-Article outline의 폭과 가로 위치다. 본문 옆에 남은 여백을 그대로 폭으로 쓰되 `toc-min`과 `toc-max` 사이에 가둔다.
+목차(`TableOfContents`)의 폭과 가로 위치다. 본문 옆에 남은 여백을 그대로 폭으로 쓰되 `toc-min`과 `toc-max` 사이에 가둔다.
+식은 `src/styles/table-of-contents.css`의 `toc-beside-article` utility에 있다.
 위치는 화면이 넓으면 본문 기준, 여백이 부족해지면 화면 기준으로 브라우저가 매 순간 고른다.
+목차는 여백이 충분한 `toc:` 이상에서만 보이므로 실제로는 본문 기준만 쓰이고, 화면 기준은 본문 폭을 바꿨을 때의 방어선이다.
 전환점을 사람이 계산해서 적지 않으므로 본문 폭을 바꿔도 전환점이 따라온다.
 같은 동작을 media query로 쓰면 전환점 숫자가 본문 폭과 따로 놀다가 어긋난다.
 
@@ -64,11 +66,13 @@ Article outline의 폭과 가로 위치다. 본문 옆에 남은 여백을 그�
 | 없음 | 320px~ | 기본. 단일 컬럼 |
 | `sm:` | 640px~ | 쌓인 block을 나란히 배치 (2열 grid, 가로 flex), header의 terminal 신호등 등장 |
 | `md:` | 768px~ | 카드 grid 2열, landing hero 타이포 확대 |
-| `lg:` | 1024px~ | Article outline 등장, source 상세 사이드 패널 |
-| `toc:` | 1200px~ | Article outline을 펼친 상태로 고정 |
+| `lg:` | 1024px~ | source 상세 사이드 패널 |
+| `toc:` | 1200px~ | 목차 등장 |
 | `xl:` | 1280px~ | 카드 grid 3열 |
 
 `sm` `md` `lg` `xl`은 Tailwind 기본값이다. `toc`는 `src/index.css`의 `@theme`에서 정의한다.
+
+Tailwind는 코드를 실행하지 않고 소스 글자에서 class를 찾는다. 그래서 `` `${VARIANT}:hidden` ``처럼 실행할 때 이어 붙이는 class는 CSS로 생성되지 않는다. 반복되는 media 조건에는 문자열 상수가 아니라 이름 있는 variant를 만든다.
 
 ### 기기 이름으로 부르지 않는다
 
@@ -79,8 +83,16 @@ Article outline의 폭과 가로 위치다. 본문 옆에 남은 여백을 그�
 - 데스크톱에서 창을 반만 줄이면 700px이 된다.
 
 대신 그 폭에서 **레이아웃이 무엇을 하는지**로 부른다.
-새 breakpoint를 추가할 때도 마찬가지다. `--breakpoint-toc`는 "큰 화면"이 아니라 "목차를 펼칠 수 있는 최소 폭"이고,
+새 breakpoint를 추가할 때도 마찬가지다. `--breakpoint-toc`는 "큰 화면"이 아니라 "목차가 본문을 덮지 않고 들어갈 수 있는 최소 폭"이고,
 1200이라는 값은 본문 폭과 목차 자리에서 유도된 숫자다. 이름이 근거를 붙들고 있어야 나중에 임의로 바뀌지 않는다.
+
+```
+measure + 2 × (toc-min + 2 × gutter) = 680 + 2 × (200 + 48) = 1176px
+```
+
+본문이 가운데 놓이므로 목차가 없는 왼쪽에도 같은 폭의 여백이 생긴다. 그래서 목차 자리(하한 폭과 양옆 gutter)가 양쪽에 필요하다.
+예약된 scrollbar 자리(`scrollbar-gutter: stable`, 약 15px)를 더하면 약 1191px이고, 이를 올려 1200px로 둔다.
+Media query 안에서는 `var()`를 쓸 수 없어 이 계산을 CSS가 대신하지 못한다. `--spacing-measure`, `--spacing-toc-min`, `--spacing-gutter`를 바꾸면 이 값도 다시 계산한다.
 
 ### 새 breakpoint를 추가하기 전에
 
@@ -135,7 +147,7 @@ Source 상세의 사이드 패널(`PublishPostPanel`)처럼 좁은 자리에 놓
 ### 훑어보는 목록은 줄바꿈이 아니라 잘라서 맞춘다
 
 본문은 줄이 늘어나도 읽을 수 있으므로 `break-words`로 접는다. 한눈에 구조를 보는 목록은 다르다.
-Article outline 항목이 두세 줄로 접히면 항목 사이 간격과 줄 간격이 비슷해져서 몇 개의 섹션인지가 먼저 읽히지 않는다.
+목차 항목이 두세 줄로 접히면 항목 사이 간격과 줄 간격이 비슷해져서 몇 개의 섹션인지가 먼저 읽히지 않는다.
 이런 목록은 항목당 한 줄을 고정하고 넘치는 문구를 `truncate`로 자른다.
 
 자른 문구는 화면에서 사라지므로 전체를 `title`에 남긴다. 목차 링크는 `aria-hidden`이 아니라서
@@ -180,8 +192,8 @@ Card hover 표면처럼 음수 margin으로 컨테이너 밖까지 번지는 요
 가로 스크롤 0은 `test/layout/page-horizontal-scroll.layout.spec.ts`가 320px, 640px, 1280px에서 모든 route를 훑어 자동으로 확인한다.
 Fixture는 긴 토큰이 섞인 제목과 값을 쓴다. 짧은 예시 데이터만으로는 항목이 줄어드는지 증명할 수 없기 때문이다.
 
-Article outline의 폭과 정렬은 `test/layout/article-outline.layout.spec.ts`가 1024px부터 1920px까지 확인한다.
-폭, 본문과의 간격, 항목당 줄 수, 접힌 목차 아래 본문에 닿는지를 모두 숫자로 잰다.
+목차의 폭과 정렬은 `test/layout/table-of-contents.layout.spec.ts`가 1024px부터 1920px까지 확인한다.
+1200px 미만에서 목차가 없는지, 그 이상에서 폭, 본문과의 간격, 항목당 줄 수를 모두 숫자로 잰다.
 
 나머지 두 항목은 아직 사람이 browser에서 확인한다. 자동으로 지키고 싶어지면 [UI 테스트 컨벤션](./test.md)의 layout 테스트로 옮긴다.
 

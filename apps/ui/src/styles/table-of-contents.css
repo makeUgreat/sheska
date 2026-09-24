@@ -1,0 +1,36 @@
+/*
+ * 목차(TableOfContents)의 위치 계산이다. 목차는 --breakpoint-toc 이상에서만 보인다.
+ * 규칙의 근거는 docs/ko/responsive.md와 docs/ko/design-token.md의 "목차 표시"에 있다.
+ */
+
+/*
+ * 본문은 화면 가운데에 --spacing-measure 폭으로 놓이고, 목차는 그 오른쪽 여백을 쓴다.
+ * 목차는 fixed라서 50%는 화면 폭의 절반이고, 본문을 가운데 놓는 계산과 같은 척도다.
+ */
+@utility toc-beside-article {
+  --toc-margin: calc(50% - var(--spacing-measure) / 2);
+
+  /*
+   * 여백을 폭으로 쓰되 toc-min과 toc-max 사이에 가둔다. --breakpoint-toc가 하한에서 유도되므로
+   * 목차가 보이는 폭에서는 하한에 닿지 않는다. 본문 폭을 바꾸고 breakpoint를 따라 바꾸지 않았을 때의 방어선이다.
+   */
+  --toc-width: clamp(
+    var(--spacing-toc-min),
+    calc(var(--toc-margin) - 2 * var(--spacing-gutter)),
+    var(--spacing-toc-max)
+  );
+  width: var(--toc-width);
+
+  /* 본문에서 gutter만큼 떨어져 서고, 여백이 모자라도 화면 끝에서 gutter를 지킨다. */
+  right: max(
+    var(--spacing-gutter),
+    calc(var(--toc-margin) - var(--spacing-gutter) - var(--toc-width))
+  );
+
+  top: calc(var(--spacing-header) + var(--spacing-gutter));
+}
+
+/* 헤더 아래 남은 높이를 넘으면 목차 안에서 스크롤한다. */
+@utility toc-within-viewport-height {
+  max-height: calc(100vh - var(--spacing-header) - 2 * var(--spacing-gutter));
+}

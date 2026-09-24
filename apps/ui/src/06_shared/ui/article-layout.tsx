@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { type Heading } from '../lib/markdown';
 import { Markdown } from './markdown';
-import { ArticleOutline } from './article-outline';
+import { TableOfContents } from './table-of-contents';
 
 const OUTLINE_MINIMUM_HEADINGS = 2;
 
@@ -34,7 +34,7 @@ export function ArticleLayout({
       </article>
 
       {outline.length >= OUTLINE_MINIMUM_HEADINGS && (
-        <ArticleOutline headings={outline} activeId={activeHeadingId} />
+        <TableOfContents headings={outline} activeId={activeHeadingId} />
       )}
     </>
   );
