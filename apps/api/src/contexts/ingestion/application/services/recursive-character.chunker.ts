@@ -5,8 +5,8 @@ export interface Chunk {
   readonly index: number;
 }
 
-export const DEFAULT_CHUNK_SIZE = 6000;
-export const DEFAULT_CHUNK_OVERLAP = 600;
+export const DEFAULT_CHUNK_SIZE = 2000;
+export const DEFAULT_CHUNK_OVERLAP = 200;
 export const DEFAULT_SEPARATORS = ['\n\n', '\n', ' ', ''];
 
 const CHAR_SPLIT_SENTINEL = [''];
