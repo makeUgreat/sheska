@@ -20,8 +20,8 @@ const OLLAMA_MODEL = 'qwen3-embedding:0.6b';
 // AbortSignal.timeout이 던지는 DOMException의 name. 이 프로젝트의 TimeoutError와는 다르다.
 const ABORT_TIMEOUT_ERROR_NAME = 'TimeoutError';
 
-const OllamaEmbeddingsResponse = z.object({
-  embedding: z.array(z.number()),
+const OllamaEmbedResponse = z.object({
+  embeddings: z.tuple([z.array(z.number())]),
 });
 
 @Injectable()
@@ -58,10 +58,10 @@ export class OllamaHttpEmbedder implements Embedder {
     let response: Response;
 
     try {
-      response = await fetch(`${this.config.baseUrl}/api/embeddings`, {
+      response = await fetch(`${this.config.baseUrl}/api/embed`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: this.model, prompt: text }),
+        body: JSON.stringify({ model: this.model, input: text }),
         signal: attempt.signal,
       });
     } catch (error: unknown) {
@@ -92,7 +92,7 @@ export class OllamaHttpEmbedder implements Embedder {
       });
     }
 
-    const parsed = OllamaEmbeddingsResponse.safeParse(await response.json());
+    const parsed = OllamaEmbedResponse.safeParse(await response.json());
     if (!parsed.success) {
       throw new InvalidDataError({
         code: 'ollama.invalid_response',
@@ -103,6 +103,6 @@ export class OllamaHttpEmbedder implements Embedder {
         cause: parsed.error,
       });
     }
-    return { embedding: parsed.data.embedding, model: this.model };
+    return { embedding: parsed.data.embeddings[0], model: this.model };
   }
 }

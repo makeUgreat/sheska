@@ -26,17 +26,17 @@ describe('OllamaHttpEmbedder', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ embedding: fakeEmbedding }),
+        json: () => Promise.resolve({ embeddings: [fakeEmbedding] }),
       }),
     );
 
     const result = await client.embed('hello world', buildContext());
 
     expect(result).toEqual({ embedding: fakeEmbedding, model });
-    expect(fetch).toHaveBeenCalledWith(`${baseUrl}/api/embeddings`, {
+    expect(fetch).toHaveBeenCalledWith(`${baseUrl}/api/embed`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, prompt: 'hello world' }),
+      body: JSON.stringify({ model, input: 'hello world' }),
       signal: expect.any(AbortSignal) as AbortSignal,
     });
   });
@@ -118,7 +118,7 @@ describe('OllamaHttpEmbedder', () => {
   it('deadline에 여유가 있으면 어댑터 자신의 attempt timeout으로 signal을 bound한다', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ embedding: [0.1] }),
+      json: () => Promise.resolve({ embeddings: [[0.1]] }),
     });
     vi.stubGlobal('fetch', fetchMock);
     const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
@@ -132,7 +132,7 @@ describe('OllamaHttpEmbedder', () => {
   it('남은 deadline이 더 짧으면 그 값으로 signal이 bound된다', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ embedding: [0.1] }),
+      json: () => Promise.resolve({ embeddings: [[0.1]] }),
     });
     vi.stubGlobal('fetch', fetchMock);
     const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
@@ -188,7 +188,7 @@ describe('OllamaHttpEmbedder', () => {
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ embedding: fakeEmbedding }),
+        json: () => Promise.resolve({ embeddings: [fakeEmbedding] }),
       });
     vi.stubGlobal('fetch', fetchMock);
 
