@@ -17,50 +17,19 @@ interface SourceContentSnapshotProps {
 }
 
 export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProps> {
-  constructor(props: SourceContentSnapshotProps) {
+  private constructor(props: SourceContentSnapshotProps) {
     super(props);
   }
 
-  static create(params: {
-    frontmatter: SourceFrontmatterProps;
-    title: string;
-    body: string;
-    fingerprint: string;
-    size: number;
-  }): SourceContentSnapshot {
-    const { body, frontmatter, title, fingerprint, size } = params;
-    const sourceContent = SourceContent.of(body);
-    const sourceFrontmatter = SourceFrontmatter.of(frontmatter);
-    const sourceFingerprint = SourceFingerprint.of(fingerprint);
+  static of(value: SourceContentSnapshotProps): SourceContentSnapshot {
+    const { body, frontmatter, title, fingerprint, size } = value;
 
     return new SourceContentSnapshot({
-      body: sourceContent.unpack(),
-      frontmatter: sourceFrontmatter.unpack(),
+      body: SourceContent.of(body).unpack(),
+      frontmatter: SourceFrontmatter.of(frontmatter).unpack(),
       title,
-      fingerprint: sourceFingerprint.unpack(),
+      fingerprint: SourceFingerprint.of(fingerprint).unpack(),
       size: SourceSize.of(size).unpack(),
-    });
-  }
-
-  static restore(params: {
-    frontmatter: SourceFrontmatterProps;
-    title: string;
-    body: string;
-    fingerprint: string;
-    size: number;
-  }): SourceContentSnapshot {
-    const { body, frontmatter, title, fingerprint, size } = params;
-    const sourceContent = SourceContent.of(body);
-    const sourceFrontmatter = SourceFrontmatter.of(frontmatter);
-    const sourceFingerprint = SourceFingerprint.of(fingerprint);
-    const sourceSize = SourceSize.of(size);
-
-    return new SourceContentSnapshot({
-      body: sourceContent.unpack(),
-      frontmatter: sourceFrontmatter.unpack(),
-      title,
-      fingerprint: sourceFingerprint.unpack(),
-      size: sourceSize.unpack(),
     });
   }
 
