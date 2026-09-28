@@ -1,4 +1,4 @@
-import { Source } from '@contexts/library/domain';
+import { Source, SourceContentSnapshot } from '@contexts/library/domain';
 import { describe, expect, it } from 'vitest';
 
 const UUID_V7_PATTERN =
@@ -21,7 +21,9 @@ describe('Source', () => {
 
     expect(source.id).toMatch(UUID_V7_PATTERN);
     expect(source.getProps().externalSourceId.unpack()).toBe('Notes/source.md');
-    expect(source.getProps().contentSnapshot.unpack()).toEqual(snapshot);
+    expect(source.getProps().contentSnapshot).toEqual(
+      SourceContentSnapshot.of(snapshot),
+    );
   });
 
   it('frontmatter title이 없으면 externalSourceId를 title로 저장한다', () => {
@@ -70,6 +72,8 @@ describe('Source', () => {
     const result = source.syncContentSnapshot(next);
 
     expect(result.changed).toBe(true);
-    expect(source.getProps().contentSnapshot.unpack()).toEqual(next);
+    expect(source.getProps().contentSnapshot).toEqual(
+      SourceContentSnapshot.of(next),
+    );
   });
 });

@@ -1,5 +1,6 @@
 import {
   Source,
+  SourceContentSnapshot,
   SourceSyncJob,
   type SourceRepository,
   type SourceSyncJobRepository,
@@ -563,13 +564,15 @@ function expectSourceSavedWith(
   expect(savedSource?.getProps().externalSourceId.unpack()).toBe(
     expected.externalSourceId,
   );
-  expect(savedSource?.getProps().contentSnapshot.unpack()).toEqual({
-    body: expected.content,
-    frontmatter: {},
-    title: expected.externalSourceId,
-    fingerprint: expected.fingerprint,
-    size: sourceContentByteSize(expected.content),
-  });
+  expect(savedSource?.getProps().contentSnapshot).toEqual(
+    SourceContentSnapshot.of({
+      body: expected.content,
+      frontmatter: {},
+      title: expected.externalSourceId,
+      fingerprint: expected.fingerprint,
+      size: sourceContentByteSize(expected.content),
+    }),
+  );
 }
 
 function expectSyncJobSavedWith(

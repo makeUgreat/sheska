@@ -85,7 +85,7 @@ export class UploadSourceUseCase {
 
     const syncJob = SourceSyncJob.create({
       sourceId: source.id,
-      fingerprint,
+      fingerprint: fingerprint.unpack(),
       content: body,
     });
     const integrationEvents = syncJob.domainEvents.map(
@@ -126,7 +126,7 @@ export class UploadSourceUseCase {
     return {
       sourceId: source.id,
       externalSourceId: externalSourceId.unpack(),
-      fingerprint: contentSnapshot.unpack().fingerprint,
+      fingerprint: contentSnapshot.unpack().fingerprint.unpack(),
       syncJobId: syncJob?.id,
     };
   }

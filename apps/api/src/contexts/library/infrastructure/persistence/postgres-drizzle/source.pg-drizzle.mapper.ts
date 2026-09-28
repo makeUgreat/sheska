@@ -23,11 +23,11 @@ export class SourcePgDrizzleMapper {
     return {
       id: source.id,
       externalSourceId: props.externalSourceId.unpack(),
-      frontmatter: contentSnapshot.frontmatter,
+      frontmatter: contentSnapshot.frontmatter.unpack(),
       title: contentSnapshot.title,
       body: contentSnapshot.body,
-      fingerprint: contentSnapshot.fingerprint,
-      sizeBytes: contentSnapshot.size,
+      fingerprint: contentSnapshot.fingerprint.unpack(),
+      sizeBytes: contentSnapshot.size.unpack(),
     };
   }
 }

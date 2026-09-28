@@ -68,10 +68,10 @@ export class GetSourceUseCase {
       sourceId: source.id,
       externalSourceId: props.externalSourceId.unpack(),
       body: snapshot.body,
-      frontmatter: snapshot.frontmatter,
+      frontmatter: snapshot.frontmatter.unpack(),
       title: snapshot.title,
-      fingerprint: snapshot.fingerprint,
-      sizeBytes: snapshot.size,
+      fingerprint: snapshot.fingerprint.unpack(),
+      sizeBytes: snapshot.size.unpack(),
       createdAt: source.createdAt,
       updatedAt: source.updatedAt,
       latestSyncJob: latestJob

@@ -1,4 +1,9 @@
-import { SourceContentSnapshot } from '@contexts/library/domain';
+import {
+  SourceContentSnapshot,
+  SourceFingerprint,
+  SourceFrontmatter,
+  SourceSize,
+} from '@contexts/library/domain';
 import { describe, expect, it } from 'vitest';
 
 describe('SourceContentSnapshot', () => {
@@ -13,10 +18,13 @@ describe('SourceContentSnapshot', () => {
 
     expect(snapshot.unpack()).toEqual({
       body: '# Source note',
-      frontmatter: { title: 'Source note', custom: { enabled: true } },
+      frontmatter: SourceFrontmatter.of({
+        title: 'Source note',
+        custom: { enabled: true },
+      }),
       title: 'Source note',
-      fingerprint: 'fingerprint-1',
-      size: 100,
+      fingerprint: SourceFingerprint.of('fingerprint-1'),
+      size: SourceSize.of(100),
     });
   });
 
@@ -29,7 +37,7 @@ describe('SourceContentSnapshot', () => {
       size: 0,
     });
 
-    expect(snapshot.unpack().size).toBe(0);
+    expect(snapshot.unpack().size.unpack()).toBe(0);
   });
 
   it('fingerprint가 공백뿐이면 throw한다', () => {
