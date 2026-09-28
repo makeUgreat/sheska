@@ -2,7 +2,7 @@ import { InvariantViolationError } from '@core/errors';
 import { ValueObject, type DomainPrimitive } from '@kernels/domain';
 
 export class PostViewCount extends ValueObject<number> {
-  constructor(props: DomainPrimitive<number>) {
+  private constructor(props: DomainPrimitive<number>) {
     super(props);
   }
 

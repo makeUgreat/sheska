@@ -2,7 +2,7 @@ import { InvariantViolationError } from '@core/errors';
 import { ValueObject, type DomainPrimitive } from '@kernels/domain';
 
 export class ExternalSourceId extends ValueObject<string> {
-  constructor(props: DomainPrimitive<string>) {
+  private constructor(props: DomainPrimitive<string>) {
     super(props);
   }
 
