@@ -8,7 +8,6 @@ function buildMockRepository(
   return {
     find: vi.fn(),
     get: vi.fn(),
-    list: vi.fn(),
     insert: vi.fn(),
     update: vi.fn(),
     ...overrides,

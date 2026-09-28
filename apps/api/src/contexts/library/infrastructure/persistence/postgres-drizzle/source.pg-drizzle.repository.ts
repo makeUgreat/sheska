@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { desc, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { ConstraintViolationError, NotFoundError } from '@core/errors';
 import {
   type Source,
@@ -80,27 +80,6 @@ export class SourcePgDrizzleRepository implements SourceRepository {
     }
 
     return SourcePgDrizzleMapper.toDomain(row);
-  }
-
-  async list(): Promise<Source[]> {
-    let rows: schema.SourceRow[];
-
-    try {
-      rows = await this.db
-        .select()
-        .from(schema.sources)
-        .orderBy(desc(schema.sources.createdAt));
-    } catch (error: unknown) {
-      const ErrorClass = classifyPostgresError(error);
-      throw new ErrorClass({
-        code: 'source.list_failed',
-        message: 'Source list operation failed',
-        details: {},
-        cause: error,
-      });
-    }
-
-    return rows.map((row) => SourcePgDrizzleMapper.toDomain(row));
   }
 
   async insert(source: Source): Promise<Source> {

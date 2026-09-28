@@ -11,7 +11,6 @@ export type SourceRepositoryGetCriteria = {
 export interface SourceRepository {
   find(criteria: SourceRepositoryFindCriteria): Promise<Source | null>;
   get(criteria: SourceRepositoryGetCriteria): Promise<Source>;
-  list(): Promise<Source[]>;
   insert(source: Source): Promise<Source>;
   update(source: Source): Promise<Source>;
 }

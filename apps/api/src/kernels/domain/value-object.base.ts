@@ -19,10 +19,6 @@ export abstract class ValueObject<T> {
 
   protected abstract validate(props: ValueObjectProps<T>): void;
 
-  static isValueObject(obj: unknown): obj is ValueObject<unknown> {
-    return obj instanceof ValueObject;
-  }
-
   unpack(): T {
     if (this.isDomainPrimitive(this.props)) {
       return this.props.value;
