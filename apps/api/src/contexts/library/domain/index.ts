@@ -3,7 +3,6 @@ export { Source, type SyncContentSnapshotResult } from './source.aggregate';
 export { SourceSyncJobCreatedDomainEvent } from './source-sync-job.event';
 export { SourceFingerprint } from './source-fingerprint.vo';
 export { SourceContentSnapshot } from './source-content-snapshot.vo';
-export { SourceContent } from './source-content.vo';
 export { SourceFrontmatter } from './source-frontmatter.vo';
 export type {
   SourceFrontmatterProps,
