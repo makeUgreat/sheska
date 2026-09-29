@@ -17,6 +17,10 @@ related:
 
 ## 라우팅
 
+- 도메인 용어의 의미를 확인하거나, 도메인 규칙에 닿는 기능을 설계·구현·변경할 때:
+  해당 bounded context의 도메인 문서를 읽는다.
+  - [Library 도메인](./domain/library.md): source 동기화, sync job, note, post 발행과 검색, 본문 문법
+  - [Ingestion 도메인](./domain/ingestion.md): 청크 분할, 임베딩 모델, 임베딩 저장과 재시도
 - 문서를 생성, 수정, 리뷰할 때: [문서 작성 가이드라인](./documentation-guidelines.md)을 읽는다.
 - 앱 단위든 레포지토리 단위든 ADR을 작성하거나 리뷰할 때: [ADR 작성 가이드](./adr.md)를 읽는다.
 - workspace layout, 루트 package script, 저장소 단위 명령어, static harness 동작을 변경할 때: [모노레포 정책](./monorepo.md)을 읽는다.
