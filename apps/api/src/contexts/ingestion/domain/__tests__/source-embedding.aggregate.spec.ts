@@ -13,12 +13,14 @@ describe('SourceEmbedding', () => {
     it('유효한 파라미터로 SourceEmbedding을 생성한다', () => {
       const sourceEmbedding = SourceEmbedding.create({
         sourceId: 'source-1',
+        syncJobId: 'sync-job-1',
         model: 'qwen3-embedding:0.6b',
         chunks: validChunks,
       });
       const props = sourceEmbedding.getProps();
 
       expect(sourceEmbedding.id).toBe('source-1');
+      expect(props.syncJobId).toBe('sync-job-1');
       expect(props.model.unpack()).toBe('qwen3-embedding:0.6b');
       expect(props.chunks).toHaveLength(2);
       expect(props.chunks[0].unpack().chunkIndex).toBe(0);
@@ -29,6 +31,7 @@ describe('SourceEmbedding', () => {
       expect(() =>
         SourceEmbedding.create({
           sourceId: 'source-1',
+          syncJobId: 'sync-job-1',
           model: 'unknown-model',
           chunks: validChunks,
         }),
@@ -39,6 +42,7 @@ describe('SourceEmbedding', () => {
       expect(() =>
         SourceEmbedding.create({
           sourceId: 'source-1',
+          syncJobId: 'sync-job-1',
           model: 'qwen3-embedding:0.6b',
           chunks: [
             { chunkIndex: 0, chunkContent: 'text', embedding: [0.1, 0.2] },
@@ -52,6 +56,7 @@ describe('SourceEmbedding', () => {
     it('저장된 sourceId를 id로 복원한다', () => {
       const sourceEmbedding = SourceEmbedding.restore({
         sourceId: 'source-1',
+        syncJobId: 'sync-job-1',
         model: 'qwen3-embedding:0.6b',
         chunks: validChunks,
       });
@@ -62,6 +67,7 @@ describe('SourceEmbedding', () => {
     it('모든 청크를 포함하여 복원한다', () => {
       const sourceEmbedding = SourceEmbedding.restore({
         sourceId: 'source-1',
+        syncJobId: 'sync-job-1',
         model: 'qwen3-embedding:0.6b',
         chunks: validChunks,
       });

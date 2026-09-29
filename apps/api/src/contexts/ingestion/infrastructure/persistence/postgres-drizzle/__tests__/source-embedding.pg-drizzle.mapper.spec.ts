@@ -9,13 +9,22 @@ import { SourceEmbeddingPgDrizzleMapper } from '../source-embedding.pg-drizzle.m
 describe('SourceEmbeddingPgDrizzleMapper', () => {
   it('valid source embedding rows를 SourceEmbedding aggregate로 복원한다', () => {
     const rows = [
-      buildSourceEmbeddingRow({ chunkIndex: 0, chunkContent: 'first' }),
-      buildSourceEmbeddingRow({ chunkIndex: 1, chunkContent: 'second' }),
+      buildSourceEmbeddingRow({
+        chunkIndex: 0,
+        chunkContent: 'first',
+        syncJobId: 'sync-job-7',
+      }),
+      buildSourceEmbeddingRow({
+        chunkIndex: 1,
+        chunkContent: 'second',
+        syncJobId: 'sync-job-7',
+      }),
     ];
 
     const sourceEmbedding = SourceEmbeddingPgDrizzleMapper.toDomain(rows);
 
     expect(sourceEmbedding.id).toBe('source-1');
+    expect(sourceEmbedding.getProps().syncJobId).toBe('sync-job-7');
     expect(sourceEmbedding.getProps().model.unpack()).toBe(
       'qwen3-embedding:0.6b',
     );
@@ -37,13 +46,14 @@ describe('SourceEmbeddingPgDrizzleMapper', () => {
   });
 
   it('SourceEmbedding aggregate를 insert rows로 변환한다', () => {
-    const sourceEmbedding = buildSourceEmbedding();
+    const sourceEmbedding = buildSourceEmbedding({ syncJobId: 'sync-job-9' });
 
     const rows = SourceEmbeddingPgDrizzleMapper.toInserts(sourceEmbedding);
 
     expect(rows).toHaveLength(1);
     expect(rows[0]).toEqual({
       sourceId: 'source-1',
+      syncJobId: 'sync-job-9',
       chunkIndex: 0,
       chunkContent: 'default chunk content',
       embedding: VALID_EMBEDDING,

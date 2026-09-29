@@ -36,7 +36,7 @@ const chunks: EmbedSourceChunkResult[] = [
 ];
 
 function buildUseCase() {
-  const upsert = vi.fn().mockResolvedValue(undefined);
+  const upsert = vi.fn().mockResolvedValue({ replaced: true });
   const append = vi.fn<OutboxWriter['append']>().mockResolvedValue(undefined);
   const unitOfWork: IngestionUnitOfWork = {
     execute: (work) =>
@@ -57,9 +57,11 @@ describe('FinalizeEmbeddingWorkflowUseCase', () => {
   it('child 결과를 index 순으로 저장하고 completed를 outbox에 기록한다', async () => {
     const { useCase, upsert, append, dispatch } = buildUseCase();
 
-    await useCase.execute(payload, chunks);
+    const result = await useCase.execute(payload, chunks);
 
     const saved = upsert.mock.calls[0][0] as SourceEmbedding;
+    expect(result).toEqual({ replaced: true });
+    expect(saved.getProps().syncJobId).toBe('sync-job-1');
     expect(
       saved.getProps().chunks.map((chunk) => chunk.unpack().chunkIndex),
     ).toEqual([0, 1]);
@@ -70,6 +72,18 @@ describe('FinalizeEmbeddingWorkflowUseCase', () => {
       }),
     );
     expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('더 나중 sync job의 결과가 이미 있으면 버린 결과를 알리고 completed는 그대로 기록한다', async () => {
+    const { useCase, upsert, append } = buildUseCase();
+    upsert.mockResolvedValue({ replaced: false });
+
+    const result = await useCase.execute(payload, chunks);
+
+    expect(result).toEqual({ replaced: false });
+    expect(append).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: 'source.ingestion.completed' }),
+    );
   });
 
   it('누락된 child 결과는 저장하지 않는다', async () => {

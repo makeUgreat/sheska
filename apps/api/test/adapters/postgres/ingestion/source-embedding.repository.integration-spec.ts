@@ -5,6 +5,7 @@ import { type SourceEmbeddingRepository } from '@contexts/ingestion/domain';
 import { SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
 import { type SourceRepository } from '@contexts/library/domain';
 import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
+import { newId } from '@kernels/domain';
 import { AppModule } from '@platform/nest/app.module';
 import {
   buildSourceEmbedding,
@@ -67,6 +68,57 @@ describe('SourceEmbeddingDrizzleRepository', () => {
         }),
       ),
     ).resolves.not.toThrow();
+  });
+
+  it('저장된 것보다 먼저 만든 sync job의 결과는 청크를 바꾸지 않는다', async () => {
+    const source = await sourceRepository.insert(
+      buildSource({
+        externalSourceId: 'Notes/source-embedding-stale-result.md',
+      }),
+    );
+    const olderSyncJobId = newId();
+    const newerSyncJobId = newId();
+
+    const newer = await repository.upsert(
+      buildSourceEmbedding({
+        sourceId: source.id,
+        syncJobId: newerSyncJobId,
+        chunks: [{ chunkIndex: 0, chunkContent: 'newer content' }],
+      }),
+    );
+    const older = await repository.upsert(
+      buildSourceEmbedding({
+        sourceId: source.id,
+        syncJobId: olderSyncJobId,
+        chunks: [
+          { chunkIndex: 0, chunkContent: 'older content' },
+          { chunkIndex: 1, chunkContent: 'older tail' },
+        ],
+      }),
+    );
+
+    const result = await repository.find({ sourceId: source.id });
+
+    expect(newer).toEqual({ replaced: true });
+    expect(older).toEqual({ replaced: false });
+    expect(result?.getProps().syncJobId).toBe(newerSyncJobId);
+    expect(
+      result?.getProps().chunks.map((chunk) => chunk.unpack().chunkContent),
+    ).toEqual(['newer content']);
+  });
+
+  it('같은 sync job의 결과를 다시 받으면 교체하지 않는다', async () => {
+    const source = await sourceRepository.insert(
+      buildSource({
+        externalSourceId: 'Notes/source-embedding-redelivered-result.md',
+      }),
+    );
+    const sourceEmbedding = buildSourceEmbedding({ sourceId: source.id });
+
+    await repository.upsert(sourceEmbedding);
+    const redelivered = await repository.upsert(sourceEmbedding);
+
+    expect(redelivered).toEqual({ replaced: false });
   });
 
   it('복수 청크를 저장하고 chunkIndex 오름차순으로 반환한다', async () => {

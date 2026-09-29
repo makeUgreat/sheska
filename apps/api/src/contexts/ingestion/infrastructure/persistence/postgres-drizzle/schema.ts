@@ -24,6 +24,7 @@ export const sourceEmbeddings = pgTable(
   'source_embeddings',
   {
     sourceId: text('source_id').notNull(),
+    syncJobId: text('sync_job_id').notNull(),
     chunkIndex: integer('chunk_index').notNull(),
     chunkContent: text('chunk_content').notNull(),
     embedding: vector('embedding', 1024).notNull(),
