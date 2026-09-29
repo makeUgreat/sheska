@@ -1,9 +1,11 @@
 import { SourceEmbedding } from '@contexts/ingestion/domain';
+import { newId } from '@kernels/domain';
 
 const VALID_EMBEDDING = Array.from({ length: 1024 }, (_, i) => i * 0.001);
 
 interface BuildSourceEmbeddingParams {
   sourceId?: string;
+  syncJobId?: string;
   model?: string;
   chunks?: Array<{
     chunkIndex?: number;
@@ -24,6 +26,7 @@ export function buildSourceEmbedding(
   ];
   return SourceEmbedding.create({
     sourceId: params.sourceId ?? 'source-1',
+    syncJobId: params.syncJobId ?? newId(),
     model: params.model ?? 'qwen3-embedding:0.6b',
     chunks: chunks.map((c, i) => ({
       chunkIndex: c.chunkIndex ?? i,

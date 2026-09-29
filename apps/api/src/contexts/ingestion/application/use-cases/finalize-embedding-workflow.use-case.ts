@@ -13,6 +13,10 @@ import { type EmbedSourceChunkResult } from '@contexts/ingestion/application/use
 import { type IngestionUnitOfWork } from '@contexts/ingestion/application/ports';
 import { INGESTION_UNIT_OF_WORK } from '@contexts/ingestion/ingestion.di-tokens';
 
+export interface FinalizeEmbeddingWorkflowResult {
+  readonly replaced: boolean;
+}
+
 export interface FinalizeEmbeddingWorkflowCommand {
   readonly sourceId: string;
   readonly syncJobId: string;
@@ -31,7 +35,7 @@ export class FinalizeEmbeddingWorkflowUseCase {
   async execute(
     command: FinalizeEmbeddingWorkflowCommand,
     chunks: readonly EmbedSourceChunkResult[],
-  ): Promise<void> {
+  ): Promise<FinalizeEmbeddingWorkflowResult> {
     const { syncJobId, totalChunks } = command;
     this.ensureCompleteChunkResults(command, chunks);
 
@@ -41,9 +45,10 @@ export class FinalizeEmbeddingWorkflowUseCase {
       totalChunks,
     });
 
-    await this.unitOfWork.execute(async ({ sourceEmbeddings, outbox }) => {
-      await sourceEmbeddings.upsert(sourceEmbedding);
+    return this.unitOfWork.execute(async ({ sourceEmbeddings, outbox }) => {
+      const { replaced } = await sourceEmbeddings.upsert(sourceEmbedding);
       await outbox.append(completedEvent);
+      return { replaced };
     });
   }
 
@@ -79,6 +84,7 @@ export class FinalizeEmbeddingWorkflowUseCase {
 
     return SourceEmbedding.create({
       sourceId: command.sourceId,
+      syncJobId: command.syncJobId,
       model: models[0],
       chunks: sortedChunks,
     });
