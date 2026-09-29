@@ -11,6 +11,12 @@ describe('IngestionIntegrationEventConsumer', () => {
       command: { kind: 'completed', syncJobId: 'sync-job-1', totalChunks: 5 },
     },
     {
+      method: 'onCompleted' as const,
+      eventType: 'source.ingestion.completed',
+      payload: { syncJobId: 'sync-job-1', totalChunks: 0 },
+      command: { kind: 'completed', syncJobId: 'sync-job-1', totalChunks: 0 },
+    },
+    {
       method: 'onFailed' as const,
       eventType: 'source.ingestion.failed',
       payload: { syncJobId: 'sync-job-1' },

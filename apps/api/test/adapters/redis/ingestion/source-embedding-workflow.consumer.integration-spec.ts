@@ -138,6 +138,23 @@ describe('Embedding workflow consumers', () => {
     });
   });
 
+  it('chunk가 없으면 parent가 곧바로 빈 결과를 저장한다', async () => {
+    upsert.mockResolvedValue({ replaced: true });
+
+    await workflowDispatcher.dispatch({
+      sourceId: 'source-1',
+      syncJobId: 'sync-job-empty',
+      chunks: [],
+    });
+
+    const parent = await finalizeQueue.getJob('sync-job-empty');
+    await parent!.waitUntilFinished(finalizeQueueEvents);
+
+    expect(embed).not.toHaveBeenCalled();
+    expect(upsert).toHaveBeenCalledOnce();
+    expect(append).toHaveBeenCalledOnce();
+  });
+
   it('실패한 chunk만 다시 시도하고 성공한 chunk는 다시 embed하지 않는다', async () => {
     embed
       .mockRejectedValueOnce(new Error('embedder unavailable'))
