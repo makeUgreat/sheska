@@ -50,6 +50,7 @@ services:
       DATABASE_URL: postgres://sheska:sheska@db:5432/sheska_test
       REDIS_URL: redis://redis:6379
       EMBEDDING_BASE_URL: http://embedding-unavailable:3000
+      LIBRARY_KNOWLEDGE_FOLDER: Notes
     ports:
       - '127.0.0.1::3000'
     depends_on:
