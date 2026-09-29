@@ -93,8 +93,8 @@ describe('SourceSyncJob', () => {
     });
   });
 
-  describe('isCompleted', () => {
-    it('status가 completed면 true를 반환한다', () => {
+  describe('isCompletedFor', () => {
+    it('status가 completed이고 fingerprint가 같으면 true를 반환한다', () => {
       const syncJob = SourceSyncJob.create({
         sourceId: 'source-1',
         content: '# Source note',
@@ -102,7 +102,18 @@ describe('SourceSyncJob', () => {
       });
       syncJob.markCompleted(10);
 
-      expect(syncJob.isCompleted()).toBe(true);
+      expect(syncJob.isCompletedFor('fingerprint-1')).toBe(true);
+    });
+
+    it('completed여도 fingerprint가 다르면 false를 반환한다', () => {
+      const syncJob = SourceSyncJob.create({
+        sourceId: 'source-1',
+        content: '# Source note',
+        fingerprint: 'fingerprint-1',
+      });
+      syncJob.markCompleted(10);
+
+      expect(syncJob.isCompletedFor('fingerprint-2')).toBe(false);
     });
 
     it.each(['waiting', 'failed'] as const)(
@@ -115,7 +126,7 @@ describe('SourceSyncJob', () => {
           status,
         });
 
-        expect(syncJob.isCompleted()).toBe(false);
+        expect(syncJob.isCompletedFor('fingerprint-1')).toBe(false);
       },
     );
   });

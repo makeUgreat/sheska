@@ -39,7 +39,33 @@ describe('Source', () => {
     );
   });
 
-  it('같은 fingerprint이면 snapshot을 바꾸지 않는다', () => {
+  it('받은 snapshot이 저장된 것과 같으면 바꾸지 않는다', () => {
+    const source = Source.create({
+      externalSourceId: 'Notes/source.md',
+      ...snapshot,
+    });
+
+    const result = source.syncContentSnapshot({ ...snapshot });
+
+    expect(result.changed).toBe(false);
+  });
+
+  it('frontmatter의 key 순서만 다르면 바꾸지 않는다', () => {
+    const source = Source.create({
+      externalSourceId: 'Notes/source.md',
+      ...snapshot,
+      frontmatter: { title: 'Source note', aliases: ['a'] },
+    });
+
+    const result = source.syncContentSnapshot({
+      ...snapshot,
+      frontmatter: { aliases: ['a'], title: 'Source note' },
+    });
+
+    expect(result.changed).toBe(false);
+  });
+
+  it('fingerprint가 같아도 frontmatter가 다르면 snapshot을 갱신한다', () => {
     const source = Source.create({
       externalSourceId: 'Notes/source.md',
       ...snapshot,
@@ -47,13 +73,13 @@ describe('Source', () => {
 
     const result = source.syncContentSnapshot({
       ...snapshot,
-      body: '# Changed',
+      frontmatter: { title: 'Source note', tags: ['added'] },
     });
 
-    expect(result.changed).toBe(false);
-    expect(source.getProps().contentSnapshot.unpack().body).toBe(
-      '# Source note',
-    );
+    expect(result.changed).toBe(true);
+    expect(
+      source.getProps().contentSnapshot.unpack().frontmatter.unpack(),
+    ).toEqual({ title: 'Source note', tags: ['added'] });
   });
 
   it('다른 fingerprint이면 snapshot을 갱신한다', () => {
