@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { sql } from 'drizzle-orm';
+import { type SQL, sql } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { NotFoundError } from '@core/errors';
 import {
@@ -8,7 +8,11 @@ import {
   type NoteQueryPaginateResult,
   type NoteQueryResult,
 } from '@contexts/library/application/ports';
-import { type SourceFrontmatterProps } from '@contexts/library/domain';
+import {
+  type KnowledgeFolder,
+  type SourceFrontmatterProps,
+} from '@contexts/library/domain';
+import { KNOWLEDGE_FOLDER } from '@contexts/library/library.di-tokens';
 import {
   classifyPostgresError,
   DATABASE_TOKENS,
@@ -31,6 +35,8 @@ export class NotePgDrizzleQuery implements NoteQuery {
   constructor(
     @Inject(DATABASE_TOKENS.drizzleDatabase)
     private readonly db: NodePgDatabase<typeof schema>,
+    @Inject(KNOWLEDGE_FOLDER)
+    private readonly knowledgeFolder: KnowledgeFolder,
   ) {}
 
   async get(criteria: { noteId: string }): Promise<NoteQueryResult> {
@@ -46,6 +52,7 @@ export class NotePgDrizzleQuery implements NoteQuery {
           updated_at
         FROM sources
         WHERE id = ${criteria.noteId}
+          AND ${this.isNote()}
         LIMIT 1
       `);
       row = result.rows[0];
@@ -81,7 +88,7 @@ export class NotePgDrizzleQuery implements NoteQuery {
   }): Promise<NoteQueryPaginateResult> {
     try {
       const cursorCondition = options.cursor
-        ? sql`WHERE id < ${options.cursor.id}`
+        ? sql`AND id < ${options.cursor.id}`
         : sql``;
       const result = await this.db.execute<NoteRow>(sql`
         SELECT id,
@@ -92,6 +99,7 @@ export class NotePgDrizzleQuery implements NoteQuery {
           created_at,
           updated_at
         FROM sources
+        WHERE ${this.isNote()}
         ${cursorCondition}
         ORDER BY id DESC
         LIMIT ${options.limit + 1}
@@ -112,6 +120,10 @@ export class NotePgDrizzleQuery implements NoteQuery {
         cause: error,
       });
     }
+  }
+
+  private isNote(): SQL {
+    return sql`starts_with(external_source_id, ${this.knowledgeFolder.pathPrefix})`;
   }
 
   private toListItem(row: NoteRow): NoteQueryListItem {
