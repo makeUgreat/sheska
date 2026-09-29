@@ -13,6 +13,7 @@ related:
   - ./architecture/source-dependency.md
   - ./architecture/runtime-wiring.md
   - ./architecture/context-integration.md
+  - ./architecture/context-map.md
   - ./test.md
   - ./persistence/repository-methods.md
   - ./operability/observability.md
@@ -39,6 +40,8 @@ related:
 - Infrastructure adapter file 명명, 디렉토리 구조, adapter 컨벤션 작업: [API Infrastructure 컨벤션](./architecture/infrastructure.md)을 읽는다.
 - Import direction, layer boundary, framework import 작업: [API Source Dependency 컨벤션](./architecture/source-dependency.md)을 읽는다.
 - NestJS DI, provider registration, module wiring, platform startup flow, port binding 작업: [API Runtime Wiring 컨벤션](./architecture/runtime-wiring.md)을 읽는다.
+- 새 개념이나 기능을 어느 bounded context에 둘지 정하거나, context 사이의 의존 방향을 바꾸는 작업:
+  [API 컨텍스트 맵](./architecture/context-map.md)을 읽는다.
 - 크로스 컨텍스트 데이터 통합, domain event와 integration event 분류, outbox 전달 의미, 컨슈머 소유
   포트/어댑터 배치, Pull vs Push 전략 결정 작업:
   [API 컨텍스트 통합 컨벤션](./architecture/context-integration.md)을 읽는다.
