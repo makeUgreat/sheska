@@ -10,7 +10,10 @@ import {
   SourceContentSnapshotCalculator,
   type SourceContentSnapshotCalculation,
 } from '../services/source-content-snapshot-calculator.service';
-import { type LibraryUnitOfWork } from '@contexts/library/application/ports';
+import {
+  type LibraryUnitOfWork,
+  type LibraryUnitOfWorkResources,
+} from '@contexts/library/application/ports';
 import { SourceSyncJobCreatedIntegrationEvent } from '@contexts/library/application/events/source-sync-job-created.integration-event';
 import {
   SOURCE_REPOSITORY,
@@ -29,6 +32,13 @@ export interface UploadSourceResult {
   readonly fingerprint: string;
   readonly syncJobId?: string;
 }
+
+type SourceWrite = 'insert' | 'update';
+
+type EmbeddingDecision =
+  | { kind: 'create'; pendingSyncJob?: undefined }
+  | { kind: 'none'; pendingSyncJob?: undefined }
+  | { kind: 'pending'; pendingSyncJob: SourceSyncJob };
 
 export interface UploadSourceContentSnapshotCalculator {
   calculate(content: string): Promise<SourceContentSnapshotCalculation>;
@@ -54,56 +64,60 @@ export class UploadSourceUseCase {
     const snapshot = await this.contentSnapshotCalculator.calculate(
       command.content,
     );
-    const source = await this.sources.find({ externalSourceId });
+    const existing = await this.sources.find({ externalSourceId });
 
-    if (!source) {
-      return this.persistChange(
-        Source.create({ externalSourceId, ...snapshot }),
-        'insert',
-      );
+    const source = existing ?? Source.create({ externalSourceId, ...snapshot });
+    const sourceWrite = this.decideSourceWrite(existing, snapshot);
+    const embedding = await this.decideEmbedding(existing, snapshot);
+
+    if (!sourceWrite && embedding.kind !== 'create') {
+      return this.completeUpload(source, embedding.pendingSyncJob);
     }
-
-    const { changed } = source.syncContentSnapshot(snapshot);
-    if (!changed) {
-      const latestSyncJob = await this.syncJobs.findLatest({
-        sourceId: source.id,
-      });
-      if (latestSyncJob?.isCompleted()) return this.completeUpload(source);
-      if (latestSyncJob?.isActiveFor(snapshot.fingerprint)) {
-        return this.completeUpload(source, latestSyncJob);
-      }
-    }
-
-    return this.persistChange(source, 'update');
+    return this.persist(source, sourceWrite, embedding);
   }
 
-  private async persistChange(
-    source: Source,
-    sourceWrite: 'insert' | 'update',
-  ): Promise<UploadSourceResult> {
-    const { body, fingerprint } = source.getProps().contentSnapshot.unpack();
+  private decideSourceWrite(
+    existing: Source | null,
+    snapshot: SourceContentSnapshotCalculation,
+  ): SourceWrite | null {
+    if (!existing) return 'insert';
+    return existing.syncContentSnapshot(snapshot).changed ? 'update' : null;
+  }
 
-    const syncJob = SourceSyncJob.create({
-      sourceId: source.id,
-      fingerprint: fingerprint.unpack(),
-      content: body,
+  private async decideEmbedding(
+    existing: Source | null,
+    { fingerprint }: SourceContentSnapshotCalculation,
+  ): Promise<EmbeddingDecision> {
+    if (!existing) return { kind: 'create' };
+
+    const latestSyncJob = await this.syncJobs.findLatest({
+      sourceId: existing.id,
     });
-    const integrationEvents = syncJob.domainEvents.map(
-      (event) =>
-        new SourceSyncJobCreatedIntegrationEvent({
-          occurredAt: event.occurredAt,
-          sourceId: event.sourceId,
-          syncJobId: event.aggregateId,
-          content: event.content,
-        }),
-    );
+    if (latestSyncJob?.isCompletedFor(fingerprint)) return { kind: 'none' };
+    if (latestSyncJob?.isActiveFor(fingerprint)) {
+      return { kind: 'pending', pendingSyncJob: latestSyncJob };
+    }
+    return { kind: 'create' };
+  }
+
+  private async persist(
+    source: Source,
+    sourceWrite: SourceWrite | null,
+    embedding: EmbeddingDecision,
+  ): Promise<UploadSourceResult> {
+    const syncJob =
+      embedding.kind === 'create' ? this.createSyncJob(source) : null;
+    const integrationEvents = syncJob ? this.toIntegrationEvents(syncJob) : [];
 
     const result = await this.unitOfWork.execute(async (resources) => {
-      const savedSource =
-        sourceWrite === 'insert'
-          ? await resources.sources.insert(source)
-          : await resources.sources.update(source);
-      const savedSyncJob = await resources.syncJobs.insert(syncJob);
+      const savedSource = await this.writeSource(
+        resources,
+        source,
+        sourceWrite,
+      );
+      const savedSyncJob = syncJob
+        ? await resources.syncJobs.insert(syncJob)
+        : embedding.pendingSyncJob;
 
       for (const integrationEvent of integrationEvents) {
         await resources.outbox.append(integrationEvent);
@@ -112,9 +126,43 @@ export class UploadSourceUseCase {
       return this.completeUpload(savedSource, savedSyncJob);
     });
 
-    syncJob.clearDomainEvents();
+    syncJob?.clearDomainEvents();
 
     return result;
+  }
+
+  private writeSource(
+    resources: LibraryUnitOfWorkResources,
+    source: Source,
+    sourceWrite: SourceWrite | null,
+  ): Promise<Source> {
+    if (sourceWrite === 'insert') return resources.sources.insert(source);
+    if (sourceWrite === 'update') return resources.sources.update(source);
+    return Promise.resolve(source);
+  }
+
+  private createSyncJob(source: Source): SourceSyncJob {
+    const { body, fingerprint } = source.getProps().contentSnapshot.unpack();
+
+    return SourceSyncJob.create({
+      sourceId: source.id,
+      fingerprint: fingerprint.unpack(),
+      content: body,
+    });
+  }
+
+  private toIntegrationEvents(
+    syncJob: SourceSyncJob,
+  ): SourceSyncJobCreatedIntegrationEvent[] {
+    return syncJob.domainEvents.map(
+      (event) =>
+        new SourceSyncJobCreatedIntegrationEvent({
+          occurredAt: event.occurredAt,
+          sourceId: event.sourceId,
+          syncJobId: event.aggregateId,
+          content: event.content,
+        }),
+    );
   }
 
   private completeUpload(

@@ -40,8 +40,16 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
     });
   }
 
-  hasSameContentAs(other: SourceContentSnapshot): boolean {
-    return this.props.fingerprint.equals(other.props.fingerprint);
+  equals(other?: SourceContentSnapshot): boolean {
+    if (!other) return false;
+    const { props } = this;
+    return (
+      props.title === other.props.title &&
+      props.body === other.props.body &&
+      props.frontmatter.equals(other.props.frontmatter) &&
+      props.fingerprint.equals(other.props.fingerprint) &&
+      props.size.equals(other.props.size)
+    );
   }
 
   protected validate(props: SourceContentSnapshotProps): void {
