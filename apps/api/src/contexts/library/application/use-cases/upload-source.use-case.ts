@@ -3,6 +3,7 @@ import {
   ExternalSourceId,
   Source,
   SourceSyncJob,
+  type SourceLink,
   type SourceRepository,
   type SourceSyncJobRepository,
 } from '@contexts/library/domain';
@@ -24,6 +25,7 @@ import {
 export interface UploadSourceCommand {
   readonly externalSourceId: string;
   readonly content: string;
+  readonly links: readonly SourceLink[];
 }
 
 export interface UploadSourceResult {
@@ -32,6 +34,10 @@ export interface UploadSourceResult {
   readonly fingerprint: string;
   readonly syncJobId?: string;
 }
+
+type ReceivedSnapshot = SourceContentSnapshotCalculation & {
+  readonly links: readonly SourceLink[];
+};
 
 type SourceWrite = 'insert' | 'update';
 
@@ -61,9 +67,10 @@ export class UploadSourceUseCase {
     const externalSourceId = ExternalSourceId.of(
       command.externalSourceId,
     ).unpack();
-    const snapshot = await this.contentSnapshotCalculator.calculate(
-      command.content,
-    );
+    const snapshot: ReceivedSnapshot = {
+      ...(await this.contentSnapshotCalculator.calculate(command.content)),
+      links: command.links,
+    };
     const existing = await this.sources.find({ externalSourceId });
 
     const source = existing ?? Source.create({ externalSourceId, ...snapshot });
@@ -78,7 +85,7 @@ export class UploadSourceUseCase {
 
   private decideSourceWrite(
     existing: Source | null,
-    snapshot: SourceContentSnapshotCalculation,
+    snapshot: ReceivedSnapshot,
   ): SourceWrite | null {
     if (!existing) return 'insert';
     return existing.syncContentSnapshot(snapshot).changed ? 'update' : null;
@@ -86,7 +93,7 @@ export class UploadSourceUseCase {
 
   private async decideEmbedding(
     existing: Source | null,
-    { fingerprint }: SourceContentSnapshotCalculation,
+    { fingerprint }: ReceivedSnapshot,
   ): Promise<EmbeddingDecision> {
     if (!existing) return { kind: 'create' };
 

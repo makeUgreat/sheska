@@ -29,6 +29,7 @@ function buildPostQueryResult(
     sourceId: overrides.sourceId ?? 'source-1',
     title: overrides.title ?? '테스트 포스트',
     body: overrides.body ?? '테스트 source content',
+    links: overrides.links ?? [],
     viewCount: overrides.viewCount ?? 1,
     createdAt: overrides.createdAt ?? new Date(),
     updatedAt: overrides.updatedAt ?? new Date(),

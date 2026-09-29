@@ -16,6 +16,7 @@ test('source 상세 페이지에서 게시하기 버튼으로 포스트를 만�
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       externalSourceId: `e2e-${randomUUID()}`,
+      links: [],
       content: `---\ntitle: ${title}\n---\nE2E 테스트 내용`,
     }),
   });
@@ -48,6 +49,7 @@ test('포스트 목록에서 제목 클릭 시 상세 페이지로 이동하고 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       externalSourceId: `e2e-${randomUUID()}`,
+      links: [],
       content: `---\ntitle: ${title}\n---\nE2E 테스트 내용`,
     }),
   });
@@ -85,6 +87,7 @@ test('포스트 상세 페이지에서 소스 내용이 표시된다', async ({
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       externalSourceId: `e2e-${randomUUID()}`,
+      links: [],
       content,
     }),
   });
@@ -113,6 +116,7 @@ test('포스트 상세 페이지에서 마크다운이 HTML 요소로 렌더링�
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       externalSourceId: `e2e-${randomUUID()}`,
+      links: [],
       content: '# 마크다운 제목\n\n**굵은 텍스트**\n\n- 항목 하나\n- 항목 둘',
     }),
   });
@@ -159,6 +163,7 @@ test('포스트 목록에서 제목이나 본문 검색어를 입력하면 일�
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         externalSourceId: `e2e-${randomUUID()}`,
+        links: [],
         content: `---\ntitle: ${title}\n---\n${body}`,
       }),
     });
@@ -201,6 +206,7 @@ test('포스트 목록에서 검색어를 지우면 전체 목록으로 돌아�
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       externalSourceId: `e2e-${randomUUID()}`,
+      links: [],
       content: `---\ntitle: ${title}\n---\nE2E 테스트 내용`,
     }),
   });
@@ -238,6 +244,7 @@ test('발행된 포스트가 목록에 제목과 함께 표시된다', async ({
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       externalSourceId: `e2e-${randomUUID()}`,
+      links: [],
       content: `---\ntitle: ${title}\n---\nE2E 테스트 내용`,
     }),
   });
@@ -267,6 +274,7 @@ test('포스트 목록에서 무한 스크롤로 다음 페이지를 로드한�
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         externalSourceId: `e2e-${randomUUID()}`,
+        links: [],
         content: `---\ntitle: ${title}\n---\nE2E 테스트 내용`,
       }),
     });

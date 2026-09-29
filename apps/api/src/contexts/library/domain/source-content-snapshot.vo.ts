@@ -2,6 +2,7 @@ import { InvariantViolationError } from '@core/errors';
 import { ValueObject } from '@kernels/domain';
 import { SourceFingerprint } from './source-fingerprint.vo';
 import { SourceSize } from './source-size.vo';
+import { type SourceLink, SourceLinks } from './source-links.vo';
 import {
   SourceFrontmatter,
   type SourceFrontmatterProps,
@@ -9,14 +10,16 @@ import {
 
 interface SourceContentSnapshotProps {
   frontmatter: SourceFrontmatter;
+  links: SourceLinks;
   title: string;
   body: string;
   fingerprint: SourceFingerprint;
   size: SourceSize;
 }
 
-interface RawSourceContentSnapshot {
+export interface RawSourceContentSnapshot {
   frontmatter: SourceFrontmatterProps;
+  links: readonly SourceLink[];
   title: string;
   body: string;
   fingerprint: string;
@@ -29,11 +32,12 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
   }
 
   static of(value: RawSourceContentSnapshot): SourceContentSnapshot {
-    const { body, frontmatter, title, fingerprint, size } = value;
+    const { body, frontmatter, links, title, fingerprint, size } = value;
 
     return new SourceContentSnapshot({
       body,
       frontmatter: SourceFrontmatter.of(frontmatter),
+      links: SourceLinks.of(links),
       title,
       fingerprint: SourceFingerprint.of(fingerprint),
       size: SourceSize.of(size),
@@ -47,6 +51,7 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
       props.title === other.props.title &&
       props.body === other.props.body &&
       props.frontmatter.equals(other.props.frontmatter) &&
+      props.links.equals(other.props.links) &&
       props.fingerprint.equals(other.props.fingerprint) &&
       props.size.equals(other.props.size)
     );

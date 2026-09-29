@@ -1,9 +1,11 @@
 import { sql } from 'drizzle-orm';
 import {
   customType,
+  index,
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -60,7 +62,24 @@ export const sourceSyncJobs = pgTable(
   ],
 );
 
+export const sourceLinks = pgTable(
+  'source_links',
+  {
+    sourceId: text('source_id')
+      .notNull()
+      .references(() => sources.id, { onDelete: 'cascade' }),
+    target: text('target').notNull(),
+    resolvedPath: text('resolved_path'),
+  },
+  (table) => [
+    primaryKey({ columns: [table.sourceId, table.target] }),
+    index('source_links_resolved_path_idx').on(table.resolvedPath),
+  ],
+);
+
 export type SourceRow = typeof sources.$inferSelect;
+export type SourceLinkRow = typeof sourceLinks.$inferSelect;
+export type SourceLinkInsert = typeof sourceLinks.$inferInsert;
 export type SourceInsert = typeof sources.$inferInsert;
 export type SourceSyncJobRow = typeof sourceSyncJobs.$inferSelect;
 export type SourceSyncJobInsert = typeof sourceSyncJobs.$inferInsert;

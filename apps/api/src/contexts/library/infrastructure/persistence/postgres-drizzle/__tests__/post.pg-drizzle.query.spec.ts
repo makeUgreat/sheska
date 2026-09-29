@@ -1,3 +1,4 @@
+import { KnowledgeFolder } from '@contexts/library/domain';
 import { describe, expect, it, vi } from 'vitest';
 import { PostPgDrizzleQuery } from '../post.pg-drizzle.query';
 
@@ -20,7 +21,10 @@ function createFailingSelectDb() {
 describe('PostPgDrizzleQuery', () => {
   it('find DB 오류를 UnexpectedError로 래핑한다', async () => {
     const db = createFailingDb();
-    const query = new PostPgDrizzleQuery(db as never);
+    const query = new PostPgDrizzleQuery(
+      db as never,
+      KnowledgeFolder.of('Notes'),
+    );
 
     await expect(query.find({ id: 'post-1' })).rejects.toMatchObject({
       code: 'post.get_with_source_failed',
@@ -29,7 +33,10 @@ describe('PostPgDrizzleQuery', () => {
 
   it('paginate DB 오류를 UnexpectedError로 래핑한다', async () => {
     const db = createFailingSelectDb();
-    const query = new PostPgDrizzleQuery(db as never);
+    const query = new PostPgDrizzleQuery(
+      db as never,
+      KnowledgeFolder.of('Notes'),
+    );
 
     await expect(
       query.paginate({ limit: 20, cursor: null }),
@@ -40,7 +47,10 @@ describe('PostPgDrizzleQuery', () => {
 
   it('search DB 오류를 UnexpectedError로 래핑한다', async () => {
     const db = createFailingSelectDb();
-    const query = new PostPgDrizzleQuery(db as never);
+    const query = new PostPgDrizzleQuery(
+      db as never,
+      KnowledgeFolder.of('Notes'),
+    );
 
     await expect(
       query.search({
@@ -56,7 +66,10 @@ describe('PostPgDrizzleQuery', () => {
 
   it('count DB 오류를 UnexpectedError로 래핑한다', async () => {
     const db = createFailingDb();
-    const query = new PostPgDrizzleQuery(db as never);
+    const query = new PostPgDrizzleQuery(
+      db as never,
+      KnowledgeFolder.of('Notes'),
+    );
 
     await expect(query.count()).rejects.toMatchObject({
       code: 'post.count_failed',
