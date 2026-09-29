@@ -24,6 +24,7 @@ describe('SourceFromRepositoryLookup', () => {
         title: 'Source note',
         fingerprint: 'fingerprint-1',
         size: 50,
+        links: [],
       });
       const repository = buildMockRepository({
         get: vi.fn().mockResolvedValue(source),

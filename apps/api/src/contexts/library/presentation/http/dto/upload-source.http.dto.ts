@@ -7,6 +7,14 @@ export const uploadSourceHttpRequestSchema = z
       .transform((value) => value.trim())
       .pipe(z.string().min(1)),
     content: z.string(),
+    links: z.array(
+      z
+        .object({
+          target: z.string().trim().min(1),
+          resolvedPath: z.string().min(1).nullable(),
+        })
+        .strict(),
+    ),
   })
   .strict();
 
@@ -15,6 +23,10 @@ export class UploadSourceHttpRequest {
 
   readonly externalSourceId!: string;
   readonly content!: string;
+  readonly links!: ReadonlyArray<{
+    readonly target: string;
+    readonly resolvedPath: string | null;
+  }>;
 }
 
 export interface UploadSourceHttpResponse {
