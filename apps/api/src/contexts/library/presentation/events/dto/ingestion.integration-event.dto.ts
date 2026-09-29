@@ -13,7 +13,7 @@ export const ingestionCompletedIntegrationEventSchema = z.strictObject({
   eventType: z.literal('source.ingestion.completed'),
   payload: z.strictObject({
     syncJobId: z.string().min(1),
-    totalChunks: z.number().int().positive(),
+    totalChunks: z.number().int().nonnegative(),
   }),
 });
 

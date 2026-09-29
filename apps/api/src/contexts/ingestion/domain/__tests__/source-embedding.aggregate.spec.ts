@@ -21,10 +21,44 @@ describe('SourceEmbedding', () => {
 
       expect(sourceEmbedding.id).toBe('source-1');
       expect(props.syncJobId).toBe('sync-job-1');
-      expect(props.model.unpack()).toBe('qwen3-embedding:0.6b');
+      expect(props.model?.unpack()).toBe('qwen3-embedding:0.6b');
       expect(props.chunks).toHaveLength(2);
       expect(props.chunks[0].unpack().chunkIndex).toBe(0);
       expect(props.chunks[1].unpack().chunkIndex).toBe(1);
+    });
+
+    it('청크가 없으면 모델 없이 생성한다', () => {
+      const sourceEmbedding = SourceEmbedding.create({
+        sourceId: 'source-1',
+        syncJobId: 'sync-job-1',
+        model: null,
+        chunks: [],
+      });
+
+      expect(sourceEmbedding.getProps().model).toBeNull();
+      expect(sourceEmbedding.getProps().chunks).toEqual([]);
+    });
+
+    it('청크가 있는데 모델이 없으면 throw한다', () => {
+      expect(() =>
+        SourceEmbedding.create({
+          sourceId: 'source-1',
+          syncJobId: 'sync-job-1',
+          model: null,
+          chunks: validChunks,
+        }),
+      ).toThrow('Source embedding has a model exactly when it has chunks');
+    });
+
+    it('청크가 없는데 모델이 있으면 throw한다', () => {
+      expect(() =>
+        SourceEmbedding.create({
+          sourceId: 'source-1',
+          syncJobId: 'sync-job-1',
+          model: 'qwen3-embedding:0.6b',
+          chunks: [],
+        }),
+      ).toThrow('Source embedding has a model exactly when it has chunks');
     });
 
     it('지원하지 않는 모델이면 throw한다', () => {

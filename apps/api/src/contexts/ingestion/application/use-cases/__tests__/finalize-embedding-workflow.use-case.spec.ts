@@ -86,6 +86,22 @@ describe('FinalizeEmbeddingWorkflowUseCase', () => {
     );
   });
 
+  it('청크가 없는 workflow는 청크 없는 source 임베딩으로 완료한다', async () => {
+    const { useCase, upsert, append } = buildUseCase();
+
+    await useCase.execute({ ...payload, totalChunks: 0 }, []);
+
+    const saved = upsert.mock.calls[0][0] as SourceEmbedding;
+    expect(saved.getProps().chunks).toEqual([]);
+    expect(saved.getProps().model).toBeNull();
+    expect(append).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'source.ingestion.completed',
+        payload: { syncJobId: 'sync-job-1', totalChunks: 0 },
+      }),
+    );
+  });
+
   it('누락된 child 결과는 저장하지 않는다', async () => {
     const { useCase, upsert } = buildUseCase();
 
