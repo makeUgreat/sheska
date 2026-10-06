@@ -10,7 +10,7 @@ service:
   port: 3000
 ingress:
   enabled: true
-  className: ""
+  className: cloudflare-tunnel
   annotations: {}
   hosts:
     - host: api-sheska.meogle.co.kr
