@@ -129,6 +129,7 @@ export class PostsHttpController {
       sourceId: result.sourceId,
       title: result.title,
       body: result.body,
+      links: result.links,
       viewCount: result.viewCount,
       createdAt: result.createdAt.toISOString(),
       updatedAt: result.updatedAt.toISOString(),

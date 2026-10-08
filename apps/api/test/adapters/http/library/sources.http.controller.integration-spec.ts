@@ -344,6 +344,7 @@ describe('SourcesHttpController', () => {
         .send({
           externalSourceId: ' Notes/source.md ',
           content: '# Source note',
+          links: [],
         })
         .expect(201);
 
@@ -356,6 +357,7 @@ describe('SourcesHttpController', () => {
       expect(uploadSourceUseCase.execute).toHaveBeenCalledWith({
         externalSourceId: 'Notes/source.md',
         content: '# Source note',
+        links: [],
       });
     });
 
@@ -365,6 +367,7 @@ describe('SourcesHttpController', () => {
         .send({
           externalSourceId: ' ',
           content: '# Source note',
+          links: [],
         })
         .expect(400);
 
@@ -384,6 +387,44 @@ describe('SourcesHttpController', () => {
       expect(uploadSourceUseCase.execute).not.toHaveBeenCalled();
     });
 
+    it('wiki link 해석 결과를 use case에 전달한다', async () => {
+      uploadSourceUseCase.execute.mockResolvedValue({
+        sourceId: 'source-1',
+        externalSourceId: 'Notes/source.md',
+        fingerprint: 'fingerprint-1',
+      });
+
+      await request(httpServer)
+        .post('/sources')
+        .send({
+          externalSourceId: 'Notes/source.md',
+          content: '[[Other]] [[Missing]]',
+          links: [
+            { target: ' Other ', resolvedPath: 'Notes/Other.md' },
+            { target: 'Missing', resolvedPath: null },
+          ],
+        })
+        .expect(201);
+
+      expect(uploadSourceUseCase.execute).toHaveBeenCalledWith({
+        externalSourceId: 'Notes/source.md',
+        content: '[[Other]] [[Missing]]',
+        links: [
+          { target: 'Other', resolvedPath: 'Notes/Other.md' },
+          { target: 'Missing', resolvedPath: null },
+        ],
+      });
+    });
+
+    it('wiki link 해석 결과가 없으면 400 응답을 반환한다', async () => {
+      await request(httpServer)
+        .post('/sources')
+        .send({ externalSourceId: 'Notes/source.md', content: '# Source note' })
+        .expect(400);
+
+      expect(uploadSourceUseCase.execute).not.toHaveBeenCalled();
+    });
+
     it('source upload 중 exception이 발생하면 500 응답으로 마스킹한다', async () => {
       uploadSourceUseCase.execute.mockRejectedValue(
         new Error('Source fingerprinter is unavailable'),
@@ -394,6 +435,7 @@ describe('SourcesHttpController', () => {
         .send({
           externalSourceId: 'Notes/source.md',
           content: '# Source note',
+          links: [],
         })
         .expect(500);
 
@@ -419,6 +461,7 @@ describe('SourcesHttpController', () => {
         .send({
           externalSourceId: 'Notes/source.md',
           content: '# Source note',
+          links: [],
         })
         .expect(404);
 
@@ -444,6 +487,7 @@ describe('SourcesHttpController', () => {
         .send({
           externalSourceId: 'Notes/source.md',
           content: '# Source note',
+          links: [],
         })
         .expect(409);
 

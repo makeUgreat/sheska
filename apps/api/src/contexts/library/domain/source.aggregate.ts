@@ -1,32 +1,28 @@
 import { AggregateRoot, newId } from '@kernels/domain';
 import { ExternalSourceId } from './external-source-id.vo';
-import { SourceContentSnapshot } from './source-content-snapshot.vo';
-import { type SourceFrontmatterProps } from './source-frontmatter.vo';
+import {
+  type RawSourceContentSnapshot,
+  SourceContentSnapshot,
+} from './source-content-snapshot.vo';
 
 interface SourceProps {
   externalSourceId: ExternalSourceId;
   contentSnapshot: SourceContentSnapshot;
 }
 
-interface SourceRestoreParams {
+type ReceivedSnapshot = Omit<RawSourceContentSnapshot, 'title'> & {
+  title: string | null;
+};
+
+interface SourceRestoreParams extends RawSourceContentSnapshot {
   id: string;
   externalSourceId: string;
-  frontmatter: SourceFrontmatterProps;
-  title: string;
-  body: string;
-  fingerprint: string;
-  size: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-interface SourceCreateParams {
+interface SourceCreateParams extends ReceivedSnapshot {
   externalSourceId: string;
-  frontmatter: SourceFrontmatterProps;
-  title: string | null;
-  body: string;
-  fingerprint: string;
-  size: number;
 }
 
 export interface SyncContentSnapshotResult {
@@ -51,42 +47,20 @@ export class Source extends AggregateRoot<SourceProps> {
   }
 
   static restore(params: SourceRestoreParams): Source {
-    const {
-      id,
-      externalSourceId,
-      body,
-      frontmatter,
-      title,
-      fingerprint,
-      size,
-      createdAt,
-      updatedAt,
-    } = params;
+    const { id, externalSourceId, createdAt, updatedAt, ...snapshot } = params;
 
     return new Source({
       id,
       props: {
         externalSourceId: ExternalSourceId.of(externalSourceId),
-        contentSnapshot: SourceContentSnapshot.of({
-          body,
-          frontmatter,
-          title,
-          fingerprint,
-          size,
-        }),
+        contentSnapshot: SourceContentSnapshot.of(snapshot),
       },
       createdAt,
       updatedAt,
     });
   }
 
-  syncContentSnapshot(params: {
-    frontmatter: SourceFrontmatterProps;
-    title: string | null;
-    body: string;
-    fingerprint: string;
-    size: number;
-  }): SyncContentSnapshotResult {
+  syncContentSnapshot(params: ReceivedSnapshot): SyncContentSnapshotResult {
     const contentSnapshot = SourceContentSnapshot.of({
       ...params,
       title: params.title ?? this.props.externalSourceId.unpack(),
