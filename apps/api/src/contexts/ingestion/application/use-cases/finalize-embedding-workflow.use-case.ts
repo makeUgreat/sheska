@@ -85,7 +85,7 @@ export class FinalizeEmbeddingWorkflowUseCase {
     return SourceEmbedding.create({
       sourceId: command.sourceId,
       syncJobId: command.syncJobId,
-      model: models[0],
+      model: models[0] ?? null,
       chunks: sortedChunks,
     });
   }
@@ -94,9 +94,8 @@ export class FinalizeEmbeddingWorkflowUseCase {
     command: FinalizeEmbeddingWorkflowCommand,
     chunks: readonly EmbedSourceChunkResult[],
   ): void {
-    const hasNoChunkResults = chunks.length === 0;
     const hasUnexpectedChunkCount = chunks.length !== command.totalChunks;
-    if (hasNoChunkResults || hasUnexpectedChunkCount) {
+    if (hasUnexpectedChunkCount) {
       throw new StateConflictError({
         code: 'ingestion.embedding_workflow_result_incomplete',
         message: 'Embedding workflow result is incomplete',
