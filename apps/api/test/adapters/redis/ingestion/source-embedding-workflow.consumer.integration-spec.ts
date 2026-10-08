@@ -116,7 +116,7 @@ describe('Embedding workflow consumers', () => {
       embedding: VALID_EMBEDDING,
       model: 'qwen3-embedding:0.6b',
     });
-    upsert.mockResolvedValue(undefined);
+    upsert.mockResolvedValue({ replaced: true });
 
     await workflowDispatcher.dispatch({
       sourceId: 'source-1',
@@ -145,7 +145,7 @@ describe('Embedding workflow consumers', () => {
         embedding: VALID_EMBEDDING,
         model: 'qwen3-embedding:0.6b',
       });
-    upsert.mockResolvedValue(undefined);
+    upsert.mockResolvedValue({ replaced: true });
 
     await workflowDispatcher.dispatch({
       sourceId: 'source-1',

@@ -35,7 +35,7 @@ export class SourceEmbeddingFinalizationBullMqConsumer extends WorkerHost {
         embedding: result.embedding,
       }));
 
-    await this.finalizeEmbeddingWorkflow.execute(
+    const { replaced } = await this.finalizeEmbeddingWorkflow.execute(
       {
         sourceId: input.sourceId,
         syncJobId: input.syncJobId,
@@ -43,6 +43,12 @@ export class SourceEmbeddingFinalizationBullMqConsumer extends WorkerHost {
       },
       chunks,
     );
+    if (!replaced) {
+      this.logger.debug('superseded embedding workflow result discarded', {
+        sourceId: input.sourceId,
+        syncJobId: input.syncJobId,
+      });
+    }
   }
 
   @OnWorkerEvent('failed')

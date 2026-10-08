@@ -12,7 +12,7 @@ const execAsync = promisify(exec);
 const POSTGRES_TEST_CONTAINER_NAME = 'sheska.test.db';
 const REDIS_TEST_CONTAINER_NAME = 'sheska.test.redis';
 const POSTGRES_TEST_DATABASE_URL =
-  'postgres://sheska:sheska@127.0.0.1:55432/sheska_test';
+  'postgres://sheska:sheska@127.0.0.1:55442/sheska_test';
 const POSTGRES_COMPOSE_FILE = resolve(__dirname, 'docker-compose.yml');
 const POSTGRES_COMPOSE_CWD = resolve(__dirname, '../../..');
 const POSTGRES_LOG_CONTEXT: IntegrationAdapterLogContext = {

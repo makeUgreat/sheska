@@ -5,6 +5,7 @@ import { EmbeddingVector } from './embedding-vector.vo';
 
 interface SourceEmbeddingProps {
   sourceId: string;
+  syncJobId: string;
   model: EmbeddingModel;
   chunks: ChunkEmbedding[];
 }
@@ -17,12 +18,14 @@ interface ChunkParam {
 
 interface SourceEmbeddingCreateParams {
   sourceId: string;
+  syncJobId: string;
   model: string;
   chunks: ChunkParam[];
 }
 
 interface SourceEmbeddingRestoreParams {
   sourceId: string;
+  syncJobId: string;
   model: string;
   chunks: ChunkParam[];
   createdAt?: Date;
@@ -41,7 +44,12 @@ export class SourceEmbedding extends AggregateRoot<SourceEmbeddingProps> {
     );
     return new SourceEmbedding({
       id: params.sourceId,
-      props: { sourceId: params.sourceId, model, chunks },
+      props: {
+        sourceId: params.sourceId,
+        syncJobId: params.syncJobId,
+        model,
+        chunks,
+      },
     });
   }
 
@@ -56,7 +64,12 @@ export class SourceEmbedding extends AggregateRoot<SourceEmbeddingProps> {
     );
     return new SourceEmbedding({
       id: params.sourceId,
-      props: { sourceId: params.sourceId, model, chunks },
+      props: {
+        sourceId: params.sourceId,
+        syncJobId: params.syncJobId,
+        model,
+        chunks,
+      },
       createdAt: params.createdAt,
       updatedAt: params.updatedAt,
     });

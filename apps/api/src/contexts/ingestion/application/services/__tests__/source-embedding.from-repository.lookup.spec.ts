@@ -17,6 +17,7 @@ describe('SourceEmbeddingFromRepositoryLookup', () => {
     it('저장된 SourceEmbedding을 model/dimensions/createdAt/updatedAt으로 매핑해 반환한다', async () => {
       const sourceEmbedding = SourceEmbedding.create({
         sourceId: 'source-1',
+        syncJobId: 'sync-job-1',
         model: fakeModel,
         chunks: [
           { chunkIndex: 0, chunkContent: 'chunk', embedding: fakeEmbedding },

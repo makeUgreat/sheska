@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, sql } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { ConcurrencyConflictError } from '@core/errors';
 import {
@@ -10,6 +10,7 @@ import {
 import {
   type SourceEmbedding,
   type SourceEmbeddingRepository,
+  type SourceEmbeddingUpsertResult,
 } from '@contexts/ingestion/domain';
 import * as schema from './schema';
 import type { SourceEmbeddingInsert } from './schema';
@@ -34,11 +35,13 @@ export class SourceEmbeddingPgDrizzleRepository implements SourceEmbeddingReposi
       : null;
   }
 
-  async upsert(sourceEmbedding: SourceEmbedding): Promise<void> {
+  async upsert(
+    sourceEmbedding: SourceEmbedding,
+  ): Promise<SourceEmbeddingUpsertResult> {
+    const { sourceId, syncJobId } = sourceEmbedding.getProps();
     const inserts = SourceEmbeddingPgDrizzleMapper.toInserts(sourceEmbedding);
-    const { sourceId } = inserts[0];
 
-    await resiliencePipeline()
+    return resiliencePipeline()
       .retry({
         maxRetries: 3,
         baseDelayMs: 20,
@@ -47,19 +50,32 @@ export class SourceEmbeddingPgDrizzleRepository implements SourceEmbeddingReposi
           retryable: error instanceof ConcurrencyConflictError,
         }),
       })
-      .execute(() => this.replaceOnce(sourceId, inserts));
+      .execute(() => this.replaceOnce(sourceId, syncJobId, inserts));
   }
 
   private async replaceOnce(
     sourceId: string,
+    syncJobId: string,
     inserts: SourceEmbeddingInsert[],
-  ): Promise<void> {
+  ): Promise<SourceEmbeddingUpsertResult> {
     try {
-      await this.db.transaction(async (tx) => {
+      return await this.db.transaction(async (tx) => {
+        await tx.execute(
+          sql`SELECT pg_advisory_xact_lock(hashtext(${sourceId}))`,
+        );
+        const [stored] = await tx
+          .select({ syncJobId: schema.sourceEmbeddings.syncJobId })
+          .from(schema.sourceEmbeddings)
+          .where(eq(schema.sourceEmbeddings.sourceId, sourceId))
+          .limit(1);
+        const isStale = stored !== undefined && stored.syncJobId >= syncJobId;
+        if (isStale) return { replaced: false };
+
         await tx
           .delete(schema.sourceEmbeddings)
           .where(eq(schema.sourceEmbeddings.sourceId, sourceId));
         await tx.insert(schema.sourceEmbeddings).values(inserts);
+        return { replaced: true };
       });
     } catch (error: unknown) {
       const ErrorClass = classifyPostgresError(error);

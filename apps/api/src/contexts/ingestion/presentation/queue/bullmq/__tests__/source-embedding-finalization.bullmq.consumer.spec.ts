@@ -30,7 +30,7 @@ function buildJob(): Job<FinalizeEmbeddingWorkflowCommand> {
 }
 
 function buildDependencies() {
-  const execute = vi.fn().mockResolvedValue(undefined);
+  const execute = vi.fn().mockResolvedValue({ replaced: true });
   const handleFailure = vi.fn().mockResolvedValue(undefined);
   const logger = {
     log: vi.fn(),
@@ -59,6 +59,23 @@ describe('SourceEmbeddingFinalizationBullMqConsumer', () => {
     expect(execute).toHaveBeenCalledWith(job.data, [
       expect.objectContaining({ chunkIndex: 0, chunkContent: 'chunk' }),
     ]);
+    expect(logger.debug).not.toHaveBeenCalled();
+  });
+
+  it('더 나중 결과가 있어 버려진 결과는 debug로 남긴다', async () => {
+    const { useCase, execute, logger } = buildDependencies();
+    execute.mockResolvedValue({ replaced: false });
+    const consumer = new SourceEmbeddingFinalizationBullMqConsumer(
+      useCase,
+      logger,
+    );
+
+    await consumer.process(buildJob());
+
+    expect(logger.debug).toHaveBeenCalledWith(
+      'superseded embedding workflow result discarded',
+      expect.objectContaining({ sourceId: 'source-1' }),
+    );
   });
 
   it('finalize 실패를 기록하고 sync job 실패 처리한다', async () => {
