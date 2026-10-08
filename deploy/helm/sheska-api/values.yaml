@@ -23,6 +23,8 @@ resources:
     memory: 512Mi
 embedding:
   baseUrl: http://sheska-embedder.sheska.svc.cluster.local:11434
+library:
+  knowledgeFolder: 09_Knowledge
 otel:
   exporterOtlpEndpoint: http://alloy.observability.svc.cluster.local:4318
 nodeSelector: {}
