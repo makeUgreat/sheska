@@ -85,7 +85,7 @@ export class PostPgDrizzleRepository implements PostRepository {
     try {
       [row] = await this.db
         .update(schema.posts)
-        .set({ viewCount: postInsert.viewCount, updatedAt: new Date() })
+        .set({ viewCount: postInsert.viewCount })
         .where(eq(schema.posts.id, postInsert.id))
         .returning();
     } catch (error: unknown) {
