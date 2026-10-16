@@ -14,12 +14,16 @@ import {
   type PostQuerySearchResult,
   type PostQuerySearchCursor,
   type PostMatchReason,
+  type ResolvedLink,
 } from '@contexts/library/application/ports';
+import { type KnowledgeFolder } from '@contexts/library/domain';
+import { KNOWLEDGE_FOLDER } from '@contexts/library/library.di-tokens';
 import {
   classifyPostgresError,
   DATABASE_TOKENS,
   sliceForCursor,
 } from '@kernels/infrastructure';
+import { selectResolvedLinks } from './resolved-link.pg-drizzle.sql';
 import * as postsSchema from './schema';
 
 type QuerySchema = typeof postsSchema;
@@ -66,6 +70,8 @@ export class PostPgDrizzleQuery implements PostQuery {
   constructor(
     @Inject(DATABASE_TOKENS.drizzleDatabase)
     private readonly db: NodePgDatabase<QuerySchema>,
+    @Inject(KNOWLEDGE_FOLDER)
+    private readonly knowledgeFolder: KnowledgeFolder,
   ) {}
 
   async get(criteria: PostQueryFindCriteria): Promise<PostQueryResult> {
@@ -112,7 +118,9 @@ export class PostPgDrizzleQuery implements PostQuery {
       return null;
     }
 
+    const links = await this.findLinks(row.post_id);
     return {
+      links,
       postId: row.post_id,
       sourceId: row.post_id,
       title: row.title,
@@ -121,6 +129,20 @@ export class PostPgDrizzleQuery implements PostQuery {
       updatedAt: new Date(row.updated_at),
       body: row.source_body,
     };
+  }
+
+  private async findLinks(postId: string): Promise<ResolvedLink[]> {
+    try {
+      return await selectResolvedLinks(this.db, postId, this.knowledgeFolder);
+    } catch (error: unknown) {
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
+        code: 'post.get_links_failed',
+        message: 'Post links query operation failed',
+        details: { id: postId },
+        cause: error,
+      });
+    }
   }
 
   async paginate({

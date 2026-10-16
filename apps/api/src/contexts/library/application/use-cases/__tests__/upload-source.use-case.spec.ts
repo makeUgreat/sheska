@@ -60,6 +60,7 @@ describe('UploadSourceUseCase', () => {
     const result = await useCase.execute({
       externalSourceId: ' Notes/source.md ',
       content: '# Source note',
+      links: [],
     });
 
     expect(result).toMatchObject({
@@ -129,6 +130,7 @@ describe('UploadSourceUseCase', () => {
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
+      links: [],
     });
 
     expect(result).toEqual({
@@ -173,6 +175,7 @@ describe('UploadSourceUseCase', () => {
       const result = await useCase.execute({
         externalSourceId: 'Notes/source.md',
         content: '# Source note',
+        links: [],
       });
 
       expect(result.syncJobId).toBe('sync-job-1');
@@ -205,6 +208,7 @@ describe('UploadSourceUseCase', () => {
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
+      links: [],
     });
 
     expect(result.syncJobId?.length).toBeGreaterThan(0);
@@ -241,6 +245,7 @@ describe('UploadSourceUseCase', () => {
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
+      links: [],
     });
 
     expect(result.syncJobId?.length).toBeGreaterThan(0);
@@ -249,6 +254,45 @@ describe('UploadSourceUseCase', () => {
       sourceId: 'source-1',
       fingerprint: 'fingerprint-1',
     });
+  });
+
+  it('wiki link 해석 결과만 바뀌면 source만 갱신하고 sync job은 만들지 않는다', async () => {
+    const existingSource = restoreSource({
+      id: 'source-1',
+      externalSourceId: 'Notes/source.md',
+      content: '# Source note',
+      fingerprint: 'fingerprint-1',
+    });
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
+      content: '# Source note',
+      fingerprint: 'fingerprint-1',
+    });
+    const sources = createSourceRepositoryMock();
+    sources.find.mockResolvedValue(existingSource);
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    syncJobs.findLatest.mockResolvedValue(
+      restoreSyncJob({ sourceId: 'source-1', status: 'completed' }),
+    );
+    const useCase = new UploadSourceUseCase(
+      contentSnapshotCalculator,
+      sources,
+      syncJobs,
+      createLibraryUnitOfWorkMock(sources, syncJobs),
+    );
+
+    const result = await useCase.execute({
+      externalSourceId: 'Notes/source.md',
+      content: '# Source note',
+      links: [{ target: 'Other', resolvedPath: 'Notes/Other.md' }],
+    });
+
+    expect(result.syncJobId).toBeUndefined();
+    expect(sources.update).toHaveBeenCalledOnce();
+    expect(
+      sources.update.mock.calls[0]?.[0].getProps().contentSnapshot.unpack()
+        .links.links,
+    ).toEqual([{ target: 'Other', resolvedPath: 'Notes/Other.md' }]);
+    expect(syncJobs.insert).not.toHaveBeenCalled();
   });
 
   it('frontmatter만 바뀌면 source만 갱신하고 sync job은 만들지 않는다', async () => {
@@ -280,6 +324,7 @@ describe('UploadSourceUseCase', () => {
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
+      links: [],
     });
 
     expect(result.syncJobId).toBeUndefined();
@@ -316,6 +361,7 @@ describe('UploadSourceUseCase', () => {
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
+      links: [],
     });
 
     expect(result.syncJobId).toBe('sync-job-1');
@@ -354,6 +400,7 @@ describe('UploadSourceUseCase', () => {
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# New source note',
+      links: [],
     });
 
     expect(result.syncJobId?.length).toBeGreaterThan(0);
@@ -388,6 +435,7 @@ describe('UploadSourceUseCase', () => {
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# New source note',
+      links: [],
     });
 
     expect(result).toMatchObject({
@@ -422,6 +470,7 @@ describe('UploadSourceUseCase', () => {
       useCase.execute({
         externalSourceId: ' ',
         content: '# Source note',
+        links: [],
       }),
     ).rejects.toThrow('External source id cannot be empty');
     expect(contentSnapshotCalculator.calculate).not.toHaveBeenCalled();
@@ -446,6 +495,7 @@ describe('UploadSourceUseCase', () => {
     const result = useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
+      links: [],
     });
 
     await expect(result).rejects.toBe(calculationFailure);
@@ -470,6 +520,7 @@ describe('UploadSourceUseCase', () => {
     const result = useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
+      links: [],
     });
 
     await expect(result).rejects.toThrow('Source Repository operation failed');
@@ -494,6 +545,7 @@ describe('UploadSourceUseCase', () => {
     const result = useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
+      links: [],
     });
 
     await expect(result).rejects.toThrow('Source Repository operation failed');
@@ -518,6 +570,7 @@ describe('UploadSourceUseCase', () => {
     const result = useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
+      links: [],
     });
 
     await expect(result).rejects.toThrow(
@@ -543,6 +596,7 @@ describe('UploadSourceUseCase', () => {
     const result = useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
+      links: [],
     });
 
     await expect(result).rejects.toBe(outboxFailure);
@@ -568,6 +622,7 @@ describe('UploadSourceUseCase', () => {
     const result = useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
+      links: [],
     });
 
     await expect(result).rejects.toThrow('Source fingerprint cannot be empty');
@@ -686,6 +741,7 @@ function expectSourceSavedWith(
       title: expected.externalSourceId,
       fingerprint: expected.fingerprint,
       size: sourceContentByteSize(expected.content),
+      links: [],
     }),
   );
 }
@@ -730,5 +786,6 @@ function restoreSource(params: {
     title: params.externalSourceId,
     fingerprint: params.fingerprint,
     size: sourceContentByteSize(params.content),
+    links: [],
   });
 }

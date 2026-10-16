@@ -1,8 +1,11 @@
+import { type ResolvedLink } from './resolved-link';
+
 export interface PostQueryResult {
   readonly postId: string;
   readonly sourceId: string;
   readonly title: string;
   readonly body: string;
+  readonly links: readonly ResolvedLink[];
   readonly viewCount: number;
   readonly createdAt: Date;
   readonly updatedAt: Date;

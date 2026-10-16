@@ -1,4 +1,5 @@
 export type { SourceFingerprinter } from './source.fingerprinter';
+export type { ResolvedLink } from './resolved-link';
 export type {
   SourceDocumentParser,
   ParsedSourceDocument,

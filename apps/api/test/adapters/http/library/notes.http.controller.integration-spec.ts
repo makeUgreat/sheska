@@ -71,6 +71,7 @@ describe('NotesHttpController', () => {
       noteId: 'source-1',
       sourceId: 'source-1',
       externalSourceId: 'Notes/retry.md',
+      links: [{ target: 'Nested Retries', noteId: 'source-2', postId: null }],
       title: 'Retry Amplification',
       aliases: ['Nested Retries'],
       keywords: ['retry'],

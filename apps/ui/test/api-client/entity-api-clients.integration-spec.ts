@@ -19,7 +19,7 @@ describe('entity API clients', () => {
     const uploadResponse = await fetch(`${baseUrl}/sources`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ externalSourceId, content }),
+      body: JSON.stringify({ externalSourceId, content, links: [] }),
     });
     expect(uploadResponse.status).toBe(201);
 
@@ -63,7 +63,7 @@ describe('entity API clients', () => {
     const uploadResponse = await fetch(`${baseUrl}/sources`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ externalSourceId, content }),
+      body: JSON.stringify({ externalSourceId, content, links: [] }),
     });
     expect(uploadResponse.status).toBe(201);
 

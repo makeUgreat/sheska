@@ -68,6 +68,30 @@ describe('PostPgDrizzleQuery', () => {
     });
   });
 
+  it('post 본문의 wiki link를 공개된 대상으로 풀어낸다', async () => {
+    const target = await sources.insert(
+      buildSource({ externalSourceId: 'Notes/post-query-link-target.md' }),
+    );
+    const source = await sources.insert(
+      buildSource({
+        externalSourceId: 'Drafts/post-query-linking.md',
+        links: [
+          { target: 'target', resolvedPath: 'Notes/post-query-link-target.md' },
+          { target: 'missing', resolvedPath: null },
+        ],
+      }),
+    );
+    const post = buildPost({ sourceId: source.id });
+    await posts.insert(post);
+
+    const result = await postQuery.find({ id: post.id });
+
+    expect(result?.links).toEqual([
+      { target: 'missing', noteId: null, postId: null },
+      { target: 'target', noteId: target.id, postId: null },
+    ]);
+  });
+
   it('존재하지 않는 id는 null을 반환한다', async () => {
     const result = await postQuery.find({ id: 'non-existent-id' });
 

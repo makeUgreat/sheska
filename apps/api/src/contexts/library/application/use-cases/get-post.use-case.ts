@@ -1,6 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { type PostRepository } from '@contexts/library/domain';
-import { type PostQuery } from '@contexts/library/application/ports';
+import {
+  type PostQuery,
+  type ResolvedLink,
+} from '@contexts/library/application/ports';
 import {
   POST_QUERY,
   POST_REPOSITORY,
@@ -15,6 +18,7 @@ export interface GetPostResult {
   readonly sourceId: string;
   readonly title: string;
   readonly body: string;
+  readonly links: readonly ResolvedLink[];
   readonly viewCount: number;
   readonly createdAt: Date;
   readonly updatedAt: Date;

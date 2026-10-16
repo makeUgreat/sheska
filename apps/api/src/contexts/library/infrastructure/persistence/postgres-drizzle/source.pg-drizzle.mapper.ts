@@ -1,12 +1,25 @@
 import { Source } from '@contexts/library/domain';
-import { type SourceInsert, type SourceRow } from './schema';
+import {
+  type SourceInsert,
+  type SourceLinkInsert,
+  type SourceLinkRow,
+  type SourceRow,
+} from './schema';
 
 export class SourcePgDrizzleMapper {
-  static toDomain(this: void, row: SourceRow): Source {
+  static toDomain(
+    this: void,
+    row: SourceRow,
+    linkRows: readonly SourceLinkRow[],
+  ): Source {
     return Source.restore({
       id: row.id,
       externalSourceId: row.externalSourceId,
       frontmatter: row.frontmatter,
+      links: linkRows.map(({ target, resolvedPath }) => ({
+        target,
+        resolvedPath,
+      })),
       title: row.title,
       body: row.body,
       fingerprint: row.fingerprint,
@@ -29,5 +42,14 @@ export class SourcePgDrizzleMapper {
       fingerprint: contentSnapshot.fingerprint.unpack(),
       sizeBytes: contentSnapshot.size.unpack(),
     };
+  }
+
+  static toLinkInserts(source: Source): SourceLinkInsert[] {
+    const { links } = source.getProps().contentSnapshot.unpack();
+    return links.links.map(({ target, resolvedPath }) => ({
+      sourceId: source.id,
+      target,
+      resolvedPath,
+    }));
   }
 }

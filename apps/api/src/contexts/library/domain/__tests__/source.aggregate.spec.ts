@@ -10,6 +10,7 @@ const snapshot = {
   title: 'Source note',
   fingerprint: 'fingerprint-1',
   size: 50,
+  links: [],
 } as const;
 
 describe('Source', () => {
@@ -93,6 +94,7 @@ describe('Source', () => {
       title: 'Changed',
       fingerprint: 'fingerprint-2',
       size: 40,
+      links: [],
     } as const;
 
     const result = source.syncContentSnapshot(next);

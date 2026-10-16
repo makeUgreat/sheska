@@ -106,6 +106,7 @@ export class SourcesHttpController {
     const result = await this.uploadSourceUseCase.execute({
       externalSourceId: request.externalSourceId,
       content: request.content,
+      links: request.links,
     });
 
     return {

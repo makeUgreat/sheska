@@ -1,4 +1,5 @@
 import { type SourceFrontmatterProps } from '@contexts/library/domain';
+import { type ResolvedLink } from './resolved-link';
 
 export type NoteQueryCursor = { readonly id: string };
 
@@ -16,6 +17,7 @@ export interface NoteQueryResult extends NoteQueryListItem {
   readonly externalSourceId: string;
   readonly frontmatter: SourceFrontmatterProps;
   readonly body: string;
+  readonly links: readonly ResolvedLink[];
 }
 
 export interface NoteQueryPaginateResult {

@@ -45,6 +45,7 @@ describe('SourceDrizzleRepository', () => {
         title: externalSourceId,
         fingerprint: 'fingerprint-1',
         size: sourceContentByteSize('# Source note'),
+        links: [],
       }),
     );
   });
@@ -60,6 +61,7 @@ describe('SourceDrizzleRepository', () => {
       title: externalSourceId,
       fingerprint: 'fingerprint-2',
       size: sourceContentByteSize('# Changed source note'),
+      links: [],
     });
 
     const saveResult = await repository.update(source);
@@ -73,6 +75,7 @@ describe('SourceDrizzleRepository', () => {
         title: externalSourceId,
         fingerprint: 'fingerprint-2',
         size: sourceContentByteSize('# Changed source note'),
+        links: [],
       }),
     );
   });
@@ -93,6 +96,7 @@ describe('SourceDrizzleRepository', () => {
         title: 'Notes/find-source-by-id.md',
         fingerprint: 'fingerprint-1',
         size: sourceContentByteSize('# Source note'),
+        links: [],
       }),
     );
   });
@@ -127,5 +131,31 @@ describe('SourceDrizzleRepository', () => {
       kind: 'constraint_violation',
       code: 'source.external_source_id_already_exists',
     });
+  });
+
+  it('wiki link 해석 결과를 저장하고 다시 쓰면 통째로 바꾼다', async () => {
+    const source = await repository.insert(
+      buildSource({
+        externalSourceId: 'Notes/source-repo-links.md',
+        links: [
+          { target: 'Other', resolvedPath: 'Notes/Other.md' },
+          { target: 'Missing', resolvedPath: null },
+        ],
+      }),
+    );
+
+    source.syncContentSnapshot({
+      ...source.getProps().contentSnapshot.unpack(),
+      frontmatter: {},
+      fingerprint: 'fingerprint-1',
+      size: 1,
+      links: [{ target: 'Missing', resolvedPath: 'Notes/Missing.md' }],
+    });
+    await repository.update(source);
+    const reloaded = await repository.get({ id: source.id });
+
+    expect(reloaded.getProps().contentSnapshot.unpack().links.links).toEqual([
+      { target: 'Missing', resolvedPath: 'Notes/Missing.md' },
+    ]);
   });
 });

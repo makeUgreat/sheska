@@ -16,7 +16,7 @@ describe('SourcePgDrizzleMapper', () => {
       fingerprint: 'fingerprint-1',
     });
 
-    const source = SourcePgDrizzleMapper.toDomain(row);
+    const source = SourcePgDrizzleMapper.toDomain(row, []);
 
     expect(source.id).toBe('source-1');
     expect(source.getProps().externalSourceId.unpack()).toBe('Notes/source.md');
@@ -27,6 +27,7 @@ describe('SourcePgDrizzleMapper', () => {
         title: '인사',
         fingerprint: 'fingerprint-1',
         size: sourceContentByteSize('안녕'),
+        links: [],
       }),
     );
   });
@@ -40,7 +41,7 @@ describe('SourcePgDrizzleMapper', () => {
       sizeBytes: 1,
     });
 
-    expect(() => SourcePgDrizzleMapper.toDomain(row)).toThrow(
+    expect(() => SourcePgDrizzleMapper.toDomain(row, [])).toThrow(
       'Source title must not be blank',
     );
   });

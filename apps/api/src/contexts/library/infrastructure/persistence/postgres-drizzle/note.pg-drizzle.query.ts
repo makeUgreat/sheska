@@ -7,6 +7,7 @@ import {
   type NoteQueryListItem,
   type NoteQueryPaginateResult,
   type NoteQueryResult,
+  type ResolvedLink,
 } from '@contexts/library/application/ports';
 import {
   type KnowledgeFolder,
@@ -18,6 +19,7 @@ import {
   DATABASE_TOKENS,
   sliceForCursor,
 } from '@kernels/infrastructure';
+import { selectResolvedLinks } from './resolved-link.pg-drizzle.sql';
 import * as schema from './schema';
 
 type NoteRow = {
@@ -79,6 +81,7 @@ export class NotePgDrizzleQuery implements NoteQuery {
       externalSourceId: row.external_source_id,
       frontmatter: row.frontmatter,
       body: row.body,
+      links: await this.findLinks(row.id),
     };
   }
 
@@ -117,6 +120,20 @@ export class NotePgDrizzleQuery implements NoteQuery {
         code: 'note.paginate_failed',
         message: 'Note paginate query operation failed',
         details: {},
+        cause: error,
+      });
+    }
+  }
+
+  private async findLinks(noteId: string): Promise<ResolvedLink[]> {
+    try {
+      return await selectResolvedLinks(this.db, noteId, this.knowledgeFolder);
+    } catch (error: unknown) {
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
+        code: 'note.get_links_failed',
+        message: 'Note links query operation failed',
+        details: { noteId },
         cause: error,
       });
     }

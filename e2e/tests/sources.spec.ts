@@ -11,7 +11,7 @@ test('업로드된 소스가 목록에 표시되고 상세 페이지에서 내�
   const res = await fetch(`${apiBaseUrl}/sources`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ externalSourceId, content }),
+    body: JSON.stringify({ externalSourceId, content, links: [] }),
   });
   expect(res.status).toBe(201);
 
@@ -84,7 +84,7 @@ test('업로드된 소스의 sync job 상태가 실제 API 값을 반영해 화�
   const res = await fetch(`${apiBaseUrl}/sources`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ externalSourceId, content }),
+    body: JSON.stringify({ externalSourceId, content, links: [] }),
   });
   expect(res.status).toBe(201);
   const { sourceId, syncJobId } = (await res.json()) as {

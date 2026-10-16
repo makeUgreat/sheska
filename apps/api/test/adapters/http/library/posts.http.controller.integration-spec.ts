@@ -508,6 +508,7 @@ describe('PostsHttpController', () => {
         createdAt: now,
         updatedAt: now,
         body: '테스트 본문',
+        links: [{ target: 'retry', noteId: null, postId: 'post-2' }],
       });
 
       const response = await request(httpServer)
@@ -522,6 +523,7 @@ describe('PostsHttpController', () => {
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
         body: '테스트 본문',
+        links: [{ target: 'retry', noteId: null, postId: 'post-2' }],
       });
       expect(getPostUseCase.execute).toHaveBeenCalledWith({ postId: 'post-1' });
     });

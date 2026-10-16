@@ -10,6 +10,7 @@ export type {
   SourceFrontmatterValue,
 } from './source-frontmatter.vo';
 export { SourceSize } from './source-size.vo';
+export { SourceLinks, type SourceLink } from './source-links.vo';
 export { SourceSyncJob } from './source-sync-job.aggregate';
 export {
   type SourceRepository,

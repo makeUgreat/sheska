@@ -95,7 +95,11 @@ describe('UploadSourceUseCase', () => {
     const content = '# Source note';
     const fingerprint = useFingerprint(content, 'fingerprint-new-source');
 
-    const result = await useCase.execute({ externalSourceId, content });
+    const result = await useCase.execute({
+      externalSourceId,
+      content,
+      links: [],
+    });
 
     expect(result).toMatchObject({
       externalSourceId,
@@ -113,6 +117,7 @@ describe('UploadSourceUseCase', () => {
         title: externalSourceId,
         fingerprint,
         size: sourceContentByteSize(content),
+        links: [],
       }),
     );
 
@@ -171,9 +176,17 @@ describe('UploadSourceUseCase', () => {
     const externalSourceId = 'Notes/upload-usecase-unchanged-no-embedding.md';
     const content = '# Same source note';
     const fingerprint = useFingerprint(content, 'fingerprint-unchanged-source');
-    const firstResult = await useCase.execute({ externalSourceId, content });
+    const firstResult = await useCase.execute({
+      externalSourceId,
+      content,
+      links: [],
+    });
 
-    const secondResult = await useCase.execute({ externalSourceId, content });
+    const secondResult = await useCase.execute({
+      externalSourceId,
+      content,
+      links: [],
+    });
 
     expect(secondResult).toMatchObject({
       sourceId: firstResult.sourceId,
@@ -204,7 +217,11 @@ custom:
       'fingerprint-frontmatter',
     );
 
-    const result = await useCase.execute({ externalSourceId, content });
+    const result = await useCase.execute({
+      externalSourceId,
+      content,
+      links: [],
+    });
 
     const source = await sources.get({ id: result.sourceId });
     expect(source.getProps().contentSnapshot).toEqual(
@@ -218,6 +235,7 @@ custom:
         title: 'Retry Amplification',
         fingerprint,
         size: sourceContentByteSize(content),
+        links: [],
       }),
     );
 
@@ -240,7 +258,11 @@ custom:
       content,
       'fingerprint-unchanged-with-embedding',
     );
-    const firstResult = await useCase.execute({ externalSourceId, content });
+    const firstResult = await useCase.execute({
+      externalSourceId,
+      content,
+      links: [],
+    });
 
     await database.insert(ingestionSchema.sourceEmbeddings).values({
       sourceId: firstResult.sourceId,
@@ -256,7 +278,11 @@ custom:
     firstSyncJob!.markCompleted(1);
     await syncJobs.update(firstSyncJob!);
 
-    const secondResult = await useCase.execute({ externalSourceId, content });
+    const secondResult = await useCase.execute({
+      externalSourceId,
+      content,
+      links: [],
+    });
 
     expect(secondResult).toEqual({
       sourceId: firstResult.sourceId,
@@ -276,7 +302,11 @@ custom:
     const body = '# Key order body';
     useFingerprint(body, 'fingerprint-key-order');
     const content = `---\ntitle: Key order\naliases: [a]\ncustom:\n  zeta: 1\n  alpha: 2\n---\n${body}`;
-    const firstResult = await useCase.execute({ externalSourceId, content });
+    const firstResult = await useCase.execute({
+      externalSourceId,
+      content,
+      links: [],
+    });
     const firstSyncJob = await syncJobs.findLatest({
       sourceId: firstResult.sourceId,
     });
@@ -284,7 +314,7 @@ custom:
     await syncJobs.update(firstSyncJob!);
     const stored = await sources.get({ id: firstResult.sourceId });
 
-    await useCase.execute({ externalSourceId, content });
+    await useCase.execute({ externalSourceId, content, links: [] });
 
     const reloaded = await sources.get({ id: firstResult.sourceId });
     expect(reloaded.updatedAt).toEqual(stored.updatedAt);
@@ -297,6 +327,7 @@ custom:
     const firstResult = await useCase.execute({
       externalSourceId,
       content: `---\ntags: [before]\n---\n${body}`,
+      links: [],
     });
     const firstSyncJob = await syncJobs.findLatest({
       sourceId: firstResult.sourceId,
@@ -307,6 +338,7 @@ custom:
     const secondResult = await useCase.execute({
       externalSourceId,
       content: `---\ntags: [after]\n---\n${body}`,
+      links: [],
     });
 
     const source = await sources.get({ id: firstResult.sourceId });
@@ -328,11 +360,13 @@ custom:
     const firstResult = await useCase.execute({
       externalSourceId,
       content: oldContent,
+      links: [],
     });
 
     const secondResult = await useCase.execute({
       externalSourceId,
       content: newContent,
+      links: [],
     });
 
     expect(secondResult).toMatchObject({
@@ -350,6 +384,7 @@ custom:
         title: externalSourceId,
         fingerprint: newFingerprint,
         size: sourceContentByteSize(newContent),
+        links: [],
       }),
     );
 

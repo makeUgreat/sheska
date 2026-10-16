@@ -1,4 +1,8 @@
-import { Source, type SourceFrontmatterProps } from '@contexts/library/domain';
+import {
+  Source,
+  type SourceFrontmatterProps,
+  type SourceLink,
+} from '@contexts/library/domain';
 
 export function buildSource(
   params: {
@@ -9,6 +13,7 @@ export function buildSource(
     title?: string | null;
     fingerprint?: string;
     size?: number;
+    links?: readonly SourceLink[];
   } = {},
 ): Source {
   const body = params.body ?? params.content ?? '# Source note';
@@ -21,6 +26,7 @@ export function buildSource(
     title: params.title ?? externalSourceId,
     fingerprint: params.fingerprint ?? 'fingerprint-1',
     size: params.size ?? sourceContentByteSize(params.content ?? body),
+    links: params.links ?? [],
   });
 }
 

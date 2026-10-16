@@ -2,6 +2,7 @@ import {
   SourceContentSnapshot,
   SourceFingerprint,
   SourceFrontmatter,
+  SourceLinks,
   SourceSize,
 } from '@contexts/library/domain';
 import { describe, expect, it } from 'vitest';
@@ -14,9 +15,13 @@ describe('SourceContentSnapshot', () => {
       title: 'Source note',
       fingerprint: ' fingerprint-1 ',
       size: 100,
+      links: [{ target: 'Other', resolvedPath: 'Notes/Other.md' }],
     });
 
     expect(snapshot.unpack()).toEqual({
+      links: SourceLinks.of([
+        { target: 'Other', resolvedPath: 'Notes/Other.md' },
+      ]),
       body: '# Source note',
       frontmatter: SourceFrontmatter.of({
         title: 'Source note',
@@ -35,6 +40,7 @@ describe('SourceContentSnapshot', () => {
       title: 'Notes/empty.md',
       fingerprint: 'empty-fingerprint',
       size: 0,
+      links: [],
     });
 
     expect(snapshot.unpack().size.unpack()).toBe(0);
@@ -48,6 +54,7 @@ describe('SourceContentSnapshot', () => {
         title: 'Notes/source.md',
         fingerprint: ' ',
         size: 13,
+        links: [],
       }),
     ).toThrow('Source fingerprint cannot be empty');
   });
@@ -59,6 +66,7 @@ describe('SourceContentSnapshot', () => {
       title: 'Source note',
       fingerprint: 'fingerprint-1',
       size: 100,
+      links: [],
     };
 
     it('모든 필드가 같으면 같다', () => {
@@ -71,6 +79,7 @@ describe('SourceContentSnapshot', () => {
       const reordered = SourceContentSnapshot.of({
         ...raw,
         frontmatter: { nested: { b: [1, 2], a: 1 }, title: 'Source note' },
+        links: [],
       });
 
       expect(SourceContentSnapshot.of(raw).equals(reordered)).toBe(true);
@@ -82,6 +91,12 @@ describe('SourceContentSnapshot', () => {
       { field: 'frontmatter', change: { frontmatter: { title: 'Changed' } } },
       { field: 'fingerprint', change: { fingerprint: 'fingerprint-2' } },
       { field: 'size', change: { size: 101 } },
+      {
+        field: 'links',
+        change: {
+          links: [{ target: 'Other', resolvedPath: 'Notes/Other.md' }],
+        },
+      },
     ])('$field가 다르면 다르다', ({ change }) => {
       expect(
         SourceContentSnapshot.of(raw).equals(
@@ -94,6 +109,7 @@ describe('SourceContentSnapshot', () => {
       const reordered = SourceContentSnapshot.of({
         ...raw,
         frontmatter: { title: 'Source note', nested: { a: 1, b: [2, 1] } },
+        links: [],
       });
 
       expect(SourceContentSnapshot.of(raw).equals(reordered)).toBe(false);

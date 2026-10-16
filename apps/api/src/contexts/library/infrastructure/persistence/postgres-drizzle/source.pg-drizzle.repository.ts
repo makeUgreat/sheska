@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { ConstraintViolationError, NotFoundError } from '@core/errors';
 import {
   type Source,
@@ -49,7 +49,7 @@ export class SourcePgDrizzleRepository implements SourceRepository {
       return null;
     }
 
-    return SourcePgDrizzleMapper.toDomain(row);
+    return SourcePgDrizzleMapper.toDomain(row, await this.findLinks(row.id));
   }
 
   async get(criteria: SourceRepositoryGetCriteria): Promise<Source> {
@@ -79,7 +79,7 @@ export class SourcePgDrizzleRepository implements SourceRepository {
       });
     }
 
-    return SourcePgDrizzleMapper.toDomain(row);
+    return SourcePgDrizzleMapper.toDomain(row, await this.findLinks(row.id));
   }
 
   async insert(source: Source): Promise<Source> {
@@ -109,7 +109,7 @@ export class SourcePgDrizzleRepository implements SourceRepository {
       });
     }
 
-    return SourcePgDrizzleMapper.toDomain(row);
+    return SourcePgDrizzleMapper.toDomain(row, await this.replaceLinks(source));
   }
 
   async update(source: Source): Promise<Source> {
@@ -148,6 +148,46 @@ export class SourcePgDrizzleRepository implements SourceRepository {
       });
     }
 
-    return SourcePgDrizzleMapper.toDomain(row);
+    return SourcePgDrizzleMapper.toDomain(row, await this.replaceLinks(source));
+  }
+
+  private async findLinks(sourceId: string): Promise<schema.SourceLinkRow[]> {
+    try {
+      return await this.db
+        .select()
+        .from(schema.sourceLinks)
+        .where(eq(schema.sourceLinks.sourceId, sourceId))
+        .orderBy(asc(schema.sourceLinks.target));
+    } catch (error: unknown) {
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
+        code: 'source.find_links_failed',
+        message: 'Source links find operation failed',
+        details: { id: sourceId },
+        cause: error,
+      });
+    }
+  }
+
+  private async replaceLinks(source: Source): Promise<schema.SourceLinkRow[]> {
+    const inserts = SourcePgDrizzleMapper.toLinkInserts(source);
+    try {
+      await this.db
+        .delete(schema.sourceLinks)
+        .where(eq(schema.sourceLinks.sourceId, source.id));
+      if (inserts.length === 0) return [];
+      return await this.db
+        .insert(schema.sourceLinks)
+        .values(inserts)
+        .returning();
+    } catch (error: unknown) {
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
+        code: 'source.replace_links_failed',
+        message: 'Source links replace operation failed',
+        details: { id: source.id },
+        cause: error,
+      });
+    }
   }
 }

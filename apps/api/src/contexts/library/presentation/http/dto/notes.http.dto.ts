@@ -3,6 +3,7 @@ import {
   type CursorValue,
   cursorQueryParamSchema,
 } from '@kernels/presentation';
+import { type ResolvedLinkHttpResponse } from './resolved-link.http.dto';
 
 export const listNotesHttpRequestSchema = z
   .object({
@@ -36,4 +37,5 @@ export interface GetNoteHttpResponse extends NoteSummaryHttpResponse {
   readonly externalSourceId: string;
   readonly frontmatter: Readonly<Record<string, unknown>>;
   readonly body: string;
+  readonly links: readonly ResolvedLinkHttpResponse[];
 }
