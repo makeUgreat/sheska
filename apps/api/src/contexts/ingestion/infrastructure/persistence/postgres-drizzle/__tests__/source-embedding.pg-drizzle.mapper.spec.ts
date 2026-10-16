@@ -1,3 +1,4 @@
+import { SourceEmbedding } from '@contexts/ingestion/domain';
 import { describe, expect, it } from 'vitest';
 import {
   buildSourceEmbedding,
@@ -25,7 +26,7 @@ describe('SourceEmbeddingPgDrizzleMapper', () => {
 
     expect(sourceEmbedding.id).toBe('source-1');
     expect(sourceEmbedding.getProps().syncJobId).toBe('sync-job-7');
-    expect(sourceEmbedding.getProps().model.unpack()).toBe(
+    expect(sourceEmbedding.getProps().model?.unpack()).toBe(
       'qwen3-embedding:0.6b',
     );
     expect(sourceEmbedding.getProps().chunks).toHaveLength(2);
@@ -74,5 +75,18 @@ describe('SourceEmbeddingPgDrizzleMapper', () => {
     expect(rows).toHaveLength(2);
     expect(rows[0].chunkIndex).toBe(0);
     expect(rows[1].chunkIndex).toBe(1);
+  });
+
+  it('청크 없는 SourceEmbedding은 insert row가 없다', () => {
+    const sourceEmbedding = SourceEmbedding.create({
+      sourceId: 'source-1',
+      syncJobId: 'sync-job-1',
+      model: null,
+      chunks: [],
+    });
+
+    expect(SourceEmbeddingPgDrizzleMapper.toInserts(sourceEmbedding)).toEqual(
+      [],
+    );
   });
 });

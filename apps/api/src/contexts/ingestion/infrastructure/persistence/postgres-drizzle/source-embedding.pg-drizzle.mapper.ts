@@ -20,7 +20,8 @@ export class SourceEmbeddingPgDrizzleMapper {
 
   static toInserts(sourceEmbedding: SourceEmbedding): SourceEmbeddingInsert[] {
     const props = sourceEmbedding.getProps();
-    const model = props.model.unpack();
+    const model = props.model?.unpack();
+    if (!model) return [];
 
     return props.chunks.map((chunk) => {
       const c = chunk.unpack();

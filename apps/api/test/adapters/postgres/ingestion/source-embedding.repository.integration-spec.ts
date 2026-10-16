@@ -1,7 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { type SourceEmbeddingRepository } from '@contexts/ingestion/domain';
+import {
+  SourceEmbedding,
+  type SourceEmbeddingRepository,
+} from '@contexts/ingestion/domain';
 import { SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
 import { type SourceRepository } from '@contexts/library/domain';
 import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
@@ -107,6 +110,28 @@ describe('SourceEmbeddingDrizzleRepository', () => {
     ).toEqual(['newer content']);
   });
 
+  it('청크 없는 결과로 교체하면 이전 청크를 모두 지운다', async () => {
+    const source = await sourceRepository.insert(
+      buildSource({
+        externalSourceId: 'Notes/source-embedding-emptied-body.md',
+      }),
+    );
+    await repository.upsert(buildSourceEmbedding({ sourceId: source.id }));
+
+    const emptied = await repository.upsert(
+      SourceEmbedding.create({
+        sourceId: source.id,
+        syncJobId: newId(),
+        model: null,
+        chunks: [],
+      }),
+    );
+    const result = await repository.find({ sourceId: source.id });
+
+    expect(emptied).toEqual({ replaced: true });
+    expect(result).toBeNull();
+  });
+
   it('같은 sync job의 결과를 다시 받으면 교체하지 않는다', async () => {
     const source = await sourceRepository.insert(
       buildSource({
@@ -162,7 +187,7 @@ describe('SourceEmbeddingDrizzleRepository', () => {
 
     expect(result).not.toBeNull();
     expect(result?.id).toBe(source.id);
-    expect(result?.getProps().model.unpack()).toBe('qwen3-embedding:0.6b');
+    expect(result?.getProps().model?.unpack()).toBe('qwen3-embedding:0.6b');
   });
 
   it('source embedding이 없으면 null을 반환한다', async () => {

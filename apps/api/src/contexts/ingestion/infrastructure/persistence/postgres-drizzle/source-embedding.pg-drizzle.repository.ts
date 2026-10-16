@@ -74,7 +74,9 @@ export class SourceEmbeddingPgDrizzleRepository implements SourceEmbeddingReposi
         await tx
           .delete(schema.sourceEmbeddings)
           .where(eq(schema.sourceEmbeddings.sourceId, sourceId));
-        await tx.insert(schema.sourceEmbeddings).values(inserts);
+        if (inserts.length > 0) {
+          await tx.insert(schema.sourceEmbeddings).values(inserts);
+        }
         return { replaced: true };
       });
     } catch (error: unknown) {

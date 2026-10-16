@@ -38,6 +38,24 @@ describe('SourceEmbeddingFromRepositoryLookup', () => {
       });
     });
 
+    it('청크 없는 source 임베딩이면 임베딩 메타데이터가 없다', async () => {
+      const repository = buildMockRepository(
+        vi.fn().mockResolvedValue(
+          SourceEmbedding.create({
+            sourceId: 'source-1',
+            syncJobId: 'sync-job-1',
+            model: null,
+            chunks: [],
+          }),
+        ),
+      );
+      const service = new SourceEmbeddingFromRepositoryLookup(repository);
+
+      const result = await service.find({ sourceId: 'source-1' });
+
+      expect(result).toBeNull();
+    });
+
     it('repository가 null을 반환하면 null을 반환한다', async () => {
       const repository = buildMockRepository(vi.fn().mockResolvedValue(null));
       const service = new SourceEmbeddingFromRepositoryLookup(repository);
