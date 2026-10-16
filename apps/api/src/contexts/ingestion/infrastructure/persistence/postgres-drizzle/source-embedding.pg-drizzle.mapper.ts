@@ -6,6 +6,7 @@ export class SourceEmbeddingPgDrizzleMapper {
     const first = rows[0];
     return SourceEmbedding.restore({
       sourceId: first.sourceId,
+      syncJobId: first.syncJobId,
       model: first.model,
       chunks: rows.map((row) => ({
         chunkIndex: row.chunkIndex,
@@ -25,6 +26,7 @@ export class SourceEmbeddingPgDrizzleMapper {
       const c = chunk.unpack();
       return {
         sourceId: props.sourceId,
+        syncJobId: props.syncJobId,
         chunkIndex: c.chunkIndex,
         chunkContent: c.chunkContent,
         embedding: c.embedding.unpack().values,

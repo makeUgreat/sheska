@@ -8,6 +8,7 @@ export function buildSourceEmbeddingRow(
 ): SourceEmbeddingRow {
   return {
     sourceId: params.sourceId ?? 'source-1',
+    syncJobId: params.syncJobId ?? 'sync-job-1',
     chunkIndex: params.chunkIndex ?? 0,
     chunkContent: params.chunkContent ?? 'default chunk content',
     embedding: params.embedding ?? VALID_EMBEDDING,

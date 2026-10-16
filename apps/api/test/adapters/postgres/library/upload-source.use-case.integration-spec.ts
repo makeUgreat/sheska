@@ -241,6 +241,7 @@ custom:
 
     await database.insert(ingestionSchema.sourceEmbeddings).values({
       sourceId: firstResult.sourceId,
+      syncJobId: '',
       chunkIndex: 0,
       chunkContent: 'existing chunk',
       embedding: VALID_EMBEDDING,
