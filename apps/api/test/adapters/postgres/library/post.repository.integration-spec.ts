@@ -56,6 +56,19 @@ describe('PostPgDrizzleRepository', () => {
     expect(result.getProps().viewCount.unpack()).toBe(1);
   });
 
+  it('조회수를 올려도 수정 시각은 바뀌지 않는다', async () => {
+    const source = await sources.insert(
+      buildSource({ externalSourceId: 'Notes/post-repo-view-count.md' }),
+    );
+    const inserted = await posts.insert(buildPost({ sourceId: source.id }));
+
+    inserted.incrementViewCount();
+    const updated = await posts.update(inserted);
+
+    expect(updated.getProps().viewCount.unpack()).toBe(1);
+    expect(updated.updatedAt).toEqual(inserted.updatedAt);
+  });
+
   it('존재하지 않는 id는 NotFoundError를 throw한다', async () => {
     await expect(posts.get({ id: 'non-existent-id' })).rejects.toMatchObject({
       kind: 'not_found',
