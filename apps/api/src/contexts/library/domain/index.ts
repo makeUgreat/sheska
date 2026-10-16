@@ -1,4 +1,5 @@
 export { ExternalSourceId } from './external-source-id.vo';
+export { KnowledgeFolder } from './knowledge-folder.vo';
 export { Source, type SyncContentSnapshotResult } from './source.aggregate';
 export { SourceSyncJobCreatedDomainEvent } from './source-sync-job.event';
 export { SourceFingerprint } from './source-fingerprint.vo';

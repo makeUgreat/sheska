@@ -67,4 +67,38 @@ describe('NotePgDrizzleQuery', () => {
 
     expect(result.title).toBe('Notes/note-without-title.md');
   });
+
+  it('지식 폴더 밖의 source는 note로 조회되지 않는다', async () => {
+    const source = await sources.insert(
+      buildSource({ externalSourceId: 'Drafts/note-query-outside.md' }),
+    );
+
+    await expect(notes.get({ noteId: source.id })).rejects.toMatchObject({
+      code: 'note.not_found',
+    });
+  });
+
+  it('note 목록은 지식 폴더 안의 source만 담는다', async () => {
+    const inside = await sources.insert(
+      buildSource({ externalSourceId: 'Notes/note-query-list-inside.md' }),
+    );
+    const outside = await sources.insert(
+      buildSource({ externalSourceId: 'Drafts/note-query-list-outside.md' }),
+    );
+    const lookalike = await sources.insert(
+      buildSource({
+        externalSourceId: 'NotesArchive/note-query-list-lookalike.md',
+      }),
+    );
+
+    const { notes: listed } = await notes.paginate({
+      limit: 100,
+      cursor: null,
+    });
+    const listedIds = listed.map((note) => note.noteId);
+
+    expect(listedIds).toContain(inside.id);
+    expect(listedIds).not.toContain(outside.id);
+    expect(listedIds).not.toContain(lookalike.id);
+  });
 });

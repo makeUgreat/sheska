@@ -1,4 +1,7 @@
 import { Module, type DynamicModule } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { KnowledgeFolder } from '@contexts/library/domain';
+import { parseLibraryConfig } from '@contexts/library/infrastructure/config/library.config';
 import { SourceContentSnapshotCalculator } from '@contexts/library/application/services/source-content-snapshot-calculator.service';
 import { SourceFromRepositoryLookup } from '@contexts/library/application/services/source.from-repository.lookup';
 import { GetSourceUseCase } from '@contexts/library/application/use-cases/get-source.use-case';
@@ -48,6 +51,7 @@ import {
   SOURCE_EMBEDDING_LOOKUP,
   SOURCE_QUERY,
   NOTE_QUERY,
+  KNOWLEDGE_FOLDER,
   SOURCE_LOOKUP,
   LIBRARY_UNIT_OF_WORK,
   SYNC_JOB_PROGRESS_LOOKUP,
@@ -94,6 +98,18 @@ export class LibraryModule {
         {
           provide: SOURCE_QUERY,
           useClass: SourcePgDrizzleQuery,
+        },
+        {
+          provide: KNOWLEDGE_FOLDER,
+          useFactory: (configService: ConfigService) =>
+            KnowledgeFolder.of(
+              parseLibraryConfig({
+                LIBRARY_KNOWLEDGE_FOLDER: configService.get(
+                  'LIBRARY_KNOWLEDGE_FOLDER',
+                ),
+              }).knowledgeFolder,
+            ),
+          inject: [ConfigService],
         },
         {
           provide: NOTE_QUERY,
