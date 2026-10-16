@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -72,7 +72,7 @@ describe('PostsPage', () => {
     });
   });
 
-  it('post 목록을 렌더링한다', async () => {
+  it('post 목록을 상세 링크로 렌더링한다', async () => {
     const now = '2026-01-01T00:00:00.000Z';
     const post: PostSummary = {
       postId: 'post-1',
@@ -88,13 +88,47 @@ describe('PostsPage', () => {
 
     renderPage(client);
 
-    await waitFor(() => {
-      expect(screen.getByText('테스트 포스트')).toBeDefined();
-      expect(screen.getByText('5 views')).toBeDefined();
-    });
+    const link = await screen.findByRole('link', { name: /테스트 포스트/ });
+    expect(link.getAttribute('href')).toBe('/posts/post-1');
   });
 
-  it('여러 post를 모두 렌더링한다', async () => {
+  it('post를 작성 연도별로 묶어 보여준다', async () => {
+    const posts: PostSummary[] = [
+      {
+        postId: 'post-1',
+        sourceId: 'source-1',
+        title: '올해 포스트',
+        viewCount: 1,
+        createdAt: '2026-03-01T12:00:00.000Z',
+        updatedAt: '2026-03-01T12:00:00.000Z',
+      },
+      {
+        postId: 'post-2',
+        sourceId: 'source-2',
+        title: '작년 포스트',
+        viewCount: 2,
+        createdAt: '2025-03-01T12:00:00.000Z',
+        updatedAt: '2025-03-01T12:00:00.000Z',
+      },
+    ];
+    const client = buildMockHttpClient({
+      listPosts: vi.fn().mockResolvedValue({ posts, nextCursor: null }),
+    });
+
+    renderPage(client);
+
+    const thisYear = await screen.findByRole('region', { name: '2026' });
+    const lastYear = screen.getByRole('region', { name: '2025' });
+    expect(
+      within(thisYear).getByRole('link', { name: /올해 포스트/ }),
+    ).toBeDefined();
+    expect(
+      within(lastYear).getByRole('link', { name: /작년 포스트/ }),
+    ).toBeDefined();
+  });
+
+  it('목록 항목에 마우스를 올리면 미리보기가 그 post로 바뀐다', async () => {
+    const user = userEvent.setup();
     const now = '2026-01-01T00:00:00.000Z';
     const posts: PostSummary[] = [
       {
@@ -120,12 +154,12 @@ describe('PostsPage', () => {
 
     renderPage(client);
 
-    await waitFor(() => {
-      expect(screen.getByText('첫 번째 포스트')).toBeDefined();
-      expect(screen.getByText('1 views')).toBeDefined();
-      expect(screen.getByText('두 번째 포스트')).toBeDefined();
-      expect(screen.getByText('2 views')).toBeDefined();
-    });
+    expect(await screen.findByText(/1 views/)).toBeDefined();
+
+    await user.hover(screen.getByRole('link', { name: /두 번째 포스트/ }));
+
+    expect(screen.getByText(/2 views/)).toBeDefined();
+    expect(screen.queryByText(/1 views/)).toBeNull();
   });
 
   it('에러가 발생하면 상태 코드와 실패한 대상을 보여준다', async () => {
@@ -159,13 +193,14 @@ describe('PostsPage', () => {
     });
   });
 
-  it('Back to top 링크는 홈으로 이동한다', () => {
+  it('페이지 제목을 보여준다', () => {
     const client = buildMockHttpClient();
 
     renderPage(client);
 
-    const link = screen.getByRole('link', { name: 'Back to top' });
-    expect(link.getAttribute('href')).toBe('/');
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Posts' }),
+    ).toBeDefined();
   });
 
   it('검색어 입력만으로는 searchPosts를 호출하지 않는다', async () => {
@@ -178,7 +213,7 @@ describe('PostsPage', () => {
     renderPage(client);
 
     await user.type(
-      screen.getByLabelText('Search by title or content:'),
+      screen.getByLabelText('Search posts by title or content'),
       'garden',
     );
 
@@ -206,7 +241,7 @@ describe('PostsPage', () => {
     renderPage(client);
 
     await user.type(
-      screen.getByLabelText('Search by title or content:'),
+      screen.getByLabelText('Search posts by title or content'),
       'garden{Enter}',
     );
 
@@ -230,7 +265,7 @@ describe('PostsPage', () => {
     renderPage(client);
 
     await user.type(
-      screen.getByLabelText('Search by title or content:'),
+      screen.getByLabelText('Search posts by title or content'),
       'fts',
     );
     await user.click(screen.getByRole('button', { name: 'Search' }));

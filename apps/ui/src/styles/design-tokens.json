@@ -325,6 +325,10 @@
       "$description": "Maximum width of the table of contents panel. The panel grows into the margin beside the reading column up to this width; past it the extra margin stays empty so the outline never reads as a second column.",
       "$value": "320px"
     },
+    "peek": {
+      "$description": "Width of the peek panel beside an archive list. The list keeps the reading measure; the panel only previews the hovered entry, so it stays narrower than the list and never reads as a second column.",
+      "$value": "320px"
+    },
     "header": {
       "$description": "Height of the sticky terminal header. Anything that must clear it — sticky rails, scroll-margin on anchor targets — offsets from this.",
       "$value": "84px"

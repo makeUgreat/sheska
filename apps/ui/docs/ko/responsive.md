@@ -65,12 +65,11 @@ right: max(var(--spacing-gutter), calc(50% - var(--spacing-measure)/2 - var(--sp
 | --- | --- | --- |
 | 없음 | 320px~ | 기본. 단일 컬럼 |
 | `sm:` | 640px~ | 쌓인 block을 나란히 배치 (2열 grid, 가로 flex), header의 terminal 신호등 등장 |
-| `md:` | 768px~ | 카드 grid 2열, landing hero 타이포 확대 |
-| `lg:` | 1024px~ | source 상세 사이드 패널 |
+| `md:` | 768px~ | landing hero 타이포 확대 |
+| `lg:` | 1024px~ | source 상세 사이드 패널, 목록 옆 미리보기 칸 등장 |
 | `toc:` | 1200px~ | 목차 등장 |
-| `xl:` | 1280px~ | 카드 grid 3열 |
 
-`sm` `md` `lg` `xl`은 Tailwind 기본값이다. `toc`는 `src/index.css`의 `@theme`에서 정의한다.
+`sm` `md` `lg`는 Tailwind 기본값이다. `toc`는 `src/index.css`의 `@theme`에서 정의한다.
 
 Tailwind는 코드를 실행하지 않고 소스 글자에서 class를 찾는다. 그래서 `` `${VARIANT}:hidden` ``처럼 실행할 때 이어 붙이는 class는 CSS로 생성되지 않는다. 반복되는 media 조건에는 문자열 상수가 아니라 이름 있는 variant를 만든다.
 

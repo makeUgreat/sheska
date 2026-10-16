@@ -54,9 +54,9 @@ describe('eslint/config.mjs', () => {
   it('하위 layer public API import는 막지 않는다', async () => {
     const result = await lintTextWithProjectConfig(
       `
-        import { PostCard } from '@/entities/post';
+        import { usePost } from '@/entities/post';
 
-        console.log(PostCard);
+        console.log(usePost);
       `,
       'src/03_widgets/posts-archive/ui/example.tsx',
     );

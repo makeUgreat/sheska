@@ -6,9 +6,6 @@
 
 @theme {
   --breakpoint-toc: 1200px;
-
-  --shadow-card-hover: 0 1px 2px -1px
-    color-mix(in srgb, var(--color-outline-variant) 18%, transparent);
 }
 
 :root {
@@ -55,21 +52,6 @@ select {
   50% {
     transform: translateX(0);
     animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
-  }
-}
-
-@keyframes radar-ping {
-  0%,
-  82%,
-  100% {
-    opacity: 0.7;
-    transform: scale(1);
-    text-shadow: none;
-  }
-  91% {
-    opacity: 0.95;
-    transform: scale(1.06);
-    text-shadow: 0 0 4px currentColor;
   }
 }
 

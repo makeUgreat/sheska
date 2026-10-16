@@ -137,7 +137,9 @@ describe('App', () => {
     await user.click(screen.getByRole('link', { name: /Scroll For Articles/ }));
 
     await waitFor(() => {
-      expect(screen.getByRole('link', { name: 'Back to top' })).toBeDefined();
+      expect(
+        screen.getByRole('heading', { level: 1, name: 'Posts' }),
+      ).toBeDefined();
     });
   });
 
@@ -172,7 +174,9 @@ describe('App', () => {
     await user.click(screen.getByRole('link', { name: 'posts' }));
 
     await waitFor(() => {
-      expect(screen.getByRole('link', { name: 'Back to top' })).toBeDefined();
+      expect(
+        screen.getByRole('heading', { level: 1, name: 'Posts' }),
+      ).toBeDefined();
     });
   });
 

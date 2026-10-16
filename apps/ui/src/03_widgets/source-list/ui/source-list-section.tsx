@@ -71,7 +71,7 @@ function SourceItemList({
 }) {
   return (
     <ul
-      className={`divide-y divide-outline-variant/10 border-y border-outline-variant/10 transition-opacity duration-200 ${
+      className={`border-t border-outline-variant/12 transition-opacity duration-200 ${
         isPlaceholder ? 'opacity-40' : 'opacity-100'
       }`}
     >
