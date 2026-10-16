@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MemoryRouter } from 'react-router-dom';
 import { type NoteSummary } from '@/entities/note';
-import { NotesGridSection } from './notes-grid-section';
+import { NotesIndexSection } from './notes-index-section';
 
 const sampleNotes: NoteSummary[] = [
   {
@@ -26,7 +26,7 @@ const sampleNotes: NoteSummary[] = [
     noteId: 'note-long-title',
     sourceId: 'source-long-title',
     title:
-      'A deliberately long archive title that should stay clamped inside the note grid section',
+      'A deliberately long archive title that should stay on one line inside the notes index',
     aliases: ['Long Title'],
     keywords: ['storybook', 'ui', 'component', 'fixture', 'review'],
     createdAt: '2026-08-03T08:30:00.000Z',
@@ -44,8 +44,8 @@ const sampleNotes: NoteSummary[] = [
 ];
 
 const meta = {
-  title: 'Features/Notes/NotesGridSection',
-  component: NotesGridSection,
+  title: 'Features/Notes/NotesIndexSection',
+  component: NotesIndexSection,
   tags: ['autodocs'],
   decorators: [
     (Story) => (
@@ -66,7 +66,7 @@ const meta = {
       sentinelRef: null,
     },
   },
-} satisfies Meta<typeof NotesGridSection>;
+} satisfies Meta<typeof NotesIndexSection>;
 
 export default meta;
 
@@ -119,6 +119,22 @@ export const SingleNote: Story = {
       hasNextPage: false,
       isFetchingNextPage: false,
       sentinelRef: null,
+    },
+  },
+};
+
+export const PeekWithBody: Story = {
+  args: {
+    activeId: sampleNotes[1].noteId,
+    peekNote: {
+      ...sampleNotes[1],
+      externalSourceId: 'fixtures.md',
+      frontmatter: {},
+      body: [
+        '## Why fixtures',
+        '',
+        'A fixture pins one UI state so a reviewer can see it without clicking through the app. It is not a test; it is a picture of a state.',
+      ].join('\n'),
     },
   },
 };

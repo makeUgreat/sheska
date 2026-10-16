@@ -1,64 +1,61 @@
+import { Link } from 'react-router-dom';
 import {
-  SyncJobBadge,
   SyncJobProgress,
   type SourceSummary,
-  type SyncJobSummary,
+  type SyncJobSummaryStatus,
 } from '@/entities/source';
-import { formatBytes } from '@/shared/lib';
-import { CARD_LINK_TITLE, CardLink } from '@/shared/ui';
+import { formatBytes, formatDate } from '@/shared/lib';
 
-function PublishedBadge() {
-  return (
-    <span className="rounded bg-accent-strong px-2 py-0.5 font-mono text-xs font-medium text-white">
-      게시됨
-    </span>
-  );
-}
+/** 색을 늘리지 않고 모양으로 상태를 가른다. 실패만 accent로 칠해 먼저 눈에 띄게 한다. */
+const STATUS_GLYPH: Record<SyncJobSummaryStatus, string> = {
+  completed: '●',
+  waiting: '○',
+  failed: '■',
+};
 
-function SourceSyncJobStatus({ syncJob }: { syncJob: SyncJobSummary | null }) {
-  if (!syncJob) {
-    return (
-      <span className="font-mono text-xs text-text-secondary">no job</span>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-2">
-      <SyncJobBadge status={syncJob.status} />
-      <SyncJobProgress syncJob={syncJob} />
-    </div>
-  );
-}
+const META = 'font-mono text-label-sm tracking-normal text-text-muted';
 
 export function SourceListItem({ source }: { source: SourceSummary }) {
+  const syncJob = source.latestSyncJob;
+  const failed = syncJob?.status === 'failed';
+
   return (
     <li>
-      <CardLink
+      <Link
         to={`/sources/${source.sourceId}`}
         aria-label={source.title}
-        className="px-4 py-6"
+        className="group/source grid grid-cols-[1rem_minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-1 border-b border-outline-variant/12 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page-background"
       >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <span
-              className={`break-words text-2xl font-semibold leading-snug text-text-primary ${CARD_LINK_TITLE}`}
-            >
-              {source.title}
-            </span>
-            <p className="mt-1 truncate font-mono text-xs text-text-secondary">
-              {source.externalSourceId}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            {source.publishedPostId && <PublishedBadge />}
-            <SourceSyncJobStatus syncJob={source.latestSyncJob} />
-            <span className="font-mono text-label-sm uppercase text-text-secondary">
-              {formatBytes(source.sizeBytes)} ·{' '}
-              {new Date(source.updatedAt).toLocaleString()}
-            </span>
-          </div>
-        </div>
-      </CardLink>
+        <span
+          aria-hidden="true"
+          className={`font-mono text-label-sm ${failed ? 'text-accent-strong' : 'text-text-primary'}`}
+        >
+          {syncJob ? STATUS_GLYPH[syncJob.status] : '·'}
+        </span>
+        <span className="truncate text-body-md text-text-primary transition-colors group-hover/source:text-accent-strong">
+          {source.title}
+        </span>
+        <span
+          className={`flex flex-wrap items-center justify-end gap-x-2 ${META}`}
+        >
+          <span className={failed ? 'text-accent-strong' : undefined}>
+            {syncJob ? syncJob.status : 'no job'}
+          </span>
+          {syncJob && <SyncJobProgress syncJob={syncJob} />}
+          {source.publishedPostId && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>게시됨</span>
+            </>
+          )}
+        </span>
+        <span className={`col-start-2 truncate ${META}`}>
+          {source.externalSourceId}
+        </span>
+        <span className={`text-right ${META}`}>
+          {formatBytes(source.sizeBytes)} · {formatDate(source.updatedAt)}
+        </span>
+      </Link>
     </li>
   );
 }

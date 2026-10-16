@@ -46,15 +46,12 @@ export function PostArticleSection({ state }: { state: PostArticleState }) {
 function PostHeader({ post }: { post: GetPostResponse }) {
   return (
     <>
-      <h1 className="break-words font-sans text-headline-lg text-text-primary">
+      <h1 className="break-words font-sans text-headline-md text-text-primary">
         {post.title}
       </h1>
-      <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-label-sm uppercase text-text-muted">
-        <span>{formatDate(post.updatedAt)}</span>
-        <span
-          aria-hidden="true"
-          className="h-1 w-1 rounded-full bg-outline-variant"
-        />
+      <p className="mt-2 flex flex-wrap gap-x-2 text-body-md text-text-muted">
+        <time dateTime={post.updatedAt}>{formatDate(post.updatedAt)}</time>
+        <span aria-hidden="true">·</span>
         <span>{post.viewCount} views</span>
       </p>
     </>

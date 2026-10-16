@@ -39,13 +39,6 @@ export function NoteArticleSection({ state }: { state: NoteArticleState }) {
       body={note.body}
       outline={outline}
       activeHeadingId={activeHeadingId}
-      footer={
-        note.keywords.length > 0 && (
-          <footer className="mt-14 border-t border-outline-variant/20 pt-6">
-            <MetaLine label="topics" values={note.keywords} />
-          </footer>
-        )
-      }
     />
   );
 }
@@ -53,42 +46,28 @@ export function NoteArticleSection({ state }: { state: NoteArticleState }) {
 function NoteHeader({ note }: { note: GetNoteResponse }) {
   return (
     <>
-      <h1 className="break-words font-sans text-headline-lg text-text-primary">
+      <h1 className="break-words font-sans text-headline-md text-text-primary">
         {note.title}
       </h1>
+      <p className="mt-2 flex flex-wrap gap-x-2 text-body-md text-text-muted">
+        <time dateTime={note.updatedAt}>{formatDate(note.updatedAt)}</time>
+        {note.keywords.map((keyword) => (
+          <span key={keyword} className="flex gap-x-2">
+            <span aria-hidden="true">·</span>
+            <span>{keyword}</span>
+          </span>
+        ))}
+      </p>
       {note.aliases.length > 0 && (
-        <ul className="mt-4 flex flex-wrap gap-x-3 gap-y-1 font-mono text-label-sm">
+        <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-label-sm tracking-normal">
           {note.aliases.map((alias) => (
-            <li key={alias} className="text-accent-strong">
+            <li key={alias} className="text-text-secondary">
               <span className="text-text-muted">#</span>
               {alias}
             </li>
           ))}
         </ul>
       )}
-      <p className="mt-3 font-mono text-label-sm uppercase text-text-muted">
-        {formatDate(note.updatedAt)}
-      </p>
     </>
-  );
-}
-
-function MetaLine({
-  label,
-  values,
-}: {
-  label: string;
-  values: readonly string[];
-}) {
-  return (
-    <p className="font-mono text-label-sm">
-      <span className="uppercase text-text-muted">{label} </span>
-      {values.map((value, index) => (
-        <span key={value}>
-          {index > 0 && <span className="text-text-muted"> / </span>}
-          <span className="text-text-secondary">{value}</span>
-        </span>
-      ))}
-    </p>
   );
 }

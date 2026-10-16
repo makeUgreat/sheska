@@ -1,12 +1,16 @@
-import { type Ref } from 'react';
+import { type Ref, useState } from 'react';
 import {
   useInfiniteNotesScroll,
   useNotesArchive,
 } from '@/features/notes-archive';
-import { type NoteSummary } from '@/entities/note';
-import { NotesGridSection, type NotesGridState } from './notes-grid-section';
+import { type NoteSummary, useNote } from '@/entities/note';
+import { useDebouncedValue } from '@/shared/lib';
+import { NotesIndexSection, type NotesIndexState } from './notes-index-section';
 
-function getNotesGridState({
+/** 목록을 훑으며 지나가는 항목마다 본문을 받아오지 않도록, 잠시 머문 항목만 불러온다. */
+const PEEK_FETCH_DELAY_MS = 200;
+
+function getNotesIndexState({
   isLoading,
   error,
   notes,
@@ -20,7 +24,7 @@ function getNotesGridState({
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   sentinelRef: Ref<HTMLDivElement>;
-}): NotesGridState {
+}): NotesIndexState {
   if (isLoading) return { status: 'loading' };
   if (error) return { status: 'error', error };
   if (notes.length === 0) return { status: 'empty' };
@@ -49,7 +53,10 @@ export function NotesArchive() {
     isFetchingNextPage,
     fetchNextPage,
   });
-  const state = getNotesGridState({
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const peekId = useDebouncedValue(activeId, PEEK_FETCH_DELAY_MS);
+  const { data: peekNote } = useNote(peekId ?? undefined);
+  const state = getNotesIndexState({
     isLoading,
     error,
     notes,
@@ -58,5 +65,12 @@ export function NotesArchive() {
     sentinelRef,
   });
 
-  return <NotesGridSection state={state} />;
+  return (
+    <NotesIndexSection
+      state={state}
+      activeId={activeId}
+      onActivate={setActiveId}
+      peekNote={peekNote}
+    />
+  );
 }

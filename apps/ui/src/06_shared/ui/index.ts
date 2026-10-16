@@ -1,7 +1,6 @@
 export { ArchiveIndex, type ArchiveEntry } from './archive-index';
 export { ArticleLayout } from './article-layout';
 export { BackLink } from './back-link';
-export { CardLink, CARD_LINK_TITLE } from './card-link';
 export {
   EmptyState,
   type EmptyStateProps,

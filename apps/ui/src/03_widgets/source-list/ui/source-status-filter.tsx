@@ -14,18 +14,18 @@ export function SourceStatusFilter({
   onChange: (status: SyncJobSummaryStatus | undefined) => void;
 }) {
   return (
-    <div className="mb-8 flex flex-wrap items-center gap-2">
+    <div
+      role="group"
+      aria-label="Filter by embedding status"
+      className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-1"
+    >
       {FILTER_OPTIONS.map((status) => (
         <button
           key={status ?? 'all'}
           type="button"
           aria-pressed={value === status}
           onClick={() => onChange(status)}
-          className={`rounded px-2 py-0.5 font-mono text-xs font-medium transition-colors ${
-            value === status
-              ? 'bg-accent-strong text-white'
-              : 'bg-surface-container-high text-secondary hover:text-on-surface'
-          }`}
+          className="text-body-md text-text-muted transition-colors hover:text-text-primary aria-pressed:text-text-primary focus:outline-none focus-visible:text-accent-strong"
         >
           {status ?? 'all'}
         </button>

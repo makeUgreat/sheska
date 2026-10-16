@@ -69,6 +69,9 @@ Layout philosophy는 desktop에서는 **Fixed Grid**, mobile에서는 **Fluid Gr
 - **Mobile**: 16px side margin을 가진 4-column fluid grid.
 - **Spacing Rhythm**: 모든 margin과 padding은 4px base unit의 배수여야 한다.
 - **Reading Measure**: Prose를 읽는 컬럼은 `--spacing-measure`(680px)를 넘지 않는다. Note 본문과 post 본문이 이 값을 공유하므로, 한쪽만 바꾸면 두 화면의 줄 길이가 어긋난다. 이 상한을 어떻게 거는지는 [반응형 레이아웃](./responsive.md)을 따른다.
+- **Peek Width**: 목록 옆 미리보기 칸(`PeekLayout`)은 `--spacing-peek`(320px)로 고정한다.
+  - 목록은 reading measure를 그대로 쓴다.
+  - 미리보기는 머문 항목을 한 번 더 보여줄 뿐이므로 목록보다 좁아야 두 번째 컬럼처럼 읽히지 않는다.
 - **TOC Width**: 목차(`TableOfContents`)는 본문 옆에 남는 여백을 `--spacing-toc-min`(200px)과 `--spacing-toc-max`(320px) 사이에서 폭으로 쓴다. 하한은 `--breakpoint-toc`(1200px)를 유도한 값이므로 둘은 함께 움직인다. 상한은 목차가 두 번째 읽기 컬럼처럼 보이지 않게 막는다.
 
 Major section 사이에는 minimalist, editorial aesthetic을 강조하기 위해 64px 이상의 넓은 margin을 사용한다. Content는 붐비지 않고 의도적으로 배치된 느낌이어야 한다.
@@ -115,15 +118,18 @@ Fence 전체는 `@/shared/ui`의 `CodeBlock`이 소유한다.
 
 Hover와 motion interaction은 generated token을 거치지 않고 Tailwind utility class를 그대로 사용한다. 예:
 
-- **Card hover**: `@/shared/ui`의 `CardLink`가 소유한다. 200ms `ease-out`으로 1px lift, `accent` 5% tint, `--shadow-card-hover`, 제목 ink의 `accent-strong` 전환을 함께 건다. `prefers-reduced-motion`에서는 transition과 lift를 끈다.
+- **목록 hover**: `@/shared/ui`의 `ArchiveIndex`가 소유한다.
+  - 한 항목에 pointer가 올라가면 같은 목록의 나머지 항목 ink를 `text-muted`로 낮춰 그 항목만 또렷하게 남긴다.
+  - 항목을 움직이거나 칠하지 않고 ink만 바꾼다.
+  - `prefers-reduced-motion`에서는 transition을 끈다.
 - **Action link hover**: 화살표에만 `translate-x-1`.
 - **Text link hover**: accent color로의 단순 color transition.
 - **목차 표시**: 목차는 `--breakpoint-toc`(1200px) 이상에서만 보이고, 보이는 동안은 항상 펼쳐져 있다. 그 아래에서는 본문 옆 여백이 목차 하한 폭보다 좁아서 목차가 본문을 덮게 되므로 두지 않는다. 좁은 폭을 위해 접힌 눈금과 hover 펼침을 두었다가 뺐다. 그 폭 하나를 위해 pointer 처리, 펼침 상태, 겹침 그림자, hover 없는 기기 예외가 따라붙었고, 터치 기기에서는 펼친 목차가 본문 끝을 계속 덮었기 때문이다. 목차의 폭과 가로 위치 계산은 [반응형 레이아웃](./responsive.md)에 있다. `prefers-reduced-motion`에서는 `scroll-behavior: smooth`를 끈다.
 - **목차 한 줄**: 목차는 문서 구조를 한눈에 보여주는 것이 목적이므로 항목마다 한 줄만 쓴다. 폭은 본문 옆 여백을 따라 넓어지고, 그래도 넘치는 제목은 줄을 늘리지 않고 끝을 자른다. 목차가 담는 것은 제목 전문이 아니라 섹션의 개수와 깊이다. 잘린 제목의 전문은 `title`에 남는다. 제목 링크는 대문자가 아니므로 `label-sm`의 tracking을 `normal`로 되돌린다. `ON THIS PAGE` label은 대문자이므로 그대로 둔다.
 
-Note, post, source card는 모두 `CardLink` 위에 놓인다. Card처럼 전체가 클릭되는 새 surface를 만들 때는 hover recipe를 다시 선언하지 말고 `CardLink`를 쓴다. Card hover 자체를 바꾸려면 `card-link.tsx` 한 곳만 고친다.
+Post와 note 목록은 `ArchiveIndex`를 쓴다. 제목과 날짜를 한 줄에 두는 목록을 새로 만들 때는 hover recipe를 다시 선언하지 말고 `ArchiveIndex`를 쓴다.
 
-Effect variable은 `design-tokens.json`이 아니라 `src/index.css`의 `@theme` block에 둔다. Generated token file은 color, typography, radius, spacing만 담는다. Effect는 지금 `CardLink`만 쓰는 값이라 cross-platform token exchange 대상이 아니고, generator에 새 token group을 여는 대신 실제 사용처 옆에 둔다. Effect가 여러 primitive로 퍼지면 그때 `design-tokens.json`으로 승격한다.
+Effect variable(shadow 같은 값)이 필요해지면 `design-tokens.json`이 아니라 `src/index.css`의 `@theme` block에 둔다. Generated token file은 color, typography, radius, spacing만 담는다. 한 primitive만 쓰는 effect는 cross-platform token exchange 대상이 아니므로 generator에 새 token group을 여는 대신 실제 사용처 옆에 둔다. Effect가 여러 primitive로 퍼지면 그때 `design-tokens.json`으로 승격한다.
 
 새 effect나 motion 값을 추가하기 전에는 실제로 그 값을 쓰는 구현 지점을 확인한다. 추측이나 브랜드에 "어울릴 것 같은" 값으로 값을 만들지 않는다. 구현의 특정 줄을 가리킬 수 없는 값은 추가하지 않는다.
 
