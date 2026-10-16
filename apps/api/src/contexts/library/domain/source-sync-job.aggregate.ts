@@ -82,15 +82,16 @@ export class SourceSyncJob extends AggregateRoot<
     this.props.status = 'failed';
   }
 
-  isCompleted(): boolean {
-    return this.props.status === 'completed';
+  isCompletedFor(fingerprint: string): boolean {
+    return this.props.status === 'completed' && this.isFor(fingerprint);
   }
 
   isActiveFor(fingerprint: string): boolean {
-    const isActive = this.props.status === 'waiting';
-    const hasSameFingerprint = this.props.fingerprint.unpack() === fingerprint;
+    return this.props.status === 'waiting' && this.isFor(fingerprint);
+  }
 
-    return isActive && hasSameFingerprint;
+  private isFor(fingerprint: string): boolean {
+    return this.props.fingerprint.unpack() === fingerprint;
   }
 
   public validate(): void {

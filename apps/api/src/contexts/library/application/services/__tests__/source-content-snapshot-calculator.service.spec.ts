@@ -36,6 +36,21 @@ describe('SourceContentSnapshotCalculator', () => {
     expect(fingerprinter.calculate).toHaveBeenCalledWith('안녕');
   });
 
+  it('fingerprint는 원문 전체가 아니라 임베딩이 읽는 본문으로 계산한다', async () => {
+    const fingerprinter = createSourceFingerprinterMock();
+    const calculator = new SourceContentSnapshotCalculator(fingerprinter, {
+      parse: vi.fn().mockReturnValue({
+        body: '# Body',
+        frontmatter: { tags: ['a'] },
+        title: null,
+      }),
+    });
+
+    await calculator.calculate('---\ntags: [a]\n---\n# Body');
+
+    expect(fingerprinter.calculate).toHaveBeenCalledWith('# Body');
+  });
+
   it('fingerprint 계산 exception을 전파한다', async () => {
     const fingerprinterFailure = new Error(
       'Source fingerprinter is unavailable',

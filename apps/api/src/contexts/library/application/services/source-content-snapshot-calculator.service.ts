@@ -29,8 +29,6 @@ export class SourceContentSnapshotCalculator {
   ) {}
 
   async calculate(content: string): Promise<SourceContentSnapshotCalculation> {
-    const fingerprint = await this.sourceFingerprinter.calculate(content);
-
     let parsed: ParsedSourceDocument;
     try {
       parsed = this.sourceDocumentParser.parse(content);
@@ -48,8 +46,14 @@ export class SourceContentSnapshotCalculator {
 
     return {
       ...parsed,
-      fingerprint,
+      fingerprint: await this.fingerprintEmbeddingInput(parsed),
       size: new TextEncoder().encode(content).length,
     };
+  }
+
+  private fingerprintEmbeddingInput(
+    parsed: ParsedSourceDocument,
+  ): Promise<string> {
+    return this.sourceFingerprinter.calculate(parsed.body);
   }
 }

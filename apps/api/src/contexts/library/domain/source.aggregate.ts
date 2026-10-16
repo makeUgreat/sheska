@@ -92,7 +92,7 @@ export class Source extends AggregateRoot<SourceProps> {
       title: params.title ?? this.props.externalSourceId.unpack(),
     });
 
-    if (this.props.contentSnapshot.hasSameContentAs(contentSnapshot)) {
+    if (this.props.contentSnapshot.equals(contentSnapshot)) {
       return { source: this, changed: false };
     }
 

@@ -199,7 +199,10 @@ custom:
   status: draft
 ---
 # Retry body`;
-    const fingerprint = useFingerprint(content, 'fingerprint-frontmatter');
+    const fingerprint = useFingerprint(
+      '# Retry body',
+      'fingerprint-frontmatter',
+    );
 
     const result = await useCase.execute({ externalSourceId, content });
 
@@ -266,6 +269,54 @@ custom:
     );
 
     expect(persistedSyncJobs).toHaveLength(1);
+  });
+
+  it('같은 frontmatter를 다시 업로드하면 jsonb의 key 순서가 달라도 source를 쓰지 않는다', async () => {
+    const externalSourceId = 'Notes/upload-usecase-frontmatter-key-order.md';
+    const body = '# Key order body';
+    useFingerprint(body, 'fingerprint-key-order');
+    const content = `---\ntitle: Key order\naliases: [a]\ncustom:\n  zeta: 1\n  alpha: 2\n---\n${body}`;
+    const firstResult = await useCase.execute({ externalSourceId, content });
+    const firstSyncJob = await syncJobs.findLatest({
+      sourceId: firstResult.sourceId,
+    });
+    firstSyncJob!.markCompleted(1);
+    await syncJobs.update(firstSyncJob!);
+    const stored = await sources.get({ id: firstResult.sourceId });
+
+    await useCase.execute({ externalSourceId, content });
+
+    const reloaded = await sources.get({ id: firstResult.sourceId });
+    expect(reloaded.updatedAt).toEqual(stored.updatedAt);
+  });
+
+  it('frontmatter만 바꿔 다시 업로드하면 source만 갱신하고 sync job은 추가하지 않는다', async () => {
+    const externalSourceId = 'Notes/upload-usecase-frontmatter-only.md';
+    const body = '# Frontmatter only body';
+    useFingerprint(body, 'fingerprint-frontmatter-only');
+    const firstResult = await useCase.execute({
+      externalSourceId,
+      content: `---\ntags: [before]\n---\n${body}`,
+    });
+    const firstSyncJob = await syncJobs.findLatest({
+      sourceId: firstResult.sourceId,
+    });
+    firstSyncJob!.markCompleted(1);
+    await syncJobs.update(firstSyncJob!);
+
+    const secondResult = await useCase.execute({
+      externalSourceId,
+      content: `---\ntags: [after]\n---\n${body}`,
+    });
+
+    const source = await sources.get({ id: firstResult.sourceId });
+    expect(secondResult.syncJobId).toBeUndefined();
+    expect(
+      source.getProps().contentSnapshot.unpack().frontmatter.unpack(),
+    ).toEqual({ tags: ['after'] });
+    await expect(
+      findSyncJobsBySourceId(firstResult.sourceId),
+    ).resolves.toHaveLength(1);
   });
 
   it('다른 content를 다시 업로드하면 source를 갱신하고 sync job을 추가한다', async () => {

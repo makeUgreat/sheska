@@ -51,4 +51,52 @@ describe('SourceContentSnapshot', () => {
       }),
     ).toThrow('Source fingerprint cannot be empty');
   });
+
+  describe('equals', () => {
+    const raw = {
+      body: '# Source note',
+      frontmatter: { title: 'Source note', nested: { a: 1, b: [1, 2] } },
+      title: 'Source note',
+      fingerprint: 'fingerprint-1',
+      size: 100,
+    };
+
+    it('모든 필드가 같으면 같다', () => {
+      expect(
+        SourceContentSnapshot.of(raw).equals(SourceContentSnapshot.of(raw)),
+      ).toBe(true);
+    });
+
+    it('frontmatter의 key 순서는 비교에 영향을 주지 않는다', () => {
+      const reordered = SourceContentSnapshot.of({
+        ...raw,
+        frontmatter: { nested: { b: [1, 2], a: 1 }, title: 'Source note' },
+      });
+
+      expect(SourceContentSnapshot.of(raw).equals(reordered)).toBe(true);
+    });
+
+    it.each([
+      { field: 'body', change: { body: '# Changed' } },
+      { field: 'title', change: { title: 'Changed' } },
+      { field: 'frontmatter', change: { frontmatter: { title: 'Changed' } } },
+      { field: 'fingerprint', change: { fingerprint: 'fingerprint-2' } },
+      { field: 'size', change: { size: 101 } },
+    ])('$field가 다르면 다르다', ({ change }) => {
+      expect(
+        SourceContentSnapshot.of(raw).equals(
+          SourceContentSnapshot.of({ ...raw, ...change }),
+        ),
+      ).toBe(false);
+    });
+
+    it('frontmatter 배열 순서가 다르면 다르다', () => {
+      const reordered = SourceContentSnapshot.of({
+        ...raw,
+        frontmatter: { title: 'Source note', nested: { a: 1, b: [2, 1] } },
+      });
+
+      expect(SourceContentSnapshot.of(raw).equals(reordered)).toBe(false);
+    });
+  });
 });
