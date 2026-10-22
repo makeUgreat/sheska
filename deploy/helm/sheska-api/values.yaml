@@ -1,6 +1,6 @@
 replicaCount: 2
 secret:
-  name: sheska-api-secret
+  name: sheska-database
 config:
   corsOrigins: app://obsidian.md,https://hash.meogle.co.kr
   # 텔레메트리의 deployment.environment.name이 된다.
@@ -25,6 +25,8 @@ ingress:
 resources:
   requests:
     memory: 512Mi
+redis:
+  url: redis://sheska-redis.sheska.svc.cluster.local:6379
 embedding:
   baseUrl: http://sheska-embedder.sheska.svc.cluster.local:11434
 otel:

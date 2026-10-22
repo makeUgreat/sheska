@@ -25,3 +25,12 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/name: {{ include "sheska-api.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{- define "sheska-api.databaseVolume" -}}
+- name: secrets
+  secret:
+    secretName: {{ .Values.secret.name }}
+    items:
+      - key: database-url
+        path: database-url
+{{- end }}

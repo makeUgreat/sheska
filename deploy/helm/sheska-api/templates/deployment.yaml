@@ -21,16 +21,10 @@ spec:
           env:
             - name: NODE_ENV
               value: production
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secret.name }}
-                  key: DATABASE_URL
+            - name: DATABASE_URL_FILE
+              value: /run/secrets/sheska/database-url
             - name: REDIS_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secret.name }}
-                  key: REDIS_URL
+              value: {{ .Values.redis.url }}
             - name: EMBEDDING_BASE_URL
               value: {{ .Values.embedding.baseUrl }}
             - name: CORS_ORIGINS
@@ -63,6 +57,12 @@ spec:
             successThreshold: 1
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: secrets
+              mountPath: /run/secrets/sheska
+              readOnly: true
+      volumes:
+        {{- include "sheska-api.databaseVolume" . | nindent 8 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
