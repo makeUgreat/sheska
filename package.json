@@ -5,7 +5,9 @@
   "license": "UNLICENSED",
   "scripts": {
     "deps:check": "depcruise apps --config .dependency-cruiser.cjs",
-    "harness:static": "pnpm deps:check && pnpm -r --if-present harness:static",
+    "docs:check": "node scripts/domain-rule-tables.mjs",
+    "docs:rule-tables": "node scripts/domain-rule-tables.mjs --write",
+    "harness:static": "pnpm deps:check && pnpm docs:check && pnpm -r --if-present harness:static",
     "harness:build": "pnpm -r --if-present harness:build && pnpm --filter @sheska/api test:runtime:start && pnpm --filter @sheska/api test:runtime:stop"
   },
   "devDependencies": {

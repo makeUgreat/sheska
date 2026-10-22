@@ -1,172 +1,327 @@
 ---
 title: Library 도메인
 applies_to:
-  - library bounded context의 용어와 도메인 규칙
+  - library bounded context의 도메인 규칙
   - Obsidian 플러그인의 source 동기화 동작
 read_when:
-  - source 동기화, note 조회, post 발행과 검색을 설계하거나 구현할 때
+  - source 동기화, post 발행과 검색을 설계하거나 구현할 때
   - Obsidian 플러그인이 언제 무엇을 보내는지 바꿀 때
-  - library 용어의 정확한 의미를 확인할 때
 related:
+  - ./glossary.md
   - ./ingestion.md
 ---
 
 # Library 도메인
 
-## 용어
+## 개요
 
-- vault: 사용자의 Obsidian 저장소다. 이 시스템에 들어오는 모든 문서의 원본이다.
-- source(`Source`): vault 파일 하나를 받아 둔 사본이다.
-  - `externalSourceId`: source가 온 vault 안의 파일 경로다. source를 식별하는 도메인 키다.
-  - 내용 스냅샷(`SourceContentSnapshot`): 마지막으로 받은 파일 내용을 frontmatter, 제목, 본문으로 나눈 것이다.
-- frontmatter: 파일 맨 앞의 `---`로 둘러싼 YAML mapping이다.
-- 본문: frontmatter를 뺀 나머지 내용이다. frontmatter가 없으면 파일 내용 전체가 본문이다.
-- wiki link 해석 결과: 본문의 wiki link마다 그 링크가 가리키는 vault 파일 경로다. 가리키는 파일이 없으면 경로가 없다.
-- 파생물: source를 가공해서 만드는 것이다. source에서 언제든 다시 만들 수 있다. 예: 임베딩
-- fingerprint: 임베딩이 읽는 입력의 hash다. 현재 임베딩은 본문만 읽으므로 본문의 hash다.
-- sync job(`SourceSyncJob`): source의 한 버전을 임베딩하도록 요청한 기록이다.
-  - 임베딩 자체는 [ingestion 도메인](./ingestion.md)이 만든다.
-- 동기화 클라이언트: vault 파일을 이 시스템으로 보내는 Obsidian 플러그인이다.
-- 지식 폴더: vault 안에서 사용자가 정리한 지식 노트를 두는 폴더다. 현재 `09_Knowledge`다.
-- note: 지식 폴더 안의 파일에서 온 source다.
-  - note는 별도 모델이 아니다. note의 식별자는 source의 식별자와 같다.
-- post(`Post`): 사용자가 직접 발행한 source다.
-  - note도, 지식 폴더 밖에서 직접 올린 파일도 post가 될 수 있다.
-  - post의 식별자는 source의 식별자와 같다.
+`library`는 어떤 vault 파일을 source로 받아 두고, 그 source를 post로 어떻게 보여 주는지 정한다.
+source 동기화, sync job, post 발행과 검색, 본문 문법을 다룬다.
+청크를 나누고 임베딩을 만드는 일은 `ingestion`이 정한다.
 
-## Source 규칙
+## 개념 구조
 
-- vault가 원본이고 source는 사본이다. source 내용은 동기화로만 바뀐다.
-  - 시스템 안에서 source의 제목이나 본문을 편집하지 않는다.
-    - 두 곳에서 편집하면 어느 쪽이 맞는지 정할 수 없고, 다음 동기화가 시스템 안의 편집을 덮어쓴다.
-- source는 `externalSourceId` 하나에 하나만 있다.
-  - 같은 경로로 다시 받으면 같은 source를 갱신한다.
-    - source 식별자가 유지되므로 note와 post의 URL이 바뀌지 않는다.
-- source 제목은 frontmatter `title`이 비어 있지 않은 문자열이면 그 값이고, 아니면 `externalSourceId`다.
-  - vault의 노트는 frontmatter `title` 없이 파일 이름을 제목으로 쓰는 경우가 많다.
-  - frontmatter 원문은 `title` 값과 상관없이 그대로 보존한다.
-- frontmatter 형식이 틀린 파일은 받지 않고 작성자의 입력 오류로 돌려준다.
-  - 닫는 구분선이 없는 경우, YAML 문법이 틀린 경우, 최상위가 mapping이 아닌 경우가 여기 해당한다.
-  - 틀린 frontmatter를 본문으로 흘려보내면 작성자가 오류를 모른 채 깨진 문서가 발행된다.
-- Obsidian이 흔히 만드는 다음 형태는 정상 frontmatter로 읽는다.
-  - 파일 맨 앞의 BOM, `---` 뒤의 공백, 빈 frontmatter
-  - 작성자가 고칠 수 없는 편집기 차이를 입력 오류로 만들지 않는다.
+```mermaid
+flowchart LR
+  V[동기화 대상] -->|"1 : 1 사본"| S[source]
+  C[동기화 클라이언트] -->|source 업로드| S
+  S -->|"1 : 1"| CS[내용 스냅샷]
+  S -->|"1 : N"| J[sync job]
+  S -->|"1 : 0..1 발행"| P[post]
+  J -->|임베딩 요청| E[source 임베딩]
+  classDef core stroke-width:3px,font-weight:bold
+  classDef base stroke-width:1px
+  classDef outside stroke-width:1px,stroke-dasharray:4 3
+  class S core
+  class V,C,CS,J,P base
+  class E outside
+```
 
-## 동기화 규칙
+- vault가 원본이고 source는 동기화 대상 하나의 사본이다. 동기화 대상은 소유자가 frontmatter로 고른다.
+- 동기화 클라이언트는 동기화 대상을 자동으로 보낸다. 소유자가 `sheska: false`로 바꾼 파일의 source만 지운다.
+- source는 받은 파일 내용을 내용 스냅샷으로 갖는다.
+- post는 source와 따로 있는 문서가 아니라 발행한 source다.
+- source 업로드로 본문이 바뀌면 sync job을 만들어 `ingestion`에 임베딩을 요청한다.
 
-- 동기화는 동기화 클라이언트가 파일을 보내는 push 방식이다. 서버는 vault를 읽지 않는다.
-- 서버는 같은 내용을 여러 번 받아도 결과가 같다.
-  - 동기화의 정확성은 서버가 책임진다. 동기화 클라이언트가 전송을 건너뛰는 판단은 비용을 줄이는 최적화다.
-  - 동기화 클라이언트는 판단이 애매하면 보내는 쪽을 택한다.
-    - 불필요한 전송의 비용은 대역폭뿐이고, 빠뜨린 전송은 사본이 낡는 오류다.
-- 업로드 하나는 source의 전체 상태를 담는다. 전체 상태는 파일 내용과 wiki link 해석 결과다.
-  - 일부만 담은 업로드는 받지 않는다. 일부만 받으면 "보내지 않은 값은 유지한다"는 예외가 저장 판정에 끼어든다.
-  - 동기화 클라이언트는 wiki link 해석이 준비되기 전에는 파일을 보내지 않는다.
-- 서버는 업로드를 받으면 저장 판정과 파생물 판정을 따로 한다. 두 판정은 서로의 결과를 보지 않는다.
-  - 판정 하나로 둘을 정하면 파생물과 상관없는 입력이 바뀔 때마다 파생물을 다시 만들거나 예외 분기가 는다.
-    - 예: frontmatter만 바뀌어도 임베딩을 다시 만들고, wiki link 해석 결과만 바뀌면 저장하지 않는다.
-  - 파생물이 늘어나면 그 파생물의 판정을 하나 더한다. 기존 판정은 바꾸지 않는다.
-- 저장 판정: 받은 전체 상태를 저장된 것과 비교해 하나라도 다르면 source를 갱신한다.
-- 파생물 판정: 파생물마다 그 파생물이 읽는 입력만으로 key를 만든다.
-  같은 key의 파생물이 이미 있거나 만들어지는 중이면 다시 만들지 않는다.
-  - 파생물이 읽는 입력이 바뀌면 key에 넣는 입력도 함께 바꾼다. 예: 임베딩이 제목도 읽게 되면 fingerprint에 제목을 넣는다.
-- 임베딩의 파생물 판정은 source의 가장 최근 sync job과 현재 fingerprint로 한다.
-  - 가장 최근 sync job이 현재 fingerprint로 완료됐으면 아무것도 하지 않는다.
-  - 가장 최근 sync job이 현재 fingerprint로 대기 중이면 새 sync job을 만들지 않고 그 sync job을 돌려준다.
-    - 요청이 겹칠 때 같은 내용이 두 번 임베딩되지 않게 한다.
-  - 그 밖의 경우(실패, 다른 fingerprint, sync job 없음)에는 새 sync job을 만든다.
-    - 같은 내용을 다시 보내는 것이 실패한 동기화를 재시도하는 방법이다.
-    - 임베딩이 있는지만 보고 건너뛰면, 실패했거나 중간에 끊긴 동기화가 가려져 다시 시도되지 않는다.
-- 한 source의 같은 fingerprint에 대해 대기 중인 sync job은 하나뿐이다.
-- 업로드 응답에 담긴 sync job은 "이 업로드 때문에 기다려야 할 임베딩이 있다"는 뜻 하나만 갖는다.
-  - 저장만 하고 임베딩이 필요 없는 업로드는 sync job 없이 응답한다.
-  - 동기화 클라이언트는 sync job이 없는 응답을 동기화 완료로 기록한다.
-- 동기화 클라이언트는 지식 폴더 안의 파일만 자동으로 보낸다.
-  - vault 전체를 자동으로 보내면 사용자가 의도한 지식 영역 밖의 노트까지 올라간다.
-- 지식 폴더 밖의 파일은 사용자가 직접 업로드할 때만 보낸다.
-  - 발행할 파일을 골라 올리는 경로다.
-- 동기화 클라이언트는 실패한 동기화를 횟수 제한 없이 재시도한다.
-  - 서버에는 실패한 sync job을 다시 돌리는 주체가 없다. 동기화 클라이언트가 유일한 재시도 주체다.
-  - 대부분의 실패는 임베딩 timeout이나 일시적인 DB 오류처럼 시간이 지나면 풀린다.
-  - 서버가 거부하는 파일(예: frontmatter 형식 오류)도 고쳐질 때까지 계속 다시 보낸다. 이 비용은 감수한다.
+## 생애
 
-## Sync job 규칙
+sync job의 상태다. 상태 전이는 제한하지 않는다(`library.syncJob-2`).
 
-- sync job의 저장 상태는 대기(`waiting`), 완료(`completed`), 실패(`failed`) 세 가지다.
-- 처리 중(`processing`)은 저장하지 않고, 조회할 때 임베딩 진행 상황을 보고 판단한다.
-  - 진행 상황을 저장하면 저장하는 순간부터 낡는다.
-- sync job 상태로 판단하는 곳은 source의 가장 최근 sync job만 본다. 이전 sync job의 상태는 이력일 뿐이다.
-  - ingestion 결과가 늦게 도착하거나 순서가 뒤바뀌면 이전 sync job의 상태가 사실과 달라질 수 있다.
-  - 가장 최근 sync job만 보면 상태가 틀어져도 다음 업로드에서 회복되므로 상태 전이를 제한하지 않는다.
-  - 이전 sync job의 상태에 기대는 기능을 만들려면 먼저 상태 전이 규칙을 정한다.
-- sync job 요청이 끝내 ingestion에 전달되지 못하면 그 sync job을 실패로 처리한다.
-  - 대기로 남으면 동기화 클라이언트가 결과를 기다리다 포기하고 재시도하지 않는다.
+```mermaid
+stateDiagram-v2
+  [*] --> 대기: 생성
+  대기 --> 완료: 임베딩 저장 통지
+  대기 --> 실패: 실패 통지 또는 전달 실패
+```
 
-## Note 규칙
+- 처리 중은 저장하는 상태가 아니다. 대기 중인 sync job의 임베딩 진행 상황을 보고 조회할 때 판단한다.
 
-- note인지는 source가 온 파일의 위치로 정한다. 지식 폴더 안의 파일에서 온 source만 note다.
-  - 올린 방법(자동 동기화, 직접 업로드)이나 발행 여부와 상관없다.
-  - 지식 폴더 밖에서 직접 올린 파일은 발행하려고 올린 것이지 지식 노트가 아니다.
-- note인지는 서버가 `externalSourceId`(파일 경로)로 판단한다. 지식 폴더는 서버가 소유하는 설정이다.
-  - note인지는 파일 위치로 정해지는 도메인 규칙이므로 도메인을 소유한 서버가 판단한다.
-  - 동기화 클라이언트가 note인지 표시해서 보내면, 같은 파일이 올린 방법에 따라 다르게 분류될 수 있다.
-- note의 aliases와 keywords는 frontmatter의 `aliases`, `keywords` 배열 값 중 문자열만 쓴다.
-  - 배열이 아닌 값과 배열 안의 문자열이 아닌 값은 버린다.
+## Source 규칙 (source)
 
-## Post 규칙
+어떤 vault 파일이 source가 되고, source가 무엇으로 식별되고 언제 지워지는지 정한다.
 
-- source 하나에 post는 최대 하나다.
-  - 이미 발행한 source를 다시 발행하면 충돌로 거부한다.
-- post는 제목과 본문을 따로 갖지 않는다. post는 항상 source의 최신 제목과 본문을 보여 준다.
-  - post는 독립된 문서가 아니라 source의 발행 상태와 조회수다.
-- source가 있으면 발행할 수 있다. 동기화나 임베딩이 끝났을 필요는 없다.
-- 조회수는 post 상세를 조회할 때마다 1 늘어난다. 조회한 사람을 구분하지 않는다.
-- post의 수정 시각은 post 자신의 상태가 바뀐 시각이다. 조회수 증가는 수정이 아니다.
-  - 조회수를 수정으로 치면 수정 시각이 마지막 조회 시각이 된다.
+| ID | 규칙 |
+|---|---|
+| [library.source-1](#librarysource-1-원본은-vault) | source 내용은 동기화로만 바꿀 수 있다. |
+| [library.source-2](#librarysource-2-경로-하나에-source-하나) | `externalSourceId` 하나에 source는 둘 이상일 수 없다. |
+| [library.source-3](#librarysource-3-source-제목) | source 제목은 frontmatter `title`이 비어 있지 않은 문자열이면 그 값이어야 하고, 아니면 `externalSourceId`여야 한다. |
+| [library.source-4](#librarysource-4-틀린-frontmatter) | frontmatter 형식이 틀린 파일은 source로 받을 수 없다. |
+| [library.source-5](#librarysource-5-obsidian이-만드는-frontmatter) | 파일 맨 앞의 BOM, `---` 뒤의 공백, 빈 frontmatter는 정상 frontmatter로 읽어야 한다. |
+| [library.source-6](#librarysource-6-동기화-대상) | vault 파일은 frontmatter `sheska`가 YAML boolean `true`일 때만 동기화 대상이 될 수 있다. |
+| [library.source-7](#librarysource-7-source를-지우는-조건) | source는 그 vault 파일의 frontmatter `sheska`가 YAML boolean `false`일 때만 지울 수 있고, 그때는 지워야 한다. |
+| [library.source-8](#librarysource-8-source와-함께-지우는-것) | source를 지우면 그 source의 sync job과 post도 함께 지워야 한다. |
 
-## 공개 범위 규칙
+### library.source-1 원본은 vault
 
-- 독자에게 공개하는 것은 note와 post뿐이다.
-  - note는 발행하지 않아도 공개한다.
-  - 지식 폴더 밖에서 올린 source는 발행해서 post가 되었을 때만 공개한다.
-- source 목록과 상세, sync job 상태는 소유자만 보는 관리 화면이다.
-  - 발행하지 않은 source에는 아직 다듬는 중인 글이 있다.
-- source 업로드와 post 발행은 소유자만 한다.
+source 내용은 동기화로만 바꿀 수 있다.
+- 예: 관리 화면에서 source 제목이나 본문을 고칠 수 없다.
+- 이유: 두 곳에서 편집하면 어느 쪽이 맞는지 정할 수 없고, 다음 동기화가 시스템 안의 편집을 덮어쓴다.
 
-## 검색 규칙
+### library.source-2 경로 하나에 source 하나
 
-- 검색 대상은 post뿐이다. 발행하지 않은 source는 검색되지 않는다.
-- 검색은 키워드 검색과 의미 검색의 결과를 합쳐 순위를 매긴다.
-- 의미 검색이 실패하거나 늦으면 키워드 검색 결과만 돌려준다.
-  - 검색은 응답이 늦는 것보다 의미 검색을 포기하는 편이 사용자 경험에 낫다.
-  - 결과에 의미 검색이 적용됐는지 함께 알린다.
-- 제목에 키워드가 일치하는 결과를 본문에만 일치하는 결과보다 앞에 둔다.
-- 의미 검색 후보는 질의와의 유사도가 기준 이상인 것만 쓴다.
-  - 기준이 너무 엄격하면 의미상 관련 있는 결과를 놓친다. 기준을 바꿀 때 이 trade-off를 다시 확인한다.
-- 결과마다 일치 이유(키워드, 의미, 둘 다)와 유사도를 보여 준다.
-  - 유사도는 질의와 상관없이 같은 의미를 갖는 값이어야 한다. 순위 점수는 질의마다 의미가 달라 보여 주지 않는다.
+`externalSourceId` 하나에 source는 둘 이상일 수 없다.
+- 예: 같은 경로로 다시 받은 파일은 같은 source를 갱신한다.
+- 이유: source 식별자가 유지되므로 post의 URL이 바뀌지 않는다.
 
-## 본문 문법 규칙
+### library.source-3 source 제목
 
-- note, post, source 본문은 모두 같은 vault 파일이므로 같은 Obsidian 문법으로 해석한다.
-  - 화면마다 해석이 다르면 같은 본문이 어떤 화면에서는 링크로, 어떤 화면에서는 날것의 괄호로 보인다.
-- 해석되지 않은 wiki link는 오류가 아니라 정상 상태다. 숨기지 않고 해석되지 않았다는 표시와 함께 보여 준다.
-  - vault에서는 노트를 만들기 전에 링크를 먼저 쓰는 일이 흔하다.
-- target 없이 anchor만 있는 wiki link(`[[#^id]]`)는 같은 본문 안의 block을 가리킨다.
+source 제목은 frontmatter `title`이 비어 있지 않은 문자열이면 그 값이어야 하고, 아니면 `externalSourceId`여야 한다.
+- 예: `title: 회고`이면 `회고`다. `title: ""`, `title: 3`, `title`이 없는 경우는 `externalSourceId`다.
+- 이유: vault의 노트는 frontmatter `title` 없이 파일 이름을 제목으로 쓰는 경우가 많다.
 
-## Wiki link 규칙
+### library.source-4 틀린 frontmatter
 
-- 다른 파일을 가리키는 wiki link는 동기화 클라이언트가 Obsidian으로 해석해서 보낸다.
-  서버는 Obsidian의 링크 해석 규칙을 다시 구현하지 않는다.
-  - Obsidian은 링크를 가장 짧은 경로, 상대 경로, 같은 이름 파일의 우선순위 같은 규칙으로 해석한다.
-    서버가 이를 따라 만들면 경계 사례에서 Obsidian과 다른 파일을 가리킨다.
-  - 파일이 들어오는 경로는 동기화 클라이언트 하나뿐이므로 Obsidian의 해석 결과를 그대로 받을 수 있다.
-- 서버는 wiki link 해석 결과를 source별 링크로 저장한다. 해석되지 않은 링크도 대상 경로 없이 저장한다.
-  - 같은 링크 기록으로 본문의 링크, backlink, 노트 그래프를 만든다.
-- 대상 경로를 source로 바꾸는 것은 조회할 때 한다.
-  - 대상 파일이 아직 올라오지 않았으면 해석되지 않은 링크로 보이고, 올라오면 다시 해석하지 않아도 이어진다.
-- 동기화 클라이언트는 파일 내용이 그대로여도 wiki link 해석 결과가 달라지면 그 파일을 다시 보낸다.
-  - 링크를 먼저 쓰고 대상 노트를 나중에 만들면, 링크를 쓴 파일은 바뀌지 않았어도 해석 결과는 달라진다.
-- 독자에게 보이는 wiki link는 공개된 대상(note나 post)으로만 이어진다.
-  공개되지 않은 source를 가리키는 링크는 해석되지 않은 링크로 보인다.
-  - 링크가 공개 범위를 넘어 관리 화면의 source를 드러내지 않게 한다.
+frontmatter 형식이 틀린 파일은 source로 받을 수 없다.
+- 예: 닫는 구분선이 없는 경우, YAML 문법이 틀린 경우, 최상위가 mapping이 아닌 경우
+- 이유: 틀린 frontmatter를 본문으로 흘려보내면 작성자가 오류를 모른 채 깨진 문서가 발행된다.
+- 참고: 받지 않은 파일은 작성자의 입력 오류로 돌려준다.
+
+### library.source-5 Obsidian이 만드는 frontmatter
+
+파일 맨 앞의 BOM, `---` 뒤의 공백, 빈 frontmatter는 정상 frontmatter로 읽어야 한다.
+- 이유: 작성자가 고칠 수 없는 편집기 차이를 입력 오류로 만들지 않는다.
+
+### library.source-6 동기화 대상
+
+vault 파일은 frontmatter `sheska`가 YAML boolean `true`일 때만 동기화 대상이 될 수 있다.
+- 예: `sheska: true`는 동기화 대상이다. `sheska: "true"`, `sheska: yes`, `sheska: 1`, `sheska`가 없는 경우는 아니다.
+- 이유: source는 모두 검색과 RAG에 쓰인다. 값이 애매한 파일은 올라가지 않아야 소유자가 의도하지 않은 노트가 쓰이지 않는다.
+- 이유: source가 되는 길이 frontmatter 하나여야 어떤 노트가 쓰이는지 vault만 보고 알 수 있다.
+
+### library.source-7 source를 지우는 조건
+
+source는 그 vault 파일의 frontmatter `sheska`가 YAML boolean `false`일 때만 지울 수 있고, 그때는 지워야 한다.
+- 예: `sheska`를 지우거나, 파일을 지우거나 옮기거나, frontmatter를 읽을 수 없게 되어도 source는 지우지 않는다.
+- 이유: 소유자가 명시적으로 뺀 노트만 지운다. 실수일 수 있는 변화로 post와 조회수를 잃게 하지 않는다.
+- 참고: `sheska: false`로 바꾸지 않고 파일을 옮기면 새 경로의 source가 생기고 옛 경로의 source는 남는다.
+
+### library.source-8 source와 함께 지우는 것
+
+source를 지우면 그 source의 sync job과 post도 함께 지워야 한다.
+- 참고: source 임베딩은 `ingestion.sourceEmbedding-6`이 지운다.
+
+## 동기화 규칙 (sync)
+
+vault 파일을 언제 보내고, source 업로드를 받으면 무엇을 저장하고 임베딩을 다시 만드는지 정한다.
+
+| ID | 규칙 |
+|---|---|
+| [library.sync-1](#librarysync-1-push-방식) | source는 동기화 클라이언트의 요청으로만 만들고, 바꾸고, 지울 수 있다. |
+| [library.sync-2](#librarysync-2-같은-업로드의-반복) | 같은 source 업로드를 여러 번 받은 결과는 한 번 받은 결과와 같아야 한다. |
+| [library.sync-3](#librarysync-3-애매하면-보내기) | 동기화 클라이언트는 보낼지 판단이 애매한 파일을 보내야 한다. |
+| [library.sync-4](#librarysync-4-자동-동기화) | 동기화 클라이언트는 동기화 대상을 모두 자동으로 보내야 한다. |
+| [library.sync-5](#librarysync-5-source-갱신) | source는 source 업로드의 파일 내용이 저장된 것과 다르면 갱신해야 한다. |
+| [library.sync-6](#librarysync-6-임베딩을-다시-만드는-기준) | 임베딩을 다시 만들지는 fingerprint로만 정해야 한다. |
+| [library.sync-7](#librarysync-7-sync-job을-만드는-경우) | source 업로드를 받으면 source의 가장 최근 sync job에 따라 아래 표대로 해야 한다. |
+| [library.sync-8](#librarysync-8-업로드-응답의-sync-job) | source 업로드 응답은 그 업로드 때문에 기다려야 할 임베딩이 있을 때만 sync job을 담을 수 있다. |
+| [library.sync-9](#librarysync-9-동기화-재시도) | 동기화 클라이언트는 실패한 동기화를 횟수 제한 없이 재시도해야 한다. |
+
+### library.sync-1 push 방식
+
+source는 동기화 클라이언트의 요청으로만 만들고, 바꾸고, 지울 수 있다.
+- 예: 서버는 vault를 직접 읽지 않는다.
+
+### library.sync-2 같은 업로드의 반복
+
+같은 source 업로드를 여러 번 받은 결과는 한 번 받은 결과와 같아야 한다.
+- 이유: 동기화의 정확성은 받는 쪽이 책임진다. 동기화 클라이언트가 전송을 건너뛰는 판단은 비용을 줄이는 최적화다.
+
+### library.sync-3 애매하면 보내기
+
+동기화 클라이언트는 보낼지 판단이 애매한 파일을 보내야 한다.
+- 이유: 불필요한 전송의 비용은 대역폭뿐이고, 빠뜨린 전송은 사본이 낡는 오류다.
+
+### library.sync-4 자동 동기화
+
+동기화 클라이언트는 동기화 대상을 모두 자동으로 보내야 한다.
+
+### library.sync-5 source 갱신
+
+source는 source 업로드의 파일 내용이 저장된 것과 다르면 갱신해야 한다.
+
+### library.sync-6 임베딩을 다시 만드는 기준
+
+임베딩을 다시 만들지는 fingerprint로만 정해야 한다.
+- 예: frontmatter나 제목만 바뀌면 fingerprint가 같으므로 임베딩을 다시 만들지 않는다.
+- 이유: 임베딩이 읽지 않는 입력이 바뀔 때마다 임베딩을 다시 만들면 연산만 낭비한다.
+- 참고: 임베딩이 읽는 입력이 바뀌면 fingerprint에 넣는 입력도 함께 바꾼다.
+
+### library.sync-7 sync job을 만드는 경우
+
+source 업로드를 받으면 source의 가장 최근 sync job에 따라 아래 표대로 해야 한다.
+
+| 가장 최근 sync job | 그 sync job의 fingerprint가 현재와 같음 | 결과 |
+|---|---|---|
+| 없음 | - | 새 sync job을 만든다 |
+| 완료 | 예 | 아무것도 하지 않는다 |
+| 완료 | 아니오 | 새 sync job을 만든다 |
+| 대기 | 예 | 새 sync job을 만들지 않고 그 sync job을 돌려준다 |
+| 대기 | 아니오 | 새 sync job을 만든다 |
+| 실패 | - | 새 sync job을 만든다 |
+
+- 이유: 대기 중인 sync job을 돌려주면 요청이 겹쳐도 같은 내용을 두 번 임베딩하지 않는다.
+- 이유: 실패했으면 같은 내용이라도 새로 만든다. 같은 내용을 다시 보내는 것이 실패한 동기화를 재시도하는 방법이다.
+
+### library.sync-8 업로드 응답의 sync job
+
+source 업로드 응답은 그 업로드 때문에 기다려야 할 임베딩이 있을 때만 sync job을 담을 수 있다.
+- 예: 임베딩이 필요 없는 업로드는 sync job 없이 응답한다.
+- 참고: 동기화 클라이언트는 sync job이 없는 응답을 동기화 완료로 기록한다.
+
+### library.sync-9 동기화 재시도
+
+동기화 클라이언트는 실패한 동기화를 횟수 제한 없이 재시도해야 한다.
+- 예: 서버가 거부하는 파일도 고쳐질 때까지 계속 다시 보낸다. 이 비용은 감수한다.
+- 이유: 서버에는 실패한 sync job을 다시 돌리는 주체가 없다. 동기화 클라이언트가 유일한 재시도 주체다.
+- 이유: 대부분의 실패는 임베딩 timeout이나 일시적인 DB 오류처럼 시간이 지나면 풀린다.
+
+## Sync job 규칙 (syncJob)
+
+sync job이 가질 수 있는 상태와 그 상태를 어떻게 읽는지 정한다.
+
+| ID | 규칙 |
+|---|---|
+| [library.syncJob-1](#librarysyncjob-1-저장-상태) | sync job의 저장 상태는 대기(`waiting`), 완료(`completed`), 실패(`failed`) 중 하나여야 한다. |
+| [library.syncJob-2](#librarysyncjob-2-가장-최근-sync-job) | sync job 상태로 하는 판단은 source의 가장 최근 sync job만 볼 수 있다. |
+| [library.syncJob-3](#librarysyncjob-3-전달하지-못한-sync-job) | `ingestion`에 끝내 전달하지 못한 sync job은 실패여야 한다. |
+
+### library.syncJob-1 저장 상태
+
+sync job의 저장 상태는 대기(`waiting`), 완료(`completed`), 실패(`failed`) 중 하나여야 한다.
+- 예: 처리 중(`processing`)은 저장하지 않고, 조회할 때 임베딩 진행 상황을 보고 판단한다.
+- 이유: 진행 상황을 저장하면 저장하는 순간부터 낡는다.
+
+### library.syncJob-2 가장 최근 sync job
+
+sync job 상태로 하는 판단은 source의 가장 최근 sync job만 볼 수 있다.
+- 이유: ingestion 결과가 늦게 도착하거나 순서가 뒤바뀌면 이전 sync job의 상태가 사실과 달라질 수 있다.
+  가장 최근 sync job만 보면 상태가 틀어져도 다음 업로드에서 회복되므로 상태 전이를 제한하지 않아도 된다.
+- 참고: 이전 sync job의 상태에 기대는 기능을 만들려면 먼저 상태 전이 규칙을 정한다.
+
+### library.syncJob-3 전달하지 못한 sync job
+
+`ingestion`에 끝내 전달하지 못한 sync job은 실패여야 한다.
+- 이유: 대기로 남으면 동기화 클라이언트가 결과를 기다리다 포기하고 재시도하지 않는다.
+
+## Post 규칙 (post)
+
+source를 언제 발행할 수 있는지와 post가 무엇을 갖는지 정한다.
+
+| ID | 규칙 |
+|---|---|
+| [library.post-1](#librarypost-1-source-하나에-post-하나) | source 하나에 post는 둘 이상일 수 없다. |
+| [library.post-2](#librarypost-2-post의-식별자) | post의 식별자는 그 source의 식별자와 같아야 한다. |
+| [library.post-3](#librarypost-3-post의-내용) | post는 source와 따로 제목과 본문을 가질 수 없다. |
+| [library.post-4](#librarypost-4-발행-시점) | source는 동기화나 임베딩이 끝나기 전에도 발행할 수 있다. |
+| [library.post-5](#librarypost-5-조회수) | 조회수는 post 상세를 조회할 때마다 1 늘어나야 한다. |
+| [library.post-6](#librarypost-6-조회와-수정-시각) | 조회수 증가는 post의 수정 시각을 바꿀 수 없다. |
+
+### library.post-1 source 하나에 post 하나
+
+source 하나에 post는 둘 이상일 수 없다.
+- 참고: 이미 발행한 source를 다시 발행하면 충돌로 거부한다.
+
+### library.post-2 post의 식별자
+
+post의 식별자는 그 source의 식별자와 같아야 한다.
+
+### library.post-3 post의 내용
+
+post는 source와 따로 제목과 본문을 가질 수 없다.
+- 이유: post는 독립된 문서가 아니라 source의 발행 상태와 조회수다.
+- 참고: post는 항상 source의 최신 제목과 본문을 보여 준다.
+
+### library.post-4 발행 시점
+
+source는 동기화나 임베딩이 끝나기 전에도 발행할 수 있다.
+
+### library.post-5 조회수
+
+조회수는 post 상세를 조회할 때마다 1 늘어나야 한다.
+- 예: 같은 사람이 두 번 조회해도 2 늘어난다. 조회한 사람을 구분하지 않는다.
+
+### library.post-6 조회와 수정 시각
+
+조회수 증가는 post의 수정 시각을 바꿀 수 없다.
+- 이유: 조회수를 수정으로 치면 수정 시각이 마지막 조회 시각이 된다.
+
+## 검색 규칙 (search)
+
+post 검색이 무엇을 찾고 어떤 순서로 무엇을 보여 주는지 정한다.
+
+| ID | 규칙 |
+|---|---|
+| [library.search-1](#librarysearch-1-검색-대상) | 검색 결과에는 post만 나올 수 있다. |
+| [library.search-2](#librarysearch-2-결과-합치기) | 검색 결과는 키워드 검색과 의미 검색의 결과를 합쳐 순위를 매겨야 한다. |
+| [library.search-3](#librarysearch-3-의미-검색-실패) | 의미 검색이 실패하면 검색 결과는 키워드 검색 결과만으로 돌려줘야 한다. |
+| [library.search-4](#librarysearch-4-의미-검색-적용-여부) | 검색 결과는 의미 검색이 적용됐는지 함께 알려야 한다. |
+| [library.search-5](#librarysearch-5-제목-일치-우선) | 제목에 키워드가 일치하는 결과는 본문에만 일치하는 결과보다 앞에 와야 한다. |
+| [library.search-6](#librarysearch-6-의미-검색-후보) | 의미 검색 후보는 유사도가 기준값보다 큰 청크 임베딩을 가진 post일 때만 될 수 있다. |
+| [library.search-7](#librarysearch-7-결과에-보여-주는-값) | 검색 결과마다 일치 이유와 유사도를 보여 줘야 하고, 순위 점수는 보여 줄 수 없다. |
+
+### library.search-1 검색 대상
+
+검색 결과에는 post만 나올 수 있다.
+- 예: 발행하지 않은 source는 검색되지 않는다.
+
+### library.search-2 결과 합치기
+
+검색 결과는 키워드 검색과 의미 검색의 결과를 합쳐 순위를 매겨야 한다.
+
+### library.search-3 의미 검색 실패
+
+의미 검색이 실패하면 검색 결과는 키워드 검색 결과만으로 돌려줘야 한다.
+- 예: 질의 임베딩이 timeout으로 끝나지 않은 경우도 실패다.
+- 이유: 검색은 응답이 늦는 것보다 의미 검색을 포기하는 편이 사용자 경험에 낫다.
+
+### library.search-4 의미 검색 적용 여부
+
+검색 결과는 의미 검색이 적용됐는지 함께 알려야 한다.
+
+### library.search-5 제목 일치 우선
+
+제목에 키워드가 일치하는 결과는 본문에만 일치하는 결과보다 앞에 와야 한다.
+
+### library.search-6 의미 검색 후보
+
+의미 검색 후보는 유사도가 기준값보다 큰 청크 임베딩을 가진 post일 때만 될 수 있다.
+- 이유: 기준이 너무 엄격하면 의미상 관련 있는 결과를 놓친다. 기준값을 바꿀 때 이 trade-off를 다시 확인한다.
+- 참고: 기준값은 모델 성능을 보며 조정하는 값이라 API 코드가 정한다.
+
+### library.search-7 결과에 보여 주는 값
+
+검색 결과마다 일치 이유와 유사도를 보여 줘야 하고, 순위 점수는 보여 줄 수 없다.
+- 이유: 순위 점수는 질의마다 의미가 달라 서로 비교할 수 없다. 유사도는 질의와 상관없이 같은 의미를 갖는다.
+
+## 본문 문법 규칙 (body)
+
+본문을 어떤 문법으로 읽는지 정한다.
+
+| ID | 규칙 |
+|---|---|
+| [library.body-1](#librarybody-1-같은-문법) | post와 source의 본문은 같은 Obsidian 문법으로 해석해야 한다. |
+
+### library.body-1 같은 문법
+
+post와 source의 본문은 같은 Obsidian 문법으로 해석해야 한다.
+- 이유: 화면마다 해석이 다르면 같은 본문이 화면마다 다르게 보인다.
