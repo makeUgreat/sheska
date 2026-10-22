@@ -48,7 +48,7 @@ module.exports = {
     exclude: {
       path: [
         '(^|/)node_modules/',
-        '^apps/[^/]+/(dist|coverage)/',
+        '^apps/[^/]+/(dist|coverage|storybook-static)/',
       ],
     },
     moduleSystems: ['cjs', 'es6'],
