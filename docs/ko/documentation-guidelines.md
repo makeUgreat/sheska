@@ -4,7 +4,6 @@ applies_to:
   - project Markdown documents
   - source code comments
 related:
-  - ./adr.md
   - ./domain-document-guidelines.md
 ---
 
