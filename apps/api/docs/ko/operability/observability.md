@@ -49,7 +49,11 @@ flowchart LR
 - 모든 신호에 다음 리소스 속성을 붙인다.
   - `service.name`: 하드코딩한 `SERVICE_NAME` 상수.
   - `service.version`: 실행 중인 package의 `npm_package_version`.
-  - `deployment.environment.name`: 하나의 backend를 공유하는 telemetry를 구분하는 `NODE_ENV`.
+    - 클러스터에서는 `node dist/main`으로 실행해서 `npm_package_version`이 없다.
+      Helm이 `OTEL_RESOURCE_ATTRIBUTES`에 이미지 tag를 넣어 이 값을 대신한다.
+  - `deployment.environment.name`: 하나의 backend를 공유하는 telemetry를 구분하는 실행 환경 이름.
+    - 코드에 두지 않고 `OTEL_RESOURCE_ATTRIBUTES`로 받는다. SDK는 이 환경 변수의 속성을 코드의 속성보다 우선한다.
+    - 환경 이름을 `NODE_ENV`에서 가져오지 않는 이유는 [실행 환경](../../../../../docs/ko/environments.md#설정)에 있다.
 - 리소스 속성을 추가해도 Loki나 Prometheus에서 조회 가능한 label이 되지는 않는다.
   - label 승격에는 `hash-infra`의 명시적인 Alloy 설정 변경이 필요하다.
 - metric에 `resource_to_telemetry_conversion`을 사용한 일괄 리소스-label 승격을 활성화하지 않는다.
@@ -58,12 +62,12 @@ flowchart LR
 
 ## 환경 정책
 
-- 다음 조건을 모두 충족할 때만 SDK를 시작한다.
-  - `NODE_ENV`가 `production` 또는 `development`다.
-  - `OTEL_EXPORTER_OTLP_ENDPOINT`가 있고 유효한 URL이다.
-- `NODE_ENV`가 없거나 허용 목록에 없으면 telemetry를 비활성화한다.
-  - 계측할 환경을 추가할 때 허용 목록을 명시적으로 확장한다.
-- 환경에 따라 달라지는 OTel 전송 값은 OTLP endpoint만 둔다.
+- `OTEL_EXPORTER_OTLP_ENDPOINT`가 있을 때만 SDK를 시작한다. 값이 URL이 아니면 앱이 시작하지 않는다.
+  - test 환경은 이 값을 두지 않아서 telemetry를 보내지 않는다.
+- `OTEL_EXPORTER_OTLP_ENDPOINT`가 있으면 `OTEL_RESOURCE_ATTRIBUTES`에 `deployment.environment.name`이 있어야 한다.
+  없으면 앱이 시작하지 않는다.
+  - 환경 이름이 빠진 telemetry는 공유 backend에서 다른 환경의 것과 구분할 수 없다.
+- 환경에 따라 달라지는 OTel 값은 OTLP endpoint와 `OTEL_RESOURCE_ATTRIBUTES`만 둔다.
 - service name은 `.env.*` 파일이나 Helm values가 아니라 코드에 둔다.
   - service name은 애플리케이션 식별자이며 배포마다 달라지지 않는다.
 
@@ -74,8 +78,9 @@ flowchart LR
   - 이런 모듈을 먼저 로드하면 해당 모듈에 계측을 적용할 수 없다.
 - bootstrap을 NestJS provider나 module로 만들면 안 된다.
   - NestJS bootstrap과 일반 [런타임 배선](../architecture/runtime-wiring.md)보다 먼저 실행해야 한다.
-- bootstrap은 설정을 파싱하기 전에 `dotenv`로 `.env.${NODE_ENV}`를 직접 로드한다.
-  - 이 로직을 `ConfigService`로 바꾸지 않는다. 아직 `AppModule`과 typed application config가 없기 때문이다.
+- bootstrap은 설정 묶음 `otelConfig`의 factory를 직접 호출한다.
+  - bootstrap이 실행될 때는 아직 `AppModule`이 없어서 묶음을 주입받을 수 없다.
+  - env 파일은 실행 명령의 `--env-file`이 프로세스 시작 전에 넣어서, bootstrap이 따로 읽지 않는다.
 - processor가 대기 중인 telemetry를 내보낼 수 있도록 `SIGTERM`에서 SDK를 종료한다.
 
 ## 로깅 통합

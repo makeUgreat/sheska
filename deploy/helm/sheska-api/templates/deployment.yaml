@@ -33,8 +33,12 @@ spec:
                   key: REDIS_URL
             - name: EMBEDDING_BASE_URL
               value: {{ .Values.embedding.baseUrl }}
+            - name: CORS_ORIGINS
+              value: {{ required "config.corsOrigins가 필요합니다." .Values.config.corsOrigins | quote }}
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: {{ .Values.otel.exporterOtlpEndpoint }}
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "deployment.environment.name={{ required "config.environment가 필요합니다." .Values.config.environment }},service.version={{ .Values.image.tag }}"
           ports:
             - name: http
               containerPort: 3000

@@ -14,7 +14,7 @@ import {
   type ResilienceAttempt,
 } from '@kernels/infrastructure';
 import type { Embedder } from '@contexts/ingestion/application/ports';
-import { OLLAMA_CONFIG, type OllamaConfig } from './ollama-http.config';
+import { ollamaConfig, type OllamaConfig } from './ollama-http.config';
 
 const OLLAMA_MODEL = 'qwen3-embedding:0.6b';
 // AbortSignal.timeout이 던지는 DOMException의 name. 이 프로젝트의 TimeoutError와는 다르다.
@@ -29,7 +29,7 @@ export class OllamaHttpEmbedder implements Embedder {
   private readonly model = OLLAMA_MODEL;
 
   constructor(
-    @Inject(OLLAMA_CONFIG)
+    @Inject(ollamaConfig.KEY)
     private readonly config: OllamaConfig,
   ) {}
 

@@ -1,17 +1,19 @@
+import { type ConfigType, registerAs } from '@nestjs/config';
 import { z } from 'zod';
 
-export const OLLAMA_CONFIG = Symbol('OLLAMA_CONFIG');
+const ollamaEnvSchema = z.object({
+  /** 임베딩을 만드는 Ollama 서버 주소다. 예: `http://sheska-embedder:11434` */
+  EMBEDDING_BASE_URL: z.url(),
+});
 
-const ollamaConfigSchema = z
-  .object({
-    EMBEDDING_BASE_URL: z.url(),
-  })
-  .transform((env) => ({
-    baseUrl: env.EMBEDDING_BASE_URL,
-  }));
+export const ollamaConfig = registerAs('ollama', () => {
+  const result = ollamaEnvSchema.safeParse(process.env);
+  if (!result.success) {
+    throw new Error(
+      `Invalid embedding server configuration.\n${z.prettifyError(result.error)}`,
+    );
+  }
+  return { baseUrl: result.data.EMBEDDING_BASE_URL };
+});
 
-export type OllamaConfig = z.infer<typeof ollamaConfigSchema>;
-
-export function parseOllamaConfig(env: Record<string, unknown>): OllamaConfig {
-  return ollamaConfigSchema.parse(env);
-}
+export type OllamaConfig = ConfigType<typeof ollamaConfig>;

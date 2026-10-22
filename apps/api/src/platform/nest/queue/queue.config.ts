@@ -1,15 +1,17 @@
+import { registerAs } from '@nestjs/config';
 import { z } from 'zod';
 
-const queueConfigSchema = z
-  .object({
-    REDIS_URL: z.url(),
-  })
-  .transform((env) => ({
-    redisUrl: env.REDIS_URL,
-  }));
+const queueEnvSchema = z.object({
+  /** BullMQ 큐가 쓰는 Redis 접속 주소다. 예: `redis://sheska-redis:6379` */
+  REDIS_URL: z.url(),
+});
 
-export type QueueConfig = z.infer<typeof queueConfigSchema>;
-
-export function parseQueueConfig(env: Record<string, unknown>): QueueConfig {
-  return queueConfigSchema.parse(env);
-}
+export const queueConfig = registerAs('queue', () => {
+  const result = queueEnvSchema.safeParse(process.env);
+  if (!result.success) {
+    throw new Error(
+      `Invalid queue configuration.\n${z.prettifyError(result.error)}`,
+    );
+  }
+  return { redisUrl: result.data.REDIS_URL };
+});

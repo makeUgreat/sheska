@@ -1,36 +1,23 @@
-import { describe, expect, it } from 'vitest';
-import { parseQueueConfig } from '../queue.config';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { queueConfig } from '../queue.config';
 
-describe('queue config', () => {
-  it('REDIS_URL이 유효하면 typed config를 반환한다', () => {
-    const validRedisUrl = 'redis://127.0.0.1:6379';
-
-    const config = parseQueueConfig({
-      REDIS_URL: validRedisUrl,
-    });
-
-    expect(config).toEqual({
-      redisUrl: validRedisUrl,
-    });
+describe('queueConfig', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
-  it('REDIS_URL이 없으면 validation에 실패한다', () => {
-    expect(() => parseQueueConfig({})).toThrow();
+  it('REDIS_URL이 유효하면 큐 설정을 돌려준다', () => {
+    vi.stubEnv('REDIS_URL', 'redis://localhost:6379');
+
+    expect(queueConfig()).toEqual({ redisUrl: 'redis://localhost:6379' });
   });
 
-  it('REDIS_URL이 빈 문자열이면 validation에 실패한다', () => {
-    expect(() =>
-      parseQueueConfig({
-        REDIS_URL: '',
-      }),
-    ).toThrow();
-  });
+  it.each([undefined, '', 'not-a-url'])(
+    'REDIS_URL이 %j이면 거부한다',
+    (value) => {
+      vi.stubEnv('REDIS_URL', value);
 
-  it('REDIS_URL이 URL 형식이 아니면 validation에 실패한다', () => {
-    expect(() =>
-      parseQueueConfig({
-        REDIS_URL: 'not-a-url',
-      }),
-    ).toThrow();
-  });
+      expect(() => queueConfig()).toThrow('REDIS_URL');
+    },
+  );
 });
