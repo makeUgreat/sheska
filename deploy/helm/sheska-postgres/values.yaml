@@ -4,7 +4,11 @@ image:
   pullPolicy: IfNotPresent
 
 secret:
-  name: sheska-postgres-secret
+  name: sheska-database
+
+database:
+  name: sheska
+  user: sheska
 
 storage:
   size: 100Gi
