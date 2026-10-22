@@ -1,6 +1,5 @@
 import { Module, type DynamicModule } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
-import { ConfigService } from '@nestjs/config';
 import {
   SOURCE_EMBEDDING_CHUNK_QUEUE,
   SOURCE_EMBEDDING_FINALIZATION_QUEUE,
@@ -14,10 +13,6 @@ import { SourceEmbeddingFinalizationBullMqConsumer } from '@contexts/ingestion/p
 import { SourceSyncJobCreatedIntegrationEventConsumer } from '@contexts/ingestion/presentation/events/source-sync-job-created.integration-event.consumer';
 import { SourceEmbeddingWorkflowBullMqDispatcher } from '@contexts/ingestion/infrastructure/queue/bullmq/source-embedding-workflow.bullmq.dispatcher';
 import { OllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.embedder';
-import {
-  OLLAMA_CONFIG,
-  parseOllamaConfig,
-} from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.config';
 import {
   RecursiveCharacterChunker,
   DEFAULT_CHUNK_SIZE,
@@ -61,14 +56,6 @@ export class IngestionModule {
         {
           provide: SOURCE_EMBEDDING_LOOKUP,
           useClass: SourceEmbeddingFromRepositoryLookup,
-        },
-        {
-          provide: OLLAMA_CONFIG,
-          useFactory: (configService: ConfigService) =>
-            parseOllamaConfig({
-              EMBEDDING_BASE_URL: configService.get('EMBEDDING_BASE_URL'),
-            }),
-          inject: [ConfigService],
         },
         {
           provide: EMBEDDER,

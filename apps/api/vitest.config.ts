@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { parseEnv } from 'node:util';
 import { transform } from '@swc/core';
 import { defineConfig, Plugin } from 'vitest/config';
 
@@ -44,6 +47,7 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   test: {
+    env: parseEnv(readFileSync(resolve(__dirname, '.env.test'), 'utf8')),
     coverage: {
       reportsDirectory: '../../coverage/apps/api',
     },

@@ -1,36 +1,42 @@
-import { describe, expect, it } from 'vitest';
-import { parseDatabaseConfig } from '../database.config';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { databaseConfig } from '../database.config';
 
 const validDatabaseUrl = 'postgres://sheska:sheska@localhost:5432/sheska';
 
-describe('database config', () => {
-  it('DATABASE_URL이 유효하면 typed config를 반환한다', () => {
-    const config = parseDatabaseConfig({
-      DATABASE_URL: validDatabaseUrl,
-    });
-
-    expect(config).toEqual({
-      databaseUrl: validDatabaseUrl,
-    });
+describe('databaseConfig', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
-  it('DATABASE_URL이 없으면 validation에 실패한다', () => {
-    expect(() => parseDatabaseConfig({})).toThrow();
+  it('DATABASE_URL이 유효하면 DB 설정을 돌려준다', () => {
+    vi.stubEnv('DATABASE_URL', validDatabaseUrl);
+
+    expect(databaseConfig()).toEqual({ databaseUrl: validDatabaseUrl });
   });
 
-  it('DATABASE_URL이 빈 문자열이면 validation에 실패한다', () => {
-    expect(() =>
-      parseDatabaseConfig({
-        DATABASE_URL: '',
-      }),
-    ).toThrow();
-  });
+  it.each([undefined, '', 'not-a-url'])(
+    'DATABASE_URL이 %j이면 거부한다',
+    (value) => {
+      vi.stubEnv('DATABASE_URL', value);
 
-  it('DATABASE_URL이 URL 형식이 아니면 validation에 실패한다', () => {
-    expect(() =>
-      parseDatabaseConfig({
-        DATABASE_URL: 'not-a-url',
-      }),
-    ).toThrow();
+      expect(() => databaseConfig()).toThrow('DATABASE_URL');
+    },
+  );
+
+  it('DATABASE_URL_FILE이 가리키는 파일에서 DATABASE_URL을 읽는다', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'sheska-database-'));
+    const path = join(directory, 'database-url');
+    writeFileSync(path, `${validDatabaseUrl}\n`);
+    vi.stubEnv('DATABASE_URL', undefined);
+    vi.stubEnv('DATABASE_URL_FILE', path);
+
+    try {
+      expect(databaseConfig().databaseUrl).toBe(validDatabaseUrl);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 });

@@ -1,26 +1,23 @@
-import { describe, expect, it } from 'vitest';
-import { parseOllamaConfig } from '../ollama-http.config';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ollamaConfig } from '../ollama-http.config';
 
-describe('parseOllamaConfig', () => {
-  const validEnv = {
-    EMBEDDING_BASE_URL: 'http://localhost:11434',
-  };
-
-  it('OLLAMA 설정이 유효하면 typed config를 반환한다', () => {
-    expect(parseOllamaConfig(validEnv)).toEqual({
-      baseUrl: 'http://localhost:11434',
-    });
+describe('ollamaConfig', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
-  it('EMBEDDING_BASE_URL이 없으면 validation에 실패한다', () => {
-    expect(() => parseOllamaConfig({})).toThrow();
+  it('EMBEDDING_BASE_URL이 유효하면 임베딩 서버 설정을 돌려준다', () => {
+    vi.stubEnv('EMBEDDING_BASE_URL', 'http://localhost:11434');
+
+    expect(ollamaConfig()).toEqual({ baseUrl: 'http://localhost:11434' });
   });
 
-  it('EMBEDDING_BASE_URL이 URL 형식이 아니면 validation에 실패한다', () => {
-    expect(() =>
-      parseOllamaConfig({
-        EMBEDDING_BASE_URL: 'not-a-url',
-      }),
-    ).toThrow();
-  });
+  it.each([undefined, '', 'not-a-url'])(
+    'EMBEDDING_BASE_URL이 %j이면 거부한다',
+    (value) => {
+      vi.stubEnv('EMBEDDING_BASE_URL', value);
+
+      expect(() => ollamaConfig()).toThrow('EMBEDDING_BASE_URL');
+    },
+  );
 });

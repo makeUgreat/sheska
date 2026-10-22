@@ -1,8 +1,9 @@
 import { trace } from '@opentelemetry/api';
 import { Global, Module } from '@nestjs/common';
+import type { ConfigType } from '@nestjs/config';
 import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
 import { LOGGER } from '@kernels/application';
-import { parseLoggerConfig } from './logger.config';
+import { loggerConfig } from './logger.config';
 import { PinoLoggerAdapter } from './pino-logger.adapter';
 import { serializeRequest } from './request.serializer';
 import { serializeAccessLogError } from './access-log-error.serializer';
@@ -11,9 +12,8 @@ import { serializeAccessLogError } from './access-log-error.serializer';
 @Module({
   imports: [
     PinoLoggerModule.forRootAsync({
-      useFactory: () => {
-        const { level } = parseLoggerConfig(process.env);
-        const isDevelopment = process.env.NODE_ENV === 'development';
+      inject: [loggerConfig.KEY],
+      useFactory: ({ level, format }: ConfigType<typeof loggerConfig>) => {
         return {
           pinoHttp: {
             level,
@@ -35,17 +35,18 @@ import { serializeAccessLogError } from './access-log-error.serializer';
               req: serializeRequest,
               err: serializeAccessLogError,
             },
-            transport: isDevelopment
-              ? {
-                  target: 'pino-pretty',
-                  options: {
-                    singleLine: true,
-                    colorize: true,
-                    ignore: 'pid,hostname',
-                    errorLikeObjectKeys: ['err', 'error', 'failure'],
-                  },
-                }
-              : undefined,
+            transport:
+              format === 'pretty'
+                ? {
+                    target: 'pino-pretty',
+                    options: {
+                      singleLine: true,
+                      colorize: true,
+                      ignore: 'pid,hostname',
+                      errorLikeObjectKeys: ['err', 'error', 'failure'],
+                    },
+                  }
+                : undefined,
           },
         };
       },

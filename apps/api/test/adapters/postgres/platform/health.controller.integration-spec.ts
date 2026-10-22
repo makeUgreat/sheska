@@ -5,6 +5,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
 import { HealthController } from '@platform/nest/health/health.controller';
+import { databaseConfig } from '@platform/nest/database/database.config';
 import { DatabaseModule } from '@platform/nest/database/database.module';
 import { QueueHealthProbe } from '@platform/nest/queue/queue-health.probe';
 import { LOGGER } from '@kernels/application';
@@ -40,8 +41,9 @@ describe('HealthController Postgres boundary', () => {
     const testingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
-          envFilePath: `.env.${process.env.NODE_ENV}`,
+          ignoreEnvFile: true,
           isGlobal: true,
+          load: [databaseConfig],
         }),
         DatabaseModule,
       ],
