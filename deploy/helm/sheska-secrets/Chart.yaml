@@ -1,0 +1,5 @@
+apiVersion: v2
+name: sheska-secrets
+description: AWS SSM Parameter Store의 sheska 비밀값을 Kubernetes Secret으로 가져온다
+type: application
+version: 0.1.0
