@@ -1,21 +1,22 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "sheska-api.fullname" . }}-migrate-{{ .Release.Revision }}
+  name: {{ include "sheska-api.fullname" . }}-migrate
   labels:
     {{- include "sheska-api.labels" . | nindent 4 }}
   annotations:
-    argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
 spec:
-  ttlSecondsAfterFinished: 120
+  backoffLimit: 3
   template:
     metadata:
       labels:
-        {{- include "sheska-api.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/name: {{ include "sheska-api.name" . }}-migrate
+        app.kubernetes.io/instance: {{ .Release.Name }}
         app.kubernetes.io/component: migrate
     spec:
-      restartPolicy: OnFailure
+      restartPolicy: Never
       containers:
         - name: migrate
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
