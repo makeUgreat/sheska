@@ -1,6 +1,10 @@
 replicaCount: 2
 secret:
   name: sheska-api-secret
+config:
+  corsOrigins: app://obsidian.md,https://hash.meogle.co.kr
+  # 텔레메트리의 deployment.environment.name이 된다.
+  environment: production
 image:
   repository: willom2c/sheska-api
   pullPolicy: IfNotPresent
