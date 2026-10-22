@@ -1,0 +1,10 @@
+secretStore:
+  region: ap-northeast-2
+  credentialsSecret: aws-credentials
+
+parameterPrefix: /sheska/production
+
+database:
+  host: sheska-postgres.sheska.svc.cluster.local
+  name: sheska
+  user: sheska
