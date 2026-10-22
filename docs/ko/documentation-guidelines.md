@@ -5,6 +5,7 @@ applies_to:
   - source code comments
 related:
   - ./adr.md
+  - ./domain-document-guidelines.md
 ---
 
 # 문서 작성 가이드라인
@@ -49,10 +50,11 @@ related:
 
 ## 도메인 문서
 
-- `docs/ko/domain/`에는 bounded context마다 문서 하나를 두고, 그 context의 용어와 도메인 규칙을 쓴다.
+- `docs/ko/domain/`에는 bounded context마다 문서 하나를 두고, 그 context의 도메인 규칙을 쓴다.
+  용어는 `docs/ko/domain/glossary.md` 한 곳에 쓴다.
   - 파일 이름은 bounded context 디렉토리 이름과 같게 한다. 예: `library.md`
   - 도메인 규칙은 한 앱의 것이 아니다. 같은 규칙을 API, UI, Obsidian 플러그인이 함께 지키므로 루트에 둔다.
-  - 용어는 `## 용어`에, 도메인 규칙은 `## 규칙` 또는 `## ... 규칙` 섹션에 쓴다.
+  - 문서 구성, 규칙 문장과 형식, 규칙 ID는 [도메인 문서 작성 가이드라인](./domain-document-guidelines.md)을 따른다.
 - 도메인 문서는 무엇이 참이어야 하는지와 그 이유를 쓴다. 어떤 클래스와 테이블이 그것을 구현하는지는 쓰지 않는다.
   - bounded context의 책임과 context 사이의 의존 관계는 앱 문서가 소유한다. 예: API의 context map
 - 요구사항, 기능 목록, 일정은 쓰지 않는다.
