@@ -70,6 +70,11 @@ read_when:
     - 앱이 AWS를 알지 않아서 local과 클러스터에서 같은 코드로 설정을 읽는다.
     - 두 환경 변수가 함께 있으면 어느 값을 쓸지 모호하므로 앱이 시작하지 않는다.
   - AWS에 잠시 연결되지 않아도 이미 가져온 Secret으로 Pod가 뜬다.
+- External Secrets Operator는 ExternalSecret의 정의가 바뀔 때만 Parameter Store를 다시 읽는다(`refreshPolicy: OnChange`).
+  Parameter Store의 값을 바꾸면 ExternalSecret의 `force-sync` annotation을 바꿔 다시 읽게 한다.
+  - 주기적으로 다시 읽으면 바뀐 값이 사람이 정하지 않은 시점에 Pod로 들어간다.
+  - Postgres는 데이터 디렉터리를 처음 만들 때만 `POSTGRES_PASSWORD_FILE`을 적용한다.
+    DB 비밀번호를 바꿀 때는 DB 안의 비밀번호를 먼저 `ALTER USER`로 바꾸고 Parameter Store를 맞춘다.
 - External Secrets Operator가 Parameter Store를 읽는 AWS 자격 증명은 환경마다 IAM 사용자의 access key 하나다.
   자기 환경 경로의 읽기 권한만 주고, SealedSecret으로 암호화해 hash-infra 저장소에 둔다.
   - 클러스터가 AWS 밖에 있어서 처음 하나의 자격 증명은 클러스터 안에 두어야 한다.

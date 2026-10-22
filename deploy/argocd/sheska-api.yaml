@@ -4,6 +4,7 @@ metadata:
   name: sheska-api
   namespace: argocd
   annotations:
+    argocd.argoproj.io/sync-wave: "2"
     notifications.argoproj.io/subscribe.on-manifest-synced.homelab: "C0BV08N8XFC"
     notifications.argoproj.io/subscribe.on-sync-failed.homelab: "C0BV08N8XFC"
     notifications.argoproj.io/subscribe.on-health-degraded.homelab: "C0BV08N8XFC"
