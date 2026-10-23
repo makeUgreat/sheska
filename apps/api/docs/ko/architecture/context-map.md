@@ -16,9 +16,8 @@ related:
 
 - 이 문서는 각 bounded context가 무엇을 소유하는지만 정한다.
   - 용어와 도메인 규칙은 [`docs/ko/domain/`](../../../../../docs/ko/domain)에 있다.
-- `library` (핵심): source, sync job, post, note 조회, post 검색
+- `library` (핵심): source, sync job, post, post 검색
   - 사용자가 보는 모든 개념과 동기화 클라이언트와의 계약을 소유한다.
-  - note는 source를 읽는 이름이므로 별도 context나 aggregate로 나누지 않는다.
   - post 검색의 순위 규칙은 `library`가 소유한다. 의미 검색에 쓰는 벡터만 `ingestion`에서 가져온다.
 - `ingestion` (지원): 본문을 청크로 나누고 임베딩해서 저장하는 일, 검색 질의의 임베딩
   - source, post, 동기화 클라이언트를 알지 않는다. 받은 본문을 임베딩으로 바꾸는 능력만 제공한다.

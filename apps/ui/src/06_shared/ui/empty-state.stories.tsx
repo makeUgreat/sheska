@@ -14,7 +14,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const NotesGrid: Story = {};
+export const Grid: Story = {};
 
 export const PostsList: Story = {
   args: { variant: 'list' },

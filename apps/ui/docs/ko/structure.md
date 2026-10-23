@@ -72,7 +72,7 @@ Slice 내부에는 다음 표준 segment를 사용한다.
 
 ## Markdown 본문 규약
 
-Note 본문과 post 본문은 같은 markdown 규약을 쓴다. Post는 note와 같은 source에서 published되므로 본문 문법이 갈라지지 않는다.
+Post 본문과 source 본문은 같은 markdown 규약을 쓴다. Post는 발행한 source이므로 두 본문은 같은 vault 파일이다.
 
 이 규약의 구현은 `shared`가 소유한다. Markdown 처리 코드는 segment 안의 `markdown/` 폴더에 모으고, 폴더의 `index.ts`가 반대쪽 segment와 segment public API에 내보내는 목록이 된다. 폴더 밖 `shared` 코드도 폴더 내부 파일이 아니라 이 `index.ts`로 import한다.
 
@@ -85,9 +85,9 @@ Obsidian 문법 코드는 `obsidian/` 하위 폴더에 모은다. 표준 Markdow
 
 - `shared/ui`: `TableOfContents`(목차), `ArticleLayout`(article header + 본문 + footer + 목차 배치). Markdown 문법이 아니라 article 배치를 다루므로 `markdown/` 밖에 둔다.
 
-Note, post, source 본문은 모두 같은 vault 파일이므로 `Markdown` 하나로 같은 문법을 거쳐 그린다. 화면마다 문법을 다르게 두면 같은 본문이 어떤 화면에서는 wiki link로, 어떤 화면에서는 날것의 괄호로 보인다.
+Post와 source 본문은 모두 같은 vault 파일이므로 `Markdown` 하나로 같은 문법을 거쳐 그린다. 화면마다 문법을 다르게 두면 같은 본문이 어떤 화면에서는 wiki link로, 어떤 화면에서는 날것의 괄호로 보인다.
 
-Wiki link는 특정 entity의 표현이 아니라 이 앱 markdown 본문의 문법이므로 `shared`에 둔다. Target 없이 anchor만 있는 `[[#^id|label]]`은 같은 본문 안의 block을 가리키므로 API 없이 그 자리에서 이어진다. 다른 노트를 가리키는 link는 API가 resolved target을 돌려주기 전까지 unresolved 상태이며, note 본문이든 post 본문이든 label만 남기고 점선 underline으로 표시한다. Vault에서 unresolved link는 오류가 아니라 정상 상태이므로 숨기지 않는다.
+Wiki link는 특정 entity의 표현이 아니라 이 앱 markdown 본문의 문법이므로 `shared`에 둔다. Target 없이 anchor만 있는 `[[#^id|label]]`은 같은 본문 안의 block을 가리키므로 API 없이 그 자리에서 이어진다. 다른 노트를 가리키는 link는 API가 resolved target을 돌려주기 전까지 unresolved 상태이며, 어느 화면의 본문이든 label만 남기고 점선 underline으로 표시한다. Vault에서 unresolved link는 오류가 아니라 정상 상태이므로 숨기지 않는다.
 
 Page 제목이 `<h1>`이므로 본문 heading은 그 아래 단계에 놓인다. 본문의 heading은 모두 한 단계씩 낮춰 `#`은 `<h2>`, `#####`는 `<h6>`로 렌더한다. HTML heading은 `<h6>`까지뿐이라 `######`는 `#####`와 같은 `<h6>`에 둔다. 두 단계는 어딘가에서 합쳐야 하는데, vault는 `#`을 `##`의 상위 섹션으로 자주 쓰므로 거의 쓰지 않는 가장 깊은 단계를 합친다. Vault는 heading을 구조가 아니라 크기로 쓰는 경우가 많아서 `####`만 쓰는 노트가 흔한데, 얕은 단계로 끌어올리면 저자가 나눈 구조가 무너진다. 목차도 같은 이유로 여섯 단계를 모두 담고, 들여쓰기만 그 본문이 실제로 쓴 가장 얕은 단계를 기준으로 계산한다.
 
@@ -101,7 +101,7 @@ Wiki link는 parse가 끝난 text node에서 찾는다. 그래서 label 안의 `
 
 Vault는 Obsidian 문법이므로 `~` 하나는 취소선이 아니다(`singleTilde: false`). `1~2장 그리고 3~4장` 같은 한국어 범위 표기가 취소선으로 바뀌지 않게 한다.
 
-상세 화면 widget은 이 규약을 다시 구현하지 않는다. Entity마다 다른 것은 data fetching과 header, footer의 내용뿐이며, 나머지는 `ArticleLayout`에 넘긴다. 같은 layer의 `note-article`과 `post-article`은 서로 import할 수 없으므로, 공유할 것이 생기면 이 규약처럼 `shared`로 내린다.
+상세 화면 widget은 이 규약을 다시 구현하지 않는다. Entity마다 다른 것은 data fetching과 header, footer의 내용뿐이며, 나머지는 `ArticleLayout`에 넘긴다. 같은 layer의 widget은 서로 import할 수 없으므로, 상세 화면 widget끼리 공유할 것이 생기면 이 규약처럼 `shared`로 내린다.
 
 ## 정적 검사
 

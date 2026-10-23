@@ -30,7 +30,7 @@ Design style은 terminal environment와 high-end print design에서 영감을 �
 - Header와 landing의 terminal window가 이 앱의 장식을 맡는다. 나머지 화면은 글자와 선만으로 짠다.
   - Card, thumbnail, 칠한 badge를 두지 않는다.
   - 장식이 한 곳에 모여 있어야 header의 terminal이 이 앱의 정체성으로 읽힌다.
-- Post와 note 목록은 reading measure 한 칸에 제목과 날짜만 한 줄씩 놓고, 작성 연도마다 묶는다.
+- Post 목록은 reading measure 한 칸에 제목과 날짜만 한 줄씩 놓고, 작성 연도마다 묶는다.
   - 목록은 훑으라고 있으므로 긴 제목은 줄을 바꾸지 않고 자른다.
   - 검색 결과처럼 API가 snippet을 주면 제목 아래에 붙인다.
   - `@/shared/ui`의 `ArchiveIndex`가 이 목록을 소유한다.
@@ -38,8 +38,6 @@ Design style은 terminal environment와 high-end print design에서 영감을 �
   - 미리보기는 pointer나 focus가 머문 항목을 보여주고, 아무것도 고르지 않았으면 첫 항목을 보여준다.
   - 미리보기는 목록에 이미 있는 항목을 다시 보여줄 뿐이므로 보조기술에서는 숨기고, 좁은 화면에서는 두지 않는다.
   - `@/shared/ui`의 `PeekLayout`이 목록과 미리보기 칸의 배치를 소유한다.
-- Note 미리보기는 note 본문을 불러와 첫 문단을 보여준다.
-  - 목록을 훑는 동안 지나가는 항목마다 요청하지 않도록, 잠시 머문 항목만 불러온다.
 - Post 미리보기는 목록 응답에 있는 값만 쓴다.
   - Post 상세 API는 호출할 때마다 조회수를 올린다.
     미리보기를 위해 부르면 읽지 않은 글의 조회수가 오른다.

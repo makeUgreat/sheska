@@ -1,7 +1,5 @@
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { LandingPage } from '@/pages/landing';
-import { NoteDetailPage } from '@/pages/note-detail';
-import { NotesPage } from '@/pages/notes';
 import { PostDetailPage } from '@/pages/post-detail';
 import { PostsPage } from '@/pages/posts';
 import { SourceDetailPage } from '@/pages/source-detail';
@@ -23,8 +21,6 @@ export function App() {
         <Route path="/sources/:id" element={<SourceDetailPage />} />
         <Route path="/posts" element={<PostsPage />} />
         <Route path="/posts/:id" element={<PostDetailPage />} />
-        <Route path="/notes" element={<NotesPage />} />
-        <Route path="/notes/:id" element={<NoteDetailPage />} />
       </Routes>
     </div>
   );

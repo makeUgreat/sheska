@@ -27,7 +27,6 @@ const meta = {
     onQueryChange: () => undefined,
     totalPostCount: 42,
     articlesHref: '/posts',
-    notesHref: '/notes',
   },
 } satisfies Meta<typeof LandingHero>;
 
