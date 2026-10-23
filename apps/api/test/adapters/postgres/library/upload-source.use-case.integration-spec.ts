@@ -92,7 +92,7 @@ describe('UploadSourceUseCase', () => {
 
   it('새 source를 저장하고 sync job을 생성한다', async () => {
     const externalSourceId = 'Notes/upload-usecase-new-source.md';
-    const content = '# Source note';
+    const content = optedIntoSync('# Source note');
     const fingerprint = useFingerprint(content, 'fingerprint-new-source');
 
     const result = await useCase.execute({ externalSourceId, content });
@@ -108,8 +108,8 @@ describe('UploadSourceUseCase', () => {
     expect(source?.id).toBe(result.sourceId);
     expect(source?.getProps().contentSnapshot).toEqual(
       SourceContentSnapshot.of({
-        body: content,
-        frontmatter: {},
+        body: '# Source note',
+        frontmatter: { sheska: true },
         title: externalSourceId,
         fingerprint,
         size: sourceContentByteSize(content),
@@ -141,7 +141,7 @@ describe('UploadSourceUseCase', () => {
       payload: {
         sourceId: result.sourceId,
         syncJobId: result.syncJobId,
-        content,
+        content: '# Source note',
       },
     });
     expect(outboxMessage?.eventId).toMatch(
@@ -163,13 +163,13 @@ describe('UploadSourceUseCase', () => {
       sourceId: result.sourceId,
       syncJobId: result.syncJobId,
       chunkIndex: 0,
-      chunkContent: content,
+      chunkContent: '# Source note',
     });
   });
 
   it('같은 content를 다시 업로드할 때 active sync job을 재사용한다', async () => {
     const externalSourceId = 'Notes/upload-usecase-unchanged-no-embedding.md';
-    const content = '# Same source note';
+    const content = optedIntoSync('# Same source note');
     const fingerprint = useFingerprint(content, 'fingerprint-unchanged-source');
     const firstResult = await useCase.execute({ externalSourceId, content });
 
@@ -192,6 +192,7 @@ describe('UploadSourceUseCase', () => {
   it('frontmatter 전체와 body를 분리하고 body만 임베딩 대상으로 전달한다', async () => {
     const externalSourceId = 'Notes/upload-usecase-frontmatter.md';
     const content = `---
+sheska: true
 title: Retry Amplification
 aliases:
   - Nested Retries
@@ -208,6 +209,7 @@ custom:
       SourceContentSnapshot.of({
         body: '# Retry body',
         frontmatter: {
+          sheska: true,
           title: 'Retry Amplification',
           aliases: ['Nested Retries'],
           custom: { status: 'draft' },
@@ -232,7 +234,7 @@ custom:
 
   it('같은 content를 다시 업로드할 때 임베딩이 최신이면 저장 갱신과 sync job 생성을 건너뛴다', async () => {
     const externalSourceId = 'Notes/upload-usecase-unchanged-with-embedding.md';
-    const content = '# Same source note with embedding';
+    const content = optedIntoSync('# Same source note with embedding');
     const fingerprint = useFingerprint(
       content,
       'fingerprint-unchanged-with-embedding',
@@ -269,8 +271,8 @@ custom:
 
   it('다른 content를 다시 업로드하면 source를 갱신하고 sync job을 추가한다', async () => {
     const externalSourceId = 'Notes/upload-usecase-changed-source.md';
-    const oldContent = '# Old source note';
-    const newContent = '# New source note';
+    const oldContent = optedIntoSync('# Old source note');
+    const newContent = optedIntoSync('# New source note');
     const oldFingerprint = useFingerprint(oldContent, 'fingerprint-old-source');
     const newFingerprint = useFingerprint(newContent, 'fingerprint-new-source');
     const firstResult = await useCase.execute({
@@ -293,8 +295,8 @@ custom:
     const source = await sources.find({ externalSourceId });
     expect(source?.getProps().contentSnapshot).toEqual(
       SourceContentSnapshot.of({
-        body: newContent,
-        frontmatter: {},
+        body: '# New source note',
+        frontmatter: { sheska: true },
         title: externalSourceId,
         fingerprint: newFingerprint,
         size: sourceContentByteSize(newContent),
@@ -310,6 +312,22 @@ custom:
       expect.arrayContaining([oldFingerprint, newFingerprint]),
     );
   });
+
+  it('library.source-6: frontmatter sheska가 true가 아닌 파일은 거부하고 source를 만들지 않는다', async () => {
+    const externalSourceId = 'Notes/upload-usecase-not-sync-target.md';
+    const content = '---\nsheska: "true"\n---\n# Not opted in';
+    useFingerprint(content, 'fingerprint-not-sync-target');
+
+    await expect(
+      useCase.execute({ externalSourceId, content }),
+    ).rejects.toMatchObject({ code: 'source.not_sync_target' });
+
+    expect(await sources.find({ externalSourceId })).toBeNull();
+  });
+
+  function optedIntoSync(body: string) {
+    return `---\nsheska: true\n---\n${body}`;
+  }
 
   function useFingerprint(content: string, fingerprint: string) {
     fingerprints.set(content, fingerprint);

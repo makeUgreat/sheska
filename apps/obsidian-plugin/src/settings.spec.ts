@@ -15,10 +15,6 @@ describe('DEFAULT_SETTINGS', () => {
     expect(DEFAULT_SETTINGS.autoSyncEnabled).toBe(true);
   });
 
-  it('defaults autoSyncDirectories to 09_Knowledge', () => {
-    expect(DEFAULT_SETTINGS.autoSyncDirectories).toBe('09_Knowledge');
-  });
-
   it('defaults autoSyncDebounceSeconds to 20', () => {
     expect(DEFAULT_SETTINGS.autoSyncDebounceSeconds).toBe(20);
   });
@@ -96,17 +92,6 @@ describe('SheskaSettingTab', () => {
       expect(renderedSettings[2].toggles[0].value).toBe(
         DEFAULT_SETTINGS.autoSyncEnabled,
       );
-    });
-
-    it('renders autoSyncDirectories as a text input', () => {
-      const tab = makeTab();
-
-      tab.display();
-
-      expect(renderedSettings[3]).toMatchObject({
-        name: 'Auto-sync folders',
-      });
-      expect(renderedSettings[3].textInputs).toHaveLength(1);
     });
 
     it('updates autoSyncEnabled and saves when the toggle changes', async () => {
@@ -209,10 +194,10 @@ describe('SheskaSettingTab', () => {
   });
 
   describe('getSettingDefinitions', () => {
-    it('returns seven definitions', () => {
+    it('returns six definitions', () => {
       const tab = new SheskaSettingTab({} as never, {} as never);
 
-      expect(tab.getSettingDefinitions()).toHaveLength(7);
+      expect(tab.getSettingDefinitions()).toHaveLength(6);
     });
 
     it('defines the apiBaseUrl text control', () => {
@@ -257,7 +242,7 @@ describe('SheskaSettingTab', () => {
     it('defines the autoSyncDebounceSeconds number control', () => {
       const tab = new SheskaSettingTab({} as never, {} as never);
 
-      expect(tab.getSettingDefinitions()[4]).toMatchObject({
+      expect(tab.getSettingDefinitions()[3]).toMatchObject({
         name: 'Auto-sync debounce (seconds)',
         control: {
           type: 'number',
@@ -270,7 +255,7 @@ describe('SheskaSettingTab', () => {
     it('defines the autoSyncSweepIntervalMinutes number control', () => {
       const tab = new SheskaSettingTab({} as never, {} as never);
 
-      expect(tab.getSettingDefinitions()[5]).toMatchObject({
+      expect(tab.getSettingDefinitions()[4]).toMatchObject({
         name: 'Auto-sync sweep interval (minutes)',
         control: {
           type: 'number',
@@ -283,25 +268,12 @@ describe('SheskaSettingTab', () => {
     it('defines the syncJobReconcileIntervalMinutes number control', () => {
       const tab = new SheskaSettingTab({} as never, {} as never);
 
-      expect(tab.getSettingDefinitions()[6]).toMatchObject({
+      expect(tab.getSettingDefinitions()[5]).toMatchObject({
         name: 'Sync-job reconcile interval (minutes)',
         control: {
           type: 'number',
           key: 'syncJobReconcileIntervalMinutes',
           min: 0,
-        },
-      });
-    });
-
-    it('defines the autoSyncDirectories text control', () => {
-      const tab = new SheskaSettingTab({} as never, {} as never);
-
-      expect(tab.getSettingDefinitions()[3]).toMatchObject({
-        name: 'Auto-sync folders',
-        control: {
-          type: 'text',
-          key: 'autoSyncDirectories',
-          placeholder: 'Projects, Notes/Published',
         },
       });
     });

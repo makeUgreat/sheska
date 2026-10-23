@@ -3,6 +3,7 @@ import {
   noticeMessages,
   fileMenuItems,
   fileMenuHandler,
+  metadataCacheEventHandlers,
   vaultEventHandlers,
   workspaceEventHandlers,
   statusBarItems,
@@ -14,16 +15,9 @@ import { DEFAULT_SETTINGS } from './settings';
 
 function makePlugin(
   loadDataResult: Record<string, unknown> = {},
-  useDefaultAutoSyncDirectory = false,
 ): SheskaPlugin {
   const plugin = new SheskaPlugin({} as never, {} as never);
-  plugin.loadData = vi
-    .fn()
-    .mockResolvedValue(
-      useDefaultAutoSyncDirectory
-        ? loadDataResult
-        : { autoSyncDirectories: '', ...loadDataResult },
-    );
+  plugin.loadData = vi.fn().mockResolvedValue(loadDataResult);
   plugin.saveData = vi.fn().mockResolvedValue(undefined);
   return plugin;
 }
@@ -41,7 +35,7 @@ describe('SheskaPlugin', () => {
 
   describe('onload', () => {
     it('loads settings and initialises the API client', async () => {
-      plugin = makePlugin({}, true);
+      plugin = makePlugin();
       await plugin.onload();
 
       expect(plugin.settings).toMatchObject(DEFAULT_SETTINGS);
@@ -61,11 +55,24 @@ describe('SheskaPlugin', () => {
         expect.objectContaining({ id: 'sheska-ping' }),
       );
     });
+
+    it('waits for the layout to be ready before the first sweep reads frontmatter', async () => {
+      let runWhenLayoutReady: (() => void) | undefined;
+      plugin.app.workspace.onLayoutReady = vi.fn((callback: () => void) => {
+        runWhenLayoutReady = callback;
+      });
+
+      await plugin.onload();
+      expect(plugin.app.vault.getMarkdownFiles).not.toHaveBeenCalled();
+
+      runWhenLayoutReady!();
+      expect(plugin.app.vault.getMarkdownFiles).toHaveBeenCalledOnce();
+    });
   });
 
   describe('loadSettings', () => {
     it('falls back to DEFAULT_SETTINGS when loadData returns empty', async () => {
-      plugin = makePlugin({}, true);
+      plugin = makePlugin();
       await plugin.loadSettings();
 
       expect(plugin.settings).toMatchObject({
@@ -283,6 +290,25 @@ describe('SheskaPlugin', () => {
       expect(noticeMessages).toContain('Note uploaded to Sheska.');
     });
 
+    it('library.source-6: refuses to upload a note whose frontmatter lacks sheska true', async () => {
+      const fetchMock = vi.fn();
+      vi.stubGlobal('fetch', fetchMock);
+      plugin.app.workspace.getActiveFile = vi
+        .fn()
+        .mockReturnValue(new TFile('test.md'));
+      plugin.app.metadataCache.getFileCache = vi
+        .fn()
+        .mockReturnValue({ frontmatter: { sheska: 'true' } });
+      const callback = await getUploadCallback();
+
+      await callback();
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(noticeMessages).toContain(
+        'Add "sheska: true" to the frontmatter to upload this note.',
+      );
+    });
+
     it('shows Notice when there is no active file', async () => {
       plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(null);
       const callback = await getUploadCallback();
@@ -315,7 +341,7 @@ describe('SheskaPlugin', () => {
     it('registers a file-menu event handler', async () => {
       await plugin.onload();
 
-      expect(plugin.registerEvent).toHaveBeenCalledTimes(4);
+      expect(plugin.registerEvent).toHaveBeenCalledTimes(5);
     });
 
     it('adds an Upload to Sheska item to the file menu', async () => {
@@ -328,6 +354,15 @@ describe('SheskaPlugin', () => {
 
       expect(fileMenuItems).toHaveLength(1);
       expect(fileMenuItems[0].title).toBe('Upload to Sheska');
+    });
+
+    it('library.source-6: leaves the upload item out for a note without sheska true', async () => {
+      await plugin.onload();
+      plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue(null);
+
+      fileMenuHandler!(new Menu(), new TFile('note.md'));
+
+      expect(fileMenuItems).toHaveLength(0);
     });
 
     it('shows success Notice when file-menu upload succeeds', async () => {
@@ -670,6 +705,22 @@ describe('SheskaPlugin', () => {
 
       expect(vaultEventHandlers['modify']).toBeInstanceOf(Function);
       expect(vaultEventHandlers['create']).toBeInstanceOf(Function);
+    });
+
+    it('uploads a note once the metadata cache re-indexes its sheska true frontmatter', async () => {
+      vi.useFakeTimers();
+      const { calls } = stubUploadFetch();
+      plugin = makePlugin({ autoSyncDebounceSeconds: 5 });
+      plugin.app.vault.read = vi.fn().mockResolvedValue('content');
+      await plugin.onload();
+
+      metadataCacheEventHandlers['changed']!(
+        new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }),
+      );
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(calls).toEqual(['a.md']);
+      vi.useRealTimers();
     });
 
     it('coalesces edits to two different files inside one debounce window into a single flush that uploads both', async () => {

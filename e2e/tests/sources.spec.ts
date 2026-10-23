@@ -6,7 +6,8 @@ test('업로드된 소스가 목록에 표시되고 상세 페이지에서 내�
   apiBaseUrl,
 }) => {
   const externalSourceId = `e2e-${randomUUID()}`;
-  const content = `E2E 테스트 내용 ${randomUUID()}`;
+  const body = `E2E 테스트 내용 ${randomUUID()}`;
+  const content = `---\nsheska: true\n---\n${body}`;
 
   const res = await fetch(`${apiBaseUrl}/sources`, {
     method: 'POST',
@@ -25,7 +26,7 @@ test('업로드된 소스가 목록에 표시되고 상세 페이지에서 내�
   await expect(
     page.getByRole('heading', { name: externalSourceId }),
   ).toBeVisible();
-  await expect(page.locator('pre')).toContainText(content);
+  await expect(page.locator('pre')).toContainText(body);
 
   await page.getByRole('link', { name: /back to sources/i }).click();
   await expect(page).toHaveURL('/sources');
@@ -43,7 +44,7 @@ test('게시된 소스는 목록에서 배지로 표시되고 상세 페이지�
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       externalSourceId,
-      content: `---\ntitle: ${title}\n---\nE2E 테스트 내용`,
+      content: `---\nsheska: true\ntitle: ${title}\n---\nE2E 테스트 내용`,
     }),
   });
   expect(sourceRes.status).toBe(201);
@@ -79,7 +80,7 @@ test('업로드된 소스의 sync job 상태가 실제 API 값을 반영해 화�
   apiBaseUrl,
 }) => {
   const externalSourceId = `e2e-${randomUUID()}`;
-  const content = `E2E sync job 테스트 내용 ${randomUUID()}`;
+  const content = `---\nsheska: true\n---\nE2E sync job 테스트 내용 ${randomUUID()}`;
 
   const res = await fetch(`${apiBaseUrl}/sources`, {
     method: 'POST',

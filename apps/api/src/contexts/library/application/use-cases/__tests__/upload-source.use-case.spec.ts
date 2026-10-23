@@ -2,6 +2,7 @@ import {
   Source,
   SourceContentSnapshot,
   SourceSyncJob,
+  type SourceFrontmatterProps,
   type SourceRepository,
   type SourceSyncJobRepository,
 } from '@contexts/library/domain';
@@ -292,6 +293,41 @@ describe('UploadSourceUseCase', () => {
     });
   });
 
+  it.each([
+    ['문자열 "true"', { sheska: 'true' }],
+    ['yes', { sheska: 'yes' }],
+    ['1', { sheska: 1 }],
+    ['false', { sheska: false }],
+    ['없음', {}],
+  ])(
+    'library.source-6: frontmatter sheska가 %s이면 source를 조회하거나 저장하지 않고 거부한다',
+    async (_label, frontmatter: SourceFrontmatterProps) => {
+      const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
+        content: '# Source note',
+        frontmatter,
+        fingerprint: 'fingerprint-1',
+      });
+      const sources = createSourceRepositoryMock();
+      const syncJobs = createSourceSyncJobRepositoryMock();
+      const useCase = new UploadSourceUseCase(
+        contentSnapshotCalculator,
+        sources,
+        syncJobs,
+        createLibraryUnitOfWorkMock(sources, syncJobs),
+      );
+
+      await expect(
+        useCase.execute({
+          externalSourceId: 'Notes/source.md',
+          content: '# Source note',
+        }),
+      ).rejects.toMatchObject({ code: 'source.not_sync_target' });
+      expect(sources.find).not.toHaveBeenCalled();
+      expect(sourceWriteCalls(sources)).toHaveLength(0);
+      expect(syncJobs.insert).not.toHaveBeenCalled();
+    },
+  );
+
   it('externalSourceId가 유효하지 않으면 collaborator를 호출하지 않고 throw한다', async () => {
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
     const sources = createSourceRepositoryMock();
@@ -465,7 +501,7 @@ function createContentSnapshotCalculatorMock(
   snapshot: {
     content?: string;
     body?: string;
-    frontmatter?: Record<string, never>;
+    frontmatter?: SourceFrontmatterProps;
     title?: string | null;
     fingerprint: string;
     size?: number;
@@ -477,7 +513,7 @@ function createContentSnapshotCalculatorMock(
       .fn<UploadSourceContentSnapshotCalculator['calculate']>()
       .mockResolvedValue({
         body,
-        frontmatter: snapshot.frontmatter ?? {},
+        frontmatter: snapshot.frontmatter ?? { sheska: true },
         title: snapshot.title ?? null,
         fingerprint: snapshot.fingerprint,
         size: snapshot.size ?? sourceContentByteSize(snapshot.content ?? body),
@@ -567,7 +603,7 @@ function expectSourceSavedWith(
   expect(savedSource?.getProps().contentSnapshot).toEqual(
     SourceContentSnapshot.of({
       body: expected.content,
-      frontmatter: {},
+      frontmatter: { sheska: true },
       title: expected.externalSourceId,
       fingerprint: expected.fingerprint,
       size: sourceContentByteSize(expected.content),
@@ -611,7 +647,7 @@ function restoreSource(params: {
     id: params.id,
     externalSourceId: params.externalSourceId,
     body: params.content,
-    frontmatter: {},
+    frontmatter: { sheska: true },
     title: params.externalSourceId,
     fingerprint: params.fingerprint,
     size: sourceContentByteSize(params.content),

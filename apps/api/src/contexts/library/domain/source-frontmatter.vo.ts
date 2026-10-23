@@ -23,6 +23,11 @@ export class SourceFrontmatter extends ValueObject<SourceFrontmatterProps> {
     return new SourceFrontmatter(value);
   }
 
+  /** `library.source-6`: only a YAML boolean, so `"true"`, `yes`, and `1` do not opt in. */
+  optsIntoSync(): boolean {
+    return this.props.sheska === true;
+  }
+
   protected validate(props: SourceFrontmatterProps): void {
     if (!Guard.isPlainObject(props)) {
       throw new InvariantViolationError({
