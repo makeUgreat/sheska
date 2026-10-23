@@ -107,6 +107,7 @@ vault 파일은 frontmatter `sheska`가 YAML boolean `true`일 때만 동기화 
 - 예: `sheska: true`는 동기화 대상이다. `sheska: "true"`, `sheska: yes`, `sheska: 1`, `sheska`가 없는 경우는 아니다.
 - 이유: source는 모두 검색과 RAG에 쓰인다. 값이 애매한 파일은 올라가지 않아야 소유자가 의도하지 않은 노트가 쓰이지 않는다.
 - 이유: source가 되는 길이 frontmatter 하나여야 어떤 노트가 쓰이는지 vault만 보고 알 수 있다.
+- 참고: 동기화 대상이 아닌 파일의 source 업로드는 작성자의 입력 오류로 돌려준다.
 
 ### library.source-7 source를 지우는 조건
 
@@ -129,7 +130,7 @@ vault 파일을 언제 보내고, source 업로드를 받으면 무엇을 저장
 | [library.sync-1](#librarysync-1-push-방식) | source는 동기화 클라이언트의 요청으로만 만들고, 바꾸고, 지울 수 있다. |
 | [library.sync-2](#librarysync-2-같은-업로드의-반복) | 같은 source 업로드를 여러 번 받은 결과는 한 번 받은 결과와 같아야 한다. |
 | [library.sync-3](#librarysync-3-애매하면-보내기) | 동기화 클라이언트는 보낼지 판단이 애매한 파일을 보내야 한다. |
-| [library.sync-4](#librarysync-4-자동-동기화) | 동기화 클라이언트는 동기화 대상을 모두 자동으로 보내야 한다. |
+| [library.sync-10](#librarysync-10-자동-동기화) | 동기화 클라이언트는 소유자가 자동 동기화를 끄지 않았으면 동기화 대상을 모두 자동으로 보내야 한다. |
 | [library.sync-5](#librarysync-5-source-갱신) | source는 source 업로드의 파일 내용이 저장된 것과 다르면 갱신해야 한다. |
 | [library.sync-6](#librarysync-6-임베딩을-다시-만드는-기준) | 임베딩을 다시 만들지는 fingerprint로만 정해야 한다. |
 | [library.sync-7](#librarysync-7-sync-job을-만드는-경우) | source 업로드를 받으면 source의 가장 최근 sync job에 따라 아래 표대로 해야 한다. |
@@ -151,9 +152,11 @@ source는 동기화 클라이언트의 요청으로만 만들고, 바꾸고, 지
 동기화 클라이언트는 보낼지 판단이 애매한 파일을 보내야 한다.
 - 이유: 불필요한 전송의 비용은 대역폭뿐이고, 빠뜨린 전송은 사본이 낡는 오류다.
 
-### library.sync-4 자동 동기화
+### library.sync-10 자동 동기화
 
-동기화 클라이언트는 동기화 대상을 모두 자동으로 보내야 한다.
+동기화 클라이언트는 소유자가 자동 동기화를 끄지 않았으면 동기화 대상을 모두 자동으로 보내야 한다.
+- 예: 소유자가 자동 동기화를 끄면 다시 켤 때까지 아무 파일도 자동으로 보내지 않는다. 켜면 그사이 바뀐 동기화 대상을 모두 보낸다.
+- 이유: 자동 동기화를 끄는 것은 무엇을 보낼지가 아니라 언제 보낼지를 정한다. 동기화 대상은 여전히 frontmatter로만 정해진다(`library.source-6`).
 
 ### library.sync-5 source 갱신
 
