@@ -18,6 +18,7 @@
     "deploy:local": "pnpm build && mkdir -p \"/Users/a1234/Documents/Obsidian Vault/.obsidian/plugins/sheska\" && cp main.js manifest.json styles.css \"/Users/a1234/Documents/Obsidian Vault/.obsidian/plugins/sheska/\""
   },
   "dependencies": {
+    "@sheska/contract": "workspace:*",
     "obsidian": "latest"
   },
   "devDependencies": {

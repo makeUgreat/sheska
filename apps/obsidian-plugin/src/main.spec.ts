@@ -419,9 +419,10 @@ describe('SheskaPlugin', () => {
     it('shows success Notice when API is reachable', async () => {
       vi.stubGlobal(
         'fetch',
-        vi
-          .fn()
-          .mockResolvedValue({ ok: true, json: () => Promise.resolve({}) }),
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve({ status: 'ok' }),
+        }),
       );
       const callback = await getPingCallback();
 

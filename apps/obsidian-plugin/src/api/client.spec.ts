@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { isRetryableApiError, SheskaApiClient, SheskaApiError } from './client';
 
+const passthrough = { parse: (data: unknown) => data };
+
 describe('SheskaApiClient', () => {
   let client: SheskaApiClient;
 
@@ -20,7 +22,7 @@ describe('SheskaApiClient', () => {
         }),
       );
 
-      const result = await client.get('/health');
+      const result = await client.get('/health', passthrough);
 
       expect(fetch).toHaveBeenCalledWith('http://localhost:3000/health', {
         headers: { 'Content-Type': 'application/json' },
@@ -39,7 +41,7 @@ describe('SheskaApiClient', () => {
         }),
       );
 
-      await expect(client.get('/health')).rejects.toThrow(
+      await expect(client.get('/health', passthrough)).rejects.toThrow(
         'Sheska API error: 401 Unauthorized',
       );
     });
@@ -55,7 +57,7 @@ describe('SheskaApiClient', () => {
         }),
       );
 
-      await expect(client.get('/health')).rejects.toThrow(
+      await expect(client.get('/health', passthrough)).rejects.toThrow(
         'Sheska API error: 401 Unauthorized — invalid token',
       );
     });
@@ -73,7 +75,7 @@ describe('SheskaApiClient', () => {
         }),
       );
 
-      await expect(client.get('/health')).rejects.toMatchObject({
+      await expect(client.get('/health', passthrough)).rejects.toMatchObject({
         name: 'SheskaApiError',
         status: 503,
       });
@@ -98,7 +100,7 @@ describe('SheskaApiClient', () => {
         }),
       );
 
-      await expect(client.get('/sources')).rejects.toMatchObject({
+      await expect(client.get('/sources', passthrough)).rejects.toMatchObject({
         status: 422,
         code: 'source.invalid_content',
       });
@@ -115,7 +117,7 @@ describe('SheskaApiClient', () => {
         }),
       );
 
-      await expect(client.get('/sources')).rejects.toMatchObject({
+      await expect(client.get('/sources', passthrough)).rejects.toMatchObject({
         status: 502,
         code: undefined,
       });
@@ -160,7 +162,7 @@ describe('SheskaApiClient', () => {
         }),
       );
 
-      const result = await client.post('/sources', payload);
+      const result = await client.post('/sources', payload, passthrough);
 
       expect(fetch).toHaveBeenCalledWith('http://localhost:3000/sources', {
         method: 'POST',
@@ -181,7 +183,7 @@ describe('SheskaApiClient', () => {
         }),
       );
 
-      await expect(client.post('/sources', {})).rejects.toThrow(
+      await expect(client.post('/sources', {}, passthrough)).rejects.toThrow(
         'Sheska API error: 422 Unprocessable Entity',
       );
     });
