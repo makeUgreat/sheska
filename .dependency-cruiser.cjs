@@ -43,7 +43,11 @@ module.exports = {
   options: {
     combinedDependencies: true,
     doNotFollow: {
-      path: 'node_modules',
+      path: ['node_modules', '(^|[.][.]/)packages/'],
+    },
+    enhancedResolveOptions: {
+      exportsFields: ['exports'],
+      conditionNames: ['import', 'require', 'node', 'default'],
     },
     exclude: {
       path: [
