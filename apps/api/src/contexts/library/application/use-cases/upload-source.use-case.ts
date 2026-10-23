@@ -1,7 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { ValidationFailedError } from '@core/errors';
 import {
   ExternalSourceId,
   Source,
+  SourceFrontmatter,
   SourceSyncJob,
   type SourceRepository,
   type SourceSyncJobRepository,
@@ -54,6 +56,16 @@ export class UploadSourceUseCase {
     const snapshot = await this.contentSnapshotCalculator.calculate(
       command.content,
     );
+    if (!SourceFrontmatter.of(snapshot.frontmatter).optsIntoSync()) {
+      throw new ValidationFailedError({
+        code: 'source.not_sync_target',
+        message:
+          'Only a file whose frontmatter has `sheska: true` can be uploaded',
+        details: {
+          fields: [{ path: 'frontmatter.sheska', messages: ['must be true'] }],
+        },
+      });
+    }
     const source = await this.sources.find({ externalSourceId });
 
     if (!source) {
