@@ -7,6 +7,7 @@ import { DEFAULT_SETTINGS } from '@/settings';
 import type { SheskaSettings } from '@/settings';
 import type { SyncCache } from '@/storage';
 import type {
+  CachedMetadata,
   TAbstractFile as ObsidianAbstractFile,
   TFile as ObsidianFile,
 } from 'obsidian';
@@ -19,6 +20,25 @@ function asObsidianAbstractFile(
   file: TAbstractFile | TFile,
 ): ObsidianAbstractFile {
   return file as unknown as ObsidianAbstractFile;
+}
+
+function syncTargetMetadataCache() {
+  return {
+    getFileCache: vi.fn(
+      (_file: ObsidianFile): CachedMetadata => ({
+        frontmatter: { sheska: true },
+      }),
+    ),
+  };
+}
+
+function withFrontmatter(
+  metadataCache: ReturnType<typeof syncTargetMetadataCache>,
+  frontmatterByPath: Record<string, Record<string, unknown> | undefined>,
+) {
+  metadataCache.getFileCache.mockImplementation((file) => ({
+    frontmatter: frontmatterByPath[file.path],
+  }));
 }
 
 function makeService(
@@ -45,13 +65,14 @@ function makeService(
     getMarkdownFiles: vi.fn().mockReturnValue([]),
     getAbstractFileByPath: vi.fn().mockReturnValue(null),
   };
+  const metadataCache = syncTargetMetadataCache();
   const saveSyncCache = vi.fn().mockResolvedValue(undefined);
   const service = new AutoSyncService({
     vault: vault as never,
+    metadataCache,
     api: api as unknown as SheskaApiClient,
     settings: {
       ...DEFAULT_SETTINGS,
-      autoSyncDirectories: '',
       ...settings,
     },
     syncCache,
@@ -59,7 +80,7 @@ function makeService(
     shouldPollSyncJob,
     ...serviceOptions,
   });
-  return { api, saveSyncCache, service, vault };
+  return { api, metadataCache, saveSyncCache, service, vault };
 }
 
 describe('AutoSyncService', () => {
@@ -517,7 +538,7 @@ describe('AutoSyncService', () => {
     ).toEqual(['a.md', 'b.md']);
   });
 
-  it('ignores vault changes when auto-sync is disabled', async () => {
+  it('library.sync-10: ignores vault changes when auto-sync is disabled', async () => {
     const { api, service } = makeService({
       autoSyncEnabled: false,
       autoSyncDebounceSeconds: 1,
@@ -544,34 +565,39 @@ describe('AutoSyncService', () => {
     expect(api.uploadSource).not.toHaveBeenCalled();
   });
 
-  it('uploads vault changes only from configured auto-sync folders', async () => {
-    const { api, service } = makeService({
+  it('library.source-6: uploads vault changes only from notes whose frontmatter sheska is the boolean true', async () => {
+    const { api, metadataCache, service } = makeService({
       autoSyncDebounceSeconds: 1,
-      autoSyncDirectories: 'Projects, Notes/Published/',
+    });
+    withFrontmatter(metadataCache, {
+      'target.md': { sheska: true },
+      'string.md': { sheska: 'true' },
+      'yes.md': { sheska: 'yes' },
+      'number.md': { sheska: 1 },
+      'opted-out.md': { sheska: false },
     });
 
-    service.onVaultFileChanged(
-      asObsidianAbstractFile(
-        new TFile('Projects/a.md', { ctime: 0, mtime: 100, size: 1 }),
-      ),
-    );
-    service.onVaultFileChanged(
-      asObsidianAbstractFile(
-        new TFile('Notes/Published/b.md', { ctime: 0, mtime: 100, size: 1 }),
-      ),
-    );
-    service.onVaultFileChanged(
-      asObsidianAbstractFile(
-        new TFile('Projects-old/c.md', { ctime: 0, mtime: 100, size: 1 }),
-      ),
-    );
+    for (const path of [
+      'target.md',
+      'string.md',
+      'yes.md',
+      'number.md',
+      'opted-out.md',
+      'no-frontmatter.md',
+    ]) {
+      service.onVaultFileChanged(
+        asObsidianAbstractFile(
+          new TFile(path, { ctime: 0, mtime: 100, size: 1 }),
+        ),
+      );
+    }
     await vi.advanceTimersByTimeAsync(1000);
 
     expect(
       api.uploadSource.mock.calls.map(
         ([body]) => (body as { externalSourceId: string }).externalSourceId,
       ),
-    ).toEqual(['Projects/a.md', 'Notes/Published/b.md']);
+    ).toEqual(['target.md']);
   });
 
   it('skips changed-file uploads when the cached mtime matches', async () => {
@@ -616,43 +642,49 @@ describe('AutoSyncService', () => {
     });
   });
 
-  it('sweeps only markdown files inside configured auto-sync folders', async () => {
-    const included = new TFile('Journal/2026/today.md', {
+  it('library.source-6: sweeps only markdown files whose frontmatter sheska is true', async () => {
+    const target = new TFile('Journal/today.md', {
       ctime: 0,
       mtime: 100,
       size: 1,
     });
-    const excluded = new TFile('Archive/old.md', {
+    const other = new TFile('Archive/old.md', {
       ctime: 0,
       mtime: 100,
       size: 1,
     });
-    const { api, service, vault } = makeService({
-      autoSyncDirectories: '/Journal/',
-    });
-    vault.getMarkdownFiles.mockReturnValue([included, excluded]);
+    const { api, metadataCache, service, vault } = makeService();
+    withFrontmatter(metadataCache, { 'Journal/today.md': { sheska: true } });
+    vault.getMarkdownFiles.mockReturnValue([target, other]);
 
     await service.runSweep();
 
     expect(api.uploadSource).toHaveBeenCalledOnce();
     expect(api.uploadSource).toHaveBeenCalledWith({
-      externalSourceId: 'Journal/2026/today.md',
+      externalSourceId: 'Journal/today.md',
       content: 'content',
     });
   });
 
-  it('manual upload ignores the configured auto-sync folders', async () => {
-    const { api, service } = makeService({
-      autoSyncDirectories: 'Projects',
-    });
-
-    await service.uploadFile(
-      asObsidianFile(
-        new TFile('Archive/note.md', { ctime: 0, mtime: 100, size: 1 }),
-      ),
+  it('stops retrying a failed note once its frontmatter no longer has sheska true', async () => {
+    const file = new TFile('note.md', { ctime: 0, mtime: 100, size: 1 });
+    const { api, metadataCache, service, vault } = makeService(
+      {},
+      {
+        'note.md': {
+          mtime: 100,
+          status: 'failed',
+          retryCount: 0,
+          nextRetryAt: 0,
+        },
+      },
     );
+    withFrontmatter(metadataCache, {});
+    vault.getAbstractFileByPath.mockReturnValue(file);
 
-    expect(api.uploadSource).toHaveBeenCalledOnce();
+    await service.runReconcile();
+
+    expect(api.uploadSource).not.toHaveBeenCalled();
   });
 
   it('continues a debounced batch after one upload fails', async () => {
@@ -741,6 +773,7 @@ describe('AutoSyncService', () => {
     };
     const service = new AutoSyncService({
       vault: vault as never,
+      metadataCache: syncTargetMetadataCache(),
       api: api as unknown as SheskaApiClient,
       settings: DEFAULT_SETTINGS,
       syncCache: {},
@@ -770,6 +803,7 @@ describe('AutoSyncService', () => {
     };
     const service = new AutoSyncService({
       vault: vault as never,
+      metadataCache: syncTargetMetadataCache(),
       api: api as unknown as SheskaApiClient,
       settings: DEFAULT_SETTINGS,
       syncCache: {},
@@ -796,10 +830,10 @@ describe('AutoSyncService', () => {
     };
     const service = new AutoSyncService({
       vault: vault as never,
+      metadataCache: syncTargetMetadataCache(),
       api: api as unknown as SheskaApiClient,
       settings: {
         ...DEFAULT_SETTINGS,
-        autoSyncDirectories: '',
         autoSyncDebounceSeconds: 1,
       },
       syncCache: {},
@@ -851,7 +885,6 @@ describe('AutoSyncService', () => {
 
     service.configure(newApi as unknown as SheskaApiClient, {
       ...DEFAULT_SETTINGS,
-      autoSyncDirectories: '',
       autoSyncDebounceSeconds: 1,
     });
     service.onVaultFileChanged(

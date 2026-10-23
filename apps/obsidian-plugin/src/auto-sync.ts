@@ -1,11 +1,12 @@
 import { TFile, debounce } from 'obsidian';
-import type { Debouncer, TAbstractFile, Vault } from 'obsidian';
+import type { Debouncer, MetadataCache, TAbstractFile, Vault } from 'obsidian';
 import type { SheskaApiClient } from '@/api/client';
 import type { SheskaSettings } from '@/settings';
 import type { SyncCache } from '@/storage';
 
 interface AutoSyncServiceOptions {
   vault: Vault;
+  metadataCache: Pick<MetadataCache, 'getFileCache'>;
   api: SheskaApiClient;
   settings: SheskaSettings;
   syncCache: SyncCache;
@@ -90,6 +91,14 @@ export class AutoSyncService {
 
   async uploadFile(file: TFile): Promise<void> {
     await this.uploadFileCore(file);
+  }
+
+  /** `library.source-6`: only a YAML boolean `true`, so `"true"` or `yes` stays local. */
+  isSyncTarget(file: TFile): boolean {
+    return (
+      this.options.metadataCache.getFileCache(file)?.frontmatter?.sheska ===
+      true
+    );
   }
 
   isSynced(file: TFile): boolean {
@@ -266,7 +275,7 @@ export class AutoSyncService {
   }
 
   private async uploadIfChanged(file: TFile): Promise<void> {
-    if (!this.isInAutoSyncDirectory(file.path)) return;
+    if (!this.isSyncTarget(file)) return;
     if (this.isSynced(file)) return;
     const cached = this.syncCache[file.path];
     if (
@@ -298,7 +307,7 @@ export class AutoSyncService {
   }
 
   private async uploadChangedDuringSweep(file: TFile): Promise<void> {
-    if (!this.isInAutoSyncDirectory(file.path)) return;
+    if (!this.isSyncTarget(file)) return;
     const cached = this.syncCache[file.path];
     if (cached?.mtime === file.stat.mtime) return;
     if (this.syncingFiles.has(file.path)) return;
@@ -311,8 +320,7 @@ export class AutoSyncService {
   }
 
   private async reconcileCachedFile(file: TFile): Promise<void> {
-    if (!this.isInAutoSyncDirectory(file.path)) return;
-    if (!this.isInAutoSyncDirectory(file.path)) return;
+    if (!this.isSyncTarget(file)) return;
     if (
       this.syncingFiles.has(file.path) ||
       this.pollingFiles.has(file.path) ||
@@ -471,17 +479,5 @@ export class AutoSyncService {
       fingerprint: cached.fingerprint,
       status: 'synced',
     };
-  }
-
-  private isInAutoSyncDirectory(filePath: string): boolean {
-    const directories = this.settings.autoSyncDirectories
-      .split(',')
-      .map((directory) => directory.trim().replace(/^\/+|\/+$/g, ''))
-      .filter(Boolean);
-
-    if (directories.length === 0) return true;
-    return directories.some((directory) =>
-      filePath.startsWith(`${directory}/`),
-    );
   }
 }

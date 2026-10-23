@@ -4,7 +4,6 @@ export interface SheskaSettings {
   apiBaseUrl: string;
   healthCheckIntervalMinutes: number;
   autoSyncEnabled: boolean;
-  autoSyncDirectories: string;
   autoSyncDebounceSeconds: number;
   autoSyncSweepIntervalMinutes: number;
   syncJobReconcileIntervalMinutes: number;
@@ -14,7 +13,6 @@ export const DEFAULT_SETTINGS: SheskaSettings = {
   apiBaseUrl: 'http://localhost:3000',
   healthCheckIntervalMinutes: 5,
   autoSyncEnabled: true,
-  autoSyncDirectories: '09_Knowledge',
   autoSyncDebounceSeconds: 20,
   autoSyncSweepIntervalMinutes: 30,
   syncJobReconcileIntervalMinutes: 1,
@@ -81,19 +79,10 @@ export class SheskaSettingTab extends PluginSettingTab {
       },
       {
         name: 'Auto-sync enabled',
-        desc: 'Automatically upload notes to Sheska when they are created or modified, and periodically re-scan the vault for missed changes.',
+        desc: 'Automatically upload notes whose frontmatter has "sheska: true" when they are created or modified, and periodically re-scan the vault for missed changes.',
         control: {
           type: 'toggle',
           key: 'autoSyncEnabled',
-        },
-      },
-      {
-        name: 'Auto-sync folders',
-        desc: 'Only automatically sync notes in these vault-relative folders and their subfolders. Separate multiple folders with commas. Leave blank to sync the whole vault.',
-        control: {
-          type: 'text',
-          key: 'autoSyncDirectories',
-          placeholder: 'Projects, Notes/Published',
         },
       },
       {

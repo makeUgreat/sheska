@@ -56,6 +56,7 @@ export const workspaceEventHandlers: Record<
 
 class MockWorkspace {
   getActiveFile = vi.fn().mockReturnValue(null);
+  onLayoutReady = vi.fn((callback: () => void) => callback());
 
   on(
     event: string,
@@ -89,9 +90,27 @@ class MockVault {
   }
 }
 
+export const metadataCacheEventHandlers: Record<
+  string,
+  ((...args: unknown[]) => void) | undefined
+> = {};
+
+// Defaults to a note that opted into sync so tests only override the frontmatter they are about.
+class MockMetadataCache {
+  getFileCache = vi
+    .fn()
+    .mockReturnValue({ frontmatter: { sheska: true } } as unknown);
+
+  on(event: string, handler: (...args: unknown[]) => void): object {
+    metadataCacheEventHandlers[event] = handler;
+    return {};
+  }
+}
+
 export class App {
   workspace = new MockWorkspace();
   vault = new MockVault();
+  metadataCache = new MockMetadataCache();
 }
 
 export interface Debouncer<T extends unknown[], V> {

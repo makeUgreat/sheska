@@ -54,10 +54,11 @@ export default class SheskaPlugin extends Plugin {
     this.startAutoSyncSweepInterval();
     this.startSyncJobReconcileInterval();
 
-    if (this.settings.autoSyncEnabled) {
+    this.app.workspace.onLayoutReady(() => {
+      if (!this.settings.autoSyncEnabled) return;
       void this.runSweep();
       void this.runSyncJobReconcile();
-    }
+    });
   }
 
   onunload(): void {
@@ -161,6 +162,10 @@ export default class SheskaPlugin extends Plugin {
   }
 
   private async uploadFile(file: TFile): Promise<void> {
+    if (!this.autoSyncService.isSyncTarget(file)) {
+      new Notice('Add "sheska: true" to the frontmatter to upload this note.');
+      return;
+    }
     try {
       await this.autoSyncService.uploadFile(file);
       new Notice('Note uploaded to Sheska.');
@@ -179,6 +184,7 @@ export default class SheskaPlugin extends Plugin {
     );
     this.autoSyncService = new AutoSyncService({
       vault: this.app.vault,
+      metadataCache: this.app.metadataCache,
       api: this.api,
       settings: this.settings,
       syncCache: this.syncCache,
@@ -318,6 +324,7 @@ export default class SheskaPlugin extends Plugin {
     this.registerEvent(
       this.app.workspace.on('file-menu', (menu, abstractFile) => {
         if (!(abstractFile instanceof TFile)) return;
+        if (!this.autoSyncService.isSyncTarget(abstractFile)) return;
         menu.addItem((item) => {
           item.setTitle('Upload to Sheska').onClick(async () => {
             await this.uploadFile(abstractFile);
@@ -333,6 +340,12 @@ export default class SheskaPlugin extends Plugin {
     );
     this.registerEvent(
       this.app.vault.on('create', (file) => this.handleVaultFileChanged(file)),
+    );
+    // `modify` fires before the frontmatter is re-indexed, so a new `sheska` value shows up only here.
+    this.registerEvent(
+      this.app.metadataCache.on('changed', (file) =>
+        this.handleVaultFileChanged(file),
+      ),
     );
   }
 
