@@ -1,5 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { HttpClient, HttpError, isRetryableHttpError } from './http';
+import { HealthApi } from '@sheska/contract';
+import {
+  HttpClient,
+  HttpError,
+  isRetryableHttpError,
+  type ResponseSchema,
+} from './http';
+
+const passthrough: ResponseSchema<unknown> = { parse: (data) => data };
 
 function stubFailure(status: number, statusText: string, body = '') {
   vi.stubGlobal(
@@ -32,7 +40,7 @@ describe('HttpClient', () => {
         }),
       );
 
-      const result = await client.get('/sources');
+      const result = await client.get('/sources', passthrough);
 
       expect(fetch).toHaveBeenCalledWith('http://localhost:3000/sources', {
         headers: { 'Content-Type': 'application/json' },
@@ -50,7 +58,10 @@ describe('HttpClient', () => {
         }),
       );
 
-      await client.get('/posts/search', { q: 'garden', limit: '5' });
+      await client.get('/posts/search', passthrough, {
+        q: 'garden',
+        limit: '5',
+      });
 
       expect(fetch).toHaveBeenCalledWith(
         'http://localhost:3000/posts/search?q=garden&limit=5',
@@ -58,10 +69,45 @@ describe('HttpClient', () => {
       );
     });
 
+    it('응답 본문을 schema로 parse한 값을 돌려준다', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve({ count: 3, extra: true }),
+        }),
+      );
+      const schema: ResponseSchema<{ count: number }> = {
+        parse: (data) => ({ count: (data as { count: number }).count }),
+      };
+
+      const result = await client.get('/posts/count', schema);
+
+      expect(result).toEqual({ count: 3 });
+    });
+
+    it('schema가 응답 본문을 거부하면 throw한다', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve({}),
+        }),
+      );
+      const rejection = new Error('contract mismatch');
+      const schema: ResponseSchema<never> = {
+        parse: () => {
+          throw rejection;
+        },
+      };
+
+      await expect(client.get('/posts/count', schema)).rejects.toBe(rejection);
+    });
+
     it('응답이 ok가 아니면 throw한다', async () => {
       stubFailure(500, 'Internal Server Error');
 
-      await expect(client.get('/sources')).rejects.toThrow(
+      await expect(client.get('/sources', passthrough)).rejects.toThrow(
         'HTTP error: 500 Internal Server Error',
       );
     });
@@ -69,7 +115,9 @@ describe('HttpClient', () => {
     it('실패 응답의 status를 HttpError에 담는다', async () => {
       stubFailure(404, 'Not Found');
 
-      await expect(client.get('/sources/unknown')).rejects.toMatchObject({
+      await expect(
+        client.get('/sources/unknown', passthrough),
+      ).rejects.toMatchObject({
         name: 'HttpError',
         status: 404,
       });
@@ -80,14 +128,13 @@ describe('HttpClient', () => {
         422,
         'Unprocessable Entity',
         JSON.stringify({
-          statusCode: 422,
           code: 'source.invalid_content',
           message: 'Invalid content',
           details: {},
         }),
       );
 
-      await expect(client.get('/sources')).rejects.toMatchObject({
+      await expect(client.get('/sources', passthrough)).rejects.toMatchObject({
         status: 422,
         code: 'source.invalid_content',
       });
@@ -96,7 +143,7 @@ describe('HttpClient', () => {
     it('본문이 JSON이 아니면 code 없이 status만 담는다', async () => {
       stubFailure(502, 'Bad Gateway', '<html>gateway</html>');
 
-      await expect(client.get('/sources')).rejects.toMatchObject({
+      await expect(client.get('/sources', passthrough)).rejects.toMatchObject({
         status: 502,
         code: undefined,
       });
@@ -120,8 +167,20 @@ describe('HttpClient', () => {
       );
     });
 
-    it('status를 알 수 없는 실패는 일시적일 수 있으므로 재시도 대상이다', () => {
+    it('네트워크 실패는 일시적일 수 있으므로 재시도 대상이다', () => {
       expect(isRetryableHttpError(new TypeError('Failed to fetch'))).toBe(true);
+    });
+
+    it('응답 본문이 계약과 맞지 않으면 재시도 대상이 아니다', () => {
+      const { error } = HealthApi.live.response.safeParse({});
+
+      expect(isRetryableHttpError(error)).toBe(false);
+    });
+
+    it('응답 본문이 JSON이 아니면 재시도 대상이 아니다', () => {
+      expect(isRetryableHttpError(new SyntaxError('Unexpected token'))).toBe(
+        false,
+      );
     });
   });
 
@@ -136,7 +195,11 @@ describe('HttpClient', () => {
         }),
       );
 
-      const result = await client.post('/posts', { sourceId: 'source-1' });
+      const result = await client.post(
+        '/posts',
+        { sourceId: 'source-1' },
+        passthrough,
+      );
 
       expect(fetch).toHaveBeenCalledWith('http://localhost:3000/posts', {
         method: 'POST',
@@ -158,9 +221,11 @@ describe('HttpClient', () => {
         }),
       );
 
-      const result = await client.patch('/resources/resource-1', {
-        status: 'active',
-      });
+      const result = await client.patch(
+        '/resources/resource-1',
+        { status: 'active' },
+        passthrough,
+      );
 
       expect(fetch).toHaveBeenCalledWith(
         'http://localhost:3000/resources/resource-1',

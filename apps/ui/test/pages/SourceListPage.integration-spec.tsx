@@ -341,7 +341,11 @@ describe('SourceListPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('link', { name: 'Second Title' })).toBeDefined();
     });
-    expect(get).toHaveBeenNthCalledWith(1, '/sources', { page: '1' });
-    expect(get).toHaveBeenNthCalledWith(2, '/sources', { page: '2' });
+    expect(get).toHaveBeenNthCalledWith(1, '/sources', expect.anything(), {
+      page: '1',
+    });
+    expect(get).toHaveBeenNthCalledWith(2, '/sources', expect.anything(), {
+      page: '2',
+    });
   });
 });

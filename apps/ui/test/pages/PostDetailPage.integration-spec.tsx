@@ -186,7 +186,7 @@ describe('PostDetailPage', () => {
     renderPage(buildMockHttpClient({ get: getPost }), 'post-42');
 
     await waitFor(() => {
-      expect(getPost).toHaveBeenCalledWith('/posts/post-42');
+      expect(getPost).toHaveBeenCalledWith('/posts/post-42', expect.anything());
     });
   });
 
