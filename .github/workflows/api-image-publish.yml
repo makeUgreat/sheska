@@ -7,6 +7,7 @@ on:
     paths:
       - 'apps/api/**'
       - '!apps/api/deploy/**'
+      - 'packages/contract/**'
   workflow_dispatch:
 
 env:

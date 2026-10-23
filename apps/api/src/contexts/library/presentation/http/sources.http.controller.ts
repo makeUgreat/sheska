@@ -8,20 +8,17 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { type z } from 'zod';
+import { type ApiRequest, type ApiResponse, SourceApi } from '@sheska/contract';
+import { ErrorCodes, ZodValidationPipe } from '@kernels/presentation';
 import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upload-source.use-case';
 import { ListSourcesUseCase } from '@contexts/library/application/use-cases/list-sources.use-case';
 import { GetSourceUseCase } from '@contexts/library/application/use-cases/get-source.use-case';
-import {
-  UploadSourceHttpRequest,
-  type UploadSourceHttpResponse,
-} from './dto/upload-source.http.dto';
-import {
-  ListSourcesHttpRequest,
-  type ListSourcesHttpResponse,
-} from './dto/list-sources.http.dto';
-import { type GetSourceHttpResponse } from './dto/get-source.http.dto';
+import { type SourceQueryPaginateResult } from '@contexts/library/application/ports';
 
-@Controller('sources')
+type SourceSummary = SourceQueryPaginateResult['sources'][number];
+
+@Controller()
 export class SourcesHttpController {
   constructor(
     private readonly uploadSourceUseCase: UploadSourceUseCase,
@@ -29,63 +26,34 @@ export class SourcesHttpController {
     private readonly getSourceUseCase: GetSourceUseCase,
   ) {}
 
-  @Get()
+  @Get(SourceApi.list.path)
+  @ErrorCodes(SourceApi.list.errors)
   async list(
-    @Query() query: ListSourcesHttpRequest,
-  ): Promise<ListSourcesHttpResponse> {
-    const result = await this.listSourcesUseCase.execute({
-      page: query.page,
-      pageSize: query.pageSize,
-      syncJobStatus: query.syncJobStatus,
-    });
-    return {
-      sources: result.sources.map((s) => ({
-        sourceId: s.sourceId,
-        externalSourceId: s.externalSourceId,
-        title: s.title,
-        fingerprint: s.fingerprint,
-        sizeBytes: s.sizeBytes,
-        createdAt: s.createdAt.toISOString(),
-        updatedAt: s.updatedAt.toISOString(),
-        latestSyncJob: s.latestSyncJob
-          ? {
-              syncJobId: s.latestSyncJob.syncJobId,
-              status: s.latestSyncJob.status,
-              totalChunks: s.latestSyncJob.totalChunks,
-              createdAt: s.latestSyncJob.createdAt.toISOString(),
-            }
-          : null,
-        publishedPostId: s.publishedPostId,
-      })),
+    @Query(new ZodValidationPipe(SourceApi.list.query))
+    query: z.output<typeof SourceApi.list.query>,
+  ): Promise<ApiResponse<typeof SourceApi.list>> {
+    const result = await this.listSourcesUseCase.execute(query);
+
+    return SourceApi.list.response.parse({
+      sources: result.sources.map(toSourceSummaryResponse),
       page: result.page,
       pageSize: result.pageSize,
       totalCount: result.totalCount,
       totalPages: result.totalPages,
-    };
+    });
   }
 
-  @Get(':id')
-  async get(@Param('id') id: string): Promise<GetSourceHttpResponse> {
+  @Get(SourceApi.get.path)
+  @ErrorCodes(SourceApi.get.errors)
+  async get(
+    @Param('id') id: string,
+  ): Promise<ApiResponse<typeof SourceApi.get>> {
     const result = await this.getSourceUseCase.execute({ sourceId: id });
 
-    return {
-      sourceId: result.sourceId,
-      externalSourceId: result.externalSourceId,
-      body: result.body,
+    return SourceApi.get.response.parse({
+      ...toSourceSummaryResponse(result),
       frontmatter: result.frontmatter,
-      title: result.title,
-      fingerprint: result.fingerprint,
-      sizeBytes: result.sizeBytes,
-      createdAt: result.createdAt.toISOString(),
-      updatedAt: result.updatedAt.toISOString(),
-      latestSyncJob: result.latestSyncJob
-        ? {
-            syncJobId: result.latestSyncJob.syncJobId,
-            status: result.latestSyncJob.status,
-            totalChunks: result.latestSyncJob.totalChunks,
-            createdAt: result.latestSyncJob.createdAt.toISOString(),
-          }
-        : null,
+      body: result.body,
       embedding: result.embedding
         ? {
             model: result.embedding.model,
@@ -94,25 +62,41 @@ export class SourcesHttpController {
             updatedAt: result.embedding.updatedAt.toISOString(),
           }
         : null,
-      publishedPostId: result.publishedPostId,
-    };
-  }
-
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  async upload(
-    @Body() request: UploadSourceHttpRequest,
-  ): Promise<UploadSourceHttpResponse> {
-    const result = await this.uploadSourceUseCase.execute({
-      externalSourceId: request.externalSourceId,
-      content: request.content,
     });
-
-    return {
-      sourceId: result.sourceId,
-      externalSourceId: result.externalSourceId,
-      fingerprint: result.fingerprint,
-      syncJobId: result.syncJobId,
-    };
   }
+
+  @Post(SourceApi.upload.path)
+  @HttpCode(HttpStatus.CREATED)
+  @ErrorCodes(SourceApi.upload.errors)
+  async upload(
+    @Body(new ZodValidationPipe(SourceApi.upload.request))
+    body: ApiRequest<typeof SourceApi.upload>,
+  ): Promise<ApiResponse<typeof SourceApi.upload>> {
+    const result = await this.uploadSourceUseCase.execute(body);
+
+    return SourceApi.upload.response.parse(
+      result satisfies ApiResponse<typeof SourceApi.upload>,
+    );
+  }
+}
+
+function toSourceSummaryResponse(source: SourceSummary) {
+  return {
+    sourceId: source.sourceId,
+    externalSourceId: source.externalSourceId,
+    title: source.title,
+    fingerprint: source.fingerprint,
+    sizeBytes: source.sizeBytes,
+    createdAt: source.createdAt.toISOString(),
+    updatedAt: source.updatedAt.toISOString(),
+    latestSyncJob: source.latestSyncJob
+      ? {
+          syncJobId: source.latestSyncJob.syncJobId,
+          status: source.latestSyncJob.status,
+          totalChunks: source.latestSyncJob.totalChunks,
+          createdAt: source.latestSyncJob.createdAt.toISOString(),
+        }
+      : null,
+    publishedPostId: source.publishedPostId,
+  };
 }

@@ -29,6 +29,7 @@ module.exports = {
       '^test/',
       '^node_modules/',
       '^../../node_modules/',
+      '^../../packages/',
     ],
     tsConfig: {
       fileName: join(__dirname, '../tsconfig.json'),

@@ -1,14 +1,18 @@
 import { type Server } from 'node:http';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { APP_FILTER, APP_PIPE } from '@nestjs/core';
-import { NotFoundError, StateConflictError } from '@core/errors';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import {
+  ConstraintViolationError,
+  NotFoundError,
+  ValidationFailedError,
+} from '@core/errors';
 import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upload-source.use-case';
 import { ListSourcesUseCase } from '@contexts/library/application/use-cases/list-sources.use-case';
 import { GetSourceUseCase } from '@contexts/library/application/use-cases/get-source.use-case';
 import { SourcesHttpController } from '@contexts/library/presentation/http/sources.http.controller';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
-import { ZodValidationPipe } from '@platform/nest/pipes/zod-validation.pipe';
+import { DeclaredErrorCodesInterceptor } from '@platform/nest/interceptors/declared-error-codes.interceptor';
 import { LOGGER } from '@kernels/application';
 import request from 'supertest';
 import {
@@ -67,8 +71,8 @@ describe('SourcesHttpController', () => {
           useValue: getSourceUseCase,
         },
         {
-          provide: APP_PIPE,
-          useClass: ZodValidationPipe,
+          provide: APP_INTERCEPTOR,
+          useClass: DeclaredErrorCodesInterceptor,
         },
         {
           provide: LOGGER,
@@ -198,7 +202,6 @@ describe('SourcesHttpController', () => {
         .expect(400);
 
       expect(response.body).toMatchObject({
-        statusCode: 400,
         code: 'request.validation_failed',
       });
       expect(listSourcesUseCase.execute).not.toHaveBeenCalled();
@@ -210,7 +213,6 @@ describe('SourcesHttpController', () => {
         .expect(400);
 
       expect(response.body).toMatchObject({
-        statusCode: 400,
         code: 'request.validation_failed',
       });
       expect(listSourcesUseCase.execute).not.toHaveBeenCalled();
@@ -224,7 +226,6 @@ describe('SourcesHttpController', () => {
       const response = await request(httpServer).get('/sources').expect(500);
 
       expect(response.body).toEqual({
-        statusCode: 500,
         code: 'internal.unexpected',
         message: 'Internal server error',
         details: {},
@@ -294,7 +295,7 @@ describe('SourcesHttpController', () => {
     it('source가 없으면 404 응답을 반환한다', async () => {
       getSourceUseCase.execute.mockRejectedValue(
         new NotFoundError({
-          code: 'sources.source_not_found',
+          code: 'source.not_found',
           message: 'Source not found',
           details: {},
         }),
@@ -305,8 +306,7 @@ describe('SourcesHttpController', () => {
         .expect(404);
 
       expect(response.body).toEqual({
-        statusCode: 404,
-        code: 'sources.source_not_found',
+        code: 'source.not_found',
         message: 'Source not found',
         details: {},
       });
@@ -322,7 +322,6 @@ describe('SourcesHttpController', () => {
         .expect(500);
 
       expect(response.body).toEqual({
-        statusCode: 500,
         code: 'internal.unexpected',
         message: 'Internal server error',
         details: {},
@@ -369,7 +368,6 @@ describe('SourcesHttpController', () => {
         .expect(400);
 
       expect(response.body).toEqual({
-        statusCode: 400,
         code: 'request.validation_failed',
         message: 'Invalid request',
         details: {
@@ -398,19 +396,22 @@ describe('SourcesHttpController', () => {
         .expect(500);
 
       expect(response.body).toEqual({
-        statusCode: 500,
         code: 'internal.unexpected',
         message: 'Internal server error',
         details: {},
       });
     });
 
-    it('use case가 NotFoundError를 throw하면 404 응답을 반환한다', async () => {
+    it('use case가 계약에 선언한 ValidationFailedError를 throw하면 400 응답과 details를 반환한다', async () => {
       uploadSourceUseCase.execute.mockRejectedValue(
-        new NotFoundError({
-          code: 'sources.source_not_found',
-          message: 'Source not found',
-          details: {},
+        new ValidationFailedError({
+          code: 'source.not_sync_target',
+          message: 'Not a sync target',
+          details: {
+            fields: [
+              { path: 'frontmatter.sheska', messages: ['must be true'] },
+            ],
+          },
         }),
       );
 
@@ -420,20 +421,21 @@ describe('SourcesHttpController', () => {
           externalSourceId: 'Notes/source.md',
           content: '# Source note',
         })
-        .expect(404);
+        .expect(400);
 
       expect(response.body).toEqual({
-        statusCode: 404,
-        code: 'sources.source_not_found',
-        message: 'Source not found',
-        details: {},
+        code: 'source.not_sync_target',
+        message: 'Not a sync target',
+        details: {
+          fields: [{ path: 'frontmatter.sheska', messages: ['must be true'] }],
+        },
       });
     });
 
-    it('use case가 StateConflictError를 throw하면 409 응답을 반환한다', async () => {
+    it('use case가 계약에 선언한 ConstraintViolationError를 throw하면 409 응답을 반환한다', async () => {
       uploadSourceUseCase.execute.mockRejectedValue(
-        new StateConflictError({
-          code: 'sources.duplicate_external_source_id',
+        new ConstraintViolationError({
+          code: 'source.external_source_id_already_exists',
           message: 'Source already exists',
           details: {},
         }),
@@ -448,9 +450,32 @@ describe('SourcesHttpController', () => {
         .expect(409);
 
       expect(response.body).toEqual({
-        statusCode: 409,
-        code: 'sources.duplicate_external_source_id',
+        code: 'source.external_source_id_already_exists',
         message: 'Source already exists',
+        details: {},
+      });
+    });
+
+    it('use case가 계약에 선언하지 않은 code를 throw하면 500 응답으로 마스킹한다', async () => {
+      uploadSourceUseCase.execute.mockRejectedValue(
+        new NotFoundError({
+          code: 'source.not_found',
+          message: 'Source not found',
+          details: {},
+        }),
+      );
+
+      const response = await request(httpServer)
+        .post('/sources')
+        .send({
+          externalSourceId: 'Notes/source.md',
+          content: '# Source note',
+        })
+        .expect(500);
+
+      expect(response.body).toEqual({
+        code: 'internal.unexpected',
+        message: 'Internal server error',
         details: {},
       });
     });

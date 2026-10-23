@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LibraryModule } from '@contexts/library/library.module';
 import { ollamaConfig } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.config';
@@ -11,10 +11,10 @@ import { IntegrationEventsModule } from './events/integration-events.module';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { HealthModule } from './health/health.module';
 import { httpConfig } from './http/http.config';
+import { DeclaredErrorCodesInterceptor } from './interceptors/declared-error-codes.interceptor';
 import { loggerConfig } from './logger/logger.config';
 import { LoggerModule } from './logger/logger.module';
 import { OutboxModule } from './outbox/outbox.module';
-import { ZodValidationPipe } from './pipes/zod-validation.pipe';
 import { queueConfig } from './queue/queue.config';
 import { QueueModule } from './queue/queue.module';
 
@@ -43,8 +43,8 @@ import { QueueModule } from './queue/queue.module';
   ],
   providers: [
     {
-      provide: APP_PIPE,
-      useClass: ZodValidationPipe,
+      provide: APP_INTERCEPTOR,
+      useClass: DeclaredErrorCodesInterceptor,
     },
     {
       provide: APP_FILTER,

@@ -6,4 +6,5 @@ export {
   decodeCursor,
   cursorQueryParamSchema,
 } from './cursor.codec';
-export { type HttpFailure } from './http-failure';
+export { ErrorCodes, declaredErrorCodesOf } from './error-codes.decorator';
+export { ZodValidationPipe } from './zod-validation.pipe';

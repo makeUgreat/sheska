@@ -63,6 +63,9 @@ importers:
       '@opentelemetry/semantic-conventions':
         specifier: ^1.43.0
         version: 1.43.0
+      '@sheska/contract':
+        specifier: workspace:*
+        version: link:../../packages/contract
       bullmq:
         specifier: ^5.79.2
         version: 5.79.2

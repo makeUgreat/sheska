@@ -1,6 +1,6 @@
 import { type Server } from 'node:http';
 import { type INestApplication } from '@nestjs/common';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -9,6 +9,7 @@ import { LOGGER } from '@kernels/application';
 import { GetSourceSyncJobUseCase } from '@contexts/library/application/use-cases/get-source-sync-job.use-case';
 import { SourceSyncJobsHttpController } from '@contexts/library/presentation/http/source-sync-jobs.http.controller';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
+import { DeclaredErrorCodesInterceptor } from '@platform/nest/interceptors/declared-error-codes.interceptor';
 
 describe('SourceSyncJobsHttpController', () => {
   let app: INestApplication;
@@ -31,6 +32,10 @@ describe('SourceSyncJobsHttpController', () => {
           },
         },
         { provide: APP_FILTER, useClass: HttpExceptionFilter },
+        {
+          provide: APP_INTERCEPTOR,
+          useClass: DeclaredErrorCodesInterceptor,
+        },
       ],
     }).compile();
     app = testingModule.createNestApplication();
