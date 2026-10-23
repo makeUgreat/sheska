@@ -1,7 +1,7 @@
 import { type Server } from 'node:http';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { APP_FILTER, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConstraintViolationError, NotFoundError } from '@core/errors';
 import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/library/application/use-cases/get-post.use-case';
@@ -11,7 +11,7 @@ import { CountPostsUseCase } from '@contexts/library/application/use-cases/count
 import { LOGGER } from '@kernels/application';
 import { PostsHttpController } from '@contexts/library/presentation/http/posts.http.controller';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
-import { ZodValidationPipe } from '@platform/nest/pipes/zod-validation.pipe';
+import { DeclaredErrorCodesInterceptor } from '@platform/nest/interceptors/declared-error-codes.interceptor';
 import request from 'supertest';
 import {
   afterEach,
@@ -67,7 +67,10 @@ describe('PostsHttpController', () => {
         { provide: ListPostsUseCase, useValue: listPostsUseCase },
         { provide: SearchPostsUseCase, useValue: searchPostsUseCase },
         { provide: CountPostsUseCase, useValue: countPostsUseCase },
-        { provide: APP_PIPE, useClass: ZodValidationPipe },
+        {
+          provide: APP_INTERCEPTOR,
+          useClass: DeclaredErrorCodesInterceptor,
+        },
         {
           provide: LOGGER,
           useValue: {
@@ -127,7 +130,6 @@ describe('PostsHttpController', () => {
         .expect(400);
 
       expect(response.body).toMatchObject({
-        statusCode: 400,
         code: 'request.validation_failed',
       });
       expect(publishPostUseCase.execute).not.toHaveBeenCalled();
@@ -148,7 +150,6 @@ describe('PostsHttpController', () => {
         .expect(404);
 
       expect(response.body).toEqual({
-        statusCode: 404,
         code: 'source.not_found',
         message: 'Source not found',
         details: {},
@@ -170,7 +171,6 @@ describe('PostsHttpController', () => {
         .expect(409);
 
       expect(response.body).toEqual({
-        statusCode: 409,
         code: 'post.already_exists',
         message: 'A post for this source already exists',
         details: {},
@@ -188,7 +188,6 @@ describe('PostsHttpController', () => {
         .expect(500);
 
       expect(response.body).toEqual({
-        statusCode: 500,
         code: 'internal.unexpected',
         message: 'Internal server error',
         details: {},
@@ -259,7 +258,6 @@ describe('PostsHttpController', () => {
         .expect(400);
 
       expect(response.body).toMatchObject({
-        statusCode: 400,
         code: 'request.validation_failed',
       });
       expect(listPostsUseCase.execute).not.toHaveBeenCalled();
@@ -271,7 +269,6 @@ describe('PostsHttpController', () => {
         .expect(400);
 
       expect(response.body).toMatchObject({
-        statusCode: 400,
         code: 'request.validation_failed',
       });
       expect(listPostsUseCase.execute).not.toHaveBeenCalled();
@@ -283,7 +280,6 @@ describe('PostsHttpController', () => {
         .expect(400);
 
       expect(response.body).toMatchObject({
-        statusCode: 400,
         code: 'request.validation_failed',
       });
       expect(listPostsUseCase.execute).not.toHaveBeenCalled();
@@ -391,7 +387,6 @@ describe('PostsHttpController', () => {
         .expect(400);
 
       expect(response.body).toMatchObject({
-        statusCode: 400,
         code: 'request.validation_failed',
       });
       expect(searchPostsUseCase.execute).not.toHaveBeenCalled();
@@ -403,7 +398,6 @@ describe('PostsHttpController', () => {
         .expect(400);
 
       expect(response.body).toMatchObject({
-        statusCode: 400,
         code: 'request.validation_failed',
       });
       expect(searchPostsUseCase.execute).not.toHaveBeenCalled();
@@ -416,7 +410,6 @@ describe('PostsHttpController', () => {
         .expect(400);
 
       expect(response.body).toMatchObject({
-        statusCode: 400,
         code: 'request.validation_failed',
       });
       expect(searchPostsUseCase.execute).not.toHaveBeenCalled();
@@ -459,7 +452,6 @@ describe('PostsHttpController', () => {
         .expect(500);
 
       expect(response.body).toEqual({
-        statusCode: 500,
         code: 'internal.unexpected',
         message: 'Internal server error',
         details: {},
@@ -489,7 +481,6 @@ describe('PostsHttpController', () => {
         .expect(500);
 
       expect(response.body).toEqual({
-        statusCode: 500,
         code: 'internal.unexpected',
         message: 'Internal server error',
         details: {},
@@ -529,7 +520,7 @@ describe('PostsHttpController', () => {
     it('post가 없으면 404 응답을 반환한다', async () => {
       getPostUseCase.execute.mockRejectedValue(
         new NotFoundError({
-          code: 'posts.post_not_found',
+          code: 'post.not_found',
           message: 'Post not found',
           details: {},
         }),
@@ -540,8 +531,7 @@ describe('PostsHttpController', () => {
         .expect(404);
 
       expect(response.body).toEqual({
-        statusCode: 404,
-        code: 'posts.post_not_found',
+        code: 'post.not_found',
         message: 'Post not found',
         details: {},
       });
@@ -555,7 +545,6 @@ describe('PostsHttpController', () => {
         .expect(500);
 
       expect(response.body).toEqual({
-        statusCode: 500,
         code: 'internal.unexpected',
         message: 'Internal server error',
         details: {},

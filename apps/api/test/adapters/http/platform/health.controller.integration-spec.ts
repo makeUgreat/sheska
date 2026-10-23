@@ -109,7 +109,6 @@ describe('HealthController HTTP contract', () => {
       const response = await request(httpServer).get('/readyz').expect(503);
 
       expect(response.body).toMatchObject({
-        statusCode: 503,
         code: 'health.database_unreachable',
       });
       expect(queueHealthProbe.check).not.toHaveBeenCalled();
@@ -121,7 +120,6 @@ describe('HealthController HTTP contract', () => {
       const response = await request(httpServer).get('/readyz').expect(503);
 
       expect(response.body).toMatchObject({
-        statusCode: 503,
         code: 'health.queue_unreachable',
       });
     });

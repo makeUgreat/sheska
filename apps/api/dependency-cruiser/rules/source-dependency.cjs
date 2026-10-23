@@ -1,4 +1,5 @@
 const docs = require('../docs.cjs');
+const { sourceTestFiles } = require('../patterns.cjs');
 
 module.exports = [
   {
@@ -137,6 +138,20 @@ module.exports = [
     },
     to: {
       path: '^src/(platform/|contexts/$1/(domain|infrastructure|acl)/)',
+    },
+  },
+  {
+    name: 'api-http-contract-only-from-presentation',
+    severity: 'error',
+    comment:
+      'The HTTP contract is a protocol concern. Only presentation adapters, the presentation kernel, and platform wiring may import it; keep use case results and domain models independent of it. ' +
+      `See ${docs.httpContract}.`,
+    from: {
+      path: '^src/',
+      pathNot: `^src/(platform/|kernels/presentation/|contexts/[^/]+/presentation/)|${sourceTestFiles}`,
+    },
+    to: {
+      path: '^[.][.]/[.][.]/packages/contract/',
     },
   },
   {

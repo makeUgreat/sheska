@@ -157,7 +157,6 @@ describe('HttpExceptionFilter', () => {
       );
 
       expect(json).toHaveBeenCalledWith({
-        statusCode: HttpStatus.BAD_REQUEST,
         code: 'source.invalid',
         message: 'Invalid source',
         details,
@@ -178,7 +177,6 @@ describe('HttpExceptionFilter', () => {
       );
 
       expect(json).toHaveBeenCalledWith({
-        statusCode: HttpStatus.CONFLICT,
         code: 'post.already_exists',
         message: 'A post for this source already exists',
         details: {},
@@ -197,7 +195,6 @@ describe('HttpExceptionFilter', () => {
       filter.catch(error, host);
 
       expect(json).toHaveBeenCalledWith({
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         code: 'internal.unexpected',
         message: 'Internal server error',
         details: {},
@@ -214,7 +211,6 @@ describe('HttpExceptionFilter', () => {
       filter.catch(error, host);
 
       expect(json).toHaveBeenCalledWith({
-        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
         code: 'internal.unavailable',
         message: 'Service temporarily unavailable',
         details: {},
@@ -284,11 +280,10 @@ describe('HttpExceptionFilter', () => {
   });
 
   describe('HttpException', () => {
-    it('body가 HttpFailure면 그대로 사용한다', () => {
+    it('body가 오류 응답 schema와 맞으면 그대로 사용한다', () => {
       const { host, status, json } = buildMockHost();
       const filter = new HttpExceptionFilter(buildMockLogger());
       const failure = {
-        statusCode: HttpStatus.BAD_REQUEST,
         code: 'custom.error',
         message: 'Custom error',
         details: {},
@@ -300,7 +295,7 @@ describe('HttpExceptionFilter', () => {
       expect(json).toHaveBeenCalledWith(failure);
     });
 
-    it('body가 HttpFailure가 아닌 4xx는 status를 보존한다', () => {
+    it('body가 오류 응답 schema와 맞지 않는 4xx는 status를 보존한다', () => {
       const { host, status, json } = buildMockHost();
       const filter = new HttpExceptionFilter(buildMockLogger());
 
@@ -311,14 +306,13 @@ describe('HttpExceptionFilter', () => {
 
       expect(status).toHaveBeenCalledWith(HttpStatus.NOT_FOUND);
       expect(json).toHaveBeenCalledWith({
-        statusCode: HttpStatus.NOT_FOUND,
         code: 'http.404',
         message: 'Cannot GET /unknown',
         details: {},
       });
     });
 
-    it('body가 HttpFailure가 아닌 4xx는 로그를 남기지 않는다', () => {
+    it('body가 오류 응답 schema와 맞지 않는 4xx는 로그를 남기지 않는다', () => {
       const { host } = buildMockHost();
       const logger = buildMockLogger();
       const filter = new HttpExceptionFilter(logger);
@@ -329,7 +323,7 @@ describe('HttpExceptionFilter', () => {
       expect(logger.warn).not.toHaveBeenCalled();
     });
 
-    it('body가 HttpFailure가 아닌 5xx는 마스킹한다', () => {
+    it('body가 오류 응답 schema와 맞지 않는 5xx는 마스킹한다', () => {
       const { host, status, json } = buildMockHost();
       const filter = new HttpExceptionFilter(buildMockLogger());
 
