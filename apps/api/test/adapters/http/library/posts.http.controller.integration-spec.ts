@@ -155,7 +155,7 @@ describe('PostsHttpController', () => {
       });
     });
 
-    it('이미 게시된 source이면 409 응답을 반환한다', async () => {
+    it('library.post-1: 이미 게시된 source이면 409 응답을 반환한다', async () => {
       publishPostUseCase.execute.mockRejectedValue(
         new ConstraintViolationError({
           code: 'post.already_exists',

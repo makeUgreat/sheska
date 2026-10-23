@@ -65,7 +65,7 @@ describe('SourceSyncJob', () => {
       expect(syncJob.domainEvents).toEqual([]);
     });
 
-    it('status invariant가 깨지면 throw한다', () => {
+    it('library.syncJob-1: status invariant가 깨지면 throw한다', () => {
       expect(() =>
         SourceSyncJob.restore({
           id: 'source-sync-job-1',
@@ -121,7 +121,7 @@ describe('SourceSyncJob', () => {
   });
 
   describe('isActiveFor', () => {
-    it('status가 waiting이고 fingerprint가 같으면 true를 반환한다', () => {
+    it('library.sync-7: status가 waiting이고 fingerprint가 같으면 true를 반환한다', () => {
       const syncJob = SourceSyncJob.restore({
         id: 'source-sync-job-1',
         sourceId: 'source-1',
@@ -132,7 +132,7 @@ describe('SourceSyncJob', () => {
       expect(syncJob.isActiveFor('fingerprint-1')).toBe(true);
     });
 
-    it('fingerprint가 다르면 false를 반환한다', () => {
+    it('library.sync-7: fingerprint가 다르면 false를 반환한다', () => {
       const syncJob = SourceSyncJob.create({
         sourceId: 'source-1',
         content: '# Source note',
@@ -143,7 +143,7 @@ describe('SourceSyncJob', () => {
     });
 
     it.each(['completed', 'failed'] as const)(
-      'status가 %s면 false를 반환한다',
+      'library.sync-7: status가 %s면 false를 반환한다',
       (status) => {
         const syncJob = SourceSyncJob.restore({
           id: 'source-sync-job-1',

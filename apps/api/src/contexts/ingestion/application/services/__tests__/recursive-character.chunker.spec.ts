@@ -47,7 +47,7 @@ describe('RecursiveCharacterChunker', () => {
       expect(result[0].content).toBe('1234567890');
     });
 
-    it('text length가 chunkSize보다 1 크면 분할한다', () => {
+    it('ingestion.chunk-2: text length가 chunkSize보다 1 크면 분할한다', () => {
       const chunker = buildChunker(10, 0);
 
       const result = chunker.chunk('12345678901');
@@ -119,7 +119,7 @@ describe('RecursiveCharacterChunker', () => {
   });
 
   describe('오버랩', () => {
-    it('문자 단위 분할 시 오버랩 내용이 다음 청크 앞부분에 포함된다', () => {
+    it('ingestion.chunk-3: 문자 단위 분할 시 오버랩 내용이 다음 청크 앞부분에 포함된다', () => {
       const chunker = buildChunker(8, 3);
       const result = chunker.chunk('abcdefghij');
 
@@ -130,7 +130,7 @@ describe('RecursiveCharacterChunker', () => {
       expect(result[1].content.startsWith(overlapFromFirst)).toBe(true);
     });
 
-    it('단락 분할 시 오버랩이 적용되어 앞 청크 내용이 다음 청크에 포함된다', () => {
+    it('ingestion.chunk-3: 단락 분할 시 오버랩이 적용되어 앞 청크 내용이 다음 청크에 포함된다', () => {
       const chunker = buildChunker(15, 5);
       const text = 'abcde\n\nfghij\n\nklmno';
       const result = chunker.chunk(text);
@@ -145,7 +145,7 @@ describe('RecursiveCharacterChunker', () => {
   });
 
   describe('문자 단위 분할 fallback', () => {
-    it('구분자로 나눌 수 없는 긴 단어는 문자 단위로 분할한다', () => {
+    it('ingestion.chunk-2: 구분자로 나눌 수 없는 긴 단어는 문자 단위로 분할한다', () => {
       const chunker = buildChunker(5, 0);
       const result = chunker.chunk('abcdefghij');
 

@@ -800,7 +800,7 @@ describe('SheskaPlugin', () => {
       errorSpy.mockRestore();
     });
 
-    it('captures mtime before the network call, not after, so a concurrent edit is not lost', async () => {
+    it('library.sync-3: captures mtime before the network call, not after, so a concurrent edit is not lost', async () => {
       vi.useFakeTimers();
       const { calls } = stubUploadFetch();
       plugin = makePlugin({ autoSyncDebounceSeconds: 5 });
@@ -823,7 +823,7 @@ describe('SheskaPlugin', () => {
       vi.useRealTimers();
     });
 
-    it('does not upload on vault events when autoSyncEnabled is false', async () => {
+    it('library.sync-10: does not upload on vault events when autoSyncEnabled is false', async () => {
       vi.useFakeTimers();
       const fetchMock = vi.fn();
       vi.stubGlobal('fetch', fetchMock);

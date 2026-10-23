@@ -42,7 +42,7 @@ type OutboxWriterMock = {
 };
 
 describe('UploadSourceUseCase', () => {
-  it('새 source를 저장하고 sync job을 생성한다', async () => {
+  it('library.sync-7: 새 source를 저장하고 sync job을 생성한다', async () => {
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
       content: '# Source note',
       fingerprint: 'fingerprint-1',
@@ -102,7 +102,7 @@ describe('UploadSourceUseCase', () => {
     expect(savedSyncJob?.domainEvents).toEqual([]);
   });
 
-  it('같은 content snapshot이고 최근 sync job이 completed면 저장과 sync job 생성을 건너뛴다', async () => {
+  it('library.sync-7, library.sync-8: 같은 content snapshot이고 최근 sync job이 completed면 저장과 sync job 생성을 건너뛴다', async () => {
     const existingSource = restoreSource({
       id: 'source-1',
       externalSourceId: 'Notes/source.md',
@@ -141,7 +141,7 @@ describe('UploadSourceUseCase', () => {
   });
 
   it.each(['waiting'])(
-    '같은 content snapshot의 최근 sync job이 %s이면 기존 job을 반환한다',
+    'library.sync-7: 같은 content snapshot의 최근 sync job이 %s이면 기존 job을 반환한다',
     async (status) => {
       const existingSource = restoreSource({
         id: 'source-1',
@@ -181,7 +181,7 @@ describe('UploadSourceUseCase', () => {
     },
   );
 
-  it('같은 content snapshot이라도 최근 sync job이 없으면 sync job을 생성한다', async () => {
+  it('library.sync-7: 같은 content snapshot이라도 최근 sync job이 없으면 sync job을 생성한다', async () => {
     const existingSource = restoreSource({
       id: 'source-1',
       externalSourceId: 'Notes/source.md',
@@ -214,7 +214,7 @@ describe('UploadSourceUseCase', () => {
     });
   });
 
-  it('같은 content snapshot이라도 최근 sync job이 completed가 아니면(예: failed) sync job을 다시 생성한다', async () => {
+  it('library.sync-7: 같은 content snapshot이라도 최근 sync job이 completed가 아니면(예: failed) sync job을 다시 생성한다', async () => {
     const existingSource = restoreSource({
       id: 'source-1',
       externalSourceId: 'Notes/source.md',
@@ -250,7 +250,7 @@ describe('UploadSourceUseCase', () => {
     });
   });
 
-  it('다른 content snapshot이면 source를 갱신하고 sync job을 생성한다', async () => {
+  it('library.sync-5: 다른 content snapshot이면 source를 갱신하고 sync job을 생성한다', async () => {
     const existingSource = restoreSource({
       id: 'source-1',
       externalSourceId: 'Notes/source.md',

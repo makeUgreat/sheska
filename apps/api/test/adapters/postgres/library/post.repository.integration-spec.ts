@@ -75,7 +75,7 @@ describe('PostPgDrizzleRepository', () => {
     });
   });
 
-  it('같은 sourceId로 두 번 insert하면 constraint_violation exception을 발생시킨다', async () => {
+  it('library.post-1: 같은 sourceId로 두 번 insert하면 constraint_violation exception을 발생시킨다', async () => {
     const source = await sources.insert(
       buildSource({ externalSourceId: 'Notes/post-repo-conflict.md' }),
     );

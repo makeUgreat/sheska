@@ -21,7 +21,7 @@ describe('SourceSyncJobPgDrizzleMapper', () => {
     expect(syncJob.getProps().fingerprint.unpack()).toBe('fingerprint-1');
   });
 
-  it('sync job row의 persisted status가 domain invariant를 깨면 throw한다', () => {
+  it('library.syncJob-1: sync job row의 persisted status가 domain invariant를 깨면 throw한다', () => {
     const row = buildSourceSyncJobRow({
       sourceId: 'source-1',
       fingerprint: 'fingerprint-1',

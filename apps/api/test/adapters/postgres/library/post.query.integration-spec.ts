@@ -415,7 +415,7 @@ describe('PostPgDrizzleQuery', () => {
       expect(ids).toContain(post.id);
     });
 
-    it('title 일치가 content 일치보다 높은 순위로 반환된다', async () => {
+    it('library.search-5: title 일치가 content 일치보다 높은 순위로 반환된다', async () => {
       const titleSource = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-weight-title.md',
@@ -489,7 +489,7 @@ describe('PostPgDrizzleQuery', () => {
       expect(ids).toContain(post.id);
     });
 
-    it('키워드 겹침 없이 임베딩만 근접해도 하이브리드 쿼리에서 반환된다', async () => {
+    it('library.search-2: 키워드 겹침 없이 임베딩만 근접해도 하이브리드 쿼리에서 반환된다', async () => {
       const source = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-hybrid-vector-only.md',
@@ -526,7 +526,7 @@ describe('PostPgDrizzleQuery', () => {
       expect(ids).toContain(post.id);
     });
 
-    it('FTS와 벡터 둘 다 강한 post가 하나만 강한 post보다 상위 순위로 반환된다', async () => {
+    it('library.search-2: FTS와 벡터 둘 다 강한 post가 하나만 강한 post보다 상위 순위로 반환된다', async () => {
       const bothSource = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-hybrid-rrf-both.md',
@@ -588,7 +588,7 @@ describe('PostPgDrizzleQuery', () => {
       );
     });
 
-    it('제목 매치 keyword-only가 본문 매치 both보다 상위 순위로 반환된다', async () => {
+    it('library.search-5: 제목 매치 keyword-only가 본문 매치 both보다 상위 순위로 반환된다', async () => {
       const titleOnlySource = await sources.insert(
         buildSource({
           externalSourceId: 'Notes/pq-title-boost-title-only.md',

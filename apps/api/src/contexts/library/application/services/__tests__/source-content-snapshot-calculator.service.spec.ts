@@ -52,7 +52,7 @@ describe('SourceContentSnapshotCalculator', () => {
     );
   });
 
-  it('문서가 잘못된 parser 실패를 ValidationFailedError로 변환한다', async () => {
+  it('library.source-4: 문서가 잘못된 parser 실패를 ValidationFailedError로 변환한다', async () => {
     const failingParser: SourceDocumentParser = {
       parse: vi.fn().mockImplementation(() => {
         throw new InvalidDataError({
