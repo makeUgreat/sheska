@@ -22,7 +22,7 @@ module.exports = {
     exclude: {
       path: ['^src/.*\\.spec\\.ts$'],
     },
-    includeOnly: ['^src/', '^node_modules/'],
+    includeOnly: ['^src/', '^node_modules/', '^../../packages/'],
     tsConfig: {
       fileName: join(__dirname, '../tsconfig.json'),
     },

@@ -1,35 +1,20 @@
-// API contract types mirrored from apps/api
+import {
+  type ApiRequest,
+  type ApiResponse,
+  errorResponseSchema,
+  HealthApi,
+  pathOf,
+  SourceApi,
+  SourceSyncJobApi,
+} from '@sheska/contract';
 
-export interface HealthResponse {
-  status: string;
-}
+export type HealthResponse = ApiResponse<typeof HealthApi.ready>;
+export type UploadSourceRequest = ApiRequest<typeof SourceApi.upload>;
+export type UploadSourceResponse = ApiResponse<typeof SourceApi.upload>;
+export type SourceSyncJobResponse = ApiResponse<typeof SourceSyncJobApi.get>;
 
-export interface UploadSourceRequest {
-  externalSourceId: string;
-  content: string;
-}
-
-export interface UploadSourceResponse {
-  sourceId: string;
-  externalSourceId: string;
-  fingerprint: string;
-  syncJobId?: string;
-}
-
-export type SourceSyncJobStatus =
-  | 'waiting'
-  | 'processing'
-  | 'completed'
-  | 'failed';
-
-export interface SourceSyncJobResponse {
-  syncJobId: string;
-  sourceId: string;
-  fingerprint: string;
-  status: SourceSyncJobStatus;
-  totalChunks: number | null;
-  processedChunks: number | null;
-  createdAt: string;
+interface ResponseSchema<T> {
+  parse(data: unknown): T;
 }
 
 export class SheskaApiError extends Error {
@@ -56,7 +41,11 @@ export function isRetryableApiError(error: unknown): boolean {
 export class SheskaApiClient {
   constructor(private readonly baseUrl: string) {}
 
-  private async request<T>(path: string, init?: RequestInit): Promise<T> {
+  private async request<T>(
+    path: string,
+    schema: ResponseSchema<T>,
+    init?: RequestInit,
+  ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const res = await fetch(url, {
       ...init,
@@ -76,41 +65,40 @@ export class SheskaApiClient {
       );
     }
 
-    return res.json() as Promise<T>;
+    return schema.parse(await res.json());
   }
 
-  get<T>(path: string): Promise<T> {
-    return this.request<T>(path);
+  get<T>(path: string, schema: ResponseSchema<T>): Promise<T> {
+    return this.request(path, schema);
   }
 
-  post<T>(path: string, body: unknown): Promise<T> {
-    return this.request<T>(path, {
+  post<T>(path: string, body: unknown, schema: ResponseSchema<T>): Promise<T> {
+    return this.request(path, schema, {
       method: 'POST',
       body: JSON.stringify(body),
     });
   }
 
   health(): Promise<HealthResponse> {
-    return this.get<HealthResponse>('/readyz');
+    return this.get(HealthApi.ready.path, HealthApi.ready.response);
   }
 
   uploadSource(body: UploadSourceRequest): Promise<UploadSourceResponse> {
-    return this.post<UploadSourceResponse>('/sources', body);
+    return this.post(SourceApi.upload.path, body, SourceApi.upload.response);
   }
 
   getSyncJob(syncJobId: string): Promise<SourceSyncJobResponse> {
-    return this.get<SourceSyncJobResponse>(
-      `/sync-jobs/${encodeURIComponent(syncJobId)}`,
+    return this.get(
+      pathOf(SourceSyncJobApi.get, { id: syncJobId }),
+      SourceSyncJobApi.get.response,
     );
   }
 }
 
 function readFailureCode(body: string): string | undefined {
   try {
-    const parsed: unknown = JSON.parse(body);
-    if (typeof parsed !== 'object' || parsed === null) return undefined;
-    const { code } = parsed as { code?: unknown };
-    return typeof code === 'string' ? code : undefined;
+    const parsed = errorResponseSchema.safeParse(JSON.parse(body));
+    return parsed.success ? parsed.data.code : undefined;
   } catch {
     return undefined;
   }
