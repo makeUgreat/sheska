@@ -90,7 +90,7 @@ describe('UploadSourceUseCase', () => {
     await app.close();
   });
 
-  it('새 source를 저장하고 sync job을 생성한다', async () => {
+  it('library.sync-7: 새 source를 저장하고 sync job을 생성한다', async () => {
     const externalSourceId = 'Notes/upload-usecase-new-source.md';
     const content = optedIntoSync('# Source note');
     const fingerprint = useFingerprint(content, 'fingerprint-new-source');
@@ -167,7 +167,7 @@ describe('UploadSourceUseCase', () => {
     });
   });
 
-  it('같은 content를 다시 업로드할 때 active sync job을 재사용한다', async () => {
+  it('library.sync-2, library.sync-7: 같은 content를 다시 업로드할 때 active sync job을 재사용한다', async () => {
     const externalSourceId = 'Notes/upload-usecase-unchanged-no-embedding.md';
     const content = optedIntoSync('# Same source note');
     const fingerprint = useFingerprint(content, 'fingerprint-unchanged-source');
@@ -189,7 +189,7 @@ describe('UploadSourceUseCase', () => {
     expect(persistedSyncJobs).toHaveLength(1);
   });
 
-  it('frontmatter 전체와 body를 분리하고 body만 임베딩 대상으로 전달한다', async () => {
+  it('ingestion.chunk-1: frontmatter 전체와 body를 분리하고 body만 임베딩 대상으로 전달한다', async () => {
     const externalSourceId = 'Notes/upload-usecase-frontmatter.md';
     const content = `---
 sheska: true
@@ -232,7 +232,7 @@ custom:
     expect(message?.payload).toMatchObject({ content: '# Retry body' });
   });
 
-  it('같은 content를 다시 업로드할 때 임베딩이 최신이면 저장 갱신과 sync job 생성을 건너뛴다', async () => {
+  it('library.sync-7, library.sync-8: 같은 content를 다시 업로드할 때 임베딩이 최신이면 저장 갱신과 sync job 생성을 건너뛴다', async () => {
     const externalSourceId = 'Notes/upload-usecase-unchanged-with-embedding.md';
     const content = optedIntoSync('# Same source note with embedding');
     const fingerprint = useFingerprint(
@@ -269,7 +269,7 @@ custom:
     expect(persistedSyncJobs).toHaveLength(1);
   });
 
-  it('다른 content를 다시 업로드하면 source를 갱신하고 sync job을 추가한다', async () => {
+  it('library.source-2, library.sync-5, library.sync-7: 다른 content를 다시 업로드하면 source를 갱신하고 sync job을 추가한다', async () => {
     const externalSourceId = 'Notes/upload-usecase-changed-source.md';
     const oldContent = optedIntoSync('# Old source note');
     const newContent = optedIntoSync('# New source note');

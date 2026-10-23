@@ -17,7 +17,7 @@ describe('PostViewCount', () => {
   });
 
   describe('increment', () => {
-    it('값을 1 증가시킨 새 인스턴스를 반환한다', () => {
+    it('library.post-5: 값을 1 증가시킨 새 인스턴스를 반환한다', () => {
       const count = PostViewCount.of(5);
 
       expect(count.increment().unpack()).toBe(6);

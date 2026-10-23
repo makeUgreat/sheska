@@ -26,7 +26,7 @@ describe('Source', () => {
     );
   });
 
-  it('frontmatter title이 없으면 externalSourceId를 title로 저장한다', () => {
+  it('library.source-3: frontmatter title이 없으면 externalSourceId를 title로 저장한다', () => {
     const source = Source.create({
       externalSourceId: ' Notes/source.md ',
       ...snapshot,
@@ -56,7 +56,7 @@ describe('Source', () => {
     );
   });
 
-  it('다른 fingerprint이면 snapshot을 갱신한다', () => {
+  it('library.sync-5: 다른 fingerprint이면 snapshot을 갱신한다', () => {
     const source = Source.create({
       externalSourceId: 'Notes/source.md',
       ...snapshot,

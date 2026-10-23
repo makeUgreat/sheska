@@ -139,7 +139,7 @@ describe('SearchPostsUseCase', () => {
     ).rejects.toBe(searchFailure);
   });
 
-  it('쿼리 임베딩이 성공하면 queryEmbedding을 전달하고 semanticSearchApplied를 true로 반환한다', async () => {
+  it('library.search-4: 쿼리 임베딩이 성공하면 queryEmbedding을 전달하고 semanticSearchApplied를 true로 반환한다', async () => {
     const postQuery = createPostQueryMock();
     postQuery.search.mockResolvedValue(buildSearchResult());
     const searchQueryEmbedder = createSearchQueryEmbedderMock();
@@ -165,7 +165,7 @@ describe('SearchPostsUseCase', () => {
     expect(result.semanticSearchApplied).toBe(true);
   });
 
-  it('쿼리 임베딩이 실패(null)하면 FTS-only로 폴백하고 semanticSearchApplied를 false로 반환한다', async () => {
+  it('library.search-3, library.search-4: 쿼리 임베딩이 실패(null)하면 FTS-only로 폴백하고 semanticSearchApplied를 false로 반환한다', async () => {
     const postQuery = createPostQueryMock();
     postQuery.search.mockResolvedValue(buildSearchResult());
     const searchQueryEmbedder = createSearchQueryEmbedderMock();

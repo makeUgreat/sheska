@@ -78,7 +78,7 @@ describe('PublishPostUseCase', () => {
     expect(posts.insert).not.toHaveBeenCalled();
   });
 
-  it('이미 발행된 source면 insert가 던진 StateConflictError를 전파한다', async () => {
+  it('library.post-1: 이미 발행된 source면 insert가 던진 StateConflictError를 전파한다', async () => {
     const alreadyPublished = new StateConflictError({
       code: 'post.already_exists',
       message: 'A post for this source already exists',

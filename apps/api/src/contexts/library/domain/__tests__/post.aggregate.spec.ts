@@ -2,7 +2,7 @@ import { Post } from '@contexts/library/domain';
 import { describe, expect, it } from 'vitest';
 
 describe('Post', () => {
-  it('source와 식별자를 공유하고 viewCount는 0으로 시작한다', () => {
+  it('library.post-2: source와 식별자를 공유하고 viewCount는 0으로 시작한다', () => {
     const post = Post.create({ sourceId: 'source-1' });
 
     expect(post.id).toBe('source-1');
@@ -21,7 +21,7 @@ describe('Post', () => {
     expect(post.getProps().viewCount.unpack()).toBe(42);
   });
 
-  it('viewCount를 1 증가시킨다', () => {
+  it('library.post-5: viewCount를 1 증가시킨다', () => {
     const post = Post.restore({
       id: 'source-1',
       viewCount: 5,
