@@ -7,8 +7,8 @@ const meta = {
   component: BackLink,
   tags: ['autodocs'],
   args: {
-    to: '/notes',
-    children: 'Back to notes',
+    to: '/posts',
+    children: 'Back to posts',
   },
   decorators: [
     (Story) => (
@@ -26,8 +26,4 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /** Hover or tab to it: the label unrolls. */
-export const Notes: Story = {};
-
-export const Posts: Story = {
-  args: { to: '/posts', children: 'Back to posts' },
-};
+export const Posts: Story = {};

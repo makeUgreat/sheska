@@ -2,7 +2,6 @@ import { Link, useLocation } from 'react-router-dom';
 
 const SECTIONS = [
   { href: '/posts', label: 'posts' },
-  { href: '/notes', label: 'notes' },
   { href: '/sources', label: 'sources' },
 ] as const;
 

@@ -27,7 +27,6 @@ function atRoute(route: string) {
   ];
 }
 
-export const OnNotes: Story = { decorators: atRoute('/notes') };
 export const OnPosts: Story = { decorators: atRoute('/posts') };
-export const OnNoteDetail: Story = { decorators: atRoute('/notes/01932abc') };
+export const OnPostDetail: Story = { decorators: atRoute('/posts/01932abc') };
 export const OnSources: Story = { decorators: atRoute('/sources') };

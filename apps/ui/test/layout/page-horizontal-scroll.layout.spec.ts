@@ -38,27 +38,6 @@ const POSTS = [
   },
 ];
 
-const NOTES = [
-  {
-    noteId: 'note-0',
-    sourceId: 'source-0',
-    title: `A note titled ${UNBREAKABLE}`,
-    aliases: ['alias'],
-    keywords: ['tailwind', 'responsive', 'layout'],
-    createdAt: NOW,
-    updatedAt: NOW,
-  },
-  {
-    noteId: 'note-1',
-    sourceId: 'source-1',
-    title: 'The Quiet Art of Refactoring',
-    aliases: [],
-    keywords: [],
-    createdAt: NOW,
-    updatedAt: NOW,
-  },
-];
-
 const SOURCES = [
   {
     sourceId: 'source-0',
@@ -87,13 +66,6 @@ const RESPONSES: Record<string, unknown> = {
     semanticSearchApplied: true,
   },
   '/posts/post-0': { ...POSTS[0], body: BODY },
-  '/notes': { notes: NOTES, nextCursor: null },
-  '/notes/note-0': {
-    ...NOTES[0],
-    externalSourceId: 'note.md',
-    frontmatter: { tags: ['layout'] },
-    body: BODY,
-  },
   '/sources': {
     sources: SOURCES,
     page: 1,
@@ -138,8 +110,6 @@ const ROUTES = [
   '/',
   '/posts',
   '/posts/post-0',
-  '/notes',
-  '/notes/note-0',
   '/sources',
   '/sources/source-0',
 ];
