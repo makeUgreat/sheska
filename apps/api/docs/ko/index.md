@@ -14,6 +14,7 @@ related:
   - ./architecture/runtime-wiring.md
   - ./architecture/context-integration.md
   - ./architecture/context-map.md
+  - ./architecture/http-contract.md
   - ./test.md
   - ./persistence/repository-methods.md
   - ./operability/observability.md
@@ -42,6 +43,8 @@ related:
 - NestJS DI, provider registration, module wiring, platform startup flow, port binding 작업: [API Runtime Wiring 컨벤션](./architecture/runtime-wiring.md)을 읽는다.
 - 새 개념이나 기능을 어느 bounded context에 둘지 정하거나, context 사이의 의존 방향을 바꾸는 작업:
   [API 컨텍스트 맵](./architecture/context-map.md)을 읽는다.
+- HTTP endpoint 추가, 요청·응답 schema 변경, endpoint별 오류 code 목록, 계약 하위 호환 판단 작업:
+  [API HTTP 계약 컨벤션](./architecture/http-contract.md)을 읽는다.
 - 크로스 컨텍스트 데이터 통합, domain event와 integration event 분류, outbox 전달 의미, 컨슈머 소유
   포트/어댑터 배치, Pull vs Push 전략 결정 작업:
   [API 컨텍스트 통합 컨벤션](./architecture/context-integration.md)을 읽는다.

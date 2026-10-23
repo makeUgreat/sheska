@@ -97,8 +97,10 @@ related:
   - 4xx로 매핑되는 `kind`는 `code`와 `message`를 노출한다. `details`는 호출자가 조치할 수 있을 때만 노출한다.
   - 로그 레벨은 같은 정책이 `kind`별로 정한다. 4xx로 매핑되는 비즈니스 실패는 장애 로그로 남기지 않는다.
     [로깅 정책](./logging.md)을 따른다.
-  - Presentation이 의도적으로 소유하는 protocol response는 `HttpFailure`를 담은 protocol exception으로 직접
+  - Presentation이 의도적으로 소유하는 protocol response는 오류 응답 body를 담은 protocol exception으로 직접
     던진다. 경계는 이 response를 변환하지 않고 그대로 전달한다.
+  - 4xx로 노출하는 `code`는 endpoint의 HTTP 계약에 선언한 것만 내보낸다.
+    [HTTP 계약 컨벤션](../architecture/http-contract.md#오류-code)을 따른다.
 
 ## Error 흐름
 
@@ -146,8 +148,8 @@ flowchart TB
 ## Protocol Error Response 형태
 
 - Protocol error response는 안정적인 failure shape을 사용하는 것이 좋다.
-  - HTTP에서는 protocol이 달리 정할 이유가 없다면 `kernels/presentation`의 `HttpFailure`를 사용한다.
-  - `statusCode`는 숫자로 표현한 protocol status다.
+  - HTTP에서는 `@sheska/contract`의 `errorResponseSchema`(`code`, `message`, `details`)를 사용한다.
+    status는 body에 다시 담지 않고 HTTP status로만 보낸다.
   - `code`는 호출자와 기계가 response를 분류할 때 사용하는 안정적인 값이다.
   - `message`는 변경, 지역화, masking 또는 재작성될 수 있는 사람이 읽는 맥락이다.
   - `details`는 수신자가 의존해도 되는 최소한의 구조화된 데이터다.

@@ -23,6 +23,19 @@ applies_to:
 - 앱은 다른 앱의 `src` 파일을 직접 import하지 않는 것을 원칙으로 한다.
   - 앱 간 contract는 package dependency, generated client, schema, API, 또는 전용 shared workspace를 통해 이동해야 한다.
 
+## 공유 Workspace
+
+- 앱 workspace는 `apps/`에, 둘 이상의 앱이 import하는 공유 workspace는 `packages/`에 둔다.
+  - 예: HTTP 계약을 정의하는 `packages/contract`(`@sheska/contract`)
+- 공유 workspace는 TypeScript 소스가 아니라 `tsc`로 빌드한 `dist`를 내보낸다.
+  - API는 CommonJS로 컴파일한 JS를 node로 실행한다. 공유 workspace가 소스를 내보내면 API runtime이 그 소스를 읽지 못한다.
+- `dist`는 `pnpm install`이 각 공유 workspace의 `prepare` script로 만든다.
+  공유 workspace의 소스를 고친 뒤에는 그 workspace의 `build`나 `dev`(watch)를 실행해야 앱이 바뀐 내용을 본다.
+- 공유 workspace의 `harness:static`과 `harness:build`는 먼저 자기 `dist`를 빌드한다.
+  - `pnpm -r`은 의존 순서대로 실행하므로, 앱의 typecheck와 build는 새로 빌드한 `dist`를 본다.
+- 앱의 Dockerfile은 그 앱이 의존하는 공유 workspace를 함께 복사하고 `pnpm install --filter <app>...`로 의존까지 설치한다.
+  - `...`가 없으면 공유 workspace가 설치되지 않아 `prepare`가 돌지 않는다.
+
 ## Workspace 간 런타임 테스트 정책
 
 - 한 workspace의 통합 테스트가 다른 서비스를 실행해야 한다면, 실행되는 서비스가 test runtime command를 소유한다.
