@@ -30,6 +30,7 @@
     "test:runtime:stop": "tsx test/runtime/stop.ts"
   },
   "dependencies": {
+    "@sheska/contract": "workspace:*",
     "@tailwindcss/vite": "^4.3.2",
     "@tanstack/react-query": "^5.101.2",
     "highlight.js": "^11.12.0",

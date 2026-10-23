@@ -88,7 +88,9 @@ describe('usePostsArchive', () => {
     });
 
     await waitFor(() => {
-      expect(client.get).toHaveBeenCalledWith('/posts', { limit: '5' });
+      expect(client.get).toHaveBeenCalledWith('/posts', expect.anything(), {
+        limit: '5',
+      });
       expect(result.current.posts).toHaveLength(1);
     });
   });
@@ -160,10 +162,14 @@ describe('usePostsArchive', () => {
 
     await waitFor(() => {
       expect(result.current.normalizedQuery).toBe('garden');
-      expect(client.get).toHaveBeenCalledWith('/posts/search', {
-        q: 'garden',
-        limit: '3',
-      });
+      expect(client.get).toHaveBeenCalledWith(
+        '/posts/search',
+        expect.anything(),
+        {
+          q: 'garden',
+          limit: '3',
+        },
+      );
       expect(result.current.isSearching).toBe(true);
       expect(result.current.semanticSearchApplied).toBe(true);
       expect(result.current.posts).toEqual([searchPost]);
@@ -214,10 +220,11 @@ describe('usePostsArchive', () => {
       await result.current.fetchNextPage();
     });
 
-    expect(client.get as Mock).toHaveBeenLastCalledWith('/posts/search', {
-      q: 'term',
-      cursor: 'search-next',
-    });
+    expect(client.get as Mock).toHaveBeenLastCalledWith(
+      '/posts/search',
+      expect.anything(),
+      { q: 'term', cursor: 'search-next' },
+    );
   });
 
   it('semantic search가 적용되지 않은 검색 폴백 상태를 반환한다', async () => {

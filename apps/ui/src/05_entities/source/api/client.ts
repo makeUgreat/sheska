@@ -1,3 +1,4 @@
+import { pathOf, SourceApi, SourceSyncJobApi } from '@sheska/contract';
 import { type HttpClientType as HttpClient } from '@/shared/api';
 import {
   type GetSourceResponse,
@@ -15,8 +16,9 @@ export function listSources(
   if (params?.pageSize) queryParams.pageSize = String(params.pageSize);
   if (params?.syncJobStatus) queryParams.syncJobStatus = params.syncJobStatus;
 
-  return http.get<ListSourcesResponse>(
-    '/sources',
+  return http.get(
+    SourceApi.list.path,
+    SourceApi.list.response,
     Object.keys(queryParams).length > 0 ? queryParams : undefined,
   );
 }
@@ -25,9 +27,12 @@ export function getSource(
   http: HttpClient,
   id: string,
 ): Promise<GetSourceResponse> {
-  return http.get<GetSourceResponse>(`/sources/${id}`);
+  return http.get(pathOf(SourceApi.get, { id }), SourceApi.get.response);
 }
 
 export function getSyncJob(http: HttpClient, id: string): Promise<SyncJob> {
-  return http.get<SyncJob>(`/sync-jobs/${encodeURIComponent(id)}`);
+  return http.get(
+    pathOf(SourceSyncJobApi.get, { id }),
+    SourceSyncJobApi.get.response,
+  );
 }

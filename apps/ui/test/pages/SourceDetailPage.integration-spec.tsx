@@ -187,7 +187,10 @@ describe('SourceDetailPage', () => {
     renderPage(client);
 
     await waitFor(() => {
-      expect(get).toHaveBeenCalledWith('/sync-jobs/sync-job-1');
+      expect(get).toHaveBeenCalledWith(
+        '/sync-jobs/sync-job-1',
+        expect.anything(),
+      );
       expect(
         get.mock.calls.filter(([path]) => path === '/sources/source-1').length,
       ).toBe(2);
@@ -249,7 +252,10 @@ describe('SourceDetailPage', () => {
     renderPage(client, 'source-1');
 
     await waitFor(() => {
-      expect(getSource).toHaveBeenCalledWith('/sources/source-1');
+      expect(getSource).toHaveBeenCalledWith(
+        '/sources/source-1',
+        expect.anything(),
+      );
     });
   });
 
@@ -294,9 +300,11 @@ describe('SourceDetailPage', () => {
       await user.click(screen.getByRole('button', { name: '게시하기' }));
 
       await waitFor(() => {
-        expect(publishPost).toHaveBeenCalledWith('/posts', {
-          sourceId: 'source-1',
-        });
+        expect(publishPost).toHaveBeenCalledWith(
+          '/posts',
+          { sourceId: 'source-1' },
+          expect.anything(),
+        );
       });
     });
 

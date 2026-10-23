@@ -25,3 +25,5 @@ related:
 - `apps/ui` source directory, feature boundary, import direction, reusable UI 위치를 결정하거나 변경할 때: [UI 구조 컨벤션](./structure.md)을 읽는다.
 - `apps/ui` test file, test structure, test command를 선택하거나 변경할 때: [UI 테스트 컨벤션](./test.md)을 읽는다.
 - Dockerfile, Cloudflare Pages 설정, vite 빌드 설정을 변경하거나 검토할 때: [UI 배포](./deployment.md)를 읽는다.
+- API를 호출하는 코드(`05_entities/*/api`, `06_shared/api`)를 추가하거나 변경할 때:
+  [API HTTP 계약 컨벤션](../../../api/docs/ko/architecture/http-contract.md)을 읽는다.

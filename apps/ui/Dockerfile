@@ -6,8 +6,10 @@ WORKDIR /app
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc ./
 COPY apps/ui/package.json ./apps/ui/
+COPY packages/contract/package.json packages/contract/tsconfig.json ./packages/contract/
+COPY packages/contract/src ./packages/contract/src
 
-RUN pnpm install --frozen-lockfile --filter @sheska/ui
+RUN pnpm install --frozen-lockfile --filter @sheska/ui...
 
 COPY apps/ui/index.html ./apps/ui/
 COPY apps/ui/src ./apps/ui/src

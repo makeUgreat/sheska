@@ -7,6 +7,10 @@ import { HttpClient } from '@/shared/api';
 
 const BASE_URL_FILE = '/tmp/sheska-ui-api-client-runtime/base-url';
 
+function syncTargetContent(frontmatter: string, body: string): string {
+  return `---\nsheska: true\n${frontmatter}---\n${body}`;
+}
+
 describe('entity API clients', () => {
   it('listSources 응답 계약이 실제 API와 일치한다', async () => {
     const baseUrl =
@@ -14,7 +18,8 @@ describe('entity API clients', () => {
       (await readFile(BASE_URL_FILE, 'utf8')).trim();
     const http = new HttpClient(baseUrl);
     const externalSourceId = `ui-api-client-${randomUUID()}`;
-    const content = `API client integration test content ${randomUUID()}`;
+    const body = `API client integration test content ${randomUUID()}`;
+    const content = syncTargetContent('', body);
 
     const uploadResponse = await fetch(`${baseUrl}/sources`, {
       method: 'POST',
@@ -58,7 +63,8 @@ describe('entity API clients', () => {
       (await readFile(BASE_URL_FILE, 'utf8')).trim();
     const http = new HttpClient(baseUrl);
     const externalSourceId = `ui-api-client-${randomUUID()}`;
-    const content = `API client integration test content ${randomUUID()}`;
+    const body = `API client integration test content ${randomUUID()}`;
+    const content = syncTargetContent('', body);
 
     const uploadResponse = await fetch(`${baseUrl}/sources`, {
       method: 'POST',
@@ -81,8 +87,8 @@ describe('entity API clients', () => {
         sourceId: uploaded.sourceId,
         externalSourceId,
         title: externalSourceId,
-        body: content,
-        frontmatter: {},
+        body,
+        frontmatter: { sheska: true },
         fingerprint: uploaded.fingerprint,
         latestSyncJob: expect.objectContaining({
           syncJobId: uploaded.syncJobId,
@@ -112,7 +118,10 @@ describe('entity API clients', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         externalSourceId: `ui-api-client-${randomUUID()}`,
-        content: `API client integration test content ${randomUUID()}`,
+        content: syncTargetContent(
+          '',
+          `API client integration test content ${randomUUID()}`,
+        ),
       }),
     });
     expect(uploadResponse.status).toBe(201);
@@ -147,7 +156,10 @@ describe('entity API clients', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         externalSourceId: `ui-api-client-${randomUUID()}`,
-        content: `API client integration test content ${randomUUID()}`,
+        content: syncTargetContent(
+          '',
+          `API client integration test content ${randomUUID()}`,
+        ),
       }),
     });
     expect(uploadResponse.status).toBe(201);
@@ -181,7 +193,10 @@ describe('entity API clients', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         externalSourceId: `ui-api-client-${randomUUID()}`,
-        content: `---\ntitle: ${title}\n---\nAPI client integration test content ${randomUUID()}`,
+        content: syncTargetContent(
+          `title: ${title}\n`,
+          `API client integration test content ${randomUUID()}`,
+        ),
       }),
     });
     expect(uploadResponse.status).toBe(201);
@@ -233,7 +248,10 @@ describe('entity API clients', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         externalSourceId: `ui-api-client-${randomUUID()}`,
-        content: `---\ntitle: ${title}\n---\nAPI client integration test content ${randomUUID()}`,
+        content: syncTargetContent(
+          `title: ${title}\n`,
+          `API client integration test content ${randomUUID()}`,
+        ),
       }),
     });
     expect(uploadResponse.status).toBe(201);

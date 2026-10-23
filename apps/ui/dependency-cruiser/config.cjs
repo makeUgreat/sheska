@@ -22,7 +22,13 @@ module.exports = {
     exclude: {
       path: ['^dist/', '^coverage/', '^storybook-static/'],
     },
-    includeOnly: ['^src/', '^test/', '^node_modules/', '^../../node_modules/'],
+    includeOnly: [
+      '^src/',
+      '^test/',
+      '^node_modules/',
+      '^../../node_modules/',
+      '^../../packages/',
+    ],
     tsConfig: {
       fileName: join(__dirname, '../tsconfig.json'),
     },
