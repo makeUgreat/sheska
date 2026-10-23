@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { HealthApi } from '@sheska/contract';
 import {
   HttpClient,
   HttpError,
@@ -166,8 +167,20 @@ describe('HttpClient', () => {
       );
     });
 
-    it('status를 알 수 없는 실패는 일시적일 수 있으므로 재시도 대상이다', () => {
+    it('네트워크 실패는 일시적일 수 있으므로 재시도 대상이다', () => {
       expect(isRetryableHttpError(new TypeError('Failed to fetch'))).toBe(true);
+    });
+
+    it('응답 본문이 계약과 맞지 않으면 재시도 대상이 아니다', () => {
+      const { error } = HealthApi.live.response.safeParse({});
+
+      expect(isRetryableHttpError(error)).toBe(false);
+    });
+
+    it('응답 본문이 JSON이 아니면 재시도 대상이 아니다', () => {
+      expect(isRetryableHttpError(new SyntaxError('Unexpected token'))).toBe(
+        false,
+      );
     });
   });
 

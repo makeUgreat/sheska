@@ -20,7 +20,8 @@ export class HttpError extends Error {
 const RETRYABLE_STATUS = 429;
 
 export function isRetryableHttpError(error: unknown): boolean {
-  if (!(error instanceof HttpError)) return true;
+  if (error instanceof TypeError) return true;
+  if (!(error instanceof HttpError)) return false;
   return error.status === RETRYABLE_STATUS || error.status >= 500;
 }
 
