@@ -1,6 +1,6 @@
+import { sha256Hex } from '@core/hash';
 import {
   Source,
-  SourceContentSnapshot,
   SourceSyncJob,
   type SourceFrontmatterProps,
   type SourceRepository,
@@ -16,6 +16,7 @@ import { type LibraryUnitOfWork } from '../../ports';
 import {
   buildSource,
   sourceContentByteSize,
+  sourceContentOf,
 } from '../../../../../../test/support/domains/fixtures/source.fixture';
 
 type ContentSnapshotCalculatorMock = {
@@ -45,7 +46,6 @@ describe('UploadSourceUseCase', () => {
   it('library.sync-7: 새 source를 저장하고 sync job을 생성한다', async () => {
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
       content: '# Source note',
-      fingerprint: 'fingerprint-1',
     });
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
@@ -64,7 +64,7 @@ describe('UploadSourceUseCase', () => {
 
     expect(result).toMatchObject({
       externalSourceId: 'Notes/source.md',
-      fingerprint: 'fingerprint-1',
+      fingerprint: sha256Hex('# Source note'),
     });
     expect(result.sourceId.length).toBeGreaterThan(0);
     expect(result.syncJobId?.length).toBeGreaterThan(0);
@@ -77,11 +77,10 @@ describe('UploadSourceUseCase', () => {
     expectSourceSavedWith(sources, {
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
-      fingerprint: 'fingerprint-1',
     });
     expectSyncJobSavedWith(syncJobs, {
       sourceId: sourceWriteCalls(sources)[0]?.[0]?.id,
-      fingerprint: 'fingerprint-1',
+      fingerprint: sha256Hex('# Source note'),
     });
     const savedSyncJob = syncJobs.insert.mock.calls[0]?.[0];
     expect(outbox.append).toHaveBeenCalledOnce();
@@ -107,11 +106,9 @@ describe('UploadSourceUseCase', () => {
       id: 'source-1',
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
-      fingerprint: 'fingerprint-1',
     });
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
       content: '# Source note',
-      fingerprint: 'fingerprint-1',
     });
     const sources = createSourceRepositoryMock();
     sources.find.mockResolvedValue(existingSource);
@@ -134,10 +131,48 @@ describe('UploadSourceUseCase', () => {
     expect(result).toEqual({
       sourceId: 'source-1',
       externalSourceId: 'Notes/source.md',
-      fingerprint: 'fingerprint-1',
+      fingerprint: sha256Hex('# Source note'),
     });
     expect(sourceWriteCalls(sources)).toHaveLength(0);
     expect(syncJobs.insert).not.toHaveBeenCalled();
+  });
+
+  it('library.sync-7: 본문이 같아도 최근 completed sync job의 fingerprint가 다르면 sync job을 생성한다', async () => {
+    const existingSource = restoreSource({
+      id: 'source-1',
+      externalSourceId: 'Notes/source.md',
+      content: '# Source note',
+    });
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
+      content: '# Source note',
+    });
+    const sources = createSourceRepositoryMock();
+    sources.find.mockResolvedValue(existingSource);
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    syncJobs.findLatest.mockResolvedValue(
+      restoreSyncJob({
+        sourceId: 'source-1',
+        status: 'completed',
+        fingerprint: 'previous-fingerprint',
+      }),
+    );
+    const useCase = new UploadSourceUseCase(
+      contentSnapshotCalculator,
+      sources,
+      syncJobs,
+      createLibraryUnitOfWorkMock(sources, syncJobs),
+    );
+
+    const result = await useCase.execute({
+      externalSourceId: 'Notes/source.md',
+      content: '# Source note',
+    });
+
+    expect(result.syncJobId?.length).toBeGreaterThan(0);
+    expectSyncJobSavedWith(syncJobs, {
+      sourceId: 'source-1',
+      fingerprint: sha256Hex('# Source note'),
+    });
   });
 
   it.each(['waiting'])(
@@ -147,21 +182,15 @@ describe('UploadSourceUseCase', () => {
         id: 'source-1',
         externalSourceId: 'Notes/source.md',
         content: '# Source note',
-        fingerprint: 'fingerprint-1',
       });
       const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
         content: '# Source note',
-        fingerprint: 'fingerprint-1',
       });
       const sources = createSourceRepositoryMock();
       sources.find.mockResolvedValue(existingSource);
       const syncJobs = createSourceSyncJobRepositoryMock();
       syncJobs.findLatest.mockResolvedValue(
-        restoreSyncJob({
-          sourceId: 'source-1',
-          fingerprint: 'fingerprint-1',
-          status,
-        }),
+        restoreSyncJob({ sourceId: 'source-1', status }),
       );
       const useCase = new UploadSourceUseCase(
         contentSnapshotCalculator,
@@ -186,11 +215,9 @@ describe('UploadSourceUseCase', () => {
       id: 'source-1',
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
-      fingerprint: 'fingerprint-1',
     });
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
       content: '# Source note',
-      fingerprint: 'fingerprint-1',
     });
     const sources = createSourceRepositoryMock();
     sources.find.mockResolvedValue(existingSource);
@@ -210,7 +237,7 @@ describe('UploadSourceUseCase', () => {
     expect(result.syncJobId?.length).toBeGreaterThan(0);
     expectSyncJobSavedWith(syncJobs, {
       sourceId: 'source-1',
-      fingerprint: 'fingerprint-1',
+      fingerprint: sha256Hex('# Source note'),
     });
   });
 
@@ -219,11 +246,9 @@ describe('UploadSourceUseCase', () => {
       id: 'source-1',
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
-      fingerprint: 'fingerprint-1',
     });
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
       content: '# Source note',
-      fingerprint: 'fingerprint-1',
     });
     const sources = createSourceRepositoryMock();
     sources.find.mockResolvedValue(existingSource);
@@ -246,7 +271,7 @@ describe('UploadSourceUseCase', () => {
     expect(result.syncJobId?.length).toBeGreaterThan(0);
     expectSyncJobSavedWith(syncJobs, {
       sourceId: 'source-1',
-      fingerprint: 'fingerprint-1',
+      fingerprint: sha256Hex('# Source note'),
     });
   });
 
@@ -255,11 +280,9 @@ describe('UploadSourceUseCase', () => {
       id: 'source-1',
       externalSourceId: 'Notes/source.md',
       content: '# Old source note',
-      fingerprint: 'fingerprint-old',
     });
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
       content: '# New source note',
-      fingerprint: 'fingerprint-new',
     });
     const sources = createSourceRepositoryMock();
     sources.find.mockResolvedValue(existingSource);
@@ -279,18 +302,92 @@ describe('UploadSourceUseCase', () => {
     expect(result).toMatchObject({
       sourceId: 'source-1',
       externalSourceId: 'Notes/source.md',
-      fingerprint: 'fingerprint-new',
+      fingerprint: sha256Hex('# New source note'),
     });
     expect(result.syncJobId?.length).toBeGreaterThan(0);
     expectSourceSavedWith(sources, {
       externalSourceId: 'Notes/source.md',
       content: '# New source note',
-      fingerprint: 'fingerprint-new',
     });
     expectSyncJobSavedWith(syncJobs, {
       sourceId: 'source-1',
-      fingerprint: 'fingerprint-new',
+      fingerprint: sha256Hex('# New source note'),
     });
+  });
+
+  it('library.sync-5, library.sync-6: 본문은 같고 frontmatter만 바뀌었고 최근 sync job이 completed면 source만 갱신한다', async () => {
+    const existingSource = restoreSource({
+      id: 'source-1',
+      externalSourceId: 'Notes/source.md',
+      content: '# Source note',
+    });
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
+      content: '# Source note',
+      frontmatter: { sheska: true, tags: ['a'] },
+    });
+    const sources = createSourceRepositoryMock();
+    sources.find.mockResolvedValue(existingSource);
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    syncJobs.findLatest.mockResolvedValue(
+      restoreSyncJob({ sourceId: 'source-1', status: 'completed' }),
+    );
+    const outbox = createOutboxWriterMock();
+    const useCase = new UploadSourceUseCase(
+      contentSnapshotCalculator,
+      sources,
+      syncJobs,
+      createLibraryUnitOfWorkMock(sources, syncJobs, outbox),
+    );
+
+    const result = await useCase.execute({
+      externalSourceId: 'Notes/source.md',
+      content: '# Source note',
+    });
+
+    expect(result).toEqual({
+      sourceId: 'source-1',
+      externalSourceId: 'Notes/source.md',
+      fingerprint: sha256Hex('# Source note'),
+    });
+    expect(sources.update).toHaveBeenCalledOnce();
+    expect(
+      sourceContentOf(sources.update.mock.calls[0][0]).frontmatter,
+    ).toEqual({ sheska: true, tags: ['a'] });
+    expect(syncJobs.insert).not.toHaveBeenCalled();
+    expect(outbox.append).not.toHaveBeenCalled();
+  });
+
+  it('library.sync-5, library.sync-7: 본문은 같고 frontmatter만 바뀌었고 최근 sync job이 waiting이면 source를 갱신하고 그 job을 반환한다', async () => {
+    const existingSource = restoreSource({
+      id: 'source-1',
+      externalSourceId: 'Notes/source.md',
+      content: '# Source note',
+    });
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
+      content: '# Source note',
+      frontmatter: { sheska: true, tags: ['a'] },
+    });
+    const sources = createSourceRepositoryMock();
+    sources.find.mockResolvedValue(existingSource);
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    syncJobs.findLatest.mockResolvedValue(
+      restoreSyncJob({ sourceId: 'source-1', status: 'waiting' }),
+    );
+    const useCase = new UploadSourceUseCase(
+      contentSnapshotCalculator,
+      sources,
+      syncJobs,
+      createLibraryUnitOfWorkMock(sources, syncJobs),
+    );
+
+    const result = await useCase.execute({
+      externalSourceId: 'Notes/source.md',
+      content: '# Source note',
+    });
+
+    expect(result.syncJobId).toBe('sync-job-1');
+    expect(sources.update).toHaveBeenCalledOnce();
+    expect(syncJobs.insert).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -305,7 +402,6 @@ describe('UploadSourceUseCase', () => {
       const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
         content: '# Source note',
         frontmatter,
-        fingerprint: 'fingerprint-1',
       });
       const sources = createSourceRepositoryMock();
       const syncJobs = createSourceSyncJobRepositoryMock();
@@ -352,9 +448,11 @@ describe('UploadSourceUseCase', () => {
   });
 
   it('content snapshot 계산 exception을 전파한다', async () => {
-    const calculationFailure = new Error('Source fingerprinter is unavailable');
+    const calculationFailure = new Error('Source document parser failed');
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
-    contentSnapshotCalculator.calculate.mockRejectedValue(calculationFailure);
+    contentSnapshotCalculator.calculate.mockImplementation(() => {
+      throw calculationFailure;
+    });
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
     const useCase = new UploadSourceUseCase(
@@ -475,7 +573,7 @@ describe('UploadSourceUseCase', () => {
   it('domain이 source snapshot을 거부하면 저장하지 않고 throw한다', async () => {
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
       content: '# Source note',
-      fingerprint: ' ',
+      size: -1,
     });
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
@@ -491,7 +589,9 @@ describe('UploadSourceUseCase', () => {
       content: '# Source note',
     });
 
-    await expect(result).rejects.toThrow('Source fingerprint cannot be empty');
+    await expect(result).rejects.toThrow(
+      'Source size must be a non-negative integer',
+    );
     expect(sourceWriteCalls(sources)).toHaveLength(0);
     expect(syncJobs.insert).not.toHaveBeenCalled();
   });
@@ -502,20 +602,16 @@ function createContentSnapshotCalculatorMock(
     content?: string;
     body?: string;
     frontmatter?: SourceFrontmatterProps;
-    title?: string | null;
-    fingerprint: string;
     size?: number;
-  } = { content: '# Source note', fingerprint: 'fingerprint-1' },
+  } = { content: '# Source note' },
 ): ContentSnapshotCalculatorMock {
   const body = snapshot.body ?? snapshot.content ?? '';
   return {
     calculate: vi
       .fn<UploadSourceContentSnapshotCalculator['calculate']>()
-      .mockResolvedValue({
+      .mockReturnValue({
         body,
         frontmatter: snapshot.frontmatter ?? { sheska: true },
-        title: snapshot.title ?? null,
-        fingerprint: snapshot.fingerprint,
         size: snapshot.size ?? sourceContentByteSize(snapshot.content ?? body),
       }),
   };
@@ -582,7 +678,7 @@ function restoreSyncJob(params: {
   return SourceSyncJob.restore({
     id: 'sync-job-1',
     sourceId: params.sourceId,
-    fingerprint: params.fingerprint ?? 'fingerprint-1',
+    fingerprint: params.fingerprint ?? sha256Hex('# Source note'),
     status: params.status,
   });
 }
@@ -592,7 +688,6 @@ function expectSourceSavedWith(
   expected: {
     externalSourceId: string;
     content: string;
-    fingerprint: string;
   },
 ) {
   expect(sourceWriteCalls(sources)).toHaveLength(1);
@@ -600,15 +695,13 @@ function expectSourceSavedWith(
   expect(savedSource?.getProps().externalSourceId.unpack()).toBe(
     expected.externalSourceId,
   );
-  expect(savedSource?.getProps().contentSnapshot).toEqual(
-    SourceContentSnapshot.of({
-      body: expected.content,
-      frontmatter: { sheska: true },
-      title: expected.externalSourceId,
-      fingerprint: expected.fingerprint,
-      size: sourceContentByteSize(expected.content),
-    }),
-  );
+  expect(sourceContentOf(savedSource)).toEqual({
+    body: expected.content,
+    fingerprint: sha256Hex(expected.content),
+    frontmatter: { sheska: true },
+    title: expected.externalSourceId,
+    size: sourceContentByteSize(expected.content),
+  });
 }
 
 function expectSyncJobSavedWith(
@@ -641,15 +734,13 @@ function restoreSource(params: {
   id: string;
   externalSourceId: string;
   content: string;
-  fingerprint: string;
 }) {
   return Source.restore({
     id: params.id,
     externalSourceId: params.externalSourceId,
     body: params.content,
     frontmatter: { sheska: true },
-    title: params.externalSourceId,
-    fingerprint: params.fingerprint,
+    fingerprint: sha256Hex(params.content),
     size: sourceContentByteSize(params.content),
   });
 }

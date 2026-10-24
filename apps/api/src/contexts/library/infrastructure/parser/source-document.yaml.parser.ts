@@ -25,7 +25,7 @@ export class SourceDocumentYamlParser implements SourceDocumentParser {
     const opensFrontmatter =
       this.isDelimiterLine(opening) && opening.endsWith('\n');
     if (!opensFrontmatter) {
-      return { body: content, frontmatter: {}, title: null };
+      return { body: content, frontmatter: {} };
     }
 
     const closingIndex = lines.findIndex(
@@ -50,17 +50,7 @@ export class SourceDocumentYamlParser implements SourceDocumentParser {
       });
     }
 
-    const metadata = parsed ?? {};
-    const title = metadata.title;
-
-    return {
-      body,
-      frontmatter: metadata,
-      title:
-        typeof title === 'string' && title.trim().length > 0
-          ? title.trim()
-          : null,
-    };
+    return { body, frontmatter: parsed ?? {} };
   }
 
   private parseYaml(rawFrontmatter: string): unknown {

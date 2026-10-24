@@ -1,15 +1,14 @@
+import { sha256Hex } from '@core/hash';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import {
-  type SourceRepository,
-  SourceContentSnapshot,
-} from '@contexts/library/domain';
+import { type SourceRepository } from '@contexts/library/domain';
 import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
 import {
   buildSource,
   sourceContentByteSize,
+  sourceContentOf,
 } from '../../../support/domains/fixtures/source.fixture';
 
 describe('SourceDrizzleRepository', () => {
@@ -38,15 +37,13 @@ describe('SourceDrizzleRepository', () => {
 
     expect(saveResult.id).toBe(source.id);
     expect(findResult?.id).toBe(source.id);
-    expect(findResult?.getProps().contentSnapshot).toEqual(
-      SourceContentSnapshot.of({
-        body: '# Source note',
-        frontmatter: {},
-        title: externalSourceId,
-        fingerprint: 'fingerprint-1',
-        size: sourceContentByteSize('# Source note'),
-      }),
-    );
+    expect(sourceContentOf(findResult!)).toEqual({
+      body: '# Source note',
+      fingerprint: sha256Hex('# Source note'),
+      frontmatter: { sheska: true },
+      title: externalSourceId,
+      size: sourceContentByteSize('# Source note'),
+    });
   });
 
   it('source를 갱신한다', async () => {
@@ -54,11 +51,9 @@ describe('SourceDrizzleRepository', () => {
     const source = buildSource({ externalSourceId });
     await repository.insert(source);
 
-    source.syncContentSnapshot({
+    source.syncContent({
       body: '# Changed source note',
-      frontmatter: {},
-      title: externalSourceId,
-      fingerprint: 'fingerprint-2',
+      frontmatter: { sheska: true },
       size: sourceContentByteSize('# Changed source note'),
     });
 
@@ -66,15 +61,13 @@ describe('SourceDrizzleRepository', () => {
     const findResult = await repository.find({ externalSourceId });
 
     expect(saveResult.id).toBe(source.id);
-    expect(findResult?.getProps().contentSnapshot).toEqual(
-      SourceContentSnapshot.of({
-        body: '# Changed source note',
-        frontmatter: {},
-        title: externalSourceId,
-        fingerprint: 'fingerprint-2',
-        size: sourceContentByteSize('# Changed source note'),
-      }),
-    );
+    expect(sourceContentOf(findResult!)).toEqual({
+      body: '# Changed source note',
+      fingerprint: sha256Hex('# Changed source note'),
+      frontmatter: { sheska: true },
+      title: externalSourceId,
+      size: sourceContentByteSize('# Changed source note'),
+    });
   });
 
   it('id로 source를 조회한다', async () => {
@@ -86,15 +79,13 @@ describe('SourceDrizzleRepository', () => {
     const result = await repository.find({ id: source.id });
 
     expect(result?.id).toBe(source.id);
-    expect(result?.getProps().contentSnapshot).toEqual(
-      SourceContentSnapshot.of({
-        body: '# Source note',
-        frontmatter: {},
-        title: 'Notes/find-source-by-id.md',
-        fingerprint: 'fingerprint-1',
-        size: sourceContentByteSize('# Source note'),
-      }),
-    );
+    expect(sourceContentOf(result!)).toEqual({
+      body: '# Source note',
+      fingerprint: sha256Hex('# Source note'),
+      frontmatter: { sheska: true },
+      title: 'Notes/find-source-by-id.md',
+      size: sourceContentByteSize('# Source note'),
+    });
   });
 
   it('존재하지 않는 id는 null을 반환한다', async () => {
@@ -118,7 +109,6 @@ describe('SourceDrizzleRepository', () => {
     const secondSource = buildSource({
       externalSourceId,
       content: '# Another source note',
-      fingerprint: 'fingerprint-2',
     });
 
     await repository.insert(firstSource);

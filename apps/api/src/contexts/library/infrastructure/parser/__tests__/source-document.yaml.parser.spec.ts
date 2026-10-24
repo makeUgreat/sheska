@@ -4,7 +4,7 @@ import { SourceDocumentYamlParser } from '../source-document.yaml.parser';
 describe('SourceDocumentYamlParser', () => {
   const parser = new SourceDocumentYamlParser();
 
-  it('library.source-3: frontmatter 전체와 본문을 분리하고 title을 정규화한다', () => {
+  it('frontmatter 전체와 본문을 분리하고 frontmatter 값은 바꾸지 않는다', () => {
     const result = parser.parse(`---
 title: " Retry Amplification "
 aliases:
@@ -21,7 +21,6 @@ custom:
         aliases: ['Nested Retries'],
         custom: { published: false },
       },
-      title: 'Retry Amplification',
     });
   });
 
@@ -29,7 +28,6 @@ custom:
     expect(parser.parse('# Body')).toEqual({
       body: '# Body',
       frontmatter: {},
-      title: null,
     });
   });
 
@@ -37,7 +35,6 @@ custom:
     expect(parser.parse('---\n---\n# Body')).toEqual({
       body: '# Body',
       frontmatter: {},
-      title: null,
     });
   });
 
@@ -45,7 +42,6 @@ custom:
     expect(parser.parse('\uFEFF---\ntitle: Retry\n---\n# Body')).toEqual({
       body: '# Body',
       frontmatter: { title: 'Retry' },
-      title: 'Retry',
     });
   });
 
@@ -53,7 +49,6 @@ custom:
     expect(parser.parse('---\r\ntitle: Retry\r\n---\r\n# Body')).toEqual({
       body: '# Body',
       frontmatter: { title: 'Retry' },
-      title: 'Retry',
     });
   });
 

@@ -6,7 +6,6 @@ import { GetSourceSyncJobUseCase } from '@contexts/library/application/use-cases
 import { ListSourcesUseCase } from '@contexts/library/application/use-cases/list-sources.use-case';
 import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upload-source.use-case';
 import { ApplyIngestionUpdateUseCase } from '@contexts/library/application/use-cases/apply-ingestion-update.use-case';
-import { SourceSha256Fingerprinter } from '@contexts/library/infrastructure/fingerprinter/source.sha256.fingerprinter';
 import { SourceDocumentYamlParser } from '@contexts/library/infrastructure/parser/source-document.yaml.parser';
 import { SourcePgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
 import { SourceSyncJobPgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source-sync-job.pg-drizzle.repository';
@@ -37,7 +36,6 @@ import {
   IngestionModule,
 } from '@contexts/ingestion';
 import {
-  SOURCE_FINGERPRINTER,
   SOURCE_DOCUMENT_PARSER,
   SOURCE_REPOSITORY,
   SOURCE_SYNC_JOB_REPOSITORY,
@@ -60,10 +58,6 @@ export class LibraryModule {
       module: LibraryModule,
       imports: [IngestionModule.forFeature()],
       providers: [
-        {
-          provide: SOURCE_FINGERPRINTER,
-          useClass: SourceSha256Fingerprinter,
-        },
         {
           provide: SOURCE_DOCUMENT_PARSER,
           useClass: SourceDocumentYamlParser,

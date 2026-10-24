@@ -1,26 +1,34 @@
+import { InvariantViolationError } from '@core/errors';
 import { newId } from '@core/id';
 import { AggregateRoot } from '@kernels/domain';
 import { ExternalSourceId } from './external-source-id.vo';
-import { SourceContentSnapshot } from './source-content-snapshot.vo';
-import { type SourceFrontmatterProps } from './source-frontmatter.vo';
+import { SourceBody } from './source-body.vo';
+import {
+  SourceFrontmatter,
+  type SourceFrontmatterProps,
+} from './source-frontmatter.vo';
+import { SourceSize } from './source-size.vo';
+import { SourceSyncJob } from './source-sync-job.aggregate';
 
 interface SourceProps {
   externalSourceId: ExternalSourceId;
-  contentSnapshot: SourceContentSnapshot;
+  frontmatter: SourceFrontmatter;
+  body: SourceBody;
+  size: SourceSize;
 }
 
 export class Source extends AggregateRoot<SourceProps> {
   static create(params: SourceCreateParams): Source {
-    const { externalSourceId, ...snapshot } = params;
-    const sourceId = ExternalSourceId.of(externalSourceId);
+    const frontmatter = SourceFrontmatter.of(params.frontmatter);
+    Source.ensureSyncTarget(frontmatter);
+
     return new Source({
       id: newId(),
       props: {
-        externalSourceId: sourceId,
-        contentSnapshot: SourceContentSnapshot.of({
-          ...snapshot,
-          title: snapshot.title ?? sourceId.unpack(),
-        }),
+        externalSourceId: ExternalSourceId.of(params.externalSourceId),
+        frontmatter,
+        body: SourceBody.of(params.body),
+        size: SourceSize.of(params.size),
       },
     });
   }
@@ -29,9 +37,8 @@ export class Source extends AggregateRoot<SourceProps> {
     const {
       id,
       externalSourceId,
-      body,
       frontmatter,
-      title,
+      body,
       fingerprint,
       size,
       createdAt,
@@ -42,47 +49,76 @@ export class Source extends AggregateRoot<SourceProps> {
       id,
       props: {
         externalSourceId: ExternalSourceId.of(externalSourceId),
-        contentSnapshot: SourceContentSnapshot.of({
-          body,
-          frontmatter,
-          title,
-          fingerprint,
-          size,
-        }),
+        frontmatter: SourceFrontmatter.of(frontmatter),
+        body: SourceBody.restore({ text: body, fingerprint }),
+        size: SourceSize.of(size),
       },
       createdAt,
       updatedAt,
     });
   }
 
-  syncContentSnapshot(params: {
+  syncContent(params: {
     frontmatter: SourceFrontmatterProps;
-    title: string | null;
     body: string;
-    fingerprint: string;
     size: number;
-  }): SyncContentSnapshotResult {
-    const contentSnapshot = SourceContentSnapshot.of({
-      ...params,
-      title: params.title ?? this.props.externalSourceId.unpack(),
-    });
+  }): boolean {
+    const frontmatter = SourceFrontmatter.of(params.frontmatter);
+    Source.ensureSyncTarget(frontmatter);
+    const body = SourceBody.of(params.body);
+    const size = SourceSize.of(params.size);
 
-    if (this.props.contentSnapshot.hasSameContentAs(contentSnapshot)) {
-      return { source: this, changed: false };
+    const changed =
+      !this.props.body.hasSameTextAs(body) ||
+      !this.props.frontmatter.equals(frontmatter) ||
+      !this.props.size.equals(size);
+    if (!changed) return false;
+
+    this.props.frontmatter = frontmatter;
+    this.props.body = body;
+    this.props.size = size;
+    return true;
+  }
+
+  syncJobFor(latestSyncJob: SourceSyncJob | null): SourceSyncJob {
+    const { text, fingerprint } = this.props.body.unpack();
+    if (latestSyncJob?.isWaitingOrCompletedFor(fingerprint)) {
+      return latestSyncJob;
     }
 
-    this.props.contentSnapshot = contentSnapshot;
-    return { source: this, changed: true };
+    return SourceSyncJob.create({
+      sourceId: this.id,
+      content: text,
+      fingerprint,
+    });
+  }
+
+  title(): string {
+    const { title } = this.props.frontmatter.unpack();
+    const trimmedTitle = typeof title === 'string' ? title.trim() : '';
+
+    return trimmedTitle.length > 0
+      ? trimmedTitle
+      : this.props.externalSourceId.unpack();
   }
 
   public validate(): void {}
+
+  private static ensureSyncTarget(frontmatter: SourceFrontmatter): void {
+    if (frontmatter.isSyncTarget()) return;
+
+    throw new InvariantViolationError({
+      code: 'source.not_sync_target',
+      message: 'Source frontmatter must have `sheska: true`',
+      details: { fields: ['frontmatter.sheska'] },
+    });
+  }
 }
 
 interface SourceRestoreParams {
   id: string;
   externalSourceId: string;
   frontmatter: SourceFrontmatterProps;
-  title: string;
   body: string;
   fingerprint: string;
   size: number;
@@ -93,13 +129,6 @@ interface SourceRestoreParams {
 interface SourceCreateParams {
   externalSourceId: string;
   frontmatter: SourceFrontmatterProps;
-  title: string | null;
   body: string;
-  fingerprint: string;
   size: number;
-}
-
-export interface SyncContentSnapshotResult {
-  source: Source;
-  changed: boolean;
 }

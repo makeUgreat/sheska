@@ -1,4 +1,3 @@
-export type { SourceFingerprinter } from './source.fingerprinter';
 export type {
   SourceDocumentParser,
   ParsedSourceDocument,

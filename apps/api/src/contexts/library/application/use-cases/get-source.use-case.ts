@@ -55,8 +55,8 @@ export class GetSourceUseCase {
 
   async execute(command: GetSourceCommand): Promise<GetSourceResult> {
     const source = await this.sources.get({ id: command.sourceId });
-    const props = source.getProps();
-    const snapshot = props.contentSnapshot.unpack();
+    const { externalSourceId, frontmatter, body, size } = source.getProps();
+    const { text, fingerprint } = body.unpack();
 
     const [latestJob, embedding, publishedPostId] = await Promise.all([
       this.syncJobs.findLatest({ sourceId: source.id }),
@@ -66,12 +66,12 @@ export class GetSourceUseCase {
 
     return {
       sourceId: source.id,
-      externalSourceId: props.externalSourceId.unpack(),
-      body: snapshot.body,
-      frontmatter: snapshot.frontmatter.unpack(),
-      title: snapshot.title,
-      fingerprint: snapshot.fingerprint.unpack(),
-      sizeBytes: snapshot.size.unpack(),
+      externalSourceId: externalSourceId.unpack(),
+      body: text,
+      frontmatter: frontmatter.unpack(),
+      title: source.title(),
+      fingerprint: fingerprint.unpack(),
+      sizeBytes: size.unpack(),
       createdAt: source.createdAt,
       updatedAt: source.updatedAt,
       latestSyncJob: latestJob

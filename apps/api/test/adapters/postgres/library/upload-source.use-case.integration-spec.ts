@@ -3,18 +3,17 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { Test } from '@nestjs/testing';
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type Queue } from 'bullmq';
+import { sha256Hex } from '@core/hash';
 import {
   DATABASE_TOKENS,
   OutboxRelay,
   outboxMessages,
 } from '@kernels/infrastructure';
-import { type SourceFingerprinter } from '@contexts/library/application/ports';
 import {
   type SourceRepository,
   type SourceSyncJobRepository,
-  SourceContentSnapshot,
 } from '@contexts/library/domain';
 import {
   SOURCE_EMBEDDING_CHUNK_QUEUE,
@@ -24,12 +23,14 @@ import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upl
 import * as schema from '@contexts/library/infrastructure/persistence/postgres-drizzle/schema';
 import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
 import {
-  SOURCE_FINGERPRINTER,
   SOURCE_REPOSITORY,
   SOURCE_SYNC_JOB_REPOSITORY,
 } from '@contexts/library/library.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
-import { sourceContentByteSize } from '../../../support/domains/fixtures/source.fixture';
+import {
+  sourceContentByteSize,
+  sourceContentOf,
+} from '../../../support/domains/fixtures/source.fixture';
 import { VALID_EMBEDDING } from '../../../support/domains/fixtures/source-embedding.fixture';
 
 describe('UploadSourceUseCase', () => {
@@ -41,26 +42,11 @@ describe('UploadSourceUseCase', () => {
   let outboxRelay: OutboxRelay;
   let embeddingChunksQueue: Queue;
   let embeddingFinalizeQueue: Queue;
-  const fingerprints = new Map<string, string>();
-  const sourceFingerprinter: SourceFingerprinter = {
-    calculate(content: string) {
-      const fingerprint = fingerprints.get(content);
-
-      if (!fingerprint) {
-        throw new Error(`Missing test fingerprint for content: ${content}`);
-      }
-
-      return Promise.resolve(fingerprint);
-    },
-  };
 
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
-    })
-      .overrideProvider(SOURCE_FINGERPRINTER)
-      .useValue(sourceFingerprinter)
-      .compile();
+    }).compile();
     app = moduleFixture.createNestApplication();
     await app.init();
     embeddingChunksQueue = app.get<Queue>(
@@ -80,10 +66,6 @@ describe('UploadSourceUseCase', () => {
     outboxRelay = app.get(OutboxRelay);
   });
 
-  beforeEach(() => {
-    fingerprints.clear();
-  });
-
   afterAll(async () => {
     await embeddingChunksQueue.obliterate({ force: true });
     await embeddingFinalizeQueue.obliterate({ force: true });
@@ -93,7 +75,7 @@ describe('UploadSourceUseCase', () => {
   it('library.sync-7: 새 source를 저장하고 sync job을 생성한다', async () => {
     const externalSourceId = 'Notes/upload-usecase-new-source.md';
     const content = optedIntoSync('# Source note');
-    const fingerprint = useFingerprint(content, 'fingerprint-new-source');
+    const fingerprint = sha256Hex('# Source note');
 
     const result = await useCase.execute({ externalSourceId, content });
 
@@ -106,15 +88,13 @@ describe('UploadSourceUseCase', () => {
 
     const source = await sources.find({ externalSourceId });
     expect(source?.id).toBe(result.sourceId);
-    expect(source?.getProps().contentSnapshot).toEqual(
-      SourceContentSnapshot.of({
-        body: '# Source note',
-        frontmatter: { sheska: true },
-        title: externalSourceId,
-        fingerprint,
-        size: sourceContentByteSize(content),
-      }),
-    );
+    expect(sourceContentOf(source!)).toEqual({
+      body: '# Source note',
+      fingerprint: sha256Hex('# Source note'),
+      frontmatter: { sheska: true },
+      title: externalSourceId,
+      size: sourceContentByteSize(content),
+    });
 
     const [syncJob] = await findSyncJobsBySourceId(result.sourceId);
 
@@ -170,7 +150,7 @@ describe('UploadSourceUseCase', () => {
   it('library.sync-2, library.sync-7: 같은 content를 다시 업로드할 때 active sync job을 재사용한다', async () => {
     const externalSourceId = 'Notes/upload-usecase-unchanged-no-embedding.md';
     const content = optedIntoSync('# Same source note');
-    const fingerprint = useFingerprint(content, 'fingerprint-unchanged-source');
+    const fingerprint = sha256Hex('# Same source note');
     const firstResult = await useCase.execute({ externalSourceId, content });
 
     const secondResult = await useCase.execute({ externalSourceId, content });
@@ -189,7 +169,7 @@ describe('UploadSourceUseCase', () => {
     expect(persistedSyncJobs).toHaveLength(1);
   });
 
-  it('ingestion.chunk-1: frontmatter 전체와 body를 분리하고 body만 임베딩 대상으로 전달한다', async () => {
+  it('ingestion.chunk-1, library.sync-6: frontmatter 전체와 body를 분리하고 body만 임베딩 대상과 fingerprint 입력으로 쓴다', async () => {
     const externalSourceId = 'Notes/upload-usecase-frontmatter.md';
     const content = `---
 sheska: true
@@ -200,25 +180,23 @@ custom:
   status: draft
 ---
 # Retry body`;
-    const fingerprint = useFingerprint(content, 'fingerprint-frontmatter');
 
     const result = await useCase.execute({ externalSourceId, content });
 
+    expect(result.fingerprint).toBe(sha256Hex('# Retry body'));
     const source = await sources.get({ id: result.sourceId });
-    expect(source.getProps().contentSnapshot).toEqual(
-      SourceContentSnapshot.of({
-        body: '# Retry body',
-        frontmatter: {
-          sheska: true,
-          title: 'Retry Amplification',
-          aliases: ['Nested Retries'],
-          custom: { status: 'draft' },
-        },
+    expect(sourceContentOf(source)).toEqual({
+      body: '# Retry body',
+      fingerprint: sha256Hex('# Retry body'),
+      frontmatter: {
+        sheska: true,
         title: 'Retry Amplification',
-        fingerprint,
-        size: sourceContentByteSize(content),
-      }),
-    );
+        aliases: ['Nested Retries'],
+        custom: { status: 'draft' },
+      },
+      title: 'Retry Amplification',
+      size: sourceContentByteSize(content),
+    });
 
     const messages = await database
       .select()
@@ -235,10 +213,7 @@ custom:
   it('library.sync-7, library.sync-8: 같은 content를 다시 업로드할 때 임베딩이 최신이면 저장 갱신과 sync job 생성을 건너뛴다', async () => {
     const externalSourceId = 'Notes/upload-usecase-unchanged-with-embedding.md';
     const content = optedIntoSync('# Same source note with embedding');
-    const fingerprint = useFingerprint(
-      content,
-      'fingerprint-unchanged-with-embedding',
-    );
+    const fingerprint = sha256Hex('# Same source note with embedding');
     const firstResult = await useCase.execute({ externalSourceId, content });
 
     await database.insert(ingestionSchema.sourceEmbeddings).values({
@@ -273,8 +248,8 @@ custom:
     const externalSourceId = 'Notes/upload-usecase-changed-source.md';
     const oldContent = optedIntoSync('# Old source note');
     const newContent = optedIntoSync('# New source note');
-    const oldFingerprint = useFingerprint(oldContent, 'fingerprint-old-source');
-    const newFingerprint = useFingerprint(newContent, 'fingerprint-new-source');
+    const oldFingerprint = sha256Hex('# Old source note');
+    const newFingerprint = sha256Hex('# New source note');
     const firstResult = await useCase.execute({
       externalSourceId,
       content: oldContent,
@@ -293,15 +268,13 @@ custom:
     expect(secondResult.syncJobId?.length).toBeGreaterThan(0);
 
     const source = await sources.find({ externalSourceId });
-    expect(source?.getProps().contentSnapshot).toEqual(
-      SourceContentSnapshot.of({
-        body: '# New source note',
-        frontmatter: { sheska: true },
-        title: externalSourceId,
-        fingerprint: newFingerprint,
-        size: sourceContentByteSize(newContent),
-      }),
-    );
+    expect(sourceContentOf(source!)).toEqual({
+      body: '# New source note',
+      fingerprint: sha256Hex('# New source note'),
+      frontmatter: { sheska: true },
+      title: externalSourceId,
+      size: sourceContentByteSize(newContent),
+    });
 
     const persistedSyncJobs = await findSyncJobsBySourceId(
       firstResult.sourceId,
@@ -313,10 +286,63 @@ custom:
     );
   });
 
+  it('library.sync-5, library.sync-6: 본문은 그대로이고 frontmatter만 바뀌면 source만 갱신하고 sync job은 만들지 않는다', async () => {
+    const externalSourceId = 'Notes/upload-usecase-frontmatter-only.md';
+    const oldContent = '---\nsheska: true\ntags: [a]\n---\n# Same body';
+    const newContent =
+      '---\nsheska: true\ntitle: Renamed\ntags: [a, b]\n---\n# Same body';
+    const firstResult = await useCase.execute({
+      externalSourceId,
+      content: oldContent,
+    });
+    const firstSyncJob = await syncJobs.findLatest({
+      sourceId: firstResult.sourceId,
+    });
+    firstSyncJob!.markCompleted(1);
+    await syncJobs.update(firstSyncJob!);
+
+    const secondResult = await useCase.execute({
+      externalSourceId,
+      content: newContent,
+    });
+
+    expect(secondResult).toEqual({
+      sourceId: firstResult.sourceId,
+      externalSourceId,
+      fingerprint: sha256Hex('# Same body'),
+    });
+    const source = await sources.find({ externalSourceId });
+    expect(sourceContentOf(source!)).toEqual({
+      body: '# Same body',
+      fingerprint: sha256Hex('# Same body'),
+      frontmatter: { sheska: true, title: 'Renamed', tags: ['a', 'b'] },
+      title: 'Renamed',
+      size: sourceContentByteSize(newContent),
+    });
+    expect(await findSyncJobsBySourceId(firstResult.sourceId)).toHaveLength(1);
+  });
+
+  it('library.sync-5: frontmatter 키 순서만 다른 같은 파일은 다시 저장하지 않는다', async () => {
+    const externalSourceId = 'Notes/upload-usecase-frontmatter-key-order.md';
+    const content =
+      '---\nsheska: true\nzeta: 1\nalpha: { b: 1, a: 2 }\n---\n# Body';
+    const firstResult = await useCase.execute({ externalSourceId, content });
+    const firstSyncJob = await syncJobs.findLatest({
+      sourceId: firstResult.sourceId,
+    });
+    firstSyncJob!.markCompleted(1);
+    await syncJobs.update(firstSyncJob!);
+    const [beforeRow] = await findSourceRow(externalSourceId);
+
+    await useCase.execute({ externalSourceId, content });
+
+    const [afterRow] = await findSourceRow(externalSourceId);
+    expect(afterRow?.updatedAt).toEqual(beforeRow?.updatedAt);
+  });
+
   it('library.source-6: frontmatter sheska가 true가 아닌 파일은 거부하고 source를 만들지 않는다', async () => {
     const externalSourceId = 'Notes/upload-usecase-not-sync-target.md';
     const content = '---\nsheska: "true"\n---\n# Not opted in';
-    useFingerprint(content, 'fingerprint-not-sync-target');
 
     await expect(
       useCase.execute({ externalSourceId, content }),
@@ -329,10 +355,11 @@ custom:
     return `---\nsheska: true\n---\n${body}`;
   }
 
-  function useFingerprint(content: string, fingerprint: string) {
-    fingerprints.set(content, fingerprint);
-
-    return fingerprint;
+  async function findSourceRow(externalSourceId: string) {
+    return database
+      .select()
+      .from(schema.sources)
+      .where(eq(schema.sources.externalSourceId, externalSourceId));
   }
 
   async function findSyncJobsBySourceId(sourceId: string) {

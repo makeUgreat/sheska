@@ -3,34 +3,24 @@ import { InvalidDataError, ValidationFailedError } from '@core/errors';
 import {
   type ParsedSourceDocument,
   type SourceDocumentParser,
-  type SourceFingerprinter,
 } from '@contexts/library/application/ports';
 import { type SourceFrontmatterProps } from '@contexts/library/domain';
-import {
-  SOURCE_DOCUMENT_PARSER,
-  SOURCE_FINGERPRINTER,
-} from '@contexts/library/library.di-tokens';
+import { SOURCE_DOCUMENT_PARSER } from '@contexts/library/library.di-tokens';
 
 export interface SourceContentSnapshotCalculation {
   readonly frontmatter: SourceFrontmatterProps;
-  readonly title: string | null;
   readonly body: string;
-  readonly fingerprint: string;
   readonly size: number;
 }
 
 @Injectable()
 export class SourceContentSnapshotCalculator {
   constructor(
-    @Inject(SOURCE_FINGERPRINTER)
-    private readonly sourceFingerprinter: SourceFingerprinter,
     @Inject(SOURCE_DOCUMENT_PARSER)
     private readonly sourceDocumentParser: SourceDocumentParser,
   ) {}
 
-  async calculate(content: string): Promise<SourceContentSnapshotCalculation> {
-    const fingerprint = await this.sourceFingerprinter.calculate(content);
-
+  calculate(content: string): SourceContentSnapshotCalculation {
     let parsed: ParsedSourceDocument;
     try {
       parsed = this.sourceDocumentParser.parse(content);
@@ -48,7 +38,6 @@ export class SourceContentSnapshotCalculator {
 
     return {
       ...parsed,
-      fingerprint,
       size: new TextEncoder().encode(content).length,
     };
   }

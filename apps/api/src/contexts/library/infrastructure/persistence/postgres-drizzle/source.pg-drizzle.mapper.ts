@@ -7,7 +7,6 @@ export class SourcePgDrizzleMapper {
       id: row.id,
       externalSourceId: row.externalSourceId,
       frontmatter: row.frontmatter,
-      title: row.title,
       body: row.body,
       fingerprint: row.fingerprint,
       size: row.sizeBytes,
@@ -17,17 +16,17 @@ export class SourcePgDrizzleMapper {
   }
 
   static toInsert(source: Source): SourceInsert {
-    const props = source.getProps();
-    const contentSnapshot = props.contentSnapshot.unpack();
+    const { externalSourceId, frontmatter, body, size } = source.getProps();
+    const { text, fingerprint } = body.unpack();
 
     return {
       id: source.id,
-      externalSourceId: props.externalSourceId.unpack(),
-      frontmatter: contentSnapshot.frontmatter.unpack(),
-      title: contentSnapshot.title,
-      body: contentSnapshot.body,
-      fingerprint: contentSnapshot.fingerprint.unpack(),
-      sizeBytes: contentSnapshot.size.unpack(),
+      externalSourceId: externalSourceId.unpack(),
+      frontmatter: frontmatter.unpack(),
+      title: source.title(),
+      body: text,
+      fingerprint: fingerprint.unpack(),
+      sizeBytes: size.unpack(),
     };
   }
 }

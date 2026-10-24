@@ -1,3 +1,4 @@
+import { sha256Hex } from '@core/hash';
 import {
   type SourceRepository,
   type SourceSyncJobRepository,
@@ -33,7 +34,6 @@ describe('GetSourceUseCase', () => {
       body: '# Source note',
       frontmatter: {},
       title: 'Notes/source.md',
-      fingerprint: 'fingerprint-1',
     });
     const sources = createSourceRepositoryMock();
     const syncJobs = createSyncJobRepositoryMock();
@@ -55,7 +55,7 @@ describe('GetSourceUseCase', () => {
       body: '# Source note',
       frontmatter: {},
       title: 'Notes/source.md',
-      fingerprint: 'fingerprint-1',
+      fingerprint: sha256Hex('# Source note'),
       publishedPostId: null,
     });
     expect(sources.get).toHaveBeenCalledWith({ id: source.id });

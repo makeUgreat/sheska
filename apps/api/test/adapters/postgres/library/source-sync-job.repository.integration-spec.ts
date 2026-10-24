@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { sha256Hex } from '@core/hash';
 import {
   type SourceRepository,
   type SourceSyncJobRepository,
@@ -39,7 +40,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
     await sourceRepository.insert(source);
     const syncJob = buildSourceSyncJob({
       sourceId: source.id,
-      fingerprint: 'fingerprint-2',
+      content: 'content-2',
     });
 
     const result = await repository.insert(syncJob);
@@ -49,13 +50,13 @@ describe('SourceSyncJobDrizzleRepository', () => {
       sourceId: source.id,
       status: 'waiting',
     });
-    expect(result.getProps().fingerprint.unpack()).toBe('fingerprint-2');
+    expect(result.getProps().fingerprint.unpack()).toBe(sha256Hex('content-2'));
   });
 
   it('없는 sourceId로 저장하면 코드 결함이므로 UnexpectedError로 전파한다', async () => {
     const syncJob = buildSourceSyncJob({
       sourceId: 'unknown-source',
-      fingerprint: 'fingerprint-1',
+      content: 'content-1',
     });
 
     await expect(repository.insert(syncJob)).rejects.toMatchObject({
@@ -71,11 +72,11 @@ describe('SourceSyncJobDrizzleRepository', () => {
     await sourceRepository.insert(source);
     const first = buildSourceSyncJob({
       sourceId: source.id,
-      fingerprint: 'fingerprint-active',
+      content: 'content-active',
     });
     const second = buildSourceSyncJob({
       sourceId: source.id,
-      fingerprint: 'fingerprint-active',
+      content: 'content-active',
     });
     await repository.insert(first);
 
@@ -92,14 +93,14 @@ describe('SourceSyncJobDrizzleRepository', () => {
     await sourceRepository.insert(source);
     const first = buildSourceSyncJob({
       sourceId: source.id,
-      fingerprint: 'fingerprint-retry',
+      content: 'content-retry',
     });
     await repository.insert(first);
     first.markCompleted(1);
     await repository.update(first);
     const second = buildSourceSyncJob({
       sourceId: source.id,
-      fingerprint: 'fingerprint-retry',
+      content: 'content-retry',
     });
 
     await expect(repository.insert(second)).resolves.toMatchObject({
@@ -114,11 +115,11 @@ describe('SourceSyncJobDrizzleRepository', () => {
     await sourceRepository.insert(source);
     const first = buildSourceSyncJob({
       sourceId: source.id,
-      fingerprint: 'fingerprint-first',
+      content: 'content-first',
     });
     const second = buildSourceSyncJob({
       sourceId: source.id,
-      fingerprint: 'fingerprint-second',
+      content: 'content-second',
     });
     await repository.insert(first);
     await new Promise((resolve) => setTimeout(resolve, 5));
