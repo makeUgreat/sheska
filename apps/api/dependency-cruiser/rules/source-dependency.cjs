@@ -8,7 +8,7 @@ module.exports = [
     name: 'api-core-external-only-allowlisted',
     severity: 'error',
     comment:
-      'Core may import an external module only from its allowlist (node:crypto, uuid). ' +
+      'Core may import an external module only from its allowlist (node:crypto, node:util, uuid). ' +
       `See ${docs.sourceDependency}#외부-모듈.`,
     from: {
       path: '^src/core/',
@@ -16,7 +16,7 @@ module.exports = [
     },
     to: {
       path: externalModule,
-      pathNot: '^crypto$|(^|/)node_modules/uuid/',
+      pathNot: '^(crypto|util)$|(^|/)node_modules/uuid/',
     },
   },
   {
