@@ -37,7 +37,8 @@ related:
 ### Architecture
 
 - `apps/api` architecture, DDD boundary, source structure, module boundary 결정 작업: [API 아키텍처 컨벤션](./architecture/architecture.md)을 읽는다.
-- `apps/api` DDD boundary, domain model ownership, shared domain language 작업: [API DDD 컨벤션](./architecture/ddd.md)을 읽는다.
+- `apps/api` DDD boundary, domain model ownership, shared domain language, 도메인 메서드 매개변수를 원시값과
+  도메인 객체 중 무엇으로 받을지 정하는 작업: [API DDD 컨벤션](./architecture/ddd.md)을 읽는다.
 - Infrastructure adapter file 명명, 디렉토리 구조, adapter 컨벤션 작업: [API Infrastructure 컨벤션](./architecture/infrastructure.md)을 읽는다.
 - Import direction, layer boundary, framework import 작업: [API Source Dependency 컨벤션](./architecture/source-dependency.md)을 읽는다.
 - NestJS DI, provider registration, module wiring, platform startup flow, port binding 작업: [API Runtime Wiring 컨벤션](./architecture/runtime-wiring.md)을 읽는다.
