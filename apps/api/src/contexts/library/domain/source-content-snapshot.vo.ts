@@ -15,14 +15,6 @@ interface SourceContentSnapshotProps {
   size: SourceSize;
 }
 
-interface RawSourceContentSnapshot {
-  frontmatter: SourceFrontmatterProps;
-  title: string;
-  body: string;
-  fingerprint: string;
-  size: number;
-}
-
 export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProps> {
   private constructor(props: SourceContentSnapshotProps) {
     super(props);
@@ -53,4 +45,12 @@ export class SourceContentSnapshot extends ValueObject<SourceContentSnapshotProp
       });
     }
   }
+}
+
+interface RawSourceContentSnapshot {
+  frontmatter: SourceFrontmatterProps;
+  title: string;
+  body: string;
+  fingerprint: string;
+  size: number;
 }

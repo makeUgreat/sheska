@@ -14,21 +14,6 @@ interface SourceSyncJobProps {
 
 type SourceSyncJobStatus = 'waiting' | 'completed' | 'failed';
 
-interface SourceSyncJobCreateParams {
-  sourceId: string;
-  content: string;
-  fingerprint: string;
-}
-
-interface SourceSyncJobRestoreParams {
-  id: string;
-  sourceId: string;
-  fingerprint: string;
-  status: string;
-  totalChunks?: number | null;
-  createdAt?: Date;
-}
-
 export class SourceSyncJob extends AggregateRoot<
   SourceSyncJobProps,
   SourceSyncJobDomainEvent
@@ -104,4 +89,19 @@ export class SourceSyncJob extends AggregateRoot<
       status === 'waiting' || status === 'completed' || status === 'failed'
     );
   }
+}
+
+interface SourceSyncJobCreateParams {
+  sourceId: string;
+  content: string;
+  fingerprint: string;
+}
+
+interface SourceSyncJobRestoreParams {
+  id: string;
+  sourceId: string;
+  fingerprint: string;
+  status: string;
+  totalChunks?: number | null;
+  createdAt?: Date;
 }

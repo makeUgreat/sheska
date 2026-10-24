@@ -8,32 +8,6 @@ interface SourceProps {
   contentSnapshot: SourceContentSnapshot;
 }
 
-interface SourceRestoreParams {
-  id: string;
-  externalSourceId: string;
-  frontmatter: SourceFrontmatterProps;
-  title: string;
-  body: string;
-  fingerprint: string;
-  size: number;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-interface SourceCreateParams {
-  externalSourceId: string;
-  frontmatter: SourceFrontmatterProps;
-  title: string | null;
-  body: string;
-  fingerprint: string;
-  size: number;
-}
-
-export interface SyncContentSnapshotResult {
-  source: Source;
-  changed: boolean;
-}
-
 export class Source extends AggregateRoot<SourceProps> {
   static create(params: SourceCreateParams): Source {
     const { externalSourceId, ...snapshot } = params;
@@ -101,4 +75,30 @@ export class Source extends AggregateRoot<SourceProps> {
   }
 
   public validate(): void {}
+}
+
+interface SourceRestoreParams {
+  id: string;
+  externalSourceId: string;
+  frontmatter: SourceFrontmatterProps;
+  title: string;
+  body: string;
+  fingerprint: string;
+  size: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface SourceCreateParams {
+  externalSourceId: string;
+  frontmatter: SourceFrontmatterProps;
+  title: string | null;
+  body: string;
+  fingerprint: string;
+  size: number;
+}
+
+export interface SyncContentSnapshotResult {
+  source: Source;
+  changed: boolean;
 }

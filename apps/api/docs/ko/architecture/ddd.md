@@ -216,6 +216,11 @@ await orderRepository.save(order);
   - 메서드가 public이라는 이유만으로 `Params`, `Result`, `Status` 타입을 만들지 않는다.
   - 이름 붙일 가치가 있는 타입에는 기계적인 접미사보다 도메인 이름을 선호한다.
   - 이름 붙일 가치가 없다면 형태를 인라인으로 둔다.
+- aggregate·entity 파일에는 상태 타입 `XProps`와 그 필드가 쓰는 타입을 클래스 위에 두고, 다른 타입 선언은 모두 파일 맨 아래에 둔다.
+  value object 파일에는 상태 타입이 쓰는 타입만 클래스 위에 둔다.
+  - 예: `SourceEmbeddingProps`는 `SourceEmbedding` 위에, `SourceEmbeddingCreateParams`, `SourceEmbeddingRestoreParams`와
+    그 필드가 쓰는 `ChunkParam`은 맨 아래에 둔다.
+  - 파일을 열면 aggregate가 지닌 상태와 클래스를 먼저 읽고, 입력 타입은 필요할 때 내려가서 본다.
 
 ## 리뷰 점검
 

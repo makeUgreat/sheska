@@ -9,26 +9,6 @@ interface SourceEmbeddingProps {
   chunks: ChunkEmbedding[];
 }
 
-interface ChunkParam {
-  chunkIndex: number;
-  chunkContent: string;
-  embedding: number[];
-}
-
-interface SourceEmbeddingCreateParams {
-  sourceId: string;
-  model: string;
-  chunks: ChunkParam[];
-}
-
-interface SourceEmbeddingRestoreParams {
-  sourceId: string;
-  model: string;
-  chunks: ChunkParam[];
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
 export class SourceEmbedding extends AggregateRoot<SourceEmbeddingProps> {
   static create(params: SourceEmbeddingCreateParams): SourceEmbedding {
     const model = EmbeddingModel.of(params.model);
@@ -63,4 +43,24 @@ export class SourceEmbedding extends AggregateRoot<SourceEmbeddingProps> {
   }
 
   public validate(): void {}
+}
+
+interface ChunkParam {
+  chunkIndex: number;
+  chunkContent: string;
+  embedding: number[];
+}
+
+interface SourceEmbeddingCreateParams {
+  sourceId: string;
+  model: string;
+  chunks: ChunkParam[];
+}
+
+interface SourceEmbeddingRestoreParams {
+  sourceId: string;
+  model: string;
+  chunks: ChunkParam[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
