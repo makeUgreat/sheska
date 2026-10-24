@@ -1,7 +1,52 @@
 const docs = require('../docs.cjs');
-const { sourceTestFiles } = require('../patterns.cjs');
+const { nodeBuiltinModule, sourceTestFiles } = require('../patterns.cjs');
+
+const externalModule = `${nodeBuiltinModule}|(^|/)node_modules/`;
 
 module.exports = [
+  {
+    name: 'api-core-external-only-allowlisted',
+    severity: 'error',
+    comment:
+      'Core may import an external module only from its allowlist (node:crypto, uuid). ' +
+      `See ${docs.sourceDependency}#외부-모듈.`,
+    from: {
+      path: '^src/core/',
+      pathNot: sourceTestFiles,
+    },
+    to: {
+      path: externalModule,
+      pathNot: '^crypto$|(^|/)node_modules/uuid/',
+    },
+  },
+  {
+    name: 'api-domain-kernel-not-to-external',
+    severity: 'error',
+    comment:
+      'The domain kernel must not import an external module directly; use the wrapper in core. ' +
+      `See ${docs.sourceDependency}#외부-모듈.`,
+    from: {
+      path: '^src/kernels/domain/',
+      pathNot: sourceTestFiles,
+    },
+    to: {
+      path: externalModule,
+    },
+  },
+  {
+    name: 'api-domain-not-to-external',
+    severity: 'error',
+    comment:
+      'Domain code must not import an external module directly; use the wrapper in core. ' +
+      `See ${docs.sourceDependency}#외부-모듈.`,
+    from: {
+      path: '^src/contexts/[^/]+/domain/',
+      pathNot: sourceTestFiles,
+    },
+    to: {
+      path: externalModule,
+    },
+  },
   {
     name: 'api-core-is-independent',
     severity: 'error',

@@ -1,6 +1,7 @@
 /** @type {import('dependency-cruiser').IConfiguration} */
 const { join } = require('node:path');
 
+const { nodeBuiltinModule } = require('./patterns.cjs');
 const runtimeWiringRules = require('./rules/runtime-wiring.cjs');
 const sourceDependencyRules = require('./rules/source-dependency.cjs');
 
@@ -27,6 +28,7 @@ module.exports = {
     includeOnly: [
       '^src/',
       '^test/',
+      nodeBuiltinModule,
       '^node_modules/',
       '^../../node_modules/',
       '^../../packages/',
