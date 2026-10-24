@@ -26,7 +26,7 @@ export class SourceSyncJob extends AggregateRoot<
       id: newId(),
       props: {
         sourceId,
-        fingerprint: SourceFingerprint.of(fingerprint),
+        fingerprint,
         status: 'waiting',
         totalChunks: null,
       },
@@ -68,15 +68,15 @@ export class SourceSyncJob extends AggregateRoot<
     this.props.status = 'failed';
   }
 
-  isCompleted(): boolean {
-    return this.props.status === 'completed';
+  isWaiting(): boolean {
+    return this.props.status === 'waiting';
   }
 
-  isActiveFor(fingerprint: string): boolean {
-    const isActive = this.props.status === 'waiting';
-    const hasSameFingerprint = this.props.fingerprint.unpack() === fingerprint;
-
-    return isActive && hasSameFingerprint;
+  isWaitingOrCompletedFor(fingerprint: SourceFingerprint): boolean {
+    return (
+      this.props.status !== 'failed' &&
+      this.props.fingerprint.equals(fingerprint)
+    );
   }
 
   public validate(): void {
@@ -95,7 +95,7 @@ export class SourceSyncJob extends AggregateRoot<
 interface SourceSyncJobCreateParams {
   sourceId: string;
   content: string;
-  fingerprint: string;
+  fingerprint: SourceFingerprint;
 }
 
 interface SourceSyncJobRestoreParams {

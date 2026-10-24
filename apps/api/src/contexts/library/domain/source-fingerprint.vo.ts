@@ -1,4 +1,5 @@
 import { InvariantViolationError } from '@core/errors';
+import { sha256Hex } from '@core/hash';
 import { ValueObject, type DomainPrimitive } from '@kernels/domain';
 
 export class SourceFingerprint extends ValueObject<string> {
@@ -10,6 +11,10 @@ export class SourceFingerprint extends ValueObject<string> {
     const props = { value: value.trim() };
 
     return new SourceFingerprint(props);
+  }
+
+  static ofBody(text: string): SourceFingerprint {
+    return new SourceFingerprint({ value: sha256Hex(text) });
   }
 
   protected validate(props: DomainPrimitive<string>): void {

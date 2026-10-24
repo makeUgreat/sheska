@@ -65,7 +65,7 @@ describe('SourcePgDrizzleQuery', () => {
     );
     const syncJob = buildSourceSyncJob({
       sourceId: source.id,
-      fingerprint: 'fingerprint-2',
+      content: 'content-2',
     });
     await syncJobs.insert(syncJob);
 

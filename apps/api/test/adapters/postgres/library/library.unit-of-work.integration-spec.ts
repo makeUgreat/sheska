@@ -51,7 +51,7 @@ describe('LibraryPgDrizzleUnitOfWork', () => {
     });
     const syncJob = buildSourceSyncJob({
       sourceId: source.id,
-      fingerprint: 'unit-of-work-commit',
+      content: 'unit-of-work-commit',
     });
 
     await unitOfWork.execute(async (resources) => {
@@ -73,11 +73,11 @@ describe('LibraryPgDrizzleUnitOfWork', () => {
     });
     const firstSyncJob = buildSourceSyncJob({
       sourceId: source.id,
-      fingerprint: 'unit-of-work-rollback',
+      content: 'unit-of-work-rollback',
     });
     const conflictingSyncJob = buildSourceSyncJob({
       sourceId: source.id,
-      fingerprint: 'unit-of-work-rollback',
+      content: 'unit-of-work-rollback',
     });
     const event = new SourceSyncJobCreatedIntegrationEvent({
       occurredAt: new Date(),

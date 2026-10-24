@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { type SourceRepository } from '@contexts/library/domain';
+import { type Source, type SourceRepository } from '@contexts/library/domain';
 import {
   type SourceLookup,
   type SourceDocument,
@@ -14,22 +14,22 @@ export class SourceFromRepositoryLookup implements SourceLookup {
 
   async get(sourceId: string): Promise<SourceDocument> {
     const source = await this.sources.get({ id: sourceId });
-    const props = source.getProps();
-    return {
-      externalSourceId: props.externalSourceId.unpack(),
-      title: props.contentSnapshot.unpack().title,
-      body: props.contentSnapshot.unpack().body,
-    };
+    return SourceFromRepositoryLookup.toDocument(source);
   }
 
   async find(sourceId: string): Promise<SourceDocument | null> {
     const source = await this.sources.find({ id: sourceId });
     if (source === null) return null;
-    const props = source.getProps();
+    return SourceFromRepositoryLookup.toDocument(source);
+  }
+
+  private static toDocument(source: Source): SourceDocument {
+    const { externalSourceId, body } = source.getProps();
+
     return {
-      externalSourceId: props.externalSourceId.unpack(),
-      title: props.contentSnapshot.unpack().title,
-      body: props.contentSnapshot.unpack().body,
+      externalSourceId: externalSourceId.unpack(),
+      title: source.title(),
+      body: body.unpack().text,
     };
   }
 }

@@ -1,13 +1,13 @@
-import { SourceSyncJob } from '@contexts/library/domain';
+import { SourceFingerprint, SourceSyncJob } from '@contexts/library/domain';
 import { describe, expect, it } from 'vitest';
 
 describe('SourceSyncJob', () => {
   describe('create', () => {
-    it('waiting 상태로 sync job을 생성한다', () => {
+    it('waiting 상태로 만들고 받은 fingerprint를 기록한다', () => {
       const syncJob = SourceSyncJob.create({
         sourceId: 'source-1',
         content: '# Source note',
-        fingerprint: 'fingerprint-1',
+        fingerprint: SourceFingerprint.of('fingerprint-1'),
       });
       const props = syncJob.getProps();
 
@@ -24,7 +24,7 @@ describe('SourceSyncJob', () => {
       const syncJob = SourceSyncJob.create({
         sourceId: 'source-1',
         content: '# Source note',
-        fingerprint: 'fingerprint-1',
+        fingerprint: SourceFingerprint.of('fingerprint-1'),
       });
 
       expect(syncJob.domainEvents).toHaveLength(1);
@@ -33,7 +33,6 @@ describe('SourceSyncJob', () => {
         aggregateId: syncJob.id,
         sourceId: 'source-1',
         content: '# Source note',
-        fingerprint: 'fingerprint-1',
       });
     });
   });
@@ -82,7 +81,7 @@ describe('SourceSyncJob', () => {
       const syncJob = SourceSyncJob.create({
         sourceId: 'source-1',
         content: '# Source note',
-        fingerprint: 'fingerprint-1',
+        fingerprint: SourceFingerprint.of('fingerprint-1'),
       });
       syncJob.markCompleted(10);
 
@@ -93,67 +92,56 @@ describe('SourceSyncJob', () => {
     });
   });
 
-  describe('isCompleted', () => {
-    it('status가 completed면 true를 반환한다', () => {
-      const syncJob = SourceSyncJob.create({
-        sourceId: 'source-1',
-        content: '# Source note',
-        fingerprint: 'fingerprint-1',
-      });
-      syncJob.markCompleted(10);
-
-      expect(syncJob.isCompleted()).toBe(true);
-    });
-
-    it.each(['waiting', 'failed'] as const)(
-      'status가 %s면 false를 반환한다',
-      (status) => {
-        const syncJob = SourceSyncJob.restore({
-          id: 'source-sync-job-1',
-          sourceId: 'source-1',
-          fingerprint: 'fingerprint-1',
-          status,
-        });
-
-        expect(syncJob.isCompleted()).toBe(false);
-      },
-    );
-  });
-
-  describe('isActiveFor', () => {
-    it('library.sync-7: status가 waiting이고 fingerprint가 같으면 true를 반환한다', () => {
-      const syncJob = SourceSyncJob.restore({
-        id: 'source-sync-job-1',
-        sourceId: 'source-1',
-        fingerprint: 'fingerprint-1',
-        status: 'waiting',
-      });
-
-      expect(syncJob.isActiveFor('fingerprint-1')).toBe(true);
-    });
-
-    it('library.sync-7: fingerprint가 다르면 false를 반환한다', () => {
-      const syncJob = SourceSyncJob.create({
-        sourceId: 'source-1',
-        content: '# Source note',
-        fingerprint: 'fingerprint-1',
-      });
-
-      expect(syncJob.isActiveFor('fingerprint-2')).toBe(false);
+  describe('isWaiting', () => {
+    it('library.sync-8: status가 waiting이면 true를 반환한다', () => {
+      expect(restoreSyncJob('waiting').isWaiting()).toBe(true);
     });
 
     it.each(['completed', 'failed'] as const)(
-      'library.sync-7: status가 %s면 false를 반환한다',
+      'library.sync-8: status가 %s면 false를 반환한다',
       (status) => {
-        const syncJob = SourceSyncJob.restore({
-          id: 'source-sync-job-1',
-          sourceId: 'source-1',
-          fingerprint: 'fingerprint-1',
-          status,
-        });
-
-        expect(syncJob.isActiveFor('fingerprint-1')).toBe(false);
+        expect(restoreSyncJob(status).isWaiting()).toBe(false);
       },
     );
   });
+
+  describe('isWaitingOrCompletedFor', () => {
+    it.each(['waiting', 'completed'] as const)(
+      'library.sync-7: status가 %s이고 fingerprint가 같으면 true를 반환한다',
+      (status) => {
+        expect(
+          restoreSyncJob(status).isWaitingOrCompletedFor(
+            SourceFingerprint.of('fingerprint-1'),
+          ),
+        ).toBe(true);
+      },
+    );
+
+    it('library.sync-7: fingerprint가 다르면 false를 반환한다', () => {
+      expect(
+        restoreSyncJob('completed').isWaitingOrCompletedFor(
+          SourceFingerprint.of('fingerprint-2'),
+        ),
+      ).toBe(false);
+    });
+
+    it('library.sync-7: status가 failed면 fingerprint가 같아도 false를 반환한다', () => {
+      expect(
+        restoreSyncJob('failed').isWaitingOrCompletedFor(
+          SourceFingerprint.of('fingerprint-1'),
+        ),
+      ).toBe(false);
+    });
+  });
 });
+
+function restoreSyncJob(
+  status: 'waiting' | 'completed' | 'failed',
+): SourceSyncJob {
+  return SourceSyncJob.restore({
+    id: 'source-sync-job-1',
+    sourceId: 'source-1',
+    fingerprint: 'fingerprint-1',
+    status,
+  });
+}

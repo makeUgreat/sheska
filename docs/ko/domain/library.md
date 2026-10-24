@@ -133,7 +133,7 @@ vault 파일을 언제 보내고, source 업로드를 받으면 무엇을 저장
 | [library.sync-10](#librarysync-10-자동-동기화) | 동기화 클라이언트는 소유자가 자동 동기화를 끄지 않았으면 동기화 대상을 모두 자동으로 보내야 한다. |
 | [library.sync-5](#librarysync-5-source-갱신) | source는 source 업로드의 파일 내용이 저장된 것과 다르면 갱신해야 한다. |
 | [library.sync-6](#librarysync-6-임베딩을-다시-만드는-기준) | 임베딩을 다시 만들지는 fingerprint로만 정해야 한다. |
-| [library.sync-7](#librarysync-7-sync-job을-만드는-경우) | source 업로드를 받으면 source의 가장 최근 sync job에 따라 아래 표대로 해야 한다. |
+| [library.sync-7](#librarysync-7-sync-job을-만드는-경우) | source 업로드를 받으면 가장 최근 sync job이 현재 fingerprint에 대한 대기나 완료가 아닐 때만 새 sync job을 만들어야 한다. |
 | [library.sync-8](#librarysync-8-업로드-응답의-sync-job) | source 업로드 응답은 그 업로드 때문에 기다려야 할 임베딩이 있을 때만 sync job을 담을 수 있다. |
 | [library.sync-9](#librarysync-9-동기화-재시도) | 동기화 클라이언트는 실패한 동기화를 횟수 제한 없이 재시도해야 한다. |
 
@@ -161,28 +161,22 @@ source는 동기화 클라이언트의 요청으로만 만들고, 바꾸고, 지
 ### library.sync-5 source 갱신
 
 source는 source 업로드의 파일 내용이 저장된 것과 다르면 갱신해야 한다.
+- 예: frontmatter만 바뀌어도 source는 갱신한다.
+- 참고: 임베딩을 다시 만들지는 `library.sync-6`이 따로 정한다.
 
 ### library.sync-6 임베딩을 다시 만드는 기준
 
 임베딩을 다시 만들지는 fingerprint로만 정해야 한다.
-- 예: frontmatter나 제목만 바뀌면 fingerprint가 같으므로 임베딩을 다시 만들지 않는다.
+- 예: frontmatter만 바뀌면 source 제목이 바뀌더라도 fingerprint가 같으므로 임베딩을 다시 만들지 않는다.
 - 이유: 임베딩이 읽지 않는 입력이 바뀔 때마다 임베딩을 다시 만들면 연산만 낭비한다.
 - 참고: 임베딩이 읽는 입력이 바뀌면 fingerprint에 넣는 입력도 함께 바꾼다.
 
 ### library.sync-7 sync job을 만드는 경우
 
-source 업로드를 받으면 source의 가장 최근 sync job에 따라 아래 표대로 해야 한다.
-
-| 가장 최근 sync job | 그 sync job의 fingerprint가 현재와 같음 | 결과 |
-|---|---|---|
-| 없음 | - | 새 sync job을 만든다 |
-| 완료 | 예 | 아무것도 하지 않는다 |
-| 완료 | 아니오 | 새 sync job을 만든다 |
-| 대기 | 예 | 새 sync job을 만들지 않고 그 sync job을 돌려준다 |
-| 대기 | 아니오 | 새 sync job을 만든다 |
-| 실패 | - | 새 sync job을 만든다 |
-
-- 이유: 대기 중인 sync job을 돌려주면 요청이 겹쳐도 같은 내용을 두 번 임베딩하지 않는다.
+source 업로드를 받으면 가장 최근 sync job이 현재 fingerprint에 대한 대기나 완료가 아닐 때만 새 sync job을 만들어야 한다.
+- 예: 가장 최근 sync job이 없거나, 실패했거나, fingerprint가 다르면 새로 만든다.
+- 예: 가장 최근 sync job이 현재 fingerprint에 대한 대기나 완료면 새로 만들지 않고 그 sync job을 쓴다.
+- 이유: 대기 중인 sync job을 다시 쓰면 요청이 겹쳐도 같은 내용을 두 번 임베딩하지 않는다.
 - 이유: 실패했으면 같은 내용이라도 새로 만든다. 같은 내용을 다시 보내는 것이 실패한 동기화를 재시도하는 방법이다.
 
 ### library.sync-8 업로드 응답의 sync job

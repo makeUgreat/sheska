@@ -20,9 +20,7 @@ describe('SourceFromRepositoryLookup', () => {
       const source = Source.create({
         externalSourceId: 'external-1',
         body: '# Source note',
-        frontmatter: { title: 'Source note' },
-        title: 'Source note',
-        fingerprint: 'fingerprint-1',
+        frontmatter: { sheska: true, title: 'Source note' },
         size: 50,
       });
       const repository = buildMockRepository({

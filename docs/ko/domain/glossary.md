@@ -20,11 +20,12 @@ related:
 - source(`Source`): 동기화 대상 하나를 받아 둔 사본이다.
 - `externalSourceId`(`ExternalSourceId`): source가 온 vault 안의 파일 경로다.
   - "파일 경로"라고 부를 때도 같은 것이다.
-- 내용 스냅샷(`SourceContentSnapshot`): 마지막으로 받은 파일 내용을 frontmatter, 제목, 본문으로 나눈 것이다.
+- 내용 스냅샷: 마지막으로 받은 파일 내용을 frontmatter와 본문으로 나눈 것이다.
 - frontmatter(`SourceFrontmatter`): 파일 맨 앞의 `---`로 둘러싼 YAML mapping이다.
 - 본문: 파일 내용에서 frontmatter를 뺀 나머지다.
   - 예: frontmatter가 없는 파일은 파일 내용 전체가 본문이다.
 - source 제목: source를 목록과 화면에서 부르는 이름이다.
+  - 내용 스냅샷에 따로 담기지 않는다. frontmatter와 `externalSourceId`에서 정해진다(`library.source-3`).
 - fingerprint(`SourceFingerprint`): 임베딩이 읽는 입력의 hash다.
 - sync job(`SourceSyncJob`): source의 한 버전을 임베딩하도록 요청한 기록이다.
   - 임베딩 자체와 다르다. 임베딩은 `ingestion`이 만든다.

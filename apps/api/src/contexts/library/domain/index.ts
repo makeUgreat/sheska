@@ -1,8 +1,7 @@
 export { ExternalSourceId } from './external-source-id.vo';
-export { Source, type SyncContentSnapshotResult } from './source.aggregate';
+export { Source } from './source.aggregate';
 export { SourceSyncJobCreatedDomainEvent } from './source-sync-job.event';
 export { SourceFingerprint } from './source-fingerprint.vo';
-export { SourceContentSnapshot } from './source-content-snapshot.vo';
 export { SourceFrontmatter } from './source-frontmatter.vo';
 export type {
   SourceFrontmatterProps,

@@ -1,14 +1,7 @@
 import { InvalidDataError, ValidationFailedError } from '@core/errors';
-import {
-  type SourceDocumentParser,
-  type SourceFingerprinter,
-} from '@contexts/library/application/ports';
-import { describe, expect, it, type MockedFunction, vi } from 'vitest';
+import { type SourceDocumentParser } from '@contexts/library/application/ports';
+import { describe, expect, it, vi } from 'vitest';
 import { SourceContentSnapshotCalculator } from '../source-content-snapshot-calculator.service';
-
-type SourceFingerprinterMock = {
-  calculate: MockedFunction<SourceFingerprinter['calculate']>;
-};
 
 const parser: SourceDocumentParser = {
   parse: vi
@@ -17,42 +10,20 @@ const parser: SourceDocumentParser = {
 };
 
 describe('SourceContentSnapshotCalculator', () => {
-  it('fingerprint 계산을 위임하고 source content snapshot 계산값을 반환한다', async () => {
-    const fingerprinter = createSourceFingerprinterMock();
-    const calculator = new SourceContentSnapshotCalculator(
-      fingerprinter,
-      parser,
-    );
+  it('파싱 결과와 파일 전체의 바이트 크기를 반환한다', () => {
+    const calculator = new SourceContentSnapshotCalculator(parser);
 
-    const result = await calculator.calculate('안녕');
+    const result = calculator.calculate('안녕');
 
     expect(result).toEqual({
       body: '안녕',
       frontmatter: {},
       title: null,
-      fingerprint: 'fingerprint-1',
       size: 6,
     });
-    expect(fingerprinter.calculate).toHaveBeenCalledWith('안녕');
   });
 
-  it('fingerprint 계산 exception을 전파한다', async () => {
-    const fingerprinterFailure = new Error(
-      'Source fingerprinter is unavailable',
-    );
-    const fingerprinter = createSourceFingerprinterMock();
-    fingerprinter.calculate.mockRejectedValue(fingerprinterFailure);
-    const calculator = new SourceContentSnapshotCalculator(
-      fingerprinter,
-      parser,
-    );
-
-    await expect(calculator.calculate('# Source note')).rejects.toBe(
-      fingerprinterFailure,
-    );
-  });
-
-  it('library.source-4: 문서가 잘못된 parser 실패를 ValidationFailedError로 변환한다', async () => {
+  it('library.source-4: 문서가 잘못된 parser 실패를 ValidationFailedError로 변환한다', () => {
     const failingParser: SourceDocumentParser = {
       parse: vi.fn().mockImplementation(() => {
         throw new InvalidDataError({
@@ -62,49 +33,35 @@ describe('SourceContentSnapshotCalculator', () => {
         });
       }),
     };
-    const fingerprinter = createSourceFingerprinterMock();
-    const calculator = new SourceContentSnapshotCalculator(
-      fingerprinter,
-      failingParser,
-    );
+    const calculator = new SourceContentSnapshotCalculator(failingParser);
 
-    await expect(calculator.calculate('# Source note')).rejects.toMatchObject({
-      name: 'ValidationFailedError',
-      code: 'source.invalid_frontmatter',
-      details: {
-        fields: [
-          {
-            path: 'frontmatter',
-            messages: ['Frontmatter must be a YAML mapping'],
-          },
-        ],
-      },
-    });
-    await expect(calculator.calculate('# Source note')).rejects.toBeInstanceOf(
+    expect(() => calculator.calculate('# Source note')).toThrow(
       ValidationFailedError,
+    );
+    expect(() => calculator.calculate('# Source note')).toThrow(
+      expect.objectContaining({
+        code: 'source.invalid_frontmatter',
+        details: {
+          fields: [
+            {
+              path: 'frontmatter',
+              messages: ['Frontmatter must be a YAML mapping'],
+            },
+          ],
+        },
+      }),
     );
   });
 
-  it('문서 문제가 아닌 parser 실패는 변환하지 않고 전파한다', async () => {
+  it('문서 문제가 아닌 parser 실패는 변환하지 않고 전파한다', () => {
     const parserBug = new TypeError('Cannot read properties of undefined');
     const brokenParser: SourceDocumentParser = {
       parse: vi.fn().mockImplementation(() => {
         throw parserBug;
       }),
     };
-    const calculator = new SourceContentSnapshotCalculator(
-      createSourceFingerprinterMock(),
-      brokenParser,
-    );
+    const calculator = new SourceContentSnapshotCalculator(brokenParser);
 
-    await expect(calculator.calculate('# Source note')).rejects.toBe(parserBug);
+    expect(() => calculator.calculate('# Source note')).toThrow(parserBug);
   });
 });
-
-function createSourceFingerprinterMock(): SourceFingerprinterMock {
-  return {
-    calculate: vi
-      .fn<SourceFingerprinter['calculate']>()
-      .mockResolvedValue('fingerprint-1'),
-  };
-}

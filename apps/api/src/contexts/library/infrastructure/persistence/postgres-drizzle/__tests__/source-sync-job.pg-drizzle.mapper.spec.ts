@@ -1,3 +1,4 @@
+import { sha256Hex } from '@core/hash';
 import { describe, expect, it } from 'vitest';
 import { buildSourceSyncJob } from '../../../../../../../test/support/domains/fixtures/source-sync-job.fixture';
 import { buildSourceSyncJobRow } from '../../../../../../../test/adapters/postgres/library/fixtures/source-sync-job-row.fixture';
@@ -41,7 +42,7 @@ describe('SourceSyncJobPgDrizzleMapper', () => {
     expect(row).toEqual({
       id: syncJob.id,
       sourceId: 'source-1',
-      fingerprint: 'fingerprint-1',
+      fingerprint: sha256Hex('content-1'),
       status: 'waiting',
       totalChunks: null,
     });

@@ -4,7 +4,7 @@ import {
   ExternalSourceId,
   Source,
   SourceFrontmatter,
-  SourceSyncJob,
+  type SourceSyncJob,
   type SourceRepository,
   type SourceSyncJobRepository,
 } from '@contexts/library/domain';
@@ -33,7 +33,7 @@ export interface UploadSourceResult {
 }
 
 export interface UploadSourceContentSnapshotCalculator {
-  calculate(content: string): Promise<SourceContentSnapshotCalculation>;
+  calculate(content: string): SourceContentSnapshotCalculation;
 }
 
 @Injectable()
@@ -53,54 +53,101 @@ export class UploadSourceUseCase {
     const externalSourceId = ExternalSourceId.of(
       command.externalSourceId,
     ).unpack();
-    const snapshot = await this.contentSnapshotCalculator.calculate(
-      command.content,
-    );
-    if (!SourceFrontmatter.of(snapshot.frontmatter).optsIntoSync()) {
-      throw new ValidationFailedError({
-        code: 'source.not_sync_target',
-        message:
-          'Only a file whose frontmatter has `sheska: true` can be uploaded',
-        details: {
-          fields: [{ path: 'frontmatter.sheska', messages: ['must be true'] }],
-        },
-      });
-    }
-    const source = await this.sources.find({ externalSourceId });
+    const snapshot = this.contentSnapshotCalculator.calculate(command.content);
+    this.ensureSyncTarget(snapshot);
 
-    if (!source) {
-      return this.persistChange(
-        Source.create({ externalSourceId, ...snapshot }),
-        'insert',
-      );
-    }
+    const existingSource = await this.sources.find({ externalSourceId });
+    const changes = existingSource
+      ? await this.syncSource(existingSource, snapshot)
+      : this.createSource(externalSourceId, snapshot);
 
-    const { changed } = source.syncContentSnapshot(snapshot);
-    if (!changed) {
-      const latestSyncJob = await this.syncJobs.findLatest({
-        sourceId: source.id,
-      });
-      if (latestSyncJob?.isCompleted()) return this.completeUpload(source);
-      if (latestSyncJob?.isActiveFor(snapshot.fingerprint)) {
-        return this.completeUpload(source, latestSyncJob);
-      }
-    }
-
-    return this.persistChange(source, 'update');
+    await this.persist(changes);
+    return this.toResult(changes);
   }
 
-  private async persistChange(
-    source: Source,
-    sourceWrite: 'insert' | 'update',
-  ): Promise<UploadSourceResult> {
-    const { body, fingerprint } = source.getProps().contentSnapshot.unpack();
+  private createSource(
+    externalSourceId: string,
+    snapshot: SourceContentSnapshotCalculation,
+  ): UploadChanges {
+    const source = Source.create({ externalSourceId, ...snapshot });
 
-    const syncJob = SourceSyncJob.create({
+    return {
+      source,
+      sourceWrite: 'insert',
+      syncJob: source.syncJobFor(null),
+      isNewSyncJob: true,
+    };
+  }
+
+  private async syncSource(
+    source: Source,
+    snapshot: SourceContentSnapshotCalculation,
+  ): Promise<UploadChanges> {
+    const sourceChanged = source.syncContent(snapshot);
+    const latestSyncJob = await this.syncJobs.findLatest({
       sourceId: source.id,
-      fingerprint: fingerprint.unpack(),
-      content: body,
     });
-    const integrationEvents = syncJob.domainEvents.map(
+
+    const syncJob = source.syncJobFor(latestSyncJob);
+
+    return {
+      source,
+      sourceWrite: sourceChanged ? 'update' : null,
+      syncJob,
+      isNewSyncJob: syncJob !== latestSyncJob,
+    };
+  }
+
+  private async persist({
+    source,
+    sourceWrite,
+    syncJob,
+    isNewSyncJob,
+  }: UploadChanges): Promise<void> {
+    if (sourceWrite === null && !isNewSyncJob) return;
+
+    await this.unitOfWork.execute(async (resources) => {
+      if (sourceWrite === 'insert') await resources.sources.insert(source);
+      if (sourceWrite === 'update') await resources.sources.update(source);
+      if (isNewSyncJob) {
+        await resources.syncJobs.insert(syncJob);
+        for (const integrationEvent of this.toIntegrationEvents(syncJob)) {
+          await resources.outbox.append(integrationEvent);
+        }
+      }
+    });
+
+    if (isNewSyncJob) syncJob.clearDomainEvents();
+  }
+
+  private toResult({ source, syncJob }: UploadChanges): UploadSourceResult {
+    const { externalSourceId, body } = source.getProps();
+
+    return {
+      sourceId: source.id,
+      externalSourceId: externalSourceId.unpack(),
+      fingerprint: body.unpack().fingerprint.unpack(),
+      syncJobId: syncJob.isWaiting() ? syncJob.id : undefined,
+    };
+  }
+
+  private ensureSyncTarget(snapshot: SourceContentSnapshotCalculation): void {
+    if (SourceFrontmatter.of(snapshot.frontmatter).isSyncTarget()) return;
+
+    throw new ValidationFailedError({
+      code: 'source.not_sync_target',
+      message:
+        'Only a file whose frontmatter has `sheska: true` can be uploaded',
+      details: {
+        fields: [{ path: 'frontmatter.sheska', messages: ['must be true'] }],
+      },
+    });
+  }
+
+  private toIntegrationEvents(
+    syncJob: SourceSyncJob,
+  ): SourceSyncJobCreatedIntegrationEvent[] {
+    return syncJob.domainEvents.map(
       (event) =>
         new SourceSyncJobCreatedIntegrationEvent({
           occurredAt: event.occurredAt,
@@ -109,37 +156,12 @@ export class UploadSourceUseCase {
           content: event.content,
         }),
     );
-
-    const result = await this.unitOfWork.execute(async (resources) => {
-      const savedSource =
-        sourceWrite === 'insert'
-          ? await resources.sources.insert(source)
-          : await resources.sources.update(source);
-      const savedSyncJob = await resources.syncJobs.insert(syncJob);
-
-      for (const integrationEvent of integrationEvents) {
-        await resources.outbox.append(integrationEvent);
-      }
-
-      return this.completeUpload(savedSource, savedSyncJob);
-    });
-
-    syncJob.clearDomainEvents();
-
-    return result;
   }
+}
 
-  private completeUpload(
-    source: Source,
-    syncJob?: SourceSyncJob,
-  ): UploadSourceResult {
-    const { externalSourceId, contentSnapshot } = source.getProps();
-
-    return {
-      sourceId: source.id,
-      externalSourceId: externalSourceId.unpack(),
-      fingerprint: contentSnapshot.unpack().fingerprint.unpack(),
-      syncJobId: syncJob?.id,
-    };
-  }
+interface UploadChanges {
+  source: Source;
+  sourceWrite: 'insert' | 'update' | null;
+  syncJob: SourceSyncJob;
+  isNewSyncJob: boolean;
 }

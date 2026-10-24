@@ -7,7 +7,6 @@ export function buildSource(
     body?: string;
     frontmatter?: SourceFrontmatterProps;
     title?: string | null;
-    fingerprint?: string;
     size?: number;
   } = {},
 ): Source {
@@ -17,13 +16,28 @@ export function buildSource(
   return Source.create({
     externalSourceId,
     body,
-    frontmatter: params.frontmatter ?? {},
-    title: params.title ?? externalSourceId,
-    fingerprint: params.fingerprint ?? 'fingerprint-1',
+    frontmatter: {
+      sheska: true,
+      ...params.frontmatter,
+      ...(params.title ? { title: params.title } : {}),
+    },
     size: params.size ?? sourceContentByteSize(params.content ?? body),
   });
 }
 
 export function sourceContentByteSize(content: string): number {
   return new TextEncoder().encode(content).length;
+}
+
+export function sourceContentOf(source: Source) {
+  const { frontmatter, body, size } = source.getProps();
+  const { text, fingerprint } = body.unpack();
+
+  return {
+    frontmatter: frontmatter.unpack(),
+    title: source.title(),
+    body: text,
+    fingerprint: fingerprint.unpack(),
+    size: size.unpack(),
+  };
 }
