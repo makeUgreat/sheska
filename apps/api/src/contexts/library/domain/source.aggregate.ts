@@ -1,4 +1,5 @@
-import { AggregateRoot, newId } from '@kernels/domain';
+import { newId } from '@core/id';
+import { AggregateRoot } from '@kernels/domain';
 import { ExternalSourceId } from './external-source-id.vo';
 import { SourceContentSnapshot } from './source-content-snapshot.vo';
 import { type SourceFrontmatterProps } from './source-frontmatter.vo';
