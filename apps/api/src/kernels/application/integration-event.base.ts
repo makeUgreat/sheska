@@ -1,4 +1,4 @@
-import { v7 as newId } from 'uuid';
+import { newId } from '@core/id';
 
 export interface IntegrationEventParams {
   readonly occurredAt?: Date;

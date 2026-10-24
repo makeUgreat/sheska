@@ -6,5 +6,4 @@ export {
   type AggregateID,
   type CreateEntityProps,
 } from './entity.base';
-export { newId } from './id.generator';
 export { ValueObject, type DomainPrimitive } from './value-object.base';

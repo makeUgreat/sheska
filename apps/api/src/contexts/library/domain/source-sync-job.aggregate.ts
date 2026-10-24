@@ -1,4 +1,5 @@
-import { AggregateRoot, newId } from '@kernels/domain';
+import { newId } from '@core/id';
+import { AggregateRoot } from '@kernels/domain';
 import { SourceFingerprint } from './source-fingerprint.vo';
 import {
   SourceSyncJobCreatedDomainEvent,

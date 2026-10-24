@@ -86,7 +86,7 @@ related:
 {name}.{role}.ts
 ```
 
-- **name**: 파일이 다루는 개념 (예: `cursor`, `id`, `error-log`).
+- **name**: 파일이 다루는 개념 (예: `cursor`, `integration-event`, `error-log`).
 - **role**: 파일이 하는 일을 역할 단어로 표현한다 (예: `codec`, `generator`, `mapper`, `paginator`,
   `base`, `exception`, `tokens`, `classifier`).
 
@@ -96,7 +96,6 @@ related:
 | --- | --- |
 | `cursor.codec.ts` | `encodeCursor`, `decodeCursor` |
 | `cursor.paginator.ts` | `sliceForCursor` |
-| `id.generator.ts` | `newId` |
 | `error-log.mapper.ts` | `toErrorLogContext` |
 
 ## 디렉토리 구조

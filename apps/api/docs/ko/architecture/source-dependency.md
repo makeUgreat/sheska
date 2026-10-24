@@ -72,7 +72,7 @@ flowchart TB
 
 | 영역 | 책임 | 의존할 수 있는 대상 |
 |---|---|---|
-| `core` | 레이어·framework·컨텍스트·비즈니스 용어가 없는 순수 primitive | 없음 |
+| `core` | 레이어·framework·컨텍스트·비즈니스 용어가 없는 순수 primitive | 허용 목록의 외부 모듈([외부 모듈](#외부-모듈)) |
 | `<context>/domain` | 비즈니스 규칙과 도메인 모델 | `core`, `kernels/domain` |
 | `<context>/application` | 유스 케이스와 application 흐름 | `core`, 같은 컨텍스트 domain, `kernels/application`, 같은 컨텍스트 `*.di-tokens.ts`, DI metadata 용도의 `@nestjs/common` |
 | `<context>/infrastructure` | 아웃바운드(driven) 어댑터 | `core`, domain, application, `kernels/infrastructure`, framework, 외부 라이브러리 |
@@ -88,6 +88,25 @@ flowchart TB
     어댑터는 `platform`에 둔다.
 - 예외 전파와 변환은 [오류 정책](../operability/error.md), 어댑터 이름과 파일 구조는
   [infrastructure 컨벤션](./infrastructure.md), 도메인 모델 소유권은 [DDD 컨벤션](./ddd.md)을 따른다.
+
+## 외부 모듈
+
+- 도메인이 쓰는 계산은 결정적이고 부수효과가 없으면 외부 모듈로 구현할 수 있다.
+  - 예: 해시, 식별자 생성.
+  - 도메인을 바깥과 떼어 두는 이유는 런타임 교체 가능성이 아니다.
+    I/O와 부수효과가 없어야 규칙만 따로 테스트할 수 있고, 결과가 결정적이어야 같은 입력에 같은 판단이 나온다.
+    순수 계산은 이 두 가지를 깨지 않는다.
+  - 결정적이지 않은 식별자 생성(UUIDv7)은 알려진 예외다. 모든 aggregate가 생성 시점에 식별자를 만들어야 한다.
+- I/O, 환경, 프로세스에 닿는 모듈은 도메인 쪽 어디에서도 쓰지 않는다.
+  - 예: `node:fs`, `node:net`, `node:child_process`, `process.env`, 데이터베이스, HTTP, framework.
+- 외부 모듈은 `core`의 얇은 래퍼에서만 import하고, `kernels/domain`과 context 도메인은 그 래퍼를 쓴다.
+  - 허용 범위가 `core`의 래퍼 파일로 모여서, 도메인 쪽 의존 규칙을 넓히지 않아도 된다.
+  - 래퍼 이름이 의도를 드러내고, 인코딩이나 출력 형식 같은 세부를 한 곳에서 고정한다.
+  - 해시나 식별자 생성은 비즈니스 용어가 없는 primitive라 `core`에 속한다.
+    도메인 빌딩 블록은 "aggregate는 식별자를 가진다"는 개념(`Entity`, `AggregateRoot`)이지, 식별자를 만드는 함수가 아니다.
+- `JSON`, `Math`, `TextEncoder`처럼 import 없이 쓰는 언어 내장 기능은 외부 모듈이 아니다. 감싸지 않는다.
+- 허용 목록은 `apps/api/dependency-cruiser/rules/source-dependency.cjs`가 가진다.
+  - 모듈을 허용 목록에 더할 때는 위 기준을 만족하는지 리뷰에서 확인한다.
 
 ## Import Path
 
