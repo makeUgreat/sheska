@@ -200,13 +200,57 @@ await orderRepository.save(order);
 
 ## 도메인 캡슐화
 
+- 다른 객체의 상태를 꺼내 판단하지 않는다. 판단은 상태를 가진 객체에게 묻거나 시킨다(Tell, Don't Ask).
+  - 판단이 밖에 있으면 같은 판단이 쓰는 곳마다 복사되고, 상태의 모양을 바꿀 때 그곳을 모두 찾아 고쳐야 한다.
+  - 예: use case가 source의 fingerprint를 꺼내 sync job의 fingerprint와 비교하지 않고
+    `source.syncJobFor(latestSyncJob)`에 시킨다.
 - 도메인 객체는 의도가 드러나는 메서드로 동작을 노출하는 것이 좋다.
   - 내부 속성을 그대로 반영하는 일반 getter는 피한다.
-  - 호출자가 도메인 상태를 확인하고 외부에서 도메인 판단을 내리게 만드는 snapshot은 피한다.
-  - 필드를 꺼내 외부에서 판단하기보다 객체에게 도메인 질문이나 동작을 요청한다.
   - 예: `isPublishable`, `hasContentHash`, `markDeleted`.
+- `getProps()`로 상태를 꺼내는 것은 응답, 저장, read model 매핑처럼 꺼낸 값으로 도메인 판단을 하지 않는 곳에서만
+  한다.
+  - 상태를 꺼내 판단하는 곳이 `getProps()` 호출로 드러나므로, 리뷰에서 판단에 쓰인 호출을 찾을 수 있다.
 - DTO, persistence, presentation 매핑은 레이어 경계에서 명시적인 mapper 또는 목적별 read model을 사용할 수 있지만, 그 형태를 도메인 모델의 기본 API로 만들지 않는다.
 - Value object는 값 자체가 도메인 개념일 때 원시 값을 노출할 수 있지만, entity와 aggregate는 동작 중심 API를 선호한다.
+
+## 도메인 메서드 입력 타입
+
+- 도메인 메서드의 매개변수를 원시값으로 받을지 도메인 객체로 받을지는 값이 어디서 오는지로 정한다.
+  - 도메인 밖에서 들어오는 값은 도메인에 들어오는 지점에서 한 번 도메인 객체로 바꾼다.
+  - 이미 도메인 객체인 값은 그대로 넘긴다. `unpack()`한 뒤 다시 만들지 않는다.
+    - 다시 만들면 "이미 검증된 값"이라는 보장이 타입에서 끊기고, 같은 변환이 여러 곳에 적힌다.
+  - 원시값으로 꺼내는 것은 도메인을 떠날 때만 한다. 예: repository 조회 조건, 응답, integration event
+- 이 섹션은 aggregate·entity의 `create`, 상태를 바꾸는 메서드, 판단 메서드에 적용한다. `restore`에는 적용하지 않는다.
+
+### Application에서 aggregate로 넘기는 값
+
+- 입력값 하나에 대응하는 value object는 application이 만들어 넘긴다. aggregate는 그 value object 타입으로 받는다.
+  - 예: `ExternalSourceId.of(command.externalSourceId)`, `SourceBody.of(body)`
+  - application이 정규화된 값으로 조회한 뒤 같은 value object로 aggregate를 만들 수 있어, 정규화를 두 번 하지 않는다.
+  - value object 안에서 파생되는 값은 application이 알 필요가 없다. 예: `SourceBody`의 fingerprint
+- 여러 입력에서 파생되는 value object는 aggregate가 만든다. aggregate는 재료를 받는다.
+  - 예: `EmbeddingVector`는 벡터 값과 `EmbeddingModel`의 차원에서 만들어지므로 `SourceEmbedding`이 만든다.
+  - application이 만들면 aggregate 상태의 구성 방식이 application으로 새어 나간다.
+- `kind`로 갈리는 union처럼 여러 모양 중 하나인 입력은 aggregate가 원시값으로 받고 value object로 바꾼다.
+  - 어느 모양인지 가르는 판단은 도메인이 한다. application이 value object를 만들려고 같은 분기를 하면 분기가 두 곳에
+    적힌다.
+- application은 aggregate가 아직 없을 때 도메인 질문에 답하려고 value object를 만들 수 있다.
+  - 예: `SourceFrontmatter.of(frontmatter).isSyncTarget()`
+
+### 도메인 객체 사이에서 넘기는 값
+
+- 같은 bounded context의 다른 aggregate가 가진 상태가 필요한 판단과 생성은, 그 aggregate를 인자로 받는 메서드에 둔다.
+  - 인자로 받은 aggregate의 상태를 꺼내지 않는다. 자기 value object를 넘겨 묻거나 시킨다.
+  - 예: `source.syncJobFor(latestSyncJob)`은 자기 fingerprint를 넘겨
+    `latestSyncJob.isWaitingOrCompletedFor(fingerprint)`로 묻는다.
+  - 예: 새 sync job은 `source.syncJobFor()`가 `Source`가 가진 본문과 fingerprint로 만든다. fingerprint를 다시 계산하지
+    않는다.
+  - 다른 aggregate에 대한 의존은 [같은 Bounded Context 내부의 예외](#같은-bounded-context-내부의-예외)를 따른다.
+    bounded context를 넘으면 ID와 이벤트를 쓴다.
+- aggregate 내부에서 value object·entity끼리, 또는 도메인 객체끼리 비교할 때는 도메인 타입으로 받는다.
+  - 예: `SourceBody.hasSameTextAs(other: SourceBody)`, `EmbeddingVector.of(values, model: EmbeddingModel)`
+  - value object 클래스는 `protected validate`를 선언하므로 다른 value object 타입을 넣으면 컴파일되지 않는다.
+    원시값은 fingerprint `string`과 id `string`을 바꿔 넣어도 컴파일된다.
 
 ## 도메인 API 타입 추출
 
@@ -237,5 +281,6 @@ await orderRepository.save(order);
 - 도메인 객체가 데이터베이스 행 또는 요청 DTO처럼 동작하지 않고 비즈니스 동작을 표현하는지 확인한다.
 - 비즈니스 불변 조건이 애플리케이션 오케스트레이션 또는 infrastructure 구현이 아니라 도메인에 속하는지 확인한다.
 - 유스 케이스가 상태를 꺼내 외부에서 도메인 판단을 내리지 않고 도메인 동작을 호출하는지 확인한다.
+- 도메인 객체를 `unpack()`한 뒤 같은 value object로 다시 만들어 넘기는 곳이 없는지 확인한다.
 - Repository가 저장 방식을 조회 도우미로 노출하지 않고 aggregate 저장과 조회를 모델링하는지 확인한다.
 - 모델 경계를 넘는 통신이 ID, DTO, 이벤트, 포트, 부패 방지 매핑을 사용하는지 확인한다.
