@@ -1,3 +1,5 @@
+import { isDeepEqual } from '@core/equality';
+
 export type Primitives = string | number | boolean;
 
 export interface DomainPrimitive<T extends Primitives | Date> {
@@ -27,12 +29,8 @@ export abstract class ValueObject<T> {
     return this.props as T;
   }
 
-  equals(vo?: ValueObject<T>): boolean {
-    if (vo === null || vo === undefined) {
-      return false;
-    }
-
-    return JSON.stringify(this.unpack()) === JSON.stringify(vo.unpack());
+  equals(other: ValueObject<T>): boolean {
+    return isDeepEqual(this.props, other.props);
   }
 
   private isDomainPrimitive(

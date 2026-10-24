@@ -152,18 +152,11 @@ describe('ValueObject', () => {
       expect(first.equals(second)).toBe(false);
     });
 
-    it('비교 대상이 undefined이면 false를 반환한다', () => {
-      const sampleName = SampleName.of('spring');
+    it('composite props의 키 순서는 비교하지 않는다', () => {
+      const first = SampleValueKeyDetails.of({ value: 'v', label: 'l' });
+      const second = SampleValueKeyDetails.of({ label: 'l', value: 'v' });
 
-      expect(sampleName.equals()).toBe(false);
-    });
-
-    it('비교 대상이 null이면 false를 반환한다', () => {
-      const sampleName = SampleName.of('spring');
-
-      expect(sampleName.equals(null as unknown as ValueObject<string>)).toBe(
-        false,
-      );
+      expect(first.equals(second)).toBe(true);
     });
   });
 });
