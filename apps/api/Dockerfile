@@ -1,4 +1,4 @@
-FROM node:24-alpine AS build
+FROM node:24.22.1-alpine AS build
 
 RUN corepack enable && corepack prepare pnpm@10.19.0 --activate
 
@@ -24,7 +24,7 @@ RUN cp -r apps/api/database/drizzle apps/api/dist/database/drizzle
 RUN pnpm deploy --filter @sheska/api --prod /prod
 
 
-FROM node:24-alpine AS production
+FROM node:24.22.1-alpine AS production
 
 RUN apk add --no-cache tini
 

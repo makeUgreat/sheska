@@ -1,4 +1,4 @@
-FROM node:24-alpine
+FROM node:24.22.1-alpine
 
 RUN corepack enable && corepack prepare pnpm@10.19.0 --activate
 
