@@ -53,7 +53,7 @@ read_when:
 - 어떤 env 파일을 읽을지는 실행 명령이 정한다. 앱 코드가 환경 이름으로 파일 경로를 만들지 않는다.
   - 예: package script의 `node --env-file .env.development`
   - 클러스터에서는 env 파일 없이 Pod의 환경 변수와 마운트한 파일로 설정을 받는다.
-- 개발 도구가 쓰는 접속 정보는 앱의 env 파일에 넣지 않는다. [개발 통합 도구](./dev-integrations.md)의 규칙을 따른다.
+- 개발 도구가 쓰는 접속 정보는 앱의 env 파일에 넣지 않는다. gitignore된 `.dev-integrations.env`에 두고, 키 목록은 `.dev-integrations.env.example`에 있다.
 
 ## 비밀값
 
