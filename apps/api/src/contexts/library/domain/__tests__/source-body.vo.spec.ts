@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { SourceBody } from '../source-body.vo';
 
 describe('SourceBody', () => {
-  it('library.sync-6: fingerprint를 본문의 SHA-256으로 만든다', () => {
+  // nocap: library-sync-6
+  it('fingerprint를 본문의 SHA-256으로 만든다', () => {
     const body = SourceBody.of('# Source note');
 
     expect(body.unpack().fingerprint.unpack()).toBe(sha256Hex('# Source note'));
@@ -15,13 +16,15 @@ describe('SourceBody', () => {
     expect(body.unpack().fingerprint.unpack()).toBe(sha256Hex(''));
   });
 
-  it('library.sync-6: 본문이 같으면 같은 본문이다', () => {
+  // nocap: library-sync-6
+  it('본문이 같으면 같은 본문이다', () => {
     expect(SourceBody.of('# Same').hasSameTextAs(SourceBody.of('# Same'))).toBe(
       true,
     );
   });
 
-  it('library.sync-6: 본문이 다르면 다른 본문이다', () => {
+  // nocap: library-sync-6
+  it('본문이 다르면 다른 본문이다', () => {
     expect(SourceBody.of('# A').hasSameTextAs(SourceBody.of('# B'))).toBe(
       false,
     );

@@ -72,7 +72,8 @@ describe('UploadSourceUseCase', () => {
     await app.close();
   });
 
-  it('library.sync-7: 새 source를 저장하고 sync job을 생성한다', async () => {
+  // nocap: library-sync-7
+  it('새 source를 저장하고 sync job을 생성한다', async () => {
     const externalSourceId = 'Notes/upload-usecase-new-source.md';
     const content = optedIntoSync('# Source note');
     const fingerprint = sha256Hex('# Source note');
@@ -147,7 +148,9 @@ describe('UploadSourceUseCase', () => {
     });
   });
 
-  it('library.sync-2, library.sync-7: 같은 content를 다시 업로드할 때 active sync job을 재사용한다', async () => {
+  // nocap: library-sync-2
+  // nocap: library-sync-7
+  it('같은 content를 다시 업로드할 때 active sync job을 재사용한다', async () => {
     const externalSourceId = 'Notes/upload-usecase-unchanged-no-embedding.md';
     const content = optedIntoSync('# Same source note');
     const fingerprint = sha256Hex('# Same source note');
@@ -169,7 +172,9 @@ describe('UploadSourceUseCase', () => {
     expect(persistedSyncJobs).toHaveLength(1);
   });
 
-  it('ingestion.chunk-1, library.sync-6: frontmatter 전체와 body를 분리하고 body만 임베딩 대상과 fingerprint 입력으로 쓴다', async () => {
+  // nocap: ingestion-chunk-1
+  // nocap: library-sync-6
+  it('frontmatter 전체와 body를 분리하고 body만 임베딩 대상과 fingerprint 입력으로 쓴다', async () => {
     const externalSourceId = 'Notes/upload-usecase-frontmatter.md';
     const content = `---
 sheska: true
@@ -210,7 +215,9 @@ custom:
     expect(message?.payload).toMatchObject({ content: '# Retry body' });
   });
 
-  it('library.sync-7, library.sync-8: 같은 content를 다시 업로드할 때 임베딩이 최신이면 저장 갱신과 sync job 생성을 건너뛴다', async () => {
+  // nocap: library-sync-7
+  // nocap: library-sync-8
+  it('같은 content를 다시 업로드할 때 임베딩이 최신이면 저장 갱신과 sync job 생성을 건너뛴다', async () => {
     const externalSourceId = 'Notes/upload-usecase-unchanged-with-embedding.md';
     const content = optedIntoSync('# Same source note with embedding');
     const fingerprint = sha256Hex('# Same source note with embedding');
@@ -244,7 +251,10 @@ custom:
     expect(persistedSyncJobs).toHaveLength(1);
   });
 
-  it('library.source-2, library.sync-5, library.sync-7: 다른 content를 다시 업로드하면 source를 갱신하고 sync job을 추가한다', async () => {
+  // nocap: library-source-2
+  // nocap: library-sync-5
+  // nocap: library-sync-7
+  it('다른 content를 다시 업로드하면 source를 갱신하고 sync job을 추가한다', async () => {
     const externalSourceId = 'Notes/upload-usecase-changed-source.md';
     const oldContent = optedIntoSync('# Old source note');
     const newContent = optedIntoSync('# New source note');
@@ -286,7 +296,9 @@ custom:
     );
   });
 
-  it('library.sync-5, library.sync-6: 본문은 그대로이고 frontmatter만 바뀌면 source만 갱신하고 sync job은 만들지 않는다', async () => {
+  // nocap: library-sync-5
+  // nocap: library-sync-6
+  it('본문은 그대로이고 frontmatter만 바뀌면 source만 갱신하고 sync job은 만들지 않는다', async () => {
     const externalSourceId = 'Notes/upload-usecase-frontmatter-only.md';
     const oldContent = '---\nsheska: true\ntags: [a]\n---\n# Same body';
     const newContent =
@@ -322,7 +334,8 @@ custom:
     expect(await findSyncJobsBySourceId(firstResult.sourceId)).toHaveLength(1);
   });
 
-  it('library.sync-5: frontmatter 키 순서만 다른 같은 파일은 다시 저장하지 않는다', async () => {
+  // nocap: library-sync-5
+  it('frontmatter 키 순서만 다른 같은 파일은 다시 저장하지 않는다', async () => {
     const externalSourceId = 'Notes/upload-usecase-frontmatter-key-order.md';
     const content =
       '---\nsheska: true\nzeta: 1\nalpha: { b: 1, a: 2 }\n---\n# Body';
@@ -340,7 +353,8 @@ custom:
     expect(afterRow?.updatedAt).toEqual(beforeRow?.updatedAt);
   });
 
-  it('library.source-6: frontmatter sheska가 true가 아닌 파일은 거부하고 source를 만들지 않는다', async () => {
+  // nocap: library-source-6
+  it('frontmatter sheska가 true가 아닌 파일은 거부하고 source를 만들지 않는다', async () => {
     const externalSourceId = 'Notes/upload-usecase-not-sync-target.md';
     const content = '---\nsheska: "true"\n---\n# Not opted in';
 

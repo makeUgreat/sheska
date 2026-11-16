@@ -41,7 +41,8 @@ describe('IngestionPgDrizzleUnitOfWork', () => {
     await app.close();
   });
 
-  it('ingestion.sourceEmbedding-5: source embedding과 completed event를 함께 commit한다', async () => {
+  // nocap: ingestion-sourceEmbedding-5
+  it('source embedding과 completed event를 함께 commit한다', async () => {
     const source = await sources.insert(
       buildSource({
         externalSourceId: 'Notes/ingestion-uow-commit.md',
@@ -66,7 +67,8 @@ describe('IngestionPgDrizzleUnitOfWork', () => {
     ).resolves.toHaveLength(1);
   });
 
-  it('ingestion.sourceEmbedding-5: transaction callback이 실패하면 embedding과 outbox event를 함께 rollback한다', async () => {
+  // nocap: ingestion-sourceEmbedding-5
+  it('transaction callback이 실패하면 embedding과 outbox event를 함께 rollback한다', async () => {
     const source = await sources.insert(
       buildSource({
         externalSourceId: 'Notes/ingestion-uow-rollback.md',

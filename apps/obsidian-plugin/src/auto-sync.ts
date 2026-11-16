@@ -93,7 +93,7 @@ export class AutoSyncService {
     await this.uploadFileCore(file);
   }
 
-  /** `library.source-6`: only a YAML boolean `true`, so `"true"` or `yes` stays local. */
+  /** `library-source-6`: only a YAML boolean `true`, so `"true"` or `yes` stays local. */
   isSyncTarget(file: TFile): boolean {
     return (
       this.options.metadataCache.getFileCache(file)?.frontmatter?.sheska ===

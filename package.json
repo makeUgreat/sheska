@@ -5,12 +5,12 @@
   "license": "UNLICENSED",
   "scripts": {
     "deps:check": "depcruise apps --config .dependency-cruiser.cjs",
-    "docs:check": "node scripts/domain-rule-tables.mjs",
-    "docs:rule-tables": "node scripts/domain-rule-tables.mjs --write",
-    "harness:static": "pnpm deps:check && pnpm docs:check && pnpm -r --if-present harness:static",
+    "rules:check": "nocap --spec \"docs/ko/domain/*.md\" --test \"apps/*/{src,test,scripts}/**/*{.spec,-spec}.{ts,tsx}\" --test \"e2e/tests/**/*.spec.ts\"",
+    "harness:static": "pnpm deps:check && pnpm -r --if-present harness:static",
     "harness:build": "pnpm -r --if-present harness:build && pnpm --filter @sheska/api test:runtime:start && pnpm --filter @sheska/api test:runtime:stop"
   },
   "devDependencies": {
+    "@makehash/nocap": "^0.3.0",
     "dependency-cruiser": "^17.4.2"
   }
 }

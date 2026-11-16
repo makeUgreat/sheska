@@ -64,7 +64,8 @@ describe('SourceSyncJob', () => {
       expect(syncJob.domainEvents).toEqual([]);
     });
 
-    it('library.syncJob-1: status invariant가 깨지면 throw한다', () => {
+    // nocap: library-syncJob-1
+    it('status invariant가 깨지면 throw한다', () => {
       expect(() =>
         SourceSyncJob.restore({
           id: 'source-sync-job-1',
@@ -93,12 +94,14 @@ describe('SourceSyncJob', () => {
   });
 
   describe('isWaiting', () => {
-    it('library.sync-8: status가 waiting이면 true를 반환한다', () => {
+    // nocap: library-sync-8
+    it('status가 waiting이면 true를 반환한다', () => {
       expect(restoreSyncJob('waiting').isWaiting()).toBe(true);
     });
 
+    // nocap: library-sync-8
     it.each(['completed', 'failed'] as const)(
-      'library.sync-8: status가 %s면 false를 반환한다',
+      'status가 %s면 false를 반환한다',
       (status) => {
         expect(restoreSyncJob(status).isWaiting()).toBe(false);
       },
@@ -106,8 +109,9 @@ describe('SourceSyncJob', () => {
   });
 
   describe('isWaitingOrCompletedFor', () => {
+    // nocap: library-sync-7
     it.each(['waiting', 'completed'] as const)(
-      'library.sync-7: status가 %s이고 fingerprint가 같으면 true를 반환한다',
+      'status가 %s이고 fingerprint가 같으면 true를 반환한다',
       (status) => {
         expect(
           restoreSyncJob(status).isWaitingOrCompletedFor(
@@ -117,7 +121,8 @@ describe('SourceSyncJob', () => {
       },
     );
 
-    it('library.sync-7: fingerprint가 다르면 false를 반환한다', () => {
+    // nocap: library-sync-7
+    it('fingerprint가 다르면 false를 반환한다', () => {
       expect(
         restoreSyncJob('completed').isWaitingOrCompletedFor(
           SourceFingerprint.of('fingerprint-2'),
@@ -125,7 +130,8 @@ describe('SourceSyncJob', () => {
       ).toBe(false);
     });
 
-    it('library.sync-7: status가 failed면 fingerprint가 같아도 false를 반환한다', () => {
+    // nocap: library-sync-7
+    it('status가 failed면 fingerprint가 같아도 false를 반환한다', () => {
       expect(
         restoreSyncJob('failed').isWaitingOrCompletedFor(
           SourceFingerprint.of('fingerprint-1'),

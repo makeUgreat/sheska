@@ -25,7 +25,7 @@ related:
 - 본문: 파일 내용에서 frontmatter를 뺀 나머지다.
   - 예: frontmatter가 없는 파일은 파일 내용 전체가 본문이다.
 - source 제목: source를 목록과 화면에서 부르는 이름이다.
-  - 내용 스냅샷에 따로 담기지 않는다. frontmatter와 `externalSourceId`에서 정해진다(`library.source-3`).
+  - 내용 스냅샷에 따로 담기지 않는다. frontmatter와 `externalSourceId`에서 정해진다(`library-source-3`).
 - fingerprint(`SourceFingerprint`): 임베딩이 읽는 입력의 hash다.
 - sync job(`SourceSyncJob`): source의 한 버전을 임베딩하도록 요청한 기록이다.
   - 임베딩 자체와 다르다. 임베딩은 `ingestion`이 만든다.

@@ -23,7 +23,8 @@ describe('SourceContentSnapshotCalculator', () => {
     });
   });
 
-  it('library.source-4: 문서가 잘못된 parser 실패를 ValidationFailedError로 변환한다', () => {
+  // nocap: library-source-4
+  it('문서가 잘못된 parser 실패를 ValidationFailedError로 변환한다', () => {
     const failingParser: SourceDocumentParser = {
       parse: vi.fn().mockImplementation(() => {
         throw new InvalidDataError({

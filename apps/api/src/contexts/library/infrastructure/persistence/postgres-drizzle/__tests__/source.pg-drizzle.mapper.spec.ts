@@ -30,7 +30,8 @@ describe('SourcePgDrizzleMapper', () => {
     });
   });
 
-  it('library.source-3: 저장된 title 대신 frontmatter에서 제목을 다시 만든다', () => {
+  // nocap: library-source-3
+  it('저장된 title 대신 frontmatter에서 제목을 다시 만든다', () => {
     const row = buildSourceRow({
       frontmatter: { title: '인사' },
       title: 'stale title',
