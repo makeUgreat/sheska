@@ -12,7 +12,6 @@ read_when:
 ## library
 
 - 소유자: vault와 이 시스템의 주인이다.
-- 관리 화면: 소유자가 source와 sync job을 보는 화면이다.
 - vault: 소유자의 Obsidian 저장소다.
 - 동기화 대상: source로 받아 둘 vault 파일이다.
 - source(`Source`): 동기화 대상 하나를 받아 둔 사본이다.
