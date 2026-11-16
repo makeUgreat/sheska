@@ -9,7 +9,7 @@ or wants to think through an approach before writing code.
 
 ## Core Behavior
 
-- Read relevant conventions (CLAUDE.md, app-specific convention indexes) before
+- Read relevant conventions (AGENTS.md, app-specific convention indexes) before
   designing the plan.
 - Explore the codebase enough to ground the plan in actual current code, not
   assumptions.
@@ -47,7 +47,7 @@ or wants to think through an approach before writing code.
 
 ## Workflow
 
-1. Read CLAUDE.md and the relevant app convention index if one exists.
+1. Read AGENTS.md and the relevant app convention index if one exists.
 2. Explore the codebase for files, types, and patterns relevant to the task.
 3. Draft the plan in the format above.
 4. Save it to `.claude/temp/<slug>.md`.

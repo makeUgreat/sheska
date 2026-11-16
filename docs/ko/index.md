@@ -24,7 +24,6 @@ related:
 - workspace layout, 루트 package script, 저장소 단위 명령어, static harness 동작을 변경할 때: [모노레포 정책](./monorepo.md)을 읽는다.
 - 환경 변수, env 파일, 비밀값을 추가하거나 바꾸거나, 환경마다 다르게 동작해야 하는 기능을 만들거나,
   이전 코드와 호환되지 않는 스키마 변경을 배포할 때: [실행 환경](./environments.md)을 읽는다.
-- 개발 또는 테스트 중 외부 도구를 사용할 때(Playwright MCP, Obsidian MCP, Obsidian Local REST API): [개발 통합 도구](./dev-integrations.md)를 읽는다.
 
 ## 유지보수
 

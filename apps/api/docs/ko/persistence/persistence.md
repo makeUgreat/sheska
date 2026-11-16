@@ -99,7 +99,7 @@ related:
 - Repository 구현은 데이터베이스 호출과 query 구성을 소유한다.
 - 어댑터 맥락이 장애 이해에 도움이 되면 vendor 또는 storage error를 감싼다.
   - 이 규칙을 domain restoration exception에는 적용하지 않는다.
-- 도메인 객체를 반환하는 `save`는 데이터베이스가 반환한 행에서 객체를 복원해야 한다.
+- 도메인 객체를 반환하는 쓰기 메서드는 데이터베이스가 반환한 행에서 객체를 복원해야 한다.
   - 원래 입력 객체를 반환하지 않는다.
 - Repository와 mapper 파일 이름은 [Infrastructure 명명 규칙](../architecture/infrastructure.md)을 따른다.
 
