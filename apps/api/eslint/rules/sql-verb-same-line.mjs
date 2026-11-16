@@ -62,7 +62,7 @@ export default {
     },
     messages: {
       verbNotSameLine:
-        'Keep the leading SQL verb and the next token on the same line — @opentelemetry/instrumentation-pg parses this query\'s operation name as {{ operation }}, fragmenting the Prometheus db_operation_name/span-name label. See apps/api/docs/en/persistence.md.',
+        'Keep the leading SQL verb and the next token on the same line — @opentelemetry/instrumentation-pg parses this query\'s operation name as {{ operation }}, fragmenting the Prometheus db_operation_name/span-name label. See apps/api/docs/ko/persistence/persistence.md#raw-sql.',
     },
     schema: [],
   },
