@@ -5,7 +5,6 @@ applies_to:
 related:
   - ./code-readability.md
   - ./operability/error.md
-  - ./operability/logging.md
   - ./architecture/architecture.md
   - ./architecture/ddd.md
   - ./persistence/persistence.md
@@ -18,7 +17,7 @@ related:
   - ./test.md
   - ./persistence/repository-methods.md
   - ./operability/observability.md
-  - ./operability/fault-tolerance/index.md
+  - ./operability/fault-tolerance.md
 ---
 
 # API 컨벤션 인덱스
@@ -52,10 +51,9 @@ related:
 
 ### Operability
 
-- API error, exception, masking, propagation, error response contract review 작업: [API 오류 정책](./operability/error.md)을 읽는다.
-- 로그 여부 결정, 로그 레벨, 어디서 로그를 남길지, 장애 로그 정책 작업: [API 로깅 정책](./operability/logging.md)을 읽는다.
+- API error, exception, masking, propagation, 로그 여부와 레벨 결정 작업: [API 오류와 로깅 정책](./operability/error.md)을 읽는다.
 - OpenTelemetry 계측, trace/log/metric export 배선, 리소스 속성 결정: [API 옵저버빌리티 컨벤션](./operability/observability.md)을 읽는다.
-- 외부 의존성에 대한 retry, timeout/deadline, 그 외 fault-tolerance 정책 결정: [API Fault Tolerance 인덱스](./operability/fault-tolerance/index.md)를 읽는다.
+- 외부 의존성, DB 트랜잭션, outbox relay, queue job의 retry와 timeout/deadline 결정: [API Fault Tolerance 정책](./operability/fault-tolerance.md)을 읽는다.
 
 ### Persistence
 

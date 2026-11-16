@@ -19,7 +19,7 @@ export function classifyInfrastructureRetry(
       : { retryable: false };
   }
 
-  // TimeoutError/UnavailableError are the network-level retryables per retry.md.
+  // TimeoutError/UnavailableError are the network-level retryables per docs/ko/operability/fault-tolerance.md.
   return {
     retryable:
       error instanceof TimeoutError || error instanceof UnavailableError,
