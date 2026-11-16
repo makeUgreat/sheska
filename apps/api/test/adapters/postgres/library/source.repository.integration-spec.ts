@@ -103,7 +103,8 @@ describe('SourceDrizzleRepository', () => {
     });
   });
 
-  it('library.source-2: externalSourceId unique 충돌을 exception으로 전파한다', async () => {
+  // nocap: library-source-2
+  it('externalSourceId unique 충돌을 exception으로 전파한다', async () => {
     const externalSourceId = 'Notes/conflict-source.md';
     const firstSource = buildSource({ externalSourceId });
     const secondSource = buildSource({

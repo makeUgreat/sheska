@@ -83,13 +83,15 @@ applies_to:
 - 루트 명령은 저장소가 소유한 static check를 먼저 실행한 뒤, workspace가 소유한 static harness를 재귀적으로 실행하는 것을 원칙으로 한다.
 
   ```bash
-  pnpm deps:check && pnpm docs:check && pnpm -r --if-present harness:static
+  pnpm deps:check && pnpm -r --if-present harness:static
   ```
 
 - 루트 `deps:check` 명령은 저장소 단위 dependency boundary check를 소유한다.
   - 앱 내부 layer rule이 아니라 workspace 간 boundary를 검사한다.
-- 루트 `docs:check` 명령은 도메인 문서의 규칙 ID와 규칙 요약 표를 검사한다.
-  - 요약 표는 `pnpm docs:rule-tables`로 다시 만든다. 도메인 문서는 어느 workspace에도 속하지 않으므로 루트가 소유한다.
+- 루트 `rules:check` 명령은 nocap으로 도메인 규칙의 태그와 테스트 태그를 검사한다.
+  - 태그 형식, ID 중복, 테스트가 없는 규칙, 없는 ID를 가리키는 테스트를 보고한다.
+  - 도메인 문서와 그 테스트는 여러 workspace에 걸쳐 있다. 한 workspace가 이 검사를 소유할 수 없으므로 루트가 소유한다.
+  - 테스트가 없는 규칙이 남아 있는 동안은 `harness:static`에 넣지 않는다.
 - Static verification에 참여하는 각 workspace는 자신의 `harness:static` script를 소유한다.
   - 그 script는 해당 workspace에 의미 있는 static check를 조합한다. 예를 들어 `typecheck`, `lint:check`, dependency-boundary check가 이에 해당한다.
 - `harness:static`이 전체 static gate를 이미 소유한다면 루트 `typecheck`나 `lint:check` script는 필수가 아니다.

@@ -226,7 +226,8 @@ describe('AutoSyncService', () => {
     expect(syncCache['note.md'].syncJobId).toBeUndefined();
   });
 
-  it('library.sync-9: creates a new sync job one minute after reconciliation finds an initial failure', async () => {
+  // nocap: library-sync-9
+  it('creates a new sync job one minute after reconciliation finds an initial failure', async () => {
     const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
     const syncCache: SyncCache = {
       'note.md': {
@@ -332,7 +333,8 @@ describe('AutoSyncService', () => {
     errorSpy.mockRestore();
   });
 
-  it('library.sync-9: keeps an upload the server rejects scheduled for another retry', async () => {
+  // nocap: library-sync-9
+  it('keeps an upload the server rejects scheduled for another retry', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
     const syncCache: SyncCache = {};
@@ -349,7 +351,8 @@ describe('AutoSyncService', () => {
     errorSpy.mockRestore();
   });
 
-  it('library.sync-9: retries a failed upload once its backoff elapses', async () => {
+  // nocap: library-sync-9
+  it('retries a failed upload once its backoff elapses', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
     const syncCache: SyncCache = {};
@@ -374,7 +377,8 @@ describe('AutoSyncService', () => {
     errorSpy.mockRestore();
   });
 
-  it('library.sync-9: keeps retrying an upload past the old attempt limit', async () => {
+  // nocap: library-sync-9
+  it('keeps retrying an upload past the old attempt limit', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const file = new TFile('note.md', { ctime: 0, mtime: 200, size: 1 });
     const syncCache: SyncCache = {
@@ -396,7 +400,8 @@ describe('AutoSyncService', () => {
     errorSpy.mockRestore();
   });
 
-  it('library.sync-9: schedules another retry when the server reports a failed sync job', async () => {
+  // nocap: library-sync-9
+  it('schedules another retry when the server reports a failed sync job', async () => {
     const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
     const syncCache: SyncCache = {
       'note.md': {
@@ -538,7 +543,8 @@ describe('AutoSyncService', () => {
     ).toEqual(['a.md', 'b.md']);
   });
 
-  it('library.sync-10: ignores vault changes when auto-sync is disabled', async () => {
+  // nocap: library-sync-10
+  it('ignores vault changes when auto-sync is disabled', async () => {
     const { api, service } = makeService({
       autoSyncEnabled: false,
       autoSyncDebounceSeconds: 1,
@@ -565,7 +571,8 @@ describe('AutoSyncService', () => {
     expect(api.uploadSource).not.toHaveBeenCalled();
   });
 
-  it('library.source-6: uploads vault changes only from notes whose frontmatter sheska is the boolean true', async () => {
+  // nocap: library-source-6
+  it('uploads vault changes only from notes whose frontmatter sheska is the boolean true', async () => {
     const { api, metadataCache, service } = makeService({
       autoSyncDebounceSeconds: 1,
     });
@@ -642,7 +649,8 @@ describe('AutoSyncService', () => {
     });
   });
 
-  it('library.source-6: sweeps only markdown files whose frontmatter sheska is true', async () => {
+  // nocap: library-source-6
+  it('sweeps only markdown files whose frontmatter sheska is true', async () => {
     const target = new TFile('Journal/today.md', {
       ctime: 0,
       mtime: 100,
@@ -666,7 +674,8 @@ describe('AutoSyncService', () => {
     });
   });
 
-  it('library.source-6: stops retrying a failed note once its frontmatter no longer has sheska true', async () => {
+  // nocap: library-source-6
+  it('stops retrying a failed note once its frontmatter no longer has sheska true', async () => {
     const file = new TFile('note.md', { ctime: 0, mtime: 100, size: 1 });
     const { api, metadataCache, service, vault } = makeService(
       {},
@@ -720,7 +729,8 @@ describe('AutoSyncService', () => {
     errorSpy.mockRestore();
   });
 
-  it('library.sync-3: captures mtime before reading content so concurrent edits are not lost', async () => {
+  // nocap: library-sync-3
+  it('captures mtime before reading content so concurrent edits are not lost', async () => {
     const { service, vault } = makeService();
     const file = new TFile('note.md', { ctime: 0, mtime: 100, size: 1 });
     vault.read.mockImplementation(() => {

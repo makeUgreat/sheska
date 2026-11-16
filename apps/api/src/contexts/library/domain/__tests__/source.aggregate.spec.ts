@@ -40,16 +40,19 @@ describe('Source', () => {
     });
   });
 
-  it('library.source-3: frontmatter title이 비어 있지 않은 문자열이면 그 값을 제목으로 쓴다', () => {
+  // nocap: library-source-3
+  it('frontmatter title이 비어 있지 않은 문자열이면 그 값을 제목으로 쓴다', () => {
     expect(titleOf({ title: '회고' })).toBe('회고');
   });
 
-  it('library.source-3: 제목의 앞뒤 공백은 뺀다', () => {
+  // nocap: library-source-3
+  it('제목의 앞뒤 공백은 뺀다', () => {
     expect(titleOf({ title: ' Retry Amplification ' })).toBe(
       'Retry Amplification',
     );
   });
 
+  // nocap: library-source-3
   it.each([
     ['없음', {}],
     ['빈 문자열', { title: '' }],
@@ -57,13 +60,14 @@ describe('Source', () => {
     ['숫자', { title: 3 }],
     ['null', { title: null }],
   ])(
-    'library.source-3: frontmatter title이 %s이면 externalSourceId를 제목으로 쓴다',
+    'frontmatter title이 %s이면 externalSourceId를 제목으로 쓴다',
     (_label, frontmatter: SourceFrontmatterProps) => {
       expect(titleOf(frontmatter)).toBe('Notes/source.md');
     },
   );
 
-  it('library.source-6: 동기화 대상이 아닌 frontmatter로는 source를 만들 수 없다', () => {
+  // nocap: library-source-6
+  it('동기화 대상이 아닌 frontmatter로는 source를 만들 수 없다', () => {
     expect(() =>
       Source.create({
         externalSourceId: 'Notes/source.md',
@@ -73,7 +77,8 @@ describe('Source', () => {
     ).toThrow(expect.objectContaining({ code: 'source.not_sync_target' }));
   });
 
-  it('library.source-6: 동기화 대상이 아닌 frontmatter로는 source를 갱신할 수 없다', () => {
+  // nocap: library-source-6
+  it('동기화 대상이 아닌 frontmatter로는 source를 갱신할 수 없다', () => {
     const source = Source.create({
       externalSourceId: 'Notes/source.md',
       ...content,
@@ -96,7 +101,9 @@ describe('Source', () => {
     expect(result).toBe(false);
   });
 
-  it('library.sync-5, library.sync-6: frontmatter만 바뀌면 내용을 갱신하고 fingerprint는 그대로다', () => {
+  // nocap: library-sync-5
+  // nocap: library-sync-6
+  it('frontmatter만 바뀌면 내용을 갱신하고 fingerprint는 그대로다', () => {
     const source = Source.create({
       externalSourceId: 'Notes/source.md',
       ...content,
@@ -116,7 +123,8 @@ describe('Source', () => {
     });
   });
 
-  it('library.sync-5: frontmatter 키 순서만 다르면 바뀌지 않은 것이다', () => {
+  // nocap: library-sync-5
+  it('frontmatter 키 순서만 다르면 바뀌지 않은 것이다', () => {
     const source = Source.create({
       externalSourceId: 'Notes/source.md',
       ...content,
@@ -131,7 +139,8 @@ describe('Source', () => {
     expect(result).toBe(false);
   });
 
-  it('library.sync-5: 크기만 달라도 내용을 갱신한다', () => {
+  // nocap: library-sync-5
+  it('크기만 달라도 내용을 갱신한다', () => {
     const source = Source.create({
       externalSourceId: 'Notes/source.md',
       ...content,
@@ -143,7 +152,9 @@ describe('Source', () => {
     expect(sourceContentOf(source).size).toBe(51);
   });
 
-  it('library.sync-5, library.sync-6: 본문이 바뀌면 내용과 fingerprint를 갱신한다', () => {
+  // nocap: library-sync-5
+  // nocap: library-sync-6
+  it('본문이 바뀌면 내용과 fingerprint를 갱신한다', () => {
     const source = Source.create({
       externalSourceId: 'Notes/source.md',
       ...content,
@@ -171,7 +182,8 @@ describe('Source', () => {
     expect(sourceContentOf(source).fingerprint).toBe('stored-fingerprint');
   });
 
-  it('library.source-3: 복원할 때 제목을 frontmatter에서 다시 만든다', () => {
+  // nocap: library-source-3
+  it('복원할 때 제목을 frontmatter에서 다시 만든다', () => {
     const source = Source.restore({
       id: 'source-1',
       externalSourceId: 'Notes/source.md',
@@ -184,6 +196,7 @@ describe('Source', () => {
   });
 
   describe('syncJobFor', () => {
+    // nocap: library-sync-7
     it.each([
       ['없으면', null],
       ['failed이면 fingerprint가 같아도', restoreSyncJob('failed', 'same')],
@@ -193,7 +206,7 @@ describe('Source', () => {
       ],
       ['waiting이고 fingerprint가 다르면', restoreSyncJob('waiting', 'other')],
     ])(
-      'library.sync-7: 가장 최근 sync job이 %s 새 sync job을 만든다',
+      '가장 최근 sync job이 %s 새 sync job을 만든다',
       (_label, latestSyncJob) => {
         const source = buildSourceForSync();
 
@@ -201,8 +214,9 @@ describe('Source', () => {
       },
     );
 
+    // nocap: library-sync-7
     it.each(['waiting', 'completed'] as const)(
-      'library.sync-7: 가장 최근 sync job이 현재 fingerprint에 대한 %s이면 그 sync job을 쓴다',
+      '가장 최근 sync job이 현재 fingerprint에 대한 %s이면 그 sync job을 쓴다',
       (status) => {
         const source = buildSourceForSync();
         const latestSyncJob = restoreSyncJob(status, 'same');

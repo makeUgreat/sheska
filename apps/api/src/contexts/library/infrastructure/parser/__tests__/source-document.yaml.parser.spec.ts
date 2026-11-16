@@ -31,14 +31,16 @@ custom:
     });
   });
 
-  it('library.source-5: 비어 있는 frontmatter는 빈 metadata로 읽는다', () => {
+  // nocap: library-source-5
+  it('비어 있는 frontmatter는 빈 metadata로 읽는다', () => {
     expect(parser.parse('---\n---\n# Body')).toEqual({
       body: '# Body',
       frontmatter: {},
     });
   });
 
-  it('library.source-5: BOM으로 시작해도 frontmatter를 떼어낸다', () => {
+  // nocap: library-source-5
+  it('BOM으로 시작해도 frontmatter를 떼어낸다', () => {
     expect(parser.parse('\uFEFF---\ntitle: Retry\n---\n# Body')).toEqual({
       body: '# Body',
       frontmatter: { title: 'Retry' },
@@ -52,11 +54,13 @@ custom:
     });
   });
 
-  it('library.source-5: 구분선 뒤 공백은 구분선으로 인정한다', () => {
+  // nocap: library-source-5
+  it('구분선 뒤 공백은 구분선으로 인정한다', () => {
     expect(parser.parse('---\ntitle: Retry\n--- \n# Body').body).toBe('# Body');
   });
 
-  it('library.source-4: 대시가 더 긴 줄은 닫는 구분선으로 보지 않는다', () => {
+  // nocap: library-source-4
+  it('대시가 더 긴 줄은 닫는 구분선으로 보지 않는다', () => {
     expect(() => parser.parse('---\ntitle: Retry\n----\n# Body')).toThrow(
       expect.objectContaining({
         code: 'source_document.unclosed_frontmatter',
@@ -64,7 +68,8 @@ custom:
     );
   });
 
-  it('library.source-4: frontmatter가 mapping이 아니면 예외를 던진다', () => {
+  // nocap: library-source-4
+  it('frontmatter가 mapping이 아니면 예외를 던진다', () => {
     expect(() => parser.parse('---\n- Retry\n---\n# Body')).toThrow(
       expect.objectContaining({
         code: 'source_document.frontmatter_not_mapping',
@@ -72,7 +77,8 @@ custom:
     );
   });
 
-  it('library.source-4: 유효하지 않은 YAML이면 틀린 위치를 message에 담는다', () => {
+  // nocap: library-source-4
+  it('유효하지 않은 YAML이면 틀린 위치를 message에 담는다', () => {
     const parseInvalidYaml = () => parser.parse('---\ntitle: [\n---\nBody');
 
     expect(parseInvalidYaml).toThrow(

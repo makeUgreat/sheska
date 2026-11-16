@@ -2,22 +2,21 @@ import { describe, expect, it } from 'vitest';
 import { SourceFrontmatter } from '../source-frontmatter.vo';
 
 describe('SourceFrontmatter', () => {
-  it('library.source-6: sheska가 YAML boolean true이면 동기화 대상이다', () => {
+  // nocap: library-source-6
+  it('sheska가 YAML boolean true이면 동기화 대상이다', () => {
     expect(SourceFrontmatter.of({ sheska: true }).isSyncTarget()).toBe(true);
   });
 
+  // nocap: library-source-6
   it.each([
     ['문자열 "true"', { sheska: 'true' }],
     ['yes', { sheska: 'yes' }],
     ['1', { sheska: 1 }],
     ['false', { sheska: false }],
     ['없음', {}],
-  ])(
-    'library.source-6: sheska가 %s이면 동기화 대상이 아니다',
-    (_label, frontmatter) => {
-      expect(SourceFrontmatter.of(frontmatter).isSyncTarget()).toBe(false);
-    },
-  );
+  ])('sheska가 %s이면 동기화 대상이 아니다', (_label, frontmatter) => {
+    expect(SourceFrontmatter.of(frontmatter).isSyncTarget()).toBe(false);
+  });
 
   it('중첩된 객체까지 키 순서와 무관하게 비교한다', () => {
     const current = SourceFrontmatter.of({

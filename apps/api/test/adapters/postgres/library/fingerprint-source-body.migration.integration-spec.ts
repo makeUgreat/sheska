@@ -33,7 +33,8 @@ describe('20261024020000_fingerprint_source_body', () => {
     await app.close();
   });
 
-  it('library.sync-6: 파일 전체로 만든 fingerprint를 앱과 같은 본문 fingerprint로 바꾼다', async () => {
+  // nocap: library-sync-6
+  it('파일 전체로 만든 fingerprint를 앱과 같은 본문 fingerprint로 바꾼다', async () => {
     const body = '# 안녕 👋\n\n본문만 해시한다.\n';
     const {
       titleSearchVector: _titleSearchVector,

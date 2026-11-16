@@ -72,7 +72,8 @@ describe('FinalizeEmbeddingWorkflowUseCase', () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 
-  it('ingestion.sourceEmbedding-4: 누락된 child 결과는 저장하지 않는다', async () => {
+  // nocap: ingestion-sourceEmbedding-4
+  it('누락된 child 결과는 저장하지 않는다', async () => {
     const { useCase, upsert } = buildUseCase();
 
     await expect(
@@ -90,7 +91,8 @@ describe('FinalizeEmbeddingWorkflowUseCase', () => {
     expect(upsert).not.toHaveBeenCalled();
   });
 
-  it('ingestion.embeddingModel-2: 서로 다른 model 결과는 저장하지 않는다', async () => {
+  // nocap: ingestion-embeddingModel-2
+  it('서로 다른 model 결과는 저장하지 않는다', async () => {
     const { useCase, upsert } = buildUseCase();
     const inconsistentChunks = [
       chunks[0],

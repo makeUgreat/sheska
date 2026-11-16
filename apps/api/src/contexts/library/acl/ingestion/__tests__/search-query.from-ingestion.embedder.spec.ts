@@ -34,7 +34,8 @@ describe('SearchQueryFromIngestionEmbedder', () => {
     expect(result).toEqual(embedding);
   });
 
-  it('library.search-3: 감싸고 있는 embedder가 throw하면(retry 소진 포함) null을 반환한다', async () => {
+  // nocap: library-search-3
+  it('감싸고 있는 embedder가 throw하면(retry 소진 포함) null을 반환한다', async () => {
     const { embedder } = createEmbedder(() => {
       throw new Error('embedding failed');
     });

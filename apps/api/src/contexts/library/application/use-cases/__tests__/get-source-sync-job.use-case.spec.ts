@@ -10,7 +10,8 @@ describe('GetSourceSyncJobUseCase', () => {
     debug: vi.fn(),
   };
 
-  it('library.syncJob-1: sync job을 조회한다', async () => {
+  // nocap: library-syncJob-1
+  it('sync job을 조회한다', async () => {
     const syncJob = SourceSyncJob.restore({
       id: 'sync-job-1',
       sourceId: 'source-1',
