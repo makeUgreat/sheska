@@ -5,8 +5,6 @@ applies_to:
 read_when:
   - 도메인 용어의 정확한 뜻을 확인할 때
   - 코드, 화면 문구, 문서에 쓸 이름을 정할 때
-related:
-  - ../domain-document-guidelines.md
 ---
 
 # 용어집
