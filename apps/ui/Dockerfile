@@ -1,3 +1,5 @@
+# E2E 테스트 런타임 전용임. 프로덕션은 Cloudflare Pages가 vite build 결과를 정적으로 서빙함.
+# VITE_API_BASE_URL 없이 빌드해 /api fallback을 쓰고, vite preview가 API_BASE_URL로 /api를 프록시함.
 FROM node:24.22.1-alpine
 
 RUN corepack enable && corepack prepare pnpm@10.19.0 --activate
