@@ -20,10 +20,10 @@ for how to build and open one.
 
 - Determine PR type before merge strategy: sub-branch PRs squash into the
   integration branch; integration branch PRs merge `--no-ff` into main.
-- Write PR titles and descriptions in English. Default to draft PRs.
+- Write PR titles and descriptions in English. Open PRs ready for review; open a draft only when the user asks for one.
 - Treat a bare `pr`/`$pr` request, or an explicit request to open or update
   PRs, as approval to run the full flow end to end — commit prep, branch or
-  stack setup, push, and opening draft PRs — without a separate confirmation,
+  stack setup, push, and opening PRs — without a separate confirmation,
   unless a blocker below applies. Don't stop partway (e.g. after drafting a
   title) when a creation path is available.
 - Use `cm` first when the working tree has uncommitted changes or the PR
@@ -149,8 +149,9 @@ commands (`rebase`, `modify`, `sync`), never by hand.
   branch had since been deleted) and can silently corrupt an already-open
   PR's base. Note in each PR's `Stack Context` that the dependency is
   incidental (a build-gate workaround), not a product/review dependency.
-- `gh stack submit` pushes and opens the whole stack in one step, as drafts
-  by default (add `--open` only if the user asked for ready-for-review).
+- `gh stack submit` pushes and opens the whole stack in one step, ready for
+  review with `--open` (`gh stack submit --auto --open`). Leave out `--open`
+  only when the user asked for drafts.
   Base branches are set automatically — each PR targets the branch below it.
 - `gh stack view` (`-s`/`--json`) confirms branch order, PR links, and
   commits before reporting the stack to the user.
@@ -239,6 +240,6 @@ when they form one squash-merge history event.
    separable concern, stack it on top instead (see Stacked PRs) rather than
    folding it in. Stacked set:
    `gh stack submit` creates or updates every PR in the stack in one step
-   (drafts by default) — safe to re-run after more commits. Never set stack
-   base branches manually.
+   (pass `--open` so new PRs are ready for review) — safe to re-run after
+   more commits. Never set stack base branches manually.
 7. Report verification gaps and the merge order in the final response.
