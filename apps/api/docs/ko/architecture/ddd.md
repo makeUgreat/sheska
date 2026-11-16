@@ -68,9 +68,9 @@ related:
   - 외부 코드는 항상 root를 통해 aggregate를 조회하고 변경한다.
 
 ```ts
-const order: Order = await orderRepository.findById(orderId);
+const order: Order = await orderRepository.get({ id: orderId });
 order.changeLineQuantity(lineId, 3);
-await orderRepository.save(order);
+await orderRepository.update(order);
 ```
 
 - `orderLineRepository.findById()`처럼 내부 entity를 repository로 직접 조회하는 방식은 이 규칙 위반이다.
@@ -171,8 +171,7 @@ await orderRepository.save(order);
 
 ## Repository 메서드 이름
 
-- `save`는 repository 계약을 통해 aggregate를 저장한다.
-  - 컨텍스트에 의미 있는 별도 명령이 없다면 생성과 수정에 모두 사용한다.
+- 쓰기 메서드는 `insert`, `update`, `upsert` 중 하나다. 선택 기준은 [Repository Method 사용 가이드](../persistence/repository-methods.md)를 따른다.
 - `find`는 하나의 애그리거트를 고유 조건으로 조회하고, 없으면 `null`을 반환한다.
   - 조회 의미는 객체 매개변수의 필드 이름으로 전달한다.
   - 예: `find({ id })`, `find({ externalSourceId })`.

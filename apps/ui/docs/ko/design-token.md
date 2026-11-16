@@ -65,8 +65,8 @@ Headline은 minimal background 위에서 강한 visual hierarchy를 만들 수 �
 
 Layout philosophy는 desktop에서는 **Fixed Grid**, mobile에서는 **Fluid Grid** model을 따른다.
 
-- **Desktop**: 최대 container width 1280px의 12-column grid. Gutter는 content block을 명확히 분리하기 위해 24px로 고정한다.
-- **Mobile**: 16px side margin을 가진 4-column fluid grid.
+- **Desktop**: 최대 container width는 1280px다. Gutter는 content block을 명확히 분리하기 위해 24px로 고정한다.
+- **Mobile**: side margin은 16px이고 폭은 화면에 맞춰 늘고 준다.
 - **Spacing Rhythm**: 모든 margin과 padding은 4px base unit의 배수여야 한다.
 - **Reading Measure**: Prose를 읽는 컬럼은 `--spacing-measure`(680px)를 넘지 않는다. 이 상한을 어떻게 거는지는 [반응형 레이아웃](./responsive.md)을 따른다.
 - **Peek Width**: 목록 옆 미리보기 칸(`PeekLayout`)은 `--spacing-peek`(320px)로 고정한다.
@@ -135,4 +135,4 @@ Effect variable(shadow 같은 값)이 필요해지면 `design-tokens.json`이 �
 
 ## 형태
 
-Shape language는 절제되고 professional하다. Button과 input field 같은 작은 component에는 **Soft** roundedness (0.25rem/4px)를 사용한다. 이는 grid 기반의 rectangular layout precision을 해치지 않으면서 약간의 친근함을 더한다. Card 같은 큰 container는 background와 더 구분되도록 `rounded-lg` (8px) token을 사용할 수 있다.
+Shape language는 절제되고 professional하다. Button과 input field 같은 작은 component에는 **Soft** roundedness (0.25rem/4px)를 사용한다. 이는 grid 기반의 rectangular layout precision을 해치지 않으면서 약간의 친근함을 더한다. Code block이나 panel 같은 큰 container는 background와 더 구분되도록 `rounded-lg` (8px) token을 사용할 수 있다.

@@ -61,8 +61,8 @@ related:
 {domain-name}.{adapter-or-purpose}.{role}.ts
 ```
 
-- **domain-name**: 어댑터가 담당하는 aggregate, entity 또는 port 개념 (예: `source`, `embed-job`).
-- **adapter-or-purpose**: 기술 또는 어댑터 범주 (예: `drizzle`, `bullmq`, `persistence`, `fingerprinter`).
+- **domain-name**: 어댑터가 담당하는 aggregate, entity 또는 port 개념 (예: `source`, `source-embedding-workflow`).
+- **adapter-or-purpose**: 기술 또는 어댑터 범주 (예: `drizzle`, `bullmq`, `persistence`, `yaml`).
 - **role**: 파일이 담당하는 아키텍처 역할 (예: `repository`, `dispatcher`, `mapper`, `consumer`).
 
 - 이 순서는 대상, 경계, 역할을 정렬해 파일을 일관되게 검색하고 읽을 수 있게 한다.
@@ -71,8 +71,8 @@ related:
 | --- | --- |
 | `source.pg-drizzle.repository.ts` | `SourcePgDrizzleRepository` |
 | `source.pg-drizzle.mapper.ts` | `SourcePgDrizzleMapper` |
-| `embed-job.bullmq.dispatcher.ts` | `EmbedJobBullMqDispatcher` |
-| `source.sha256.fingerprinter.ts` | `SourceSha256Fingerprinter` |
+| `source-embedding-workflow.bullmq.dispatcher.ts` | `SourceEmbeddingWorkflowBullMqDispatcher` |
+| `source-document.yaml.parser.ts` | `SourceDocumentYamlParser` |
 
 - 클래스 이름은 동일한 순서를 따른다: `{DomainName}{AdapterOrPurpose}{Role}`.
 
@@ -110,7 +110,7 @@ infrastructure/
       __tests__/
 ```
 
-- **category**: 어댑터 종류 (예: `persistence`, `queue`, `fingerprinter`).
+- **category**: 어댑터 종류 (예: `persistence`, `queue`, `parser`).
 - **technology**: 구체적인 기술 (예: `postgres-drizzle`, `bullmq`).
 
 - 범주에 기술이 하나이고 변경 가능성이 없을 때는 기술 하위 디렉터리를 생략할 수 있다.
@@ -124,9 +124,9 @@ infrastructure/
       __tests__/
   queue/
     bullmq/
-      embed-job.bullmq.dispatcher.ts
+      source-embedding-workflow.bullmq.dispatcher.ts
       __tests__/
-  fingerprinter/
-    source.sha256.fingerprinter.ts
+  parser/
+    source-document.yaml.parser.ts
     __tests__/
 ```

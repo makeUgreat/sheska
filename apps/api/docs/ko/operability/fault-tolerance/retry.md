@@ -96,7 +96,7 @@ HTTP 클라이언트 라이브러리 또는 벤더 SDK의 기본 재시도
 
 ## Max Retry
 
-- 외부 의존성 호출의 기본값은 `maxRetries: 2` (총 3회 시도)다.
+- `maxRetries`에는 기본값이 없다. 호출자가 `callContext`로 호출마다 정한다.
 - 실패한 시도의 비용이 크거나, 멱등하지 않거나, caller가 시간에 민감하다면 재시도 횟수를 줄인다. 시도 비용이 낮고, 안전하게 반복 가능하고, caller가 추가 시간을 감당할 수 있다면 재시도 횟수를 늘린다.
 
 | 호출 범주 | Max retry |
@@ -104,7 +104,7 @@ HTTP 클라이언트 라이브러리 또는 벤더 SDK의 기본 재시도
 | 내부/로컬 연산 | 0 |
 | 읽기 전용 외부 호출 (GET, metadata fetch, polling, LLM read) | 2, polling이 deadline으로 제한된다면 3-5 |
 | Mutation (`POST`/`PUT`/`PATCH`/`DELETE`) | 0, idempotency key가 있으면 1 |
-| background job (queue consumer 또는 scheduled job) | 3 |
+| background job (queue consumer 또는 scheduled job) | job 재시도 2 (attempts 3), job 안의 adapter 재시도는 0 |
 
 ## Backoff와 Jitter
 
@@ -182,6 +182,9 @@ user cancellation
   - 동시성 충돌과 같은 "DB 에러" 범주처럼 보이지만, 동시 실행이 아니라 데이터 자체의 문제이므로 재시도해도 해결되지 않는다.
 
 ## 관측성
+
+> [!NOTE]
+> 이 섹션은 미구현임. 재시도 경로는 아직 structured log 필드와 metric을 남기지 않는다.
 
 - 재시도 결정은 structured log와 metric 없이는 운영 중 디버깅하기 어렵다. 이 문서의 규칙이 재시도 여부·시점·방법을 결정하는 지점에서 이를 남긴다.
 - 이 절은 재시도 고유의 내용만 정의한다. 이벤트를 로그로 남길지·어떤 레벨로 남길지는 [API 로깅 정책](../logging.md)을 따르고, 로그·메트릭 전송 방식은 [API 옵저버빌리티 컨벤션](../observability.md)을 따른다.

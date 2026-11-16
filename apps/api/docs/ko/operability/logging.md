@@ -66,9 +66,15 @@ related:
 
 ```typescript
 try {
-  await db.save(order);
-} catch (cause) {
-  throw new OrderPersistenceError('Failed to save order', { cause, orderId: order.id });
+  [row] = await this.db.update(schema.posts).set(values).where(eq(schema.posts.id, id)).returning();
+} catch (error: unknown) {
+  const ErrorClass = classifyPostgresError(error);
+  throw new ErrorClass({
+    code: 'post.update_failed',
+    message: 'Post update operation failed',
+    details: { id },
+    cause: error,
+  });
 }
 ```
 

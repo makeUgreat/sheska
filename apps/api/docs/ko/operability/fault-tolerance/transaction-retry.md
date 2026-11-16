@@ -46,6 +46,9 @@ related:
 
 ## 관측성
 
+> [!NOTE]
+> 이 섹션은 미구현임. 재시도 경로는 아직 structured log 필드와 metric을 남기지 않는다.
+
 - 이 절은 트랜잭션 재시도 고유의 내용만 정의한다. 이벤트를 로그로 남길지·어떤 레벨로 남길지는 [API 로깅 정책](../logging.md)을 따르고, 로그·메트릭 전송 방식은 [API 옵저버빌리티 컨벤션](../observability.md)을 따른다.
 - 트랜잭션 재시도에 국한되지 않는 재시도 고유 structured log 필드와 metric은 [API 재시도 정책](./retry.md)의 [관측성](./retry.md#관측성)에 정의되어 있고 여기서 중복하지 않는다.
 
