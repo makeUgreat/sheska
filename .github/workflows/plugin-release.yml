@@ -1,0 +1,55 @@
+name: Plugin Release
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'apps/obsidian-plugin/**'
+      - 'release-please-config.json'
+      - '.release-please-manifest.json'
+  workflow_dispatch:
+
+concurrency:
+  group: plugin-release
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release-created: ${{ steps.release.outputs['apps/obsidian-plugin--release_created'] }}
+      tag-name: ${{ steps.release.outputs['apps/obsidian-plugin--tag_name'] }}
+    steps:
+      - uses: googleapis/release-please-action@v5
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  upload-assets:
+    needs: release-please
+    if: needs.release-please.outputs.release-created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.19.0
+      # pnpm cache 없음: 오염된 cache가 배포 파일에 들어가지 않게 함
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: pnpm install --frozen-lockfile --filter "@sheska/obsidian-plugin..."
+      - run: pnpm --filter "@sheska/obsidian-plugin..." build
+      - run: gh release upload "$TAG" main.js manifest.json styles.css
+        working-directory: apps/obsidian-plugin
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-please.outputs.tag-name }}

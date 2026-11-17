@@ -181,6 +181,8 @@ commands (`rebase`, `modify`, `sync`), never by hand.
 Title = squash-merge commit subject: `<type>: <imperative summary>` (e.g.
 `feat: add health check endpoint`). No trailing period; prefer intent over
 implementation detail; avoid vague titles like `fix bug`.
+Add `!` after the type (e.g. `feat!: ...`) when the change breaks existing
+setups or behavior; release-please bumps the plugin's major version only then.
 
 Body sections, in order, omitting ones that don't apply:
 
