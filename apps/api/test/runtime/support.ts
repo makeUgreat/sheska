@@ -10,7 +10,7 @@ const API_CONTAINER_PORT = '3000';
 const RUNTIME_PROJECT_NAME = buildRuntimeProjectName(
   process.env.SHESKA_TEST_RUNTIME_ID,
 );
-const RUNTIME_PROJECT_PATTERN = /^sheska-api-test-runtime-e2e-(\d+)$/;
+const RUNTIME_PROJECT_PATTERN = /^sheska-api-test-runtime-ui-api-client-(\d+)$/;
 
 export async function startRuntime(): Promise<void> {
   await reapStaleRuntimes();

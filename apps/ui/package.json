@@ -22,10 +22,7 @@
     "test:integration": "vitest run --project integration",
     "test:integration:api-client": "vitest run --project api-client",
     "test:watch": "vitest --project unit",
-    "harness:static": "pnpm tokens:check && pnpm typecheck && pnpm lint:check && pnpm deps:check && pnpm test:integration:static",
-    "test:runtime:start": "tsx test/runtime/start.ts",
-    "test:runtime:url": "tsx test/runtime/url.ts",
-    "test:runtime:stop": "tsx test/runtime/stop.ts"
+    "harness:static": "pnpm tokens:check && pnpm typecheck && pnpm lint:check && pnpm deps:check && pnpm test:integration:static"
   },
   "dependencies": {
     "@sheska/contract": "workspace:*",
@@ -62,7 +59,6 @@
     "jsdom": "^25.0.1",
     "prettier": "^3.4.2",
     "storybook": "^10.5.6",
-    "tsx": "^4.22.4",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
     "vite": "^6.0.7",

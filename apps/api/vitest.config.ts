@@ -78,7 +78,7 @@ export default defineConfig({
           fileParallelism: false,
           globals: false,
           globalSetup: './test/support/in-process-integration-global-setup.ts',
-          include: ['test/**/*.e2e-spec.ts', 'test/**/*.integration-spec.ts'],
+          include: ['test/**/*.integration-spec.ts'],
           exclude: [
             'test/static/**/*.integration-spec.ts',
             'test/adapters/postgres/**/*.integration-spec.ts',

@@ -339,9 +339,6 @@ importers:
       storybook:
         specifier: ^10.5.6
         version: 10.5.6(@types/react@18.3.31)(prettier@3.8.4)(react@18.3.1)
-      tsx:
-        specifier: ^4.22.4
-        version: 4.22.4
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
@@ -354,39 +351,6 @@ importers:
       vitest:
         specifier: ^3.0.0
         version: 3.2.6(@types/debug@4.1.13)(@types/node@22.19.21)(jiti@2.7.0)(jsdom@25.0.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.1)
-
-  e2e:
-    devDependencies:
-      '@eslint/js':
-        specifier: ^9.18.0
-        version: 9.39.4
-      '@playwright/test':
-        specifier: ^1.61.1
-        version: 1.61.1
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.21
-      eslint:
-        specifier: ^9.18.0
-        version: 9.39.4(jiti@2.7.0)
-      eslint-plugin-prettier:
-        specifier: ^5.2.2
-        version: 5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0))(prettier@3.8.4)
-      eslint-plugin-unused-imports:
-        specifier: ^4.4.1
-        version: 4.4.1(@typescript-eslint/eslint-plugin@8.61.1(@typescript-eslint/parser@8.61.1(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0))
-      globals:
-        specifier: ^16.0.0
-        version: 16.5.0
-      prettier:
-        specifier: ^3.4.2
-        version: 3.8.4
-      typescript:
-        specifier: ^5.7.3
-        version: 5.9.3
-      typescript-eslint:
-        specifier: ^8.20.0
-        version: 8.61.1(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
 
   packages/contract:
     dependencies:
@@ -10440,6 +10404,7 @@ snapshots:
       '@esbuild/win32-arm64': 0.28.1
       '@esbuild/win32-ia32': 0.28.1
       '@esbuild/win32-x64': 0.28.1
+    optional: true
 
   escalade@3.2.0: {}
 
@@ -12979,6 +12944,7 @@ snapshots:
       esbuild: 0.28.1
     optionalDependencies:
       fsevents: 2.3.3
+    optional: true
 
   type-check@0.4.0:
     dependencies:
