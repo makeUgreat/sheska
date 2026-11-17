@@ -1,6 +1,6 @@
 import { registerAs } from '@nestjs/config';
 import { z } from 'zod';
-import { withFileSecrets } from '../../config/secret-file.loader';
+import { withFileSecrets } from '@kernels/infrastructure';
 
 const databaseEnvSchema = z.object({
   /**

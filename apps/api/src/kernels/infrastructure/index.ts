@@ -26,3 +26,4 @@ export {
   type ResilienceExecutionOptions,
 } from './resilience.pipeline';
 export { SYSTEM_RETRY_RUNTIME, type RetryPolicy } from './retry';
+export { withFileSecrets } from './secret-file.loader';
