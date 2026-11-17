@@ -30,7 +30,6 @@
     "test:integration:ollama": "vitest run --project ollama",
     "test:integration:all": "pnpm test:integration:in-process && pnpm test:integration:postgres && pnpm test:integration:redis && pnpm test:integration:ollama",
     "test:runtime:start": "NODE_ENV=test ts-node --project tsconfig.json -r tsconfig-paths/register test/runtime/start.ts",
-    "test:runtime:url": "NODE_ENV=test ts-node --project tsconfig.json -r tsconfig-paths/register test/runtime/url.ts",
     "test:runtime:stop": "NODE_ENV=test ts-node --project tsconfig.json -r tsconfig-paths/register test/runtime/stop.ts",
     "test:watch": "vitest --project unit",
     "test:cov": "vitest run --project unit --coverage",

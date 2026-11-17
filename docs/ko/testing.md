@@ -4,7 +4,6 @@ applies_to:
   - apps/api, apps/ui의 테스트
 read_when:
   - 테스트를 쓰거나, 어느 계층에서 검증할지 정할 때
-  - 다른 workspace의 서비스를 띄워 테스트할 때
 ---
 
 # 테스트 컨벤션
@@ -37,8 +36,3 @@ read_when:
 - 사용자가 보는 text, role, label로 query함
 - Storybook story는 상태를 보는 fixture이고 동작의 증명이 아님
 - `jsdom`은 layout engine이 없어 배치를 증명하지 못함. 배치는 실제 browser의 layout 테스트가 숫자로 잼
-
-## 서비스 간 테스트 런타임
-- 다른 workspace가 띄워야 하는 서비스는 그 서비스의 workspace가 `test:runtime:*` script와 세부를 소유함
-- 쓰는 쪽은 그 서비스를 공개 protocol로만 다루고 다른 앱의 소스를 import하지 않음
-- 동시에 띄울 수 있는 runtime은 `SHESKA_TEST_RUNTIME_ID`로 격리함
