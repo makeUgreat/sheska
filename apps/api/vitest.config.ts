@@ -64,6 +64,15 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'static',
+          environment: 'node',
+          globals: false,
+          include: ['test/static/**/*.integration-spec.ts'],
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'in-process',
           environment: 'node',
           fileParallelism: false,
@@ -71,6 +80,7 @@ export default defineConfig({
           globalSetup: './test/support/in-process-integration-global-setup.ts',
           include: ['test/**/*.e2e-spec.ts', 'test/**/*.integration-spec.ts'],
           exclude: [
+            'test/static/**/*.integration-spec.ts',
             'test/adapters/postgres/**/*.integration-spec.ts',
             'test/adapters/redis/**/*.integration-spec.ts',
             'test/adapters/ollama/**/*.integration-spec.ts',
