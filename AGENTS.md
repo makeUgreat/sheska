@@ -2,6 +2,7 @@
 
 Convention documents are written in Korean only; do not create English counterparts.
 Read only the documents whose topic matches the task.
+Before adding or changing a convention document (`docs/ko/`, `apps/*/docs/ko/`, or this file), show the proposed text to the user and get confirmation.
 
 ## Repository
 

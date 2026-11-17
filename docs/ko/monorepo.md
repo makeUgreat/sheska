@@ -32,8 +32,6 @@ read_when:
   - squash 머지에서는 PR 제목이 커밋 메시지가 됨. `!`가 없으면 release-please가 major 버전을 올리지 않음
 - 릴리스 태그는 `v` 없이 버전만 씀
   - Obsidian과 BRAT는 태그와 `manifest.json`의 버전이 같다고 가정함
-- 실제로 쓰는 vault에는 빌드를 직접 복사하지 않음. 머지 전 확인은 임시 vault에서 함
-  - BRAT도 같은 폴더에 쓰므로, 직접 복사하면 실행 중인 버전을 알 수 없게 됨
 
 ## CI
 - PR 검사는 GitHub-hosted runner에서만 돌림. self-hosted runner에는 `pull_request` 트리거를 붙이지 않음
