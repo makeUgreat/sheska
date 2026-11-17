@@ -27,6 +27,14 @@ spec:
               value: {{ .Values.redis.url }}
             - name: EMBEDDING_BASE_URL
               value: {{ .Values.embedding.baseUrl }}
+            - name: ATTACHMENT_STORAGE_ENDPOINT
+              value: {{ required "attachmentStorage.endpoint가 필요합니다." .Values.attachmentStorage.endpoint | quote }}
+            - name: ATTACHMENT_STORAGE_BUCKET
+              value: {{ required "attachmentStorage.bucket이 필요합니다." .Values.attachmentStorage.bucket | quote }}
+            - name: ATTACHMENT_STORAGE_ACCESS_KEY_ID_FILE
+              value: /run/secrets/attachment-storage/access-key-id
+            - name: ATTACHMENT_STORAGE_SECRET_ACCESS_KEY_FILE
+              value: /run/secrets/attachment-storage/secret-access-key
             - name: CORS_ORIGINS
               value: {{ required "config.corsOrigins가 필요합니다." .Values.config.corsOrigins | quote }}
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
@@ -61,8 +69,14 @@ spec:
             - name: secrets
               mountPath: /run/secrets/sheska
               readOnly: true
+            - name: attachment-storage
+              mountPath: /run/secrets/attachment-storage
+              readOnly: true
       volumes:
         {{- include "sheska-api.databaseVolume" . | nindent 8 }}
+        - name: attachment-storage
+          secret:
+            secretName: {{ .Values.attachmentStorage.secretName }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
