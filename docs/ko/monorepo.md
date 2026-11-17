@@ -38,5 +38,3 @@ read_when:
 ## CI
 - PR 검사는 GitHub-hosted runner에서만 돌림. self-hosted runner에는 `pull_request` 트리거를 붙이지 않음
   - 저장소가 public이라 fork PR의 코드가 홈 서버에서 실행될 수 있음
-- Ollama 통합 테스트, UI layout 테스트, E2E는 PR 검사에서 돌리지 않음
-  - Ollama 테스트는 모델을 받느라 준비에 최대 6분을 쓰고, layout과 E2E는 browser와 API runtime이 필요함
