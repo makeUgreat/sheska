@@ -39,7 +39,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @sheska/api test:unit
-      - run: pnpm --filter @sheska/api test:integration:local
+      - run: pnpm --filter @sheska/api test:integration:in-process
       - run: pnpm --filter @sheska/ui test:unit
       - run: pnpm --filter @sheska/ui test:integration
       - run: pnpm --filter @sheska/obsidian-plugin test
