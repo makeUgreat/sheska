@@ -20,7 +20,6 @@
     "test:layout": "playwright test --config playwright.layout.config.ts",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
-    "test:integration:api-client": "vitest run --project api-client",
     "test:watch": "vitest --project unit",
     "harness:static": "pnpm tokens:check && pnpm typecheck && pnpm lint:check && pnpm deps:check && pnpm test:integration:static"
   },

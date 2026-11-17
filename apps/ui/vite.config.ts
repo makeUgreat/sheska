@@ -64,10 +64,7 @@ export default defineConfig({
             'test/**/*.integration-spec.ts',
             'test/**/*.integration-spec.tsx',
           ],
-          exclude: [
-            'test/api-client/**/*.integration-spec.ts',
-            'test/static/**/*.integration-spec.ts',
-          ],
+          exclude: ['test/static/**/*.integration-spec.ts'],
         },
       },
       {
@@ -77,18 +74,6 @@ export default defineConfig({
           environment: 'node',
           globals: true,
           include: ['test/static/**/*.integration-spec.ts'],
-        },
-      },
-      {
-        extends: true,
-        test: {
-          name: 'api-client',
-          environment: 'node',
-          globals: true,
-          globalSetup: ['test/api-client/support/global-setup.ts'],
-          include: ['test/api-client/**/*.integration-spec.ts'],
-          hookTimeout: 120_000,
-          testTimeout: 30_000,
         },
       },
     ],
