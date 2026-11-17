@@ -50,6 +50,10 @@ services:
       DATABASE_URL: postgres://sheska:sheska@db:5432/sheska_test
       REDIS_URL: redis://redis:6379
       EMBEDDING_BASE_URL: http://embedding-unavailable:3000
+      ATTACHMENT_STORAGE_ENDPOINT: http://attachment-storage-unavailable:9000
+      ATTACHMENT_STORAGE_BUCKET: sheska-attachments
+      ATTACHMENT_STORAGE_ACCESS_KEY_ID: unused
+      ATTACHMENT_STORAGE_SECRET_ACCESS_KEY: unused
       CORS_ORIGINS: http://localhost:4173
     ports:
       - '127.0.0.1::3000'

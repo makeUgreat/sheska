@@ -17,6 +17,11 @@ import { PostPgDrizzleRepository } from '@contexts/library/infrastructure/persis
 import { PostPgDrizzleQuery } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.query';
 import { LibraryPgDrizzleUnitOfWork } from '@contexts/library/infrastructure/persistence/postgres-drizzle/library.pg-drizzle.unit-of-work';
 import { SourcesHttpController } from '@contexts/library/presentation/http/sources.http.controller';
+import { AttachmentsHttpController } from '@contexts/library/presentation/http/attachments.http.controller';
+import { UploadAttachmentUseCase } from '@contexts/library/application/use-cases/upload-attachment.use-case';
+import { AttachmentImageOptimizer } from '@contexts/library/application/services/attachment-image-optimizer.service';
+import { AttachmentImageSharpCodec } from '@contexts/library/infrastructure/attachment-image/sharp/attachment-image.sharp.codec';
+import { AttachmentContentS3Store } from '@contexts/library/infrastructure/attachment-content/s3/attachment-content.s3.store';
 import { PostsHttpController } from '@contexts/library/presentation/http/posts.http.controller';
 import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/library/application/use-cases/get-post.use-case';
@@ -47,6 +52,8 @@ import {
   POST_REPOSITORY,
   POST_QUERY,
   SEARCH_QUERY_EMBEDDER,
+  ATTACHMENT_IMAGE_CODEC,
+  ATTACHMENT_CONTENT_STORE,
 } from './library.di-tokens';
 
 export type LibraryModuleOptions = Record<string, never>;
@@ -108,7 +115,16 @@ export class LibraryModule {
             new SearchQueryFromIngestionEmbedder(embedder),
           inject: [EMBEDDER],
         },
+        {
+          provide: ATTACHMENT_IMAGE_CODEC,
+          useClass: AttachmentImageSharpCodec,
+        },
+        {
+          provide: ATTACHMENT_CONTENT_STORE,
+          useClass: AttachmentContentS3Store,
+        },
         SourceContentSnapshotCalculator,
+        AttachmentImageOptimizer,
         ListSourcesUseCase,
         GetSourceUseCase,
         GetSourceSyncJobUseCase,
@@ -118,6 +134,7 @@ export class LibraryModule {
         ListPostsUseCase,
         SearchPostsUseCase,
         CountPostsUseCase,
+        UploadAttachmentUseCase,
       ],
       exports: [
         SOURCE_REPOSITORY,
@@ -132,6 +149,7 @@ export class LibraryModule {
         ListPostsUseCase,
         SearchPostsUseCase,
         CountPostsUseCase,
+        UploadAttachmentUseCase,
       ],
     };
   }
@@ -144,6 +162,7 @@ export class LibraryModule {
         SourcesHttpController,
         SourceSyncJobsHttpController,
         PostsHttpController,
+        AttachmentsHttpController,
       ],
       providers: [
         ApplyIngestionUpdateUseCase,
