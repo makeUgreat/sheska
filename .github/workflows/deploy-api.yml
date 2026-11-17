@@ -1,19 +1,29 @@
-name: Embedder Image Publish
+name: Deploy API
 
 on:
   push:
-    branches:
-      - master
+    branches: [master]
     paths:
-      - 'deploy/helm/sheska-embedder/Dockerfile'
+      - 'apps/api/**'
+      - 'packages/contract/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.npmrc'
   workflow_dispatch:
+    inputs:
+      sha:
+        description: '배포할 이미지의 커밋 SHA (생략 시 master의 최신 커밋)'
+        required: false
+        default: ''
 
 env:
-  IMAGE_NAME: sheska-embedder
+  IMAGE_NAME: sheska-api
   DOCKER_HUB_USERNAME: willom2c
 
 jobs:
   build:
+    if: github.event_name == 'push'
     runs-on: [self-hosted, sheska]
     steps:
       - uses: actions/checkout@v4
@@ -36,24 +46,11 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: deploy/helm/sheska-embedder
-          file: deploy/helm/sheska-embedder/Dockerfile
+          context: .
+          file: ./apps/api/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Save image tag to artifact
-        run: |
-          TAG=$(echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n' | grep "sha-" | head -n1 | sed 's/.*://')
-          echo "$TAG" > /tmp/image-tag.txt
-          echo "Image tag: $TAG"
-
-      - name: Upload image tag artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: image-tag
-          path: /tmp/image-tag.txt
-          retention-days: 7
 
       - name: Clean up old local images (keep last 10)
         if: always()
@@ -66,10 +63,22 @@ jobs:
 
       - name: Clean up dangling images
         if: success()
-        run: |
-          docker image prune -f
+        run: docker image prune -f
 
       - name: Clean up BuildKit cache
         if: always()
-        run: |
-          docker builder prune -af --max-used-space 15gb
+        run: docker builder prune -af --max-used-space 15gb
+
+  deploy:
+    needs: build
+    if: ${{ !cancelled() && needs.build.result != 'failure' }}
+    runs-on: [self-hosted, sheska]
+    concurrency:
+      group: deploy-branch
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/update-deploy-branch
+        with:
+          service: ${{ env.IMAGE_NAME }}
+          tag: sha-${{ inputs.sha || github.sha }}
