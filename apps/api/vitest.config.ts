@@ -64,11 +64,11 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          name: 'local',
+          name: 'in-process',
           environment: 'node',
           fileParallelism: false,
           globals: false,
-          globalSetup: './test/support/local-integration-global-setup.ts',
+          globalSetup: './test/support/in-process-integration-global-setup.ts',
           include: ['test/**/*.e2e-spec.ts', 'test/**/*.integration-spec.ts'],
           exclude: [
             'test/adapters/postgres/**/*.integration-spec.ts',

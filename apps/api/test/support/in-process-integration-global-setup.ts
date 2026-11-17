@@ -4,7 +4,7 @@ import {
   logIntegrationAdapterStep,
 } from './integration-adapter-logger';
 
-const LOCAL_INTEGRATION_LOG_CONTEXTS: readonly IntegrationAdapterLogContext[] =
+const IN_PROCESS_INTEGRATION_LOG_CONTEXTS: readonly IntegrationAdapterLogContext[] =
   [
     {
       adapter: 'HTTP',
@@ -27,12 +27,12 @@ const LOCAL_INTEGRATION_LOG_CONTEXTS: readonly IntegrationAdapterLogContext[] =
   ];
 
 export default function setup(): void {
-  for (const context of LOCAL_INTEGRATION_LOG_CONTEXTS) {
+  for (const context of IN_PROCESS_INTEGRATION_LOG_CONTEXTS) {
     logIntegrationAdapterBanner(context);
     logIntegrationAdapterStep(
       context,
       'READY',
-      'Included in local integration suite',
+      'Included in in-process integration suite',
     );
   }
 }
