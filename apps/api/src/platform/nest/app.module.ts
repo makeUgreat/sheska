@@ -5,6 +5,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LibraryModule } from '@contexts/library/library.module';
 import { ollamaConfig } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.config';
 import { IngestionModule } from '@contexts/ingestion/ingestion.module';
+import { attachmentContentS3Config } from '@contexts/library/infrastructure/attachment-content/s3/attachment-content.s3.config';
 import { databaseConfig } from './database/database.config';
 import { DatabaseModule } from './database/database.module';
 import { IntegrationEventsModule } from './events/integration-events.module';
@@ -29,6 +30,7 @@ import { QueueModule } from './queue/queue.module';
         loggerConfig,
         queueConfig,
         ollamaConfig,
+        attachmentContentS3Config,
       ],
     }),
     LoggerModule,

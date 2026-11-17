@@ -10,6 +10,8 @@ export interface ApiContract {
   readonly query?: z.ZodType;
   /** JSON 본문 */
   readonly request?: z.ZodType;
+  /** 본문이 JSON이 아니라 파일 바이트 그대로다. `Content-Type: application/octet-stream`으로 보낸다. */
+  readonly binaryRequest?: true;
   readonly response?: z.ZodType;
   /**
    * 이 API가 돌려줄 수 있는 오류 code.
