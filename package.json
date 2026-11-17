@@ -5,7 +5,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "deps:check": "depcruise apps --config .dependency-cruiser.cjs",
-    "rules:check": "nocap --spec \"docs/ko/domain/*.md\" --test \"apps/*/{src,test,scripts}/**/*{.spec,-spec}.{ts,tsx}\" --test \"e2e/tests/**/*.spec.ts\"",
+    "rules:check": "nocap --spec \"docs/ko/domain/*.md\" --test \"apps/*/{src,test,scripts}/**/*{.spec,-spec}.{ts,tsx}\"",
     "harness:static": "pnpm deps:check && pnpm -r --if-present harness:static",
     "harness:build": "pnpm -r build && pnpm --filter @sheska/api test:runtime:start && pnpm --filter @sheska/api test:runtime:stop"
   },

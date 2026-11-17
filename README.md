@@ -10,7 +10,6 @@ Sheska is organized as a pnpm monorepo.
 - `apps/ui`: React UI
 - `apps/obsidian-plugin`: Obsidian plugin
 - `packages/contract`: HTTP contract shared by the API and its clients
-- `e2e`: end-to-end tests
 
 ## Documentation
 
