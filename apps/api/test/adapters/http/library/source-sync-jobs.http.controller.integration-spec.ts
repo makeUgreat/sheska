@@ -2,6 +2,7 @@ import { type Server } from 'node:http';
 import { type INestApplication } from '@nestjs/common';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
+import { SourceSyncJobApi } from '@sheska/contract';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotFoundError } from '@core/errors';
@@ -61,6 +62,7 @@ describe('SourceSyncJobsHttpController', () => {
       .get('/sync-jobs/sync-job-1')
       .expect(200);
 
+    SourceSyncJobApi.get.response.parse(response.body);
     expect(response.body).toEqual({
       syncJobId: 'sync-job-1',
       sourceId: 'source-1',

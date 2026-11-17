@@ -7,6 +7,7 @@ import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filte
 import { LOGGER } from '@kernels/application';
 import { HealthController } from '@platform/nest/health/health.controller';
 import { QueueHealthProbe } from '@platform/nest/queue/queue-health.probe';
+import { HealthApi } from '@sheska/contract';
 import request from 'supertest';
 import {
   afterEach,
@@ -88,6 +89,7 @@ describe('HealthController HTTP contract', () => {
     it('의존성 없이 즉시 200과 { status: "ok" }를 반환한다', async () => {
       const response = await request(httpServer).get('/livez').expect(200);
 
+      HealthApi.live.response.parse(response.body);
       expect(response.body).toEqual({ status: 'ok' });
       expect(db.execute).not.toHaveBeenCalled();
       expect(queueHealthProbe.check).not.toHaveBeenCalled();
@@ -98,6 +100,7 @@ describe('HealthController HTTP contract', () => {
     it('dependency probe가 정상이면 200과 { status: "ok" }를 반환한다', async () => {
       const response = await request(httpServer).get('/readyz').expect(200);
 
+      HealthApi.ready.response.parse(response.body);
       expect(response.body).toEqual({ status: 'ok' });
       expect(db.execute).toHaveBeenCalledOnce();
       expect(queueHealthProbe.check).toHaveBeenCalledOnce();
