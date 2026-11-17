@@ -13,7 +13,6 @@
     "deps:check": "depcruise src --config dependency-cruiser/config.cjs",
     "harness:static": "pnpm typecheck && pnpm lint:check && pnpm deps:check",
     "test": "vitest run",
-    "test:obsidian-smoke": "node scripts/obsidian-smoke-test.mjs",
     "test:watch": "vitest"
   },
   "dependencies": {
