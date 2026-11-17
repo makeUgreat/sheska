@@ -1,4 +1,9 @@
 export type {
+  AttachmentImageCodec,
+  AttachmentImageInfo,
+  AttachmentImageMediaType,
+} from './attachment-image.codec';
+export type {
   SourceDocumentParser,
   ParsedSourceDocument,
 } from './source-document.parser';
