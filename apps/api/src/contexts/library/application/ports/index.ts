@@ -1,3 +1,4 @@
+export type { AttachmentContentStore } from './attachment-content.store';
 export type {
   AttachmentImageCodec,
   AttachmentImageInfo,
