@@ -24,7 +24,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm harness:static
-      - run: pnpm -r --if-present harness:build
+      - run: pnpm -r build
 
   test:
     runs-on: ubuntu-latest

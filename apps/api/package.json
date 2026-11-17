@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
+    "build": "nest build && tsc --project tsconfig.migrate.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "NODE_ENV=development nest start --env-file .env.development",
     "start:dev": "NODE_ENV=development nest start --watch --env-file .env.development",
@@ -20,7 +20,6 @@
     "db:reset": "NODE_ENV=development node --env-file=.env.development -r ts-node/register -r tsconfig-paths/register database/reset.ts",
     "db:seed": "NODE_ENV=development node --env-file=.env.development -r ts-node/register -r tsconfig-paths/register database/seed.ts",
     "harness:static": "pnpm typecheck && pnpm lint:check && pnpm deps:check && pnpm test:integration:static",
-    "harness:build": "pnpm build && tsc --project tsconfig.migrate.json",
     "typecheck": "tsc --noEmit",
     "test": "pnpm test:unit && pnpm test:integration:all",
     "test:unit": "vitest run --project unit",

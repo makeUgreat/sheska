@@ -7,7 +7,7 @@
     "deps:check": "depcruise apps --config .dependency-cruiser.cjs",
     "rules:check": "nocap --spec \"docs/ko/domain/*.md\" --test \"apps/*/{src,test,scripts}/**/*{.spec,-spec}.{ts,tsx}\" --test \"e2e/tests/**/*.spec.ts\"",
     "harness:static": "pnpm deps:check && pnpm -r --if-present harness:static",
-    "harness:build": "pnpm -r --if-present harness:build && pnpm --filter @sheska/api test:runtime:start && pnpm --filter @sheska/api test:runtime:stop"
+    "harness:build": "pnpm -r build && pnpm --filter @sheska/api test:runtime:start && pnpm --filter @sheska/api test:runtime:stop"
   },
   "devDependencies": {
     "@makehash/nocap": "^0.3.0",
