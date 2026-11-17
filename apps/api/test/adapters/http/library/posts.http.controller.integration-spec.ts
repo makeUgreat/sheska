@@ -12,6 +12,7 @@ import { LOGGER } from '@kernels/application';
 import { PostsHttpController } from '@contexts/library/presentation/http/posts.http.controller';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
 import { DeclaredErrorCodesInterceptor } from '@platform/nest/interceptors/declared-error-codes.interceptor';
+import { errorResponseSchema, PostApi } from '@sheska/contract';
 import request from 'supertest';
 import {
   afterEach,
@@ -110,6 +111,7 @@ describe('PostsHttpController', () => {
         .send({ sourceId: 'source-1' })
         .expect(201);
 
+      PostApi.publish.response.parse(response.body);
       expect(response.body).toEqual({
         postId: 'post-1',
         sourceId: 'source-1',
@@ -217,6 +219,7 @@ describe('PostsHttpController', () => {
       const response = await request(httpServer).get('/posts').expect(200);
       const body = response.body as { posts: unknown[]; nextCursor: unknown };
 
+      PostApi.list.response.parse(response.body);
       expect(body.posts).toEqual([
         {
           postId: 'post-1',
@@ -319,6 +322,7 @@ describe('PostsHttpController', () => {
         semanticSearchApplied: boolean;
       };
 
+      PostApi.search.response.parse(response.body);
       expect(body.posts).toEqual([
         {
           postId: 'post-1',
@@ -468,6 +472,7 @@ describe('PostsHttpController', () => {
         .get('/posts/count')
         .expect(200);
 
+      PostApi.count.response.parse(response.body);
       expect(response.body).toEqual({ count: 42 });
       expect(countPostsUseCase.execute).toHaveBeenCalledOnce();
     });
@@ -506,6 +511,7 @@ describe('PostsHttpController', () => {
         .get('/posts/post-1')
         .expect(200);
 
+      PostApi.get.response.parse(response.body);
       expect(response.body).toEqual({
         postId: 'post-1',
         sourceId: 'source-1',
@@ -545,6 +551,7 @@ describe('PostsHttpController', () => {
         .get('/posts/post-1')
         .expect(500);
 
+      errorResponseSchema.parse(response.body);
       expect(response.body).toEqual({
         code: 'internal.unexpected',
         message: 'Internal server error',

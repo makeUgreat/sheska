@@ -14,6 +14,7 @@ import { SourcesHttpController } from '@contexts/library/presentation/http/sourc
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
 import { DeclaredErrorCodesInterceptor } from '@platform/nest/interceptors/declared-error-codes.interceptor';
 import { LOGGER } from '@kernels/application';
+import { SourceApi } from '@sheska/contract';
 import request from 'supertest';
 import {
   afterEach,
@@ -129,6 +130,7 @@ describe('SourcesHttpController', () => {
 
       const response = await request(httpServer).get('/sources').expect(200);
 
+      SourceApi.list.response.parse(response.body);
       expect(response.body).toEqual({
         sources: [
           {
@@ -265,6 +267,7 @@ describe('SourcesHttpController', () => {
         .get('/sources/source-1')
         .expect(200);
 
+      SourceApi.get.response.parse(response.body);
       expect(response.body).toMatchObject({
         sourceId: 'source-1',
         externalSourceId: 'Notes/source.md',
@@ -346,6 +349,7 @@ describe('SourcesHttpController', () => {
         })
         .expect(201);
 
+      SourceApi.upload.response.parse(response.body);
       expect(response.body).toEqual({
         sourceId: 'source-1',
         externalSourceId: 'Notes/source.md',
