@@ -267,9 +267,9 @@ export class AutoSyncService {
 
   private async uploadImageIfChanged(image: TFile): Promise<boolean> {
     const cached = this.attachmentCache[image.path];
-    if (cached?.mtime === image.stat.mtime && cached.size === image.stat.size) {
-      return false;
-    }
+    const sameVersion =
+      cached?.mtime === image.stat.mtime && cached.size === image.stat.size;
+    if (sameVersion && !cached.rejected) return false;
     if (image.stat.size > ATTACHMENT_MAX_BYTES) {
       console.warn(
         `[Sheska] Skipped "${image.path}": larger than ${ATTACHMENT_MAX_BYTES} bytes.`,
@@ -283,11 +283,14 @@ export class AutoSyncService {
       await this.api.uploadAttachment(image.path, data);
     } catch (error: unknown) {
       if (isRetryableApiError(error)) throw error;
+      if (sameVersion) return false;
       const reason =
         error instanceof SheskaApiError
           ? (error.code ?? `HTTP ${error.status}`)
           : String(error);
       new Notice(`Sheska: "${image.path}" was rejected (${reason}).`);
+      this.attachmentCache[image.path] = { ...stat, rejected: true };
+      return true;
     }
     this.attachmentCache[image.path] = stat;
     return true;
