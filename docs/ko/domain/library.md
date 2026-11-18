@@ -137,8 +137,9 @@ stateDiagram-v2
 - 동기화 클라이언트는 frontmatter `sheska-mask`에 적은 단어를 보내기 전에 바꿔야 함 <!-- nocap: library-sync-13 -->
   - 예: `sheska-mask: { CertBear: A사 }`이면 `certbear`와 `CertBearAgent`의 `CertBear`도 `A사`로 바뀜. 값이 비어 있으면 `●●●`로 바뀜
   - 이유: 서버에 원문이 남으면 화면을 가려도 검색과 임베딩으로 드러남
-- 동기화 클라이언트는 `sheska-mask`를 읽을 수 없으면 그 파일을 보내지 않아야 함 <!-- nocap: library-sync-14 -->
-  - 이유: 원문이 섞여 올라가는 것보다 고쳐질 때까지 올라가지 않는 편이 나음
+- 동기화 클라이언트는 `sheska-mask`를 읽을 수 없거나 링크 주소에 마스킹 단어가 있으면 그 파일을 보내지 않아야 함 <!-- nocap: library-sync-14 -->
+  - 예: `sheska-mask: { CertBear: A사 }`이면 `[문서](https://certbear.io)`가 있는 노트는 보내지 않음. 보낼 이미지와 코드 안의 주소는 해당하지 않음
+  - 이유: 링크 주소를 바꾸면 링크가 깨지고 그대로 두면 단어가 드러남. 원문이 섞여 올라가는 것보다 고쳐질 때까지 올라가지 않는 편이 나음
 
 ### 보내는 제목
 - 동기화 클라이언트는 frontmatter `title`이 비어 있으면 확장자를 뺀 파일 이름을 `title`로 넣어 보내야 함 <!-- nocap: library-sync-15 -->

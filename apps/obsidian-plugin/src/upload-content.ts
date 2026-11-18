@@ -35,6 +35,16 @@ export function prepareUploadContent(
   }
   delete frontmatter[MASK_KEY];
 
+  const maskedAddress = findMaskedAddress(body, imageLinks, [
+    ...replacements.keys(),
+  ]);
+  if (maskedAddress) {
+    return {
+      ok: false,
+      reason: `change the link ${maskedAddress}, its address contains a masked word`,
+    };
+  }
+
   if (!isNonEmptyString(frontmatter.title)) {
     frontmatter.title = fileNameWithoutExtension(filePath);
   }
@@ -70,6 +80,39 @@ function rewriteImageLinks(
       .join(`![${mask(altOf(original))}](${target})`);
   }
   return rewritten;
+}
+
+const FENCED_CODE = /^(```|~~~)[\s\S]*?^\1/gm;
+const INLINE_CODE = /`[^`\n]+`/g;
+const LINK_TARGET = /\]\(\s*<?([^)\s>]+)/g;
+const REFERENCE_DEFINITION = /^ {0,3}\[[^\]]+\]:\s*<?([^\s>]+)/gm;
+const URL_LITERAL = /[a-z][a-z\d+.-]*:\/\/[^\s<>()[\]]+/gi;
+
+/**
+ * `library-sync-14`: 링크 주소를 마스킹하면 링크가 깨지고, 두면 단어가 드러난다.
+ * 사용자가 고칠 수 있도록 보내지 않는다. 해시 이름으로 바꿀 vault 이미지와 코드는 링크가 아니라 제외한다.
+ */
+function findMaskedAddress(
+  body: string,
+  imageLinks: ImageLink[],
+  maskWords: string[],
+): string | undefined {
+  if (maskWords.length === 0) return undefined;
+  let linkText = body;
+  for (const { original } of imageLinks) {
+    linkText = linkText.split(original).join(' ');
+  }
+  linkText = linkText.replace(FENCED_CODE, ' ').replace(INLINE_CODE, ' ');
+
+  const addresses = [
+    ...linkText.matchAll(LINK_TARGET),
+    ...linkText.matchAll(REFERENCE_DEFINITION),
+    ...linkText.matchAll(URL_LITERAL),
+  ].map((match) => match[1] ?? match[0]);
+  return addresses.find((address) => {
+    const lowered = address.toLowerCase();
+    return maskWords.some((word) => lowered.includes(word));
+  });
 }
 
 const MARKDOWN_EMBED = /^!\[([^\]]*)\]\(/;
