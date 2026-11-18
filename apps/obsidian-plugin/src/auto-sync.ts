@@ -5,6 +5,7 @@ import { isRetryableApiError, SheskaApiError } from '@/api/client';
 import type { SheskaApiClient } from '@/api/client';
 import type { SheskaSettings } from '@/settings';
 import type { AttachmentCache, SyncCache } from '@/storage';
+import { containsMaskWord, prepareUploadContent } from '@/upload-content';
 
 interface AutoSyncServiceOptions {
   vault: Vault;
@@ -28,12 +29,24 @@ export const AUTO_RETRY_BACKOFF_MS = [60_000, 5 * 60_000, 30 * 60_000];
 
 const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'svg'];
 
+/** `library-sync-14`: 재시도해도 같은 결과라 실패로 기록하지 않는다. */
+export class UploadBlockedError extends Error {
+  constructor(
+    readonly path: string,
+    readonly reason: string,
+  ) {
+    super(`"${path}" was not uploaded: ${reason}`);
+    this.name = 'UploadBlockedError';
+  }
+}
+
 export class AutoSyncService {
   private api: SheskaApiClient;
   private settings: SheskaSettings;
   private syncCache: SyncCache;
   private attachmentCache: AttachmentCache;
   private readonly notesWithUnsupportedImageLinks = new Set<string>();
+  private readonly notifiedBlockedVersions = new Map<string, number>();
   private readonly dirtyFiles = new Map<string, TFile>();
   private readonly syncingFiles = new Set<string>();
   private readonly pollingFiles = new Set<string>();
@@ -192,12 +205,17 @@ export class AutoSyncService {
     this.syncingFiles.add(file.path);
     this.options.onSyncStart?.(file.path);
     try {
-      await this.uploadEmbeddedImages(file);
       const mtimeAtRead = file.stat.mtime;
-      const content = await this.options.vault.read(file);
+      const prepared = prepareUploadContent(
+        await this.options.vault.read(file),
+        file.path,
+      );
+      if (!prepared.ok)
+        throw new UploadBlockedError(file.path, prepared.reason);
+      await this.uploadEmbeddedImages(file, prepared.maskWords);
       const upload = await this.api.uploadSource({
         externalSourceId: file.path,
-        content,
+        content: prepared.content,
       });
       if (!upload.syncJobId) {
         this.syncCache[file.path] = {
@@ -236,33 +254,74 @@ export class AutoSyncService {
     }
   }
 
-  private async uploadEmbeddedImages(note: TFile): Promise<void> {
-    const embeds = this.options.metadataCache.getFileCache(note)?.embeds ?? [];
-    let unsupportedLinkCount = 0;
+  private async uploadEmbeddedImages(
+    note: TFile,
+    maskWords: string[],
+  ): Promise<void> {
+    const { images, unsupportedLinkCount } = this.findEmbeddedImages(note);
+    const maskedImage = images.find((image) =>
+      containsMaskWord(image.path, maskWords),
+    );
+    if (maskedImage) {
+      throw new UploadBlockedError(
+        note.path,
+        `rename ${maskedImage.path}, its path contains a masked word`,
+      );
+    }
+
     let cacheChanged = false;
     try {
-      for (const embed of embeds) {
-        const linkpath = getLinkpath(embed.link);
-        const image = this.options.metadataCache.getFirstLinkpathDest(
-          linkpath,
-          note.path,
-        );
-        if (
-          !image ||
-          !IMAGE_EXTENSIONS.includes(image.extension.toLowerCase())
-        ) {
-          continue;
-        }
-        if (embed.original.startsWith('![[') || linkpath !== image.path) {
-          unsupportedLinkCount += 1;
-          continue;
-        }
+      for (const image of images) {
         if (await this.uploadImageIfChanged(image)) cacheChanged = true;
       }
     } finally {
       if (cacheChanged) await this.options.saveAttachmentCache();
     }
     this.notifyUnsupportedImageLinks(note, unsupportedLinkCount);
+  }
+
+  private findEmbeddedImages(note: TFile): {
+    images: TFile[];
+    unsupportedLinkCount: number;
+  } {
+    const images: TFile[] = [];
+    let unsupportedLinkCount = 0;
+    for (const embed of this.options.metadataCache.getFileCache(note)?.embeds ??
+      []) {
+      const linkpath = getLinkpath(embed.link);
+      const image = this.options.metadataCache.getFirstLinkpathDest(
+        linkpath,
+        note.path,
+      );
+      if (!image || !IMAGE_EXTENSIONS.includes(image.extension.toLowerCase())) {
+        continue;
+      }
+      if (embed.original.startsWith('![[') || linkpath !== image.path) {
+        unsupportedLinkCount += 1;
+        continue;
+      }
+      images.push(image);
+    }
+    return { images, unsupportedLinkCount };
+  }
+
+  private notifyBlockedUpload(file: TFile, error: UploadBlockedError): void {
+    if (this.notifiedBlockedVersions.get(file.path) === file.stat.mtime) return;
+    this.notifiedBlockedVersions.set(file.path, file.stat.mtime);
+    new Notice(`Sheska: ${error.message}.`);
+  }
+
+  private async uploadAutomatically(file: TFile): Promise<void> {
+    try {
+      await this.uploadFileCore(file);
+    } catch (err) {
+      if (err instanceof UploadBlockedError) {
+        this.notifyBlockedUpload(file, err);
+        return;
+      }
+      console.error(`[Sheska] Auto-sync failed for "${file.path}":`, err);
+      await this.recordUploadFailure(file);
+    }
   }
 
   private async uploadImageIfChanged(image: TFile): Promise<boolean> {
@@ -407,12 +466,7 @@ export class AutoSyncService {
       return;
     }
     if (cached?.mtime === file.stat.mtime) return;
-    try {
-      await this.uploadFileCore(file);
-    } catch (err) {
-      console.error(`[Sheska] Auto-sync failed for "${file.path}":`, err);
-      await this.recordUploadFailure(file);
-    }
+    await this.uploadAutomatically(file);
   }
 
   private async uploadChangedDuringSweep(file: TFile): Promise<void> {
@@ -420,12 +474,7 @@ export class AutoSyncService {
     const cached = this.syncCache[file.path];
     if (cached?.mtime === file.stat.mtime) return;
     if (this.syncingFiles.has(file.path)) return;
-    try {
-      await this.uploadFileCore(file);
-    } catch (err) {
-      console.error(`[Sheska] Auto-sync failed for "${file.path}":`, err);
-      await this.recordUploadFailure(file);
-    }
+    await this.uploadAutomatically(file);
   }
 
   private async reconcileCachedFile(file: TFile): Promise<void> {
