@@ -29,8 +29,8 @@ related:
 - adapter 전용 환경 변수는 그 adapter를 고른 경우에만 필수로 둠
 
 ## NestJS DI
-- `core`, domain, kernel은 framework와 무관하게 둠
-- application은 생성자 주입 metadata까지만 씀. use case는 명시적인 의존성만으로 만들어지는 일반 클래스임
+- `core`와 domain은 framework와 무관하게 둠. kernel의 domain도 같음
+- application은 생성자 주입 metadata까지만 씀. kernel의 application도 같음. use case는 명시적인 의존성만으로 만들어지는 일반 클래스임
 - 모듈은 use case 단위가 아니라 bounded context나 runtime 경계 단위로 조립함
 
 ### 동적 모듈
