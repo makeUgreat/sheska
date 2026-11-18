@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/makeUgreat/sheska/compare/1.1.0...1.2.0) (2026-11-18)
+
+
+### Features
+
+* **obsidian-plugin:** mask words before uploading notes ([#397](https://github.com/makeUgreat/sheska/issues/397)) ([d5e91f2](https://github.com/makeUgreat/sheska/commit/d5e91f28b259e0671f03f2b0430a313c54244005))
+
 ## [1.1.0](https://github.com/makeUgreat/sheska/compare/1.0.0...1.1.0) (2026-11-18)
 
 
