@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { IamModule } from '@contexts/iam';
+import { ownerPasswordSecretConfig } from '@contexts/iam/infrastructure/owner-password/secret/owner-password.secret.config';
 import { LibraryModule } from '@contexts/library/library.module';
 import { ollamaConfig } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.config';
 import { IngestionModule } from '@contexts/ingestion/ingestion.module';
@@ -32,6 +34,7 @@ import { RedisModule } from './redis/redis.module';
         redisConfig,
         ollamaConfig,
         attachmentContentS3Config,
+        ownerPasswordSecretConfig,
       ],
     }),
     LoggerModule,
@@ -43,6 +46,7 @@ import { RedisModule } from './redis/redis.module';
     HealthModule,
     LibraryModule.forRoot(),
     IngestionModule.forRoot(),
+    IamModule.forRoot(),
     OutboxModule,
   ],
   providers: [
