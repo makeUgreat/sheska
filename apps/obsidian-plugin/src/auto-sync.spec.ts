@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { noticeMessages, TAbstractFile, TFile } from '../__mocks__/obsidian';
 import { SheskaApiError } from '@/api/client';
 import type { SheskaApiClient } from '@/api/client';
-import { AutoSyncService } from '@/auto-sync';
+import { AutoSyncService, UploadBlockedError } from '@/auto-sync';
 import { DEFAULT_SETTINGS } from '@/settings';
 import type { SheskaSettings } from '@/settings';
 import type { AttachmentCache, SyncCache } from '@/storage';
@@ -142,7 +142,7 @@ describe('AutoSyncService', () => {
     expect(vault.read).toHaveBeenCalledWith(file);
     expect(api.uploadSource).toHaveBeenCalledWith({
       externalSourceId: 'note.md',
-      content: 'content',
+      content: '---\ntitle: note\n---\ncontent',
     });
     expect(syncCache['note.md']).toMatchObject({ mtime: 123 });
     expect(saveSyncCache).toHaveBeenCalledOnce();
@@ -685,7 +685,7 @@ describe('AutoSyncService', () => {
     expect(api.uploadSource).toHaveBeenCalledOnce();
     expect(api.uploadSource).toHaveBeenCalledWith({
       externalSourceId: 'changed.md',
-      content: 'content',
+      content: '---\ntitle: changed\n---\ncontent',
     });
   });
 
@@ -710,7 +710,7 @@ describe('AutoSyncService', () => {
     expect(api.uploadSource).toHaveBeenCalledOnce();
     expect(api.uploadSource).toHaveBeenCalledWith({
       externalSourceId: 'Journal/today.md',
-      content: 'content',
+      content: '---\ntitle: today\n---\ncontent',
     });
   });
 
@@ -1280,6 +1280,114 @@ describe('AutoSyncService', () => {
       expect(api.uploadAttachment).toHaveBeenCalledTimes(2);
       expect(attachmentCache['att/a.png']).toEqual({ mtime: 60, size: 4 });
       errorSpy.mockRestore();
+    });
+  });
+
+  describe('masking', () => {
+    const MASKED_NOTE = [
+      '---',
+      'sheska: true',
+      'sheska-mask:',
+      '  CertBear: A사',
+      '---',
+      'CertBear 설계',
+    ].join('\n');
+    const note = new TFile('notes/meeting.md', {
+      ctime: 0,
+      mtime: 100,
+      size: 1,
+    });
+
+    it('uploads the masked content', async () => {
+      const { api, service, vault } = makeService();
+      vault.read.mockResolvedValue(MASKED_NOTE);
+
+      await service.uploadFile(asObsidianFile(note));
+
+      expect(api.uploadSource).toHaveBeenCalledWith({
+        externalSourceId: 'notes/meeting.md',
+        content: '---\nsheska: true\ntitle: meeting\n---\nA사 설계',
+      });
+    });
+
+    it('reads the note before uploading its images', async () => {
+      const { api, metadataCache, service, vault } = makeService();
+      withEmbeds(
+        metadataCache,
+        [{ link: 'att/a.png', original: '![](att/a.png)' }],
+        [new TFile('att/a.png', { ctime: 0, mtime: 50, size: 4 })],
+      );
+
+      await service.uploadFile(asObsidianFile(note));
+
+      expect(vault.read.mock.invocationCallOrder[0]).toBeLessThan(
+        api.uploadAttachment.mock.invocationCallOrder[0],
+      );
+    });
+
+    // nocap: library-sync-14
+    it('does not upload a note whose mask list is not a mapping, and notifies once', async () => {
+      const syncCache: SyncCache = {};
+      const { api, service, vault } = makeService(
+        { autoSyncDebounceSeconds: 1 },
+        syncCache,
+      );
+      vault.read.mockResolvedValue(
+        '---\nsheska: true\nsheska-mask: [CertBear]\n---\nCertBear',
+      );
+
+      for (let i = 0; i < 2; i += 1) {
+        service.onVaultFileChanged(asObsidianAbstractFile(note));
+        await vi.advanceTimersByTimeAsync(1000);
+      }
+
+      expect(api.uploadSource).not.toHaveBeenCalled();
+      expect(syncCache['notes/meeting.md']).toBeUndefined();
+      expect(noticeMessages).toEqual([
+        'Sheska: "notes/meeting.md" was not uploaded: sheska-mask must be a mapping of word: replacement.',
+      ]);
+    });
+
+    // nocap: library-sync-14
+    it('uploads neither the images nor the note when an image path contains a masked word', async () => {
+      const { api, metadataCache, service, vault } = makeService();
+      vault.read.mockResolvedValue(MASKED_NOTE);
+      withEmbeds(
+        metadataCache,
+        [
+          { link: 'att/plain.png', original: '![](att/plain.png)' },
+          {
+            link: 'att/certbear_axis.svg',
+            original: '![](att/certbear_axis.svg)',
+          },
+        ],
+        [
+          new TFile('att/plain.png', { ctime: 0, mtime: 50, size: 4 }),
+          new TFile('att/certbear_axis.svg', { ctime: 0, mtime: 50, size: 4 }),
+        ],
+      );
+
+      vault.getMarkdownFiles.mockReturnValue([note]);
+      await service.runSweep();
+      await service.runSweep();
+
+      expect(api.uploadAttachment).not.toHaveBeenCalled();
+      expect(api.uploadSource).not.toHaveBeenCalled();
+      expect(noticeMessages).toEqual([
+        'Sheska: "notes/meeting.md" was not uploaded: rename att/certbear_axis.svg, its path contains a masked word.',
+      ]);
+    });
+
+    it('rejects a manual upload that masking blocks', async () => {
+      const { api, service, vault } = makeService();
+      vault.read.mockResolvedValue(
+        '---\nsheska: true\nsheska-mask: CertBear\n---\n',
+      );
+
+      await expect(service.uploadFile(asObsidianFile(note))).rejects.toThrow(
+        UploadBlockedError,
+      );
+      expect(api.uploadSource).not.toHaveBeenCalled();
     });
   });
 });

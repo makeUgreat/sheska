@@ -133,6 +133,17 @@ stateDiagram-v2
   - 예: `![](att/a.png)`는 보냄. `![[att/a.png]]`와 최단 경로 링크 `![](a.png)`는 보내지 않음
   - 이유: 본문은 링크 글자를 이미지 위치로 읽음. 다른 형식으로 쓴 이미지는 보내도 본문에 보이지 않음
 
+### 마스킹
+- 동기화 클라이언트는 frontmatter `sheska-mask`에 적은 단어를 보내기 전에 바꿔야 함 <!-- nocap: library-sync-13 -->
+  - 예: `sheska-mask: { CertBear: A사 }`이면 `certbear`와 `CertBearAgent`의 `CertBear`도 `A사`로 바뀜. 값이 비어 있으면 `●●●`로 바뀜
+  - 이유: 서버에 원문이 남으면 화면을 가려도 검색과 임베딩으로 드러남
+- 동기화 클라이언트는 `sheska-mask`를 읽을 수 없거나 보낼 이미지의 경로에 마스킹 단어가 있으면 그 파일을 보내지 않아야 함 <!-- nocap: library-sync-14 -->
+  - 이유: 원문이 섞여 올라가는 것보다 고쳐질 때까지 올라가지 않는 편이 나음
+
+### 보내는 제목
+- 동기화 클라이언트는 frontmatter `title`이 비어 있으면 확장자를 뺀 파일 이름을 `title`로 넣어 보내야 함 <!-- nocap: library-sync-15 -->
+  - 이유: 서버는 제목이 없으면 vault 전체 경로를 제목으로 씀. 폴더 이름이 공개 제목에 드러남
+
 ## Sync job 규칙 (syncJob)
 - sync job이 가질 수 있는 상태와 그 상태를 어떻게 읽는지 정함
 

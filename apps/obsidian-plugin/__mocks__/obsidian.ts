@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { parse, stringify } from 'yaml';
 
 export interface FileStats {
   ctime: number;
@@ -17,6 +18,51 @@ export class TFile {
     const dot = name.lastIndexOf('.');
     return dot <= 0 ? '' : name.slice(dot + 1);
   }
+}
+
+export interface FrontMatterInfo {
+  exists: boolean;
+  frontmatter: string;
+  from: number;
+  to: number;
+  contentStart: number;
+}
+
+const NO_FRONTMATTER: FrontMatterInfo = {
+  exists: false,
+  frontmatter: '',
+  from: 0,
+  to: 0,
+  contentStart: 0,
+};
+
+/** Same fence matching as Obsidian 1.x: the closing `---` must start a line. */
+export function getFrontMatterInfo(content: string): FrontMatterInfo {
+  const opening = /^---(\r?\n)/g;
+  if (!opening.exec(content)) return NO_FRONTMATTER;
+  const from = opening.lastIndex;
+  const closing = /---(\r?\n|$)/g;
+  closing.lastIndex = from;
+  let match = closing.exec(content);
+  while (match && content.charAt(match.index - 1) !== '\n') {
+    match = closing.exec(content);
+  }
+  if (!match) return NO_FRONTMATTER;
+  return {
+    exists: true,
+    frontmatter: content.slice(from, match.index),
+    from,
+    to: match.index,
+    contentStart: closing.lastIndex,
+  };
+}
+
+export function parseYaml(yaml: string): unknown {
+  return parse(yaml);
+}
+
+export function stringifyYaml(value: unknown): string {
+  return stringify(value);
 }
 
 export function getLinkpath(linktext: string): string {
