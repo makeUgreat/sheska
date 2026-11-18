@@ -45,15 +45,24 @@ export interface TerminalProps {
   prompt: string;
   promptClassName?: string;
   banner?: ReactNode;
+  /** 이 영역 안에서 스크롤한다. 높이는 부모가 정한다. */
+  className?: string;
 }
 
 export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
   function Terminal(
-    { commands, prompt, promptClassName = 'text-secondary', banner },
+    {
+      commands,
+      prompt,
+      promptClassName = 'text-secondary',
+      banner,
+      className = '',
+    },
     ref,
   ) {
     const inputId = useId();
     const inputRef = useRef<HTMLInputElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
     const nextLineId = useRef(0);
     const running = useRef<AbortController | null>(null);
     const history = useRef<string[]>([]);
@@ -179,7 +188,9 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     );
 
     useEffect(() => {
-      inputRef.current?.scrollIntoView?.({ block: 'nearest' });
+      // 페이지가 아니라 터미널 영역만 맨 아래로 내린다.
+      const area = scrollRef.current;
+      if (area) area.scrollTop = area.scrollHeight;
     }, [lines, mode]);
 
     function interrupt() {
@@ -312,7 +323,8 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
 
     return (
       <div
-        className="flex flex-col"
+        ref={scrollRef}
+        className={`flex flex-col overflow-y-auto overscroll-contain ${className}`}
         onClick={() => {
           if (!window.getSelection()?.toString()) inputRef.current?.focus();
         }}

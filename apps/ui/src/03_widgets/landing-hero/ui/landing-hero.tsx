@@ -42,6 +42,7 @@ export function LandingHero({ articlesHref }: { articlesHref: string }) {
             commands={commands}
             prompt={prompt}
             promptClassName={promptClassName}
+            className="h-full p-4 [scrollbar-color:rgb(255_255_255/0.2)_transparent] [scrollbar-width:thin] sm:p-6"
             banner={
               <p className="mb-4 text-on-surface-muted">
                 HASH shell · type <span className="text-white">help</span> to

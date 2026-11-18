@@ -23,7 +23,7 @@ export function TerminalWindow({
           {title}
         </span>
       </div>
-      <div className="min-h-[450px] p-4 font-mono text-display-terminal-mobile text-on-surface sm:p-6 sm:text-display-terminal">
+      <div className="flex h-[450px] flex-col font-mono text-display-terminal-mobile text-on-surface sm:text-display-terminal">
         {children}
       </div>
     </div>
