@@ -1,6 +1,10 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLogOut, useViewer } from '@/entities/session';
-import { TrafficLights, type TerminalLaunchState } from '@/shared/ui';
+import {
+  PromptText,
+  TrafficLights,
+  type TerminalLaunchState,
+} from '@/shared/ui';
 
 const SECTIONS = [
   { href: '/posts', label: 'posts', ownerOnly: false },
@@ -87,9 +91,13 @@ export function Header() {
 
       <div className="h-10 px-4">
         <div className="mx-auto flex h-full max-w-content items-center font-mono text-code-snippet">
-          <span className="text-accent">
-            {owner ? 'owner@hash:~#' : 'visitor@hash:~$'}
-          </span>
+          <PromptText
+            prompt={
+              owner
+                ? { identity: 'owner@hash', rest: ':~#' }
+                : { identity: 'visitor@hash', rest: ':~$' }
+            }
+          />
           <span className="ml-2 text-white">{toCommand(pathname)}</span>
           <span
             className="ml-1 h-4 w-2 animate-pulse bg-accent"

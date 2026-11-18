@@ -49,6 +49,9 @@ export function useShellCommands() {
   return {
     viewer,
     commands,
-    prompt: `${viewer}@hash:${directoryPath(where)}${owner ? '#' : '$'}`,
+    prompt: {
+      identity: `${viewer}@hash`,
+      rest: `:${directoryPath(where)}${owner ? '#' : '$'}`,
+    },
   };
 }

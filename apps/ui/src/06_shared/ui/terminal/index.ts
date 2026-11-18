@@ -1,4 +1,4 @@
-export { Terminal } from './ui/terminal';
+export { PromptText, Terminal } from './ui/terminal';
 export {
   TerminalEntryLink,
   TerminalHighlight,
@@ -15,5 +15,6 @@ export type {
   TerminalHandle,
   TerminalIo,
   TerminalListedEntry,
+  TerminalPrompt,
   TerminalLaunchState,
 } from './model/types';

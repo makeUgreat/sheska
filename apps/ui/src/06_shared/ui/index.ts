@@ -19,6 +19,7 @@ export { TrafficLights } from './traffic-lights';
 export {
   clearCommand,
   printRequestFailure,
+  PromptText,
   Terminal,
   TerminalEntryLink,
   TerminalHighlight,
@@ -31,5 +32,6 @@ export {
   type TerminalHandle,
   type TerminalIo,
   type TerminalListedEntry,
+  type TerminalPrompt,
   type TerminalLaunchState,
 } from './terminal';

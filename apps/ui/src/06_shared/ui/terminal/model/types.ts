@@ -39,6 +39,12 @@ export interface TerminalListedEntry {
   to: string;
 }
 
+/** `visitor@hash:~$`를 누구(identity)와 위치(rest)로 나눈다. 누구만 accent로 칠한다. */
+export interface TerminalPrompt {
+  identity: string;
+  rest: string;
+}
+
 export interface TerminalHandle {
   /** 사용자가 입력한 것처럼 한 줄을 실행한다. 다른 명령이 도는 중이면 무시한다. */
   run(line: string): void;

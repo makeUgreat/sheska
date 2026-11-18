@@ -18,7 +18,7 @@ export function TerminalWindow({
           onYellowClick={onYellowClick}
         />
       </div>
-      <div className="flex h-[450px] flex-col font-mono text-display-terminal-mobile text-on-surface sm:text-display-terminal">
+      <div className="flex h-[clamp(400px,calc(100svh-11.5rem),620px)] flex-col font-mono text-display-terminal-mobile text-on-surface sm:text-display-terminal">
         {children}
       </div>
     </div>

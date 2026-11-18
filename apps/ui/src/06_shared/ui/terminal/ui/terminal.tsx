@@ -18,6 +18,7 @@ import {
   type TerminalCommand,
   type TerminalHandle,
   type TerminalIo,
+  type TerminalPrompt,
 } from '../model/types';
 import { TerminalText } from './terminal-output';
 
@@ -43,24 +44,14 @@ type Mode =
 
 export interface TerminalProps {
   commands: TerminalCommand[];
-  prompt: string;
-  promptClassName?: string;
+  prompt: TerminalPrompt;
   banner?: ReactNode;
   /** 이 영역 안에서 스크롤한다. 높이는 부모가 정한다. */
   className?: string;
 }
 
 export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
-  function Terminal(
-    {
-      commands,
-      prompt,
-      promptClassName = 'text-accent',
-      banner,
-      className = '',
-    },
-    ref,
-  ) {
+  function Terminal({ commands, prompt, banner, className = '' }, ref) {
     const inputId = useId();
     const inputRef = useRef<HTMLInputElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -97,11 +88,11 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
       (text: string) =>
         print(
           <p className="whitespace-pre-wrap break-words">
-            <span className={promptClassName}>{prompt}</span>
+            <PromptText prompt={prompt} />
             {text && <span className="text-white"> {text}</span>}
           </p>,
         ),
-      [print, prompt, promptClassName],
+      [print, prompt],
     );
 
     const printHelp = useCallback(() => {
@@ -334,7 +325,6 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     }
 
     const asking = mode.kind === 'asking' ? mode.ask : null;
-    const label = asking ? asking.prompt : prompt;
 
     return (
       <div
@@ -361,10 +351,10 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
                 ? 'sr-only'
                 : asking
                   ? 'text-on-surface'
-                  : promptClassName
+                  : undefined
             }
           >
-            {label}
+            {asking ? asking.prompt : <PromptText prompt={prompt} />}
           </label>
           <span className="relative min-w-[8ch] flex-1">
             <input
@@ -458,5 +448,14 @@ function BlockCursor({
         </span>
       </span>
     </span>
+  );
+}
+
+export function PromptText({ prompt }: { prompt: TerminalPrompt }) {
+  return (
+    <>
+      <span className="text-accent">{prompt.identity}</span>
+      <span className="text-secondary">{prompt.rest}</span>
+    </>
   );
 }

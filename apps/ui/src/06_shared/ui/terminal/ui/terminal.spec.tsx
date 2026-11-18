@@ -23,7 +23,13 @@ const hiddenCommand: TerminalCommand = {
 
 function renderTerminal(commands: TerminalCommand[] = [echoCommand]) {
   const ref = createRef<TerminalHandle>();
-  render(<Terminal ref={ref} commands={commands} prompt="visitor@hash:~$" />);
+  render(
+    <Terminal
+      ref={ref}
+      commands={commands}
+      prompt={{ identity: 'visitor@hash', rest: ':~$' }}
+    />,
+  );
   const log = screen.getByRole('log');
   return {
     ref,
