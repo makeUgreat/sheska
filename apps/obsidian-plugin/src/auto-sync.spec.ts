@@ -125,6 +125,7 @@ function makeService(
 describe('AutoSyncService', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    noticeMessages.length = 0;
   });
 
   afterEach(() => {
@@ -960,10 +961,6 @@ describe('AutoSyncService', () => {
       size: 1,
     });
 
-    beforeEach(() => {
-      noticeMessages.length = 0;
-    });
-
     it('uploads an image linked by its vault path before the note', async () => {
       const {
         api,
@@ -1121,7 +1118,7 @@ describe('AutoSyncService', () => {
       expect(attachmentCache['att/a.png']).toBeUndefined();
     });
 
-    it('notifies and caches an image the server rejects, and still uploads the note', async () => {
+    it('notifies once about an image the server rejects, and still uploads the note', async () => {
       const { api, attachmentCache, metadataCache, service } = makeService();
       api.uploadAttachment.mockRejectedValue(
         new SheskaApiError(
@@ -1142,7 +1139,11 @@ describe('AutoSyncService', () => {
       expect(noticeMessages).toEqual([
         'Sheska: "att/broken.png" was rejected (attachment.corrupt_image).',
       ]);
-      expect(attachmentCache['att/broken.png']).toEqual({ mtime: 50, size: 4 });
+      expect(attachmentCache['att/broken.png']).toEqual({
+        mtime: 50,
+        size: 4,
+        rejected: true,
+      });
       expect(api.uploadSource).toHaveBeenCalledOnce();
     });
   });
@@ -1229,6 +1230,35 @@ describe('AutoSyncService', () => {
       expect(service.getAttachmentCache()).toEqual({
         'att/a.png': { mtime: 50, size: 4 },
       });
+    });
+
+    // nocap: library-sync-9
+    it('retries a rejected image on every sweep without notifying again', async () => {
+      const { api, attachmentCache, service, vault } = makeService();
+      attachmentCache['att/a.png'] = { mtime: 50, size: 4, rejected: true };
+      vault.getAbstractFileByPath.mockReturnValue(
+        new TFile('att/a.png', { ctime: 0, mtime: 50, size: 4 }),
+      );
+      api.uploadAttachment.mockRejectedValueOnce(
+        new SheskaApiError(
+          422,
+          'Unprocessable Entity',
+          '',
+          'attachment.too_many_pixels',
+        ),
+      );
+
+      await service.runSweep();
+      expect(attachmentCache['att/a.png']).toEqual({
+        mtime: 50,
+        size: 4,
+        rejected: true,
+      });
+
+      await service.runSweep();
+      expect(api.uploadAttachment).toHaveBeenCalledTimes(2);
+      expect(attachmentCache['att/a.png']).toEqual({ mtime: 50, size: 4 });
+      expect(noticeMessages).toEqual([]);
     });
 
     it('retries an image upload that failed transiently on the next sweep', async () => {
