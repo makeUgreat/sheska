@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/makeUgreat/sheska/compare/1.2.0...1.3.0) (2026-11-18)
+
+
+### Features
+
+* **obsidian-plugin:** hold back notes whose link addresses contain masked words ([#400](https://github.com/makeUgreat/sheska/issues/400)) ([f306ed7](https://github.com/makeUgreat/sheska/commit/f306ed78f7f03abab596efebef3b7f4740f402d5))
+* **obsidian-plugin:** upload images under hashed names ([#399](https://github.com/makeUgreat/sheska/issues/399)) ([5f8d447](https://github.com/makeUgreat/sheska/commit/5f8d447e1d0fee247c904d21d58306c7ab6c7779))
+
 ## [1.2.0](https://github.com/makeUgreat/sheska/compare/1.1.0...1.2.0) (2026-11-18)
 
 
