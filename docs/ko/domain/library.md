@@ -204,3 +204,7 @@ stateDiagram-v2
 
 ### 같은 문법
 - post와 source의 본문은 같은 Obsidian 문법으로 해석해야 함 <!-- nocap: library-body-1 -->
+
+### 이미지 위치
+- 본문은 scheme이 없는 이미지 링크 글자를 vault 절대 경로로 읽어야 함 <!-- nocap: library-body-2 -->
+  - 예: `![](att/my%20img.png)`는 vault 파일 `att/my img.png`를 가리킴

@@ -23,6 +23,8 @@ read_when:
 - 필수 설정값에는 기본값을 두지 않음. local 값이 production에서 조용히 쓰임
 - 앱은 시작할 때 설정값을 검증하고 틀리면 시작하지 않음
 - 접근을 허용하거나 데이터를 지우는 기능은 설정이 없으면 닫힌 쪽으로 동작함
+- UI 설정값은 빌드할 때 번들에 들어감. production 값은 Cloudflare UI 프로젝트의 빌드 변수에 둠
+  - 저장소와 helm values에는 UI의 production 값이 없음. 런타임 변수에 넣으면 번들에 들어가지 않음
 
 ## env 파일
 - local과 test의 env 파일만 커밋함. 그 PC 밖에서 쓸 수 없는 값은 비밀값이 아님
