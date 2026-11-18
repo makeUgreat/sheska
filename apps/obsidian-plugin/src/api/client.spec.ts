@@ -280,6 +280,64 @@ describe('SheskaApiClient', () => {
     });
   });
 
+  describe('uploadAttachment', () => {
+    it('calls PUT /attachments with the vault path and raw bytes', async () => {
+      const response = {
+        path: 'att/my img.png',
+        mediaType: 'image/webp',
+        sizeBytes: 1200,
+        originalSizeBytes: 4800,
+      };
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(response),
+        }),
+      );
+      const data = Uint8Array.from([0x89, 0x50, 0x4e, 0x47]).buffer;
+
+      const result = await client.uploadAttachment('att/my img.png', data);
+
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:3000/attachments?path=att%2Fmy+img.png',
+        {
+          method: 'PUT',
+          body: data,
+          headers: { 'Content-Type': 'application/octet-stream' },
+        },
+      );
+      expect(result).toEqual(response);
+    });
+
+    it('carries the failure code when the server rejects the content', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 422,
+          statusText: 'Unprocessable Entity',
+          text: () =>
+            Promise.resolve(
+              JSON.stringify({
+                statusCode: 422,
+                code: 'attachment.unsupported_media_type',
+                message: 'Unsupported media type',
+                details: {},
+              }),
+            ),
+        }),
+      );
+
+      await expect(
+        client.uploadAttachment('att/a.pdf', new ArrayBuffer(0)),
+      ).rejects.toMatchObject({
+        status: 422,
+        code: 'attachment.unsupported_media_type',
+      });
+    });
+  });
+
   describe('getSyncJob', () => {
     it('calls GET /sync-jobs/:id', async () => {
       const response = {

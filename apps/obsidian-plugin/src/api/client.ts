@@ -1,6 +1,7 @@
 import {
   type ApiRequest,
   type ApiResponse,
+  AttachmentApi,
   errorResponseSchema,
   HealthApi,
   pathOf,
@@ -12,6 +13,7 @@ export type HealthResponse = ApiResponse<typeof HealthApi.ready>;
 export type UploadSourceRequest = ApiRequest<typeof SourceApi.upload>;
 export type UploadSourceResponse = ApiResponse<typeof SourceApi.upload>;
 export type SourceSyncJobResponse = ApiResponse<typeof SourceSyncJobApi.get>;
+export type UploadAttachmentResponse = ApiResponse<typeof AttachmentApi.upload>;
 
 interface ResponseSchema<T> {
   parse(data: unknown): T;
@@ -85,6 +87,22 @@ export class SheskaApiClient {
 
   uploadSource(body: UploadSourceRequest): Promise<UploadSourceResponse> {
     return this.post(SourceApi.upload.path, body, SourceApi.upload.response);
+  }
+
+  uploadAttachment(
+    path: string,
+    data: ArrayBuffer,
+  ): Promise<UploadAttachmentResponse> {
+    const query = new URLSearchParams({ path });
+    return this.request(
+      `${AttachmentApi.upload.path}?${query}`,
+      AttachmentApi.upload.response,
+      {
+        method: 'PUT',
+        body: data,
+        headers: { 'Content-Type': 'application/octet-stream' },
+      },
+    );
   }
 
   getSyncJob(syncJobId: string): Promise<SourceSyncJobResponse> {
