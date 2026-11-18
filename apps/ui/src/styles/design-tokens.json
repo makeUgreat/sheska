@@ -170,6 +170,22 @@
         "components": [0.1529, 0.7882, 0.2471],
         "hex": "#27c93f"
       }
+    },
+    "terminal-output-error": {
+      "$description": "Landing terminal error lines. Amber so errors never read as the red accent. 9.6:1 on surface.",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.8902, 0.702, 0.2549],
+        "hex": "#e3b341"
+      }
+    },
+    "terminal-output-success": {
+      "$description": "Landing terminal lines for completed actions such as login and logout. 12.1:1 on surface.",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.4941, 0.9059, 0.5294],
+        "hex": "#7ee787"
+      }
     }
   },
   "typography": {
