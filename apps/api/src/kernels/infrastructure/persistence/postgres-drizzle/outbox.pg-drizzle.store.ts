@@ -1,3 +1,4 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { and, asc, eq, inArray, isNull, lte, sql } from 'drizzle-orm';
 import {
   type ClaimedOutboxMessage,
@@ -5,12 +6,17 @@ import {
   type OutboxRelayStore,
   type OutboxWriter,
 } from '@kernels/application';
+import { DATABASE_TOKENS } from '../../database.tokens';
 import { type PgDrizzleSession } from '../../pg-drizzle.session';
 import { classifyPostgresError } from '../../postgres-error.classifier';
 import * as outboxSchema from './outbox.pg-drizzle.schema';
 
+@Injectable()
 export class PgDrizzleOutboxStore implements OutboxWriter, OutboxRelayStore {
-  constructor(private readonly db: PgDrizzleSession<typeof outboxSchema>) {}
+  constructor(
+    @Inject(DATABASE_TOKENS.drizzleDatabase)
+    private readonly db: PgDrizzleSession<typeof outboxSchema>,
+  ) {}
 
   async append(event: IntegrationEvent): Promise<void> {
     try {

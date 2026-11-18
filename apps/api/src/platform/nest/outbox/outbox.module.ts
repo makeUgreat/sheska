@@ -7,12 +7,10 @@ import {
   type OutboxRelayStore,
 } from '@kernels/application';
 import {
-  DATABASE_TOKENS,
   OutboxRelay,
   PgDrizzleOutboxStore,
   SYSTEM_RETRY_RUNTIME,
 } from '@kernels/infrastructure';
-import { type ApiDrizzleDatabase } from '../database/drizzle-postgres.provider';
 import {
   OUTBOX_RELAY_RUNNER_OPTIONS,
   OutboxRelayRunner,
@@ -24,12 +22,7 @@ const OUTBOX_RELAY_STORE = Symbol('OUTBOX_RELAY_STORE');
 @Module({
   imports: [IntegrationEventsModule],
   providers: [
-    {
-      provide: OUTBOX_RELAY_STORE,
-      useFactory: (database: ApiDrizzleDatabase): OutboxRelayStore =>
-        new PgDrizzleOutboxStore(database),
-      inject: [DATABASE_TOKENS.drizzleDatabase],
-    },
+    { provide: OUTBOX_RELAY_STORE, useClass: PgDrizzleOutboxStore },
     {
       provide: OutboxRelay,
       useFactory: (
