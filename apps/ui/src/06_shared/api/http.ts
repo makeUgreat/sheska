@@ -5,15 +5,22 @@ export interface ResponseSchema<T> {
   parse(data: unknown): T;
 }
 
+interface FailureBody {
+  code: string;
+  details: Record<string, unknown>;
+}
+
 export class HttpError extends Error {
   readonly status: number;
   readonly code?: string;
+  readonly details: Record<string, unknown>;
 
-  constructor(status: number, statusText: string, code?: string) {
+  constructor(status: number, statusText: string, failure?: FailureBody) {
     super(`HTTP error: ${status} ${statusText}`);
     this.name = 'HttpError';
     this.status = status;
-    this.code = code;
+    this.code = failure?.code;
+    this.details = failure?.details ?? {};
   }
 }
 
@@ -37,15 +44,16 @@ export class HttpClient {
     return this.request(`${path}${search}`, schema);
   }
 
+  post<T>(path: string, body: unknown, schema: ResponseSchema<T>): Promise<T>;
+  post(path: string, body: unknown): Promise<void>;
   async post<T>(
     path: string,
     body: unknown,
-    schema: ResponseSchema<T>,
-  ): Promise<T> {
-    return this.request(path, schema, {
-      method: 'POST',
-      body: JSON.stringify(body),
-    });
+    schema?: ResponseSchema<T>,
+  ): Promise<T | void> {
+    const init = { method: 'POST', body: JSON.stringify(body) };
+    if (!schema) return this.send(path, init);
+    return this.request(path, schema, init);
   }
 
   async patch<T>(
@@ -59,32 +67,43 @@ export class HttpClient {
     });
   }
 
+  async delete(path: string): Promise<void> {
+    return this.send(path, { method: 'DELETE' });
+  }
+
   private async request<T>(
     path: string,
     schema: ResponseSchema<T>,
     init?: RequestInit,
   ): Promise<T> {
+    const res = await this.fetch(path, init);
+    return schema.parse(await res.json());
+  }
+
+  /** 응답 본문이 없는 요청(204)이다. 본문을 읽지 않는다. */
+  private async send(path: string, init: RequestInit): Promise<void> {
+    await this.fetch(path, init);
+  }
+
+  private async fetch(path: string, init?: RequestInit): Promise<Response> {
+    // UI와 API는 출처가 달라서 include여야 세션 쿠키가 실린다.
     const res = await fetch(`${this.baseUrl}${path}`, {
       ...init,
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
     });
 
     if (!res.ok) {
-      throw new HttpError(
-        res.status,
-        res.statusText,
-        await readFailureCode(res),
-      );
+      throw new HttpError(res.status, res.statusText, await readFailure(res));
     }
-
-    return schema.parse(await res.json());
+    return res;
   }
 }
 
-async function readFailureCode(res: Response): Promise<string | undefined> {
+async function readFailure(res: Response): Promise<FailureBody | undefined> {
   try {
     const parsed = errorResponseSchema.safeParse(JSON.parse(await res.text()));
-    return parsed.success ? parsed.data.code : undefined;
+    return parsed.success ? parsed.data : undefined;
   } catch {
     return undefined;
   }

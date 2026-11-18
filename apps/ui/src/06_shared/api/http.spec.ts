@@ -43,6 +43,7 @@ describe('HttpClient', () => {
       const result = await client.get('/sources', passthrough);
 
       expect(fetch).toHaveBeenCalledWith('http://localhost:3000/sources', {
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
       });
       expect(result).toEqual(response);
@@ -65,7 +66,10 @@ describe('HttpClient', () => {
 
       expect(fetch).toHaveBeenCalledWith(
         'http://localhost:3000/posts/search?q=garden&limit=5',
-        { headers: { 'Content-Type': 'application/json' } },
+        {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        },
       );
     });
 
@@ -140,6 +144,22 @@ describe('HttpClient', () => {
       });
     });
 
+    it('실패 응답 본문의 details를 HttpError에 담는다', async () => {
+      stubFailure(
+        429,
+        'Too Many Requests',
+        JSON.stringify({
+          code: 'auth.too_many_attempts',
+          message: 'Too many attempts',
+          details: { retryAfterSeconds: 300 },
+        }),
+      );
+
+      await expect(client.get('/sources', passthrough)).rejects.toMatchObject({
+        details: { retryAfterSeconds: 300 },
+      });
+    });
+
     it('본문이 JSON이 아니면 code 없이 status만 담는다', async () => {
       stubFailure(502, 'Bad Gateway', '<html>gateway</html>');
 
@@ -203,10 +223,53 @@ describe('HttpClient', () => {
 
       expect(fetch).toHaveBeenCalledWith('http://localhost:3000/posts', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sourceId: 'source-1' }),
       });
       expect(result).toEqual(response);
+    });
+  });
+
+  describe('post without a response schema', () => {
+    it('본문을 읽지 않고 끝난다', async () => {
+      const json = vi.fn();
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({ ok: true, status: 204, json }),
+      );
+
+      await expect(
+        client.post('/auth/session', { password: 'secret' }),
+      ).resolves.toBeUndefined();
+      expect(json).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('delete', () => {
+    it('DELETE 요청을 보내고 본문을 읽지 않는다', async () => {
+      const json = vi.fn();
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({ ok: true, status: 204, json }),
+      );
+
+      await client.delete('/auth/session');
+
+      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/auth/session', {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      expect(json).not.toHaveBeenCalled();
+    });
+
+    it('실패 응답이면 HttpError를 throw한다', async () => {
+      stubFailure(503, 'Service Unavailable');
+
+      await expect(client.delete('/auth/session')).rejects.toMatchObject({
+        status: 503,
+      });
     });
   });
 
@@ -231,6 +294,7 @@ describe('HttpClient', () => {
         'http://localhost:3000/resources/resource-1',
         {
           method: 'PATCH',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: 'active' }),
         },
