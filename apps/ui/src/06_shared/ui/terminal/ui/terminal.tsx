@@ -5,6 +5,7 @@ import {
   useEffect,
   useId,
   useImperativeHandle,
+  useLayoutEffect,
   useRef,
   useState,
   type FormEvent,
@@ -73,6 +74,19 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     const [lines, setLines] = useState<Line[]>([]);
     const [mode, setMode] = useState<Mode>({ kind: 'idle' });
     const [value, setValue] = useState('');
+    const [caret, setCaret] = useState(0);
+    const [scrollLeft, setScrollLeft] = useState(0);
+    const [focused, setFocused] = useState(false);
+
+    function syncCaret(input: HTMLInputElement) {
+      setCaret(input.selectionStart ?? input.value.length);
+      setScrollLeft(input.scrollLeft);
+    }
+
+    // 기록, Tab 완성처럼 코드가 값을 바꾸면 select 이벤트가 없어서 여기서 맞춘다.
+    useLayoutEffect(() => {
+      if (inputRef.current) syncCaret(inputRef.current);
+    }, [value, mode]);
 
     const print = useCallback((node: ReactNode) => {
       const id = nextLineId.current++;
@@ -352,25 +366,38 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
           >
             {label}
           </label>
-          <input
-            ref={inputRef}
-            id={inputId}
-            // 비밀번호 칸은 type이 바뀌어야 비밀번호 관리자가 알아본다.
-            type={asking?.secret ? 'password' : 'text'}
-            autoComplete={asking?.secret ? 'current-password' : 'off'}
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-            enterKeyHint={asking ? 'go' : 'enter'}
-            readOnly={mode.kind === 'running'}
-            value={value}
-            onChange={(event) => setValue(event.target.value)}
-            onKeyDown={handleKeyDown}
-            autoFocus
-            className={`min-w-[8ch] flex-1 bg-transparent caret-accent outline-none ${
-              asking?.secret ? 'text-on-surface-muted' : 'text-white'
-            }`}
-          />
+          <span className="relative min-w-[8ch] flex-1">
+            <input
+              ref={inputRef}
+              id={inputId}
+              // 비밀번호 칸은 type이 바뀌어야 비밀번호 관리자가 알아본다.
+              type={asking?.secret ? 'password' : 'text'}
+              autoComplete={asking?.secret ? 'current-password' : 'off'}
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint={asking ? 'go' : 'enter'}
+              readOnly={mode.kind === 'running'}
+              value={value}
+              onChange={(event) => setValue(event.target.value)}
+              onSelect={(event) => syncCaret(event.currentTarget)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              autoFocus
+              className={`w-full bg-transparent caret-transparent outline-none ${
+                asking?.secret ? 'text-on-surface-muted' : 'text-white'
+              }`}
+            />
+            {mode.kind !== 'running' && (
+              <BlockCursor
+                text={asking?.secret ? '•'.repeat(value.length) : value}
+                caret={caret}
+                scrollLeft={scrollLeft}
+                focused={focused}
+              />
+            )}
+          </span>
           {asking?.username && (
             <input
               type="text"
@@ -395,3 +422,41 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     );
   },
 );
+
+/**
+ * 브라우저 기본 커서는 얇은 세로선이라 터미널처럼 블록을 그린다.
+ * 입력 칸 위에 같은 글자를 투명하게 깔아 커서 위치를 맞춘다.
+ * 블록은 글자 한 칸 폭(0.6em)이고 높이는 글자 크기(1em)라 줄 높이보다 작다. 커서 아래 글자는 반전색으로 보인다.
+ */
+function BlockCursor({
+  text,
+  caret,
+  scrollLeft,
+  focused,
+}: {
+  text: string;
+  caret: number;
+  scrollLeft: number;
+  focused: boolean;
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre"
+    >
+      <span
+        className="inline-block"
+        style={{ transform: `translateX(${-scrollLeft}px)` }}
+      >
+        <span className="invisible">{text.slice(0, caret)}</span>
+        <span
+          className={`inline-flex h-[1em] w-[0.6em] items-center justify-center overflow-hidden align-[-0.15em] leading-none text-surface bg-accent ${
+            focused ? 'animate-blink motion-reduce:animate-none' : ''
+          }`}
+        >
+          {text[caret]}
+        </span>
+      </span>
+    </span>
+  );
+}

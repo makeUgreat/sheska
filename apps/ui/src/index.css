@@ -6,6 +6,13 @@
 
 @theme {
   --breakpoint-toc: 1200px;
+  --animate-blink: blink 1s step-end infinite;
+
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
 }
 
 :root {
