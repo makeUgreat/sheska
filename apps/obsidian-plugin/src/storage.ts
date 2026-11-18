@@ -22,9 +22,17 @@ export interface SyncCacheEntry {
 
 export type SyncCache = Record<string, SyncCacheEntry>;
 
+export interface AttachmentCacheEntry {
+  mtime: number;
+  size: number;
+}
+
+export type AttachmentCache = Record<string, AttachmentCacheEntry>;
+
 export interface StoredData {
   settings?: Partial<SheskaSettings>;
   syncCache?: SyncCache;
+  attachmentCache?: AttachmentCache;
 }
 
 type DataPlugin = Pick<Plugin, 'loadData' | 'saveData'>;
@@ -43,8 +51,13 @@ export class PluginDataStore {
     return raw.syncCache ?? {};
   }
 
-  async save(settings: SheskaSettings, syncCache: SyncCache): Promise<void> {
-    await this.plugin.saveData({ settings, syncCache });
+  async loadAttachmentCache(): Promise<AttachmentCache> {
+    const raw = await this.loadStoredData();
+    return raw.attachmentCache ?? {};
+  }
+
+  async save(data: Required<StoredData>): Promise<void> {
+    await this.plugin.saveData(data);
   }
 
   private async loadStoredData(): Promise<

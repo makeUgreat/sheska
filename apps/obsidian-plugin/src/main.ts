@@ -10,7 +10,7 @@ import { HealthCheckScheduler } from '@/health-check';
 import { SheskaSettingTab } from '@/settings';
 import type { SheskaSettings } from '@/settings';
 import { PluginDataStore } from '@/storage';
-import type { SyncCache } from '@/storage';
+import type { AttachmentCache, SyncCache } from '@/storage';
 
 type SyncStatus = FileExplorerSyncStatus;
 
@@ -30,6 +30,7 @@ export default class SheskaPlugin extends Plugin {
   declare api: SheskaApiClient;
   private readonly dataStore = new PluginDataStore(this);
   private syncCache: SyncCache = {};
+  private attachmentCache: AttachmentCache = {};
   private healthCheckScheduler!: HealthCheckScheduler;
   private autoSyncService!: AutoSyncService;
   private fileExplorerSyncDecorator!: FileExplorerSyncDecorator;
@@ -41,6 +42,7 @@ export default class SheskaPlugin extends Plugin {
   async onload(): Promise<void> {
     await this.loadSettings();
     await this.loadSyncCache();
+    await this.loadAttachmentCache();
     this.initializeServices();
 
     this.addSettingTab(new SheskaSettingTab(this.app, this));
@@ -78,6 +80,11 @@ export default class SheskaPlugin extends Plugin {
     this.autoSyncService?.setSyncCache(this.syncCache);
   }
 
+  async loadAttachmentCache(): Promise<void> {
+    this.attachmentCache = await this.dataStore.loadAttachmentCache();
+    this.autoSyncService?.setAttachmentCache(this.attachmentCache);
+  }
+
   async saveSettings(): Promise<void> {
     await this.persistData();
     this.api = new SheskaApiClient(this.settings.apiBaseUrl);
@@ -108,7 +115,13 @@ export default class SheskaPlugin extends Plugin {
 
   private async persistData(): Promise<void> {
     this.syncCache = this.autoSyncService?.getSyncCache() ?? this.syncCache;
-    await this.dataStore.save(this.settings, this.syncCache);
+    this.attachmentCache =
+      this.autoSyncService?.getAttachmentCache() ?? this.attachmentCache;
+    await this.dataStore.save({
+      settings: this.settings,
+      syncCache: this.syncCache,
+      attachmentCache: this.attachmentCache,
+    });
   }
 
   private startAutoSyncSweepInterval(): void {
@@ -188,7 +201,9 @@ export default class SheskaPlugin extends Plugin {
       api: this.api,
       settings: this.settings,
       syncCache: this.syncCache,
+      attachmentCache: this.attachmentCache,
       saveSyncCache: async () => this.saveSyncCache(),
+      saveAttachmentCache: async () => this.persistData(),
       onSyncStart: (path) => this.refreshSyncIndicators(path),
       onSyncFinished: (path) => this.refreshSyncIndicators(path),
       onSyncStateChanged: (path) => this.refreshSyncIndicators(path),
