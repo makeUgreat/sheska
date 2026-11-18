@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TerminalWindow } from './terminal-window';
 
 const meta = {
-  title: 'Features/Posts/TerminalWindow',
+  title: 'Widgets/LandingHero/TerminalWindow',
   component: TerminalWindow,
   tags: ['autodocs'],
   decorators: [
@@ -13,24 +13,14 @@ const meta = {
     ),
   ],
   args: {
-    prompt: (
-      <div className="mb-4">
-        <span className="text-secondary">visitor@hash:~$</span>{' '}
-        <span className="text-white">hash-cli init</span>
-      </div>
-    ),
+    title: 'hash — visitor',
+    yellowLabel: 'Log in',
+    onYellowClick: () => undefined,
     children: (
-      <div className="text-accent">
-        Loading semantic nodes...
-        <br />
-        Ready for input.
-      </div>
-    ),
-    cursor: (
-      <div className="mt-4 flex items-center">
-        <span className="text-secondary">visitor@hash:~$</span>
-        <span className="ml-2 h-5 w-2 animate-pulse bg-accent" />
-      </div>
+      <p>
+        <span className="text-secondary">visitor@hash:~$</span>{' '}
+        <span className="text-white">ls</span>
+      </p>
     ),
   },
 } satisfies Meta<typeof TerminalWindow>;
@@ -40,9 +30,3 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
-
-export const CustomTitle: Story = {
-  args: {
-    title: 'hash-cli - preview',
-  },
-};

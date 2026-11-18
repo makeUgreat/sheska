@@ -1,17 +1,14 @@
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { Terminal, type TerminalHandle } from '@/shared/ui';
+import { useShellCommands } from '../model/use-shell-commands';
 import { TerminalWindow } from './terminal-window';
 
-export function LandingHero({
-  query,
-  onQueryChange,
-  totalPostCount,
-  articlesHref,
-}: {
-  query: string;
-  onQueryChange: (query: string) => void;
-  totalPostCount: number;
-  articlesHref: string;
-}) {
+export function LandingHero({ articlesHref }: { articlesHref: string }) {
+  const terminal = useRef<TerminalHandle>(null);
+  const { viewer, commands, prompt, promptClassName } = useShellCommands();
+  const owner = viewer === 'owner';
+
   return (
     <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white px-4 pb-24 pt-12">
       <div className="mb-12">
@@ -22,51 +19,22 @@ export function LandingHero({
 
       <div className="z-10 mx-auto w-full max-w-container-terminal px-0 sm:px-6">
         <TerminalWindow
-          prompt={
-            <>
-              <div className="mb-4">
-                <span className="text-secondary">visitor@hash:~$</span>{' '}
-                <span className="text-white">
-                  hash-cli init --mode=explorative
-                </span>
-              </div>
-              <div className="mb-4 text-tertiary opacity-80">
-                Initializing HASH context...
-                <br />
-                Loading semantic nodes...
-                <br />
-                Ready for input.
-              </div>
-            </>
-          }
-          cursor={
-            <div className="mt-2 flex items-center">
-              <span className="text-secondary">visitor@hash:~$</span>
-              <span className="ml-2 text-white">Y</span>
-              <span className="ml-1 h-5 w-2 animate-pulse bg-accent" />
-            </div>
-          }
+          title={`hash — ${viewer}`}
+          yellowLabel={owner ? 'Log out' : 'Log in'}
+          onYellowClick={() => terminal.current?.run(owner ? 'exit' : 'su')}
         >
-          <div className="mb-4">
-            <span className="text-secondary">visitor@hash:~$</span>{' '}
-            <input
-              type="search"
-              aria-label="Search posts by title or content"
-              placeholder="Search title or content"
-              value={query}
-              onChange={(e) => onQueryChange(e.target.value)}
-              className="w-[min(100%,34rem)] bg-transparent text-white caret-accent outline-none placeholder:text-white"
-            />
-          </div>
-          <div className="mb-4 text-accent">
-            Analyzing recent thought logs...
-            <br />- {totalPostCount} notes found in /posts
-            <br />- Updated reading index for &quot;Generative UI&quot;
-            <br />- Technical snippets synced via CLI
-            <br />
-            <br />
-            Shall I display the latest entries? (Y/n)
-          </div>
+          <Terminal
+            ref={terminal}
+            commands={commands}
+            prompt={prompt}
+            promptClassName={promptClassName}
+            banner={
+              <p className="mb-4 text-on-surface-muted">
+                HASH shell · type <span className="text-white">help</span> to
+                see commands.
+              </p>
+            }
+          />
         </TerminalWindow>
       </div>
 
