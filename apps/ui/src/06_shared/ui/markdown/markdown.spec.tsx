@@ -278,6 +278,7 @@ describe('Markdown vault 문법', () => {
   });
 
   describe('이미지', () => {
+    // nocap: library-body-2
     it('vault 경로는 첨부 파일 저장소 주소로 바꾸고 다시 인코딩하지 않는다', () => {
       renderWithAttachments('![도식](att/my%20img.png)');
 

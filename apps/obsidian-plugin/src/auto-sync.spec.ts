@@ -1032,6 +1032,7 @@ describe('AutoSyncService', () => {
       expect(attachmentCache['att/a.png']).toEqual({ mtime: 50, size: 8 });
     });
 
+    // nocap: library-sync-12
     it('does not upload wiki or shortest-path image links and notifies once per note', async () => {
       const { api, metadataCache, service } = makeService();
       withEmbeds(
@@ -1168,6 +1169,7 @@ describe('AutoSyncService', () => {
       expect(saveAttachmentCache).toHaveBeenCalledOnce();
     });
 
+    // nocap: library-sync-11
     it('does not upload a changed image that no synced note has embedded', async () => {
       const { api, metadataCache, service } = makeService({
         autoSyncDebounceSeconds: 1,

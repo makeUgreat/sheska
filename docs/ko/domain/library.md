@@ -123,6 +123,16 @@ stateDiagram-v2
   - 예: 서버가 거부하는 파일도 고쳐질 때까지 다시 보냄
   - 이유: 서버에는 실패한 sync job을 다시 돌리는 주체가 없음
 
+### 이미지 업로드 대상
+- 동기화 클라이언트는 동기화 대상이 링크한 이미지만 보내야 함 <!-- nocap: library-sync-11 -->
+  - 예: 어떤 동기화 대상도 링크하지 않은 vault 이미지는 바뀌어도 보내지 않음
+  - 이유: 이미지 저장소는 공개 주소로 열려 있어서 보낸 이미지는 누구나 볼 수 있음
+
+### 이미지 링크 형식
+- 동기화 클라이언트는 vault 절대 경로 markdown 링크로 쓴 이미지만 보내야 함 <!-- nocap: library-sync-12 -->
+  - 예: `![](att/a.png)`는 보냄. `![[att/a.png]]`와 최단 경로 링크 `![](a.png)`는 보내지 않음
+  - 이유: 본문은 링크 글자를 이미지 위치로 읽음. 다른 형식으로 쓴 이미지는 보내도 본문에 보이지 않음
+
 ## Sync job 규칙 (syncJob)
 - sync job이 가질 수 있는 상태와 그 상태를 어떻게 읽는지 정함
 
@@ -194,3 +204,7 @@ stateDiagram-v2
 
 ### 같은 문법
 - post와 source의 본문은 같은 Obsidian 문법으로 해석해야 함 <!-- nocap: library-body-1 -->
+
+### 이미지 위치
+- 본문은 scheme이 없는 이미지 링크 글자를 vault 절대 경로로 읽어야 함 <!-- nocap: library-body-2 -->
+  - 예: `![](att/my%20img.png)`는 vault 파일 `att/my img.png`를 가리킴
