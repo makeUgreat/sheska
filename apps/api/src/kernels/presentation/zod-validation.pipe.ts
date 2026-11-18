@@ -1,3 +1,4 @@
+import { type PipeTransform } from '@nestjs/common';
 import { type z } from 'zod';
 import { type $ZodError, type $ZodIssue } from 'zod/v4/core';
 import { CommonErrorCode } from '@sheska/contract';
@@ -7,7 +8,10 @@ import {
   type ValidationFieldDetail,
 } from '@core/errors';
 
-export class ZodValidationPipe<T extends z.ZodType> {
+export class ZodValidationPipe<T extends z.ZodType> implements PipeTransform<
+  unknown,
+  z.output<T>
+> {
   constructor(private readonly schema: T) {}
 
   transform(value: unknown): z.output<T> {

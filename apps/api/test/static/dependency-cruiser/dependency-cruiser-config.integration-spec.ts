@@ -430,6 +430,20 @@ function getViolationRuleNames(result: IReporterOutput): string[] {
   );
 }
 
+const frameworkRuleNames = [
+  'api-inner-layers-not-to-frameworks',
+  'api-application-not-to-non-di-nest-frameworks',
+];
+
+function getFrameworkViolations(result: IReporterOutput): string[] {
+  const cruiseResult = result.output as ICruiseResult;
+
+  return cruiseResult.summary.violations
+    .filter((violation) => frameworkRuleNames.includes(violation.rule.name))
+    .map((violation) => `${violation.rule.name}: ${violation.from}`)
+    .sort();
+}
+
 describe('dependency-cruiser/config.cjs', () => {
   it('root rule과 API rule을 함께 등록한다', async () => {
     const config = await extractDepcruiseConfig(configPath);
@@ -454,5 +468,41 @@ describe('dependency-cruiser/config.cjs', () => {
     expect(violationRuleNames.length).toBeGreaterThanOrEqual(
       apiRuleNames.length,
     );
+  });
+
+  it('kernel은 domain에서 framework를, application에서 DI metadata 밖의 framework를 막는다', async () => {
+    const result = await cruiseFixture({
+      ...validFiles,
+      'src/kernels/domain/uses-framework.ts': `
+        import { Injectable } from '@nestjs/common';
+
+        export const value = Injectable;
+      `,
+      'src/kernels/application/uses-di-metadata.ts': `
+        import { Inject } from '@nestjs/common';
+
+        export const value = Inject;
+      `,
+      'src/kernels/application/uses-framework.ts': `
+        import { ModuleRef } from '@nestjs/core';
+
+        export const value = ModuleRef;
+      `,
+      'src/kernels/infrastructure/uses-framework.ts': `
+        import { ModuleRef } from '@nestjs/core';
+
+        export const value = ModuleRef;
+      `,
+      'src/kernels/presentation/uses-framework.ts': `
+        import { Reflector } from '@nestjs/core';
+
+        export const value = Reflector;
+      `,
+    });
+
+    expect(getFrameworkViolations(result)).toEqual([
+      'api-application-not-to-non-di-nest-frameworks: src/kernels/application/uses-framework.ts',
+      'api-inner-layers-not-to-frameworks: src/kernels/domain/uses-framework.ts',
+    ]);
   });
 });
