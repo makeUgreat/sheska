@@ -3,8 +3,14 @@ import { getFrontMatterInfo, parseYaml, stringifyYaml } from 'obsidian';
 const MASK_KEY = 'sheska-mask';
 const DEFAULT_REPLACEMENT = '●●●';
 
+export interface ImageLink {
+  /** 본문에 적힌 embed 원문. 예: `![[a.png|300]]` */
+  original: string;
+  target: string;
+}
+
 export type PreparedUpload =
-  | { ok: true; content: string; maskWords: string[] }
+  | { ok: true; content: string }
   | { ok: false; reason: string };
 
 /**
@@ -14,6 +20,7 @@ export type PreparedUpload =
 export function prepareUploadContent(
   content: string,
   filePath: string,
+  imageLinks: ImageLink[] = [],
 ): PreparedUpload {
   const info = getFrontMatterInfo(content);
   const frontmatter = info.exists ? toRecord(parseYaml(info.frontmatter)) : {};
@@ -35,14 +42,50 @@ export function prepareUploadContent(
   const mask = createMask(replacements);
   return {
     ok: true,
-    content: `---\n${stringifyYaml(maskValues(frontmatter, mask))}---\n${mask(body)}`,
-    maskWords: [...replacements.keys()],
+    content: `---\n${stringifyYaml(maskValues(frontmatter, mask))}---\n${rewriteImageLinks(body, imageLinks, mask)}`,
   };
 }
 
-export function containsMaskWord(text: string, maskWords: string[]): boolean {
-  const lowered = text.toLowerCase();
-  return maskWords.some((word) => lowered.includes(word));
+/**
+ * `library-sync-12`: 링크를 먼저 사설 영역 문자로 감춘 뒤 마스킹한다.
+ * 그대로 마스킹하면 `cafe` 같은 단어가 해시 안의 글자를 바꿔 링크가 깨진다.
+ */
+function rewriteImageLinks(
+  body: string,
+  imageLinks: ImageLink[],
+  mask: (text: string) => string,
+): string {
+  const tokens = imageLinks.map((link, index) => ({
+    ...link,
+    token: `\uE000${String.fromCharCode(0xe001 + index)}\uE000`,
+  }));
+  let rewritten = body;
+  for (const { original, token } of tokens) {
+    rewritten = rewritten.split(original).join(token);
+  }
+  rewritten = mask(rewritten);
+  for (const { original, target, token } of tokens) {
+    rewritten = rewritten
+      .split(token)
+      .join(`![${mask(altOf(original))}](${target})`);
+  }
+  return rewritten;
+}
+
+const MARKDOWN_EMBED = /^!\[([^\]]*)\]\(/;
+const WIKI_EMBED = /^!\[\[([^\]]*)\]\]$/;
+const OBSIDIAN_SIZE = /^\d+(?:x\d+)?$/;
+
+/** wiki embed의 `|300`은 UI가 alt 끝에서 읽는 크기 문법 `![|300](…)`으로 옮긴다. */
+function altOf(original: string): string {
+  const markdown = MARKDOWN_EMBED.exec(original);
+  if (markdown) return markdown[1];
+  const wiki = WIKI_EMBED.exec(original);
+  if (!wiki) return '';
+  const separator = wiki[1].indexOf('|');
+  if (separator === -1) return '';
+  const display = wiki[1].slice(separator + 1);
+  return OBSIDIAN_SIZE.test(display) ? `|${display}` : display;
 }
 
 function readReplacements(value: unknown): Map<string, string> | null {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
-import { containsMaskWord, prepareUploadContent } from '@/upload-content';
+import { type ImageLink, prepareUploadContent } from '@/upload-content';
 
 function prepared(content: string, filePath = 'notes/회의록.md') {
   const result = prepareUploadContent(content, filePath);
@@ -10,7 +10,6 @@ function prepared(content: string, filePath = 'notes/회의록.md') {
   return {
     frontmatter: parse(frontmatter) as Record<string, unknown>,
     body,
-    maskWords: result.maskWords,
   };
 }
 
@@ -91,10 +90,6 @@ describe('prepareUploadContent', () => {
     });
   });
 
-  it('reports the masked words in lower case', () => {
-    expect(prepared(`${MASKED}본문`).maskWords).toEqual(['certbear', '홍길동']);
-  });
-
   // nocap: library-sync-14
   it.each([
     ['a list', 'sheska-mask: [CertBear]'],
@@ -113,12 +108,9 @@ describe('prepareUploadContent', () => {
   });
 
   it('leaves the body unchanged when there is no mask list', () => {
-    const { body, maskWords } = prepared(
-      '---\nsheska: true\n---\nCertBear 그대로\n',
-    );
+    const { body } = prepared('---\nsheska: true\n---\nCertBear 그대로\n');
 
     expect(body).toBe('CertBear 그대로\n');
-    expect(maskWords).toEqual([]);
   });
 
   // nocap: library-sync-15
@@ -149,11 +141,56 @@ describe('prepareUploadContent', () => {
   });
 });
 
-describe('containsMaskWord', () => {
-  it('finds a masked word in a path regardless of case', () => {
+describe('prepareUploadContent image links', () => {
+  const HASHED = 'attachments/9f2ccafe.svg';
+
+  function body(content: string, imageLinks: ImageLink[]) {
+    const result = prepareUploadContent(content, 'notes/a.md', imageLinks);
+    if (!result.ok) throw new Error(result.reason);
+    return result.content.slice(result.content.indexOf('---\n', 4) + 4);
+  }
+
+  // nocap: library-sync-12
+  it.each([
+    ['a markdown link', '![도식](20_Projects/주요%20작업/axis.svg)', '![도식]'],
+    ['a wiki embed', '![[axis.svg]]', '![]'],
+    ['a wiki embed with a width', '![[axis.svg|300]]', '![|300]'],
+    ['a wiki embed with a size', '![[axis.svg|300x200]]', '![|300x200]'],
+    ['a wiki embed with a caption', '![[axis.svg|도식]]', '![도식]'],
+  ])('rewrites %s to the hashed name', (_kind, original, alt) => {
     expect(
-      containsMaskWord('att/CertBear_axis.svg', ['certbear', '홍길동']),
-    ).toBe(true);
-    expect(containsMaskWord('att/diagram.svg', ['certbear'])).toBe(false);
+      body(`---\nsheska: true\n---\n앞 ${original} 뒤\n`, [
+        { original, target: HASHED },
+      ]),
+    ).toBe(`앞 ${alt}(${HASHED}) 뒤\n`);
+  });
+
+  it('removes every trace of the vault path', () => {
+    const original = '![](20_Projects/주요%20작업/axis.svg)';
+
+    const result = body(`---\nsheska: true\n---\n${original}\n${original}`, [
+      { original, target: HASHED },
+    ]);
+
+    expect(result).toBe(`![](${HASHED})\n![](${HASHED})`);
+  });
+
+  it('keeps the hashed name intact when a masked word matches its characters', () => {
+    const original = '![CertBear 도식](att/certbear.svg)';
+
+    const result = body(
+      [
+        '---',
+        'sheska: true',
+        'sheska-mask:',
+        '  cafe: X',
+        '  CertBear: 제품 C',
+        '---',
+        `cafe ${original}`,
+      ].join('\n'),
+      [{ original, target: HASHED }],
+    );
+
+    expect(result).toBe(`X ![제품 C 도식](${HASHED})`);
   });
 });
