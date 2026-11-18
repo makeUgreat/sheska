@@ -24,12 +24,12 @@ module.exports = [
     name: 'api-inner-layers-not-to-frameworks',
     severity: 'error',
     comment:
-      'Core, domain, and kernels must stay framework-independent. Keep framework decorators and SDK imports in platform, feature root modules, presentation, infrastructure adapters, or the narrow application DI exception. ' +
+      'Core and domain, including the domain kernel, must stay framework-independent. Keep framework decorators and SDK imports in platform, feature root modules, presentation, infrastructure adapters, or the narrow application DI exception. ' +
       `See ${docs.runtimeWiring}#nestjs-di.`,
     from: {
       path: [
         '^src/core/',
-        '^src/kernels/',
+        '^src/kernels/domain/',
         '^src/contexts/[^/]+/domain/',
       ],
     },
@@ -41,10 +41,10 @@ module.exports = [
     name: 'api-application-not-to-non-di-nest-frameworks',
     severity: 'error',
     comment:
-      'Application code may use @nestjs/common only for narrow DI metadata. Keep other NestJS runtime APIs outside application code. ' +
+      'Application code, including the application kernel, may use @nestjs/common only for narrow DI metadata. Keep other NestJS runtime APIs outside application code. ' +
       `See ${docs.runtimeWiring}#nestjs-di.`,
     from: {
-      path: '^src/contexts/[^/]+/application/',
+      path: ['^src/contexts/[^/]+/application/', '^src/kernels/application/'],
     },
     to: {
       path: frameworkDependency,
