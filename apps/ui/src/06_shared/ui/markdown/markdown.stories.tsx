@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { AttachmentBaseUrlProvider } from './attachment-base-url';
 import { Markdown } from './markdown';
 
 /** 상세 화면의 본문은 읽기 컬럼 폭 안에 놓인다. 줄 길이와 넘침은 이 폭에서 봐야 의미가 있다. */
@@ -231,6 +232,28 @@ export const LongContent: Story = {
       '```ts',
       "export const client = createClient({ baseUrl: 'https://api.example.com', retry: 3, timeout: 30_000, headers: { accept: 'application/json' } });",
       '```',
+    ].join('\n'),
+  },
+};
+
+/** 저장소 주소를 풀리지 않는 도메인으로 두어 대체 이미지를 본다. 지정 폭이 본문보다 넓어도 본문 폭에 맞춰 줄어야 한다. */
+export const Images: Story = {
+  decorators: [
+    (Story) => (
+      <AttachmentBaseUrlProvider baseUrl="http://attachment-storage.invalid">
+        <Story />
+      </AttachmentBaseUrlProvider>
+    ),
+  ],
+  args: {
+    body: [
+      '불러오지 못한 이미지는 대체 이미지로 바뀐다.',
+      '',
+      '![도식](att/diagram.png)',
+      '',
+      '![본문보다 넓게 지정한 이미지|1360](att/wide.png)',
+      '',
+      'wiki embed는 그리지 않는다: ![[att/wiki.png]]',
     ].join('\n'),
   },
 };

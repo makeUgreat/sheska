@@ -1,11 +1,29 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { parseOutline } from '../../lib/markdown';
+import { AttachmentBaseUrlProvider } from './attachment-base-url';
+import imageUnavailable from './image-unavailable.svg';
 import { Markdown } from './markdown';
 
 function renderBody(body: string) {
   return render(<Markdown body={body} />);
+}
+
+const ATTACHMENT_BASE_URL = 'https://files.example.com';
+
+function renderWithAttachments(body: string) {
+  return render(
+    <AttachmentBaseUrlProvider baseUrl={ATTACHMENT_BASE_URL}>
+      <Markdown body={body} />
+    </AttachmentBaseUrlProvider>,
+  );
 }
 
 describe('Markdown', () => {
@@ -257,5 +275,62 @@ describe('Markdown vault 문법', () => {
     expect(screen.getByRole('heading', { level: 2 }).id).toBe(
       parseOutline('# 설치 방법')[0].id,
     );
+  });
+
+  describe('이미지', () => {
+    it('vault 경로는 첨부 파일 저장소 주소로 바꾸고 다시 인코딩하지 않는다', () => {
+      renderWithAttachments('![도식](att/my%20img.png)');
+
+      const image = screen.getByRole('img', { name: '도식' });
+      expect(image.getAttribute('src')).toBe(
+        'https://files.example.com/vault/att/my%20img.png',
+      );
+      expect(image.getAttribute('loading')).toBe('lazy');
+    });
+
+    it('scheme이 있는 주소는 그대로 쓴다', () => {
+      renderWithAttachments('![외부](https://example.com/a.png)');
+
+      expect(
+        screen.getByRole('img', { name: '외부' }).getAttribute('src'),
+      ).toBe('https://example.com/a.png');
+    });
+
+    it('Obsidian 크기 문법을 alt에서 떼어 폭과 높이로 쓴다', () => {
+      const { container } = renderWithAttachments(
+        ['![설명|300](att/a.png)', '', '![|300x200](att/b.png)'].join('\n'),
+      );
+
+      const [widthOnly, both] = container.querySelectorAll('img');
+      expect(widthOnly.getAttribute('alt')).toBe('설명');
+      expect(widthOnly.getAttribute('width')).toBe('300');
+      expect(widthOnly.getAttribute('height')).toBe(null);
+      expect(both.getAttribute('alt')).toBe('');
+      expect(both.getAttribute('width')).toBe('300');
+      expect(both.getAttribute('height')).toBe('200');
+    });
+
+    it('로드에 실패하면 alt를 남긴 채 대체 이미지로 바꾼다', () => {
+      renderWithAttachments('![도식|300](att/missing.png)');
+
+      const image = screen.getByRole('img', { name: '도식' });
+      fireEvent.error(image);
+
+      expect(image.getAttribute('src')).toBe(imageUnavailable);
+      expect(image.getAttribute('alt')).toBe('도식');
+      expect(image.getAttribute('width')).toBe('300');
+    });
+
+    it('alt가 없는 이미지가 실패하면 대체 이미지에 설명을 붙인다', () => {
+      renderWithAttachments('![](att/missing.png)');
+
+      fireEvent.error(screen.getByRole('presentation'));
+
+      expect(
+        screen
+          .getByRole('img', { name: 'Image unavailable' })
+          .getAttribute('src'),
+      ).toBe(imageUnavailable);
+    });
   });
 });

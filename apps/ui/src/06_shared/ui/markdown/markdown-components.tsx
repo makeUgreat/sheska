@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { type Components } from 'react-markdown';
 import { CodeBlock, useInsideCodeBlock } from './code-block';
+import { MarkdownImage } from './markdown-image';
 import { WIKI_LINK_ELEMENT } from '../../lib/markdown';
 import { WikiLink } from './obsidian/wiki-link';
 
@@ -160,6 +161,7 @@ const components: Components = {
       {children}
     </a>
   ),
+  img: MarkdownImage,
   pre: CodeBlock,
   code: CodeText,
 };
