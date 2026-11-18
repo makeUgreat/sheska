@@ -97,6 +97,10 @@ export class AutoSyncService {
     for (const file of this.options.vault.getMarkdownFiles()) {
       await this.uploadChangedDuringSweep(file);
     }
+    for (const path of Object.keys(this.attachmentCache)) {
+      const image = this.options.vault.getAbstractFileByPath(path);
+      if (image instanceof TFile) await this.reuploadImage(image);
+    }
   }
 
   async runReconcile(): Promise<void> {
@@ -288,6 +292,16 @@ export class AutoSyncService {
     return true;
   }
 
+  private async reuploadImage(image: TFile): Promise<void> {
+    try {
+      if (await this.uploadImageIfChanged(image)) {
+        await this.options.saveAttachmentCache();
+      }
+    } catch (err) {
+      console.error(`[Sheska] Image upload failed for "${image.path}":`, err);
+    }
+  }
+
   private notifyUnsupportedImageLinks(note: TFile, count: number): void {
     if (count === 0) {
       this.notesWithUnsupportedImageLinks.delete(note.path);
@@ -362,6 +376,10 @@ export class AutoSyncService {
   }
 
   private async uploadIfChanged(file: TFile): Promise<void> {
+    if (this.attachmentCache[file.path]) {
+      await this.reuploadImage(file);
+      return;
+    }
     if (!this.isSyncTarget(file)) return;
     if (this.isSynced(file)) return;
     const cached = this.syncCache[file.path];

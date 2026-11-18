@@ -1146,4 +1146,83 @@ describe('AutoSyncService', () => {
       expect(api.uploadSource).toHaveBeenCalledOnce();
     });
   });
+
+  describe('changed images', () => {
+    it('re-uploads a changed image that a synced note embeds, without the note', async () => {
+      const { api, attachmentCache, saveAttachmentCache, service, vault } =
+        makeService({ autoSyncDebounceSeconds: 1 });
+      attachmentCache['att/a.png'] = { mtime: 50, size: 4 };
+      const image = new TFile('att/a.png', { ctime: 0, mtime: 60, size: 4 });
+
+      service.onVaultFileChanged(asObsidianAbstractFile(image));
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(vault.readBinary).toHaveBeenCalledWith(image);
+      expect(api.uploadAttachment).toHaveBeenCalledWith(
+        'att/a.png',
+        new ArrayBuffer(4),
+      );
+      expect(api.uploadSource).not.toHaveBeenCalled();
+      expect(attachmentCache['att/a.png']).toEqual({ mtime: 60, size: 4 });
+      expect(saveAttachmentCache).toHaveBeenCalledOnce();
+    });
+
+    it('does not upload a changed image that no synced note has embedded', async () => {
+      const { api, metadataCache, service } = makeService({
+        autoSyncDebounceSeconds: 1,
+      });
+      withFrontmatter(metadataCache, {});
+
+      service.onVaultFileChanged(
+        asObsidianAbstractFile(
+          new TFile('photos/private.jpg', { ctime: 0, mtime: 60, size: 4 }),
+        ),
+      );
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(api.uploadAttachment).not.toHaveBeenCalled();
+      expect(api.uploadSource).not.toHaveBeenCalled();
+    });
+
+    it('re-uploads cached images that changed while Obsidian was closed during a sweep', async () => {
+      const { api, attachmentCache, service, vault } = makeService();
+      attachmentCache['att/changed.png'] = { mtime: 50, size: 4 };
+      attachmentCache['att/same.png'] = { mtime: 50, size: 4 };
+      attachmentCache['att/deleted.png'] = { mtime: 50, size: 4 };
+      const files = [
+        new TFile('att/changed.png', { ctime: 0, mtime: 60, size: 4 }),
+        new TFile('att/same.png', { ctime: 0, mtime: 50, size: 4 }),
+      ];
+      vault.getAbstractFileByPath.mockImplementation(
+        (path: string) => files.find((file) => file.path === path) ?? null,
+      );
+
+      await service.runSweep();
+
+      expect(api.uploadAttachment).toHaveBeenCalledOnce();
+      expect(api.uploadAttachment).toHaveBeenCalledWith(
+        'att/changed.png',
+        new ArrayBuffer(4),
+      );
+    });
+
+    it('retries an image upload that failed transiently on the next sweep', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { api, attachmentCache, service, vault } = makeService();
+      attachmentCache['att/a.png'] = { mtime: 50, size: 4 };
+      const image = new TFile('att/a.png', { ctime: 0, mtime: 60, size: 4 });
+      vault.getAbstractFileByPath.mockReturnValue(image);
+      api.uploadAttachment.mockRejectedValueOnce(
+        new TypeError('Failed to fetch'),
+      );
+
+      await service.runSweep();
+      expect(attachmentCache['att/a.png']).toEqual({ mtime: 50, size: 4 });
+
+      await service.runSweep();
+      expect(api.uploadAttachment).toHaveBeenCalledTimes(2);
+      expect(attachmentCache['att/a.png']).toEqual({ mtime: 60, size: 4 });
+      errorSpy.mockRestore();
+    });
+  });
 });
