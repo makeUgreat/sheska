@@ -206,14 +206,16 @@ export class SheskaSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Reset sync cache')
       .setDesc(
-        'Clear the local sync cache so every note is treated as unsynced and re-uploaded on the next sync. Use this if sync state looks stuck or inconsistent.',
+        'Clear the local sync cache so every note and its embedded images are re-uploaded on the next sync. Use this if sync state looks stuck or inconsistent, or after the server changes how it stores images.',
       )
       .addButton((button) => {
         button.setButtonText('Reset').onClick(async () => {
           button.setDisabled(true);
           await this.pluginWithSettings.resetSyncCache();
           button.setButtonText('✓ Cleared');
-          new Notice('Sheska sync cache cleared. All notes will re-sync.');
+          new Notice(
+            'Sheska sync cache cleared. All notes and their images will re-sync.',
+          );
           window.setTimeout(() => {
             button.setButtonText('Reset');
             button.setDisabled(false);

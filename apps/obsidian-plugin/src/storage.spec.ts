@@ -58,17 +58,33 @@ describe('PluginDataStore', () => {
     });
   });
 
+  describe('loadAttachmentCache', () => {
+    it('defaults to an empty cache', async () => {
+      const { store } = makeStore();
+
+      await expect(store.loadAttachmentCache()).resolves.toEqual({});
+    });
+
+    it('loads the stored attachment cache', async () => {
+      const attachmentCache = { 'att/a.png': { mtime: 123, size: 456 } };
+      const { store } = makeStore({ attachmentCache });
+
+      await expect(store.loadAttachmentCache()).resolves.toBe(attachmentCache);
+    });
+  });
+
   describe('save', () => {
-    it('persists settings and sync cache in the structured data shape', async () => {
+    it('persists settings and caches in the structured data shape', async () => {
       const { plugin, store } = makeStore();
-      const syncCache = { 'note.md': { mtime: 123, syncedAt: 456 } };
-
-      await store.save(DEFAULT_SETTINGS, syncCache);
-
-      expect(plugin.saveData).toHaveBeenCalledWith({
+      const data = {
         settings: DEFAULT_SETTINGS,
-        syncCache,
-      });
+        syncCache: { 'note.md': { mtime: 123, syncedAt: 456 } },
+        attachmentCache: { 'att/a.png': { mtime: 123, size: 456 } },
+      };
+
+      await store.save(data);
+
+      expect(plugin.saveData).toHaveBeenCalledWith(data);
     });
   });
 });

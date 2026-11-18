@@ -11,6 +11,17 @@ export class TFile {
     public path: string,
     public stat: FileStats = { ctime: 0, mtime: 0, size: 0 },
   ) {}
+
+  get extension(): string {
+    const name = this.path.slice(this.path.lastIndexOf('/') + 1);
+    const dot = name.lastIndexOf('.');
+    return dot <= 0 ? '' : name.slice(dot + 1);
+  }
+}
+
+export function getLinkpath(linktext: string): string {
+  const hash = linktext.indexOf('#');
+  return hash === -1 ? linktext : linktext.slice(0, hash);
 }
 
 export class TAbstractFile {
@@ -80,6 +91,7 @@ export const vaultEventHandlers: Record<
 
 class MockVault {
   read = vi.fn().mockResolvedValue('');
+  readBinary = vi.fn().mockResolvedValue(new ArrayBuffer(0));
   getFiles = vi.fn().mockReturnValue([]);
   getMarkdownFiles = vi.fn().mockReturnValue([]);
   getAbstractFileByPath = vi.fn().mockReturnValue(null);
@@ -100,6 +112,7 @@ class MockMetadataCache {
   getFileCache = vi
     .fn()
     .mockReturnValue({ frontmatter: { sheska: true } } as unknown);
+  getFirstLinkpathDest = vi.fn().mockReturnValue(null);
 
   on(event: string, handler: (...args: unknown[]) => void): object {
     metadataCacheEventHandlers[event] = handler;

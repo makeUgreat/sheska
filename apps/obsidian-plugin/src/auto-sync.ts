@@ -1,16 +1,20 @@
-import { TFile, debounce } from 'obsidian';
+import { ATTACHMENT_MAX_BYTES } from '@sheska/contract';
+import { Notice, TFile, debounce, getLinkpath } from 'obsidian';
 import type { Debouncer, MetadataCache, TAbstractFile, Vault } from 'obsidian';
+import { isRetryableApiError, SheskaApiError } from '@/api/client';
 import type { SheskaApiClient } from '@/api/client';
 import type { SheskaSettings } from '@/settings';
-import type { SyncCache } from '@/storage';
+import type { AttachmentCache, SyncCache } from '@/storage';
 
 interface AutoSyncServiceOptions {
   vault: Vault;
-  metadataCache: Pick<MetadataCache, 'getFileCache'>;
+  metadataCache: Pick<MetadataCache, 'getFileCache' | 'getFirstLinkpathDest'>;
   api: SheskaApiClient;
   settings: SheskaSettings;
   syncCache: SyncCache;
+  attachmentCache: AttachmentCache;
   saveSyncCache(): Promise<void>;
+  saveAttachmentCache(): Promise<void>;
   onSyncStart?(path: string): void;
   onSyncFinished?(path: string): void;
   onSyncStateChanged?(path: string): void;
@@ -22,10 +26,14 @@ interface AutoSyncServiceOptions {
 
 export const AUTO_RETRY_BACKOFF_MS = [60_000, 5 * 60_000, 30 * 60_000];
 
+const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'svg'];
+
 export class AutoSyncService {
   private api: SheskaApiClient;
   private settings: SheskaSettings;
   private syncCache: SyncCache;
+  private attachmentCache: AttachmentCache;
+  private readonly notesWithUnsupportedImageLinks = new Set<string>();
   private readonly dirtyFiles = new Map<string, TFile>();
   private readonly syncingFiles = new Set<string>();
   private readonly pollingFiles = new Set<string>();
@@ -38,6 +46,7 @@ export class AutoSyncService {
     this.api = options.api;
     this.settings = options.settings;
     this.syncCache = options.syncCache;
+    this.attachmentCache = options.attachmentCache;
     this.flushDebounced = this.createFlushDebouncer();
   }
 
@@ -57,6 +66,15 @@ export class AutoSyncService {
 
   resetSyncCache(): void {
     this.syncCache = {};
+    this.attachmentCache = {};
+  }
+
+  getAttachmentCache(): AttachmentCache {
+    return this.attachmentCache;
+  }
+
+  setAttachmentCache(attachmentCache: AttachmentCache): void {
+    this.attachmentCache = attachmentCache;
   }
 
   cancel(): void {
@@ -79,6 +97,10 @@ export class AutoSyncService {
   async runSweep(): Promise<void> {
     for (const file of this.options.vault.getMarkdownFiles()) {
       await this.uploadChangedDuringSweep(file);
+    }
+    for (const path of Object.keys(this.attachmentCache)) {
+      const image = this.options.vault.getAbstractFileByPath(path);
+      if (image instanceof TFile) await this.reuploadImage(image);
     }
   }
 
@@ -170,6 +192,7 @@ export class AutoSyncService {
     this.syncingFiles.add(file.path);
     this.options.onSyncStart?.(file.path);
     try {
+      await this.uploadEmbeddedImages(file);
       const mtimeAtRead = file.stat.mtime;
       const content = await this.options.vault.read(file);
       const upload = await this.api.uploadSource({
@@ -211,6 +234,85 @@ export class AutoSyncService {
       this.syncingFiles.delete(file.path);
       this.options.onSyncFinished?.(file.path);
     }
+  }
+
+  private async uploadEmbeddedImages(note: TFile): Promise<void> {
+    const embeds = this.options.metadataCache.getFileCache(note)?.embeds ?? [];
+    let unsupportedLinkCount = 0;
+    let cacheChanged = false;
+    try {
+      for (const embed of embeds) {
+        const linkpath = getLinkpath(embed.link);
+        const image = this.options.metadataCache.getFirstLinkpathDest(
+          linkpath,
+          note.path,
+        );
+        if (
+          !image ||
+          !IMAGE_EXTENSIONS.includes(image.extension.toLowerCase())
+        ) {
+          continue;
+        }
+        if (embed.original.startsWith('![[') || linkpath !== image.path) {
+          unsupportedLinkCount += 1;
+          continue;
+        }
+        if (await this.uploadImageIfChanged(image)) cacheChanged = true;
+      }
+    } finally {
+      if (cacheChanged) await this.options.saveAttachmentCache();
+    }
+    this.notifyUnsupportedImageLinks(note, unsupportedLinkCount);
+  }
+
+  private async uploadImageIfChanged(image: TFile): Promise<boolean> {
+    const cached = this.attachmentCache[image.path];
+    if (cached?.mtime === image.stat.mtime && cached.size === image.stat.size) {
+      return false;
+    }
+    if (image.stat.size > ATTACHMENT_MAX_BYTES) {
+      console.warn(
+        `[Sheska] Skipped "${image.path}": larger than ${ATTACHMENT_MAX_BYTES} bytes.`,
+      );
+      return false;
+    }
+
+    const stat = { mtime: image.stat.mtime, size: image.stat.size };
+    try {
+      const data = await this.options.vault.readBinary(image);
+      await this.api.uploadAttachment(image.path, data);
+    } catch (error: unknown) {
+      if (isRetryableApiError(error)) throw error;
+      const reason =
+        error instanceof SheskaApiError
+          ? (error.code ?? `HTTP ${error.status}`)
+          : String(error);
+      new Notice(`Sheska: "${image.path}" was rejected (${reason}).`);
+    }
+    this.attachmentCache[image.path] = stat;
+    return true;
+  }
+
+  private async reuploadImage(image: TFile): Promise<void> {
+    try {
+      if (await this.uploadImageIfChanged(image)) {
+        await this.options.saveAttachmentCache();
+      }
+    } catch (err) {
+      console.error(`[Sheska] Image upload failed for "${image.path}":`, err);
+    }
+  }
+
+  private notifyUnsupportedImageLinks(note: TFile, count: number): void {
+    if (count === 0) {
+      this.notesWithUnsupportedImageLinks.delete(note.path);
+      return;
+    }
+    if (this.notesWithUnsupportedImageLinks.has(note.path)) return;
+    this.notesWithUnsupportedImageLinks.add(note.path);
+    new Notice(
+      `Sheska: ${count} image link(s) in "${note.path}" are not absolute vault paths, so Sheska will not show them.`,
+    );
   }
 
   private async waitForSyncJob(
@@ -275,6 +377,10 @@ export class AutoSyncService {
   }
 
   private async uploadIfChanged(file: TFile): Promise<void> {
+    if (this.attachmentCache[file.path]) {
+      await this.reuploadImage(file);
+      return;
+    }
     if (!this.isSyncTarget(file)) return;
     if (this.isSynced(file)) return;
     const cached = this.syncCache[file.path];
