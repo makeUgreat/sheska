@@ -330,7 +330,9 @@ export default class SheskaPlugin extends Plugin {
       name: 'Reset Sheska sync cache (force full re-sync)',
       callback: async () => {
         await this.resetSyncCache();
-        new Notice('Sheska sync cache cleared. All notes will re-sync.');
+        new Notice(
+          'Sheska sync cache cleared. All notes and their images will re-sync.',
+        );
       },
     });
   }

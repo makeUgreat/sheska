@@ -1206,6 +1206,31 @@ describe('AutoSyncService', () => {
       );
     });
 
+    it('re-uploads every embedded image after the sync cache is reset', async () => {
+      const { api, attachmentCache, metadataCache, service } = makeService();
+      attachmentCache['att/a.png'] = { mtime: 50, size: 4 };
+      withEmbeds(
+        metadataCache,
+        [{ link: 'att/a.png', original: '![](att/a.png)' }],
+        [new TFile('att/a.png', { ctime: 0, mtime: 50, size: 4 })],
+      );
+
+      service.resetSyncCache();
+      await service.uploadFile(
+        asObsidianFile(
+          new TFile('notes/meeting.md', { ctime: 0, mtime: 100, size: 1 }),
+        ),
+      );
+
+      expect(api.uploadAttachment).toHaveBeenCalledWith(
+        'att/a.png',
+        new ArrayBuffer(4),
+      );
+      expect(service.getAttachmentCache()).toEqual({
+        'att/a.png': { mtime: 50, size: 4 },
+      });
+    });
+
     it('retries an image upload that failed transiently on the next sweep', async () => {
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const { api, attachmentCache, service, vault } = makeService();

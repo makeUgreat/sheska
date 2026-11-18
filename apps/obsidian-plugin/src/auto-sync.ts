@@ -66,6 +66,7 @@ export class AutoSyncService {
 
   resetSyncCache(): void {
     this.syncCache = {};
+    this.attachmentCache = {};
   }
 
   getAttachmentCache(): AttachmentCache {

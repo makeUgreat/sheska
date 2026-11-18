@@ -187,7 +187,7 @@ describe('SheskaSettingTab', () => {
 
         expect(resetSyncCache).toHaveBeenCalledOnce();
         expect(noticeMessages).toContain(
-          'Sheska sync cache cleared. All notes will re-sync.',
+          'Sheska sync cache cleared. All notes and their images will re-sync.',
         );
       });
     });
