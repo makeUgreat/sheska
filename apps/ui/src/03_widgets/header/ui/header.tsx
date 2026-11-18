@@ -1,14 +1,10 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLogOut, useViewer } from '@/entities/session';
+import { TrafficLights, type TerminalLaunchState } from '@/shared/ui';
 
 const SECTIONS = [
-  { href: '/posts', label: 'posts' },
-  { href: '/sources', label: 'sources' },
-] as const;
-
-const TRAFFIC_LIGHTS = [
-  'bg-terminal-red',
-  'bg-terminal-yellow',
-  'bg-terminal-green',
+  { href: '/posts', label: 'posts', ownerOnly: false },
+  { href: '/sources', label: 'sources', ownerOnly: true },
 ] as const;
 
 const FOCUS_RING =
@@ -26,19 +22,33 @@ function isCurrent(pathname: string, href: string) {
 
 export function Header() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const viewer = useViewer();
+  const logOut = useLogOut();
+  const owner = viewer === 'owner';
+
+  function handleYellowClick() {
+    if (!owner) {
+      navigate('/', { state: { run: 'su' } satisfies TerminalLaunchState });
+      return;
+    }
+    logOut.mutate(undefined, {
+      onSuccess: () => {
+        if (isCurrent(pathname, '/sources')) navigate('/');
+      },
+    });
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-surface">
       <div className="h-11 border-b border-white/5 bg-surface-container-low/80 px-4">
         <div className="mx-auto flex h-full max-w-content items-center justify-between gap-3 sm:gap-6">
           <div className="flex items-center gap-2">
-            <span
-              className="mr-2 hidden items-center gap-2 sm:flex"
-              aria-hidden="true"
-            >
-              {TRAFFIC_LIGHTS.map((light) => (
-                <span key={light} className={`h-3 w-3 rounded-full ${light}`} />
-              ))}
+            <span className="mr-2 hidden sm:flex">
+              <TrafficLights
+                yellowLabel={owner ? 'Log out' : 'Log in'}
+                onYellowClick={handleYellowClick}
+              />
             </span>
             <Link
               to="/"
@@ -52,30 +62,34 @@ export function Header() {
             aria-label="Sections"
             className="flex gap-3 font-mono text-label-sm sm:gap-6"
           >
-            {SECTIONS.map(({ href, label }) => {
-              const current = isCurrent(pathname, href);
-              return (
-                <Link
-                  key={href}
-                  to={href}
-                  aria-current={current ? 'page' : undefined}
-                  className={`transition-colors ${FOCUS_RING} ${
-                    current
-                      ? 'text-accent'
-                      : 'text-secondary hover:text-on-surface'
-                  }`}
-                >
-                  {label}
-                </Link>
-              );
-            })}
+            {SECTIONS.filter(({ ownerOnly }) => owner || !ownerOnly).map(
+              ({ href, label }) => {
+                const current = isCurrent(pathname, href);
+                return (
+                  <Link
+                    key={href}
+                    to={href}
+                    aria-current={current ? 'page' : undefined}
+                    className={`transition-colors ${FOCUS_RING} ${
+                      current
+                        ? 'text-accent'
+                        : 'text-secondary hover:text-on-surface'
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                );
+              },
+            )}
           </nav>
         </div>
       </div>
 
       <div className="h-10 px-4">
         <div className="mx-auto flex h-full max-w-content items-center font-mono text-code-snippet">
-          <span className="text-secondary">visitor@hash:~$</span>
+          <span className={owner ? 'text-accent' : 'text-secondary'}>
+            {owner ? 'owner@hash:~#' : 'visitor@hash:~$'}
+          </span>
           <span className="ml-2 text-white">{toCommand(pathname)}</span>
           <span
             className="ml-1 h-4 w-2 animate-pulse bg-accent"

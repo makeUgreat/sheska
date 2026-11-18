@@ -28,6 +28,11 @@ export interface TerminalCommand {
   complete?(argument: string): string[];
 }
 
+/** 다른 화면이 터미널 화면으로 보낼 때 router state에 담는다. 도착하면 이 줄을 한 번 실행한다. */
+export interface TerminalLaunchState {
+  run: string;
+}
+
 export interface TerminalHandle {
   /** 사용자가 입력한 것처럼 한 줄을 실행한다. 다른 명령이 도는 중이면 무시한다. */
   run(line: string): void;

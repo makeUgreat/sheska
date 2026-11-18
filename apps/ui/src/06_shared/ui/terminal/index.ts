@@ -7,4 +7,5 @@ export type {
   TerminalCommand,
   TerminalHandle,
   TerminalIo,
+  TerminalLaunchState,
 } from './model/types';

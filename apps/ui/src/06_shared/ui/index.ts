@@ -15,6 +15,7 @@ export { Pagination } from './pagination';
 export { PeekLayout } from './peek-layout';
 export { TableOfContents } from './table-of-contents';
 export { Tag } from './tag';
+export { TrafficLights } from './traffic-lights';
 export {
   clearCommand,
   printRequestFailure,
@@ -25,4 +26,5 @@ export {
   type TerminalCommand,
   type TerminalHandle,
   type TerminalIo,
+  type TerminalLaunchState,
 } from './terminal';

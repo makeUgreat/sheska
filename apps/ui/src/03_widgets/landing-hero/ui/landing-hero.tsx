@@ -1,6 +1,10 @@
-import { useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { Terminal, type TerminalHandle } from '@/shared/ui';
+import { useEffect, useRef } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  Terminal,
+  type TerminalHandle,
+  type TerminalLaunchState,
+} from '@/shared/ui';
 import { useShellCommands } from '../model/use-shell-commands';
 import { TerminalWindow } from './terminal-window';
 
@@ -8,6 +12,16 @@ export function LandingHero({ articlesHref }: { articlesHref: string }) {
   const terminal = useRef<TerminalHandle>(null);
   const { viewer, commands, prompt, promptClassName } = useShellCommands();
   const owner = viewer === 'owner';
+  const location = useLocation();
+  const navigate = useNavigate();
+  const launch = (location.state as TerminalLaunchState | null)?.run;
+
+  useEffect(() => {
+    if (!launch) return;
+    terminal.current?.run(launch);
+    // 새로고침이나 뒤로 가기로 같은 명령이 다시 돌지 않게 state를 지운다.
+    navigate(location.pathname, { replace: true, state: null });
+  }, [launch, location.pathname, navigate]);
 
   return (
     <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white px-4 pb-24 pt-12">
