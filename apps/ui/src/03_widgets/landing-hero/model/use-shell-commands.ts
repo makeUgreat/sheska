@@ -4,6 +4,7 @@ import {
   useBrowseCommands,
   type Directory,
 } from '@/features/terminal-browse';
+import { useAskAiCommand } from '@/features/terminal-ask-ai';
 import { useSearchCommand } from '@/features/terminal-search';
 import { useSwitchUserCommands } from '@/features/terminal-switch-user';
 import { useViewer } from '@/entities/session';
@@ -27,6 +28,7 @@ export function useShellCommands() {
     recent,
   });
   const grep = useSearchCommand({ recent });
+  const ai = useAskAiCommand();
   const [su, exit, logout, whoami] = useSwitchUserCommands({
     viewer,
     onLoggedOut: () => setDirectory('home'),
@@ -37,6 +39,7 @@ export function useShellCommands() {
     ls,
     cat,
     grep,
+    ai,
     cd,
     clearCommand,
     su,

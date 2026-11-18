@@ -183,6 +183,17 @@ describe('LandingPage terminal', () => {
     expect(await screen.findByText('post detail post-1')).toBeDefined();
   });
 
+  it('ai는 아직 준비 중이라고 알린다', async () => {
+    const { client } = buildMockHttpClient();
+    renderPage(client);
+
+    await typeCommand('visitor@hash:~$', 'ai 세션은 어디에 저장했어?');
+
+    expect(
+      await screen.findByText('ai: not ready yet. Try grep <word> for now.'),
+    ).toBeDefined();
+  });
+
   it('방문자에게 sources 폴더는 없는 것으로 답한다', async () => {
     const { client } = buildMockHttpClient();
     renderPage(client);
