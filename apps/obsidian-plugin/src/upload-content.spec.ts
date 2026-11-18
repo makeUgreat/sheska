@@ -55,18 +55,71 @@ describe('prepareUploadContent', () => {
     expect(body).toBe('C와 A사');
   });
 
-  it('masks code blocks, link text and image paths in the body', () => {
+  it('masks code blocks, inline code and link text in the body', () => {
     const { body } = prepared(
       [
         MASKED,
-        '```ts',
-        "const client = 'certbear';",
+        '```sh',
+        'curl https://certbear.example.com',
         '```',
-        '[CertBear 문서](https://certbear.example.com)',
+        '`certbear.yaml`을 고친다.',
+        '[CertBear 문서](https://docs.example.com)',
       ].join('\n'),
     );
 
     expect(body).not.toMatch(/certbear/i);
+    expect(body).toContain('[A사 문서](https://docs.example.com)');
+  });
+
+  // nocap: library-sync-14
+  it.each([
+    [
+      'a markdown link',
+      '[문서](https://certbear.example.com/guide)',
+      'https://certbear.example.com/guide',
+    ],
+    [
+      'a bare URL',
+      '참고: https://CertBear.io/docs',
+      'https://CertBear.io/docs',
+    ],
+    [
+      'an angle-bracket autolink',
+      '<https://certbear.io>',
+      'https://certbear.io',
+    ],
+    [
+      'a reference definition',
+      '[가이드][g]\n\n[g]: https://certbear.io/g',
+      'https://certbear.io/g',
+    ],
+    [
+      'an external image',
+      '![로고](https://cdn.example.com/certbear.png)',
+      'https://cdn.example.com/certbear.png',
+    ],
+    [
+      'a link to another note',
+      '[소개](notes/CertBear%20소개.md)',
+      'notes/CertBear%20소개.md',
+    ],
+  ])(
+    'holds back a note when %s has a masked word in its address',
+    (_kind, line, address) => {
+      expect(prepareUploadContent(`${MASKED}${line}\n`, 'notes/a.md')).toEqual({
+        ok: false,
+        reason: `change the link ${address}, its address contains a masked word`,
+      });
+    },
+  );
+
+  it('allows link addresses with masked words when nothing is masked', () => {
+    const result = prepareUploadContent(
+      '---\nsheska: true\n---\n[문서](https://certbear.example.com)\n',
+      'notes/a.md',
+    );
+
+    expect(result.ok).toBe(true);
   });
 
   it('masks frontmatter values, keeps keys, and drops the mask list', () => {
@@ -192,5 +245,26 @@ describe('prepareUploadContent image links', () => {
     );
 
     expect(result).toBe(`X ![제품 C 도식](${HASHED})`);
+  });
+});
+
+describe('prepareUploadContent link addresses next to hashed images', () => {
+  it('does not hold back a vault image whose path has a masked word', () => {
+    const original = '![](att/certbear_axis.svg)';
+
+    const result = prepareUploadContent(
+      [
+        '---',
+        'sheska: true',
+        'sheska-mask:',
+        '  CertBear: A사',
+        '---',
+        original,
+      ].join('\n'),
+      'notes/a.md',
+      [{ original, target: 'attachments/9f2c.svg' }],
+    );
+
+    expect(result).toMatchObject({ ok: true });
   });
 });
