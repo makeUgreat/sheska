@@ -5,7 +5,7 @@ import { isRetryableApiError, SheskaApiError } from '@/api/client';
 import type { SheskaApiClient } from '@/api/client';
 import type { SheskaSettings } from '@/settings';
 import type { AttachmentCache, SyncCache } from '@/storage';
-import { containsMaskWord, prepareUploadContent } from '@/upload-content';
+import { type ImageLink, prepareUploadContent } from '@/upload-content';
 
 interface AutoSyncServiceOptions {
   vault: Vault;
@@ -23,6 +23,18 @@ interface AutoSyncServiceOptions {
   syncJobPollInitialDelayMs?: number;
   syncJobPollIntervalMs?: number;
   syncJobPollTimeoutMs?: number;
+}
+
+/** `library-sync-12`: 공개 주소에 vault 경로와 파일 이름이 드러나지 않게 경로의 해시를 쓴다. */
+async function attachmentKey(image: TFile): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(image.path),
+  );
+  const hex = Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, '0'),
+  ).join('');
+  return `attachments/${hex}.${image.extension.toLowerCase()}`;
 }
 
 export const AUTO_RETRY_BACKOFF_MS = [60_000, 5 * 60_000, 30 * 60_000];
@@ -45,7 +57,6 @@ export class AutoSyncService {
   private settings: SheskaSettings;
   private syncCache: SyncCache;
   private attachmentCache: AttachmentCache;
-  private readonly notesWithUnsupportedImageLinks = new Set<string>();
   private readonly notifiedBlockedVersions = new Map<string, number>();
   private readonly dirtyFiles = new Map<string, TFile>();
   private readonly syncingFiles = new Set<string>();
@@ -206,13 +217,18 @@ export class AutoSyncService {
     this.options.onSyncStart?.(file.path);
     try {
       const mtimeAtRead = file.stat.mtime;
-      const prepared = prepareUploadContent(
-        await this.options.vault.read(file),
-        file.path,
+      const content = await this.options.vault.read(file);
+      const embeds = this.findEmbeddedImages(file);
+      const imageLinks: ImageLink[] = await Promise.all(
+        embeds.map(async ({ original, image }) => ({
+          original,
+          target: await attachmentKey(image),
+        })),
       );
+      const prepared = prepareUploadContent(content, file.path, imageLinks);
       if (!prepared.ok)
         throw new UploadBlockedError(file.path, prepared.reason);
-      await this.uploadEmbeddedImages(file, prepared.maskWords);
+      await this.uploadImages(embeds.map(({ image }) => image));
       const upload = await this.api.uploadSource({
         externalSourceId: file.path,
         content: prepared.content,
@@ -254,55 +270,33 @@ export class AutoSyncService {
     }
   }
 
-  private async uploadEmbeddedImages(
-    note: TFile,
-    maskWords: string[],
-  ): Promise<void> {
-    const { images, unsupportedLinkCount } = this.findEmbeddedImages(note);
-    const maskedImage = images.find((image) =>
-      containsMaskWord(image.path, maskWords),
-    );
-    if (maskedImage) {
-      throw new UploadBlockedError(
-        note.path,
-        `rename ${maskedImage.path}, its path contains a masked word`,
-      );
-    }
-
+  private async uploadImages(images: TFile[]): Promise<void> {
+    const unique = new Map(images.map((image) => [image.path, image]));
     let cacheChanged = false;
     try {
-      for (const image of images) {
+      for (const image of unique.values()) {
         if (await this.uploadImageIfChanged(image)) cacheChanged = true;
       }
     } finally {
       if (cacheChanged) await this.options.saveAttachmentCache();
     }
-    this.notifyUnsupportedImageLinks(note, unsupportedLinkCount);
   }
 
-  private findEmbeddedImages(note: TFile): {
-    images: TFile[];
-    unsupportedLinkCount: number;
-  } {
-    const images: TFile[] = [];
-    let unsupportedLinkCount = 0;
+  private findEmbeddedImages(
+    note: TFile,
+  ): { original: string; image: TFile }[] {
+    const found: { original: string; image: TFile }[] = [];
     for (const embed of this.options.metadataCache.getFileCache(note)?.embeds ??
       []) {
-      const linkpath = getLinkpath(embed.link);
       const image = this.options.metadataCache.getFirstLinkpathDest(
-        linkpath,
+        getLinkpath(embed.link),
         note.path,
       );
-      if (!image || !IMAGE_EXTENSIONS.includes(image.extension.toLowerCase())) {
-        continue;
+      if (image && IMAGE_EXTENSIONS.includes(image.extension.toLowerCase())) {
+        found.push({ original: embed.original, image });
       }
-      if (embed.original.startsWith('![[') || linkpath !== image.path) {
-        unsupportedLinkCount += 1;
-        continue;
-      }
-      images.push(image);
     }
-    return { images, unsupportedLinkCount };
+    return found;
   }
 
   private notifyBlockedUpload(file: TFile, error: UploadBlockedError): void {
@@ -325,9 +319,12 @@ export class AutoSyncService {
   }
 
   private async uploadImageIfChanged(image: TFile): Promise<boolean> {
+    const key = await attachmentKey(image);
     const cached = this.attachmentCache[image.path];
     const sameVersion =
-      cached?.mtime === image.stat.mtime && cached.size === image.stat.size;
+      cached?.mtime === image.stat.mtime &&
+      cached.size === image.stat.size &&
+      cached.key === key;
     if (sameVersion && !cached.rejected) return false;
     if (image.stat.size > ATTACHMENT_MAX_BYTES) {
       console.warn(
@@ -336,10 +333,10 @@ export class AutoSyncService {
       return false;
     }
 
-    const stat = { mtime: image.stat.mtime, size: image.stat.size };
+    const stat = { mtime: image.stat.mtime, size: image.stat.size, key };
     try {
       const data = await this.options.vault.readBinary(image);
-      await this.api.uploadAttachment(image.path, data);
+      await this.api.uploadAttachment(key, data);
     } catch (error: unknown) {
       if (isRetryableApiError(error)) throw error;
       if (sameVersion) return false;
@@ -363,18 +360,6 @@ export class AutoSyncService {
     } catch (err) {
       console.error(`[Sheska] Image upload failed for "${image.path}":`, err);
     }
-  }
-
-  private notifyUnsupportedImageLinks(note: TFile, count: number): void {
-    if (count === 0) {
-      this.notesWithUnsupportedImageLinks.delete(note.path);
-      return;
-    }
-    if (this.notesWithUnsupportedImageLinks.has(note.path)) return;
-    this.notesWithUnsupportedImageLinks.add(note.path);
-    new Notice(
-      `Sheska: ${count} image link(s) in "${note.path}" are not absolute vault paths, so Sheska will not show them.`,
-    );
   }
 
   private async waitForSyncJob(

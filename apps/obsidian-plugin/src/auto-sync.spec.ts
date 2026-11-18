@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { noticeMessages, TAbstractFile, TFile } from '../__mocks__/obsidian';
 import { SheskaApiError } from '@/api/client';
@@ -11,6 +12,11 @@ import type {
   TAbstractFile as ObsidianAbstractFile,
   TFile as ObsidianFile,
 } from 'obsidian';
+
+function keyOf(path: string): string {
+  const extension = path.slice(path.lastIndexOf('.') + 1).toLowerCase();
+  return `attachments/${createHash('sha256').update(path).digest('hex')}.${extension}`;
+}
 
 function asObsidianFile(file: TFile): ObsidianFile {
   return file as unknown as ObsidianFile;
@@ -985,13 +991,17 @@ describe('AutoSyncService', () => {
 
       expect(vault.readBinary).toHaveBeenCalledWith(image);
       expect(api.uploadAttachment).toHaveBeenCalledWith(
-        'att/my img.png',
+        keyOf('att/my img.png'),
         new ArrayBuffer(4),
       );
       expect(api.uploadAttachment.mock.invocationCallOrder[0]).toBeLessThan(
         api.uploadSource.mock.invocationCallOrder[0],
       );
-      expect(attachmentCache['att/my img.png']).toEqual({ mtime: 50, size: 4 });
+      expect(attachmentCache['att/my img.png']).toEqual({
+        mtime: 50,
+        size: 4,
+        key: keyOf('att/my img.png'),
+      });
       expect(saveAttachmentCache).toHaveBeenCalledOnce();
     });
 
@@ -1003,7 +1013,11 @@ describe('AutoSyncService', () => {
         saveAttachmentCache,
         service,
       } = makeService();
-      attachmentCache['att/a.png'] = { mtime: 50, size: 4 };
+      attachmentCache['att/a.png'] = {
+        mtime: 50,
+        size: 4,
+        key: keyOf('att/a.png'),
+      };
       withEmbeds(
         metadataCache,
         [{ link: 'att/a.png', original: '![](att/a.png)' }],
@@ -1017,9 +1031,35 @@ describe('AutoSyncService', () => {
       expect(api.uploadSource).toHaveBeenCalledOnce();
     });
 
-    it('re-uploads an image whose size changed', async () => {
+    it('re-uploads an image cached before hashed names, even when unchanged', async () => {
       const { api, attachmentCache, metadataCache, service } = makeService();
       attachmentCache['att/a.png'] = { mtime: 50, size: 4 };
+      withEmbeds(
+        metadataCache,
+        [{ link: 'att/a.png', original: '![](att/a.png)' }],
+        [new TFile('att/a.png', { ctime: 0, mtime: 50, size: 4 })],
+      );
+
+      await service.uploadFile(asObsidianFile(note));
+
+      expect(api.uploadAttachment).toHaveBeenCalledWith(
+        keyOf('att/a.png'),
+        new ArrayBuffer(4),
+      );
+      expect(attachmentCache['att/a.png']).toEqual({
+        mtime: 50,
+        size: 4,
+        key: keyOf('att/a.png'),
+      });
+    });
+
+    it('re-uploads an image whose size changed', async () => {
+      const { api, attachmentCache, metadataCache, service } = makeService();
+      attachmentCache['att/a.png'] = {
+        mtime: 50,
+        size: 4,
+        key: keyOf('att/a.png'),
+      };
       withEmbeds(
         metadataCache,
         [{ link: 'att/a.png', original: '![](att/a.png)' }],
@@ -1029,16 +1069,20 @@ describe('AutoSyncService', () => {
       await service.uploadFile(asObsidianFile(note));
 
       expect(api.uploadAttachment).toHaveBeenCalledOnce();
-      expect(attachmentCache['att/a.png']).toEqual({ mtime: 50, size: 8 });
+      expect(attachmentCache['att/a.png']).toEqual({
+        mtime: 50,
+        size: 8,
+        key: keyOf('att/a.png'),
+      });
     });
 
     // nocap: library-sync-12
-    it('does not upload wiki or shortest-path image links and notifies once per note', async () => {
-      const { api, metadataCache, service } = makeService();
+    it('uploads wiki and shortest-path embeds under hashed names and rewrites their links', async () => {
+      const { api, metadataCache, service, vault } = makeService();
       withEmbeds(
         metadataCache,
         [
-          { link: 'att/a.png', original: '![[att/a.png]]' },
+          { link: 'att/a.png', original: '![[att/a.png|300]]' },
           { link: 'b.png', original: '![](b.png)' },
         ],
         [
@@ -1046,15 +1090,20 @@ describe('AutoSyncService', () => {
           new TFile('att/b.png', { ctime: 0, mtime: 50, size: 4 }),
         ],
       );
+      vault.read.mockResolvedValue(
+        '---\nsheska: true\n---\n![[att/a.png|300]]\n![](b.png)\n',
+      );
 
       await service.uploadFile(asObsidianFile(note));
-      await service.uploadFile(asObsidianFile(note));
 
-      expect(api.uploadAttachment).not.toHaveBeenCalled();
-      expect(api.uploadSource).toHaveBeenCalledTimes(2);
-      expect(noticeMessages).toEqual([
-        'Sheska: 2 image link(s) in "notes/meeting.md" are not absolute vault paths, so Sheska will not show them.',
-      ]);
+      expect(
+        api.uploadAttachment.mock.calls.map((call) => call[0] as string),
+      ).toEqual([keyOf('att/a.png'), keyOf('att/b.png')]);
+      expect(api.uploadSource).toHaveBeenCalledWith({
+        externalSourceId: 'notes/meeting.md',
+        content: `---\nsheska: true\ntitle: meeting\n---\n![|300](${keyOf('att/a.png')})\n![](${keyOf('att/b.png')})\n`,
+      });
+      expect(noticeMessages).toEqual([]);
     });
 
     it('ignores embeds that are not images or do not resolve to a file', async () => {
@@ -1143,6 +1192,7 @@ describe('AutoSyncService', () => {
       expect(attachmentCache['att/broken.png']).toEqual({
         mtime: 50,
         size: 4,
+        key: keyOf('att/broken.png'),
         rejected: true,
       });
       expect(api.uploadSource).toHaveBeenCalledOnce();
@@ -1153,19 +1203,28 @@ describe('AutoSyncService', () => {
     it('re-uploads a changed image that a synced note embeds, without the note', async () => {
       const { api, attachmentCache, saveAttachmentCache, service, vault } =
         makeService({ autoSyncDebounceSeconds: 1 });
-      attachmentCache['att/a.png'] = { mtime: 50, size: 4 };
+      attachmentCache['att/a.png'] = {
+        mtime: 50,
+        size: 4,
+        key: keyOf('att/a.png'),
+      };
       const image = new TFile('att/a.png', { ctime: 0, mtime: 60, size: 4 });
 
       service.onVaultFileChanged(asObsidianAbstractFile(image));
       await vi.advanceTimersByTimeAsync(1000);
+      await vi.waitFor(() => expect(saveAttachmentCache).toHaveBeenCalled());
 
       expect(vault.readBinary).toHaveBeenCalledWith(image);
       expect(api.uploadAttachment).toHaveBeenCalledWith(
-        'att/a.png',
+        keyOf('att/a.png'),
         new ArrayBuffer(4),
       );
       expect(api.uploadSource).not.toHaveBeenCalled();
-      expect(attachmentCache['att/a.png']).toEqual({ mtime: 60, size: 4 });
+      expect(attachmentCache['att/a.png']).toEqual({
+        mtime: 60,
+        size: 4,
+        key: keyOf('att/a.png'),
+      });
       expect(saveAttachmentCache).toHaveBeenCalledOnce();
     });
 
@@ -1189,9 +1248,21 @@ describe('AutoSyncService', () => {
 
     it('re-uploads cached images that changed while Obsidian was closed during a sweep', async () => {
       const { api, attachmentCache, service, vault } = makeService();
-      attachmentCache['att/changed.png'] = { mtime: 50, size: 4 };
-      attachmentCache['att/same.png'] = { mtime: 50, size: 4 };
-      attachmentCache['att/deleted.png'] = { mtime: 50, size: 4 };
+      attachmentCache['att/changed.png'] = {
+        mtime: 50,
+        size: 4,
+        key: keyOf('att/changed.png'),
+      };
+      attachmentCache['att/same.png'] = {
+        mtime: 50,
+        size: 4,
+        key: keyOf('att/same.png'),
+      };
+      attachmentCache['att/deleted.png'] = {
+        mtime: 50,
+        size: 4,
+        key: keyOf('att/deleted.png'),
+      };
       const files = [
         new TFile('att/changed.png', { ctime: 0, mtime: 60, size: 4 }),
         new TFile('att/same.png', { ctime: 0, mtime: 50, size: 4 }),
@@ -1204,14 +1275,18 @@ describe('AutoSyncService', () => {
 
       expect(api.uploadAttachment).toHaveBeenCalledOnce();
       expect(api.uploadAttachment).toHaveBeenCalledWith(
-        'att/changed.png',
+        keyOf('att/changed.png'),
         new ArrayBuffer(4),
       );
     });
 
     it('re-uploads every embedded image after the sync cache is reset', async () => {
       const { api, attachmentCache, metadataCache, service } = makeService();
-      attachmentCache['att/a.png'] = { mtime: 50, size: 4 };
+      attachmentCache['att/a.png'] = {
+        mtime: 50,
+        size: 4,
+        key: keyOf('att/a.png'),
+      };
       withEmbeds(
         metadataCache,
         [{ link: 'att/a.png', original: '![](att/a.png)' }],
@@ -1226,18 +1301,23 @@ describe('AutoSyncService', () => {
       );
 
       expect(api.uploadAttachment).toHaveBeenCalledWith(
-        'att/a.png',
+        keyOf('att/a.png'),
         new ArrayBuffer(4),
       );
       expect(service.getAttachmentCache()).toEqual({
-        'att/a.png': { mtime: 50, size: 4 },
+        'att/a.png': { mtime: 50, size: 4, key: keyOf('att/a.png') },
       });
     });
 
     // nocap: library-sync-9
     it('retries a rejected image on every sweep without notifying again', async () => {
       const { api, attachmentCache, service, vault } = makeService();
-      attachmentCache['att/a.png'] = { mtime: 50, size: 4, rejected: true };
+      attachmentCache['att/a.png'] = {
+        mtime: 50,
+        size: 4,
+        key: keyOf('att/a.png'),
+        rejected: true,
+      };
       vault.getAbstractFileByPath.mockReturnValue(
         new TFile('att/a.png', { ctime: 0, mtime: 50, size: 4 }),
       );
@@ -1254,19 +1334,28 @@ describe('AutoSyncService', () => {
       expect(attachmentCache['att/a.png']).toEqual({
         mtime: 50,
         size: 4,
+        key: keyOf('att/a.png'),
         rejected: true,
       });
 
       await service.runSweep();
       expect(api.uploadAttachment).toHaveBeenCalledTimes(2);
-      expect(attachmentCache['att/a.png']).toEqual({ mtime: 50, size: 4 });
+      expect(attachmentCache['att/a.png']).toEqual({
+        mtime: 50,
+        size: 4,
+        key: keyOf('att/a.png'),
+      });
       expect(noticeMessages).toEqual([]);
     });
 
     it('retries an image upload that failed transiently on the next sweep', async () => {
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const { api, attachmentCache, service, vault } = makeService();
-      attachmentCache['att/a.png'] = { mtime: 50, size: 4 };
+      attachmentCache['att/a.png'] = {
+        mtime: 50,
+        size: 4,
+        key: keyOf('att/a.png'),
+      };
       const image = new TFile('att/a.png', { ctime: 0, mtime: 60, size: 4 });
       vault.getAbstractFileByPath.mockReturnValue(image);
       api.uploadAttachment.mockRejectedValueOnce(
@@ -1274,11 +1363,19 @@ describe('AutoSyncService', () => {
       );
 
       await service.runSweep();
-      expect(attachmentCache['att/a.png']).toEqual({ mtime: 50, size: 4 });
+      expect(attachmentCache['att/a.png']).toEqual({
+        mtime: 50,
+        size: 4,
+        key: keyOf('att/a.png'),
+      });
 
       await service.runSweep();
       expect(api.uploadAttachment).toHaveBeenCalledTimes(2);
-      expect(attachmentCache['att/a.png']).toEqual({ mtime: 60, size: 4 });
+      expect(attachmentCache['att/a.png']).toEqual({
+        mtime: 60,
+        size: 4,
+        key: keyOf('att/a.png'),
+      });
       errorSpy.mockRestore();
     });
   });
@@ -1348,34 +1445,33 @@ describe('AutoSyncService', () => {
       ]);
     });
 
-    // nocap: library-sync-14
-    it('uploads neither the images nor the note when an image path contains a masked word', async () => {
+    it('uploads an image whose path contains a masked word without exposing the word', async () => {
       const { api, metadataCache, service, vault } = makeService();
-      vault.read.mockResolvedValue(MASKED_NOTE);
+      vault.read.mockResolvedValue(
+        `${MASKED_NOTE}\n![](att/certbear_axis.svg)`,
+      );
       withEmbeds(
         metadataCache,
         [
-          { link: 'att/plain.png', original: '![](att/plain.png)' },
           {
             link: 'att/certbear_axis.svg',
             original: '![](att/certbear_axis.svg)',
           },
         ],
-        [
-          new TFile('att/plain.png', { ctime: 0, mtime: 50, size: 4 }),
-          new TFile('att/certbear_axis.svg', { ctime: 0, mtime: 50, size: 4 }),
-        ],
+        [new TFile('att/certbear_axis.svg', { ctime: 0, mtime: 50, size: 4 })],
       );
 
-      vault.getMarkdownFiles.mockReturnValue([note]);
-      await service.runSweep();
-      await service.runSweep();
+      await service.uploadFile(asObsidianFile(note));
 
-      expect(api.uploadAttachment).not.toHaveBeenCalled();
-      expect(api.uploadSource).not.toHaveBeenCalled();
-      expect(noticeMessages).toEqual([
-        'Sheska: "notes/meeting.md" was not uploaded: rename att/certbear_axis.svg, its path contains a masked word.',
-      ]);
+      expect(api.uploadAttachment).toHaveBeenCalledWith(
+        keyOf('att/certbear_axis.svg'),
+        new ArrayBuffer(4),
+      );
+      const [{ content }] = api.uploadSource.mock.calls[0] as [
+        { content: string },
+      ];
+      expect(content).toContain(`![](${keyOf('att/certbear_axis.svg')})`);
+      expect(content).not.toMatch(/certbear/i);
     });
 
     it('rejects a manual upload that masking blocks', async () => {

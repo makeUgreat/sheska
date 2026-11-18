@@ -25,6 +25,7 @@ export type SyncCache = Record<string, SyncCacheEntry>;
 export interface AttachmentCacheEntry {
   mtime: number;
   size: number;
+  key?: string;
   rejected?: true;
 }
 
