@@ -10,7 +10,7 @@ export { EndOfList } from './end-of-list';
 export { ErrorState, type ErrorStateProps } from './error-state';
 export { LoadingDots } from './loading-dots';
 export { LoadingState } from './loading-state';
-export { CodeBlock, Markdown } from './markdown';
+export { AttachmentBaseUrlProvider, CodeBlock, Markdown } from './markdown';
 export { Pagination } from './pagination';
 export { PeekLayout } from './peek-layout';
 export { TableOfContents } from './table-of-contents';
