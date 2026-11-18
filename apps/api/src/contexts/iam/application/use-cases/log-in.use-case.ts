@@ -38,7 +38,7 @@ export class LogInUseCase {
   async execute(command: LogInCommand): Promise<LogInResult> {
     const policy = LoginAttemptPolicy.STANDARD;
     const attempt = await this.attempts.register(command.clientAddress, policy);
-    if (policy.isLocked(attempt.previousFailures)) {
+    if (!policy.allows(attempt.attemptNumber)) {
       throw new RateLimitedError({
         code: 'auth.too_many_attempts',
         message: 'Too many failed login attempts',

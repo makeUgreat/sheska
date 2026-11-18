@@ -27,7 +27,7 @@ function setup(options: { passwordMatches: boolean; attempt?: LoginAttempt }) {
     register: vi
       .fn()
       .mockResolvedValue(
-        options.attempt ?? { previousFailures: 0, retryAfterSeconds: 300 },
+        options.attempt ?? { attemptNumber: 1, retryAfterSeconds: 300 },
       ),
     clear: vi.fn(),
   } satisfies LoginAttemptCounter;
@@ -70,7 +70,7 @@ describe('LogInUseCase', () => {
   it('비밀번호가 맞으면 그 IP의 시도 기록을 지운다', async () => {
     const { useCase, attempts } = setup({
       passwordMatches: true,
-      attempt: { previousFailures: 3, retryAfterSeconds: 200 },
+      attempt: { attemptNumber: 4, retryAfterSeconds: 200 },
     });
 
     await useCase.execute({
@@ -97,11 +97,11 @@ describe('LogInUseCase', () => {
     expect(attempts.clear).not.toHaveBeenCalled();
   });
 
-  it('이전 실패가 한도에 닿았으면 비밀번호를 확인하지 않고 남은 시간과 함께 거부한다', async () => {
+  it('한도를 넘은 시도는 비밀번호를 확인하지 않고 남은 시간과 함께 거부한다', async () => {
     const { useCase, ownerPassword } = setup({
       passwordMatches: true,
       attempt: {
-        previousFailures: LoginAttemptPolicy.STANDARD.maxFailures,
+        attemptNumber: LoginAttemptPolicy.STANDARD.maxFailures + 1,
         retryAfterSeconds: 240,
       },
     });

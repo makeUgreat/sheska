@@ -1,7 +1,7 @@
 import { type LoginAttemptPolicy } from '@contexts/iam/domain';
 
 export interface LoginAttempt {
-  readonly previousFailures: number;
+  readonly attemptNumber: number;
   readonly retryAfterSeconds: number;
 }
 

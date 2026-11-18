@@ -13,8 +13,8 @@ export class LoginAttemptPolicy {
 
   constructor(private readonly props: LoginAttemptPolicyProps) {}
 
-  isLocked(failureCount: number): boolean {
-    return failureCount >= this.props.maxFailures;
+  allows(attemptNumber: number): boolean {
+    return attemptNumber <= this.props.maxFailures;
   }
 
   get maxFailures(): number {
