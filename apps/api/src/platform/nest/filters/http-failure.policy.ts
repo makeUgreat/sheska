@@ -22,6 +22,16 @@ export const ERROR_KIND_POLICY: Record<ErrorKind, HttpFailurePolicy> = {
     exposure: 'code_only',
     logLevel: null,
   },
+  [ERROR_KIND.UNAUTHENTICATED]: {
+    status: HttpStatus.UNAUTHORIZED,
+    exposure: 'code_only',
+    logLevel: null,
+  },
+  [ERROR_KIND.RATE_LIMITED]: {
+    status: HttpStatus.TOO_MANY_REQUESTS,
+    exposure: 'with_details',
+    logLevel: null,
+  },
   [ERROR_KIND.STATE_CONFLICT]: {
     status: HttpStatus.CONFLICT,
     exposure: 'code_only',

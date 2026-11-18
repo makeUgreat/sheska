@@ -7,9 +7,11 @@ import {
   InvalidDataError,
   InvariantViolationError,
   NotFoundError,
+  RateLimitedError,
   SheskaError,
   StateConflictError,
   TimeoutError,
+  UnauthenticatedError,
   UnavailableError,
   UnexpectedError,
   ValidationFailedError,
@@ -19,6 +21,8 @@ const ERROR_CLASSES = [
   InvariantViolationError,
   ValidationFailedError,
   NotFoundError,
+  UnauthenticatedError,
+  RateLimitedError,
   StateConflictError,
   ConstraintViolationError,
   ConcurrencyConflictError,
@@ -50,7 +54,7 @@ describe('ERROR_KIND', () => {
         new ErrorClass({
           code: 'sample.error',
           message: 'sample',
-          details: { fields: [], statusCode: 500 },
+          details: { fields: [], statusCode: 500, retryAfterSeconds: 0 },
         }).kind,
     );
 

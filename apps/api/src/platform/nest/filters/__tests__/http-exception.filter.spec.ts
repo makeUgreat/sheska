@@ -7,8 +7,10 @@ import {
   InvalidDataError,
   InvariantViolationError,
   NotFoundError,
+  RateLimitedError,
   StateConflictError,
   TimeoutError,
+  UnauthenticatedError,
   UnavailableError,
   UnexpectedError,
   ValidationFailedError,
@@ -90,6 +92,22 @@ describe('HttpExceptionFilter', () => {
         expectedStatus: HttpStatus.NOT_FOUND,
       },
       {
+        error: new UnauthenticatedError({
+          code: 'auth.invalid_credentials',
+          message: 'Invalid credentials',
+          details: {},
+        }),
+        expectedStatus: HttpStatus.UNAUTHORIZED,
+      },
+      {
+        error: new RateLimitedError({
+          code: 'auth.too_many_attempts',
+          message: 'Too many attempts',
+          details: { retryAfterSeconds: 60 },
+        }),
+        expectedStatus: HttpStatus.TOO_MANY_REQUESTS,
+      },
+      {
         error: new StateConflictError({
           code: 'post.already_published',
           message: 'Post is already published',
@@ -160,6 +178,26 @@ describe('HttpExceptionFilter', () => {
         code: 'source.invalid',
         message: 'Invalid source',
         details,
+      });
+    });
+
+    it('RateLimitedError는 다시 시도할 시각을 details로 노출한다', () => {
+      const { host, json } = buildMockHost();
+      const filter = new HttpExceptionFilter(buildMockLogger());
+
+      filter.catch(
+        new RateLimitedError({
+          code: 'auth.too_many_attempts',
+          message: 'Too many attempts',
+          details: { retryAfterSeconds: 60 },
+        }),
+        host,
+      );
+
+      expect(json).toHaveBeenCalledWith({
+        code: 'auth.too_many_attempts',
+        message: 'Too many attempts',
+        details: { retryAfterSeconds: 60 },
       });
     });
 

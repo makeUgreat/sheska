@@ -2,6 +2,8 @@ export const ERROR_KIND = {
   INVARIANT_VIOLATION: 'invariant_violation',
   VALIDATION_FAILED: 'validation_failed',
   NOT_FOUND: 'not_found',
+  UNAUTHENTICATED: 'unauthenticated',
+  RATE_LIMITED: 'rate_limited',
   STATE_CONFLICT: 'state_conflict',
   CONSTRAINT_VIOLATION: 'constraint_violation',
   CONCURRENCY_CONFLICT: 'concurrency_conflict',
@@ -57,6 +59,18 @@ export class ValidationFailedError extends SheskaError<ValidationFailedDetails> 
 
 export class NotFoundError extends SheskaError<Record<string, unknown>> {
   readonly kind = ERROR_KIND.NOT_FOUND;
+}
+
+export class UnauthenticatedError extends SheskaError<Record<string, unknown>> {
+  readonly kind = ERROR_KIND.UNAUTHENTICATED;
+}
+
+export type RateLimitedDetails = {
+  readonly retryAfterSeconds: number;
+};
+
+export class RateLimitedError extends SheskaError<RateLimitedDetails> {
+  readonly kind = ERROR_KIND.RATE_LIMITED;
 }
 
 export class StateConflictError extends SheskaError<Record<string, unknown>> {
