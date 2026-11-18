@@ -15,3 +15,14 @@ export { Pagination } from './pagination';
 export { PeekLayout } from './peek-layout';
 export { TableOfContents } from './table-of-contents';
 export { Tag } from './tag';
+export {
+  clearCommand,
+  printRequestFailure,
+  Terminal,
+  TerminalListRow,
+  TerminalText,
+  type AskOptions,
+  type TerminalCommand,
+  type TerminalHandle,
+  type TerminalIo,
+} from './terminal';
