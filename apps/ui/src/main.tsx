@@ -9,9 +9,14 @@ import {
 } from '@tanstack/react-query';
 import { App } from '@/app/shell';
 import { HttpClient, HttpClientProvider, shouldRetryQuery } from '@/shared/api';
+import { AttachmentBaseUrlProvider } from '@/shared/ui';
 
 const apiBaseUrl =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';
+const attachmentBaseUrl = requireAbsoluteUrl(
+  'VITE_ATTACHMENT_BASE_URL',
+  import.meta.env.VITE_ATTACHMENT_BASE_URL as string | undefined,
+);
 const rootEl = document.getElementById('root');
 if (!rootEl) throw new Error('Root element not found');
 
@@ -31,9 +36,18 @@ createRoot(rootEl).render(
         }
       >
         <HttpClientProvider client={new HttpClient(apiBaseUrl)}>
-          <App />
+          <AttachmentBaseUrlProvider baseUrl={attachmentBaseUrl}>
+            <App />
+          </AttachmentBaseUrlProvider>
         </HttpClientProvider>
       </QueryClientProvider>
     </BrowserRouter>
   </StrictMode>,
 );
+
+function requireAbsoluteUrl(name: string, value: string | undefined): string {
+  if (!value || !URL.canParse(value)) {
+    throw new Error(`${name} must be an absolute URL`);
+  }
+  return value.replace(/\/+$/, '');
+}

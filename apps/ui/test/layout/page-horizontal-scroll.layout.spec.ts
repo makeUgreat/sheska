@@ -10,6 +10,8 @@ const BODY = `# Heading one
 
 A paragraph with an unbroken token ${UNBREAKABLE} and a [link](https://example.com/${UNBREAKABLE}).
 
+![A figure sized wider than the reading column|1360](att/wide.png)
+
 | column one | column two | column three | column four | column five |
 | --- | --- | --- | --- | --- |
 | ${UNBREAKABLE} | value | value | value | value |
