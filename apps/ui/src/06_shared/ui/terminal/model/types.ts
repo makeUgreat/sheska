@@ -33,6 +33,12 @@ export interface TerminalLaunchState {
   run: string;
 }
 
+/** `ls`나 `grep`이 방금 보인 항목. `cat`이 이 제목으로 Tab 완성하고 연다. */
+export interface TerminalListedEntry {
+  title: string;
+  to: string;
+}
+
 export interface TerminalHandle {
   /** 사용자가 입력한 것처럼 한 줄을 실행한다. 다른 명령이 도는 중이면 무시한다. */
   run(line: string): void;

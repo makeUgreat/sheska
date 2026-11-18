@@ -13,7 +13,6 @@ const meta = {
     ),
   ],
   args: {
-    title: 'hash — visitor',
     yellowLabel: 'Log in',
     onYellowClick: () => undefined,
     children: (

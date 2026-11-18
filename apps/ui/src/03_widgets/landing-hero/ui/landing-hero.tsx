@@ -10,7 +10,7 @@ import { TerminalWindow } from './terminal-window';
 
 export function LandingHero({ articlesHref }: { articlesHref: string }) {
   const terminal = useRef<TerminalHandle>(null);
-  const { viewer, commands, prompt, promptClassName } = useShellCommands();
+  const { viewer, commands, prompt } = useShellCommands();
   const owner = viewer === 'owner';
   const location = useLocation();
   const navigate = useNavigate();
@@ -33,7 +33,6 @@ export function LandingHero({ articlesHref }: { articlesHref: string }) {
 
       <div className="z-10 mx-auto w-full max-w-container-terminal px-0 sm:px-6">
         <TerminalWindow
-          title={`hash — ${viewer}`}
           yellowLabel={owner ? 'Log out' : 'Log in'}
           onYellowClick={() => terminal.current?.run(owner ? 'exit' : 'su')}
         >
@@ -41,7 +40,6 @@ export function LandingHero({ articlesHref }: { articlesHref: string }) {
             ref={terminal}
             commands={commands}
             prompt={prompt}
-            promptClassName={promptClassName}
             className="h-full p-4 [scrollbar-color:rgb(255_255_255/0.2)_transparent] [scrollbar-width:thin] sm:p-6"
             banner={
               <p className="mb-4 text-on-surface-muted">

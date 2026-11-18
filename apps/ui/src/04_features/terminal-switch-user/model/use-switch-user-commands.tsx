@@ -51,7 +51,7 @@ export function useSwitchUserCommands({
       try {
         await logIn.mutateAsync({ password });
         io.print(
-          <TerminalText tone="muted">
+          <TerminalText tone="success">
             Welcome back. This browser stays logged in for 30 days.
           </TerminalText>,
         );
@@ -69,7 +69,7 @@ export function useSwitchUserCommands({
     try {
       await logOut.mutateAsync();
       onLoggedOut();
-      io.print(<TerminalText tone="muted">logout</TerminalText>);
+      io.print(<TerminalText tone="success">logout</TerminalText>);
     } catch (error) {
       printRequestFailure(io, name, error);
     }

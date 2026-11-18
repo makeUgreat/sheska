@@ -87,7 +87,7 @@ export function Header() {
 
       <div className="h-10 px-4">
         <div className="mx-auto flex h-full max-w-content items-center font-mono text-code-snippet">
-          <span className={owner ? 'text-accent' : 'text-secondary'}>
+          <span className="text-accent">
             {owner ? 'owner@hash:~#' : 'visitor@hash:~$'}
           </span>
           <span className="ml-2 text-white">{toCommand(pathname)}</span>

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { type MutableRefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { countPosts, listPosts, type PostSummary } from '@/entities/post';
 import { type Viewer } from '@/entities/session';
@@ -7,10 +7,13 @@ import { useHttpClient } from '@/shared/api';
 import { formatMonthDay } from '@/shared/lib';
 import {
   printRequestFailure,
-  TerminalListRow,
+  TerminalEntryLink,
   TerminalText,
+  TerminalTree,
+  TerminalTreeRoot,
   type TerminalCommand,
-  type TerminalIo,
+  type TerminalListedEntry,
+  type TerminalTreeItem,
 } from '@/shared/ui';
 
 /** `~`는 post 목록이고 `~/sources`는 소유자에게만 있다. */
@@ -23,9 +26,8 @@ export function directoryPath(directory: Directory): string {
 const PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 100;
 
-interface Entry {
+interface Entry extends TerminalListedEntry {
   id: string;
-  title: string;
   date: string;
 }
 
@@ -33,16 +35,18 @@ export function useBrowseCommands({
   viewer,
   directory,
   onDirectoryChange,
+  recent,
 }: {
   viewer: Viewer;
   directory: Directory;
   onDirectoryChange: (directory: Directory) => void;
+  /** 방금 보인 목록. `grep`도 여기에 쓴다. */
+  recent: MutableRefObject<TerminalListedEntry[]>;
 }): TerminalCommand[] {
   const http = useHttpClient();
   const navigate = useNavigate();
-  const listed = useRef<Record<Directory, Entry[]>>({ home: [], sources: [] });
-
-  const where: Directory = viewer === 'owner' ? directory : 'home';
+  const owner = viewer === 'owner';
+  const where: Directory = owner ? directory : 'home';
 
   async function fetchPosts(all: boolean) {
     if (!all) {
@@ -78,14 +82,15 @@ export function useBrowseCommands({
     return { entries: sources.map(sourceEntry), total };
   }
 
-  async function fetchEverything() {
+  async function countSources() {
+    const { totalCount } = await listSources(http, { page: 1, pageSize: 1 });
+    return totalCount;
+  }
+
+  async function fetchEverything(): Promise<TerminalListedEntry[]> {
     const { entries } =
       where === 'home' ? await fetchPosts(true) : await fetchSources(true);
     return entries;
-  }
-
-  function linkOf(entry: Entry) {
-    return where === 'home' ? `/posts/${entry.id}` : `/sources/${entry.id}`;
   }
 
   const ls: TerminalCommand = {
@@ -104,46 +109,49 @@ export function useBrowseCommands({
       }
       const all = args.includes('-a');
       try {
-        const { entries, total } =
-          where === 'home' ? await fetchPosts(all) : await fetchSources(all);
-        listed.current[where] = entries;
-        printListing(io, entries, total);
+        if (where === 'sources') {
+          const { entries, total } = await fetchSources(all);
+          recent.current = entries;
+          io.print(
+            <TerminalTree
+              root={<TerminalTreeRoot label="~/sources" note={notes(total)} />}
+              items={entries.map(entryItem)}
+              footer={moreFooter(entries.length, total)}
+            />,
+          );
+          return;
+        }
+        const [{ entries, total }, sourceCount] = await Promise.all([
+          fetchPosts(all),
+          owner ? countSources() : Promise.resolve(null),
+        ]);
+        recent.current = entries;
+        const folder: TerminalTreeItem[] =
+          sourceCount === null
+            ? []
+            : [
+                {
+                  key: 'sources',
+                  head: (
+                    <TerminalTreeRoot
+                      label="sources/"
+                      note={notes(sourceCount)}
+                    />
+                  ),
+                },
+              ];
+        io.print(
+          <TerminalTree
+            root={<TerminalTreeRoot label="~" note={posts(total)} />}
+            items={[...folder, ...entries.map(entryItem)]}
+            footer={moreFooter(entries.length, total)}
+          />,
+        );
       } catch (error) {
         printRequestFailure(io, 'ls', error);
       }
     },
   };
-
-  function printListing(io: TerminalIo, entries: Entry[], total: number) {
-    if (where === 'home' && viewer === 'owner') {
-      io.print(<TerminalText>sources/</TerminalText>);
-    }
-    if (entries.length === 0) {
-      io.print(
-        <TerminalText tone="muted">
-          {where === 'home' ? 'no posts yet' : 'no sources yet'}
-        </TerminalText>,
-      );
-      return;
-    }
-    for (const entry of entries) {
-      io.print(
-        <TerminalListRow
-          date={formatMonthDay(entry.date)}
-          title={entry.title}
-          to={linkOf(entry)}
-        />,
-      );
-    }
-    if (total > entries.length) {
-      io.print(
-        <TerminalText tone="muted">
-          showing {entries.length} of {total.toLocaleString('en-US')} · ls -a
-          for all
-        </TerminalText>,
-      );
-    }
-  }
 
   const cat: TerminalCommand = {
     name: 'cat',
@@ -159,7 +167,7 @@ export function useBrowseCommands({
       }
       try {
         const entry =
-          findEntry(listed.current[where], target) ??
+          findEntry(recent.current, target) ??
           findEntry(await fetchEverything(), target);
         if (!entry) {
           io.print(
@@ -169,26 +177,28 @@ export function useBrowseCommands({
           );
           return;
         }
-        navigate(linkOf(entry));
+        navigate(entry.to);
       } catch (error) {
         printRequestFailure(io, 'cat', error);
       }
     },
-    complete: (argument) =>
-      listed.current[where]
+    complete: (argument) => {
+      const typed = argument.toLowerCase();
+      return recent.current
         .map((entry) => entry.title)
-        .filter((title) => title.startsWith(argument)),
+        .filter((title) => title.toLowerCase().startsWith(typed));
+    },
   };
 
   const cd: TerminalCommand = {
     name: 'cd',
     usage: 'cd <dir>',
     summary: 'move to a folder',
-    hidden: viewer !== 'owner',
+    hidden: !owner,
     run(args, io) {
       const target = args[0] ?? '~';
       const next = resolveDirectory(target, where);
-      if (!next || (next === 'sources' && viewer !== 'owner')) {
+      if (!next || (next === 'sources' && !owner)) {
         io.print(
           <TerminalText tone="error">
             cd: no such file or directory: {target}
@@ -198,26 +208,69 @@ export function useBrowseCommands({
       }
       onDirectoryChange(next);
     },
-    complete: () => (viewer === 'owner' && where === 'home' ? ['sources'] : []),
+    complete: () => (owner && where === 'home' ? ['sources'] : []),
   };
 
   return [ls, cat, cd];
 }
 
+function entryItem(entry: Entry): TerminalTreeItem {
+  return {
+    key: entry.id,
+    head: (
+      <TerminalEntryLink
+        title={entry.title}
+        to={entry.to}
+        date={formatMonthDay(entry.date)}
+      />
+    ),
+  };
+}
+
+function moreFooter(shown: number, total: number) {
+  return total > shown
+    ? `… ${(total - shown).toLocaleString('en-US')} more · ls -a`
+    : undefined;
+}
+
+function posts(count: number) {
+  return `${count.toLocaleString('en-US')} ${count === 1 ? 'post' : 'posts'}`;
+}
+
+function notes(count: number) {
+  return `${count.toLocaleString('en-US')} ${count === 1 ? 'note' : 'notes'}`;
+}
+
 function postEntry(post: PostSummary): Entry {
-  return { id: post.postId, title: post.title, date: post.createdAt };
+  return {
+    id: post.postId,
+    title: post.title,
+    date: post.createdAt,
+    to: `/posts/${post.postId}`,
+  };
 }
 
 function sourceEntry(source: SourceSummary): Entry {
-  return { id: source.sourceId, title: source.title, date: source.updatedAt };
+  return {
+    id: source.sourceId,
+    title: source.title,
+    date: source.updatedAt,
+    to: `/sources/${source.sourceId}`,
+  };
 }
 
-function findEntry(entries: Entry[], target: string): Entry | undefined {
+/** 제목이 같거나, 앞부분이 한 항목에만 맞으면 그 항목을 고른다. */
+function findEntry(
+  entries: TerminalListedEntry[],
+  target: string,
+): TerminalListedEntry | undefined {
   const wanted = target.toLowerCase();
-  return (
-    entries.find((entry) => entry.id === target) ??
-    entries.find((entry) => entry.title.toLowerCase() === wanted)
+  const exact = entries.find((entry) => entry.title.toLowerCase() === wanted);
+  if (exact) return exact;
+  const prefixed = entries.filter((entry) =>
+    entry.title.toLowerCase().startsWith(wanted),
   );
+  return prefixed.length === 1 ? prefixed[0] : undefined;
 }
 
 function resolveDirectory(

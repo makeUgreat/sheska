@@ -58,9 +58,9 @@ function buildMockHttpClient({
                 ? [
                     {
                       ...POST,
-                      matchReason: 'keyword',
-                      similarity: null,
-                      snippet: null,
+                      matchReason: 'both',
+                      similarity: 92,
+                      snippet: '세션 토큰은 Redis에\n저장한다',
                     },
                   ]
                 : [],
@@ -115,7 +115,7 @@ async function typeCommand(prompt: string | RegExp, line: string) {
 }
 
 describe('LandingPage terminal', () => {
-  it('ls는 최신 post를 링크로 보이고 전체 수를 알린다', async () => {
+  it('ls는 최신 post를 tree로 보이고 남은 수를 알린다', async () => {
     const { client } = buildMockHttpClient();
     renderPage(client);
 
@@ -124,7 +124,8 @@ describe('LandingPage terminal', () => {
     const log = screen.getByRole('log');
     const link = await within(log).findByRole('link', { name: POST.title });
     expect(link.getAttribute('href')).toBe('/posts/post-1');
-    expect(within(log).getByText(/showing 1 of 12/)).toBeDefined();
+    expect(within(log).getByText(/12 posts/)).toBeDefined();
+    expect(within(log).getByText(/… 11 more · ls -a/)).toBeDefined();
   });
 
   it('cat은 제목으로 post 상세 페이지로 이동한다', async () => {
@@ -143,14 +144,43 @@ describe('LandingPage terminal', () => {
     await typeCommand('visitor@hash:~$', 'grep redis');
 
     const log = screen.getByRole('log');
-    expect(
-      await within(log).findByText('1 post matches "redis"'),
-    ).toBeDefined();
-    expect(within(log).getByRole('link', { name: POST.title })).toBeDefined();
+    expect(await within(log).findByText(/1 match/)).toBeDefined();
+    expect(within(log).getByText(/세션 토큰은/).textContent).toBe(
+      '세션 토큰은 Redis에 저장한다',
+    );
+    // 강조한 부분이 링크 안에서 별도 요소라서 이름 대신 글자로 찾는다.
+    const link = within(log).getByRole('link', {
+      name: /에 로그인 세션 저장하기/,
+    });
+    expect(link.textContent).toBe(POST.title);
+    expect(within(link).getByText('Redis', { selector: 'mark' })).toBeDefined();
     expect(get).toHaveBeenCalledWith('/posts/search', expect.anything(), {
       q: 'redis',
       limit: '10',
     });
+  });
+
+  it('grep 뒤에 cat과 Tab을 누르면 결과 제목을 채운다', async () => {
+    const { client } = buildMockHttpClient();
+    renderPage(client);
+
+    const user = await typeCommand('visitor@hash:~$', 'grep redis');
+    await within(screen.getByRole('log')).findByText(/1 match/);
+    const input = screen.getByLabelText('visitor@hash:~$');
+    await user.type(input, 'cat re{Tab}');
+
+    expect((input as HTMLInputElement).value).toBe(`cat ${POST.title}`);
+  });
+
+  it('cat은 제목 앞부분이 한 글에만 맞으면 그 글을 연다', async () => {
+    const { client } = buildMockHttpClient();
+    renderPage(client);
+
+    await typeCommand('visitor@hash:~$', 'ls');
+    await within(screen.getByRole('log')).findByText(/12 posts/);
+    await typeCommand('visitor@hash:~$', 'cat redis');
+
+    expect(await screen.findByText('post detail post-1')).toBeDefined();
   });
 
   it('방문자에게 sources 폴더는 없는 것으로 답한다', async () => {

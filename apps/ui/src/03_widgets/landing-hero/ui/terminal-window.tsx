@@ -2,12 +2,10 @@ import { type ReactNode } from 'react';
 import { TrafficLights } from '@/shared/ui';
 
 export function TerminalWindow({
-  title,
   yellowLabel,
   onYellowClick,
   children,
 }: {
-  title: string;
   yellowLabel: string;
   onYellowClick: () => void;
   children: ReactNode;
@@ -19,9 +17,6 @@ export function TerminalWindow({
           yellowLabel={yellowLabel}
           onYellowClick={onYellowClick}
         />
-        <span className="ml-4 font-mono text-[13px] leading-[18px] text-white/40">
-          {title}
-        </span>
       </div>
       <div className="flex h-[450px] flex-col font-mono text-display-terminal-mobile text-on-surface sm:text-display-terminal">
         {children}

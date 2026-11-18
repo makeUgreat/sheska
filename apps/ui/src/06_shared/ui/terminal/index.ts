@@ -1,5 +1,12 @@
 export { Terminal } from './ui/terminal';
-export { TerminalListRow, TerminalText } from './ui/terminal-output';
+export {
+  TerminalEntryLink,
+  TerminalHighlight,
+  TerminalText,
+  TerminalTree,
+  TerminalTreeRoot,
+  type TerminalTreeItem,
+} from './ui/terminal-output';
 export { printRequestFailure } from './ui/request-failure';
 export { clearCommand } from './model/clear-command';
 export type {
@@ -7,5 +14,6 @@ export type {
   TerminalCommand,
   TerminalHandle,
   TerminalIo,
+  TerminalListedEntry,
   TerminalLaunchState,
 } from './model/types';

@@ -54,7 +54,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     {
       commands,
       prompt,
-      promptClassName = 'text-secondary',
+      promptClassName = 'text-accent',
       banner,
       className = '',
     },
@@ -232,8 +232,9 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
       const command = latestCommands.current.find((c) => c.name === name);
       const argument = rest.join(' ');
       const candidates = command?.complete?.(argument) ?? [];
+      // 후보는 명령이 고른다. 대소문자를 가리지 않는 비교도 명령의 몫이다.
       applyCompletion(
-        candidates.filter((c) => c.startsWith(argument)),
+        candidates,
         (match) => `${name} ${match}`,
         argument,
         name,
