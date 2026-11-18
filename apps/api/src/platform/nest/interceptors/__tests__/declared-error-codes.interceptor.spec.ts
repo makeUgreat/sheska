@@ -1,4 +1,5 @@
 import { type CallHandler, type ExecutionContext } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { firstValueFrom, throwError } from 'rxjs';
 import { describe, expect, it } from 'vitest';
 import { NotFoundError, UnavailableError } from '@core/errors';
@@ -10,6 +11,16 @@ class Handlers {
   declared(this: void): void {}
 
   undeclared(this: void): void {}
+}
+
+function wrappedLikeOpenTelemetry(handler: () => void): () => void {
+  const wrapped = (): void => {
+    handler();
+  };
+  for (const key of Reflect.getMetadataKeys(handler)) {
+    Reflect.defineMetadata(key, Reflect.getMetadata(key, handler), wrapped);
+  }
+  return wrapped;
 }
 
 function contextOf(handler: () => void): ExecutionContext {
@@ -24,7 +35,7 @@ async function rejectionOf(
   handler: () => void,
   error: unknown,
 ): Promise<unknown> {
-  const interceptor = new DeclaredErrorCodesInterceptor();
+  const interceptor = new DeclaredErrorCodesInterceptor(new Reflector());
 
   return firstValueFrom(
     interceptor.intercept(contextOf(handler), failingWith(error)),
@@ -40,6 +51,15 @@ const notFound = new NotFoundError({
 describe('DeclaredErrorCodesInterceptor', () => {
   it('handler가 선언한 code의 error는 그대로 전달한다', async () => {
     const rejected = await rejectionOf(Handlers.prototype.declared, notFound);
+
+    expect(rejected).toBe(notFound);
+  });
+
+  it('handler를 감싼 함수가 metadata만 복사해도 선언한 code의 error를 그대로 전달한다', async () => {
+    const rejected = await rejectionOf(
+      wrappedLikeOpenTelemetry(Handlers.prototype.declared),
+      notFound,
+    );
 
     expect(rejected).toBe(notFound);
   });

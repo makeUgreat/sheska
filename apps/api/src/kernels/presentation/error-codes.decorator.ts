@@ -1,11 +1,3 @@
-const declaredErrorCodes = new WeakMap<object, readonly string[]>();
+import { Reflector } from '@nestjs/core';
 
-export function ErrorCodes(codes: readonly string[]): MethodDecorator {
-  return (_target, _propertyKey, descriptor) => {
-    declaredErrorCodes.set(descriptor.value as object, codes);
-  };
-}
-
-export function declaredErrorCodesOf(handler: object): readonly string[] {
-  return declaredErrorCodes.get(handler) ?? [];
-}
+export const ErrorCodes = Reflector.createDecorator<readonly string[]>();
