@@ -5,6 +5,7 @@ export {
   sliceForCursor,
 } from './cursor.paginator';
 export { DATABASE_TOKENS } from './database.tokens';
+export { REDIS_TOKENS } from './redis.tokens';
 export {
   classifyPostgresError,
   type PostgresErrorClass,

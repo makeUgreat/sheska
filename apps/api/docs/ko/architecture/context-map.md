@@ -17,6 +17,8 @@ related:
 - `ingestion` (지원): 본문의 청크 분할, 임베딩과 저장, 검색 질의 임베딩
   - source, post, 동기화 클라이언트를 모름. 본문을 임베딩으로 바꾸는 능력만 제공함
   - 임베딩 품질을 정하는 결정은 `ingestion`에 둠
+- `iam` (지원): 소유자 인증, 세션, API 토큰
+  - 누가 요청했는지만 판단함. source, post 같은 `library`의 개념을 모름
 
 ## 의존 관계
 - 다른 bounded context의 aggregate는 식별자로만 참조함

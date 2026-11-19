@@ -1,15 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { queueConfig } from '../queue.config';
+import { redisConfig } from '../redis.config';
 
-describe('queueConfig', () => {
+describe('redisConfig', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
   });
 
-  it('REDIS_URL이 유효하면 큐 설정을 돌려준다', () => {
+  it('REDIS_URL이 유효하면 Redis 설정을 돌려준다', () => {
     vi.stubEnv('REDIS_URL', 'redis://localhost:6379');
 
-    expect(queueConfig()).toEqual({ redisUrl: 'redis://localhost:6379' });
+    expect(redisConfig()).toEqual({ redisUrl: 'redis://localhost:6379' });
   });
 
   it.each([undefined, '', 'not-a-url'])(
@@ -17,7 +17,7 @@ describe('queueConfig', () => {
     (value) => {
       vi.stubEnv('REDIS_URL', value);
 
-      expect(() => queueConfig()).toThrow('REDIS_URL');
+      expect(() => redisConfig()).toThrow('REDIS_URL');
     },
   );
 });

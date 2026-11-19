@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { IamModule } from '@contexts/iam';
+import { ownerPasswordSecretConfig } from '@contexts/iam/infrastructure/owner-password/secret/owner-password.secret.config';
 import { LibraryModule } from '@contexts/library/library.module';
 import { ollamaConfig } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.config';
 import { IngestionModule } from '@contexts/ingestion/ingestion.module';
@@ -16,8 +18,9 @@ import { DeclaredErrorCodesInterceptor } from './interceptors/declared-error-cod
 import { loggerConfig } from './logger/logger.config';
 import { LoggerModule } from './logger/logger.module';
 import { OutboxModule } from './outbox/outbox.module';
-import { queueConfig } from './queue/queue.config';
 import { QueueModule } from './queue/queue.module';
+import { redisConfig } from './redis/redis.config';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -28,19 +31,22 @@ import { QueueModule } from './queue/queue.module';
         databaseConfig,
         httpConfig,
         loggerConfig,
-        queueConfig,
+        redisConfig,
         ollamaConfig,
         attachmentContentS3Config,
+        ownerPasswordSecretConfig,
       ],
     }),
     LoggerModule,
     EventEmitterModule.forRoot({ wildcard: false }),
     IntegrationEventsModule,
     QueueModule,
+    RedisModule,
     DatabaseModule,
     HealthModule,
     LibraryModule.forRoot(),
     IngestionModule.forRoot(),
+    IamModule.forRoot(),
     OutboxModule,
   ],
   providers: [

@@ -35,6 +35,8 @@ spec:
               value: /run/secrets/attachment-storage/access-key-id
             - name: ATTACHMENT_STORAGE_SECRET_ACCESS_KEY_FILE
               value: /run/secrets/attachment-storage/secret-access-key
+            - name: OWNER_PASSWORD_FILE
+              value: /run/secrets/owner-password/password
             - name: CORS_ORIGINS
               value: {{ required "config.corsOrigins가 필요합니다." .Values.config.corsOrigins | quote }}
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
@@ -72,11 +74,17 @@ spec:
             - name: attachment-storage
               mountPath: /run/secrets/attachment-storage
               readOnly: true
+            - name: owner-password
+              mountPath: /run/secrets/owner-password
+              readOnly: true
       volumes:
         {{- include "sheska-api.databaseVolume" . | nindent 8 }}
         - name: attachment-storage
           secret:
             secretName: {{ .Values.attachmentStorage.secretName }}
+        - name: owner-password
+          secret:
+            secretName: {{ .Values.ownerPassword.secretName }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
