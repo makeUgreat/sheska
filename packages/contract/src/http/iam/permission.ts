@@ -11,18 +11,8 @@ export const Permission = {
   SOURCES_READ: 'sources:read',
   /** 올린 노트를 블로그 글로 공개한다. */
   POSTS_PUBLISH: 'posts:publish',
-  /** API 토큰을 발급하고, 목록을 보고, 폐기한다. 로그인 세션만 가진다. */
-  API_TOKENS_MANAGE: 'api_tokens:manage',
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
 
-/** API 토큰에 줄 수 있는 권한. 토큰이 다른 토큰을 만들지 못하게 `api_tokens:manage`는 뺀다. */
-export const GRANTABLE_PERMISSIONS = [
-  Permission.SOURCES_SYNC,
-  Permission.SOURCES_READ,
-  Permission.POSTS_PUBLISH,
-] as const;
-
 export const permissionSchema = z.enum(Permission);
-export const grantablePermissionSchema = z.enum(GRANTABLE_PERMISSIONS);

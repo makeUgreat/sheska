@@ -7,11 +7,12 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
  * 이 API를 부를 수 있는 사람이다.
  * - `public`: 누구나 부른다. 요청에 든 인증 정보는 보지 않는다.
  * - `authenticated`: 로그인 세션 쿠키나 `Authorization: Bearer <API 토큰>`으로 인증한 요청만 부른다.
+ * - `session`: 로그인 세션으로 인증한 요청만 부른다. API 토큰을 만들고 지우는 일처럼 비밀번호를 아는 사람이 직접 해야 하는 일이다.
  * - 권한 이름: 인증한 요청 중 그 권한을 가진 요청만 부른다. 로그인 세션은 모든 권한을 가진다.
  *
- * 인증에 실패하면 401 `auth.unauthenticated`, 권한이 없으면 403 `auth.forbidden`이다.
+ * 인증에 실패하면 401 `auth.unauthenticated`, 권한이 없거나 `session` API를 API 토큰으로 부르면 403 `auth.forbidden`이다.
  */
-export type ApiAccess = 'public' | 'authenticated' | Permission;
+export type ApiAccess = 'public' | 'authenticated' | 'session' | Permission;
 
 export interface ApiContract {
   readonly method: HttpMethod;

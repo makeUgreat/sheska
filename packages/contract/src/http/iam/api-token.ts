@@ -1,6 +1,6 @@
 import * as z from 'zod';
 import { defineApi } from '../api.js';
-import { grantablePermissionSchema, Permission } from './permission.js';
+import { permissionSchema } from './permission.js';
 import { CommonErrorCode } from '../error.js';
 import { AuthErrorCode } from './auth.js';
 
@@ -22,7 +22,7 @@ const apiTokenSchema = z.object({
   /** 원문의 앞 몇 글자. 어느 토큰인지 알아보는 데만 쓴다. 이것으로 인증할 수 없다. */
   hint: z.string(),
   /** 이 토큰이 가진 권한 */
-  permissions: z.array(grantablePermissionSchema),
+  permissions: z.array(permissionSchema),
   createdAt: z.iso.datetime(),
   /** 이 토큰으로 인증한 마지막 시각. 한 번도 쓰지 않았으면 `null`이다. */
   lastUsedAt: z.iso.datetime().nullable(),
@@ -46,11 +46,11 @@ export const ApiTokenApi = {
   issue: defineApi({
     method: 'POST',
     path: '/api-tokens',
-    access: Permission.API_TOKENS_MANAGE,
+    access: 'session',
     request: z.strictObject({
       name: nameSchema,
       /** 이 토큰에 줄 권한. 하나 이상이고 같은 권한은 한 번만 남긴다. */
-      permissions: z.array(grantablePermissionSchema).min(1),
+      permissions: z.array(permissionSchema).min(1),
     }),
     response: apiTokenSchema.extend({
       token: z.string().startsWith(API_TOKEN_PREFIX),
@@ -67,7 +67,7 @@ export const ApiTokenApi = {
   list: defineApi({
     method: 'GET',
     path: '/api-tokens',
-    access: Permission.API_TOKENS_MANAGE,
+    access: 'session',
     response: z.object({ apiTokens: z.array(apiTokenSchema) }),
     errors: [AuthErrorCode.UNAUTHENTICATED, AuthErrorCode.FORBIDDEN],
   }),
@@ -76,7 +76,7 @@ export const ApiTokenApi = {
   revoke: defineApi({
     method: 'DELETE',
     path: '/api-tokens/:id',
-    access: Permission.API_TOKENS_MANAGE,
+    access: 'session',
     errors: [
       AuthErrorCode.UNAUTHENTICATED,
       AuthErrorCode.FORBIDDEN,
