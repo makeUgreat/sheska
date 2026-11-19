@@ -3,11 +3,13 @@ import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as librarySchema from '@contexts/library/infrastructure/persistence/postgres-drizzle/schema';
 import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
+import * as iamSchema from '@contexts/iam/infrastructure/persistence/postgres-drizzle/schema';
 import { outboxSchema } from '@kernels/infrastructure';
 
 const schema = {
   ...librarySchema,
   ...ingestionSchema,
+  ...iamSchema,
   ...outboxSchema,
 };
 
