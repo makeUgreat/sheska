@@ -43,6 +43,12 @@ function makeTab(
 }
 
 describe('SheskaSettingTab', () => {
+  it('does not define getSettingDefinitions, so Obsidian renders display()', () => {
+    expect(
+      Object.getOwnPropertyNames(SheskaSettingTab.prototype),
+    ).not.toContain('getSettingDefinitions');
+  });
+
   describe('display', () => {
     beforeEach(() => {
       renderedSettings.length = 0;
@@ -54,9 +60,7 @@ describe('SheskaSettingTab', () => {
 
       tab.display();
 
-      expect(renderedSettings).toHaveLength(
-        tab.getSettingDefinitions().length + 3,
-      );
+      expect(renderedSettings).toHaveLength(tab.describeSettings().length + 3);
     });
 
     describe('API token row', () => {
@@ -252,17 +256,17 @@ describe('SheskaSettingTab', () => {
     });
   });
 
-  describe('getSettingDefinitions', () => {
+  describe('describeSettings', () => {
     it('returns six definitions', () => {
       const tab = new SheskaSettingTab({} as never, {} as never);
 
-      expect(tab.getSettingDefinitions()).toHaveLength(6);
+      expect(tab.describeSettings()).toHaveLength(6);
     });
 
     it('defines the apiBaseUrl text control', () => {
       const tab = new SheskaSettingTab({} as never, {} as never);
 
-      expect(tab.getSettingDefinitions()[0]).toMatchObject({
+      expect(tab.describeSettings()[0]).toMatchObject({
         name: 'API base URL',
         desc: 'The base URL of your Sheska API instance.',
         control: {
@@ -276,7 +280,7 @@ describe('SheskaSettingTab', () => {
     it('defines the healthCheckIntervalMinutes number control', () => {
       const tab = new SheskaSettingTab({} as never, {} as never);
 
-      expect(tab.getSettingDefinitions()[1]).toMatchObject({
+      expect(tab.describeSettings()[1]).toMatchObject({
         name: 'Health check interval (minutes)',
         control: {
           type: 'number',
@@ -289,7 +293,7 @@ describe('SheskaSettingTab', () => {
     it('defines the autoSyncEnabled toggle control', () => {
       const tab = new SheskaSettingTab({} as never, {} as never);
 
-      expect(tab.getSettingDefinitions()[2]).toMatchObject({
+      expect(tab.describeSettings()[2]).toMatchObject({
         name: 'Auto-sync enabled',
         control: {
           type: 'toggle',
@@ -301,7 +305,7 @@ describe('SheskaSettingTab', () => {
     it('defines the autoSyncDebounceSeconds number control', () => {
       const tab = new SheskaSettingTab({} as never, {} as never);
 
-      expect(tab.getSettingDefinitions()[3]).toMatchObject({
+      expect(tab.describeSettings()[3]).toMatchObject({
         name: 'Auto-sync debounce (seconds)',
         control: {
           type: 'number',
@@ -314,7 +318,7 @@ describe('SheskaSettingTab', () => {
     it('defines the autoSyncSweepIntervalMinutes number control', () => {
       const tab = new SheskaSettingTab({} as never, {} as never);
 
-      expect(tab.getSettingDefinitions()[4]).toMatchObject({
+      expect(tab.describeSettings()[4]).toMatchObject({
         name: 'Auto-sync sweep interval (minutes)',
         control: {
           type: 'number',
@@ -327,7 +331,7 @@ describe('SheskaSettingTab', () => {
     it('defines the syncJobReconcileIntervalMinutes number control', () => {
       const tab = new SheskaSettingTab({} as never, {} as never);
 
-      expect(tab.getSettingDefinitions()[5]).toMatchObject({
+      expect(tab.describeSettings()[5]).toMatchObject({
         name: 'Sync-job reconcile interval (minutes)',
         control: {
           type: 'number',

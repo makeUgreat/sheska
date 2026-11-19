@@ -44,7 +44,7 @@ interface ToggleControl<Key extends keyof SheskaSettings> {
   key: Key;
 }
 
-interface SettingDefinition<Key extends keyof SheskaSettings> {
+interface SettingRow<Key extends keyof SheskaSettings> {
   name: string;
   desc: string;
   control: TextControl<Key> | NumberControl<Key> | ToggleControl<Key>;
@@ -58,7 +58,9 @@ export class SheskaSettingTab extends PluginSettingTab {
     this.pluginWithSettings = plugin;
   }
 
-  getSettingDefinitions(): SettingDefinition<keyof SheskaSettings>[] {
+  // Obsidian 1.13부터 getSettingDefinitions()가 있으면 display() 대신 그 정의로 화면을 그린다.
+  // 그러면 토큰 칸과 버튼이 빠지고 값은 data.json 전체를 settings로 덮어써 저장된다.
+  describeSettings(): SettingRow<keyof SheskaSettings>[] {
     return [
       {
         name: 'API base URL',
@@ -120,7 +122,7 @@ export class SheskaSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    for (const def of this.getSettingDefinitions()) {
+    for (const def of this.describeSettings()) {
       const setting = new Setting(containerEl)
         .setName(def.name)
         .setDesc(def.desc);
