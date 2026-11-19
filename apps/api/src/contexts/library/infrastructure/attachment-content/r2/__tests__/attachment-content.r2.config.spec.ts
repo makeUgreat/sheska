@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { attachmentContentS3Config } from '../attachment-content.s3.config';
+import { attachmentContentR2Config } from '../attachment-content.r2.config';
 
 const VALID_ENV = {
   ATTACHMENT_STORAGE_ENDPOINT: 'https://account.r2.cloudflarestorage.com',
@@ -15,11 +15,11 @@ function stubEnv(env: Record<string, string | undefined>): void {
   for (const [name, value] of Object.entries(env)) vi.stubEnv(name, value);
 }
 
-describe('attachmentContentS3Config', () => {
+describe('attachmentContentR2Config', () => {
   let directory: string;
 
   beforeEach(() => {
-    directory = mkdtempSync(join(tmpdir(), 'attachment-content-s3-'));
+    directory = mkdtempSync(join(tmpdir(), 'attachment-content-r2-'));
   });
 
   afterEach(() => {
@@ -30,7 +30,7 @@ describe('attachmentContentS3Config', () => {
   it('환경 변수가 모두 있으면 저장소 설정을 돌려준다', () => {
     stubEnv(VALID_ENV);
 
-    expect(attachmentContentS3Config()).toEqual({
+    expect(attachmentContentR2Config()).toEqual({
       endpoint: 'https://account.r2.cloudflarestorage.com',
       bucket: 'sheska-attachments',
       accessKeyId: 'access-key-id',
@@ -41,13 +41,13 @@ describe('attachmentContentS3Config', () => {
   it.each(Object.keys(VALID_ENV))('%s가 없으면 거부한다', (name) => {
     stubEnv({ ...VALID_ENV, [name]: undefined });
 
-    expect(() => attachmentContentS3Config()).toThrow(name);
+    expect(() => attachmentContentR2Config()).toThrow(name);
   });
 
   it('ATTACHMENT_STORAGE_ENDPOINT가 URL이 아니면 거부한다', () => {
     stubEnv({ ...VALID_ENV, ATTACHMENT_STORAGE_ENDPOINT: 'not-a-url' });
 
-    expect(() => attachmentContentS3Config()).toThrow('ATTACHMENT_STORAGE_ENDPOINT');
+    expect(() => attachmentContentR2Config()).toThrow('ATTACHMENT_STORAGE_ENDPOINT');
   });
 
   it.each([
@@ -58,6 +58,6 @@ describe('attachmentContentS3Config', () => {
     writeFileSync(path, 'from-file\n');
     stubEnv({ ...VALID_ENV, [name]: undefined, [`${name}_FILE`]: path });
 
-    expect(attachmentContentS3Config()).toMatchObject({ [field]: 'from-file' });
+    expect(attachmentContentR2Config()).toMatchObject({ [field]: 'from-file' });
   });
 });

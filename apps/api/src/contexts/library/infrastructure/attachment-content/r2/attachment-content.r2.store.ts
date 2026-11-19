@@ -4,18 +4,18 @@ import { BadResponseError, TimeoutError, UnavailableError } from '@core/errors';
 import { type CallContext } from '@core/call-context';
 import { classifyInfrastructureRetry, resiliencePipeline, type ResilienceAttempt } from '@kernels/infrastructure';
 import type { AttachmentContentStore, AttachmentImageMediaType } from '@contexts/library/application/ports';
-import { attachmentContentS3Config, type AttachmentContentS3Config } from './attachment-content.s3.config';
+import { attachmentContentR2Config, type AttachmentContentR2Config } from './attachment-content.r2.config';
 
 const OBJECT_KEY_PREFIX = 'vault/';
 const CACHE_CONTROL = 'no-cache';
 
 @Injectable()
-export class AttachmentContentS3Store implements AttachmentContentStore {
+export class AttachmentContentR2Store implements AttachmentContentStore {
   private readonly client: S3Client;
 
   constructor(
-    @Inject(attachmentContentS3Config.KEY)
-    private readonly config: AttachmentContentS3Config,
+    @Inject(attachmentContentR2Config.KEY)
+    private readonly config: AttachmentContentR2Config,
   ) {
     this.client = new S3Client({
       endpoint: config.endpoint,
@@ -64,23 +64,23 @@ function toStorageError(error: unknown, attempt: ResilienceAttempt): BadResponse
   if (error instanceof S3ServiceException) {
     const statusCode = error.$metadata.httpStatusCode ?? 500;
     return new BadResponseError({
-      code: 's3.bad_response',
-      message: `S3 returned an error response: ${statusCode} ${error.name}`,
+      code: 'r2.bad_response',
+      message: `R2 returned an error response: ${statusCode} ${error.name}`,
       details: { statusCode },
       cause: error,
     });
   }
   if (attempt.signal.aborted) {
     return new TimeoutError({
-      code: 's3.request_timeout',
-      message: 'S3 did not respond in time',
+      code: 'r2.request_timeout',
+      message: 'R2 did not respond in time',
       details: { deadlineBound: attempt.deadlineBound },
       cause: error,
     });
   }
   return new UnavailableError({
-    code: 's3.request_failed',
-    message: 'S3 is unavailable',
+    code: 'r2.request_failed',
+    message: 'R2 is unavailable',
     details: {},
     cause: error,
   });

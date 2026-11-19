@@ -1,7 +1,7 @@
 import { PutObjectCommand, S3Client, S3ServiceException } from '@aws-sdk/client-s3';
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { callContext } from '@core/call-context';
-import { AttachmentContentS3Store } from '../attachment-content.s3.store';
+import { AttachmentContentR2Store } from '../attachment-content.r2.store';
 
 const CONFIG = {
   endpoint: 'https://account.r2.cloudflarestorage.com',
@@ -28,13 +28,13 @@ const abortWhenSignalled: Send = (_command, options) => {
   });
 };
 
-describe('AttachmentContentS3Store', () => {
+describe('AttachmentContentR2Store', () => {
   let send: MockInstance<Send>;
-  let store: AttachmentContentS3Store;
+  let store: AttachmentContentR2Store;
 
   beforeEach(() => {
     send = vi.spyOn(S3Client.prototype, 'send');
-    store = new AttachmentContentS3Store(CONFIG);
+    store = new AttachmentContentR2Store(CONFIG);
   });
 
   afterEach(() => {
@@ -57,7 +57,7 @@ describe('AttachmentContentS3Store', () => {
     });
   });
 
-  it('S3가 재시도 가능한 5xx로 한 번 실패하면 다시 보내서 저장한다', async () => {
+  it('R2가 재시도 가능한 5xx로 한 번 실패하면 다시 보내서 저장한다', async () => {
     send.mockRejectedValueOnce(serviceError('SlowDown', 503)).mockResolvedValueOnce({});
 
     await store.put('att/a.png', DATA, 'image/png', callContext({ deadlineMs: 5_000, maxRetries: 2 }));
@@ -65,23 +65,23 @@ describe('AttachmentContentS3Store', () => {
     expect(send).toHaveBeenCalledTimes(2);
   });
 
-  it('S3가 4xx로 거부하면 재시도하지 않고 BadResponseError를 던진다', async () => {
+  it('R2가 4xx로 거부하면 재시도하지 않고 BadResponseError를 던진다', async () => {
     send.mockRejectedValue(serviceError('AccessDenied', 403));
 
     await expect(store.put('att/a.png', DATA, 'image/png', callContext({ deadlineMs: 5_000, maxRetries: 2 }))).rejects.toMatchObject({
       kind: 'bad_response',
-      code: 's3.bad_response',
+      code: 'r2.bad_response',
       details: { statusCode: 403 },
     });
     expect(send).toHaveBeenCalledOnce();
   });
 
-  it('S3에 닿지 못하면 maxRetries만큼 재시도한 뒤 UnavailableError를 던진다', async () => {
+  it('R2에 닿지 못하면 maxRetries만큼 재시도한 뒤 UnavailableError를 던진다', async () => {
     send.mockRejectedValue(new Error('connect ECONNREFUSED'));
 
     await expect(store.put('att/a.png', DATA, 'image/png', callContext({ deadlineMs: 5_000, maxRetries: 1 }))).rejects.toMatchObject({
       kind: 'unavailable',
-      code: 's3.request_failed',
+      code: 'r2.request_failed',
     });
     expect(send).toHaveBeenCalledTimes(2);
   });
@@ -91,7 +91,7 @@ describe('AttachmentContentS3Store', () => {
 
     await expect(store.put('att/a.png', DATA, 'image/png', callContext({ deadlineMs: 50, maxRetries: 0 }))).rejects.toMatchObject({
       kind: 'timeout',
-      code: 's3.request_timeout',
+      code: 'r2.request_timeout',
       details: { deadlineBound: true },
     });
   });

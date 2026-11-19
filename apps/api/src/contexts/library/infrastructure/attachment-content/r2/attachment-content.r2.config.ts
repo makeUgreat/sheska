@@ -2,7 +2,7 @@ import { type ConfigType, registerAs } from '@nestjs/config';
 import { z } from 'zod';
 import { withFileSecrets } from '@kernels/infrastructure';
 
-const attachmentContentS3EnvSchema = z.object({
+const attachmentContentR2EnvSchema = z.object({
   /** S3 API 주소. 예: `https://<account id>.r2.cloudflarestorage.com` */
   ATTACHMENT_STORAGE_ENDPOINT: z.url(),
   ATTACHMENT_STORAGE_BUCKET: z.string().min(1),
@@ -12,8 +12,8 @@ const attachmentContentS3EnvSchema = z.object({
   ATTACHMENT_STORAGE_SECRET_ACCESS_KEY: z.string().min(1),
 });
 
-export const attachmentContentS3Config = registerAs('attachmentContentS3', () => {
-  const result = attachmentContentS3EnvSchema.safeParse(
+export const attachmentContentR2Config = registerAs('attachmentContentR2', () => {
+  const result = attachmentContentR2EnvSchema.safeParse(
     withFileSecrets(process.env, ['ATTACHMENT_STORAGE_ACCESS_KEY_ID', 'ATTACHMENT_STORAGE_SECRET_ACCESS_KEY']),
   );
   if (!result.success) {
@@ -28,4 +28,4 @@ export const attachmentContentS3Config = registerAs('attachmentContentS3', () =>
   };
 });
 
-export type AttachmentContentS3Config = ConfigType<typeof attachmentContentS3Config>;
+export type AttachmentContentR2Config = ConfigType<typeof attachmentContentR2Config>;
