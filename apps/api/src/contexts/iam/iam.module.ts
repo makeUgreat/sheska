@@ -1,4 +1,7 @@
 import { Module, type DynamicModule } from '@nestjs/common';
+import { IssueApiTokenUseCase } from '@contexts/iam/application/use-cases/issue-api-token.use-case';
+import { ListApiTokensUseCase } from '@contexts/iam/application/use-cases/list-api-tokens.use-case';
+import { RevokeApiTokenUseCase } from '@contexts/iam/application/use-cases/revoke-api-token.use-case';
 import { GetSessionUseCase } from '@contexts/iam/application/use-cases/get-session.use-case';
 import { LogInUseCase } from '@contexts/iam/application/use-cases/log-in.use-case';
 import { LogOutUseCase } from '@contexts/iam/application/use-cases/log-out.use-case';
@@ -7,6 +10,7 @@ import { ApiTokenPgDrizzleRepository } from '@contexts/iam/infrastructure/persis
 import { LoginAttemptRedisCounter } from '@contexts/iam/infrastructure/login-attempt/redis/login-attempt.redis.counter';
 import { OwnerPasswordSecretVerifier } from '@contexts/iam/infrastructure/owner-password/secret/owner-password.secret.verifier';
 import { SessionRedisStore } from '@contexts/iam/infrastructure/session/redis/session.redis.store';
+import { ApiTokenHttpController } from '@contexts/iam/presentation/http/api-token.http.controller';
 import { AuthHttpController } from '@contexts/iam/presentation/http/auth.http.controller';
 import {
   API_TOKEN_QUERY,
@@ -21,7 +25,7 @@ export class IamModule {
   static forRoot(): DynamicModule {
     return {
       module: IamModule,
-      controllers: [AuthHttpController],
+      controllers: [AuthHttpController, ApiTokenHttpController],
       providers: [
         {
           provide: OWNER_PASSWORD_VERIFIER,
@@ -37,6 +41,9 @@ export class IamModule {
         LogInUseCase,
         LogOutUseCase,
         GetSessionUseCase,
+        IssueApiTokenUseCase,
+        ListApiTokensUseCase,
+        RevokeApiTokenUseCase,
       ],
     };
   }
