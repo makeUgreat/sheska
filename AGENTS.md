@@ -11,6 +11,7 @@ Before adding or changing a convention document (`docs/ko/`, `apps/*/docs/ko/`, 
 - Workspaces, root scripts, static harness: [Monorepo](docs/ko/monorepo.md)
 - Environment variables, env files, secrets, per-environment behavior, migrations: [Environments](docs/ko/environments.md)
 - Writing tests, choosing a test layer, cross-workspace test runtimes: [Testing](docs/ko/testing.md)
+- Code shape (blank lines in function bodies, branch order and conditions): [Code style](docs/ko/code-style.md)
 
 ## API (`apps/api/docs/ko/`)
 
