@@ -17,7 +17,7 @@ const meta = {
     onYellowClick: () => undefined,
     children: (
       <p>
-        <span className="text-secondary">visitor@hash:~$</span> <span className="text-white">ls</span>
+        <span className="text-secondary">guest@hash:~$</span> <span className="text-white">ls</span>
       </p>
     ),
   },

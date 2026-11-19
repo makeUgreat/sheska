@@ -175,8 +175,8 @@ describe('App', () => {
 
       renderApp(client, '/posts');
 
-      // 프롬프트는 누구(visitor@hash)와 위치(:~$)를 나눠 그린다.
-      expect(await screen.findByText('visitor@hash')).toBeDefined();
+      // 프롬프트는 누구(guest@hash)와 위치(:~$)를 나눠 그린다.
+      expect(await screen.findByText('guest@hash')).toBeDefined();
       expect(screen.queryByRole('link', { name: 'sources' })).toBeNull();
     });
 
@@ -198,7 +198,7 @@ describe('App', () => {
       await user.click(await screen.findByRole('button', { name: 'Log out' }));
 
       expect(client.delete).toHaveBeenCalledWith('/auth/session');
-      expect(await screen.findByLabelText('visitor@hash:~$')).toBeDefined();
+      expect(await screen.findByLabelText('guest@hash:~$')).toBeDefined();
     });
   });
 });
