@@ -1,4 +1,9 @@
-import { ApiTokenApi, pathOf } from '@sheska/contract';
+import {
+  type ApiRequest,
+  ApiTokenApi,
+  PERMISSION,
+  pathOf,
+} from '@sheska/contract';
 import { type HttpClientType as HttpClient } from '@/shared/api';
 import { type ApiToken, type IssuedApiToken } from './types';
 
@@ -8,7 +13,10 @@ export function issueApiToken(
 ): Promise<IssuedApiToken> {
   return http.post(
     ApiTokenApi.issue.path,
-    { name },
+    {
+      name,
+      permissions: [PERMISSION.SOURCES_SYNC],
+    } satisfies ApiRequest<typeof ApiTokenApi.issue>,
     ApiTokenApi.issue.response,
   );
 }
