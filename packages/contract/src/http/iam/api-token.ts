@@ -46,8 +46,7 @@ export const ApiTokenApi = {
     path: '/api-tokens',
     request: z.strictObject({ name: nameSchema }),
     response: apiTokenSchema.extend({
-      /** `API_TOKEN_PREFIX`로 시작한다. */
-      token: z.string(),
+      token: z.string().startsWith(API_TOKEN_PREFIX),
     }),
     errors: [
       CommonErrorCode.VALIDATION_FAILED,
