@@ -44,9 +44,14 @@ const SOURCE_DETAIL: GetSourceResponse = {
 
 function buildMockHttpClient(
   overrides: MockHttpClientOverrides = {},
+  { authenticated = true }: { authenticated?: boolean } = {},
 ): HttpClient {
+  let loggedIn = authenticated;
   return {
     get: vi.fn((path: string) => {
+      if (path === '/auth/session') {
+        return Promise.resolve({ authenticated: loggedIn });
+      }
       if (path === '/sources') {
         return Promise.resolve({
           sources: [SOURCE_SUMMARY],
@@ -66,6 +71,10 @@ function buildMockHttpClient(
     }),
     post: vi.fn(),
     patch: vi.fn(),
+    delete: vi.fn(() => {
+      loggedIn = false;
+      return Promise.resolve();
+    }),
     ...overrides,
   } as unknown as HttpClient;
 }
@@ -164,10 +173,43 @@ describe('App', () => {
 
     renderApp(client, '/sources/source-1');
 
-    await user.click(screen.getByRole('link', { name: 'sources' }));
+    await user.click(await screen.findByRole('link', { name: 'sources' }));
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Sources' })).toBeDefined();
+    });
+  });
+
+  describe('header', () => {
+    it('방문자에게는 sources 메뉴를 보이지 않는다', async () => {
+      const client = buildMockHttpClient({}, { authenticated: false });
+
+      renderApp(client, '/posts');
+
+      // 프롬프트는 누구(visitor@hash)와 위치(:~$)를 나눠 그린다.
+      expect(await screen.findByText('visitor@hash')).toBeDefined();
+      expect(screen.queryByRole('link', { name: 'sources' })).toBeNull();
+    });
+
+    it('방문자가 노란 점을 누르면 메인 터미널에서 su를 실행한다', async () => {
+      const user = userEvent.setup();
+      const client = buildMockHttpClient({}, { authenticated: false });
+
+      renderApp(client, '/posts');
+      await user.click(await screen.findByRole('button', { name: 'Log in' }));
+
+      expect(await screen.findByLabelText('Password:')).toBeDefined();
+    });
+
+    it('소유자가 노란 점을 누르면 로그아웃하고 sources 화면을 떠난다', async () => {
+      const user = userEvent.setup();
+      const client = buildMockHttpClient();
+
+      renderApp(client, '/sources');
+      await user.click(await screen.findByRole('button', { name: 'Log out' }));
+
+      expect(client.delete).toHaveBeenCalledWith('/auth/session');
+      expect(await screen.findByLabelText('visitor@hash:~$')).toBeDefined();
     });
   });
 });

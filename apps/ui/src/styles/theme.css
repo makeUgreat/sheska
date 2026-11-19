@@ -24,6 +24,8 @@
   --color-terminal-red: #ff5f57;
   --color-terminal-yellow: #ffbd2e;
   --color-terminal-green: #27c93f;
+  --color-terminal-output-error: #e3b341;
+  --color-terminal-output-success: #7ee787;
 
   --font-sans: "Geist", "Arial", sans-serif;
   --font-mono: "JetBrains Mono", monospace;

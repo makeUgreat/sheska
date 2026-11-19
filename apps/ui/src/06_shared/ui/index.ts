@@ -15,3 +15,23 @@ export { Pagination } from './pagination';
 export { PeekLayout } from './peek-layout';
 export { TableOfContents } from './table-of-contents';
 export { Tag } from './tag';
+export { TrafficLights } from './traffic-lights';
+export {
+  clearCommand,
+  printRequestFailure,
+  PromptText,
+  Terminal,
+  TerminalEntryLink,
+  TerminalHighlight,
+  TerminalText,
+  TerminalTree,
+  TerminalTreeRoot,
+  type TerminalTreeItem,
+  type AskOptions,
+  type TerminalCommand,
+  type TerminalHandle,
+  type TerminalIo,
+  type TerminalListedEntry,
+  type TerminalPrompt,
+  type TerminalLaunchState,
+} from './terminal';

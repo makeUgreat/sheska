@@ -20,6 +20,9 @@ related:
 - monochrome palette에 accent 색 하나만 씀. 상태는 색을 늘리지 않고 모양과 글자로 나타냄
 - 어두운 terminal 톤은 header, landing, code fence에만 씀
 - 장식은 header와 landing에만 두고 나머지 화면은 글자와 선만으로 짬. 장식이 한 곳에 모여야 앱의 정체성으로 읽힘
+- 예외로 landing 터미널 출력은 상태 색 2개를 씀. amber는 오류, 초록은 끝난 동작임. 오류가 accent와 섞여 보이지 않게 붉은 계열을 피함
+- 터미널 프롬프트의 사용자 부분, 커서, LLM 답 앞의 AI 아이콘은 accent로 씀. 링크는 primary로 씀. 소유자는 색이 아니라 이름과 `#`으로 구분함
+- 터미널 안 출력은 LLM 답을 포함해 mono 글꼴 하나로 씀. 글꼴이 바뀌면 그 부분만 다른 화면처럼 읽힘
 
 ## 화면 구성
 - post 목록은 제목과 날짜만 한 줄씩 놓음. 목록은 훑으라고 있으므로 긴 제목은 자름
