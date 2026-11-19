@@ -289,6 +289,11 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         return;
       }
       if (mode.kind !== 'idle') return;
+      // IME 조합 중에 값을 바꾸면 조합이 끝날 때 조합하던 글자가 끝에 다시 붙는다.
+      if (event.nativeEvent.isComposing) {
+        if (event.key === 'Tab') event.preventDefault();
+        return;
+      }
       if (event.key === 'Tab') {
         event.preventDefault();
         complete();

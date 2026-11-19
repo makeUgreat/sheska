@@ -1,6 +1,13 @@
 import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type TerminalCommand, type TerminalHandle } from '../model/types';
 import { Terminal } from './terminal';
@@ -116,6 +123,28 @@ describe('Terminal', () => {
     await user.type(input, 'echo a{Tab}');
 
     expect((input as HTMLInputElement).value).toBe('echo alp');
+  });
+
+  it('IME 조합 중 Tab은 값을 바꾸지 않는다', async () => {
+    const user = userEvent.setup();
+    renderTerminal();
+    const input = screen.getByLabelText('visitor@hash:~$');
+
+    await user.type(input, 'echo a');
+    fireEvent.keyDown(input, { key: 'Tab', isComposing: true });
+
+    expect((input as HTMLInputElement).value).toBe('echo a');
+  });
+
+  it('IME 조합 중 위 화살표는 값을 바꾸지 않는다', async () => {
+    const user = userEvent.setup();
+    renderTerminal();
+    const input = screen.getByLabelText('visitor@hash:~$');
+
+    await user.type(input, 'echo one{Enter}echo t');
+    fireEvent.keyDown(input, { key: 'ArrowUp', isComposing: true });
+
+    expect((input as HTMLInputElement).value).toBe('echo t');
   });
 
   it('Ctrl+L은 화면을 비운다', async () => {
