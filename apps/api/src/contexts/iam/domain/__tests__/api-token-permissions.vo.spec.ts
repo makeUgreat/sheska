@@ -1,7 +1,7 @@
 import { InvariantViolationError } from '@core/errors';
 import { describe, expect, it } from 'vitest';
 import { ApiTokenPermissions } from '../api-token-permissions.vo';
-import { Permission } from '../permission';
+import { PERMISSION } from '../permission';
 
 describe('ApiTokenPermissions', () => {
   it('같은 권한은 한 번만 남긴다', () => {
@@ -17,8 +17,8 @@ describe('ApiTokenPermissions', () => {
   it('가진 권한만 허락한다', () => {
     const permissions = ApiTokenPermissions.of(['sources:sync']);
 
-    expect(permissions.grants(Permission.SOURCES_SYNC)).toBe(true);
-    expect(permissions.grants(Permission.SOURCES_READ)).toBe(false);
+    expect(permissions.grants(PERMISSION.SOURCES_SYNC)).toBe(true);
+    expect(permissions.grants(PERMISSION.SOURCES_READ)).toBe(false);
   });
 
   it.each([

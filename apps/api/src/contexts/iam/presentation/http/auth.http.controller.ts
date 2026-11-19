@@ -11,8 +11,18 @@ import {
   Res,
 } from '@nestjs/common';
 import { type Request, type Response } from 'express';
-import { type ApiRequest, type ApiResponse, AuthApi } from '@sheska/contract';
-import { ErrorCodes, ZodValidationPipe } from '@kernels/presentation';
+import {
+  type ApiRequest,
+  type ApiResponse,
+  AuthApi,
+  PERMISSION,
+} from '@sheska/contract';
+import {
+  ErrorCodes,
+  Permission,
+  Public,
+  ZodValidationPipe,
+} from '@kernels/presentation';
 import { GetSessionUseCase } from '@contexts/iam/application/use-cases/get-session.use-case';
 import { LogInUseCase } from '@contexts/iam/application/use-cases/log-in.use-case';
 import { LogOutUseCase } from '@contexts/iam/application/use-cases/log-out.use-case';
@@ -31,6 +41,7 @@ export class AuthHttpController {
   ) {}
 
   @Post(AuthApi.logIn.path)
+  @Public()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Header('Cache-Control', 'no-store')
   @ErrorCodes(AuthApi.logIn.errors)
@@ -48,6 +59,7 @@ export class AuthHttpController {
   }
 
   @Delete(AuthApi.logOut.path)
+  @Public()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Header('Cache-Control', 'no-store')
   @ErrorCodes(AuthApi.logOut.errors)
@@ -62,6 +74,7 @@ export class AuthHttpController {
   }
 
   @Get(AuthApi.session.path)
+  @Public()
   @Header('Cache-Control', 'no-store')
   @ErrorCodes(AuthApi.session.errors)
   async session(
@@ -74,6 +87,13 @@ export class AuthHttpController {
       result satisfies ApiResponse<typeof AuthApi.session>,
     );
   }
+
+  @Get(AuthApi.syncCheck.path)
+  @Permission(PERMISSION.SOURCES_SYNC)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Header('Cache-Control', 'no-store')
+  @ErrorCodes(AuthApi.syncCheck.errors)
+  syncCheck(): void {}
 }
 
 function clientAddressOf(request: Request): string {

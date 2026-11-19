@@ -85,4 +85,8 @@ describe('ApiToken', () => {
     expect(token.tryRecordUse(at)).toBe(true);
     expect(token.getProps().lastUsedAt).toEqual(at);
   });
+
+  it('가진 권한을 알려 준다', () => {
+    expect(restore().grantedPermissions()).toEqual(['sources:sync']);
+  });
 });

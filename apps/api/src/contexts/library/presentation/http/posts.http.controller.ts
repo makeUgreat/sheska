@@ -14,12 +14,15 @@ import {
   type ApiResponse,
   PostApi,
   type PostSummaryResponse,
+  PERMISSION,
 } from '@sheska/contract';
 import { callContext } from '@core/call-context';
 import {
   cursorQueryParamSchema,
   encodeCursor,
   ErrorCodes,
+  Permission,
+  Public,
   ZodValidationPipe,
 } from '@kernels/presentation';
 import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
@@ -58,6 +61,7 @@ export class PostsHttpController {
   ) {}
 
   @Get(PostApi.list.path)
+  @Public()
   @ErrorCodes(PostApi.list.errors)
   async list(
     @Query(new ZodValidationPipe(listPostsQuerySchema))
@@ -75,6 +79,7 @@ export class PostsHttpController {
   }
 
   @Post(PostApi.publish.path)
+  @Permission(PERMISSION.POSTS_PUBLISH)
   @HttpCode(HttpStatus.CREATED)
   @ErrorCodes(PostApi.publish.errors)
   async publish(
@@ -94,6 +99,7 @@ export class PostsHttpController {
 
   // 정적 경로가 `:id`보다 먼저 등록되어야 한다.
   @Get(PostApi.search.path)
+  @Public()
   @ErrorCodes(PostApi.search.errors)
   async search(
     @Query(new ZodValidationPipe(searchPostsQuerySchema))
@@ -123,6 +129,7 @@ export class PostsHttpController {
   }
 
   @Get(PostApi.count.path)
+  @Public()
   @ErrorCodes(PostApi.count.errors)
   async count(): Promise<ApiResponse<typeof PostApi.count>> {
     const count = await this.countPostsUseCase.execute();
@@ -133,6 +140,7 @@ export class PostsHttpController {
   }
 
   @Get(PostApi.get.path)
+  @Public()
   @ErrorCodes(PostApi.get.errors)
   async get(@Param('id') id: string): Promise<ApiResponse<typeof PostApi.get>> {
     const result = await this.getPostUseCase.execute({ postId: id });

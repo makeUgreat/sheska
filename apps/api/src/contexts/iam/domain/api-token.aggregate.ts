@@ -2,6 +2,7 @@ import { newId } from '@core/id';
 import { AggregateRoot } from '@kernels/domain';
 import { ApiTokenName } from './api-token-name.vo';
 import { ApiTokenPermissions } from './api-token-permissions.vo';
+import { type Permission } from './permission';
 import { type ApiTokenSecret } from './api-token-secret.vo';
 
 interface ApiTokenProps {
@@ -54,6 +55,10 @@ export class ApiToken extends AggregateRoot<ApiTokenProps> {
     }
     this.props.lastUsedAt = at;
     return true;
+  }
+
+  grantedPermissions(): readonly Permission[] {
+    return this.props.permissions.unpack();
   }
 
   public validate(): void {}

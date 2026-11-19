@@ -14,7 +14,7 @@ import {
   HealthErrorCode,
 } from '@sheska/contract';
 import { DATABASE_TOKENS } from '@kernels/infrastructure';
-import { ErrorCodes } from '@kernels/presentation';
+import { ErrorCodes, Public } from '@kernels/presentation';
 import { QueueHealthProbe } from '../queue/queue-health.probe';
 
 @Controller()
@@ -26,12 +26,14 @@ export class HealthController {
   ) {}
 
   @Get(HealthApi.live.path)
+  @Public()
   @ErrorCodes(HealthApi.live.errors)
   live(): ApiResponse<typeof HealthApi.live> {
     return { status: 'ok' };
   }
 
   @Get(HealthApi.ready.path)
+  @Public()
   @ErrorCodes(HealthApi.ready.errors)
   async ready(): Promise<ApiResponse<typeof HealthApi.ready>> {
     try {

@@ -11,4 +11,4 @@ export {
   LoginAttemptPolicy,
   type LoginAttemptPolicyProps,
 } from './login-attempt.policy';
-export { ALL_PERMISSIONS, Permission } from './permission';
+export { ALL_PERMISSIONS, PERMISSION, type Permission } from './permission';

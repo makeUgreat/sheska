@@ -5,10 +5,15 @@ import {
   ATTACHMENT_MAX_BYTES,
   type ApiResponse,
   AttachmentApi,
+  PERMISSION,
 } from '@sheska/contract';
 import { callContext } from '@core/call-context';
 import { ValidationFailedError } from '@core/errors';
-import { ErrorCodes, ZodValidationPipe } from '@kernels/presentation';
+import {
+  ErrorCodes,
+  Permission,
+  ZodValidationPipe,
+} from '@kernels/presentation';
 import { UploadAttachmentUseCase } from '@contexts/library/application/use-cases/upload-attachment.use-case';
 
 @Controller()
@@ -18,6 +23,7 @@ export class AttachmentsHttpController {
   ) {}
 
   @Put(AttachmentApi.upload.path)
+  @Permission(PERMISSION.SOURCES_SYNC)
   @ErrorCodes(AttachmentApi.upload.errors)
   async upload(
     @Query(new ZodValidationPipe(AttachmentApi.upload.query))
