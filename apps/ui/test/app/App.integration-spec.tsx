@@ -177,6 +177,7 @@ describe('App', () => {
 
       // 프롬프트는 누구(guest@hash)와 위치(:~$)를 나눠 그린다.
       expect(await screen.findByText('guest@hash')).toBeDefined();
+      expect(screen.getByText('open ~/posts')).toBeDefined();
       expect(screen.queryByRole('link', { name: 'sources' })).toBeNull();
     });
 

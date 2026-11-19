@@ -119,6 +119,7 @@ function renderPage(client: HttpClient) {
         <HttpClientProvider client={client}>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/posts" element={<p>posts page</p>} />
             <Route path="/posts/:id" element={<PostDetailStub />} />
           </Routes>
         </HttpClientProvider>
@@ -285,6 +286,54 @@ describe('LandingPage terminal', () => {
     await typeCommand('guest@hash:~$', 'cd /dev/secret');
 
     expect(await screen.findByText('cd: not a directory: /dev/secret')).toBeDefined();
+  });
+
+  describe('open', () => {
+    it('폴더를 그 목록 페이지로 연다', async () => {
+      const { client } = buildMockHttpClient();
+      renderPage(client);
+
+      await typeCommand('guest@hash:~$', 'open posts');
+
+      expect(await screen.findByText('posts page')).toBeDefined();
+    });
+
+    it('경로가 없으면 현재 폴더를 연다', async () => {
+      const { client } = buildMockHttpClient();
+      renderPage(client);
+
+      await typeCommand('guest@hash:~$', 'cd posts');
+      await typeCommand('guest@hash:~/posts$', 'open');
+
+      expect(await screen.findByText('posts page')).toBeDefined();
+    });
+
+    it('글 경로를 그 상세 페이지로 연다', async () => {
+      const { client } = buildMockHttpClient();
+      renderPage(client);
+
+      await typeCommand('guest@hash:~$', `open posts/${POST.title}`);
+
+      expect(await screen.findByText('post detail post-1')).toBeDefined();
+    });
+
+    it('방문자는 sources를 열 수 없다', async () => {
+      const { client } = buildMockHttpClient();
+      renderPage(client);
+
+      await typeCommand('guest@hash:~$', 'open sources');
+
+      expect(await screen.findByText('open: sources: Permission denied')).toBeDefined();
+    });
+
+    it('페이지가 없는 폴더는 열 수 없다고 답한다', async () => {
+      const { client } = buildMockHttpClient();
+      renderPage(client);
+
+      await typeCommand('guest@hash:~$', 'open /dev');
+
+      expect(await screen.findByText('open: /dev: no page to open')).toBeDefined();
+    });
   });
 
   it('pwd는 현재 폴더의 절대 경로를 보인다', async () => {
