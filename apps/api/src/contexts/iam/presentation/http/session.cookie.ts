@@ -1,7 +1,6 @@
 import { parse } from 'cookie';
 import { type CookieOptions, type Request, type Response } from 'express';
 
-// `__Host-` 접두사가 붙은 쿠키는 Secure, Path=/, Domain 없음일 때만 브라우저가 받는다.
 // 같은 site의 다른 서브도메인이 이 쿠키를 덮어쓰지 못한다.
 export const SESSION_COOKIE_NAME = '__Host-sheska_session';
 
