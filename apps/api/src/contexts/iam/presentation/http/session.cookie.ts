@@ -14,6 +14,7 @@ const SESSION_COOKIE_OPTIONS: CookieOptions = {
 export function readSessionCookie(request: Request): string | null {
   const header = request.headers.cookie;
   if (!header) return null;
+
   return parse(header)[SESSION_COOKIE_NAME] ?? null;
 }
 

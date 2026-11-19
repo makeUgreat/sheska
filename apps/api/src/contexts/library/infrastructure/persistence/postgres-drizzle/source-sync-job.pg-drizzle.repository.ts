@@ -22,6 +22,7 @@ export class SourceSyncJobPgDrizzleRepository implements SourceSyncJobRepository
         details: { id: criteria.id },
       });
     }
+
     return syncJob;
   }
 

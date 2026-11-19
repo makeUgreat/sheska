@@ -56,5 +56,6 @@ function classifyByCode(error: unknown): PostgresErrorClass {
       return mapped;
     }
   }
+
   return UnexpectedError;
 }

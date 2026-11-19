@@ -19,6 +19,7 @@ export const attachmentContentS3Config = registerAs('attachmentContentS3', () =>
   if (!result.success) {
     throw new Error(`Invalid attachment storage configuration.\n${z.prettifyError(result.error)}`);
   }
+
   return {
     endpoint: result.data.ATTACHMENT_STORAGE_ENDPOINT,
     bucket: result.data.ATTACHMENT_STORAGE_BUCKET,

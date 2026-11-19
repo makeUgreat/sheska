@@ -34,8 +34,10 @@ export class GetSourceSyncJobUseCase {
       this.syncJobs.get({ id: command.syncJobId }),
       this.findLiveProgress(command.syncJobId),
     ]);
+
     const props = syncJob.getProps();
     const isProcessing = props.status === 'waiting' && liveProgress !== null;
+
     return {
       syncJobId: syncJob.id,
       sourceId: props.sourceId,

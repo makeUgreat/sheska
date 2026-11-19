@@ -5,8 +5,8 @@ function serializeCause(value: unknown, seen = new Set<Error>()): unknown {
   if (seen.has(value)) {
     return { name: value.name, message: value.message };
   }
-  seen.add(value);
 
+  seen.add(value);
   return {
     name: value.name,
     message: value.message,
@@ -21,8 +21,8 @@ function stackWithCauses(error: Error, seen = new Set<Error>()): string {
   if (seen.has(error)) {
     return stack;
   }
-  seen.add(error);
 
+  seen.add(error);
   return error.cause instanceof Error ? `${stack}\ncaused by: ${stackWithCauses(error.cause, seen)}` : stack;
 }
 

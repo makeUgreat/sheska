@@ -11,5 +11,6 @@ export const redisConfig = registerAs('redis', () => {
   if (!result.success) {
     throw new Error(`Invalid Redis configuration.\n${z.prettifyError(result.error)}`);
   }
+
   return { redisUrl: result.data.REDIS_URL };
 });

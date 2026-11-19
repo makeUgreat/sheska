@@ -38,7 +38,8 @@ export class LogInUseCase {
       });
     }
 
-    if (!(await this.ownerPassword.matches(command.password))) {
+    const passwordMatches = await this.ownerPassword.matches(command.password);
+    if (!passwordMatches) {
       throw new UnauthenticatedError({
         code: 'auth.invalid_credentials',
         message: 'Invalid credentials',
@@ -48,6 +49,7 @@ export class LogInUseCase {
 
     await this.attempts.clear(command.clientAddress);
     const session = await this.sessions.issue(SESSION_LIFETIME_SECONDS);
+
     return { sessionToken: session.token, expiresAt: session.expiresAt };
   }
 }

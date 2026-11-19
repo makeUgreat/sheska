@@ -19,6 +19,7 @@ export const httpConfig = registerAs('http', () => {
   if (!result.success) {
     throw new Error(`Invalid HTTP configuration.\n${z.prettifyError(result.error)}`);
   }
+
   return {
     port: result.data.PORT,
     corsOrigins: result.data.CORS_ORIGINS,

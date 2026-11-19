@@ -15,6 +15,7 @@ export class SourceFromRepositoryLookup implements SourceLookup {
   async find(sourceId: string): Promise<SourceDocument | null> {
     const source = await this.sources.find({ id: sourceId });
     if (source === null) return null;
+
     return SourceFromRepositoryLookup.toDocument(source);
   }
 

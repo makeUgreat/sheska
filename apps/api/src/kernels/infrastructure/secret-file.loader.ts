@@ -15,6 +15,7 @@ export function withFileSecrets(env: Record<string, unknown>, names: readonly st
 
     secretsFromFiles[name] = readSecretFile(fileVariable, path);
   }
+
   return { ...env, ...secretsFromFiles };
 }
 

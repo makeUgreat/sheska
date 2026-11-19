@@ -16,6 +16,7 @@ export class ApiTokenPermissions extends ValueObject<Permission[]> {
         details: { fields: ['permissions'] },
       });
     }
+
     return new ApiTokenPermissions(unique);
   }
 

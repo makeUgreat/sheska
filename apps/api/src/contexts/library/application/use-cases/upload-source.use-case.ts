@@ -90,6 +90,7 @@ export class UploadSourceUseCase {
     await this.unitOfWork.execute(async (resources) => {
       if (sourceWrite === 'insert') await resources.sources.insert(source);
       if (sourceWrite === 'update') await resources.sources.update(source);
+
       if (isNewSyncJob) {
         await resources.syncJobs.insert(syncJob);
         for (const integrationEvent of this.toIntegrationEvents(syncJob)) {
