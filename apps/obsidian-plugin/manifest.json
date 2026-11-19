@@ -1,7 +1,7 @@
 {
   "id": "sheska",
   "name": "Sheska",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "minAppVersion": "1.11.4",
   "description": "Connect Obsidian to the Sheska API.",
   "author": "hash_kim",

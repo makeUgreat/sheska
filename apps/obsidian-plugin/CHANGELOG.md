@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/makeUgreat/sheska/compare/1.4.0...1.4.1) (2026-11-19)
+
+
+### Bug Fixes
+
+* **obsidian-plugin:** render the settings tab with display() on Obsidian 1.13+ ([#414](https://github.com/makeUgreat/sheska/issues/414)) ([7555dd7](https://github.com/makeUgreat/sheska/commit/7555dd7cf2d1d5602ff05adfcf2d575988ee163f))
+
 ## [1.4.0](https://github.com/makeUgreat/sheska/compare/1.3.0...1.4.0) (2026-11-19)
 
 
