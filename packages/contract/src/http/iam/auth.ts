@@ -22,6 +22,8 @@ export const AuthErrorCode = {
    * `details.retryAfterSeconds`초가 지나면 다시 시도할 수 있다.
    */
   TOO_MANY_ATTEMPTS: 'auth.too_many_attempts',
+  /** 이 API는 로그인 세션이 있어야 한다. 세션이 없거나 만료됐다. */
+  UNAUTHENTICATED: 'auth.unauthenticated',
 } as const;
 
 /** 소유자가 브라우저에서 로그인하고 로그아웃하는 API다. 세션은 `HttpOnly` 쿠키로 주고받는다. */
