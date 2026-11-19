@@ -1,11 +1,23 @@
 import type { z } from 'zod';
+import type { Permission } from './iam/permission.js';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+
+/**
+ * 이 API를 부를 수 있는 사람이다.
+ * - `public`: 누구나 부른다. 요청에 든 인증 정보는 보지 않는다.
+ * - `authenticated`: 로그인 세션 쿠키나 `Authorization: Bearer <API 토큰>`으로 인증한 요청만 부른다.
+ * - 권한 이름: 인증한 요청 중 그 권한을 가진 요청만 부른다. 로그인 세션은 모든 권한을 가진다.
+ *
+ * 인증에 실패하면 401 `auth.unauthenticated`, 권한이 없으면 403 `auth.forbidden`이다.
+ */
+export type ApiAccess = 'public' | 'authenticated' | Permission;
 
 export interface ApiContract {
   readonly method: HttpMethod;
   /** 서버 라우팅 문법으로 적는다. 경로에 든 값은 `:이름`이다. 예: `/sources/:id` */
   readonly path: string;
+  readonly access: ApiAccess;
   /** query string. 값은 문자열로 오므로 숫자는 `z.coerce`로 받는다. */
   readonly query?: z.ZodType;
   /** JSON 본문 */
