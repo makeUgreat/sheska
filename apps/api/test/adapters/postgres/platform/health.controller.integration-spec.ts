@@ -10,15 +10,7 @@ import { DatabaseModule } from '@platform/nest/database/database.module';
 import { QueueHealthProbe } from '@platform/nest/queue/queue-health.probe';
 import { LOGGER } from '@kernels/application';
 import request from 'supertest';
-import {
-  afterAll,
-  beforeAll,
-  describe,
-  expect,
-  it,
-  type MockedFunction,
-  vi,
-} from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, type MockedFunction, vi } from 'vitest';
 
 type QueueHealthProbeMock = {
   check: MockedFunction<() => Promise<void>>;

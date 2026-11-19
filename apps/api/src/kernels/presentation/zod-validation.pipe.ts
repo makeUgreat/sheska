@@ -2,16 +2,9 @@ import { type PipeTransform } from '@nestjs/common';
 import { type z } from 'zod';
 import { type $ZodError, type $ZodIssue } from 'zod/v4/core';
 import { CommonErrorCode } from '@sheska/contract';
-import {
-  ValidationFailedError,
-  type ValidationFailedDetails,
-  type ValidationFieldDetail,
-} from '@core/errors';
+import { ValidationFailedError, type ValidationFailedDetails, type ValidationFieldDetail } from '@core/errors';
 
-export class ZodValidationPipe<T extends z.ZodType> implements PipeTransform<
-  unknown,
-  z.output<T>
-> {
+export class ZodValidationPipe<T extends z.ZodType> implements PipeTransform<unknown, z.output<T>> {
   constructor(private readonly schema: T) {}
 
   transform(value: unknown): z.output<T> {
@@ -35,9 +28,7 @@ function toValidationDetails(error: $ZodError): ValidationFailedDetails {
   };
 }
 
-function toValidationFieldDetails(
-  issues: $ZodIssue[],
-): ValidationFieldDetail[] {
+function toValidationFieldDetails(issues: $ZodIssue[]): ValidationFieldDetail[] {
   const fields = new Map<string, string[]>();
 
   for (const issue of issues) {

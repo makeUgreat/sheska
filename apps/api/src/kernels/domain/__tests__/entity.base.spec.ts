@@ -63,9 +63,7 @@ describe('Entity', () => {
     });
 
     it('props가 너무 많으면 throw한다', () => {
-      const props = Object.fromEntries(
-        Array.from({ length: 51 }, (_, index) => [`prop${index}`, index]),
-      ) as unknown as SampleProps;
+      const props = Object.fromEntries(Array.from({ length: 51 }, (_, index) => [`prop${index}`, index])) as unknown as SampleProps;
 
       expect(
         () =>

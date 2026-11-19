@@ -1,9 +1,5 @@
 import { InvalidDataError, UnavailableError } from '@core/errors';
-import {
-  type AttachmentImageCodec,
-  type AttachmentImageInfo,
-  type AttachmentImageMediaType,
-} from '@contexts/library/application/ports';
+import { type AttachmentImageCodec, type AttachmentImageInfo, type AttachmentImageMediaType } from '@contexts/library/application/ports';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { AttachmentImageOptimizer } from '../attachment-image-optimizer.service';
 
@@ -33,32 +29,27 @@ function setup(info: Partial<AttachmentImageInfo> = {}) {
       frameCount: 1,
       ...info,
     }),
-    encodeWebp: vi
-      .fn<AttachmentImageCodec['encodeWebp']>()
-      .mockResolvedValue(SMALLER),
+    encodeWebp: vi.fn<AttachmentImageCodec['encodeWebp']>().mockResolvedValue(SMALLER),
   };
   return { codec, optimizer: new AttachmentImageOptimizer(codec) };
 }
 
 describe('AttachmentImageOptimizer', () => {
   describe('지원하는 형식', () => {
-    it.each<AttachmentImageMediaType>([
-      'image/png',
-      'image/jpeg',
-      'image/gif',
-      'image/webp',
-      'image/avif',
-    ])('%s는 폭 1360px, 품질 80의 WebP로 바꾼다', async (mediaType) => {
-      const { codec, optimizer } = setup({ mediaType });
+    it.each<AttachmentImageMediaType>(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif'])(
+      '%s는 폭 1360px, 품질 80의 WebP로 바꾼다',
+      async (mediaType) => {
+        const { codec, optimizer } = setup({ mediaType });
 
-      const result = await optimizer.optimize(ORIGINAL);
+        const result = await optimizer.optimize(ORIGINAL);
 
-      expect(codec.encodeWebp).toHaveBeenCalledWith(ORIGINAL, {
-        maxWidth: 1360,
-        quality: 80,
-      });
-      expect(result).toEqual({ data: SMALLER, mediaType: 'image/webp' });
-    });
+        expect(codec.encodeWebp).toHaveBeenCalledWith(ORIGINAL, {
+          maxWidth: 1360,
+          quality: 80,
+        });
+        expect(result).toEqual({ data: SMALLER, mediaType: 'image/webp' });
+      },
+    );
 
     it('애니메이션 GIF도 WebP로 바꾼다', async () => {
       const { codec, optimizer } = setup({

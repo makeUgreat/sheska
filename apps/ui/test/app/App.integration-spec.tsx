@@ -5,10 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type GetSourceResponse, type SourceSummary } from '@/entities/source';
 import { App } from '@/app/shell';
-import {
-  HttpClientProvider,
-  type HttpClientType as HttpClient,
-} from '@/shared/api';
+import { HttpClientProvider, type HttpClientType as HttpClient } from '@/shared/api';
 
 type MockHttpClientOverrides = {
   get?: ReturnType<typeof vi.fn>;
@@ -116,9 +113,7 @@ describe('App', () => {
 
     await waitFor(() => {
       expect(getSource).toHaveBeenCalledWith('/sources/source-1');
-      expect(
-        screen.getByRole('heading', { name: 'Source note', level: 1 }),
-      ).toBeDefined();
+      expect(screen.getByRole('heading', { name: 'Source note', level: 1 })).toBeDefined();
     });
   });
 
@@ -128,9 +123,7 @@ describe('App', () => {
 
     renderApp(client, '/sources/source-1');
 
-    await user.click(
-      await screen.findByRole('link', { name: '← Back to sources' }),
-    );
+    await user.click(await screen.findByRole('link', { name: '← Back to sources' }));
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Sources' })).toBeDefined();
@@ -146,9 +139,7 @@ describe('App', () => {
     await user.click(screen.getByRole('link', { name: /Scroll For Articles/ }));
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { level: 1, name: 'Posts' }),
-      ).toBeDefined();
+      expect(screen.getByRole('heading', { level: 1, name: 'Posts' })).toBeDefined();
     });
   });
 
@@ -161,9 +152,7 @@ describe('App', () => {
     await user.click(screen.getByRole('link', { name: 'posts' }));
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { level: 1, name: 'Posts' }),
-      ).toBeDefined();
+      expect(screen.getByRole('heading', { level: 1, name: 'Posts' })).toBeDefined();
     });
   });
 

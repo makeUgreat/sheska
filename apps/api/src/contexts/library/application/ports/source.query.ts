@@ -32,8 +32,6 @@ export type SourceQueryPaginateResult = {
 };
 
 export interface SourceQuery {
-  paginate(
-    options: SourceQueryPaginateOptions,
-  ): Promise<SourceQueryPaginateResult>;
+  paginate(options: SourceQueryPaginateOptions): Promise<SourceQueryPaginateResult>;
   find(criteria: { sourceId: string }): Promise<string | null>;
 }

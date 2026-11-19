@@ -2,15 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { ConstraintViolationError, NotFoundError } from '@core/errors';
-import {
-  type Post,
-  type PostRepository,
-  type PostRepositoryGetCriteria,
-} from '@contexts/library/domain';
-import {
-  classifyPostgresError,
-  DATABASE_TOKENS,
-} from '@kernels/infrastructure';
+import { type Post, type PostRepository, type PostRepositoryGetCriteria } from '@contexts/library/domain';
+import { classifyPostgresError, DATABASE_TOKENS } from '@kernels/infrastructure';
 import * as schema from './schema';
 import { PostPgDrizzleMapper } from './post.pg-drizzle.mapper';
 
@@ -25,11 +18,7 @@ export class PostPgDrizzleRepository implements PostRepository {
     let row: schema.PostRow | undefined;
 
     try {
-      [row] = await this.db
-        .select()
-        .from(schema.posts)
-        .where(eq(schema.posts.id, criteria.id))
-        .limit(1);
+      [row] = await this.db.select().from(schema.posts).where(eq(schema.posts.id, criteria.id)).limit(1);
     } catch (error: unknown) {
       const ErrorClass = classifyPostgresError(error);
       throw new ErrorClass({

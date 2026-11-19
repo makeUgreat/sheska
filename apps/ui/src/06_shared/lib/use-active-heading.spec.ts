@@ -13,10 +13,7 @@ class MockIntersectionObserver implements IntersectionObserver {
   readonly callback: IntersectionObserverCallback;
   readonly observed: Element[] = [];
 
-  constructor(
-    callback: IntersectionObserverCallback,
-    options?: IntersectionObserverInit,
-  ) {
+  constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
     this.callback = callback;
     this.rootMargin = options?.rootMargin ?? '0px';
     observers.push(this);
@@ -82,9 +79,7 @@ describe('useActiveHeading', () => {
   it('마운트 직후 첫 heading을 활성으로 표시한다', () => {
     placeHeadings('layers', 'slices', 'segments');
 
-    const { result } = renderHook(() =>
-      useActiveHeading(['layers', 'slices', 'segments']),
-    );
+    const { result } = renderHook(() => useActiveHeading(['layers', 'slices', 'segments']));
 
     expect(result.current).toBe('layers');
   });
@@ -99,9 +94,7 @@ describe('useActiveHeading', () => {
 
   it('교차한 heading이 여러 개면 가장 위쪽을 활성으로 표시한다', () => {
     placeHeadings('layers', 'slices', 'segments');
-    const { result } = renderHook(() =>
-      useActiveHeading(['layers', 'slices', 'segments']),
-    );
+    const { result } = renderHook(() => useActiveHeading(['layers', 'slices', 'segments']));
 
     observers[0].trigger([
       { id: 'segments', isIntersecting: true, top: 240 },
@@ -162,9 +155,7 @@ describe('useActiveHeading', () => {
 
   it('unmount되면 observer를 해제한다', () => {
     placeHeadings('layers', 'slices');
-    const { unmount } = renderHook(() =>
-      useActiveHeading(['layers', 'slices']),
-    );
+    const { unmount } = renderHook(() => useActiveHeading(['layers', 'slices']));
 
     unmount();
 

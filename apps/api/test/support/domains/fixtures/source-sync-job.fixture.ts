@@ -1,13 +1,9 @@
 import { SourceFingerprint, SourceSyncJob } from '@contexts/library/domain';
 
-export function buildSourceSyncJob(
-  params: Partial<Parameters<typeof SourceSyncJob.create>[0]> = {},
-): SourceSyncJob {
+export function buildSourceSyncJob(params: Partial<Parameters<typeof SourceSyncJob.create>[0]> = {}): SourceSyncJob {
   return SourceSyncJob.create({
     sourceId: params.sourceId ?? 'source-1',
     content: params.content ?? 'content-1',
-    fingerprint:
-      params.fingerprint ??
-      SourceFingerprint.ofBody(params.content ?? 'content-1'),
+    fingerprint: params.fingerprint ?? SourceFingerprint.ofBody(params.content ?? 'content-1'),
   });
 }

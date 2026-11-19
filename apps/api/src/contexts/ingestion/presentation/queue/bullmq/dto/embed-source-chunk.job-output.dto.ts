@@ -8,6 +8,4 @@ export const embedSourceChunkJobOutputSchema = z.strictObject({
   embedding: z.array(z.number()),
 });
 
-export type EmbedSourceChunkJobOutput = z.infer<
-  typeof embedSourceChunkJobOutputSchema
->;
+export type EmbedSourceChunkJobOutput = z.infer<typeof embedSourceChunkJobOutputSchema>;

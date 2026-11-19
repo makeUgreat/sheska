@@ -1,24 +1,9 @@
-import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpException,
-  HttpStatus,
-  Inject,
-} from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Inject } from '@nestjs/common';
 import { type Response } from 'express';
-import {
-  CommonErrorCode,
-  errorResponseSchema,
-  type ErrorResponse,
-} from '@sheska/contract';
+import { CommonErrorCode, errorResponseSchema, type ErrorResponse } from '@sheska/contract';
 import { SheskaError } from '@core/errors';
 import { LOGGER, type LoggerPort } from '@kernels/application';
-import {
-  ERROR_KIND_POLICY,
-  type FailureLogLevel,
-  type HttpFailurePolicy,
-} from './http-failure.policy';
+import { ERROR_KIND_POLICY, type FailureLogLevel, type HttpFailurePolicy } from './http-failure.policy';
 
 const FAILURE_LOG_MESSAGE = 'HTTP request failed';
 
@@ -95,10 +80,7 @@ function resolveFailure(exception: unknown): ResolvedFailure {
   };
 }
 
-function toHttpExceptionBody(
-  exception: HttpException,
-  status: number,
-): ErrorResponse {
+function toHttpExceptionBody(exception: HttpException, status: number): ErrorResponse {
   const owned = errorResponseSchema.safeParse(exception.getResponse());
 
   if (owned.success) {
@@ -116,10 +98,7 @@ function toHttpExceptionBody(
   };
 }
 
-function toSheskaErrorBody(
-  error: SheskaError,
-  policy: HttpFailurePolicy,
-): ErrorResponse {
+function toSheskaErrorBody(error: SheskaError, policy: HttpFailurePolicy): ErrorResponse {
   if (policy.exposure === 'masked') {
     return maskedResponse(policy.status);
   }
@@ -132,9 +111,7 @@ function toSheskaErrorBody(
 }
 
 function toDetails(details: unknown): ErrorResponse['details'] {
-  return typeof details === 'object' && details !== null
-    ? (details as ErrorResponse['details'])
-    : {};
+  return typeof details === 'object' && details !== null ? (details as ErrorResponse['details']) : {};
 }
 
 function maskedResponse(status: number): ErrorResponse {

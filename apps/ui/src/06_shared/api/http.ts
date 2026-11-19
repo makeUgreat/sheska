@@ -35,32 +35,20 @@ export function isRetryableHttpError(error: unknown): boolean {
 export class HttpClient {
   constructor(private readonly baseUrl: string) {}
 
-  async get<T>(
-    path: string,
-    schema: ResponseSchema<T>,
-    params?: Record<string, string>,
-  ): Promise<T> {
+  async get<T>(path: string, schema: ResponseSchema<T>, params?: Record<string, string>): Promise<T> {
     const search = params ? '?' + new URLSearchParams(params).toString() : '';
     return this.request(`${path}${search}`, schema);
   }
 
   post<T>(path: string, body: unknown, schema: ResponseSchema<T>): Promise<T>;
   post(path: string, body: unknown): Promise<void>;
-  async post<T>(
-    path: string,
-    body: unknown,
-    schema?: ResponseSchema<T>,
-  ): Promise<T | void> {
+  async post<T>(path: string, body: unknown, schema?: ResponseSchema<T>): Promise<T | void> {
     const init = { method: 'POST', body: JSON.stringify(body) };
     if (!schema) return this.send(path, init);
     return this.request(path, schema, init);
   }
 
-  async patch<T>(
-    path: string,
-    body: unknown,
-    schema: ResponseSchema<T>,
-  ): Promise<T> {
+  async patch<T>(path: string, body: unknown, schema: ResponseSchema<T>): Promise<T> {
     return this.request(path, schema, {
       method: 'PATCH',
       body: JSON.stringify(body),
@@ -71,11 +59,7 @@ export class HttpClient {
     return this.send(path, { method: 'DELETE' });
   }
 
-  private async request<T>(
-    path: string,
-    schema: ResponseSchema<T>,
-    init?: RequestInit,
-  ): Promise<T> {
+  private async request<T>(path: string, schema: ResponseSchema<T>, init?: RequestInit): Promise<T> {
     const res = await this.fetch(path, init);
     return schema.parse(await res.json());
   }

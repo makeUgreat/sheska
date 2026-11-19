@@ -1,11 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { type SyncJobSummaryStatus } from '@/entities/source';
 
-export const SYNC_JOB_STATUS_FILTERS: readonly SyncJobSummaryStatus[] = [
-  'waiting',
-  'completed',
-  'failed',
-];
+export const SYNC_JOB_STATUS_FILTERS: readonly SyncJobSummaryStatus[] = ['waiting', 'completed', 'failed'];
 
 function isSyncJobStatus(value: string | null): value is SyncJobSummaryStatus {
   return (SYNC_JOB_STATUS_FILTERS as readonly string[]).includes(value ?? '');

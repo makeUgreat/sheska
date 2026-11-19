@@ -23,8 +23,7 @@ const samplePosts: PostSummary[] = [
   {
     postId: 'post-long-title',
     sourceId: 'source-long-title',
-    title:
-      'A deliberately long archive title that should wrap cleanly inside the post list section',
+    title: 'A deliberately long archive title that should wrap cleanly inside the post list section',
     viewCount: 1_208,
     createdAt: '2026-08-03T08:30:00.000Z',
     updatedAt: '2026-08-03T09:30:00.000Z',

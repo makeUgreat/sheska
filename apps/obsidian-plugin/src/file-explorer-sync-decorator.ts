@@ -1,10 +1,7 @@
 import { setIcon } from 'obsidian';
 import type { SyncCacheEntry } from '@/storage';
 
-export type FileExplorerSyncStatus =
-  | NonNullable<SyncCacheEntry['status']>
-  | 'not-synced'
-  | 'uploading';
+export type FileExplorerSyncStatus = NonNullable<SyncCacheEntry['status']> | 'not-synced' | 'uploading';
 
 interface SyncBadgePresentation {
   readonly icon: Parameters<typeof setIcon>[1];
@@ -14,10 +11,7 @@ interface SyncBadgePresentation {
 const BADGE_CLASS = 'sheska-sync-badge';
 const FILE_TITLE_SELECTOR = '.nav-file-title[data-path]';
 
-const BADGE_PRESENTATIONS: Record<
-  FileExplorerSyncStatus,
-  SyncBadgePresentation
-> = {
+const BADGE_PRESENTATIONS: Record<FileExplorerSyncStatus, SyncBadgePresentation> = {
   synced: { icon: 'check-circle', label: 'Sheska: Synced' },
   'not-synced': { icon: 'circle', label: 'Sheska: Not synced' },
   uploading: { icon: 'loader-2', label: 'Sheska: Uploading' },
@@ -56,18 +50,14 @@ export class FileExplorerSyncDecorator {
   render(path: string): void {
     if (!this.root) return;
     const status = this.getStatus(path);
-    for (const title of this.root.querySelectorAll<HTMLElement>(
-      FILE_TITLE_SELECTOR,
-    )) {
+    for (const title of this.root.querySelectorAll<HTMLElement>(FILE_TITLE_SELECTOR)) {
       if (title.dataset.path === path) this.renderTitle(title, status);
     }
   }
 
   renderAll(): void {
     if (!this.root) return;
-    for (const title of this.root.querySelectorAll<HTMLElement>(
-      FILE_TITLE_SELECTOR,
-    )) {
+    for (const title of this.root.querySelectorAll<HTMLElement>(FILE_TITLE_SELECTOR)) {
       const path = title.dataset.path;
       if (path) this.renderTitle(title, this.getStatus(path));
     }
@@ -78,17 +68,12 @@ export class FileExplorerSyncDecorator {
     this.observer = null;
     this.renderScheduled = false;
     if (!this.root) return;
-    for (const badge of this.root.querySelectorAll<HTMLElement>(
-      `.${BADGE_CLASS}`,
-    )) {
+    for (const badge of this.root.querySelectorAll<HTMLElement>(`.${BADGE_CLASS}`)) {
       badge.remove();
     }
   }
 
-  private renderTitle(
-    title: HTMLElement,
-    status: FileExplorerSyncStatus | null,
-  ): void {
+  private renderTitle(title: HTMLElement, status: FileExplorerSyncStatus | null): void {
     const existing = title.querySelector<HTMLElement>(`.${BADGE_CLASS}`);
     if (!status) {
       existing?.remove();
@@ -114,10 +99,7 @@ export class FileExplorerSyncDecorator {
     if (!ElementConstructor) return false;
     for (const node of mutation.addedNodes) {
       if (!(node instanceof ElementConstructor)) continue;
-      if (
-        node.matches(FILE_TITLE_SELECTOR) ||
-        node.querySelector(FILE_TITLE_SELECTOR)
-      ) {
+      if (node.matches(FILE_TITLE_SELECTOR) || node.querySelector(FILE_TITLE_SELECTOR)) {
         return true;
       }
     }

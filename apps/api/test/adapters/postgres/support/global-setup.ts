@@ -11,8 +11,7 @@ import {
 const execAsync = promisify(exec);
 const POSTGRES_TEST_CONTAINER_NAME = 'sheska.test.db';
 const REDIS_TEST_CONTAINER_NAME = 'sheska.test.redis';
-const POSTGRES_TEST_DATABASE_URL =
-  'postgres://sheska:sheska@127.0.0.1:56432/sheska_test';
+const POSTGRES_TEST_DATABASE_URL = 'postgres://sheska:sheska@127.0.0.1:56432/sheska_test';
 const POSTGRES_COMPOSE_FILE = resolve(__dirname, 'docker-compose.yml');
 const POSTGRES_COMPOSE_CWD = resolve(__dirname, '../../..');
 const POSTGRES_LOG_CONTEXT: IntegrationAdapterLogContext = {
@@ -33,32 +32,16 @@ export default async function setup(): Promise<() => Promise<void>> {
     logIntegrationAdapterBanner(POSTGRES_LOG_CONTEXT);
     logIntegrationAdapterBanner(REDIS_LOG_CONTEXT);
     await executeTestDatabaseContainer();
-    logIntegrationAdapterStep(
-      POSTGRES_LOG_CONTEXT,
-      'START',
-      'Running database migrations',
-    );
+    logIntegrationAdapterStep(POSTGRES_LOG_CONTEXT, 'START', 'Running database migrations');
     await runMigrations(POSTGRES_TEST_DATABASE_URL);
-    logIntegrationAdapterStep(
-      POSTGRES_LOG_CONTEXT,
-      'DONE',
-      'Database migrations completed',
-    );
+    logIntegrationAdapterStep(POSTGRES_LOG_CONTEXT, 'DONE', 'Database migrations completed');
 
     return async () => {
       await execAsync(`docker compose -f "${POSTGRES_COMPOSE_FILE}" down -v`, {
         cwd: POSTGRES_COMPOSE_CWD,
       });
-      logIntegrationAdapterStep(
-        POSTGRES_LOG_CONTEXT,
-        'DONE',
-        `${POSTGRES_TEST_CONTAINER_NAME} cleaned up`,
-      );
-      logIntegrationAdapterStep(
-        REDIS_LOG_CONTEXT,
-        'DONE',
-        `${REDIS_TEST_CONTAINER_NAME} cleaned up`,
-      );
+      logIntegrationAdapterStep(POSTGRES_LOG_CONTEXT, 'DONE', `${POSTGRES_TEST_CONTAINER_NAME} cleaned up`);
+      logIntegrationAdapterStep(REDIS_LOG_CONTEXT, 'DONE', `${REDIS_TEST_CONTAINER_NAME} cleaned up`);
     };
   } catch (error) {
     console.error(error);
@@ -67,34 +50,18 @@ export default async function setup(): Promise<() => Promise<void>> {
 }
 
 async function executeTestDatabaseContainer(): Promise<void> {
-  logIntegrationAdapterStep(
-    POSTGRES_LOG_CONTEXT,
-    'START',
-    'Resetting docker compose services',
-  );
+  logIntegrationAdapterStep(POSTGRES_LOG_CONTEXT, 'START', 'Resetting docker compose services');
   await execAsync(`docker compose -f "${POSTGRES_COMPOSE_FILE}" down -v`, {
     cwd: POSTGRES_COMPOSE_CWD,
   });
-  logIntegrationAdapterStep(
-    POSTGRES_LOG_CONTEXT,
-    'START',
-    'Starting docker compose services',
-  );
+  logIntegrationAdapterStep(POSTGRES_LOG_CONTEXT, 'START', 'Starting docker compose services');
   await execAsync(`docker compose -f "${POSTGRES_COMPOSE_FILE}" up -d`, {
     cwd: POSTGRES_COMPOSE_CWD,
   });
   await waitForHealthyContainer(POSTGRES_TEST_CONTAINER_NAME);
-  logIntegrationAdapterStep(
-    POSTGRES_LOG_CONTEXT,
-    'READY',
-    `${POSTGRES_TEST_CONTAINER_NAME} is healthy`,
-  );
+  logIntegrationAdapterStep(POSTGRES_LOG_CONTEXT, 'READY', `${POSTGRES_TEST_CONTAINER_NAME} is healthy`);
   await waitForHealthyContainer(REDIS_TEST_CONTAINER_NAME);
-  logIntegrationAdapterStep(
-    REDIS_LOG_CONTEXT,
-    'READY',
-    `${REDIS_TEST_CONTAINER_NAME} is healthy`,
-  );
+  logIntegrationAdapterStep(REDIS_LOG_CONTEXT, 'READY', `${REDIS_TEST_CONTAINER_NAME} is healthy`);
 }
 
 async function waitForHealthyContainer(containerName: string): Promise<void> {
@@ -102,10 +69,9 @@ async function waitForHealthyContainer(containerName: string): Promise<void> {
     let status = 'unavailable';
 
     try {
-      const { stdout } = await execAsync(
-        `docker inspect --format='{{.State.Health.Status}}' ${containerName}`,
-        { cwd: POSTGRES_COMPOSE_CWD },
-      );
+      const { stdout } = await execAsync(`docker inspect --format='{{.State.Health.Status}}' ${containerName}`, {
+        cwd: POSTGRES_COMPOSE_CWD,
+      });
       status = stdout.trim();
     } catch {
       status = 'unavailable';
@@ -115,9 +81,7 @@ async function waitForHealthyContainer(containerName: string): Promise<void> {
       return;
     }
 
-    await new Promise((resolveDelay) =>
-      setTimeout(resolveDelay, Math.min(500 * 2 ** (attempt - 1), 10_000)),
-    );
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, Math.min(500 * 2 ** (attempt - 1), 10_000)));
   }
 
   throw new Error(`Timed out waiting for ${containerName} healthcheck`);

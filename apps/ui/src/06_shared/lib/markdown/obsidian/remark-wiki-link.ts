@@ -1,10 +1,5 @@
 import { type PhrasingContent, type Root, type RootContent } from 'mdast';
-import {
-  parseWikiLink,
-  writeAnchor,
-  type WikiLink,
-  type WikiLinkAnchor,
-} from './parse-wiki-link';
+import { parseWikiLink, writeAnchor, type WikiLink, type WikiLinkAnchor } from './parse-wiki-link';
 import { blockAnchorId, collectBlockAnchorIds } from './remark-block-anchor';
 
 export const WIKI_LINK_ELEMENT = 'wiki-link';
@@ -30,20 +25,11 @@ declare module 'mdast' {
   }
 }
 
-function isMissingBlock(
-  target: string | null,
-  anchor: WikiLinkAnchor,
-  anchors: Set<string>,
-): boolean {
-  return (
-    !target && anchor.kind === 'block' && !anchors.has(blockAnchorId(anchor.id))
-  );
+function isMissingBlock(target: string | null, anchor: WikiLinkAnchor, anchors: Set<string>): boolean {
+  return !target && anchor.kind === 'block' && !anchors.has(blockAnchorId(anchor.id));
 }
 
-function readAnchorProperty(
-  { target, anchor }: WikiLink,
-  anchors: Set<string>,
-): string | null {
+function readAnchorProperty({ target, anchor }: WikiLink, anchors: Set<string>): string | null {
   if (!anchor) return null;
   return isMissingBlock(target, anchor, anchors) ? null : writeAnchor(anchor);
 }

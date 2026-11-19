@@ -32,10 +32,7 @@ export class UploadAttachmentUseCase {
     private readonly store: AttachmentContentStore,
   ) {}
 
-  async execute(
-    { path, data }: UploadAttachmentCommand,
-    context: CallContext,
-  ): Promise<UploadAttachmentResult> {
+  async execute({ path, data }: UploadAttachmentCommand, context: CallContext): Promise<UploadAttachmentResult> {
     const optimized = await this.optimizer.optimize(data);
     await this.store.put(path, optimized.data, optimized.mediaType, context);
 

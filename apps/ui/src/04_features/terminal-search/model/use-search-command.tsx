@@ -33,9 +33,7 @@ export function useSearchCommand({
     async run(args, io) {
       const query = args.join(' ');
       if (!query) {
-        io.print(
-          <TerminalText tone="error">usage: grep &lt;words&gt;</TerminalText>,
-        );
+        io.print(<TerminalText tone="error">usage: grep &lt;words&gt;</TerminalText>);
         return;
       }
       try {
@@ -44,11 +42,7 @@ export function useSearchCommand({
           limit: RESULT_LIMIT,
         });
         if (posts.length === 0) {
-          io.print(
-            <TerminalText tone="muted">
-              no posts match &quot;{query}&quot;
-            </TerminalText>,
-          );
+          io.print(<TerminalText tone="muted">no posts match &quot;{query}&quot;</TerminalText>);
           return;
         }
         recent.current = posts.map((post) => ({
@@ -57,12 +51,7 @@ export function useSearchCommand({
         }));
         io.print(
           <TerminalTree
-            root={
-              <TerminalTreeRoot
-                label={`"${query}"`}
-                note={matches(posts.length, nextCursor !== null)}
-              />
-            }
+            root={<TerminalTreeRoot label={`"${query}"`} note={matches(posts.length, nextCursor !== null)} />}
             items={posts.map((post) => hitItem(post, args))}
             footer="cat + Tab to open one"
           />,
@@ -77,14 +66,7 @@ export function useSearchCommand({
 function hitItem(post: SearchHit, words: string[]): TerminalTreeItem {
   return {
     key: post.postId,
-    head: (
-      <TerminalEntryLink
-        title={post.title}
-        to={`/posts/${post.postId}`}
-        date={formatMonthDay(post.createdAt)}
-        highlight={words}
-      />
-    ),
+    head: <TerminalEntryLink title={post.title} to={`/posts/${post.postId}`} date={formatMonthDay(post.createdAt)} highlight={words} />,
     detail: detailOf(post, words),
   };
 }
@@ -92,13 +74,7 @@ function hitItem(post: SearchHit, words: string[]): TerminalTreeItem {
 /** 본문 발췌가 있으면 발췌를, 의미로만 찾았으면 유사도를 보인다. */
 function detailOf(post: SearchHit, words: string[]) {
   if (post.snippet) {
-    return (
-      <TerminalHighlight
-        text={toOneLine(post.snippet)}
-        words={words}
-        className="text-primary"
-      />
-    );
+    return <TerminalHighlight text={toOneLine(post.snippet)} words={words} className="text-primary" />;
   }
   if (post.matchReason === 'semantic' && post.similarity !== null) {
     return `similar in meaning · ${post.similarity}%`;

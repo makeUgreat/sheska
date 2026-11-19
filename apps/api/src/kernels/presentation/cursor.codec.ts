@@ -21,15 +21,11 @@ export type CursorListResult<T> = {
 };
 
 export function encodeCursor(cursor: CursorValue): string {
-  return Buffer.from(
-    JSON.stringify({ id: cursor.id, score: cursor.score }),
-  ).toString('base64url');
+  return Buffer.from(JSON.stringify({ id: cursor.id, score: cursor.score })).toString('base64url');
 }
 
 export function decodeCursor(encoded: string): CursorValue {
-  const parsed: unknown = JSON.parse(
-    Buffer.from(encoded, 'base64url').toString(),
-  );
+  const parsed: unknown = JSON.parse(Buffer.from(encoded, 'base64url').toString());
 
   const result = cursorValueSchema.safeParse(parsed);
   if (!result.success) {

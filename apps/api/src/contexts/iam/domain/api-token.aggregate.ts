@@ -32,8 +32,7 @@ export class ApiToken extends AggregateRoot<ApiTokenProps> {
   }
 
   static restore(params: ApiTokenRestoreParams): ApiToken {
-    const { id, name, secretHash, hint, permissions, lastUsedAt, createdAt } =
-      params;
+    const { id, name, secretHash, hint, permissions, lastUsedAt, createdAt } = params;
 
     return new ApiToken({
       id,

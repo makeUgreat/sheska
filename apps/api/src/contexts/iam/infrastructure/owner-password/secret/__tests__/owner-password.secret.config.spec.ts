@@ -12,12 +12,9 @@ describe('ownerPasswordSecretConfig', () => {
     expect(ownerPasswordSecretConfig()).toEqual({ password: '12345678' });
   });
 
-  it.each([undefined, '', '1234567'])(
-    'OWNER_PASSWORD가 %j이면 거부한다',
-    (value) => {
-      vi.stubEnv('OWNER_PASSWORD', value);
+  it.each([undefined, '', '1234567'])('OWNER_PASSWORD가 %j이면 거부한다', (value) => {
+    vi.stubEnv('OWNER_PASSWORD', value);
 
-      expect(() => ownerPasswordSecretConfig()).toThrow('OWNER_PASSWORD');
-    },
-  );
+    expect(() => ownerPasswordSecretConfig()).toThrow('OWNER_PASSWORD');
+  });
 });

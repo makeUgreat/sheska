@@ -96,9 +96,7 @@ describe('SourceEmbeddingChunkBullMqConsumer', () => {
     const job = buildJob(undefined, { attemptsMade: 3, maxAttempts: 3 });
     (job as { data: unknown }).data = { sourceId: 'source-1' };
 
-    await expect(
-      consumer.onFailed(job, new Error('terminal')),
-    ).resolves.toBeUndefined();
+    await expect(consumer.onFailed(job, new Error('terminal'))).resolves.toBeUndefined();
 
     expect(handleFailure).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledWith(
@@ -114,9 +112,7 @@ describe('SourceEmbeddingChunkBullMqConsumer', () => {
     const consumer = new SourceEmbeddingChunkBullMqConsumer(useCase, logger);
     const job = buildJob(undefined, { attemptsMade: 3, maxAttempts: 3 });
 
-    await expect(
-      consumer.onFailed(job, new Error('terminal')),
-    ).resolves.toBeUndefined();
+    await expect(consumer.onFailed(job, new Error('terminal'))).resolves.toBeUndefined();
 
     expect(logger.error).toHaveBeenCalledWith(
       'source-embedding-chunk job failure compensation failed',
@@ -139,14 +135,10 @@ describe('SourceEmbeddingChunkBullMqConsumer', () => {
     const { useCase, logger } = buildDependencies();
     const consumer = new SourceEmbeddingChunkBullMqConsumer(useCase, logger);
 
-    expect(() =>
-      consumer.onError(new Error('redis connection lost')),
-    ).not.toThrow();
+    expect(() => consumer.onError(new Error('redis connection lost'))).not.toThrow();
 
-    expect(logger.error).toHaveBeenCalledWith(
-      'source-embedding-chunk worker error',
-      expect.any(Error) as Error,
-      { queueName: 'source-embedding-chunk' },
-    );
+    expect(logger.error).toHaveBeenCalledWith('source-embedding-chunk worker error', expect.any(Error) as Error, {
+      queueName: 'source-embedding-chunk',
+    });
   });
 });

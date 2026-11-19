@@ -2,21 +2,13 @@ import './index.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import {
-  QueryCache,
-  QueryClient,
-  QueryClientProvider,
-} from '@tanstack/react-query';
+import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from '@/app/shell';
 import { HttpClient, HttpClientProvider, shouldRetryQuery } from '@/shared/api';
 import { AttachmentBaseUrlProvider } from '@/shared/ui';
 
-const apiBaseUrl =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';
-const attachmentBaseUrl = requireAbsoluteUrl(
-  'VITE_ATTACHMENT_BASE_URL',
-  import.meta.env.VITE_ATTACHMENT_BASE_URL as string | undefined,
-);
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';
+const attachmentBaseUrl = requireAbsoluteUrl('VITE_ATTACHMENT_BASE_URL', import.meta.env.VITE_ATTACHMENT_BASE_URL as string | undefined);
 const rootEl = document.getElementById('root');
 if (!rootEl) throw new Error('Root element not found');
 

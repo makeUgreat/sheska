@@ -10,13 +10,7 @@ const TONE = {
   directory: 'font-bold text-white',
 } as const;
 
-export function TerminalText({
-  tone = 'plain',
-  children,
-}: {
-  tone?: keyof typeof TONE;
-  children: ReactNode;
-}) {
+export function TerminalText({ tone = 'plain', children }: { tone?: keyof typeof TONE; children: ReactNode }) {
   return <p className={`whitespace-pre-wrap ${TONE[tone]}`}>{children}</p>;
 }
 
@@ -63,15 +57,7 @@ export interface TerminalTreeItem {
  * tree 명령처럼 `├──`, `└──`로 묶는다. 가지 기호는 장식이라 화면 낭독기에는 숨긴다.
  * 긴 제목이 줄바꿈되어도 가지 기호 오른쪽에 맞춘다.
  */
-export function TerminalTree({
-  root,
-  items,
-  footer,
-}: {
-  root: ReactNode;
-  items: TerminalTreeItem[];
-  footer?: ReactNode;
-}) {
+export function TerminalTree({ root, items, footer }: { root: ReactNode; items: TerminalTreeItem[]; footer?: ReactNode }) {
   return (
     <div>
       <p>{root}</p>
@@ -91,9 +77,7 @@ export function TerminalTree({
                   <span aria-hidden="true" className={BRANCH}>
                     {last ? '    ' : '│   '}
                   </span>
-                  <span className="min-w-0 break-words text-on-surface-muted">
-                    {item.detail}
-                  </span>
+                  <span className="min-w-0 break-words text-on-surface-muted">{item.detail}</span>
                 </p>
               )}
             </li>
@@ -110,13 +94,7 @@ export function TerminalTree({
   );
 }
 
-export function TerminalTreeRoot({
-  label,
-  note,
-}: {
-  label: string;
-  note?: string;
-}) {
+export function TerminalTreeRoot({ label, note }: { label: string; note?: string }) {
   return (
     <>
       <span className="font-bold text-white">{label}</span>
@@ -126,23 +104,10 @@ export function TerminalTreeRoot({
 }
 
 /** 목록 한 줄. 제목 링크 뒤에 날짜를 붙인다. */
-export function TerminalEntryLink({
-  title,
-  to,
-  date,
-  highlight = [],
-}: {
-  title: string;
-  to: string;
-  date?: string;
-  highlight?: string[];
-}) {
+export function TerminalEntryLink({ title, to, date, highlight = [] }: { title: string; to: string; date?: string; highlight?: string[] }) {
   return (
     <>
-      <Link
-        to={to}
-        className="text-primary underline decoration-primary/40 underline-offset-[3px] hover:decoration-primary"
-      >
+      <Link to={to} className="text-primary underline decoration-primary/40 underline-offset-[3px] hover:decoration-primary">
         <TerminalHighlight text={title} words={highlight} />
       </Link>
       {date && (

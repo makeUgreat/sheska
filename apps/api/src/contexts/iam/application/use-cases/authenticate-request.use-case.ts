@@ -1,20 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UnauthenticatedError } from '@core/errors';
 import { type SessionStore } from '@contexts/iam/application/ports';
-import {
-  ALL_PERMISSIONS,
-  type ApiTokenRepository,
-  ApiTokenSecret,
-  type Permission,
-} from '@contexts/iam/domain';
-import {
-  API_TOKEN_REPOSITORY,
-  SESSION_STORE,
-} from '@contexts/iam/iam.di-tokens';
+import { ALL_PERMISSIONS, type ApiTokenRepository, ApiTokenSecret, type Permission } from '@contexts/iam/domain';
+import { API_TOKEN_REPOSITORY, SESSION_STORE } from '@contexts/iam/iam.di-tokens';
 
-export type Credential =
-  | { readonly type: 'session'; readonly token: string }
-  | { readonly type: 'bearer'; readonly token: string };
+export type Credential = { readonly type: 'session'; readonly token: string } | { readonly type: 'bearer'; readonly token: string };
 
 export interface Identity {
   readonly permissions: readonly Permission[];

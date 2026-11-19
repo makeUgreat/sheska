@@ -1,8 +1,6 @@
 import { type Source } from './source.aggregate';
 
-export type SourceRepositoryFindCriteria =
-  | { readonly id: string }
-  | { readonly externalSourceId: string };
+export type SourceRepositoryFindCriteria = { readonly id: string } | { readonly externalSourceId: string };
 
 export type SourceRepositoryGetCriteria = {
   readonly id: string;

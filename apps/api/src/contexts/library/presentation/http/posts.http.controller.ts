@@ -1,30 +1,8 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import { z } from 'zod';
-import {
-  type ApiRequest,
-  type ApiResponse,
-  PostApi,
-  type PostSummaryResponse,
-  PERMISSION,
-} from '@sheska/contract';
+import { type ApiRequest, type ApiResponse, PostApi, type PostSummaryResponse, PERMISSION } from '@sheska/contract';
 import { callContext } from '@core/call-context';
-import {
-  cursorQueryParamSchema,
-  encodeCursor,
-  ErrorCodes,
-  Permission,
-  Public,
-  ZodValidationPipe,
-} from '@kernels/presentation';
+import { cursorQueryParamSchema, encodeCursor, ErrorCodes, Permission, Public, ZodValidationPipe } from '@kernels/presentation';
 import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/library/application/use-cases/get-post.use-case';
 import { ListPostsUseCase } from '@contexts/library/application/use-cases/list-posts.use-case';
@@ -36,9 +14,7 @@ const listPostsQuerySchema = PostApi.list.query.extend({
 });
 
 const searchPostsQuerySchema = PostApi.search.query.extend({
-  cursor: cursorQueryParamSchema
-    .pipe(z.object({ id: z.string(), score: z.number('Invalid cursor') }))
-    .optional(),
+  cursor: cursorQueryParamSchema.pipe(z.object({ id: z.string(), score: z.number('Invalid cursor') })).optional(),
 });
 
 interface PostSummary {
@@ -90,11 +66,7 @@ export class PostsHttpController {
       sourceId: body.sourceId,
     });
 
-    return PostApi.publish.response.parse(
-      toPostSummaryResponse(result) satisfies ApiResponse<
-        typeof PostApi.publish
-      >,
-    );
+    return PostApi.publish.response.parse(toPostSummaryResponse(result) satisfies ApiResponse<typeof PostApi.publish>);
   }
 
   // 정적 경로가 `:id`보다 먼저 등록되어야 한다.

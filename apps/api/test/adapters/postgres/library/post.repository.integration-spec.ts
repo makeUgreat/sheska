@@ -29,9 +29,7 @@ describe('PostPgDrizzleRepository', () => {
   });
 
   it('post를 저장하고 id로 조회한다', async () => {
-    const source = await sources.insert(
-      buildSource({ externalSourceId: 'Notes/post-repo-get.md' }),
-    );
+    const source = await sources.insert(buildSource({ externalSourceId: 'Notes/post-repo-get.md' }));
     const post = buildPost({ sourceId: source.id, title: '조회 테스트' });
 
     await posts.insert(post);
@@ -43,9 +41,7 @@ describe('PostPgDrizzleRepository', () => {
   });
 
   it('post를 갱신한다', async () => {
-    const source = await sources.insert(
-      buildSource({ externalSourceId: 'Notes/post-repo-update.md' }),
-    );
+    const source = await sources.insert(buildSource({ externalSourceId: 'Notes/post-repo-update.md' }));
     const post = buildPost({ sourceId: source.id });
     await posts.insert(post);
 
@@ -64,9 +60,7 @@ describe('PostPgDrizzleRepository', () => {
   });
 
   it('존재하지 않는 post를 update하면 NotFoundError를 throw한다', async () => {
-    const source = await sources.insert(
-      buildSource({ externalSourceId: 'Notes/post-repo-update-missing.md' }),
-    );
+    const source = await sources.insert(buildSource({ externalSourceId: 'Notes/post-repo-update-missing.md' }));
     const post = buildPost({ sourceId: source.id });
 
     await expect(posts.update(post)).rejects.toMatchObject({
@@ -77,9 +71,7 @@ describe('PostPgDrizzleRepository', () => {
 
   // nocap: library-post-1
   it('같은 sourceId로 두 번 insert하면 constraint_violation exception을 발생시킨다', async () => {
-    const source = await sources.insert(
-      buildSource({ externalSourceId: 'Notes/post-repo-conflict.md' }),
-    );
+    const source = await sources.insert(buildSource({ externalSourceId: 'Notes/post-repo-conflict.md' }));
     const post1 = buildPost({ sourceId: source.id });
     const post2 = buildPost({ sourceId: source.id });
     await posts.insert(post1);

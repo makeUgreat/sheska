@@ -50,9 +50,7 @@ export async function withRetryAttempts<T>(
         throw error;
       }
 
-      const delay =
-        classification.retryAfterMs ??
-        computeRetryDelayMs(attempt, policy, random);
+      const delay = classification.retryAfterMs ?? computeRetryDelayMs(attempt, policy, random);
 
       if (delay >= remainingMs(deadline, now())) {
         throw error;

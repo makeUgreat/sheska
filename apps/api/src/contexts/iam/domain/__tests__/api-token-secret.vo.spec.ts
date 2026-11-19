@@ -10,9 +10,7 @@ describe('ApiTokenSecret', () => {
   });
 
   it('만들 때마다 다른 원문을 만든다', () => {
-    expect(ApiTokenSecret.generate().unpack()).not.toBe(
-      ApiTokenSecret.generate().unpack(),
-    );
+    expect(ApiTokenSecret.generate().unpack()).not.toBe(ApiTokenSecret.generate().unpack());
   });
 
   it('hash는 원문의 SHA-256이다', () => {

@@ -28,11 +28,7 @@ export default async function setup(): Promise<() => Promise<void>> {
       await execAsync(`docker compose -f "${REDIS_COMPOSE_FILE}" down -v`, {
         cwd: REDIS_COMPOSE_CWD,
       });
-      logIntegrationAdapterStep(
-        REDIS_LOG_CONTEXT,
-        'DONE',
-        `${REDIS_TEST_CONTAINER_NAME} cleaned up`,
-      );
+      logIntegrationAdapterStep(REDIS_LOG_CONTEXT, 'DONE', `${REDIS_TEST_CONTAINER_NAME} cleaned up`);
     };
   } catch (error) {
     console.error(error);
@@ -41,28 +37,16 @@ export default async function setup(): Promise<() => Promise<void>> {
 }
 
 async function executeTestRedisContainer(): Promise<void> {
-  logIntegrationAdapterStep(
-    REDIS_LOG_CONTEXT,
-    'START',
-    'Resetting docker compose services',
-  );
+  logIntegrationAdapterStep(REDIS_LOG_CONTEXT, 'START', 'Resetting docker compose services');
   await execAsync(`docker compose -f "${REDIS_COMPOSE_FILE}" down -v`, {
     cwd: REDIS_COMPOSE_CWD,
   });
-  logIntegrationAdapterStep(
-    REDIS_LOG_CONTEXT,
-    'START',
-    'Starting docker compose services',
-  );
+  logIntegrationAdapterStep(REDIS_LOG_CONTEXT, 'START', 'Starting docker compose services');
   await execAsync(`docker compose -f "${REDIS_COMPOSE_FILE}" up -d`, {
     cwd: REDIS_COMPOSE_CWD,
   });
   await waitForHealthyContainer(REDIS_TEST_CONTAINER_NAME);
-  logIntegrationAdapterStep(
-    REDIS_LOG_CONTEXT,
-    'READY',
-    `${REDIS_TEST_CONTAINER_NAME} is healthy`,
-  );
+  logIntegrationAdapterStep(REDIS_LOG_CONTEXT, 'READY', `${REDIS_TEST_CONTAINER_NAME} is healthy`);
 }
 
 async function waitForHealthyContainer(containerName: string): Promise<void> {
@@ -70,10 +54,7 @@ async function waitForHealthyContainer(containerName: string): Promise<void> {
     let status = 'unavailable';
 
     try {
-      const { stdout } = await execAsync(
-        `docker inspect --format='{{.State.Health.Status}}' ${containerName}`,
-        { cwd: REDIS_COMPOSE_CWD },
-      );
+      const { stdout } = await execAsync(`docker inspect --format='{{.State.Health.Status}}' ${containerName}`, { cwd: REDIS_COMPOSE_CWD });
       status = stdout.trim();
     } catch {
       status = 'unavailable';
@@ -83,9 +64,7 @@ async function waitForHealthyContainer(containerName: string): Promise<void> {
       return;
     }
 
-    await new Promise((resolveDelay) =>
-      setTimeout(resolveDelay, Math.min(500 * 2 ** (attempt - 1), 10_000)),
-    );
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, Math.min(500 * 2 ** (attempt - 1), 10_000)));
   }
 
   throw new Error(`Timed out waiting for ${containerName} healthcheck`);

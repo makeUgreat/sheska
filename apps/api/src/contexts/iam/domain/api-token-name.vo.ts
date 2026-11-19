@@ -17,8 +17,7 @@ export class ApiTokenName extends ValueObject<string> {
 
     throw new InvariantViolationError({
       code: 'api_token.invalid_name',
-      message:
-        'API token name must be 1-32 lowercase letters, digits, or hyphens',
+      message: 'API token name must be 1-32 lowercase letters, digits, or hyphens',
       details: { fields: ['name'] },
     });
   }

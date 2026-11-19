@@ -1,9 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { type SourceEmbeddingRepository } from '@contexts/ingestion/domain';
-import {
-  type SourceEmbeddingLookup,
-  type EmbeddingMetadata,
-} from '@contexts/ingestion/application/ports';
+import { type SourceEmbeddingLookup, type EmbeddingMetadata } from '@contexts/ingestion/application/ports';
 import { SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
 
 @Injectable()
@@ -13,11 +10,7 @@ export class SourceEmbeddingFromRepositoryLookup implements SourceEmbeddingLooku
     private readonly sourceEmbeddings: SourceEmbeddingRepository,
   ) {}
 
-  async find({
-    sourceId,
-  }: {
-    sourceId: string;
-  }): Promise<EmbeddingMetadata | null> {
+  async find({ sourceId }: { sourceId: string }): Promise<EmbeddingMetadata | null> {
     const embedding = await this.sourceEmbeddings.find({ sourceId });
     if (!embedding) return null;
     const props = embedding.getProps();

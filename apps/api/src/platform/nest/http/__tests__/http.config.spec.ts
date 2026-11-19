@@ -14,10 +14,7 @@ describe('httpConfig', () => {
   it('CORS_ORIGINS를 쉼표로 나눈 출처 목록으로 돌려준다', () => {
     vi.stubEnv('CORS_ORIGINS', 'app://obsidian.md, https://hash.example.com');
 
-    expect(httpConfig().corsOrigins).toEqual([
-      'app://obsidian.md',
-      'https://hash.example.com',
-    ]);
+    expect(httpConfig().corsOrigins).toEqual(['app://obsidian.md', 'https://hash.example.com']);
   });
 
   it('PORT가 없으면 3000을 쓴다', () => {
@@ -36,12 +33,9 @@ describe('httpConfig', () => {
     expect(() => httpConfig()).toThrow('PORT');
   });
 
-  it.each([undefined, '', 'http://localhost:5173,*'])(
-    'CORS_ORIGINS가 %j이면 거부한다',
-    (value) => {
-      vi.stubEnv('CORS_ORIGINS', value);
+  it.each([undefined, '', 'http://localhost:5173,*'])('CORS_ORIGINS가 %j이면 거부한다', (value) => {
+    vi.stubEnv('CORS_ORIGINS', value);
 
-      expect(() => httpConfig()).toThrow('CORS_ORIGINS');
-    },
-  );
+    expect(() => httpConfig()).toThrow('CORS_ORIGINS');
+  });
 });

@@ -1,17 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { buildSourceEmbedding } from '../../../../../../../test/support/domains/fixtures/source-embedding.fixture';
 import { SourceEmbeddingPgDrizzleRepository } from '../source-embedding.pg-drizzle.repository';
-import {
-  ConcurrencyConflictError,
-  ConstraintViolationError,
-  UnexpectedError,
-} from '@core/errors';
+import { ConcurrencyConflictError, ConstraintViolationError, UnexpectedError } from '@core/errors';
 
 describe('SourceEmbeddingPgDrizzleRepository', () => {
   it('Postgres error는 ConstraintViolationError로 전파하고 재시도하지 않는다', async () => {
-    const { db, transaction } = createSaveRejectingDb(
-      createPostgresError('23505'),
-    );
+    const { db, transaction } = createSaveRejectingDb(createPostgresError('23505'));
     const repository = new SourceEmbeddingPgDrizzleRepository(db);
 
     const result = repository.upsert(buildSourceEmbedding());
@@ -24,9 +18,7 @@ describe('SourceEmbeddingPgDrizzleRepository', () => {
   });
 
   it('unknown failure는 UnexpectedError로 전파하고 재시도하지 않는다', async () => {
-    const { db, transaction } = createSaveRejectingDb(
-      new Error('connection failed'),
-    );
+    const { db, transaction } = createSaveRejectingDb(new Error('connection failed'));
     const repository = new SourceEmbeddingPgDrizzleRepository(db);
 
     const result = repository.upsert(buildSourceEmbedding());
@@ -39,10 +31,7 @@ describe('SourceEmbeddingPgDrizzleRepository', () => {
   });
 
   it('ConcurrencyConflictError는 트랜잭션 전체를 재시도해서 결국 성공한다', async () => {
-    const { db, transaction } = createSaveFailingNTimesDb(
-      createPostgresError('40001'),
-      2,
-    );
+    const { db, transaction } = createSaveFailingNTimesDb(createPostgresError('40001'), 2);
     const repository = new SourceEmbeddingPgDrizzleRepository(db);
 
     await repository.upsert(buildSourceEmbedding());
@@ -74,9 +63,7 @@ function createSaveRejectingDb(error: Error): {
     }),
   );
   return {
-    db: { transaction } as unknown as ConstructorParameters<
-      typeof SourceEmbeddingPgDrizzleRepository
-    >[0],
+    db: { transaction } as unknown as ConstructorParameters<typeof SourceEmbeddingPgDrizzleRepository>[0],
     transaction,
   };
 }
@@ -94,15 +81,12 @@ function createSaveFailingNTimesDb(
     return fn({
       delete: () => ({ where: () => Promise.resolve() }),
       insert: () => ({
-        values: () =>
-          calls <= failCount ? Promise.reject(error) : Promise.resolve(),
+        values: () => (calls <= failCount ? Promise.reject(error) : Promise.resolve()),
       }),
     });
   });
   return {
-    db: { transaction } as unknown as ConstructorParameters<
-      typeof SourceEmbeddingPgDrizzleRepository
-    >[0],
+    db: { transaction } as unknown as ConstructorParameters<typeof SourceEmbeddingPgDrizzleRepository>[0],
     transaction,
   };
 }

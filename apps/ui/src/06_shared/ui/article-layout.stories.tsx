@@ -10,21 +10,15 @@ import { ArticleLayout } from './article-layout';
  * real page puts it. Widen the canvas past 1024px to see the outline at all,
  * and past 1200px to see it stay open.
  */
-const AS_THE_DETAIL_PAGE_PLACES_IT =
-  'min-h-screen bg-page-background px-4 py-14';
+const AS_THE_DETAIL_PAGE_PLACES_IT = 'min-h-screen bg-page-background px-4 py-14';
 
 function Header({ title }: { title: string }) {
   return (
     <>
-      <h1 className="break-words font-sans text-headline-lg text-text-primary">
-        {title}
-      </h1>
+      <h1 className="break-words font-sans text-headline-lg text-text-primary">{title}</h1>
       <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-label-sm uppercase text-text-muted">
         <span>Sep 22, 2026</span>
-        <span
-          aria-hidden="true"
-          className="h-1 w-1 rounded-full bg-outline-variant"
-        />
+        <span aria-hidden="true" className="h-1 w-1 rounded-full bg-outline-variant" />
         <span>128 views</span>
       </p>
     </>
@@ -111,9 +105,7 @@ export const WithFooter: Story = {
     ...WithOutline.args,
     footer: (
       <footer className="mt-14 border-t border-outline-variant/20 pt-6">
-        <p className="font-mono text-label-sm uppercase text-text-muted">
-          topics · layout · outline
-        </p>
+        <p className="font-mono text-label-sm uppercase text-text-muted">topics · layout · outline</p>
       </footer>
     ),
   },

@@ -4,11 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type GetPostResponse } from '@/entities/post';
 import { PostDetailPage } from '@/pages/post-detail';
-import {
-  HttpClientProvider,
-  HttpError,
-  type HttpClientType as HttpClient,
-} from '@/shared/api';
+import { HttpClientProvider, HttpError, type HttpClientType as HttpClient } from '@/shared/api';
 
 type MockHttpClientOverrides = {
   get?: ReturnType<typeof vi.fn>;
@@ -41,9 +37,7 @@ const MOCK_POST: GetPostResponse = {
   ].join('\n'),
 };
 
-function buildMockHttpClient(
-  overrides: MockHttpClientOverrides = {},
-): HttpClient {
+function buildMockHttpClient(overrides: MockHttpClientOverrides = {}): HttpClient {
   return {
     get: vi.fn().mockResolvedValue(MOCK_POST),
     post: vi.fn(),
@@ -96,9 +90,7 @@ describe('PostDetailPage', () => {
     renderPage(buildMockHttpClient());
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { level: 1, name: '테스트 포스트' }),
-      ).toBeDefined();
+      expect(screen.getByRole('heading', { level: 1, name: '테스트 포스트' })).toBeDefined();
     });
     expect(screen.getByText('Jan 5, 2026')).toBeDefined();
     expect(screen.getByText('7 views')).toBeDefined();
@@ -111,9 +103,7 @@ describe('PostDetailPage', () => {
       expect(screen.getByRole('heading', { name: 'Layers' })).toBeDefined();
     });
     expect(screen.getByRole('heading', { name: 'Layers' }).id).toBe('layers');
-    expect(screen.getByRole('heading', { name: 'Segments' }).id).toBe(
-      'segments',
-    );
+    expect(screen.getByRole('heading', { name: 'Segments' }).id).toBe('segments');
   });
 
   it('heading이 둘 이상이면 outline navigation을 보여준다', async () => {
@@ -140,9 +130,7 @@ describe('PostDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByText('제목 없는 본문')).toBeDefined();
     });
-    expect(
-      screen.queryByRole('navigation', { name: 'On this page' }),
-    ).toBeNull();
+    expect(screen.queryByRole('navigation', { name: 'On this page' })).toBeNull();
   });
 
   it('resolve되지 않은 wiki link를 label만 남겨 렌더링한다', async () => {
@@ -164,9 +152,7 @@ describe('PostDetailPage', () => {
       expect(screen.getByRole('alert')).toBeDefined();
     });
     expect(screen.getByText('503')).toBeDefined();
-    expect(
-      screen.getByText('Something went wrong while loading.'),
-    ).toBeDefined();
+    expect(screen.getByText('Something went wrong while loading.')).toBeDefined();
   });
 
   it('post id가 없으면 빈 상태 메시지를 보여준다', () => {
@@ -174,9 +160,7 @@ describe('PostDetailPage', () => {
 
     renderPageWithoutId(buildMockHttpClient({ get: getPost }));
 
-    expect(
-      screen.getByText('This page does not exist, or it was removed.'),
-    ).toBeDefined();
+    expect(screen.getByText('This page does not exist, or it was removed.')).toBeDefined();
     expect(getPost).not.toHaveBeenCalled();
   });
 

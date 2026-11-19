@@ -1,12 +1,6 @@
 import { sha256Hex } from '@core/hash';
-import {
-  type SourceRepository,
-  type SourceSyncJobRepository,
-} from '@contexts/library/domain';
-import {
-  type SourceEmbeddingLookup,
-  type SourceQuery,
-} from '@contexts/library/application/ports';
+import { type SourceRepository, type SourceSyncJobRepository } from '@contexts/library/domain';
+import { type SourceEmbeddingLookup, type SourceQuery } from '@contexts/library/application/ports';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { GetSourceUseCase } from '../get-source.use-case';
 import { buildSource } from '../../../../../../test/support/domains/fixtures/source.fixture';
@@ -96,25 +90,19 @@ describe('GetSourceUseCase', () => {
       sourceQuery as unknown as SourceQuery,
     );
 
-    await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(
-      getFailure,
-    );
+    await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(getFailure);
   });
 });
 
 function createSourceRepositoryMock(): SourceRepositoryMock {
   return {
-    get: vi
-      .fn<SourceRepository['get']>()
-      .mockResolvedValue(buildSource({ externalSourceId: 'Notes/source.md' })),
+    get: vi.fn<SourceRepository['get']>().mockResolvedValue(buildSource({ externalSourceId: 'Notes/source.md' })),
   };
 }
 
 function createSyncJobRepositoryMock(): SourceSyncJobRepositoryMock {
   return {
-    findLatest: vi
-      .fn<SourceSyncJobRepository['findLatest']>()
-      .mockResolvedValue(null),
+    findLatest: vi.fn<SourceSyncJobRepository['findLatest']>().mockResolvedValue(null),
   };
 }
 

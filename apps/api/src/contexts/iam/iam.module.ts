@@ -16,13 +16,7 @@ import { SessionRedisStore } from '@contexts/iam/infrastructure/session/redis/se
 import { AccessHttpGuard } from '@contexts/iam/presentation/http/access.http.guard';
 import { ApiTokenHttpController } from '@contexts/iam/presentation/http/api-token.http.controller';
 import { AuthHttpController } from '@contexts/iam/presentation/http/auth.http.controller';
-import {
-  API_TOKEN_QUERY,
-  API_TOKEN_REPOSITORY,
-  LOGIN_ATTEMPT_COUNTER,
-  OWNER_PASSWORD_VERIFIER,
-  SESSION_STORE,
-} from './iam.di-tokens';
+import { API_TOKEN_QUERY, API_TOKEN_REPOSITORY, LOGIN_ATTEMPT_COUNTER, OWNER_PASSWORD_VERIFIER, SESSION_STORE } from './iam.di-tokens';
 
 @Module({})
 export class IamModule {

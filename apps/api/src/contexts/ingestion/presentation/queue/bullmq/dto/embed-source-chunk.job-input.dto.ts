@@ -7,6 +7,4 @@ export const embedSourceChunkJobInputSchema = z.strictObject({
   chunkContent: z.string(),
 });
 
-export type EmbedSourceChunkJobInput = z.infer<
-  typeof embedSourceChunkJobInputSchema
->;
+export type EmbedSourceChunkJobInput = z.infer<typeof embedSourceChunkJobInputSchema>;

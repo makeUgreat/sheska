@@ -9,8 +9,7 @@ module.exports = {
     {
       name: 'not-to-unresolvable',
       severity: 'error',
-      comment:
-        'Imports must resolve to a real local file, package dependency, or Node built-in module.',
+      comment: 'Imports must resolve to a real local file, package dependency, or Node built-in module.',
       from: {},
       to: {
         couldNotResolve: true,

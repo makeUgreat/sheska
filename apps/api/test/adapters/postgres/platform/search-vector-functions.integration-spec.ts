@@ -7,10 +7,7 @@ import { type SourceRepository } from '@contexts/library/domain';
 import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { DATABASE_TOKENS } from '@kernels/infrastructure';
 import { AppModule } from '@platform/nest/app.module';
-import {
-  buildSource,
-  sourceContentByteSize,
-} from '../../../support/domains/fixtures/source.fixture';
+import { buildSource, sourceContentByteSize } from '../../../support/domains/fixtures/source.fixture';
 
 describe('Search vector Postgres functions', () => {
   let app: INestApplication;
@@ -33,49 +30,37 @@ describe('Search vector Postgres functions', () => {
 
   describe('bigram_tokens', () => {
     it('null 입력이면 빈 문자열을 반환한다', async () => {
-      const result = await db.execute<{ tokens: string }>(
-        sql`SELECT bigram_tokens(${null}) AS tokens`,
-      );
+      const result = await db.execute<{ tokens: string }>(sql`SELECT bigram_tokens(${null}) AS tokens`);
 
       expect(result.rows[0]?.tokens).toBe('');
     });
 
     it('공백만 있는 입력이면 빈 문자열을 반환한다', async () => {
-      const result = await db.execute<{ tokens: string }>(
-        sql`SELECT bigram_tokens(${'   '}) AS tokens`,
-      );
+      const result = await db.execute<{ tokens: string }>(sql`SELECT bigram_tokens(${'   '}) AS tokens`);
 
       expect(result.rows[0]?.tokens).toBe('');
     });
 
     it('2자 이하 단어는 분리하지 않고 그대로 유지한다', async () => {
-      const result = await db.execute<{ tokens: string }>(
-        sql`SELECT bigram_tokens(${'AI'}) AS tokens`,
-      );
+      const result = await db.execute<{ tokens: string }>(sql`SELECT bigram_tokens(${'AI'}) AS tokens`);
 
       expect(result.rows[0]?.tokens).toBe('AI');
     });
 
     it('3자 이상 한글 단어는 2글자 단위로 겹치게 분리한다', async () => {
-      const result = await db.execute<{ tokens: string }>(
-        sql`SELECT bigram_tokens(${'소켓은'}) AS tokens`,
-      );
+      const result = await db.execute<{ tokens: string }>(sql`SELECT bigram_tokens(${'소켓은'}) AS tokens`);
 
       expect(result.rows[0]?.tokens).toBe('소켓 켓은');
     });
 
     it('3자 이상 영어 단어도 동일하게 2글자 단위로 분리한다', async () => {
-      const result = await db.execute<{ tokens: string }>(
-        sql`SELECT bigram_tokens(${'Go1234'}) AS tokens`,
-      );
+      const result = await db.execute<{ tokens: string }>(sql`SELECT bigram_tokens(${'Go1234'}) AS tokens`);
 
       expect(result.rows[0]?.tokens).toBe('Go o1 12 23 34');
     });
 
     it('공백으로 구분된 여러 단어를 각각 독립적으로 토큰화한다', async () => {
-      const result = await db.execute<{ tokens: string }>(
-        sql`SELECT bigram_tokens(${'머신러닝 모델'}) AS tokens`,
-      );
+      const result = await db.execute<{ tokens: string }>(sql`SELECT bigram_tokens(${'머신러닝 모델'}) AS tokens`);
 
       expect(result.rows[0]?.tokens).toBe('머신 신러 러닝 모델');
     });
@@ -140,9 +125,7 @@ describe('Search vector Postgres functions', () => {
     });
 
     it('title_search_vector에 직접 쓰려고 하면 에러가 발생한다', async () => {
-      const source = await sources.insert(
-        buildSource({ externalSourceId: 'Notes/svf-title-direct-write.md' }),
-      );
+      const source = await sources.insert(buildSource({ externalSourceId: 'Notes/svf-title-direct-write.md' }));
       await expect(
         db.execute(sql`
           UPDATE sources SET title_search_vector = ''::tsvector WHERE id = ${source.id}

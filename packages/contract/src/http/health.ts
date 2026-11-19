@@ -27,9 +27,6 @@ export const HealthApi = {
     method: 'GET',
     path: '/readyz',
     response: healthySchema,
-    errors: [
-      HealthErrorCode.DATABASE_UNREACHABLE,
-      HealthErrorCode.QUEUE_UNREACHABLE,
-    ],
+    errors: [HealthErrorCode.DATABASE_UNREACHABLE, HealthErrorCode.QUEUE_UNREACHABLE],
   }),
 };

@@ -9,13 +9,7 @@ export interface SyncCacheEntry {
   sourceId?: string;
   syncJobId?: string;
   fingerprint?: string;
-  status?:
-    | 'accepted'
-    | 'processing'
-    | 'synced'
-    | 'failed'
-    | 'unknown'
-    | 'retrying';
+  status?: 'accepted' | 'processing' | 'synced' | 'failed' | 'unknown' | 'retrying';
   retryCount?: number;
   nextRetryAt?: number;
 }
@@ -62,10 +56,7 @@ export class PluginDataStore {
     await this.plugin.saveData(data);
   }
 
-  private async loadStoredData(): Promise<
-    StoredData & Partial<SheskaSettings>
-  > {
-    return ((await this.plugin.loadData()) ?? {}) as StoredData &
-      Partial<SheskaSettings>;
+  private async loadStoredData(): Promise<StoredData & Partial<SheskaSettings>> {
+    return ((await this.plugin.loadData()) ?? {}) as StoredData & Partial<SheskaSettings>;
   }
 }

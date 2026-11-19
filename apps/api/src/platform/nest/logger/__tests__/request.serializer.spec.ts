@@ -2,9 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { SerializedRequest } from 'pino-std-serializers';
 import { serializeRequest } from '../request.serializer';
 
-function buildSerializedRequest(
-  overrides: Partial<SerializedRequest>,
-): SerializedRequest {
+function buildSerializedRequest(overrides: Partial<SerializedRequest>): SerializedRequest {
   return {
     id: 1,
     method: 'GET',

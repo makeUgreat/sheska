@@ -46,9 +46,7 @@ describe('LoginAttemptRedisCounter', () => {
   it('시도를 IP별로 센다', async () => {
     await registerTimes(2);
 
-    await expect(
-      counter.register('198.51.100.1', POLICY),
-    ).resolves.toMatchObject({ attemptNumber: 1 });
+    await expect(counter.register('198.51.100.1', POLICY)).resolves.toMatchObject({ attemptNumber: 1 });
     await expect(counter.register(ADDRESS, POLICY)).resolves.toMatchObject({
       attemptNumber: 3,
     });
@@ -78,13 +76,9 @@ describe('LoginAttemptRedisCounter', () => {
   });
 
   it('동시에 시도해도 시도마다 서로 다른 횟수를 받는다', async () => {
-    const attempts = await Promise.all(
-      Array.from({ length: 20 }, () => counter.register(ADDRESS, POLICY)),
-    );
+    const attempts = await Promise.all(Array.from({ length: 20 }, () => counter.register(ADDRESS, POLICY)));
 
-    expect(
-      attempts.map((attempt) => attempt.attemptNumber).sort((a, b) => a - b),
-    ).toEqual(Array.from({ length: 20 }, (_, i) => i + 1));
+    expect(attempts.map((attempt) => attempt.attemptNumber).sort((a, b) => a - b)).toEqual(Array.from({ length: 20 }, (_, i) => i + 1));
   });
 
   it('Redis가 명령을 거부하면 UnexpectedError로 바꾼다', async () => {
@@ -101,10 +95,7 @@ describe('LoginAttemptRedisCounter', () => {
   it('Redis에 닿지 못하면 UnavailableError로 바꾼다', async () => {
     const unreachable = buildUnreachableRedis();
 
-    const result = new LoginAttemptRedisCounter(unreachable).register(
-      ADDRESS,
-      POLICY,
-    );
+    const result = new LoginAttemptRedisCounter(unreachable).register(ADDRESS, POLICY);
 
     await expect(result).rejects.toBeInstanceOf(UnavailableError);
     await expect(result).rejects.toMatchObject({ code: 'redis.unavailable' });

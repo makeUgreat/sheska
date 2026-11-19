@@ -1,13 +1,5 @@
 import { sql } from 'drizzle-orm';
-import {
-  customType,
-  integer,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  uniqueIndex,
-} from 'drizzle-orm/pg-core';
+import { customType, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { type SourceFrontmatterProps } from '@contexts/library/domain';
 
 const tsvector = customType<{ data: string }>({
@@ -18,10 +10,7 @@ export const sources = pgTable('sources', {
   id: text('id').primaryKey(),
   externalSourceId: text('external_source_id').notNull().unique(),
   body: text('body').notNull(),
-  frontmatter: jsonb('frontmatter')
-    .$type<SourceFrontmatterProps>()
-    .notNull()
-    .default({}),
+  frontmatter: jsonb('frontmatter').$type<SourceFrontmatterProps>().notNull().default({}),
   title: text('title').notNull(),
   fingerprint: text('fingerprint').notNull(),
   sizeBytes: integer('size_bytes').notNull(),
@@ -31,12 +20,8 @@ export const sources = pgTable('sources', {
   bodySearchVector: tsvector('body_search_vector')
     .notNull()
     .generatedAlwaysAs(sql`to_tsvector('simple', bigram_tokens(body))`),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const sourceSyncJobs = pgTable(
@@ -49,9 +34,7 @@ export const sourceSyncJobs = pgTable(
     fingerprint: text('fingerprint').notNull(),
     status: text('status').notNull(),
     totalChunks: integer('total_chunks'),
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     uniqueIndex('source_sync_jobs_active_source_fingerprint_unique')
@@ -68,12 +51,8 @@ export type SourceSyncJobInsert = typeof sourceSyncJobs.$inferInsert;
 export const posts = pgTable('posts', {
   id: text('id').primaryKey(),
   viewCount: integer('view_count').notNull().default(0),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 export type PostRow = typeof posts.$inferSelect;

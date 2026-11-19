@@ -11,21 +11,10 @@ export class PinoLoggerAdapter implements LoggerPort {
   }
 
   error(message: string, context?: Record<string, unknown>): void;
-  error(
-    message: string,
-    error: unknown,
-    context?: Record<string, unknown>,
-  ): void;
-  error(
-    message: string,
-    errorOrContext?: unknown,
-    context?: Record<string, unknown>,
-  ): void {
+  error(message: string, error: unknown, context?: Record<string, unknown>): void;
+  error(message: string, errorOrContext?: unknown, context?: Record<string, unknown>): void {
     if (arguments.length >= 3 || !isLogContext(errorOrContext)) {
-      this.logger.error(
-        { ...context, ...toErrorLogContext(errorOrContext) },
-        message,
-      );
+      this.logger.error({ ...context, ...toErrorLogContext(errorOrContext) }, message);
       return;
     }
 
@@ -33,21 +22,10 @@ export class PinoLoggerAdapter implements LoggerPort {
   }
 
   warn(message: string, context?: Record<string, unknown>): void;
-  warn(
-    message: string,
-    error: unknown,
-    context?: Record<string, unknown>,
-  ): void;
-  warn(
-    message: string,
-    errorOrContext?: unknown,
-    context?: Record<string, unknown>,
-  ): void {
+  warn(message: string, error: unknown, context?: Record<string, unknown>): void;
+  warn(message: string, errorOrContext?: unknown, context?: Record<string, unknown>): void {
     if (arguments.length >= 3 || !isLogContext(errorOrContext)) {
-      this.logger.warn(
-        { ...context, ...toErrorLogContext(errorOrContext) },
-        message,
-      );
+      this.logger.warn({ ...context, ...toErrorLogContext(errorOrContext) }, message);
       return;
     }
 
@@ -60,8 +38,5 @@ export class PinoLoggerAdapter implements LoggerPort {
 }
 
 function isLogContext(value: unknown): value is Record<string, unknown> {
-  return (
-    value === undefined ||
-    (typeof value === 'object' && value !== null && !(value instanceof Error))
-  );
+  return value === undefined || (typeof value === 'object' && value !== null && !(value instanceof Error));
 }

@@ -12,14 +12,9 @@ const otelEnvSchema = z
     OTEL_RESOURCE_ATTRIBUTES: z.string().optional(),
   })
   .refine(
-    (env) =>
-      !env.OTEL_EXPORTER_OTLP_ENDPOINT ||
-      /(^|,)\s*deployment\.environment\.name=\S/.test(
-        env.OTEL_RESOURCE_ATTRIBUTES ?? '',
-      ),
+    (env) => !env.OTEL_EXPORTER_OTLP_ENDPOINT || /(^|,)\s*deployment\.environment\.name=\S/.test(env.OTEL_RESOURCE_ATTRIBUTES ?? ''),
     {
-      message:
-        'deployment.environment.name is required when OTEL_EXPORTER_OTLP_ENDPOINT is set.',
+      message: 'deployment.environment.name is required when OTEL_EXPORTER_OTLP_ENDPOINT is set.',
       path: ['OTEL_RESOURCE_ATTRIBUTES'],
     },
   );
@@ -27,9 +22,7 @@ const otelEnvSchema = z
 export const otelConfig = registerAs('otel', () => {
   const result = otelEnvSchema.safeParse(process.env);
   if (!result.success) {
-    throw new Error(
-      `Invalid telemetry configuration.\n${z.prettifyError(result.error)}`,
-    );
+    throw new Error(`Invalid telemetry configuration.\n${z.prettifyError(result.error)}`);
   }
   return { otlpEndpoint: result.data.OTEL_EXPORTER_OTLP_ENDPOINT };
 });

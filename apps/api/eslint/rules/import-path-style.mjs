@@ -40,9 +40,7 @@ function getExpectedAlias(sourcePath, targetPath) {
     return targetPath.replace(/^src\/kernels/, '@kernels');
   }
 
-  const domainMatch = targetPath.match(
-    /^src\/contexts\/([^/]+)\/domain(?:\/.*)?$/,
-  );
+  const domainMatch = targetPath.match(/^src\/contexts\/([^/]+)\/domain(?:\/.*)?$/);
 
   if (domainMatch) {
     const domainPrefix = `src/contexts/${domainMatch[1]}/domain`;
@@ -54,9 +52,7 @@ function getExpectedAlias(sourcePath, targetPath) {
     return `@contexts/${domainMatch[1]}/domain`;
   }
 
-  const portsMatch = targetPath.match(
-    /^src\/contexts\/([^/]+)\/application\/ports(?:\/.*)?$/,
-  );
+  const portsMatch = targetPath.match(/^src\/contexts\/([^/]+)\/application\/ports(?:\/.*)?$/);
 
   if (portsMatch) {
     const portsPrefix = `src/contexts/${portsMatch[1]}/application/ports`;
@@ -68,9 +64,7 @@ function getExpectedAlias(sourcePath, targetPath) {
     return `@contexts/${portsMatch[1]}/application/ports`;
   }
 
-  const contextLayerMatch = targetPath.match(
-    /^src\/contexts\/([^/]+)\/(application|infrastructure|presentation)(?:\/.*)?$/,
-  );
+  const contextLayerMatch = targetPath.match(/^src\/contexts\/([^/]+)\/(application|infrastructure|presentation)(?:\/.*)?$/);
 
   if (contextLayerMatch) {
     const sourceLayerPrefix = `src/contexts/${contextLayerMatch[1]}/${contextLayerMatch[2]}`;
@@ -96,10 +90,7 @@ function getExpectedAlias(sourcePath, targetPath) {
 function checkImportPathStyle(context, node) {
   const importPath = node.source?.value;
 
-  if (
-    typeof importPath !== 'string' ||
-    !RELATIVE_IMPORT_PATTERN.test(importPath)
-  ) {
+  if (typeof importPath !== 'string' || !RELATIVE_IMPORT_PATTERN.test(importPath)) {
     return;
   }
 
@@ -109,9 +100,7 @@ function checkImportPathStyle(context, node) {
     return;
   }
 
-  const targetPath = toProjectPath(
-    path.resolve(path.dirname(toAbsolutePath(sourcePath)), importPath),
-  );
+  const targetPath = toProjectPath(path.resolve(path.dirname(toAbsolutePath(sourcePath)), importPath));
   const expectedAlias = getExpectedAlias(sourcePath, targetPath);
 
   if (!expectedAlias) {
@@ -131,12 +120,10 @@ export default {
   meta: {
     type: 'suggestion',
     docs: {
-      description:
-        'Require tsconfig path aliases when production imports cross source boundaries.',
+      description: 'Require tsconfig path aliases when production imports cross source boundaries.',
     },
     messages: {
-      useAlias:
-        'Use the public path alias "{{ expectedAlias }}" for this cross-boundary import.',
+      useAlias: 'Use the public path alias "{{ expectedAlias }}" for this cross-boundary import.',
     },
     schema: [],
   },

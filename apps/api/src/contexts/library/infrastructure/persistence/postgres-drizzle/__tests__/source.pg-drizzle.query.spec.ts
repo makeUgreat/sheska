@@ -12,9 +12,7 @@ describe('SourcePgDrizzleQuery', () => {
     const db = createFailingDb();
     const query = new SourcePgDrizzleQuery(db as never);
 
-    await expect(
-      query.paginate({ page: 1, pageSize: 10 }),
-    ).rejects.toMatchObject({
+    await expect(query.paginate({ page: 1, pageSize: 10 })).rejects.toMatchObject({
       code: 'source.paginate_failed',
     });
   });

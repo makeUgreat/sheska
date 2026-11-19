@@ -38,14 +38,8 @@ describe('TableOfContents', () => {
   it('현재 위치인 heading에만 aria-current를 준다', () => {
     renderOutline('prior-art');
 
-    expect(
-      screen
-        .getByRole('link', { name: '기존 방식' })
-        .getAttribute('aria-current'),
-    ).toBe('location');
-    expect(
-      screen.getByRole('link', { name: '배경' }).getAttribute('aria-current'),
-    ).toBeNull();
+    expect(screen.getByRole('link', { name: '기존 방식' }).getAttribute('aria-current')).toBe('location');
+    expect(screen.getByRole('link', { name: '배경' }).getAttribute('aria-current')).toBeNull();
   });
 
   it('본문이 쓴 가장 얕은 단계를 기준으로 들여쓴다', () => {
@@ -55,12 +49,8 @@ describe('TableOfContents', () => {
     ];
     render(<TableOfContents headings={deepOnly} activeId={null} />);
 
-    expect(screen.getByRole('link', { name: '첫 절' }).className).not.toContain(
-      'pl-',
-    );
-    expect(screen.getByRole('link', { name: '그 아래' }).className).toContain(
-      'pl-3',
-    );
+    expect(screen.getByRole('link', { name: '첫 절' }).className).not.toContain('pl-');
+    expect(screen.getByRole('link', { name: '그 아래' }).className).toContain('pl-3');
   });
 
   it('`#` 아래의 `##`을 한 단계 들여쓴다', () => {
@@ -70,16 +60,12 @@ describe('TableOfContents', () => {
     ];
     render(<TableOfContents headings={fromTop} activeId={null} />);
 
-    expect(screen.getByRole('link', { name: '설치' }).className).toContain(
-      'pl-3',
-    );
+    expect(screen.getByRole('link', { name: '설치' }).className).toContain('pl-3');
   });
 
   it('heading id를 anchor로 연결한다', () => {
     renderOutline();
 
-    expect(
-      screen.getByRole('link', { name: '결론' }).getAttribute('href'),
-    ).toBe('#conclusion');
+    expect(screen.getByRole('link', { name: '결론' }).getAttribute('href')).toBe('#conclusion');
   });
 });

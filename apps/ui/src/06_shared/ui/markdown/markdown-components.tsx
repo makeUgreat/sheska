@@ -6,8 +6,7 @@ import { WIKI_LINK_ELEMENT } from '../../lib/markdown';
 import { WikiLink } from './obsidian/wiki-link';
 
 /** Anchor로 이동하면 목적지가 sticky header 뒤에 가려진다. */
-const BELOW_HEADER =
-  'scroll-mt-[calc(var(--spacing-header)+var(--spacing-gutter))]';
+const BELOW_HEADER = 'scroll-mt-[calc(var(--spacing-header)+var(--spacing-gutter))]';
 
 /**
  * Loose list도 tight list 간격으로 그린다.
@@ -23,19 +22,11 @@ function anchored(id: string | undefined, className: string) {
 }
 
 /** Fence 안의 code는 highlighter가 붙인 class를 그대로 들고 가야 token ink가 걸린다. */
-function CodeText({
-  className,
-  children,
-}: {
-  className?: string;
-  children?: ReactNode;
-}) {
+function CodeText({ className, children }: { className?: string; children?: ReactNode }) {
   return useInsideCodeBlock() ? (
     <code className={className}>{children}</code>
   ) : (
-    <code className="rounded bg-outline-variant/10 px-1.5 py-0.5 font-mono text-code-snippet text-accent-strong">
-      {children}
-    </code>
+    <code className="rounded bg-outline-variant/10 px-1.5 py-0.5 font-mono text-code-snippet text-accent-strong">{children}</code>
   );
 }
 
@@ -67,10 +58,7 @@ const components: Components = {
   h5: HeadingBelowTitle('h6'),
   h6: HeadingBelowTitle('h6'),
   p: ({ id, children }) => (
-    <p
-      id={id}
-      className={anchored(id, 'mb-5 text-body-md text-text-secondary')}
-    >
+    <p id={id} className={anchored(id, 'mb-5 text-body-md text-text-secondary')}>
       {children}
     </p>
   ),
@@ -84,22 +72,11 @@ const components: Components = {
         {children}
       </li>
     ),
-  input: ({ checked }) => (
-    <input
-      type="checkbox"
-      checked={checked}
-      disabled
-      className="mt-1 h-3.5 w-3.5 shrink-0 accent-accent-strong"
-    />
-  ),
-  del: ({ children }) => (
-    <del className="text-text-muted line-through">{children}</del>
-  ),
+  input: ({ checked }) => <input type="checkbox" checked={checked} disabled className="mt-1 h-3.5 w-3.5 shrink-0 accent-accent-strong" />,
+  del: ({ children }) => <del className="text-text-muted line-through">{children}</del>,
   table: ({ id, children }) => (
     <div id={id} className={anchored(id, 'my-7 overflow-x-auto')}>
-      <table className="w-full border-collapse text-left text-body-md text-text-secondary">
-        {children}
-      </table>
+      <table className="w-full border-collapse text-left text-body-md text-text-secondary">{children}</table>
     </div>
   ),
   th: ({ children }) => (
@@ -107,57 +84,30 @@ const components: Components = {
       {children}
     </th>
   ),
-  td: ({ children }) => (
-    <td className="border-b border-outline-variant/10 px-3 py-2 first:pl-0 last:pr-0 align-top">
-      {children}
-    </td>
-  ),
+  td: ({ children }) => <td className="border-b border-outline-variant/10 px-3 py-2 first:pl-0 last:pr-0 align-top">{children}</td>,
   ul: ({ className, children, id }) =>
     className?.includes('contains-task-list') ? (
       <ul id={id} className={anchored(id, `${LIST_BASE} list-none pl-0`)}>
         {children}
       </ul>
     ) : (
-      <ul
-        id={id}
-        className={anchored(
-          id,
-          `${LIST_BASE} list-disc pl-4 marker:text-outline-variant`,
-        )}
-      >
+      <ul id={id} className={anchored(id, `${LIST_BASE} list-disc pl-4 marker:text-outline-variant`)}>
         {children}
       </ul>
     ),
   ol: ({ id, children }) => (
-    <ol
-      id={id}
-      className={anchored(
-        id,
-        `${LIST_BASE} list-decimal pl-4 marker:text-outline-variant`,
-      )}
-    >
+    <ol id={id} className={anchored(id, `${LIST_BASE} list-decimal pl-4 marker:text-outline-variant`)}>
       {children}
     </ol>
   ),
   blockquote: ({ id, children }) => (
-    <blockquote
-      id={id}
-      className={anchored(
-        id,
-        'my-7 border-l-2 border-accent/40 pl-5 text-body-md italic text-text-secondary',
-      )}
-    >
+    <blockquote id={id} className={anchored(id, 'my-7 border-l-2 border-accent/40 pl-5 text-body-md italic text-text-secondary')}>
       {children}
     </blockquote>
   ),
-  hr: () => (
-    <hr className="mx-auto my-12 h-px w-18 border-0 bg-outline-variant/30" />
-  ),
+  hr: () => <hr className="mx-auto my-12 h-px w-18 border-0 bg-outline-variant/30" />,
   a: ({ children, href }) => (
-    <a
-      href={href}
-      className="text-accent-strong underline underline-offset-2 transition-colors hover:text-accent-hover"
-    >
+    <a href={href} className="text-accent-strong underline underline-offset-2 transition-colors hover:text-accent-hover">
       {children}
     </a>
   ),

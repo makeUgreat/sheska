@@ -8,10 +8,7 @@ import {
   type ApiTokenRepositoryFindCriteria,
   type ApiTokenRepositoryGetCriteria,
 } from '@contexts/iam/domain';
-import {
-  classifyPostgresError,
-  DATABASE_TOKENS,
-} from '@kernels/infrastructure';
+import { classifyPostgresError, DATABASE_TOKENS } from '@kernels/infrastructure';
 import * as schema from './schema';
 import { ApiTokenPgDrizzleMapper } from './api-token.pg-drizzle.mapper';
 
@@ -22,17 +19,11 @@ export class ApiTokenPgDrizzleRepository implements ApiTokenRepository {
     private readonly db: NodePgDatabase<typeof schema>,
   ) {}
 
-  async find(
-    criteria: ApiTokenRepositoryFindCriteria,
-  ): Promise<ApiToken | null> {
+  async find(criteria: ApiTokenRepositoryFindCriteria): Promise<ApiToken | null> {
     let row: schema.ApiTokenRow | undefined;
 
     try {
-      [row] = await this.db
-        .select()
-        .from(schema.apiTokens)
-        .where(eq(schema.apiTokens.secretHash, criteria.secretHash))
-        .limit(1);
+      [row] = await this.db.select().from(schema.apiTokens).where(eq(schema.apiTokens.secretHash, criteria.secretHash)).limit(1);
     } catch (error: unknown) {
       const ErrorClass = classifyPostgresError(error);
       throw new ErrorClass({
@@ -50,11 +41,7 @@ export class ApiTokenPgDrizzleRepository implements ApiTokenRepository {
     let row: schema.ApiTokenRow | undefined;
 
     try {
-      [row] = await this.db
-        .select()
-        .from(schema.apiTokens)
-        .where(eq(schema.apiTokens.id, criteria.id))
-        .limit(1);
+      [row] = await this.db.select().from(schema.apiTokens).where(eq(schema.apiTokens.id, criteria.id)).limit(1);
     } catch (error: unknown) {
       const ErrorClass = classifyPostgresError(error);
       throw new ErrorClass({
@@ -74,10 +61,7 @@ export class ApiTokenPgDrizzleRepository implements ApiTokenRepository {
     let row: schema.ApiTokenRow;
 
     try {
-      [row] = await this.db
-        .insert(schema.apiTokens)
-        .values(apiTokenInsert)
-        .returning();
+      [row] = await this.db.insert(schema.apiTokens).values(apiTokenInsert).returning();
     } catch (error: unknown) {
       const ErrorClass = classifyPostgresError(error);
       if (ErrorClass === ConstraintViolationError) {
@@ -127,10 +111,7 @@ export class ApiTokenPgDrizzleRepository implements ApiTokenRepository {
     let row: { id: string } | undefined;
 
     try {
-      [row] = await this.db
-        .delete(schema.apiTokens)
-        .where(eq(schema.apiTokens.id, apiToken.id))
-        .returning({ id: schema.apiTokens.id });
+      [row] = await this.db.delete(schema.apiTokens).where(eq(schema.apiTokens.id, apiToken.id)).returning({ id: schema.apiTokens.id });
     } catch (error: unknown) {
       const ErrorClass = classifyPostgresError(error);
       throw new ErrorClass({

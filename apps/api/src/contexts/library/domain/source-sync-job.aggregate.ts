@@ -1,10 +1,7 @@
 import { newId } from '@core/id';
 import { AggregateRoot } from '@kernels/domain';
 import { SourceFingerprint } from './source-fingerprint.vo';
-import {
-  SourceSyncJobCreatedDomainEvent,
-  type SourceSyncJobDomainEvent,
-} from './source-sync-job.event';
+import { SourceSyncJobCreatedDomainEvent, type SourceSyncJobDomainEvent } from './source-sync-job.event';
 
 interface SourceSyncJobProps {
   sourceId: string;
@@ -15,10 +12,7 @@ interface SourceSyncJobProps {
 
 type SourceSyncJobStatus = 'waiting' | 'completed' | 'failed';
 
-export class SourceSyncJob extends AggregateRoot<
-  SourceSyncJobProps,
-  SourceSyncJobDomainEvent
-> {
+export class SourceSyncJob extends AggregateRoot<SourceSyncJobProps, SourceSyncJobDomainEvent> {
   static create(params: SourceSyncJobCreateParams): SourceSyncJob {
     const { sourceId, content, fingerprint } = params;
 
@@ -73,10 +67,7 @@ export class SourceSyncJob extends AggregateRoot<
   }
 
   isWaitingOrCompletedFor(fingerprint: SourceFingerprint): boolean {
-    return (
-      this.props.status !== 'failed' &&
-      this.props.fingerprint.equals(fingerprint)
-    );
+    return this.props.status !== 'failed' && this.props.fingerprint.equals(fingerprint);
   }
 
   public validate(): void {
@@ -86,9 +77,7 @@ export class SourceSyncJob extends AggregateRoot<
   }
 
   private static isStatus(status: string): status is SourceSyncJobStatus {
-    return (
-      status === 'waiting' || status === 'completed' || status === 'failed'
-    );
+    return status === 'waiting' || status === 'completed' || status === 'failed';
   }
 }
 

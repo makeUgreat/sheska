@@ -8,9 +8,7 @@ export interface IntegrationAdapterLogContext {
   readonly target: string;
 }
 
-export function logIntegrationAdapterBanner(
-  context: IntegrationAdapterLogContext,
-): void {
+export function logIntegrationAdapterBanner(context: IntegrationAdapterLogContext): void {
   console.info(
     [
       '',
@@ -39,8 +37,7 @@ function horizontalRule(): string {
 }
 
 function boxLine(value: string): string {
-  const clippedValue =
-    value.length > CONTENT_WIDTH ? value.slice(0, CONTENT_WIDTH) : value;
+  const clippedValue = value.length > CONTENT_WIDTH ? value.slice(0, CONTENT_WIDTH) : value;
 
   return `| ${clippedValue.padEnd(CONTENT_WIDTH)} |`;
 }

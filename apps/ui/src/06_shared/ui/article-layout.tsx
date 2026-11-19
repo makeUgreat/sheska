@@ -5,8 +5,7 @@ import { TableOfContents } from './table-of-contents';
 
 const OUTLINE_MINIMUM_HEADINGS = 2;
 
-const FADE_RULE =
-  'bg-linear-to-r from-outline-variant/26 via-outline-variant/8 via-60% to-transparent';
+const FADE_RULE = 'bg-linear-to-r from-outline-variant/26 via-outline-variant/8 via-60% to-transparent';
 
 export function ArticleLayout({
   header,
@@ -33,9 +32,7 @@ export function ArticleLayout({
         {footer}
       </article>
 
-      {outline.length >= OUTLINE_MINIMUM_HEADINGS && (
-        <TableOfContents headings={outline} activeId={activeHeadingId} />
-      )}
+      {outline.length >= OUTLINE_MINIMUM_HEADINGS && <TableOfContents headings={outline} activeId={activeHeadingId} />}
     </>
   );
 }

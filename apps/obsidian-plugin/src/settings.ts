@@ -125,25 +125,16 @@ export class SheskaSettingTab extends PluginSettingTab {
     containerEl.empty();
 
     for (const def of this.describeSettings()) {
-      const setting = new Setting(containerEl)
-        .setName(def.name)
-        .setDesc(def.desc);
+      const setting = new Setting(containerEl).setName(def.name).setDesc(def.desc);
       const { control } = def;
 
       if (control.type === 'text') {
         setting.addText((text) => {
           text
             .setPlaceholder(control.placeholder ?? '')
-            .setValue(
-              String(this.pluginWithSettings.settings[control.key] ?? ''),
-            )
+            .setValue(String(this.pluginWithSettings.settings[control.key] ?? ''))
             .onChange(async (value) => {
-              (
-                this.pluginWithSettings.settings as unknown as Record<
-                  string,
-                  unknown
-                >
-              )[control.key] = value;
+              (this.pluginWithSettings.settings as unknown as Record<string, unknown>)[control.key] = value;
               await this.pluginWithSettings.saveSettings();
             });
         });
@@ -152,36 +143,20 @@ export class SheskaSettingTab extends PluginSettingTab {
           text.inputEl.type = 'number';
           if (control.min !== undefined) text.inputEl.min = String(control.min);
           if (control.max !== undefined) text.inputEl.max = String(control.max);
-          text
-            .setValue(
-              String(this.pluginWithSettings.settings[control.key] ?? ''),
-            )
-            .onChange(async (value) => {
-              const parsed = Number(value);
-              if (!Number.isNaN(parsed)) {
-                (
-                  this.pluginWithSettings.settings as unknown as Record<
-                    string,
-                    unknown
-                  >
-                )[control.key] = parsed;
-                await this.pluginWithSettings.saveSettings();
-              }
-            });
+          text.setValue(String(this.pluginWithSettings.settings[control.key] ?? '')).onChange(async (value) => {
+            const parsed = Number(value);
+            if (!Number.isNaN(parsed)) {
+              (this.pluginWithSettings.settings as unknown as Record<string, unknown>)[control.key] = parsed;
+              await this.pluginWithSettings.saveSettings();
+            }
+          });
         });
       } else if (control.type === 'toggle') {
         setting.addToggle((toggle) => {
-          toggle
-            .setValue(Boolean(this.pluginWithSettings.settings[control.key]))
-            .onChange(async (value) => {
-              (
-                this.pluginWithSettings.settings as unknown as Record<
-                  string,
-                  unknown
-                >
-              )[control.key] = value;
-              await this.pluginWithSettings.saveSettings();
-            });
+          toggle.setValue(Boolean(this.pluginWithSettings.settings[control.key])).onChange(async (value) => {
+            (this.pluginWithSettings.settings as unknown as Record<string, unknown>)[control.key] = value;
+            await this.pluginWithSettings.saveSettings();
+          });
         });
       }
 
@@ -192,9 +167,7 @@ export class SheskaSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Test connection')
-      .setDesc(
-        'Check that the current URL and API token can sync with the Sheska API.',
-      )
+      .setDesc('Check that the current URL and API token can sync with the Sheska API.')
       .addButton((button) => {
         button.setButtonText('Ping').onClick(async () => {
           button.setDisabled(true);
@@ -224,9 +197,7 @@ export class SheskaSettingTab extends PluginSettingTab {
           button.setDisabled(true);
           await this.pluginWithSettings.resetSyncCache();
           button.setButtonText('✓ Cleared');
-          new Notice(
-            'Sheska sync cache cleared. All notes and their images will re-sync.',
-          );
+          new Notice('Sheska sync cache cleared. All notes and their images will re-sync.');
           window.setTimeout(() => {
             button.setButtonText('Reset');
             button.setDisabled(false);

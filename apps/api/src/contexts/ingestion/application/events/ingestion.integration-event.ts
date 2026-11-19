@@ -1,7 +1,4 @@
-import {
-  IntegrationEvent,
-  type IntegrationEventParams,
-} from '@kernels/application';
+import { IntegrationEvent, type IntegrationEventParams } from '@kernels/application';
 
 interface IngestionCompletedIntegrationEventParams extends IntegrationEventParams {
   readonly syncJobId: string;

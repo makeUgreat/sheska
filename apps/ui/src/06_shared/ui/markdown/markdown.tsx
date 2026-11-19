@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import {
-  hasCodeBlock,
-  MARKDOWN_PLUGINS,
-  parseMarkdown,
-} from '../../lib/markdown';
+import { hasCodeBlock, MARKDOWN_PLUGINS, parseMarkdown } from '../../lib/markdown';
 import { MARKDOWN_COMPONENTS } from './markdown-components';
 import { type RehypePlugins } from './markdown-highlight';
 
@@ -17,10 +13,7 @@ const NO_PLUGINS: RehypePlugins = [];
  */
 function useHighlightPlugins(body: string) {
   const [plugins, setPlugins] = useState(NO_PLUGINS);
-  const needsHighlight = useMemo(
-    () => hasCodeBlock(parseMarkdown(body)),
-    [body],
-  );
+  const needsHighlight = useMemo(() => hasCodeBlock(parseMarkdown(body)), [body]);
 
   useEffect(() => {
     if (!needsHighlight) return;
@@ -44,20 +37,10 @@ function useHighlightPlugins(body: string) {
  */
 const BODY = 'break-words [&>*:first-child]:mt-0';
 
-export function Markdown({
-  body,
-  className = '',
-}: {
-  body: string;
-  className?: string;
-}) {
+export function Markdown({ body, className = '' }: { body: string; className?: string }) {
   return (
     <div className={[BODY, className].filter(Boolean).join(' ')}>
-      <ReactMarkdown
-        components={MARKDOWN_COMPONENTS}
-        remarkPlugins={MARKDOWN_PLUGINS}
-        rehypePlugins={useHighlightPlugins(body)}
-      >
+      <ReactMarkdown components={MARKDOWN_COMPONENTS} remarkPlugins={MARKDOWN_PLUGINS} rehypePlugins={useHighlightPlugins(body)}>
         {body}
       </ReactMarkdown>
     </div>

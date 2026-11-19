@@ -27,15 +27,7 @@ import { RedisModule } from './redis/redis.module';
     ConfigModule.forRoot({
       ignoreEnvFile: true,
       isGlobal: true,
-      load: [
-        databaseConfig,
-        httpConfig,
-        loggerConfig,
-        redisConfig,
-        ollamaConfig,
-        attachmentContentS3Config,
-        ownerPasswordSecretConfig,
-      ],
+      load: [databaseConfig, httpConfig, loggerConfig, redisConfig, ollamaConfig, attachmentContentS3Config, ownerPasswordSecretConfig],
     }),
     LoggerModule,
     EventEmitterModule.forRoot({ wildcard: false }),

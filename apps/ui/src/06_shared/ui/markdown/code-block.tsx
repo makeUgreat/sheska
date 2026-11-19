@@ -1,19 +1,9 @@
 import { type Element } from 'hast';
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-  type RefObject,
-} from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 
 const COPIED_RESET_MS = 2000;
 
-const LANGUAGE_LABEL =
-  'font-mono text-label-sm uppercase text-on-surface-muted';
+const LANGUAGE_LABEL = 'font-mono text-label-sm uppercase text-on-surface-muted';
 
 const InsideCodeBlock = createContext(false);
 
@@ -26,14 +16,10 @@ const LANGUAGE_PREFIX = 'language-';
 
 function languageOf(node?: Element) {
   const code = node?.children[0];
-  const names =
-    code?.type === 'element' ? code.properties.className : undefined;
+  const names = code?.type === 'element' ? code.properties.className : undefined;
   if (!Array.isArray(names)) return undefined;
 
-  const tag = names.find(
-    (name): name is string =>
-      typeof name === 'string' && name.startsWith(LANGUAGE_PREFIX),
-  );
+  const tag = names.find((name): name is string => typeof name === 'string' && name.startsWith(LANGUAGE_PREFIX));
   return tag?.slice(LANGUAGE_PREFIX.length);
 }
 
@@ -82,9 +68,7 @@ function CopyButton({ source }: { source: RefObject<HTMLPreElement | null> }) {
         onClick={copy}
         aria-label="Copy code"
         className={`-m-1.5 p-1.5 transition-colors focus-visible:outline-none ${
-          copied
-            ? 'text-accent'
-            : 'text-on-surface-muted hover:text-accent focus-visible:text-accent'
+          copied ? 'text-accent' : 'text-on-surface-muted hover:text-accent focus-visible:text-accent'
         }`}
       >
         {copied ? (
@@ -107,13 +91,7 @@ function CopyButton({ source }: { source: RefObject<HTMLPreElement | null> }) {
 }
 
 /** Highlighting만으로는 코드 블록임이 드러나지 않아 chrome 한 줄을 함께 얹는다. */
-export function CodeBlock({
-  children,
-  node,
-}: {
-  children?: ReactNode;
-  node?: Element;
-}) {
+export function CodeBlock({ children, node }: { children?: ReactNode; node?: Element }) {
   const body = useRef<HTMLPreElement>(null);
   const language = languageOf(node);
 
@@ -127,13 +105,8 @@ export function CodeBlock({
         <span className={LANGUAGE_LABEL}>{language}</span>
         <CopyButton source={body} />
       </div>
-      <pre
-        ref={body}
-        className="overflow-x-auto px-5 py-4 font-mono text-code-block text-on-surface"
-      >
-        <InsideCodeBlock.Provider value={true}>
-          {children}
-        </InsideCodeBlock.Provider>
+      <pre ref={body} className="overflow-x-auto px-5 py-4 font-mono text-code-block text-on-surface">
+        <InsideCodeBlock.Provider value={true}>{children}</InsideCodeBlock.Provider>
       </pre>
     </div>
   );

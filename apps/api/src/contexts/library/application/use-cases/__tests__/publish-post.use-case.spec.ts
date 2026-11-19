@@ -1,9 +1,6 @@
 import { StateConflictError } from '@core/errors';
 import { type PostRepository } from '@contexts/library/domain';
-import {
-  type SourceDocument,
-  type SourceLookup,
-} from '@contexts/library/application/ports';
+import { type SourceDocument, type SourceLookup } from '@contexts/library/application/ports';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { PublishPostUseCase } from '../publish-post.use-case';
 import { buildPost } from '../../../../../../test/support/domains/fixtures/post.fixture';
@@ -72,9 +69,7 @@ describe('PublishPostUseCase', () => {
     sourceLookup.get.mockRejectedValue(notFoundError);
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
-    await expect(useCase.execute({ sourceId: 'non-existent' })).rejects.toBe(
-      notFoundError,
-    );
+    await expect(useCase.execute({ sourceId: 'non-existent' })).rejects.toBe(notFoundError);
     expect(posts.insert).not.toHaveBeenCalled();
   });
 
@@ -92,9 +87,7 @@ describe('PublishPostUseCase', () => {
     });
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
-    await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(
-      alreadyPublished,
-    );
+    await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(alreadyPublished);
   });
 
   it('sourceLookup exception을 전파한다', async () => {
@@ -106,9 +99,7 @@ describe('PublishPostUseCase', () => {
     sourceLookup.get.mockRejectedValue(lookupFailure);
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
-    await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(
-      lookupFailure,
-    );
+    await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(lookupFailure);
     expect(posts.insert).not.toHaveBeenCalled();
   });
 
@@ -121,29 +112,19 @@ describe('PublishPostUseCase', () => {
     });
     const useCase = new PublishPostUseCase(posts, sourceLookup);
 
-    await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(
-      insertFailure,
-    );
+    await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(insertFailure);
   });
 });
 
 function createPostRepositoryMock(): PostRepositoryMock {
   return {
     get: vi.fn<PostRepository['get']>().mockResolvedValue(buildPost()),
-    insert: vi
-      .fn<PostRepository['insert']>()
-      .mockImplementation((post) => Promise.resolve(post)),
-    update: vi
-      .fn<PostRepository['update']>()
-      .mockImplementation((post) => Promise.resolve(post)),
+    insert: vi.fn<PostRepository['insert']>().mockImplementation((post) => Promise.resolve(post)),
+    update: vi.fn<PostRepository['update']>().mockImplementation((post) => Promise.resolve(post)),
   };
 }
 
-function createSourceLookupMock({
-  sourceContent,
-}: {
-  sourceContent: SourceDocument;
-}): SourceLookupMock {
+function createSourceLookupMock({ sourceContent }: { sourceContent: SourceDocument }): SourceLookupMock {
   return {
     get: vi.fn<SourceLookup['get']>().mockResolvedValue(sourceContent),
     find: vi.fn<SourceLookup['find']>().mockResolvedValue(sourceContent),

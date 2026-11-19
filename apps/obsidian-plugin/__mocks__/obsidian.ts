@@ -106,21 +106,13 @@ export class Menu {
   }
 }
 
-export const workspaceEventHandlers: Record<
-  string,
-  ((...args: unknown[]) => void) | undefined
-> = {};
+export const workspaceEventHandlers: Record<string, ((...args: unknown[]) => void) | undefined> = {};
 
 class MockWorkspace {
   getActiveFile = vi.fn().mockReturnValue(null);
   onLayoutReady = vi.fn((callback: () => void) => callback());
 
-  on(
-    event: string,
-    handler:
-      | ((menu: Menu, file: TFile) => void)
-      | ((...args: unknown[]) => void),
-  ): object {
+  on(event: string, handler: ((menu: Menu, file: TFile) => void) | ((...args: unknown[]) => void)): object {
     if (event === 'file-menu') {
       fileMenuHandler = handler as (menu: Menu, file: TFile) => void;
     } else {
@@ -130,10 +122,7 @@ class MockWorkspace {
   }
 }
 
-export const vaultEventHandlers: Record<
-  string,
-  ((...args: unknown[]) => void) | undefined
-> = {};
+export const vaultEventHandlers: Record<string, ((...args: unknown[]) => void) | undefined> = {};
 
 class MockVault {
   read = vi.fn().mockResolvedValue('');
@@ -148,16 +137,11 @@ class MockVault {
   }
 }
 
-export const metadataCacheEventHandlers: Record<
-  string,
-  ((...args: unknown[]) => void) | undefined
-> = {};
+export const metadataCacheEventHandlers: Record<string, ((...args: unknown[]) => void) | undefined> = {};
 
 // Defaults to a note that opted into sync so tests only override the frontmatter they are about.
 class MockMetadataCache {
-  getFileCache = vi
-    .fn()
-    .mockReturnValue({ frontmatter: { sheska: true } } as unknown);
+  getFileCache = vi.fn().mockReturnValue({ frontmatter: { sheska: true } } as unknown);
   getFirstLinkpathDest = vi.fn().mockReturnValue(null);
 
   on(event: string, handler: (...args: unknown[]) => void): object {
@@ -198,11 +182,7 @@ export interface Debouncer<T extends unknown[], V> {
 // Real-timer-backed fake so tests can use vi.useFakeTimers()/advanceTimersByTimeAsync
 // to observe genuine coalescing behavior, instead of a synchronous passthrough that
 // would make it impossible to test multi-call debounce semantics.
-export function debounce<T extends unknown[], V>(
-  cb: (...args: T) => V,
-  timeout = 0,
-  resetTimer = false,
-): Debouncer<T, V> {
+export function debounce<T extends unknown[], V>(cb: (...args: T) => V, timeout = 0, resetTimer = false): Debouncer<T, V> {
   let timer: ReturnType<typeof setTimeout> | null = null;
   let lastArgs: T;
 

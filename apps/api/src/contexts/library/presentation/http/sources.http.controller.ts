@@ -1,25 +1,7 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import { type z } from 'zod';
-import {
-  type ApiRequest,
-  type ApiResponse,
-  SourceApi,
-  PERMISSION,
-} from '@sheska/contract';
-import {
-  ErrorCodes,
-  Permission,
-  ZodValidationPipe,
-} from '@kernels/presentation';
+import { type ApiRequest, type ApiResponse, SourceApi, PERMISSION } from '@sheska/contract';
+import { ErrorCodes, Permission, ZodValidationPipe } from '@kernels/presentation';
 import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upload-source.use-case';
 import { ListSourcesUseCase } from '@contexts/library/application/use-cases/list-sources.use-case';
 import { GetSourceUseCase } from '@contexts/library/application/use-cases/get-source.use-case';
@@ -56,9 +38,7 @@ export class SourcesHttpController {
   @Get(SourceApi.get.path)
   @Permission(PERMISSION.SOURCES_READ)
   @ErrorCodes(SourceApi.get.errors)
-  async get(
-    @Param('id') id: string,
-  ): Promise<ApiResponse<typeof SourceApi.get>> {
+  async get(@Param('id') id: string): Promise<ApiResponse<typeof SourceApi.get>> {
     const result = await this.getSourceUseCase.execute({ sourceId: id });
 
     return SourceApi.get.response.parse({
@@ -86,9 +66,7 @@ export class SourcesHttpController {
   ): Promise<ApiResponse<typeof SourceApi.upload>> {
     const result = await this.uploadSourceUseCase.execute(body);
 
-    return SourceApi.upload.response.parse(
-      result satisfies ApiResponse<typeof SourceApi.upload>,
-    );
+    return SourceApi.upload.response.parse(result satisfies ApiResponse<typeof SourceApi.upload>);
   }
 }
 

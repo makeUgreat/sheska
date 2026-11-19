@@ -44,12 +44,7 @@ class ProbeController {
 }
 
 const OWNER = {
-  permissions: [
-    'sources:sync',
-    'sources:read',
-    'posts:publish',
-    'api_tokens:manage',
-  ],
+  permissions: ['sources:sync', 'sources:read', 'posts:publish', 'api_tokens:manage'],
 } as const;
 
 describe('AccessHttpGuard', () => {
@@ -94,20 +89,14 @@ describe('AccessHttpGuard', () => {
   afterEach(async () => app.close());
 
   it('Public route는 인증하지 않는다', async () => {
-    await request(httpServer)
-      .get('/probe/public')
-      .set('Authorization', 'Bearer wrong')
-      .expect(200);
+    await request(httpServer).get('/probe/public').set('Authorization', 'Bearer wrong').expect(200);
 
     expect(authenticate).not.toHaveBeenCalled();
     expect(authorize).not.toHaveBeenCalled();
   });
 
   it('접근을 선언하지 않은 route는 인증하지 않고 500이다', async () => {
-    await request(httpServer)
-      .get('/probe/undeclared')
-      .set('Cookie', '__Host-sheska_session=session-token')
-      .expect(500);
+    await request(httpServer).get('/probe/undeclared').set('Cookie', '__Host-sheska_session=session-token').expect(500);
 
     expect(authenticate).not.toHaveBeenCalled();
   });
@@ -116,10 +105,7 @@ describe('AccessHttpGuard', () => {
     ['/probe/sync', 'sources:sync'],
     ['/probe/manage', 'api_tokens:manage'],
   ])('%s는 %s를 요구한다', async (path, permission) => {
-    await request(httpServer)
-      .get(path)
-      .set('Cookie', '__Host-sheska_session=session-token')
-      .expect(200);
+    await request(httpServer).get(path).set('Cookie', '__Host-sheska_session=session-token').expect(200);
 
     expect(authorize).toHaveBeenCalledWith({
       identity: OWNER,
@@ -128,9 +114,7 @@ describe('AccessHttpGuard', () => {
   });
 
   it('세션 쿠키를 세션 증거로 넘긴다', async () => {
-    await request(httpServer)
-      .get('/probe/sync')
-      .set('Cookie', '__Host-sheska_session=session-token');
+    await request(httpServer).get('/probe/sync').set('Cookie', '__Host-sheska_session=session-token');
 
     expect(authenticate).toHaveBeenCalledWith({
       credential: { type: 'session', token: 'session-token' },
@@ -149,9 +133,7 @@ describe('AccessHttpGuard', () => {
   });
 
   it('Bearer 모양이 아닌 Authorization 헤더는 빈 토큰으로 넘긴다', async () => {
-    await request(httpServer)
-      .get('/probe/sync')
-      .set('Authorization', 'shk_secret');
+    await request(httpServer).get('/probe/sync').set('Authorization', 'shk_secret');
 
     expect(authenticate).toHaveBeenCalledWith({
       credential: { type: 'bearer', token: '' },
@@ -173,14 +155,9 @@ describe('AccessHttpGuard', () => {
       }),
     );
 
-    const response = await request(httpServer)
-      .get('/probe/sync')
-      .set('Authorization', 'Bearer wrong')
-      .expect(401);
+    const response = await request(httpServer).get('/probe/sync').set('Authorization', 'Bearer wrong').expect(401);
 
-    expect(errorResponseSchema.parse(response.body).code).toBe(
-      'auth.unauthenticated',
-    );
+    expect(errorResponseSchema.parse(response.body).code).toBe('auth.unauthenticated');
   });
 
   it('권한이 없으면 403 auth.forbidden이다', async () => {
@@ -192,14 +169,9 @@ describe('AccessHttpGuard', () => {
       });
     });
 
-    const response = await request(httpServer)
-      .get('/probe/sync')
-      .set('Authorization', 'Bearer shk_secret')
-      .expect(403);
+    const response = await request(httpServer).get('/probe/sync').set('Authorization', 'Bearer shk_secret').expect(403);
 
-    expect(errorResponseSchema.parse(response.body).code).toBe(
-      'auth.forbidden',
-    );
+    expect(errorResponseSchema.parse(response.body).code).toBe('auth.forbidden');
   });
 
   describe('GET /auth/sync-check', () => {

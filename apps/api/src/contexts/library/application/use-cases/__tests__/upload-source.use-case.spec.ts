@@ -8,16 +8,9 @@ import {
 } from '@contexts/library/domain';
 import { type OutboxWriter } from '@kernels/application';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
-import {
-  type UploadSourceContentSnapshotCalculator,
-  UploadSourceUseCase,
-} from '../upload-source.use-case';
+import { type UploadSourceContentSnapshotCalculator, UploadSourceUseCase } from '../upload-source.use-case';
 import { type LibraryUnitOfWork } from '../../ports';
-import {
-  buildSource,
-  sourceContentByteSize,
-  sourceContentOf,
-} from '../../../../../../test/support/domains/fixtures/source.fixture';
+import { buildSource, sourceContentByteSize, sourceContentOf } from '../../../../../../test/support/domains/fixtures/source.fixture';
 
 type ContentSnapshotCalculatorMock = {
   calculate: MockedFunction<UploadSourceContentSnapshotCalculator['calculate']>;
@@ -69,9 +62,7 @@ describe('UploadSourceUseCase', () => {
     });
     expect(result.sourceId.length).toBeGreaterThan(0);
     expect(result.syncJobId?.length).toBeGreaterThan(0);
-    expect(contentSnapshotCalculator.calculate).toHaveBeenCalledWith(
-      '# Source note',
-    );
+    expect(contentSnapshotCalculator.calculate).toHaveBeenCalledWith('# Source note');
     expect(sources.find).toHaveBeenCalledWith({
       externalSourceId: 'Notes/source.md',
     });
@@ -95,9 +86,7 @@ describe('UploadSourceUseCase', () => {
         content: '# Source note',
       },
     });
-    expect(appendedMessage?.eventId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
-    );
+    expect(appendedMessage?.eventId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
     expect(appendedMessage?.occurredAt).toBeInstanceOf(Date);
     expect(savedSyncJob?.domainEvents).toEqual([]);
   });
@@ -116,15 +105,8 @@ describe('UploadSourceUseCase', () => {
     const sources = createSourceRepositoryMock();
     sources.find.mockResolvedValue(existingSource);
     const syncJobs = createSourceSyncJobRepositoryMock();
-    syncJobs.findLatest.mockResolvedValue(
-      restoreSyncJob({ sourceId: 'source-1', status: 'completed' }),
-    );
-    const useCase = new UploadSourceUseCase(
-      contentSnapshotCalculator,
-      sources,
-      syncJobs,
-      createLibraryUnitOfWorkMock(sources, syncJobs),
-    );
+    syncJobs.findLatest.mockResolvedValue(restoreSyncJob({ sourceId: 'source-1', status: 'completed' }));
+    const useCase = new UploadSourceUseCase(contentSnapshotCalculator, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
 
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
@@ -160,12 +142,7 @@ describe('UploadSourceUseCase', () => {
         fingerprint: 'previous-fingerprint',
       }),
     );
-    const useCase = new UploadSourceUseCase(
-      contentSnapshotCalculator,
-      sources,
-      syncJobs,
-      createLibraryUnitOfWorkMock(sources, syncJobs),
-    );
+    const useCase = new UploadSourceUseCase(contentSnapshotCalculator, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
 
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
@@ -180,40 +157,30 @@ describe('UploadSourceUseCase', () => {
   });
 
   // nocap: library-sync-7
-  it.each(['waiting'])(
-    '같은 content snapshot의 최근 sync job이 %s이면 기존 job을 반환한다',
-    async (status) => {
-      const existingSource = restoreSource({
-        id: 'source-1',
-        externalSourceId: 'Notes/source.md',
-        content: '# Source note',
-      });
-      const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
-        content: '# Source note',
-      });
-      const sources = createSourceRepositoryMock();
-      sources.find.mockResolvedValue(existingSource);
-      const syncJobs = createSourceSyncJobRepositoryMock();
-      syncJobs.findLatest.mockResolvedValue(
-        restoreSyncJob({ sourceId: 'source-1', status }),
-      );
-      const useCase = new UploadSourceUseCase(
-        contentSnapshotCalculator,
-        sources,
-        syncJobs,
-        createLibraryUnitOfWorkMock(sources, syncJobs),
-      );
+  it.each(['waiting'])('같은 content snapshot의 최근 sync job이 %s이면 기존 job을 반환한다', async (status) => {
+    const existingSource = restoreSource({
+      id: 'source-1',
+      externalSourceId: 'Notes/source.md',
+      content: '# Source note',
+    });
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
+      content: '# Source note',
+    });
+    const sources = createSourceRepositoryMock();
+    sources.find.mockResolvedValue(existingSource);
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    syncJobs.findLatest.mockResolvedValue(restoreSyncJob({ sourceId: 'source-1', status }));
+    const useCase = new UploadSourceUseCase(contentSnapshotCalculator, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
 
-      const result = await useCase.execute({
-        externalSourceId: 'Notes/source.md',
-        content: '# Source note',
-      });
+    const result = await useCase.execute({
+      externalSourceId: 'Notes/source.md',
+      content: '# Source note',
+    });
 
-      expect(result.syncJobId).toBe('sync-job-1');
-      expect(sourceWriteCalls(sources)).toHaveLength(0);
-      expect(syncJobs.insert).not.toHaveBeenCalled();
-    },
-  );
+    expect(result.syncJobId).toBe('sync-job-1');
+    expect(sourceWriteCalls(sources)).toHaveLength(0);
+    expect(syncJobs.insert).not.toHaveBeenCalled();
+  });
 
   // nocap: library-sync-7
   it('같은 content snapshot이라도 최근 sync job이 없으면 sync job을 생성한다', async () => {
@@ -228,12 +195,7 @@ describe('UploadSourceUseCase', () => {
     const sources = createSourceRepositoryMock();
     sources.find.mockResolvedValue(existingSource);
     const syncJobs = createSourceSyncJobRepositoryMock();
-    const useCase = new UploadSourceUseCase(
-      contentSnapshotCalculator,
-      sources,
-      syncJobs,
-      createLibraryUnitOfWorkMock(sources, syncJobs),
-    );
+    const useCase = new UploadSourceUseCase(contentSnapshotCalculator, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
 
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
@@ -260,15 +222,8 @@ describe('UploadSourceUseCase', () => {
     const sources = createSourceRepositoryMock();
     sources.find.mockResolvedValue(existingSource);
     const syncJobs = createSourceSyncJobRepositoryMock();
-    syncJobs.findLatest.mockResolvedValue(
-      restoreSyncJob({ sourceId: 'source-1', status: 'failed' }),
-    );
-    const useCase = new UploadSourceUseCase(
-      contentSnapshotCalculator,
-      sources,
-      syncJobs,
-      createLibraryUnitOfWorkMock(sources, syncJobs),
-    );
+    syncJobs.findLatest.mockResolvedValue(restoreSyncJob({ sourceId: 'source-1', status: 'failed' }));
+    const useCase = new UploadSourceUseCase(contentSnapshotCalculator, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
 
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
@@ -295,12 +250,7 @@ describe('UploadSourceUseCase', () => {
     const sources = createSourceRepositoryMock();
     sources.find.mockResolvedValue(existingSource);
     const syncJobs = createSourceSyncJobRepositoryMock();
-    const useCase = new UploadSourceUseCase(
-      contentSnapshotCalculator,
-      sources,
-      syncJobs,
-      createLibraryUnitOfWorkMock(sources, syncJobs),
-    );
+    const useCase = new UploadSourceUseCase(contentSnapshotCalculator, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
 
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
@@ -338,9 +288,7 @@ describe('UploadSourceUseCase', () => {
     const sources = createSourceRepositoryMock();
     sources.find.mockResolvedValue(existingSource);
     const syncJobs = createSourceSyncJobRepositoryMock();
-    syncJobs.findLatest.mockResolvedValue(
-      restoreSyncJob({ sourceId: 'source-1', status: 'completed' }),
-    );
+    syncJobs.findLatest.mockResolvedValue(restoreSyncJob({ sourceId: 'source-1', status: 'completed' }));
     const outbox = createOutboxWriterMock();
     const useCase = new UploadSourceUseCase(
       contentSnapshotCalculator,
@@ -360,9 +308,7 @@ describe('UploadSourceUseCase', () => {
       fingerprint: sha256Hex('# Source note'),
     });
     expect(sources.update).toHaveBeenCalledOnce();
-    expect(
-      sourceContentOf(sources.update.mock.calls[0][0]).frontmatter,
-    ).toEqual({ sheska: true, tags: ['a'] });
+    expect(sourceContentOf(sources.update.mock.calls[0][0]).frontmatter).toEqual({ sheska: true, tags: ['a'] });
     expect(syncJobs.insert).not.toHaveBeenCalled();
     expect(outbox.append).not.toHaveBeenCalled();
   });
@@ -382,15 +328,8 @@ describe('UploadSourceUseCase', () => {
     const sources = createSourceRepositoryMock();
     sources.find.mockResolvedValue(existingSource);
     const syncJobs = createSourceSyncJobRepositoryMock();
-    syncJobs.findLatest.mockResolvedValue(
-      restoreSyncJob({ sourceId: 'source-1', status: 'waiting' }),
-    );
-    const useCase = new UploadSourceUseCase(
-      contentSnapshotCalculator,
-      sources,
-      syncJobs,
-      createLibraryUnitOfWorkMock(sources, syncJobs),
-    );
+    syncJobs.findLatest.mockResolvedValue(restoreSyncJob({ sourceId: 'source-1', status: 'waiting' }));
+    const useCase = new UploadSourceUseCase(contentSnapshotCalculator, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
 
     const result = await useCase.execute({
       externalSourceId: 'Notes/source.md',
@@ -409,44 +348,31 @@ describe('UploadSourceUseCase', () => {
     ['1', { sheska: 1 }],
     ['false', { sheska: false }],
     ['없음', {}],
-  ])(
-    'frontmatter sheska가 %s이면 source를 조회하거나 저장하지 않고 거부한다',
-    async (_label, frontmatter: SourceFrontmatterProps) => {
-      const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
-        content: '# Source note',
-        frontmatter,
-      });
-      const sources = createSourceRepositoryMock();
-      const syncJobs = createSourceSyncJobRepositoryMock();
-      const useCase = new UploadSourceUseCase(
-        contentSnapshotCalculator,
-        sources,
-        syncJobs,
-        createLibraryUnitOfWorkMock(sources, syncJobs),
-      );
+  ])('frontmatter sheska가 %s이면 source를 조회하거나 저장하지 않고 거부한다', async (_label, frontmatter: SourceFrontmatterProps) => {
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
+      content: '# Source note',
+      frontmatter,
+    });
+    const sources = createSourceRepositoryMock();
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    const useCase = new UploadSourceUseCase(contentSnapshotCalculator, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
 
-      await expect(
-        useCase.execute({
-          externalSourceId: 'Notes/source.md',
-          content: '# Source note',
-        }),
-      ).rejects.toMatchObject({ code: 'source.not_sync_target' });
-      expect(sources.find).not.toHaveBeenCalled();
-      expect(sourceWriteCalls(sources)).toHaveLength(0);
-      expect(syncJobs.insert).not.toHaveBeenCalled();
-    },
-  );
+    await expect(
+      useCase.execute({
+        externalSourceId: 'Notes/source.md',
+        content: '# Source note',
+      }),
+    ).rejects.toMatchObject({ code: 'source.not_sync_target' });
+    expect(sources.find).not.toHaveBeenCalled();
+    expect(sourceWriteCalls(sources)).toHaveLength(0);
+    expect(syncJobs.insert).not.toHaveBeenCalled();
+  });
 
   it('externalSourceId가 유효하지 않으면 collaborator를 호출하지 않고 throw한다', async () => {
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
-    const useCase = new UploadSourceUseCase(
-      contentSnapshotCalculator,
-      sources,
-      syncJobs,
-      createLibraryUnitOfWorkMock(sources, syncJobs),
-    );
+    const useCase = new UploadSourceUseCase(contentSnapshotCalculator, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
 
     await expect(
       useCase.execute({
@@ -468,12 +394,7 @@ describe('UploadSourceUseCase', () => {
     });
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
-    const useCase = new UploadSourceUseCase(
-      contentSnapshotCalculator,
-      sources,
-      syncJobs,
-      createLibraryUnitOfWorkMock(sources, syncJobs),
-    );
+    const useCase = new UploadSourceUseCase(contentSnapshotCalculator, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
 
     const result = useCase.execute({
       externalSourceId: 'Notes/source.md',
@@ -492,12 +413,7 @@ describe('UploadSourceUseCase', () => {
     const sources = createSourceRepositoryMock();
     sources.find.mockRejectedValue(findFailure);
     const syncJobs = createSourceSyncJobRepositoryMock();
-    const useCase = new UploadSourceUseCase(
-      contentSnapshotCalculator,
-      sources,
-      syncJobs,
-      createLibraryUnitOfWorkMock(sources, syncJobs),
-    );
+    const useCase = new UploadSourceUseCase(contentSnapshotCalculator, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
 
     const result = useCase.execute({
       externalSourceId: 'Notes/source.md',
@@ -516,12 +432,7 @@ describe('UploadSourceUseCase', () => {
     sources.insert.mockRejectedValue(saveFailure);
     sources.update.mockRejectedValue(saveFailure);
     const syncJobs = createSourceSyncJobRepositoryMock();
-    const useCase = new UploadSourceUseCase(
-      contentSnapshotCalculator,
-      sources,
-      syncJobs,
-      createLibraryUnitOfWorkMock(sources, syncJobs),
-    );
+    const useCase = new UploadSourceUseCase(contentSnapshotCalculator, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
 
     const result = useCase.execute({
       externalSourceId: 'Notes/source.md',
@@ -533,28 +444,19 @@ describe('UploadSourceUseCase', () => {
   });
 
   it('sync job 저장 exception을 전파한다', async () => {
-    const syncJobSaveFailure = new Error(
-      'Source Sync Job Repository operation failed',
-    );
+    const syncJobSaveFailure = new Error('Source Sync Job Repository operation failed');
     const contentSnapshotCalculator = createContentSnapshotCalculatorMock();
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
     syncJobs.insert.mockRejectedValue(syncJobSaveFailure);
-    const useCase = new UploadSourceUseCase(
-      contentSnapshotCalculator,
-      sources,
-      syncJobs,
-      createLibraryUnitOfWorkMock(sources, syncJobs),
-    );
+    const useCase = new UploadSourceUseCase(contentSnapshotCalculator, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
 
     const result = useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
     });
 
-    await expect(result).rejects.toThrow(
-      'Source Sync Job Repository operation failed',
-    );
+    await expect(result).rejects.toThrow('Source Sync Job Repository operation failed');
     expect(sourceWriteCalls(sources)).toHaveLength(1);
   });
 
@@ -590,21 +492,14 @@ describe('UploadSourceUseCase', () => {
     });
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
-    const useCase = new UploadSourceUseCase(
-      contentSnapshotCalculator,
-      sources,
-      syncJobs,
-      createLibraryUnitOfWorkMock(sources, syncJobs),
-    );
+    const useCase = new UploadSourceUseCase(contentSnapshotCalculator, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
 
     const result = useCase.execute({
       externalSourceId: 'Notes/source.md',
       content: '# Source note',
     });
 
-    await expect(result).rejects.toThrow(
-      'Source size must be a non-negative integer',
-    );
+    await expect(result).rejects.toThrow('Source size must be a non-negative integer');
     expect(sourceWriteCalls(sources)).toHaveLength(0);
     expect(syncJobs.insert).not.toHaveBeenCalled();
   });
@@ -620,13 +515,11 @@ function createContentSnapshotCalculatorMock(
 ): ContentSnapshotCalculatorMock {
   const body = snapshot.body ?? snapshot.content ?? '';
   return {
-    calculate: vi
-      .fn<UploadSourceContentSnapshotCalculator['calculate']>()
-      .mockReturnValue({
-        body,
-        frontmatter: snapshot.frontmatter ?? { sheska: true },
-        size: snapshot.size ?? sourceContentByteSize(snapshot.content ?? body),
-      }),
+    calculate: vi.fn<UploadSourceContentSnapshotCalculator['calculate']>().mockReturnValue({
+      body,
+      frontmatter: snapshot.frontmatter ?? { sheska: true },
+      size: snapshot.size ?? sourceContentByteSize(snapshot.content ?? body),
+    }),
   };
 }
 
@@ -634,32 +527,18 @@ function createSourceRepositoryMock(): SourceRepositoryMock {
   return {
     find: vi.fn<SourceRepository['find']>().mockResolvedValue(null),
     get: vi.fn<SourceRepository['get']>().mockResolvedValue(buildSource()),
-    insert: vi
-      .fn<SourceRepository['insert']>()
-      .mockImplementation((source) => Promise.resolve(source)),
-    update: vi
-      .fn<SourceRepository['update']>()
-      .mockImplementation((source) => Promise.resolve(source)),
+    insert: vi.fn<SourceRepository['insert']>().mockImplementation((source) => Promise.resolve(source)),
+    update: vi.fn<SourceRepository['update']>().mockImplementation((source) => Promise.resolve(source)),
   };
 }
 
 function createSourceSyncJobRepositoryMock(): SourceSyncJobRepositoryMock {
   return {
-    get: vi
-      .fn<SourceSyncJobRepository['get']>()
-      .mockResolvedValue(
-        restoreSyncJob({ sourceId: 'source-1', status: 'waiting' }),
-      ),
+    get: vi.fn<SourceSyncJobRepository['get']>().mockResolvedValue(restoreSyncJob({ sourceId: 'source-1', status: 'waiting' })),
     find: vi.fn<SourceSyncJobRepository['find']>().mockResolvedValue(null),
-    findLatest: vi
-      .fn<SourceSyncJobRepository['findLatest']>()
-      .mockResolvedValue(null),
-    insert: vi
-      .fn<SourceSyncJobRepository['insert']>()
-      .mockImplementation((syncJob) => Promise.resolve(syncJob)),
-    update: vi
-      .fn<SourceSyncJobRepository['update']>()
-      .mockImplementation((syncJob) => Promise.resolve(syncJob)),
+    findLatest: vi.fn<SourceSyncJobRepository['findLatest']>().mockResolvedValue(null),
+    insert: vi.fn<SourceSyncJobRepository['insert']>().mockImplementation((syncJob) => Promise.resolve(syncJob)),
+    update: vi.fn<SourceSyncJobRepository['update']>().mockImplementation((syncJob) => Promise.resolve(syncJob)),
   };
 }
 
@@ -683,11 +562,7 @@ function createOutboxWriterMock(): OutboxWriterMock {
   };
 }
 
-function restoreSyncJob(params: {
-  sourceId: string;
-  fingerprint?: string;
-  status: string;
-}): SourceSyncJob {
+function restoreSyncJob(params: { sourceId: string; fingerprint?: string; status: string }): SourceSyncJob {
   return SourceSyncJob.restore({
     id: 'sync-job-1',
     sourceId: params.sourceId,
@@ -705,9 +580,7 @@ function expectSourceSavedWith(
 ) {
   expect(sourceWriteCalls(sources)).toHaveLength(1);
   const savedSource = sourceWriteCalls(sources)[0]?.[0];
-  expect(savedSource?.getProps().externalSourceId.unpack()).toBe(
-    expected.externalSourceId,
-  );
+  expect(savedSource?.getProps().externalSourceId.unpack()).toBe(expected.externalSourceId);
   expect(sourceContentOf(savedSource)).toEqual({
     body: expected.content,
     fingerprint: sha256Hex(expected.content),
@@ -743,11 +616,7 @@ function sourceSyncJobProps(syncJob: SourceSyncJob | undefined) {
   };
 }
 
-function restoreSource(params: {
-  id: string;
-  externalSourceId: string;
-  content: string;
-}) {
+function restoreSource(params: { id: string; externalSourceId: string; content: string }) {
   return Source.restore({
     id: params.id,
     externalSourceId: params.externalSourceId,

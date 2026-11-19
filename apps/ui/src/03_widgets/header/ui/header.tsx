@@ -1,10 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLogOut, useViewer } from '@/entities/session';
-import {
-  PromptText,
-  TrafficLights,
-  type TerminalLaunchState,
-} from '@/shared/ui';
+import { PromptText, TrafficLights, type TerminalLaunchState } from '@/shared/ui';
 
 const SECTIONS = [
   { href: '/posts', label: 'posts', ownerOnly: false },
@@ -49,10 +45,7 @@ export function Header() {
         <div className="mx-auto flex h-full max-w-content items-center justify-between gap-3 sm:gap-6">
           <div className="flex items-center gap-2">
             <span className="mr-2 hidden sm:flex">
-              <TrafficLights
-                yellowLabel={owner ? 'Log out' : 'Log in'}
-                onYellowClick={handleYellowClick}
-              />
+              <TrafficLights yellowLabel={owner ? 'Log out' : 'Log in'} onYellowClick={handleYellowClick} />
             </span>
             <Link
               to="/"
@@ -62,47 +55,29 @@ export function Header() {
             </Link>
           </div>
 
-          <nav
-            aria-label="Sections"
-            className="flex gap-3 font-mono text-label-sm sm:gap-6"
-          >
-            {SECTIONS.filter(({ ownerOnly }) => owner || !ownerOnly).map(
-              ({ href, label }) => {
-                const current = isCurrent(pathname, href);
-                return (
-                  <Link
-                    key={href}
-                    to={href}
-                    aria-current={current ? 'page' : undefined}
-                    className={`transition-colors ${FOCUS_RING} ${
-                      current
-                        ? 'text-accent'
-                        : 'text-secondary hover:text-on-surface'
-                    }`}
-                  >
-                    {label}
-                  </Link>
-                );
-              },
-            )}
+          <nav aria-label="Sections" className="flex gap-3 font-mono text-label-sm sm:gap-6">
+            {SECTIONS.filter(({ ownerOnly }) => owner || !ownerOnly).map(({ href, label }) => {
+              const current = isCurrent(pathname, href);
+              return (
+                <Link
+                  key={href}
+                  to={href}
+                  aria-current={current ? 'page' : undefined}
+                  className={`transition-colors ${FOCUS_RING} ${current ? 'text-accent' : 'text-secondary hover:text-on-surface'}`}
+                >
+                  {label}
+                </Link>
+              );
+            })}
           </nav>
         </div>
       </div>
 
       <div className="h-10 px-4">
         <div className="mx-auto flex h-full max-w-content items-center font-mono text-code-snippet">
-          <PromptText
-            prompt={
-              owner
-                ? { identity: 'owner@hash', rest: ':~#' }
-                : { identity: 'visitor@hash', rest: ':~$' }
-            }
-          />
+          <PromptText prompt={owner ? { identity: 'owner@hash', rest: ':~#' } : { identity: 'visitor@hash', rest: ':~$' }} />
           <span className="ml-2 text-white">{toCommand(pathname)}</span>
-          <span
-            className="ml-1 h-4 w-2 animate-pulse bg-accent"
-            aria-hidden="true"
-          />
+          <span className="ml-1 h-4 w-2 animate-pulse bg-accent" aria-hidden="true" />
         </div>
       </div>
     </header>

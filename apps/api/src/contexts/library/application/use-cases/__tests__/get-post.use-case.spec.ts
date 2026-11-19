@@ -1,8 +1,5 @@
 import { type PostRepository } from '@contexts/library/domain';
-import {
-  type PostQuery,
-  type PostQueryResult,
-} from '@contexts/library/application/ports';
+import { type PostQuery, type PostQueryResult } from '@contexts/library/application/ports';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { GetPostUseCase } from '../get-post.use-case';
 import { buildPost } from '../../../../../../test/support/domains/fixtures/post.fixture';
@@ -21,9 +18,7 @@ type PostQueryMock = {
   count: MockedFunction<PostQuery['count']>;
 };
 
-function buildPostQueryResult(
-  overrides: Partial<PostQueryResult> = {},
-): PostQueryResult {
+function buildPostQueryResult(overrides: Partial<PostQueryResult> = {}): PostQueryResult {
   return {
     postId: overrides.postId ?? 'post-1',
     sourceId: overrides.sourceId ?? 'source-1',
@@ -72,9 +67,7 @@ describe('GetPostUseCase', () => {
     posts.get.mockRejectedValue(getFailure);
     const useCase = new GetPostUseCase(posts, postQuery);
 
-    await expect(useCase.execute({ postId: 'post-1' })).rejects.toBe(
-      getFailure,
-    );
+    await expect(useCase.execute({ postId: 'post-1' })).rejects.toBe(getFailure);
     expect(posts.update).not.toHaveBeenCalled();
   });
 
@@ -87,9 +80,7 @@ describe('GetPostUseCase', () => {
     posts.update.mockRejectedValue(saveFailure);
     const useCase = new GetPostUseCase(posts, postQuery);
 
-    await expect(useCase.execute({ postId: post.id })).rejects.toBe(
-      saveFailure,
-    );
+    await expect(useCase.execute({ postId: post.id })).rejects.toBe(saveFailure);
   });
 
   it('postQuery.get exception을 전파한다', async () => {
@@ -101,21 +92,15 @@ describe('GetPostUseCase', () => {
     postQuery.get.mockRejectedValue(queryFailure);
     const useCase = new GetPostUseCase(posts, postQuery);
 
-    await expect(useCase.execute({ postId: post.id })).rejects.toBe(
-      queryFailure,
-    );
+    await expect(useCase.execute({ postId: post.id })).rejects.toBe(queryFailure);
   });
 });
 
 function createPostRepositoryMock(): PostRepositoryMock {
   return {
     get: vi.fn<PostRepository['get']>().mockResolvedValue(buildPost()),
-    insert: vi
-      .fn<PostRepository['insert']>()
-      .mockImplementation((post) => Promise.resolve(post)),
-    update: vi
-      .fn<PostRepository['update']>()
-      .mockImplementation((post) => Promise.resolve(post)),
+    insert: vi.fn<PostRepository['insert']>().mockImplementation((post) => Promise.resolve(post)),
+    update: vi.fn<PostRepository['update']>().mockImplementation((post) => Promise.resolve(post)),
   };
 }
 
@@ -123,12 +108,8 @@ function createPostQueryMock(): PostQueryMock {
   return {
     get: vi.fn<PostQuery['get']>().mockResolvedValue(null as never),
     find: vi.fn<PostQuery['find']>().mockResolvedValue(null),
-    paginate: vi
-      .fn<PostQuery['paginate']>()
-      .mockResolvedValue({ posts: [], nextCursor: null }),
-    search: vi
-      .fn<PostQuery['search']>()
-      .mockResolvedValue({ posts: [], nextCursor: null }),
+    paginate: vi.fn<PostQuery['paginate']>().mockResolvedValue({ posts: [], nextCursor: null }),
+    search: vi.fn<PostQuery['search']>().mockResolvedValue({ posts: [], nextCursor: null }),
     count: vi.fn<PostQuery['count']>().mockResolvedValue(0),
   };
 }

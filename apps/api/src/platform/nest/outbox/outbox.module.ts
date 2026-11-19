@@ -6,15 +6,8 @@ import {
   type LoggerPort,
   type OutboxRelayStore,
 } from '@kernels/application';
-import {
-  OutboxRelay,
-  PgDrizzleOutboxStore,
-  SYSTEM_RETRY_RUNTIME,
-} from '@kernels/infrastructure';
-import {
-  OUTBOX_RELAY_RUNNER_OPTIONS,
-  OutboxRelayRunner,
-} from './outbox-relay.runner';
+import { OutboxRelay, PgDrizzleOutboxStore, SYSTEM_RETRY_RUNTIME } from '@kernels/infrastructure';
+import { OUTBOX_RELAY_RUNNER_OPTIONS, OutboxRelayRunner } from './outbox-relay.runner';
 import { IntegrationEventsModule } from '../events/integration-events.module';
 
 const OUTBOX_RELAY_STORE = Symbol('OUTBOX_RELAY_STORE');
@@ -25,11 +18,7 @@ const OUTBOX_RELAY_STORE = Symbol('OUTBOX_RELAY_STORE');
     { provide: OUTBOX_RELAY_STORE, useClass: PgDrizzleOutboxStore },
     {
       provide: OutboxRelay,
-      useFactory: (
-        store: OutboxRelayStore,
-        dispatcher: IntegrationEventDispatcher,
-        logger: LoggerPort,
-      ) =>
+      useFactory: (store: OutboxRelayStore, dispatcher: IntegrationEventDispatcher, logger: LoggerPort) =>
         new OutboxRelay(store, dispatcher, logger, SYSTEM_RETRY_RUNTIME, {
           batchSize: 100,
           maxAttempts: 14,

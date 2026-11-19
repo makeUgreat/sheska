@@ -1,10 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { computeDeadline } from '@core/deadline';
-import {
-  withRetryAttempts as executeRetryAttempts,
-  type RetryPolicy,
-  type RetryRuntime,
-} from '../retry';
+import { withRetryAttempts as executeRetryAttempts, type RetryPolicy, type RetryRuntime } from '../retry';
 import { classifyInfrastructureRetry } from '../retry-error.classifier';
 
 function buildPolicy(overrides: Partial<RetryPolicy> = {}): RetryPolicy {
@@ -26,10 +22,7 @@ interface TestRetryOptions {
   readonly random?: RetryRuntime['random'];
 }
 
-function withRetryAttempts<T>(
-  operation: (attempt: number) => Promise<T>,
-  options: TestRetryOptions,
-): Promise<T> {
+function withRetryAttempts<T>(operation: (attempt: number) => Promise<T>, options: TestRetryOptions): Promise<T> {
   return executeRetryAttempts(
     operation,
     {
@@ -76,11 +69,7 @@ describe('withRetryAttempts', () => {
   it('재시도 가능한 에러가 나면 backoff 후 재시도해서 결국 성공한다', async () => {
     const clock = buildClock();
     const error = new Error('transient');
-    const operation = vi
-      .fn()
-      .mockRejectedValueOnce(error)
-      .mockRejectedValueOnce(error)
-      .mockResolvedValue('ok');
+    const operation = vi.fn().mockRejectedValueOnce(error).mockRejectedValueOnce(error).mockResolvedValue('ok');
     const sleep = vi.fn((ms: number) => {
       clock.advance(ms);
       return Promise.resolve();
@@ -147,10 +136,7 @@ describe('withRetryAttempts', () => {
   it('classification의 retryAfterMs가 있으면 계산된 backoff보다 우선한다', async () => {
     const clock = buildClock();
     const error = new Error('rate limited');
-    const operation = vi
-      .fn()
-      .mockRejectedValueOnce(error)
-      .mockResolvedValue('ok');
+    const operation = vi.fn().mockRejectedValueOnce(error).mockResolvedValue('ok');
     const sleep = vi.fn((ms: number) => {
       clock.advance(ms);
       return Promise.resolve();

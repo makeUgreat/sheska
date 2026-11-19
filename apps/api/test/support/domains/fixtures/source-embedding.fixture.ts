@@ -12,9 +12,7 @@ interface BuildSourceEmbeddingParams {
   }>;
 }
 
-export function buildSourceEmbedding(
-  params: BuildSourceEmbeddingParams = {},
-): SourceEmbedding {
+export function buildSourceEmbedding(params: BuildSourceEmbeddingParams = {}): SourceEmbedding {
   const chunks = params.chunks ?? [
     {
       chunkIndex: 0,

@@ -22,16 +22,11 @@ function readObsidianSize(alt: string) {
  * Scheme이 없는 `src`는 vault 절대 경로다. 첨부 파일 저장소는 object를 `vault/<경로>`에 둔다.
  * Markdown의 `src`는 이미 `%20`처럼 인코딩되어 있어 다시 인코딩하지 않는다.
  */
-export const MarkdownImage: Components['img'] = function MarkdownImage({
-  src,
-  alt,
-  title,
-}) {
+export const MarkdownImage: Components['img'] = function MarkdownImage({ src, alt, title }) {
   const attachmentBaseUrl = useAttachmentBaseUrl();
   const [failedSrc, setFailedSrc] = useState<string>();
   const { text, width, height } = readObsidianSize(alt ?? '');
-  const resolvedSrc =
-    src && !URL_SCHEME.test(src) ? `${attachmentBaseUrl}/vault/${src}` : src;
+  const resolvedSrc = src && !URL_SCHEME.test(src) ? `${attachmentBaseUrl}/vault/${src}` : src;
   const unavailable = !resolvedSrc || failedSrc === resolvedSrc;
 
   return (

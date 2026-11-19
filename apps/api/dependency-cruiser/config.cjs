@@ -11,8 +11,7 @@ module.exports = {
     {
       name: 'not-to-unresolvable',
       severity: 'error',
-      comment:
-        'Imports must resolve to a real local file, package dependency, or Node built-in module.',
+      comment: 'Imports must resolve to a real local file, package dependency, or Node built-in module.',
       from: {},
       to: {
         couldNotResolve: true,
@@ -25,14 +24,7 @@ module.exports = {
     exclude: {
       path: ['^dist/', '^coverage/'],
     },
-    includeOnly: [
-      '^src/',
-      '^test/',
-      nodeBuiltinModule,
-      '^node_modules/',
-      '^../../node_modules/',
-      '^../../packages/',
-    ],
+    includeOnly: ['^src/', '^test/', nodeBuiltinModule, '^node_modules/', '^../../node_modules/', '^../../packages/'],
     tsConfig: {
       fileName: join(__dirname, '../tsconfig.json'),
     },

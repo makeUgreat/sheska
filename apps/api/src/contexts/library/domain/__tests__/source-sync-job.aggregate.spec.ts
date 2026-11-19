@@ -100,50 +100,30 @@ describe('SourceSyncJob', () => {
     });
 
     // nocap: library-sync-8
-    it.each(['completed', 'failed'] as const)(
-      'status가 %s면 false를 반환한다',
-      (status) => {
-        expect(restoreSyncJob(status).isWaiting()).toBe(false);
-      },
-    );
+    it.each(['completed', 'failed'] as const)('status가 %s면 false를 반환한다', (status) => {
+      expect(restoreSyncJob(status).isWaiting()).toBe(false);
+    });
   });
 
   describe('isWaitingOrCompletedFor', () => {
     // nocap: library-sync-7
-    it.each(['waiting', 'completed'] as const)(
-      'status가 %s이고 fingerprint가 같으면 true를 반환한다',
-      (status) => {
-        expect(
-          restoreSyncJob(status).isWaitingOrCompletedFor(
-            SourceFingerprint.of('fingerprint-1'),
-          ),
-        ).toBe(true);
-      },
-    );
+    it.each(['waiting', 'completed'] as const)('status가 %s이고 fingerprint가 같으면 true를 반환한다', (status) => {
+      expect(restoreSyncJob(status).isWaitingOrCompletedFor(SourceFingerprint.of('fingerprint-1'))).toBe(true);
+    });
 
     // nocap: library-sync-7
     it('fingerprint가 다르면 false를 반환한다', () => {
-      expect(
-        restoreSyncJob('completed').isWaitingOrCompletedFor(
-          SourceFingerprint.of('fingerprint-2'),
-        ),
-      ).toBe(false);
+      expect(restoreSyncJob('completed').isWaitingOrCompletedFor(SourceFingerprint.of('fingerprint-2'))).toBe(false);
     });
 
     // nocap: library-sync-7
     it('status가 failed면 fingerprint가 같아도 false를 반환한다', () => {
-      expect(
-        restoreSyncJob('failed').isWaitingOrCompletedFor(
-          SourceFingerprint.of('fingerprint-1'),
-        ),
-      ).toBe(false);
+      expect(restoreSyncJob('failed').isWaitingOrCompletedFor(SourceFingerprint.of('fingerprint-1'))).toBe(false);
     });
   });
 });
 
-function restoreSyncJob(
-  status: 'waiting' | 'completed' | 'failed',
-): SourceSyncJob {
+function restoreSyncJob(status: 'waiting' | 'completed' | 'failed'): SourceSyncJob {
   return SourceSyncJob.restore({
     id: 'source-sync-job-1',
     sourceId: 'source-1',

@@ -6,6 +6,4 @@ export const finalizeEmbeddingWorkflowJobInputSchema = z.strictObject({
   totalChunks: z.number().int().nonnegative(),
 });
 
-export type FinalizeEmbeddingWorkflowJobInput = z.infer<
-  typeof finalizeEmbeddingWorkflowJobInputSchema
->;
+export type FinalizeEmbeddingWorkflowJobInput = z.infer<typeof finalizeEmbeddingWorkflowJobInputSchema>;

@@ -1,18 +1,8 @@
 export type { AttachmentContentStore } from './attachment-content.store';
-export type {
-  AttachmentImageCodec,
-  AttachmentImageInfo,
-  AttachmentImageMediaType,
-} from './attachment-image.codec';
-export type {
-  SourceDocumentParser,
-  ParsedSourceDocument,
-} from './source-document.parser';
+export type { AttachmentImageCodec, AttachmentImageInfo, AttachmentImageMediaType } from './attachment-image.codec';
+export type { SourceDocumentParser, ParsedSourceDocument } from './source-document.parser';
 export type { SourceLookup, SourceDocument } from './source.lookup';
-export type {
-  SourceEmbeddingLookup,
-  SourceEmbeddingMetadata,
-} from './source-embedding.lookup';
+export type { SourceEmbeddingLookup, SourceEmbeddingMetadata } from './source-embedding.lookup';
 export type {
   SourceQuery,
   SourceQueryPaginateOptions,
@@ -20,14 +10,8 @@ export type {
   SourceQueryListItem,
   SourceQueryPaginateResult,
 } from './source.query';
-export type {
-  LibraryUnitOfWork,
-  LibraryUnitOfWorkResources,
-} from './library.unit-of-work';
-export type {
-  SyncJobProgress,
-  SyncJobProgressLookup,
-} from './sync-job-progress.lookup';
+export type { LibraryUnitOfWork, LibraryUnitOfWorkResources } from './library.unit-of-work';
+export type { SyncJobProgress, SyncJobProgressLookup } from './sync-job-progress.lookup';
 export type { SearchQueryEmbedder } from './search-query.embedder';
 export type {
   PostQueryResult,

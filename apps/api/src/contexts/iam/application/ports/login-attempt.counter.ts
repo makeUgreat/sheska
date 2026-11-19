@@ -6,9 +6,6 @@ export interface LoginAttempt {
 }
 
 export interface LoginAttemptCounter {
-  register(
-    clientAddress: string,
-    policy: LoginAttemptPolicy,
-  ): Promise<LoginAttempt>;
+  register(clientAddress: string, policy: LoginAttemptPolicy): Promise<LoginAttempt>;
   clear(clientAddress: string): Promise<void>;
 }

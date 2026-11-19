@@ -13,9 +13,7 @@ import {
 import SheskaPlugin from './main';
 import { DEFAULT_SETTINGS } from './settings';
 
-function makePlugin(
-  loadDataResult: Record<string, unknown> = {},
-): SheskaPlugin {
+function makePlugin(loadDataResult: Record<string, unknown> = {}): SheskaPlugin {
   const plugin = new SheskaPlugin({} as never, {} as never);
   plugin.loadData = vi.fn().mockResolvedValue(loadDataResult);
   plugin.saveData = vi.fn().mockResolvedValue(undefined);
@@ -51,9 +49,7 @@ describe('SheskaPlugin', () => {
     it('registers the sheska-ping command', async () => {
       await plugin.onload();
 
-      expect(plugin.addCommand).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 'sheska-ping' }),
-      );
+      expect(plugin.addCommand).toHaveBeenCalledWith(expect.objectContaining({ id: 'sheska-ping' }));
     });
 
     it('waits for the layout to be ready before the first sweep reads frontmatter', async () => {
@@ -82,9 +78,7 @@ describe('SheskaPlugin', () => {
     });
 
     it('merges saved data over defaults', async () => {
-      plugin.loadData = vi
-        .fn()
-        .mockResolvedValue({ apiBaseUrl: 'http://prod:80' });
+      plugin.loadData = vi.fn().mockResolvedValue({ apiBaseUrl: 'http://prod:80' });
 
       await plugin.loadSettings();
 
@@ -115,18 +109,11 @@ describe('SheskaPlugin', () => {
       });
       await plugin.onload();
       plugin.settings.apiBaseUrl = 'http://staging:3001';
-      vi.stubGlobal(
-        'fetch',
-        vi
-          .fn()
-          .mockResolvedValue({ ok: true, json: () => Promise.resolve({}) }),
-      );
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) }));
 
       await plugin.saveSettings();
       const commandArg = vi.mocked(plugin.addCommand).mock.calls[0][0];
-      await (
-        commandArg as unknown as { callback: () => Promise<void> }
-      ).callback();
+      await (commandArg as unknown as { callback: () => Promise<void> }).callback();
 
       expect(fetch).toHaveBeenCalledWith('http://staging:3001/readyz', {
         headers: { 'Content-Type': 'application/json' },
@@ -138,9 +125,7 @@ describe('SheskaPlugin', () => {
     it('defaults to an empty object when no cache is stored', async () => {
       await plugin.loadSyncCache();
 
-      expect(
-        (plugin as unknown as { syncCache: Record<string, unknown> }).syncCache,
-      ).toEqual({});
+      expect((plugin as unknown as { syncCache: Record<string, unknown> }).syncCache).toEqual({});
     });
 
     it('loads a previously persisted cache', async () => {
@@ -150,9 +135,7 @@ describe('SheskaPlugin', () => {
 
       await plugin.loadSyncCache();
 
-      expect(
-        (plugin as unknown as { syncCache: Record<string, unknown> }).syncCache,
-      ).toEqual({ 'a.md': { mtime: 1, syncedAt: 2 } });
+      expect((plugin as unknown as { syncCache: Record<string, unknown> }).syncCache).toEqual({ 'a.md': { mtime: 1, syncedAt: 2 } });
     });
   });
 
@@ -202,17 +185,12 @@ describe('SheskaPlugin', () => {
         healthCheckIntervalMinutes: 1,
         autoSyncEnabled: false,
       });
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
-      );
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNREFUSED')));
 
       await plugin.onload();
       await vi.advanceTimersByTimeAsync(60 * 1000);
 
-      expect(noticeMessages).toContain(
-        'Sheska API health check failed. Check settings.',
-      );
+      expect(noticeMessages).toContain('Sheska API health check failed. Check settings.');
       vi.useRealTimers();
     });
   });
@@ -254,16 +232,13 @@ describe('SheskaPlugin', () => {
       await plugin.onload();
       const calls = vi.mocked(plugin.addCommand).mock.calls;
       const uploadCall = calls.find((c) => c[0].id === 'sheska-upload-note');
-      return (uploadCall![0] as unknown as { callback: () => Promise<void> })
-        .callback;
+      return (uploadCall![0] as unknown as { callback: () => Promise<void> }).callback;
     }
 
     it('registers the sheska-upload-note command', async () => {
       await plugin.onload();
 
-      expect(plugin.addCommand).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 'sheska-upload-note' }),
-      );
+      expect(plugin.addCommand).toHaveBeenCalledWith(expect.objectContaining({ id: 'sheska-upload-note' }));
     });
 
     it('shows success Notice when upload succeeds', async () => {
@@ -279,9 +254,7 @@ describe('SheskaPlugin', () => {
             }),
         }),
       );
-      plugin.app.workspace.getActiveFile = vi
-        .fn()
-        .mockReturnValue(new TFile('test.md'));
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(new TFile('test.md'));
       plugin.app.vault.read = vi.fn().mockResolvedValue('# Hello');
       const callback = await getUploadCallback();
 
@@ -294,20 +267,14 @@ describe('SheskaPlugin', () => {
     it('refuses to upload a note whose frontmatter lacks sheska true', async () => {
       const fetchMock = vi.fn();
       vi.stubGlobal('fetch', fetchMock);
-      plugin.app.workspace.getActiveFile = vi
-        .fn()
-        .mockReturnValue(new TFile('test.md'));
-      plugin.app.metadataCache.getFileCache = vi
-        .fn()
-        .mockReturnValue({ frontmatter: { sheska: 'true' } });
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(new TFile('test.md'));
+      plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({ frontmatter: { sheska: 'true' } });
       const callback = await getUploadCallback();
 
       await callback();
 
       expect(fetchMock).not.toHaveBeenCalled();
-      expect(noticeMessages).toContain(
-        'Add "sheska: true" to the frontmatter to upload this note.',
-      );
+      expect(noticeMessages).toContain('Add "sheska: true" to the frontmatter to upload this note.');
     });
 
     it('shows Notice when there is no active file', async () => {
@@ -320,21 +287,14 @@ describe('SheskaPlugin', () => {
     });
 
     it('shows failure Notice with error message when upload fails', async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
-      );
-      plugin.app.workspace.getActiveFile = vi
-        .fn()
-        .mockReturnValue(new TFile('test.md'));
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNREFUSED')));
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(new TFile('test.md'));
       plugin.app.vault.read = vi.fn().mockResolvedValue('content');
       const callback = await getUploadCallback();
 
       await callback();
 
-      expect(noticeMessages).toContain(
-        'Failed to upload note to Sheska: ECONNREFUSED',
-      );
+      expect(noticeMessages).toContain('Failed to upload note to Sheska: ECONNREFUSED');
     });
   });
 
@@ -392,10 +352,7 @@ describe('SheskaPlugin', () => {
     });
 
     it('shows failure Notice with error message when file-menu upload fails', async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockRejectedValue(new Error('Network error')),
-      );
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')));
       plugin.app.vault.read = vi.fn().mockResolvedValue('content');
       await plugin.onload();
       const handler = fileMenuHandler!;
@@ -404,9 +361,7 @@ describe('SheskaPlugin', () => {
 
       await fileMenuItems[0].click();
 
-      expect(noticeMessages).toContain(
-        'Failed to upload note to Sheska: Network error',
-      );
+      expect(noticeMessages).toContain('Failed to upload note to Sheska: Network error');
     });
   });
 
@@ -414,8 +369,7 @@ describe('SheskaPlugin', () => {
     async function getPingCallback(): Promise<() => Promise<void>> {
       await plugin.onload();
       const commandArg = vi.mocked(plugin.addCommand).mock.calls[0][0];
-      return (commandArg as unknown as { callback: () => Promise<void> })
-        .callback;
+      return (commandArg as unknown as { callback: () => Promise<void> }).callback;
     }
 
     it('shows success Notice when API is reachable', async () => {
@@ -434,17 +388,12 @@ describe('SheskaPlugin', () => {
     });
 
     it('shows failure Notice when API is unreachable', async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
-      );
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNREFUSED')));
       const callback = await getPingCallback();
 
       await callback();
 
-      expect(noticeMessages).toContain(
-        'Failed to reach Sheska API. Check settings.',
-      );
+      expect(noticeMessages).toContain('Failed to reach Sheska API. Check settings.');
     });
   });
 
@@ -459,9 +408,7 @@ describe('SheskaPlugin', () => {
     });
 
     it('shows Not synced for the active file when it is not in the sync cache', async () => {
-      plugin.app.workspace.getActiveFile = vi
-        .fn()
-        .mockReturnValue(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }));
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }));
 
       await plugin.onload();
 
@@ -472,9 +419,7 @@ describe('SheskaPlugin', () => {
       plugin = makePlugin({
         syncCache: { 'a.md': { mtime: 100, syncedAt: 1 } },
       });
-      plugin.app.workspace.getActiveFile = vi
-        .fn()
-        .mockReturnValue(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }));
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }));
 
       await plugin.onload();
 
@@ -489,9 +434,7 @@ describe('SheskaPlugin', () => {
       await plugin.onload();
       expect(statusBarItems[0].text).toBe('');
 
-      workspaceEventHandlers['file-open']!(
-        new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }),
-      );
+      workspaceEventHandlers['file-open']!(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }));
 
       expect(statusBarItems[0].text).toBe('Sheska: ✓ Synced');
     });
@@ -611,9 +554,7 @@ describe('SheskaPlugin', () => {
       plugin = makePlugin({
         syncCache: { 'a.md': { mtime: 100, syncedAt: 1 } },
       });
-      plugin.app.workspace.getActiveFile = vi
-        .fn()
-        .mockReturnValue(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }));
+      plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }));
 
       await plugin.onload();
 
@@ -668,12 +609,8 @@ describe('SheskaPlugin', () => {
       plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(null);
       await plugin.onload();
 
-      workspaceEventHandlers['file-open']!(
-        new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }),
-      );
-      workspaceEventHandlers['file-open']!(
-        new TFile('b.md', { ctime: 0, mtime: 200, size: 1 }),
-      );
+      workspaceEventHandlers['file-open']!(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }));
+      workspaceEventHandlers['file-open']!(new TFile('b.md', { ctime: 0, mtime: 200, size: 1 }));
 
       expect(noticeMessages).toEqual([]);
     });
@@ -717,9 +654,7 @@ describe('SheskaPlugin', () => {
       plugin.app.vault.read = vi.fn().mockResolvedValue('content');
       await plugin.onload();
 
-      metadataCacheEventHandlers['changed']!(
-        new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }),
-      );
+      metadataCacheEventHandlers['changed']!(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }));
       await vi.advanceTimersByTimeAsync(5000);
 
       expect(calls).toEqual(['a.md']);
@@ -754,9 +689,7 @@ describe('SheskaPlugin', () => {
       plugin.app.vault.read = vi.fn().mockResolvedValue('content');
       await plugin.onload();
 
-      vaultEventHandlers['modify']!(
-        new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }),
-      );
+      vaultEventHandlers['modify']!(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }));
       await vi.advanceTimersByTimeAsync(5000);
 
       expect(calls).toEqual([]);
@@ -839,9 +772,7 @@ describe('SheskaPlugin', () => {
       plugin.app.vault.read = vi.fn().mockResolvedValue('content');
       await plugin.onload();
 
-      vaultEventHandlers['modify']!(
-        new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }),
-      );
+      vaultEventHandlers['modify']!(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }));
       await vi.advanceTimersByTimeAsync(5000);
 
       expect(fetchMock).not.toHaveBeenCalled();
@@ -857,12 +788,8 @@ describe('SheskaPlugin', () => {
       plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(file);
       plugin.app.vault.read = vi.fn().mockResolvedValue('content');
       await plugin.onload();
-      const uploadCall = vi
-        .mocked(plugin.addCommand)
-        .mock.calls.find((c) => c[0].id === 'sheska-upload-note');
-      const callback = (
-        uploadCall![0] as unknown as { callback: () => Promise<void> }
-      ).callback;
+      const uploadCall = vi.mocked(plugin.addCommand).mock.calls.find((c) => c[0].id === 'sheska-upload-note');
+      const callback = (uploadCall![0] as unknown as { callback: () => Promise<void> }).callback;
 
       await callback();
 
@@ -888,9 +815,7 @@ describe('SheskaPlugin', () => {
       // getMarkdownFiles still returns [] here, so onload's own fire-and-forget
       // initial sweep is a no-op and doesn't race with the explicit call below.
       await plugin.onload();
-      plugin.app.vault.getMarkdownFiles = vi
-        .fn()
-        .mockReturnValue([unchanged, changed]);
+      plugin.app.vault.getMarkdownFiles = vi.fn().mockReturnValue([unchanged, changed]);
 
       await (plugin as unknown as { runSweep(): Promise<void> }).runSweep();
 

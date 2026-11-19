@@ -14,8 +14,6 @@ export abstract class IntegrationEvent {
 
   protected constructor(params: IntegrationEventParams = {}) {
     this.eventId = newId();
-    this.occurredAt = params.occurredAt
-      ? new Date(params.occurredAt)
-      : new Date();
+    this.occurredAt = params.occurredAt ? new Date(params.occurredAt) : new Date();
   }
 }

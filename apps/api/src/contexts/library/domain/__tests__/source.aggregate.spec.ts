@@ -1,14 +1,9 @@
 import { sha256Hex } from '@core/hash';
-import {
-  Source,
-  SourceSyncJob,
-  type SourceFrontmatterProps,
-} from '@contexts/library/domain';
+import { Source, SourceSyncJob, type SourceFrontmatterProps } from '@contexts/library/domain';
 import { describe, expect, it } from 'vitest';
 import { sourceContentOf } from '../../../../../test/support/domains/fixtures/source.fixture';
 
-const UUID_V7_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const UUID_V7_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 const content = {
   body: '# Source note',
@@ -47,9 +42,7 @@ describe('Source', () => {
 
   // nocap: library-source-3
   it('제목의 앞뒤 공백은 뺀다', () => {
-    expect(titleOf({ title: ' Retry Amplification ' })).toBe(
-      'Retry Amplification',
-    );
+    expect(titleOf({ title: ' Retry Amplification ' })).toBe('Retry Amplification');
   });
 
   // nocap: library-source-3
@@ -59,12 +52,9 @@ describe('Source', () => {
     ['공백뿐인 문자열', { title: '  ' }],
     ['숫자', { title: 3 }],
     ['null', { title: null }],
-  ])(
-    'frontmatter title이 %s이면 externalSourceId를 제목으로 쓴다',
-    (_label, frontmatter: SourceFrontmatterProps) => {
-      expect(titleOf(frontmatter)).toBe('Notes/source.md');
-    },
-  );
+  ])('frontmatter title이 %s이면 externalSourceId를 제목으로 쓴다', (_label, frontmatter: SourceFrontmatterProps) => {
+    expect(titleOf(frontmatter)).toBe('Notes/source.md');
+  });
 
   // nocap: library-source-6
   it('동기화 대상이 아닌 frontmatter로는 source를 만들 수 없다', () => {
@@ -84,9 +74,9 @@ describe('Source', () => {
       ...content,
     });
 
-    expect(() =>
-      source.syncContent({ ...content, frontmatter: { sheska: false } }),
-    ).toThrow(expect.objectContaining({ code: 'source.not_sync_target' }));
+    expect(() => source.syncContent({ ...content, frontmatter: { sheska: false } })).toThrow(
+      expect.objectContaining({ code: 'source.not_sync_target' }),
+    );
     expect(sourceContentOf(source).frontmatter).toEqual(content.frontmatter);
   });
 
@@ -200,30 +190,21 @@ describe('Source', () => {
     it.each([
       ['없으면', null],
       ['failed이면 fingerprint가 같아도', restoreSyncJob('failed', 'same')],
-      [
-        'completed이고 fingerprint가 다르면',
-        restoreSyncJob('completed', 'other'),
-      ],
+      ['completed이고 fingerprint가 다르면', restoreSyncJob('completed', 'other')],
       ['waiting이고 fingerprint가 다르면', restoreSyncJob('waiting', 'other')],
-    ])(
-      '가장 최근 sync job이 %s 새 sync job을 만든다',
-      (_label, latestSyncJob) => {
-        const source = buildSourceForSync();
+    ])('가장 최근 sync job이 %s 새 sync job을 만든다', (_label, latestSyncJob) => {
+      const source = buildSourceForSync();
 
-        expect(source.syncJobFor(latestSyncJob)).not.toBe(latestSyncJob);
-      },
-    );
+      expect(source.syncJobFor(latestSyncJob)).not.toBe(latestSyncJob);
+    });
 
     // nocap: library-sync-7
-    it.each(['waiting', 'completed'] as const)(
-      '가장 최근 sync job이 현재 fingerprint에 대한 %s이면 그 sync job을 쓴다',
-      (status) => {
-        const source = buildSourceForSync();
-        const latestSyncJob = restoreSyncJob(status, 'same');
+    it.each(['waiting', 'completed'] as const)('가장 최근 sync job이 현재 fingerprint에 대한 %s이면 그 sync job을 쓴다', (status) => {
+      const source = buildSourceForSync();
+      const latestSyncJob = restoreSyncJob(status, 'same');
 
-        expect(source.syncJobFor(latestSyncJob)).toBe(latestSyncJob);
-      },
-    );
+      expect(source.syncJobFor(latestSyncJob)).toBe(latestSyncJob);
+    });
 
     it('새 sync job은 source의 본문과 fingerprint로 만든다', () => {
       const source = buildSourceForSync();
@@ -234,9 +215,7 @@ describe('Source', () => {
         sourceId: source.id,
         status: 'waiting',
       });
-      expect(syncJob.getProps().fingerprint.unpack()).toBe(
-        sha256Hex(content.body),
-      );
+      expect(syncJob.getProps().fingerprint.unpack()).toBe(sha256Hex(content.body));
       expect(syncJob.domainEvents[0]).toMatchObject({
         sourceId: source.id,
         content: content.body,
@@ -249,15 +228,11 @@ function buildSourceForSync(): Source {
   return Source.create({ externalSourceId: 'Notes/source.md', ...content });
 }
 
-function restoreSyncJob(
-  status: 'waiting' | 'completed' | 'failed',
-  fingerprint: 'same' | 'other',
-): SourceSyncJob {
+function restoreSyncJob(status: 'waiting' | 'completed' | 'failed', fingerprint: 'same' | 'other'): SourceSyncJob {
   return SourceSyncJob.restore({
     id: 'sync-job-1',
     sourceId: 'source-1',
-    fingerprint:
-      fingerprint === 'same' ? sha256Hex(content.body) : 'other-fingerprint',
+    fingerprint: fingerprint === 'same' ? sha256Hex(content.body) : 'other-fingerprint',
     status,
   });
 }

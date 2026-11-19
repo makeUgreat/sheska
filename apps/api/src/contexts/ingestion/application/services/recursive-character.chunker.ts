@@ -73,10 +73,7 @@ export class RecursiveCharacterChunker {
     const current: string[] = [];
 
     for (const split of splits) {
-      const projectedChunk =
-        current.length === 0
-          ? split
-          : current.join(separator) + separator + split;
+      const projectedChunk = current.length === 0 ? split : current.join(separator) + separator + split;
 
       if (projectedChunk.length > this.chunkSize && current.length > 0) {
         chunks.push(current.join(separator));
@@ -93,16 +90,8 @@ export class RecursiveCharacterChunker {
     return chunks;
   }
 
-  private splitWithFinerSeparator(
-    text: string,
-    remainingSeparators: string[],
-  ): string[] {
-    return this.splitText(
-      text,
-      remainingSeparators.length > 0
-        ? remainingSeparators
-        : CHAR_SPLIT_SENTINEL,
-    );
+  private splitWithFinerSeparator(text: string, remainingSeparators: string[]): string[] {
+    return this.splitText(text, remainingSeparators.length > 0 ? remainingSeparators : CHAR_SPLIT_SENTINEL);
   }
 
   private trimToOverlapBudget(current: string[], separator: string): void {

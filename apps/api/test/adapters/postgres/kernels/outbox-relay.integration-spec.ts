@@ -2,11 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { eq, sql } from 'drizzle-orm';
-import {
-  DATABASE_TOKENS,
-  outboxMessages,
-  PgDrizzleOutboxStore,
-} from '@kernels/infrastructure';
+import { DATABASE_TOKENS, outboxMessages, PgDrizzleOutboxStore } from '@kernels/infrastructure';
 import { type ApiDrizzleDatabase } from '@platform/nest/database/drizzle-postgres.provider';
 import { AppModule } from '@platform/nest/app.module';
 
@@ -47,9 +43,7 @@ describe('PgDrizzleOutboxStore claim', () => {
 
     const row = await findRow('event-claim-1');
     expect(row?.attemptCount).toBe(1);
-    expect(row?.nextAttemptAt.getTime()).toBeGreaterThan(
-      Date.now() + LEASE_MS / 2,
-    );
+    expect(row?.nextAttemptAt.getTime()).toBeGreaterThan(Date.now() + LEASE_MS / 2);
   });
 
   it('다음 시도 시각이 아직 오지 않은 row는 claim하지 않는다', async () => {
@@ -69,10 +63,7 @@ describe('PgDrizzleOutboxStore claim', () => {
 
     const claimed = await store.claimDue(10, LEASE_MS);
 
-    expect(claimedEventIds(claimed)).toEqual([
-      'event-order-a',
-      'event-order-b',
-    ]);
+    expect(claimedEventIds(claimed)).toEqual(['event-order-a', 'event-order-b']);
   });
 
   it('재시도를 예약하면 다음 시도 시각과 실패 사유를 기록한다', async () => {
@@ -83,9 +74,7 @@ describe('PgDrizzleOutboxStore claim', () => {
 
     const row = await findRow('event-retry');
     expect(row?.lastFailureReason).toBe('Dispatcher unavailable');
-    expect(row?.nextAttemptAt.getTime()).toBeLessThan(
-      Date.now() + LEASE_MS / 2,
-    );
+    expect(row?.nextAttemptAt.getTime()).toBeLessThan(Date.now() + LEASE_MS / 2);
     expect(row?.nextAttemptAt.getTime()).toBeGreaterThan(Date.now());
   });
 
@@ -134,24 +123,17 @@ describe('PgDrizzleOutboxStore claim', () => {
       eventVersion: 1,
       payload: { sourceId: 'source-1', syncJobId: 'sync-job-1' },
       occurredAt: new Date('2026-09-18T00:00:00.000Z'),
-      ...(overrides.nextAttemptAt
-        ? { nextAttemptAt: overrides.nextAttemptAt }
-        : {}),
+      ...(overrides.nextAttemptAt ? { nextAttemptAt: overrides.nextAttemptAt } : {}),
       ...(overrides.createdAt ? { createdAt: overrides.createdAt } : {}),
     });
   }
 
   async function findRow(eventId: string) {
-    const [row] = await database
-      .select()
-      .from(outboxMessages)
-      .where(eq(outboxMessages.eventId, eventId));
+    const [row] = await database.select().from(outboxMessages).where(eq(outboxMessages.eventId, eventId));
     return row;
   }
 });
 
-function claimedEventIds(
-  claimed: Awaited<ReturnType<PgDrizzleOutboxStore['claimDue']>>,
-): string[] {
+function claimedEventIds(claimed: Awaited<ReturnType<PgDrizzleOutboxStore['claimDue']>>): string[] {
   return claimed.map(({ event }) => event.eventId);
 }

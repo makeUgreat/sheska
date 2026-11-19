@@ -1,14 +1,7 @@
 import { type Ref } from 'react';
-import {
-  useInfinitePostsScroll,
-  usePostsArchive,
-} from '@/features/posts-archive';
+import { useInfinitePostsScroll, usePostsArchive } from '@/features/posts-archive';
 import { type PostSummary } from '@/entities/post';
-import {
-  PostsListSection,
-  type PostsListState,
-  type PostsSearchMode,
-} from './posts-list-section';
+import { PostsListSection, type PostsListState, type PostsSearchMode } from './posts-list-section';
 
 function getSearchMode(semanticSearchApplied: boolean | null): PostsSearchMode {
   if (semanticSearchApplied === null) return null;

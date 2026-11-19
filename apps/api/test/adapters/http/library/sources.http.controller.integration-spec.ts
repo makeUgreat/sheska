@@ -2,11 +2,7 @@ import { type Server } from 'node:http';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
-import {
-  ConstraintViolationError,
-  NotFoundError,
-  ValidationFailedError,
-} from '@core/errors';
+import { ConstraintViolationError, NotFoundError, ValidationFailedError } from '@core/errors';
 import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upload-source.use-case';
 import { ListSourcesUseCase } from '@contexts/library/application/use-cases/list-sources.use-case';
 import { GetSourceUseCase } from '@contexts/library/application/use-cases/get-source.use-case';
@@ -16,15 +12,7 @@ import { DeclaredErrorCodesInterceptor } from '@platform/nest/interceptors/decla
 import { LOGGER } from '@kernels/application';
 import { SourceApi } from '@sheska/contract';
 import request from 'supertest';
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  type MockedFunction,
-  vi,
-} from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type MockedFunction, vi } from 'vitest';
 
 type UploadSourceUseCaseMock = {
   execute: MockedFunction<UploadSourceUseCase['execute']>;
@@ -199,9 +187,7 @@ describe('SourcesHttpController', () => {
     });
 
     it('유효하지 않은 page이면 400 응답을 반환한다', async () => {
-      const response = await request(httpServer)
-        .get('/sources?page=-1')
-        .expect(400);
+      const response = await request(httpServer).get('/sources?page=-1').expect(400);
 
       expect(response.body).toMatchObject({
         code: 'request.validation_failed',
@@ -210,9 +196,7 @@ describe('SourcesHttpController', () => {
     });
 
     it('pageSize가 100을 초과하면 400 응답을 반환한다', async () => {
-      const response = await request(httpServer)
-        .get('/sources?pageSize=101')
-        .expect(400);
+      const response = await request(httpServer).get('/sources?pageSize=101').expect(400);
 
       expect(response.body).toMatchObject({
         code: 'request.validation_failed',
@@ -221,9 +205,7 @@ describe('SourcesHttpController', () => {
     });
 
     it('exception이 발생하면 500 응답으로 마스킹한다', async () => {
-      listSourcesUseCase.execute.mockRejectedValue(
-        new Error('Source Repository operation failed'),
-      );
+      listSourcesUseCase.execute.mockRejectedValue(new Error('Source Repository operation failed'));
 
       const response = await request(httpServer).get('/sources').expect(500);
 
@@ -263,9 +245,7 @@ describe('SourcesHttpController', () => {
         publishedPostId: 'post-1',
       });
 
-      const response = await request(httpServer)
-        .get('/sources/source-1')
-        .expect(200);
+      const response = await request(httpServer).get('/sources/source-1').expect(200);
 
       SourceApi.get.response.parse(response.body);
       expect(response.body).toMatchObject({
@@ -304,9 +284,7 @@ describe('SourcesHttpController', () => {
         }),
       );
 
-      const response = await request(httpServer)
-        .get('/sources/non-existent')
-        .expect(404);
+      const response = await request(httpServer).get('/sources/non-existent').expect(404);
 
       expect(response.body).toEqual({
         code: 'source.not_found',
@@ -316,13 +294,9 @@ describe('SourcesHttpController', () => {
     });
 
     it('exception이 발생하면 500 응답으로 마스킹한다', async () => {
-      getSourceUseCase.execute.mockRejectedValue(
-        new Error('Source Repository operation failed'),
-      );
+      getSourceUseCase.execute.mockRejectedValue(new Error('Source Repository operation failed'));
 
-      const response = await request(httpServer)
-        .get('/sources/source-1')
-        .expect(500);
+      const response = await request(httpServer).get('/sources/source-1').expect(500);
 
       expect(response.body).toEqual({
         code: 'internal.unexpected',
@@ -387,9 +361,7 @@ describe('SourcesHttpController', () => {
     });
 
     it('source upload 중 exception이 발생하면 500 응답으로 마스킹한다', async () => {
-      uploadSourceUseCase.execute.mockRejectedValue(
-        new Error('Source fingerprinter is unavailable'),
-      );
+      uploadSourceUseCase.execute.mockRejectedValue(new Error('Source fingerprinter is unavailable'));
 
       const response = await request(httpServer)
         .post('/sources')
@@ -412,9 +384,7 @@ describe('SourcesHttpController', () => {
           code: 'source.not_sync_target',
           message: 'Not a sync target',
           details: {
-            fields: [
-              { path: 'frontmatter.sheska', messages: ['must be true'] },
-            ],
+            fields: [{ path: 'frontmatter.sheska', messages: ['must be true'] }],
           },
         }),
       );

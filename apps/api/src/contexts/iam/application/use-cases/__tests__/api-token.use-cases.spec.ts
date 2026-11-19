@@ -82,9 +82,7 @@ describe('ListApiTokensUseCase', () => {
       list: vi.fn().mockResolvedValue(items),
     } satisfies ApiTokenQuery;
 
-    await expect(new ListApiTokensUseCase(query).execute()).resolves.toBe(
-      items,
-    );
+    await expect(new ListApiTokensUseCase(query).execute()).resolves.toBe(items);
   });
 });
 
@@ -111,9 +109,9 @@ describe('RevokeApiTokenUseCase', () => {
       }),
     );
 
-    await expect(
-      new RevokeApiTokenUseCase(apiTokens).execute({ apiTokenId: 'missing' }),
-    ).rejects.toMatchObject({ code: 'api_token.not_found' });
+    await expect(new RevokeApiTokenUseCase(apiTokens).execute({ apiTokenId: 'missing' })).rejects.toMatchObject({
+      code: 'api_token.not_found',
+    });
     expect(apiTokens.delete).not.toHaveBeenCalled();
   });
 });

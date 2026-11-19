@@ -11,9 +11,7 @@ describe('EmbeddingModel', () => {
     });
 
     it('지원하지 않는 모델이면 throw한다', () => {
-      expect(() => EmbeddingModel.of('unknown-model')).toThrow(
-        'Unsupported embedding model: unknown-model',
-      );
+      expect(() => EmbeddingModel.of('unknown-model')).toThrow('Unsupported embedding model: unknown-model');
     });
   });
 });

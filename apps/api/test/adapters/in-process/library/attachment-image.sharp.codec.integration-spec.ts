@@ -11,11 +11,7 @@ function buildNoise(width: number, height: number): sharp.Sharp {
   return sharp(pixels, { raw: { width, height, channels: 3 } });
 }
 
-async function buildAnimatedGif(
-  width: number,
-  height: number,
-  frameCount: number,
-) {
+async function buildAnimatedGif(width: number, height: number, frameCount: number) {
   const frames = await Promise.all(
     Array.from({ length: frameCount }, (_, index) =>
       buildNoise(width, height)
@@ -29,8 +25,7 @@ async function buildAnimatedGif(
     .toBuffer();
 }
 
-const XMP =
-  '<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/></x:xmpmeta>';
+const XMP = '<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/></x:xmpmeta>';
 
 const ENCODE_OPTIONS = { maxWidth: 1360, quality: 80 };
 
@@ -58,9 +53,7 @@ describe('AttachmentImageSharpCodec (integration)', () => {
     });
 
     it('SVG를 image/svg+xml로 판정한다', async () => {
-      const svg = Buffer.from(
-        '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="20"/>',
-      );
+      const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="30" height="20"/>');
 
       expect(await codec.inspect(svg)).toMatchObject({
         mediaType: 'image/svg+xml',
@@ -70,9 +63,7 @@ describe('AttachmentImageSharpCodec (integration)', () => {
     it('이미지라도 다루는 형식이 아니면 InvalidDataError를 던진다', async () => {
       const tiff = await buildNoise(30, 20).tiff().toBuffer();
 
-      await expect(codec.inspect(tiff)).rejects.toBeInstanceOf(
-        InvalidDataError,
-      );
+      await expect(codec.inspect(tiff)).rejects.toBeInstanceOf(InvalidDataError);
     });
 
     it('애니메이션은 frame 하나의 크기와 frame 수를 돌려준다', async () => {
@@ -87,9 +78,7 @@ describe('AttachmentImageSharpCodec (integration)', () => {
     });
 
     it('이미지로 읽을 수 없으면 InvalidDataError를 던진다', async () => {
-      await expect(
-        codec.inspect(Buffer.from('%PDF-1.7 not an image')),
-      ).rejects.toBeInstanceOf(InvalidDataError);
+      await expect(codec.inspect(Buffer.from('%PDF-1.7 not an image'))).rejects.toBeInstanceOf(InvalidDataError);
     });
   });
 
@@ -118,10 +107,7 @@ describe('AttachmentImageSharpCodec (integration)', () => {
     });
 
     it('EXIF 방향대로 회전한다', async () => {
-      const jpeg = await buildNoise(300, 100)
-        .jpeg()
-        .withMetadata({ orientation: 6 })
-        .toBuffer();
+      const jpeg = await buildNoise(300, 100).jpeg().withMetadata({ orientation: 6 }).toBuffer();
 
       const encoded = await codec.encodeWebp(jpeg, ENCODE_OPTIONS);
 
@@ -145,9 +131,7 @@ describe('AttachmentImageSharpCodec (integration)', () => {
       expect(input.icc).toBeDefined();
       expect(input.xmp).toBeDefined();
 
-      const metadata = await sharp(
-        await codec.encodeWebp(jpeg, ENCODE_OPTIONS),
-      ).metadata();
+      const metadata = await sharp(await codec.encodeWebp(jpeg, ENCODE_OPTIONS)).metadata();
 
       expect(metadata.exif).toBeUndefined();
       expect(metadata.icc).toBeUndefined();
@@ -157,9 +141,7 @@ describe('AttachmentImageSharpCodec (integration)', () => {
     it('애니메이션은 모든 frame을 유지한 채 줄여서 애니메이션 WebP로 인코딩한다', async () => {
       const gif = await buildAnimatedGif(2000, 100, 3);
 
-      const metadata = await sharp(
-        await codec.encodeWebp(gif, ENCODE_OPTIONS),
-      ).metadata();
+      const metadata = await sharp(await codec.encodeWebp(gif, ENCODE_OPTIONS)).metadata();
 
       expect(metadata).toMatchObject({
         format: 'webp',
@@ -172,12 +154,9 @@ describe('AttachmentImageSharpCodec (integration)', () => {
     it('헤더는 맞지만 내용이 잘렸으면 InvalidDataError를 던진다', async () => {
       const jpeg = await buildNoise(300, 200).jpeg().toBuffer();
 
-      await expect(
-        codec.encodeWebp(
-          jpeg.subarray(0, Math.floor(jpeg.length / 2)),
-          ENCODE_OPTIONS,
-        ),
-      ).rejects.toBeInstanceOf(InvalidDataError);
+      await expect(codec.encodeWebp(jpeg.subarray(0, Math.floor(jpeg.length / 2)), ENCODE_OPTIONS)).rejects.toBeInstanceOf(
+        InvalidDataError,
+      );
     });
   });
 });

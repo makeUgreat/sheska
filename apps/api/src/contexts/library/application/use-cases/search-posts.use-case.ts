@@ -6,10 +6,7 @@ import {
   type PostQuerySearchResult,
   type SearchQueryEmbedder,
 } from '@contexts/library/application/ports';
-import {
-  POST_QUERY,
-  SEARCH_QUERY_EMBEDDER,
-} from '@contexts/library/library.di-tokens';
+import { POST_QUERY, SEARCH_QUERY_EMBEDDER } from '@contexts/library/library.di-tokens';
 
 export type SearchPostsCommand = {
   readonly query: string;
@@ -30,14 +27,8 @@ export class SearchPostsUseCase {
     private readonly searchQueryEmbedder: SearchQueryEmbedder,
   ) {}
 
-  async execute(
-    command: SearchPostsCommand,
-    context: CallContext,
-  ): Promise<SearchPostsResult> {
-    const queryEmbedding = await this.searchQueryEmbedder.embed(
-      command.query,
-      context,
-    );
+  async execute(command: SearchPostsCommand, context: CallContext): Promise<SearchPostsResult> {
+    const queryEmbedding = await this.searchQueryEmbedder.embed(command.query, context);
 
     const result = await this.postQuery.search({
       query: command.query,

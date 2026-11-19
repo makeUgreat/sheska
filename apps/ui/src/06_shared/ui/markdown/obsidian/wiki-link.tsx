@@ -26,10 +26,7 @@ export function WikiLink({ target, anchor, label }: WikiLinkProperties) {
   }
 
   return (
-    <span
-      title={`${label} — no note yet`}
-      className="text-accent-strong underline decoration-dotted underline-offset-2"
-    >
+    <span title={`${label} — no note yet`} className="text-accent-strong underline decoration-dotted underline-offset-2">
       {label}
     </span>
   );

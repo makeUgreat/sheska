@@ -12,24 +12,13 @@ function indentStep(headings: readonly Heading[]) {
 const MAX_INDENT_STEP = 2;
 const LINK_INDENT = ['', 'pl-3', 'pl-6'];
 
-export function TableOfContents({
-  headings,
-  activeId,
-}: {
-  headings: readonly Heading[];
-  activeId: string | null;
-}) {
+export function TableOfContents({ headings, activeId }: { headings: readonly Heading[]; activeId: string | null }) {
   const stepOf = indentStep(headings);
 
   return (
-    <nav
-      aria-label="On this page"
-      className="fixed z-40 hidden py-2 toc:block toc-beside-article"
-    >
+    <nav aria-label="On this page" className="fixed z-40 hidden py-2 toc:block toc-beside-article">
       <div className="overflow-y-auto p-3 toc-within-viewport-height">
-        <p className="mb-3 font-mono text-label-sm uppercase text-text-muted">
-          On this page
-        </p>
+        <p className="mb-3 font-mono text-label-sm uppercase text-text-muted">On this page</p>
         <ul className="space-y-2 border-l border-outline-variant/20 pl-4">
           {headings.map((heading) => {
             const isActive = heading.id === activeId;
@@ -42,9 +31,7 @@ export function TableOfContents({
                   className={[
                     `block truncate font-mono text-label-sm transition-colors ${WITHOUT_LABEL_TRACKING}`,
                     LINK_INDENT[stepOf(heading)],
-                    isActive
-                      ? 'text-accent-strong'
-                      : 'text-text-muted hover:text-text-primary',
+                    isActive ? 'text-accent-strong' : 'text-text-muted hover:text-text-primary',
                   ]
                     .filter(Boolean)
                     .join(' ')}

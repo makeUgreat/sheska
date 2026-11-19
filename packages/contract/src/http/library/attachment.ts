@@ -10,9 +10,7 @@ const MAX_PATH_BYTES = 1000;
 function isPathInsideVault(path: string): boolean {
   if (path.includes('\\')) return false;
   if (new TextEncoder().encode(path).length > MAX_PATH_BYTES) return false;
-  return path
-    .split('/')
-    .every((segment) => segment !== '' && segment !== '.' && segment !== '..');
+  return path.split('/').every((segment) => segment !== '' && segment !== '.' && segment !== '..');
 }
 
 export const AttachmentErrorCode = {

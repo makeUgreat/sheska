@@ -40,10 +40,7 @@ describe('OllamaHttpEmbedder (integration)', () => {
   });
 
   it('다른 텍스트는 다른 임베딩을 반환한다', async () => {
-    const [r1, r2] = await Promise.all([
-      embedder.embed('apple', buildContext()),
-      embedder.embed('refrigerator', buildContext()),
-    ]);
+    const [r1, r2] = await Promise.all([embedder.embed('apple', buildContext()), embedder.embed('refrigerator', buildContext())]);
 
     expect(r1.embedding).not.toEqual(r2.embedding);
   });
@@ -59,12 +56,8 @@ describe('OllamaHttpEmbedder — 서비스 불가 (integration)', () => {
   });
 
   it('Ollama에 연결할 수 없으면 재시도가 소진된 뒤 cause가 직렬화된 UnavailableError를 던진다', async () => {
-    await expect(
-      unreachableEmbedder.embed('hello', buildContext()),
-    ).rejects.toThrow(UnavailableError);
-    await expect(
-      unreachableEmbedder.embed('hello', buildContext()),
-    ).rejects.toMatchObject({
+    await expect(unreachableEmbedder.embed('hello', buildContext())).rejects.toThrow(UnavailableError);
+    await expect(unreachableEmbedder.embed('hello', buildContext())).rejects.toMatchObject({
       code: 'ollama.request_failed',
       cause: expect.objectContaining({
         name: expect.any(String) as string,

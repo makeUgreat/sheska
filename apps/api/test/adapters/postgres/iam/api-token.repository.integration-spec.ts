@@ -2,17 +2,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { type ApiTokenQuery } from '@contexts/iam/application/ports';
-import {
-  ApiToken,
-  ApiTokenName,
-  ApiTokenPermissions,
-  type ApiTokenRepository,
-  ApiTokenSecret,
-} from '@contexts/iam/domain';
-import {
-  API_TOKEN_QUERY,
-  API_TOKEN_REPOSITORY,
-} from '@contexts/iam/iam.di-tokens';
+import { ApiToken, ApiTokenName, ApiTokenPermissions, type ApiTokenRepository, ApiTokenSecret } from '@contexts/iam/domain';
+import { API_TOKEN_QUERY, API_TOKEN_REPOSITORY } from '@contexts/iam/iam.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
 
 function buildApiToken(name: string, permissions: string[] = ['sources:sync']) {
@@ -57,32 +48,22 @@ describe('ApiTokenPgDrizzleRepository', () => {
   });
 
   it('권한을 저장하고 같은 순서로 복원한다', async () => {
-    const { apiToken } = buildApiToken('repo-permissions', [
-      'posts:publish',
-      'sources:sync',
-    ]);
+    const { apiToken } = buildApiToken('repo-permissions', ['posts:publish', 'sources:sync']);
     await apiTokens.insert(apiToken);
 
     const stored = await apiTokens.get({ id: apiToken.id });
 
-    expect(stored.getProps().permissions.unpack()).toEqual([
-      'posts:publish',
-      'sources:sync',
-    ]);
+    expect(stored.getProps().permissions.unpack()).toEqual(['posts:publish', 'sources:sync']);
   });
 
   it('맞는 hash가 없으면 null을 준다', async () => {
-    await expect(
-      apiTokens.find({ secretHash: ApiTokenSecret.generate().hash() }),
-    ).resolves.toBeNull();
+    await expect(apiTokens.find({ secretHash: ApiTokenSecret.generate().hash() })).resolves.toBeNull();
   });
 
   it('같은 이름으로 두 번 저장하면 name_taken 오류를 던진다', async () => {
     await apiTokens.insert(buildApiToken('repo-taken').apiToken);
 
-    await expect(
-      apiTokens.insert(buildApiToken('repo-taken').apiToken),
-    ).rejects.toMatchObject({
+    await expect(apiTokens.insert(buildApiToken('repo-taken').apiToken)).rejects.toMatchObject({
       kind: 'constraint_violation',
       code: 'api_token.name_taken',
     });
@@ -93,9 +74,7 @@ describe('ApiTokenPgDrizzleRepository', () => {
     await apiTokens.insert(apiToken);
     await apiTokens.delete(apiToken);
 
-    await expect(
-      apiTokens.insert(buildApiToken('repo-reuse').apiToken),
-    ).resolves.toBeDefined();
+    await expect(apiTokens.insert(buildApiToken('repo-reuse').apiToken)).resolves.toBeDefined();
   });
 
   it('지운 토큰은 찾을 수 없다', async () => {
@@ -104,9 +83,7 @@ describe('ApiTokenPgDrizzleRepository', () => {
 
     await apiTokens.delete(apiToken);
 
-    await expect(
-      apiTokens.find({ secretHash: secret.hash() }),
-    ).resolves.toBeNull();
+    await expect(apiTokens.find({ secretHash: secret.hash() })).resolves.toBeNull();
     await expect(apiTokens.get({ id: apiToken.id })).rejects.toMatchObject({
       kind: 'not_found',
       code: 'api_token.not_found',
@@ -156,9 +133,7 @@ describe('ApiTokenPgDrizzleRepository', () => {
       await apiTokens.insert(second.apiToken);
 
       const items = await apiTokenQuery.list();
-      const ours = items.filter((item) =>
-        ['query-first', 'query-second'].includes(item.name),
-      );
+      const ours = items.filter((item) => ['query-first', 'query-second'].includes(item.name));
 
       expect(ours).toEqual([
         {

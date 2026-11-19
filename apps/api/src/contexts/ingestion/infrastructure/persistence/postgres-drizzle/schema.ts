@@ -1,11 +1,4 @@
-import {
-  customType,
-  integer,
-  pgTable,
-  primaryKey,
-  text,
-  timestamp,
-} from 'drizzle-orm/pg-core';
+import { customType, integer, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
 
 const vector = (name: string, dimensions: number) =>
   customType<{ data: number[]; driverData: string }>({
@@ -28,12 +21,8 @@ export const sourceEmbeddings = pgTable(
     chunkContent: text('chunk_content').notNull(),
     embedding: vector('embedding', 1024).notNull(),
     model: text('model').notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.sourceId, t.chunkIndex] })],
 );

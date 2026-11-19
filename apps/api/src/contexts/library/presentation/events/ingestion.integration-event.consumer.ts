@@ -1,10 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { ApplyIngestionUpdateUseCase } from '@contexts/library/application/use-cases/apply-ingestion-update.use-case';
-import {
-  ingestionCompletedIntegrationEventSchema,
-  ingestionFailedIntegrationEventSchema,
-} from './dto/ingestion.integration-event.dto';
+import { ingestionCompletedIntegrationEventSchema, ingestionFailedIntegrationEventSchema } from './dto/ingestion.integration-event.dto';
 
 @Injectable()
 export class IngestionIntegrationEventConsumer {

@@ -10,11 +10,6 @@ export function useAskAiCommand(): TerminalCommand {
     usage: 'ai <question>',
     summary: 'ask an AI about these posts',
     hidden: true,
-    run: (_args, io) =>
-      io.print(
-        <TerminalText tone="muted">
-          ai: not ready yet. Try grep &lt;word&gt; for now.
-        </TerminalText>,
-      ),
+    run: (_args, io) => io.print(<TerminalText tone="muted">ai: not ready yet. Try grep &lt;word&gt; for now.</TerminalText>),
   };
 }

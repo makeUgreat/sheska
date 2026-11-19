@@ -46,10 +46,7 @@ export class SourceEmbeddingFinalizationBullMqConsumer extends WorkerHost {
   }
 
   @OnWorkerEvent('failed')
-  async onFailed(
-    job: Job<FinalizeEmbeddingWorkflowJobInput> | undefined,
-    error: Error,
-  ): Promise<void> {
+  async onFailed(job: Job<FinalizeEmbeddingWorkflowJobInput> | undefined, error: Error): Promise<void> {
     if (!job) return;
 
     const context = {
@@ -62,11 +59,7 @@ export class SourceEmbeddingFinalizationBullMqConsumer extends WorkerHost {
 
     const input = finalizeEmbeddingWorkflowJobInputSchema.safeParse(job.data);
     if (!input.success) {
-      this.logger.error(
-        `${job.queueName} job failure compensation skipped`,
-        input.error,
-        context,
-      );
+      this.logger.error(`${job.queueName} job failure compensation skipped`, input.error, context);
       return;
     }
 
@@ -77,22 +70,14 @@ export class SourceEmbeddingFinalizationBullMqConsumer extends WorkerHost {
         totalChunks: input.data.totalChunks,
       });
     } catch (compensationError: unknown) {
-      this.logger.error(
-        `${job.queueName} job failure compensation failed`,
-        compensationError,
-        context,
-      );
+      this.logger.error(`${job.queueName} job failure compensation failed`, compensationError, context);
     }
   }
 
   @OnWorkerEvent('error')
   onError(error: Error): void {
-    this.logger.error(
-      `${SOURCE_EMBEDDING_FINALIZATION_QUEUE} worker error`,
-      error,
-      {
-        queueName: SOURCE_EMBEDDING_FINALIZATION_QUEUE,
-      },
-    );
+    this.logger.error(`${SOURCE_EMBEDDING_FINALIZATION_QUEUE} worker error`, error, {
+      queueName: SOURCE_EMBEDDING_FINALIZATION_QUEUE,
+    });
   }
 }

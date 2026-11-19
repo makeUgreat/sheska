@@ -7,11 +7,7 @@ import { AutoSyncService, UploadBlockedError } from '@/auto-sync';
 import { DEFAULT_SETTINGS } from '@/settings';
 import type { SheskaSettings } from '@/settings';
 import type { AttachmentCache, SyncCache } from '@/storage';
-import type {
-  CachedMetadata,
-  TAbstractFile as ObsidianAbstractFile,
-  TFile as ObsidianFile,
-} from 'obsidian';
+import type { CachedMetadata, TAbstractFile as ObsidianAbstractFile, TFile as ObsidianFile } from 'obsidian';
 
 function keyOf(path: string): string {
   const extension = path.slice(path.lastIndexOf('.') + 1).toLowerCase();
@@ -22,9 +18,7 @@ function asObsidianFile(file: TFile): ObsidianFile {
   return file as unknown as ObsidianFile;
 }
 
-function asObsidianAbstractFile(
-  file: TAbstractFile | TFile,
-): ObsidianAbstractFile {
+function asObsidianAbstractFile(file: TAbstractFile | TFile): ObsidianAbstractFile {
   return file as unknown as ObsidianAbstractFile;
 }
 
@@ -35,9 +29,7 @@ function syncTargetMetadataCache() {
         frontmatter: { sheska: true },
       }),
     ),
-    getFirstLinkpathDest: vi.fn(
-      (_linkpath: string, _sourcePath: string): ObsidianFile | null => null,
-    ),
+    getFirstLinkpathDest: vi.fn((_linkpath: string, _sourcePath: string): ObsidianFile | null => null),
   };
 }
 
@@ -55,10 +47,7 @@ function withEmbeds(
     embeds: embeds.map((embed) => ({ ...embed, position })),
   });
   metadataCache.getFirstLinkpathDest.mockImplementation((linkpath) => {
-    const file = vaultFiles.find(
-      (candidate) =>
-        candidate.path === linkpath || candidate.path.endsWith(`/${linkpath}`),
-    );
+    const file = vaultFiles.find((candidate) => candidate.path === linkpath || candidate.path.endsWith(`/${linkpath}`));
     return file ? asObsidianFile(file) : null;
   });
 }
@@ -163,9 +152,7 @@ describe('AutoSyncService', () => {
       fingerprint: 'fingerprint',
       syncJobId: 'job-1',
     });
-    api.getSyncJob
-      .mockResolvedValueOnce({ status: 'processing' })
-      .mockResolvedValueOnce({ status: 'completed' });
+    api.getSyncJob.mockResolvedValueOnce({ status: 'processing' }).mockResolvedValueOnce({ status: 'completed' });
     const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
 
     await service.uploadFile(asObsidianFile(file));
@@ -195,9 +182,7 @@ describe('AutoSyncService', () => {
     api.getSyncJob.mockResolvedValue({ status: 'failed' });
     const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
 
-    await expect(
-      service.uploadFile(asObsidianFile(file)),
-    ).resolves.toBeUndefined();
+    await expect(service.uploadFile(asObsidianFile(file))).resolves.toBeUndefined();
     await vi.advanceTimersByTimeAsync(2_000);
 
     expect(syncCache['note.md']).toMatchObject({
@@ -315,44 +300,41 @@ describe('AutoSyncService', () => {
   it.each([
     { retryCount: 1, delayMs: 5 * 60_000 },
     { retryCount: 2, delayMs: 30 * 60_000 },
-  ])(
-    'waits $delayMs ms before retrying after $retryCount previous retries',
-    async ({ retryCount, delayMs }) => {
-      const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
-      const syncCache: SyncCache = {
-        'note.md': {
-          mtime: 123,
-          syncJobId: `job-${retryCount}`,
-          status: 'accepted',
-          retryCount,
-        },
-      };
-      const { api, service, vault } = makeService({}, syncCache, () => false);
-      vault.getAbstractFileByPath.mockReturnValue(file);
-      api.getSyncJob.mockResolvedValue({ status: 'failed' });
-      api.uploadSource.mockResolvedValue({
-        sourceId: 'source-1',
-        externalSourceId: 'note.md',
-        fingerprint: 'fingerprint',
-        syncJobId: `job-${retryCount + 1}`,
-      });
-
-      await service.runReconcile();
-      await vi.advanceTimersByTimeAsync(delayMs - 1);
-      await service.runReconcile();
-      expect(api.uploadSource).not.toHaveBeenCalled();
-
-      await vi.advanceTimersByTimeAsync(1);
-      await service.runReconcile();
-
-      expect(api.getSyncJob).toHaveBeenCalledOnce();
-      expect(api.uploadSource).toHaveBeenCalledOnce();
-      expect(syncCache['note.md']).toMatchObject({
+  ])('waits $delayMs ms before retrying after $retryCount previous retries', async ({ retryCount, delayMs }) => {
+    const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+    const syncCache: SyncCache = {
+      'note.md': {
+        mtime: 123,
+        syncJobId: `job-${retryCount}`,
         status: 'accepted',
-        retryCount: retryCount + 1,
-      });
-    },
-  );
+        retryCount,
+      },
+    };
+    const { api, service, vault } = makeService({}, syncCache, () => false);
+    vault.getAbstractFileByPath.mockReturnValue(file);
+    api.getSyncJob.mockResolvedValue({ status: 'failed' });
+    api.uploadSource.mockResolvedValue({
+      sourceId: 'source-1',
+      externalSourceId: 'note.md',
+      fingerprint: 'fingerprint',
+      syncJobId: `job-${retryCount + 1}`,
+    });
+
+    await service.runReconcile();
+    await vi.advanceTimersByTimeAsync(delayMs - 1);
+    await service.runReconcile();
+    expect(api.uploadSource).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
+    await service.runReconcile();
+
+    expect(api.getSyncJob).toHaveBeenCalledOnce();
+    expect(api.uploadSource).toHaveBeenCalledOnce();
+    expect(syncCache['note.md']).toMatchObject({
+      status: 'accepted',
+      retryCount: retryCount + 1,
+    });
+  });
 
   it('records a retryable upload failure so the sweep stops re-uploading it', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -360,9 +342,7 @@ describe('AutoSyncService', () => {
     const syncCache: SyncCache = {};
     const { api, service, vault } = makeService({}, syncCache);
     vault.getMarkdownFiles.mockReturnValue([file]);
-    api.uploadSource.mockRejectedValue(
-      new SheskaApiError(503, 'Service Unavailable', ''),
-    );
+    api.uploadSource.mockRejectedValue(new SheskaApiError(503, 'Service Unavailable', ''));
 
     await service.runSweep();
 
@@ -386,9 +366,7 @@ describe('AutoSyncService', () => {
     const syncCache: SyncCache = {};
     const { api, service, vault } = makeService({}, syncCache);
     vault.getMarkdownFiles.mockReturnValue([file]);
-    api.uploadSource.mockRejectedValue(
-      new SheskaApiError(400, 'Bad Request', ''),
-    );
+    api.uploadSource.mockRejectedValue(new SheskaApiError(400, 'Bad Request', ''));
 
     await service.runSweep();
 
@@ -405,9 +383,7 @@ describe('AutoSyncService', () => {
     const { api, service, vault } = makeService({}, syncCache, () => false);
     vault.getMarkdownFiles.mockReturnValue([file]);
     vault.getAbstractFileByPath.mockReturnValue(file);
-    api.uploadSource.mockRejectedValueOnce(
-      new SheskaApiError(503, 'Service Unavailable', ''),
-    );
+    api.uploadSource.mockRejectedValueOnce(new SheskaApiError(503, 'Service Unavailable', ''));
 
     await service.runSweep();
     await vi.advanceTimersByTimeAsync(60_000 - 1);
@@ -432,9 +408,7 @@ describe('AutoSyncService', () => {
     };
     const { api, service, vault } = makeService({}, syncCache);
     vault.getMarkdownFiles.mockReturnValue([file]);
-    api.uploadSource.mockRejectedValue(
-      new SheskaApiError(503, 'Service Unavailable', ''),
-    );
+    api.uploadSource.mockRejectedValue(new SheskaApiError(503, 'Service Unavailable', ''));
 
     await service.runSweep();
 
@@ -582,11 +556,7 @@ describe('AutoSyncService', () => {
     service.onVaultFileChanged(asObsidianAbstractFile(fileB));
     await vi.advanceTimersByTimeAsync(5000);
 
-    expect(
-      api.uploadSource.mock.calls.map(
-        ([body]) => (body as { externalSourceId: string }).externalSourceId,
-      ),
-    ).toEqual(['a.md', 'b.md']);
+    expect(api.uploadSource.mock.calls.map(([body]) => (body as { externalSourceId: string }).externalSourceId)).toEqual(['a.md', 'b.md']);
   });
 
   // nocap: library-sync-10
@@ -596,11 +566,7 @@ describe('AutoSyncService', () => {
       autoSyncDebounceSeconds: 1,
     });
 
-    service.onVaultFileChanged(
-      asObsidianAbstractFile(
-        new TFile('note.md', { ctime: 0, mtime: 100, size: 1 }),
-      ),
-    );
+    service.onVaultFileChanged(asObsidianAbstractFile(new TFile('note.md', { ctime: 0, mtime: 100, size: 1 })));
     await vi.advanceTimersByTimeAsync(1000);
 
     expect(api.uploadSource).not.toHaveBeenCalled();
@@ -609,9 +575,7 @@ describe('AutoSyncService', () => {
   it('ignores non-file vault changes', async () => {
     const { api, service } = makeService({ autoSyncDebounceSeconds: 1 });
 
-    service.onVaultFileChanged(
-      asObsidianAbstractFile(new TAbstractFile('folder')),
-    );
+    service.onVaultFileChanged(asObsidianAbstractFile(new TAbstractFile('folder')));
     await vi.advanceTimersByTimeAsync(1000);
 
     expect(api.uploadSource).not.toHaveBeenCalled();
@@ -630,40 +594,18 @@ describe('AutoSyncService', () => {
       'opted-out.md': { sheska: false },
     });
 
-    for (const path of [
-      'target.md',
-      'string.md',
-      'yes.md',
-      'number.md',
-      'opted-out.md',
-      'no-frontmatter.md',
-    ]) {
-      service.onVaultFileChanged(
-        asObsidianAbstractFile(
-          new TFile(path, { ctime: 0, mtime: 100, size: 1 }),
-        ),
-      );
+    for (const path of ['target.md', 'string.md', 'yes.md', 'number.md', 'opted-out.md', 'no-frontmatter.md']) {
+      service.onVaultFileChanged(asObsidianAbstractFile(new TFile(path, { ctime: 0, mtime: 100, size: 1 })));
     }
     await vi.advanceTimersByTimeAsync(1000);
 
-    expect(
-      api.uploadSource.mock.calls.map(
-        ([body]) => (body as { externalSourceId: string }).externalSourceId,
-      ),
-    ).toEqual(['target.md']);
+    expect(api.uploadSource.mock.calls.map(([body]) => (body as { externalSourceId: string }).externalSourceId)).toEqual(['target.md']);
   });
 
   it('skips changed-file uploads when the cached mtime matches', async () => {
-    const { api, service } = makeService(
-      { autoSyncDebounceSeconds: 1 },
-      { 'note.md': { mtime: 100, syncedAt: 1 } },
-    );
+    const { api, service } = makeService({ autoSyncDebounceSeconds: 1 }, { 'note.md': { mtime: 100, syncedAt: 1 } });
 
-    service.onVaultFileChanged(
-      asObsidianAbstractFile(
-        new TFile('note.md', { ctime: 0, mtime: 100, size: 1 }),
-      ),
-    );
+    service.onVaultFileChanged(asObsidianAbstractFile(new TFile('note.md', { ctime: 0, mtime: 100, size: 1 })));
     await vi.advanceTimersByTimeAsync(1000);
 
     expect(api.uploadSource).not.toHaveBeenCalled();
@@ -680,10 +622,7 @@ describe('AutoSyncService', () => {
       mtime: 200,
       size: 1,
     });
-    const { api, service, vault } = makeService(
-      {},
-      { 'unchanged.md': { mtime: 100, syncedAt: 1 } },
-    );
+    const { api, service, vault } = makeService({}, { 'unchanged.md': { mtime: 100, syncedAt: 1 } });
     vault.getMarkdownFiles.mockReturnValue([unchanged, changed]);
 
     await service.runSweep();
@@ -745,24 +684,14 @@ describe('AutoSyncService', () => {
   it('continues a debounced batch after one upload fails', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const { api, service } = makeService({ autoSyncDebounceSeconds: 1 });
-    api.uploadSource
-      .mockRejectedValueOnce(new Error('boom'))
-      .mockResolvedValueOnce({
-        sourceId: 'source-2',
-        externalSourceId: 'b.md',
-        fingerprint: 'fingerprint',
-      });
+    api.uploadSource.mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce({
+      sourceId: 'source-2',
+      externalSourceId: 'b.md',
+      fingerprint: 'fingerprint',
+    });
 
-    service.onVaultFileChanged(
-      asObsidianAbstractFile(
-        new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }),
-      ),
-    );
-    service.onVaultFileChanged(
-      asObsidianAbstractFile(
-        new TFile('b.md', { ctime: 0, mtime: 200, size: 1 }),
-      ),
-    );
+    service.onVaultFileChanged(asObsidianAbstractFile(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 })));
+    service.onVaultFileChanged(asObsidianAbstractFile(new TFile('b.md', { ctime: 0, mtime: 200, size: 1 })));
     await vi.advanceTimersByTimeAsync(1000);
 
     expect(api.uploadSource).toHaveBeenCalledTimes(2);
@@ -790,28 +719,11 @@ describe('AutoSyncService', () => {
   });
 
   it('isSynced reports true only when the cached mtime matches the file', () => {
-    const { service } = makeService(
-      {},
-      { 'note.md': { mtime: 100, syncedAt: 1 } },
-    );
+    const { service } = makeService({}, { 'note.md': { mtime: 100, syncedAt: 1 } });
 
-    expect(
-      service.isSynced(
-        asObsidianFile(new TFile('note.md', { ctime: 0, mtime: 100, size: 1 })),
-      ),
-    ).toBe(true);
-    expect(
-      service.isSynced(
-        asObsidianFile(new TFile('note.md', { ctime: 0, mtime: 200, size: 1 })),
-      ),
-    ).toBe(false);
-    expect(
-      service.isSynced(
-        asObsidianFile(
-          new TFile('other.md', { ctime: 0, mtime: 100, size: 1 }),
-        ),
-      ),
-    ).toBe(false);
+    expect(service.isSynced(asObsidianFile(new TFile('note.md', { ctime: 0, mtime: 100, size: 1 })))).toBe(true);
+    expect(service.isSynced(asObsidianFile(new TFile('note.md', { ctime: 0, mtime: 200, size: 1 })))).toBe(false);
+    expect(service.isSynced(asObsidianFile(new TFile('other.md', { ctime: 0, mtime: 100, size: 1 })))).toBe(false);
   });
 
   it('calls onSyncFinished with the path after a successful upload', async () => {
@@ -839,9 +751,7 @@ describe('AutoSyncService', () => {
       onSyncFinished,
     });
 
-    await service.uploadFile(
-      asObsidianFile(new TFile('note.md', { ctime: 0, mtime: 100, size: 1 })),
-    );
+    await service.uploadFile(asObsidianFile(new TFile('note.md', { ctime: 0, mtime: 100, size: 1 })));
 
     expect(onSyncFinished).toHaveBeenCalledWith('note.md');
   });
@@ -871,9 +781,7 @@ describe('AutoSyncService', () => {
       onSyncStart,
     });
 
-    await service.uploadFile(
-      asObsidianFile(new TFile('note.md', { ctime: 0, mtime: 100, size: 1 })),
-    );
+    await service.uploadFile(asObsidianFile(new TFile('note.md', { ctime: 0, mtime: 100, size: 1 })));
 
     expect(onSyncStart).toHaveBeenCalledWith('note.md');
   });
@@ -903,11 +811,7 @@ describe('AutoSyncService', () => {
       onSyncFinished,
     });
 
-    service.onVaultFileChanged(
-      asObsidianAbstractFile(
-        new TFile('note.md', { ctime: 0, mtime: 100, size: 1 }),
-      ),
-    );
+    service.onVaultFileChanged(asObsidianAbstractFile(new TFile('note.md', { ctime: 0, mtime: 100, size: 1 })));
     await vi.advanceTimersByTimeAsync(1000);
 
     expect(onSyncFinished).toHaveBeenCalledWith('note.md');
@@ -949,11 +853,7 @@ describe('AutoSyncService', () => {
       ...DEFAULT_SETTINGS,
       autoSyncDebounceSeconds: 1,
     });
-    service.onVaultFileChanged(
-      asObsidianAbstractFile(
-        new TFile('note.md', { ctime: 0, mtime: 100, size: 1 }),
-      ),
-    );
+    service.onVaultFileChanged(asObsidianAbstractFile(new TFile('note.md', { ctime: 0, mtime: 100, size: 1 })));
     await vi.advanceTimersByTimeAsync(1000);
 
     expect(api.uploadSource).not.toHaveBeenCalled();
@@ -968,35 +868,19 @@ describe('AutoSyncService', () => {
     });
 
     it('uploads an image linked by its vault path before the note', async () => {
-      const {
-        api,
-        attachmentCache,
-        metadataCache,
-        saveAttachmentCache,
-        service,
-        vault,
-      } = makeService();
+      const { api, attachmentCache, metadataCache, saveAttachmentCache, service, vault } = makeService();
       const image = new TFile('att/my img.png', {
         ctime: 0,
         mtime: 50,
         size: 4,
       });
-      withEmbeds(
-        metadataCache,
-        [{ link: 'att/my img.png', original: '![](att/my%20img.png)' }],
-        [image],
-      );
+      withEmbeds(metadataCache, [{ link: 'att/my img.png', original: '![](att/my%20img.png)' }], [image]);
 
       await service.uploadFile(asObsidianFile(note));
 
       expect(vault.readBinary).toHaveBeenCalledWith(image);
-      expect(api.uploadAttachment).toHaveBeenCalledWith(
-        keyOf('att/my img.png'),
-        new ArrayBuffer(4),
-      );
-      expect(api.uploadAttachment.mock.invocationCallOrder[0]).toBeLessThan(
-        api.uploadSource.mock.invocationCallOrder[0],
-      );
+      expect(api.uploadAttachment).toHaveBeenCalledWith(keyOf('att/my img.png'), new ArrayBuffer(4));
+      expect(api.uploadAttachment.mock.invocationCallOrder[0]).toBeLessThan(api.uploadSource.mock.invocationCallOrder[0]);
       expect(attachmentCache['att/my img.png']).toEqual({
         mtime: 50,
         size: 4,
@@ -1006,13 +890,7 @@ describe('AutoSyncService', () => {
     });
 
     it('skips an image whose mtime and size match the cache', async () => {
-      const {
-        api,
-        attachmentCache,
-        metadataCache,
-        saveAttachmentCache,
-        service,
-      } = makeService();
+      const { api, attachmentCache, metadataCache, saveAttachmentCache, service } = makeService();
       attachmentCache['att/a.png'] = {
         mtime: 50,
         size: 4,
@@ -1042,10 +920,7 @@ describe('AutoSyncService', () => {
 
       await service.uploadFile(asObsidianFile(note));
 
-      expect(api.uploadAttachment).toHaveBeenCalledWith(
-        keyOf('att/a.png'),
-        new ArrayBuffer(4),
-      );
+      expect(api.uploadAttachment).toHaveBeenCalledWith(keyOf('att/a.png'), new ArrayBuffer(4));
       expect(attachmentCache['att/a.png']).toEqual({
         mtime: 50,
         size: 4,
@@ -1085,20 +960,13 @@ describe('AutoSyncService', () => {
           { link: 'att/a.png', original: '![[att/a.png|300]]' },
           { link: 'b.png', original: '![](b.png)' },
         ],
-        [
-          new TFile('att/a.png', { ctime: 0, mtime: 50, size: 4 }),
-          new TFile('att/b.png', { ctime: 0, mtime: 50, size: 4 }),
-        ],
+        [new TFile('att/a.png', { ctime: 0, mtime: 50, size: 4 }), new TFile('att/b.png', { ctime: 0, mtime: 50, size: 4 })],
       );
-      vault.read.mockResolvedValue(
-        '---\nsheska: true\n---\n![[att/a.png|300]]\n![](b.png)\n',
-      );
+      vault.read.mockResolvedValue('---\nsheska: true\n---\n![[att/a.png|300]]\n![](b.png)\n');
 
       await service.uploadFile(asObsidianFile(note));
 
-      expect(
-        api.uploadAttachment.mock.calls.map((call) => call[0] as string),
-      ).toEqual([keyOf('att/a.png'), keyOf('att/b.png')]);
+      expect(api.uploadAttachment.mock.calls.map((call) => call[0] as string)).toEqual([keyOf('att/a.png'), keyOf('att/b.png')]);
       expect(api.uploadSource).toHaveBeenCalledWith({
         externalSourceId: 'notes/meeting.md',
         content: `---\nsheska: true\ntitle: meeting\n---\n![|300](${keyOf('att/a.png')})\n![](${keyOf('att/b.png')})\n`,
@@ -1115,10 +983,7 @@ describe('AutoSyncService', () => {
           { link: 'att/doc.pdf', original: '![](att/doc.pdf)' },
           { link: 'att/missing.png', original: '![](att/missing.png)' },
         ],
-        [
-          new TFile('other.md', { ctime: 0, mtime: 50, size: 4 }),
-          new TFile('att/doc.pdf', { ctime: 0, mtime: 50, size: 4 }),
-        ],
+        [new TFile('other.md', { ctime: 0, mtime: 50, size: 4 }), new TFile('att/doc.pdf', { ctime: 0, mtime: 50, size: 4 })],
       );
 
       await service.uploadFile(asObsidianFile(note));
@@ -1160,9 +1025,7 @@ describe('AutoSyncService', () => {
         [new TFile('att/a.png', { ctime: 0, mtime: 50, size: 4 })],
       );
 
-      await expect(service.uploadFile(asObsidianFile(note))).rejects.toThrow(
-        'Failed to fetch',
-      );
+      await expect(service.uploadFile(asObsidianFile(note))).rejects.toThrow('Failed to fetch');
 
       expect(api.uploadSource).not.toHaveBeenCalled();
       expect(attachmentCache['att/a.png']).toBeUndefined();
@@ -1170,14 +1033,7 @@ describe('AutoSyncService', () => {
 
     it('notifies once about an image the server rejects, and still uploads the note', async () => {
       const { api, attachmentCache, metadataCache, service } = makeService();
-      api.uploadAttachment.mockRejectedValue(
-        new SheskaApiError(
-          422,
-          'Unprocessable Entity',
-          '',
-          'attachment.corrupt_image',
-        ),
-      );
+      api.uploadAttachment.mockRejectedValue(new SheskaApiError(422, 'Unprocessable Entity', '', 'attachment.corrupt_image'));
       withEmbeds(
         metadataCache,
         [{ link: 'att/broken.png', original: '![](att/broken.png)' }],
@@ -1186,9 +1042,7 @@ describe('AutoSyncService', () => {
 
       await service.uploadFile(asObsidianFile(note));
 
-      expect(noticeMessages).toEqual([
-        'Sheska: "att/broken.png" was rejected (attachment.corrupt_image).',
-      ]);
+      expect(noticeMessages).toEqual(['Sheska: "att/broken.png" was rejected (attachment.corrupt_image).']);
       expect(attachmentCache['att/broken.png']).toEqual({
         mtime: 50,
         size: 4,
@@ -1201,8 +1055,7 @@ describe('AutoSyncService', () => {
 
   describe('changed images', () => {
     it('re-uploads a changed image that a synced note embeds, without the note', async () => {
-      const { api, attachmentCache, saveAttachmentCache, service, vault } =
-        makeService({ autoSyncDebounceSeconds: 1 });
+      const { api, attachmentCache, saveAttachmentCache, service, vault } = makeService({ autoSyncDebounceSeconds: 1 });
       attachmentCache['att/a.png'] = {
         mtime: 50,
         size: 4,
@@ -1215,10 +1068,7 @@ describe('AutoSyncService', () => {
       await vi.waitFor(() => expect(saveAttachmentCache).toHaveBeenCalled());
 
       expect(vault.readBinary).toHaveBeenCalledWith(image);
-      expect(api.uploadAttachment).toHaveBeenCalledWith(
-        keyOf('att/a.png'),
-        new ArrayBuffer(4),
-      );
+      expect(api.uploadAttachment).toHaveBeenCalledWith(keyOf('att/a.png'), new ArrayBuffer(4));
       expect(api.uploadSource).not.toHaveBeenCalled();
       expect(attachmentCache['att/a.png']).toEqual({
         mtime: 60,
@@ -1235,11 +1085,7 @@ describe('AutoSyncService', () => {
       });
       withFrontmatter(metadataCache, {});
 
-      service.onVaultFileChanged(
-        asObsidianAbstractFile(
-          new TFile('photos/private.jpg', { ctime: 0, mtime: 60, size: 4 }),
-        ),
-      );
+      service.onVaultFileChanged(asObsidianAbstractFile(new TFile('photos/private.jpg', { ctime: 0, mtime: 60, size: 4 })));
       await vi.advanceTimersByTimeAsync(1000);
 
       expect(api.uploadAttachment).not.toHaveBeenCalled();
@@ -1267,17 +1113,12 @@ describe('AutoSyncService', () => {
         new TFile('att/changed.png', { ctime: 0, mtime: 60, size: 4 }),
         new TFile('att/same.png', { ctime: 0, mtime: 50, size: 4 }),
       ];
-      vault.getAbstractFileByPath.mockImplementation(
-        (path: string) => files.find((file) => file.path === path) ?? null,
-      );
+      vault.getAbstractFileByPath.mockImplementation((path: string) => files.find((file) => file.path === path) ?? null);
 
       await service.runSweep();
 
       expect(api.uploadAttachment).toHaveBeenCalledOnce();
-      expect(api.uploadAttachment).toHaveBeenCalledWith(
-        keyOf('att/changed.png'),
-        new ArrayBuffer(4),
-      );
+      expect(api.uploadAttachment).toHaveBeenCalledWith(keyOf('att/changed.png'), new ArrayBuffer(4));
     });
 
     it('re-uploads every embedded image after the sync cache is reset', async () => {
@@ -1294,16 +1135,9 @@ describe('AutoSyncService', () => {
       );
 
       service.resetSyncCache();
-      await service.uploadFile(
-        asObsidianFile(
-          new TFile('notes/meeting.md', { ctime: 0, mtime: 100, size: 1 }),
-        ),
-      );
+      await service.uploadFile(asObsidianFile(new TFile('notes/meeting.md', { ctime: 0, mtime: 100, size: 1 })));
 
-      expect(api.uploadAttachment).toHaveBeenCalledWith(
-        keyOf('att/a.png'),
-        new ArrayBuffer(4),
-      );
+      expect(api.uploadAttachment).toHaveBeenCalledWith(keyOf('att/a.png'), new ArrayBuffer(4));
       expect(service.getAttachmentCache()).toEqual({
         'att/a.png': { mtime: 50, size: 4, key: keyOf('att/a.png') },
       });
@@ -1318,17 +1152,8 @@ describe('AutoSyncService', () => {
         key: keyOf('att/a.png'),
         rejected: true,
       };
-      vault.getAbstractFileByPath.mockReturnValue(
-        new TFile('att/a.png', { ctime: 0, mtime: 50, size: 4 }),
-      );
-      api.uploadAttachment.mockRejectedValueOnce(
-        new SheskaApiError(
-          422,
-          'Unprocessable Entity',
-          '',
-          'attachment.too_many_pixels',
-        ),
-      );
+      vault.getAbstractFileByPath.mockReturnValue(new TFile('att/a.png', { ctime: 0, mtime: 50, size: 4 }));
+      api.uploadAttachment.mockRejectedValueOnce(new SheskaApiError(422, 'Unprocessable Entity', '', 'attachment.too_many_pixels'));
 
       await service.runSweep();
       expect(attachmentCache['att/a.png']).toEqual({
@@ -1358,9 +1183,7 @@ describe('AutoSyncService', () => {
       };
       const image = new TFile('att/a.png', { ctime: 0, mtime: 60, size: 4 });
       vault.getAbstractFileByPath.mockReturnValue(image);
-      api.uploadAttachment.mockRejectedValueOnce(
-        new TypeError('Failed to fetch'),
-      );
+      api.uploadAttachment.mockRejectedValueOnce(new TypeError('Failed to fetch'));
 
       await service.runSweep();
       expect(attachmentCache['att/a.png']).toEqual({
@@ -1381,14 +1204,7 @@ describe('AutoSyncService', () => {
   });
 
   describe('masking', () => {
-    const MASKED_NOTE = [
-      '---',
-      'sheska: true',
-      'sheska-mask:',
-      '  CertBear: A사',
-      '---',
-      'CertBear 설계',
-    ].join('\n');
+    const MASKED_NOTE = ['---', 'sheska: true', 'sheska-mask:', '  CertBear: A사', '---', 'CertBear 설계'].join('\n');
     const note = new TFile('notes/meeting.md', {
       ctime: 0,
       mtime: 100,
@@ -1417,21 +1233,14 @@ describe('AutoSyncService', () => {
 
       await service.uploadFile(asObsidianFile(note));
 
-      expect(vault.read.mock.invocationCallOrder[0]).toBeLessThan(
-        api.uploadAttachment.mock.invocationCallOrder[0],
-      );
+      expect(vault.read.mock.invocationCallOrder[0]).toBeLessThan(api.uploadAttachment.mock.invocationCallOrder[0]);
     });
 
     // nocap: library-sync-14
     it('does not upload a note whose mask list is not a mapping, and notifies once', async () => {
       const syncCache: SyncCache = {};
-      const { api, service, vault } = makeService(
-        { autoSyncDebounceSeconds: 1 },
-        syncCache,
-      );
-      vault.read.mockResolvedValue(
-        '---\nsheska: true\nsheska-mask: [CertBear]\n---\nCertBear',
-      );
+      const { api, service, vault } = makeService({ autoSyncDebounceSeconds: 1 }, syncCache);
+      vault.read.mockResolvedValue('---\nsheska: true\nsheska-mask: [CertBear]\n---\nCertBear');
 
       for (let i = 0; i < 2; i += 1) {
         service.onVaultFileChanged(asObsidianAbstractFile(note));
@@ -1440,16 +1249,12 @@ describe('AutoSyncService', () => {
 
       expect(api.uploadSource).not.toHaveBeenCalled();
       expect(syncCache['notes/meeting.md']).toBeUndefined();
-      expect(noticeMessages).toEqual([
-        'Sheska: "notes/meeting.md" was not uploaded: sheska-mask must be a mapping of word: replacement.',
-      ]);
+      expect(noticeMessages).toEqual(['Sheska: "notes/meeting.md" was not uploaded: sheska-mask must be a mapping of word: replacement.']);
     });
 
     it('uploads an image whose path contains a masked word without exposing the word', async () => {
       const { api, metadataCache, service, vault } = makeService();
-      vault.read.mockResolvedValue(
-        `${MASKED_NOTE}\n![](att/certbear_axis.svg)`,
-      );
+      vault.read.mockResolvedValue(`${MASKED_NOTE}\n![](att/certbear_axis.svg)`);
       withEmbeds(
         metadataCache,
         [
@@ -1463,26 +1268,17 @@ describe('AutoSyncService', () => {
 
       await service.uploadFile(asObsidianFile(note));
 
-      expect(api.uploadAttachment).toHaveBeenCalledWith(
-        keyOf('att/certbear_axis.svg'),
-        new ArrayBuffer(4),
-      );
-      const [{ content }] = api.uploadSource.mock.calls[0] as [
-        { content: string },
-      ];
+      expect(api.uploadAttachment).toHaveBeenCalledWith(keyOf('att/certbear_axis.svg'), new ArrayBuffer(4));
+      const [{ content }] = api.uploadSource.mock.calls[0] as [{ content: string }];
       expect(content).toContain(`![](${keyOf('att/certbear_axis.svg')})`);
       expect(content).not.toMatch(/certbear/i);
     });
 
     it('rejects a manual upload that masking blocks', async () => {
       const { api, service, vault } = makeService();
-      vault.read.mockResolvedValue(
-        '---\nsheska: true\nsheska-mask: CertBear\n---\n',
-      );
+      vault.read.mockResolvedValue('---\nsheska: true\nsheska-mask: CertBear\n---\n');
 
-      await expect(service.uploadFile(asObsidianFile(note))).rejects.toThrow(
-        UploadBlockedError,
-      );
+      await expect(service.uploadFile(asObsidianFile(note))).rejects.toThrow(UploadBlockedError);
       expect(api.uploadSource).not.toHaveBeenCalled();
     });
   });

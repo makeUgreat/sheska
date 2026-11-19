@@ -9,9 +9,7 @@ const redisEnvSchema = z.object({
 export const redisConfig = registerAs('redis', () => {
   const result = redisEnvSchema.safeParse(process.env);
   if (!result.success) {
-    throw new Error(
-      `Invalid Redis configuration.\n${z.prettifyError(result.error)}`,
-    );
+    throw new Error(`Invalid Redis configuration.\n${z.prettifyError(result.error)}`);
   }
   return { redisUrl: result.data.REDIS_URL };
 });

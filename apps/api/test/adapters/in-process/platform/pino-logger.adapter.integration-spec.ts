@@ -21,13 +21,8 @@ function createLineCapture(): { stream: Writable; lines: () => string[] } {
 function buildTestModule(stream: Writable) {
   @Global()
   @Module({
-    imports: [
-      PinoLoggerModule.forRoot({ pinoHttp: [{ level: 'info' }, stream] }),
-    ],
-    providers: [
-      PinoLoggerAdapter,
-      { provide: LOGGER, useExisting: PinoLoggerAdapter },
-    ],
+    imports: [PinoLoggerModule.forRoot({ pinoHttp: [{ level: 'info' }, stream] })],
+    providers: [PinoLoggerAdapter, { provide: LOGGER, useExisting: PinoLoggerAdapter }],
     exports: [LOGGER],
   })
   class TestLoggerModule {}
@@ -46,10 +41,7 @@ describe('PinoLoggerAdapter', () => {
     const capture = createLineCapture();
     lines = capture.lines;
 
-    appContext = await NestFactory.createApplicationContext(
-      buildTestModule(capture.stream),
-      { logger: false },
-    );
+    appContext = await NestFactory.createApplicationContext(buildTestModule(capture.stream), { logger: false });
     logger = appContext.get<LoggerPort>(LOGGER);
   });
 

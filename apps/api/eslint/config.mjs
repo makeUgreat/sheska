@@ -70,18 +70,7 @@ export default tseslint.config(
         'error',
         {
           classes: {
-            memberTypes: [
-              'private-constructor',
-              [
-                'field',
-                'static-initialization',
-                'constructor',
-                'accessor',
-                'get',
-                'set',
-                'method',
-              ],
-            ],
+            memberTypes: ['private-constructor', ['field', 'static-initialization', 'constructor', 'accessor', 'get', 'set', 'method']],
             order: 'as-written',
           },
         },
@@ -99,8 +88,7 @@ export default tseslint.config(
             {
               name: '@nestjs/common',
               allowImportNames: ['Inject', 'Injectable'],
-              message:
-                'Application code may import only narrow NestJS DI metadata from @nestjs/common.',
+              message: 'Application code may import only narrow NestJS DI metadata from @nestjs/common.',
             },
           ],
         },

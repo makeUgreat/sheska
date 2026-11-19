@@ -4,9 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { SourceContentSnapshotCalculator } from '../source-content-snapshot-calculator.service';
 
 const parser: SourceDocumentParser = {
-  parse: vi
-    .fn()
-    .mockReturnValue({ body: '안녕', frontmatter: {}, title: null }),
+  parse: vi.fn().mockReturnValue({ body: '안녕', frontmatter: {}, title: null }),
 };
 
 describe('SourceContentSnapshotCalculator', () => {
@@ -36,9 +34,7 @@ describe('SourceContentSnapshotCalculator', () => {
     };
     const calculator = new SourceContentSnapshotCalculator(failingParser);
 
-    expect(() => calculator.calculate('# Source note')).toThrow(
-      ValidationFailedError,
-    );
+    expect(() => calculator.calculate('# Source note')).toThrow(ValidationFailedError);
     expect(() => calculator.calculate('# Source note')).toThrow(
       expect.objectContaining({
         code: 'source.invalid_frontmatter',

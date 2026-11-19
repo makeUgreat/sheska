@@ -1,10 +1,6 @@
 import { sha256Hex } from '@core/hash';
 import { describe, expect, it } from 'vitest';
-import {
-  buildSource,
-  sourceContentByteSize,
-  sourceContentOf,
-} from '../../../../../../../test/support/domains/fixtures/source.fixture';
+import { buildSource, sourceContentByteSize, sourceContentOf } from '../../../../../../../test/support/domains/fixtures/source.fixture';
 import { buildSourceRow } from '../../../../../../../test/adapters/postgres/library/fixtures/source-row.fixture';
 import { SourcePgDrizzleMapper } from '../source.pg-drizzle.mapper';
 
@@ -45,9 +41,7 @@ describe('SourcePgDrizzleMapper', () => {
   it('source row의 크기가 음수면 domain invariant error를 throw한다', () => {
     const row = buildSourceRow({ sizeBytes: -1 });
 
-    expect(() => SourcePgDrizzleMapper.toDomain(row)).toThrow(
-      'Source size must be a non-negative integer',
-    );
+    expect(() => SourcePgDrizzleMapper.toDomain(row)).toThrow('Source size must be a non-negative integer');
   });
 
   it('Source aggregate를 source insert row로 변환한다', () => {

@@ -40,9 +40,7 @@ describe('SourceEmbedding', () => {
         SourceEmbedding.create({
           sourceId: 'source-1',
           model: 'qwen3-embedding:0.6b',
-          chunks: [
-            { chunkIndex: 0, chunkContent: 'text', embedding: [0.1, 0.2] },
-          ],
+          chunks: [{ chunkIndex: 0, chunkContent: 'text', embedding: [0.1, 0.2] }],
         }),
       ).toThrow('Embedding vector must have 1024 dimensions, got 2');
     });

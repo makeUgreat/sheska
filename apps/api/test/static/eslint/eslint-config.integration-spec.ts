@@ -10,9 +10,7 @@ function getConfiguredRules(config: unknown): Record<string, unknown> {
   return (config as { rules?: Record<string, unknown> }).rules ?? {};
 }
 
-function createProjectEslint(
-  options: ConstructorParameters<typeof ESLint>[0] = {},
-) {
+function createProjectEslint(options: ConstructorParameters<typeof ESLint>[0] = {}) {
   return new ESLint({
     cwd: apiRoot,
     overrideConfigFile: configPath,
@@ -26,10 +24,7 @@ async function calculateConfigForFile(filePath: string): Promise<unknown> {
   return eslint.calculateConfigForFile(filePath);
 }
 
-async function lintTextWithProjectConfig(
-  code: string,
-  filePath: string,
-): Promise<ESLint.LintResult> {
+async function lintTextWithProjectConfig(code: string, filePath: string): Promise<ESLint.LintResult> {
   const eslint = createProjectEslint({ fix: true });
   const results = await eslint.lintText(code, {
     filePath: path.join(apiRoot, filePath),
@@ -58,9 +53,7 @@ describe('eslint/config.mjs', () => {
   });
 
   it('test file에는 source import path style rule을 적용하지 않는다', async () => {
-    const config = await calculateConfigForFile(
-      'test/static/eslint/eslint-config.integration-spec.ts',
-    );
+    const config = await calculateConfigForFile('test/static/eslint/eslint-config.integration-spec.ts');
     const rules = getConfiguredRules(config);
 
     expect(rules['unused-imports/no-unused-imports']).toBeDefined();
@@ -91,9 +84,7 @@ describe('eslint/config.mjs', () => {
       'src/main.ts',
     );
 
-    const message = result.messages.find(
-      (lintMessage) => lintMessage.ruleId === 'api-local/import-path-style',
-    )?.message;
+    const message = result.messages.find((lintMessage) => lintMessage.ruleId === 'api-local/import-path-style')?.message;
 
     expect(message).toContain('@platform/nest/app.module');
   });
@@ -107,9 +98,7 @@ describe('eslint/config.mjs', () => {
       'src/main.ts',
     );
 
-    const message = result.messages.find(
-      (lintMessage) => lintMessage.ruleId === 'api-local/sql-verb-same-line',
-    )?.message;
+    const message = result.messages.find((lintMessage) => lintMessage.ruleId === 'api-local/sql-verb-same-line')?.message;
 
     expect(message).toContain('"SELECT\\n"');
   });
@@ -122,11 +111,7 @@ describe('eslint/config.mjs', () => {
       'src/main.ts',
     );
 
-    expect(
-      result.messages.some(
-        (lintMessage) => lintMessage.ruleId === 'api-local/sql-verb-same-line',
-      ),
-    ).toBe(false);
+    expect(result.messages.some((lintMessage) => lintMessage.ruleId === 'api-local/sql-verb-same-line')).toBe(false);
   });
 
   it('application code에서 좁은 NestJS DI metadata import를 허용한다', async () => {
@@ -146,11 +131,7 @@ describe('eslint/config.mjs', () => {
       'src/contexts/library/application/use-cases/upload-source.use-case.ts',
     );
 
-    expect(
-      result.messages.some(
-        (lintMessage) => lintMessage.ruleId === 'no-restricted-imports',
-      ),
-    ).toBe(false);
+    expect(result.messages.some((lintMessage) => lintMessage.ruleId === 'no-restricted-imports')).toBe(false);
   });
 
   it('application code에서 NestJS DI 범위를 벗어난 common import를 금지한다', async () => {
@@ -166,9 +147,7 @@ describe('eslint/config.mjs', () => {
       'src/contexts/library/application/use-cases/upload-source.use-case.ts',
     );
 
-    const message = result.messages.find(
-      (lintMessage) => lintMessage.ruleId === 'no-restricted-imports',
-    )?.message;
+    const message = result.messages.find((lintMessage) => lintMessage.ruleId === 'no-restricted-imports')?.message;
 
     expect(message).toContain('Application code may import only narrow');
   });

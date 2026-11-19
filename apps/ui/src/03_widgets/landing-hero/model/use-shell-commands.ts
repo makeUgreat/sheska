@@ -1,19 +1,11 @@
 import { useRef, useState } from 'react';
-import {
-  directoryPath,
-  useBrowseCommands,
-  type Directory,
-} from '@/features/terminal-browse';
+import { directoryPath, useBrowseCommands, type Directory } from '@/features/terminal-browse';
 import { useApiTokenCommand } from '@/features/terminal-api-token';
 import { useAskAiCommand } from '@/features/terminal-ask-ai';
 import { useSearchCommand } from '@/features/terminal-search';
 import { useSwitchUserCommands } from '@/features/terminal-switch-user';
 import { useViewer } from '@/entities/session';
-import {
-  clearCommand,
-  type TerminalCommand,
-  type TerminalListedEntry,
-} from '@/shared/ui';
+import { clearCommand, type TerminalCommand, type TerminalListedEntry } from '@/shared/ui';
 
 export function useShellCommands() {
   const viewer = useViewer();
@@ -37,19 +29,7 @@ export function useShellCommands() {
   });
 
   // help는 이 순서로 보인다.
-  const commands: TerminalCommand[] = [
-    ls,
-    cat,
-    grep,
-    ai,
-    cd,
-    clearCommand,
-    token,
-    su,
-    exit,
-    logout,
-    whoami,
-  ];
+  const commands: TerminalCommand[] = [ls, cat, grep, ai, cd, clearCommand, token, su, exit, logout, whoami];
   const owner = viewer === 'owner';
 
   return {

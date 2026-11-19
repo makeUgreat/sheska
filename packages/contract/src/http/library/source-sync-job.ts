@@ -55,10 +55,6 @@ export const SourceSyncJobApi = {
     method: 'GET',
     path: '/sync-jobs/:id',
     response: syncJobSchema,
-    errors: [
-      SourceSyncJobErrorCode.NOT_FOUND,
-      AuthErrorCode.UNAUTHENTICATED,
-      AuthErrorCode.FORBIDDEN,
-    ],
+    errors: [SourceSyncJobErrorCode.NOT_FOUND, AuthErrorCode.UNAUTHENTICATED, AuthErrorCode.FORBIDDEN],
   }),
 };

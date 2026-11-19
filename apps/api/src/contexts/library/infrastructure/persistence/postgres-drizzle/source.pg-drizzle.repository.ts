@@ -7,11 +7,7 @@ import {
   type SourceRepositoryFindCriteria,
   type SourceRepositoryGetCriteria,
 } from '@contexts/library/domain';
-import {
-  classifyPostgresError,
-  DATABASE_TOKENS,
-  type PgDrizzleSession,
-} from '@kernels/infrastructure';
+import { classifyPostgresError, DATABASE_TOKENS, type PgDrizzleSession } from '@kernels/infrastructure';
 import * as schema from './schema';
 import { SourcePgDrizzleMapper } from './source.pg-drizzle.mapper';
 
@@ -27,14 +23,8 @@ export class SourcePgDrizzleRepository implements SourceRepository {
 
     try {
       const condition =
-        'id' in criteria
-          ? eq(schema.sources.id, criteria.id)
-          : eq(schema.sources.externalSourceId, criteria.externalSourceId);
-      [row] = await this.db
-        .select()
-        .from(schema.sources)
-        .where(condition)
-        .limit(1);
+        'id' in criteria ? eq(schema.sources.id, criteria.id) : eq(schema.sources.externalSourceId, criteria.externalSourceId);
+      [row] = await this.db.select().from(schema.sources).where(condition).limit(1);
     } catch (error: unknown) {
       const ErrorClass = classifyPostgresError(error);
       throw new ErrorClass({
@@ -56,11 +46,7 @@ export class SourcePgDrizzleRepository implements SourceRepository {
     let row: schema.SourceRow | undefined;
 
     try {
-      [row] = await this.db
-        .select()
-        .from(schema.sources)
-        .where(eq(schema.sources.id, criteria.id))
-        .limit(1);
+      [row] = await this.db.select().from(schema.sources).where(eq(schema.sources.id, criteria.id)).limit(1);
     } catch (error: unknown) {
       const ErrorClass = classifyPostgresError(error);
       throw new ErrorClass({
@@ -87,10 +73,7 @@ export class SourcePgDrizzleRepository implements SourceRepository {
     let row: schema.SourceRow;
 
     try {
-      [row] = await this.db
-        .insert(schema.sources)
-        .values(sourceInsert)
-        .returning();
+      [row] = await this.db.insert(schema.sources).values(sourceInsert).returning();
     } catch (error: unknown) {
       const ErrorClass = classifyPostgresError(error);
       if (ErrorClass === ConstraintViolationError) {

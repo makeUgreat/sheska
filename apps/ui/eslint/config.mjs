@@ -51,8 +51,7 @@ export default tseslint.config(
           patterns: [
             {
               group: ['@/app/*', '@/pages/*', '@/features/*', '@/entities/*'],
-              message:
-                'shared code must stay domain-free and must not depend on upper FSD layers.',
+              message: 'shared code must stay domain-free and must not depend on upper FSD layers.',
             },
           ],
         },
@@ -68,8 +67,7 @@ export default tseslint.config(
           patterns: [
             {
               group: ['@/app/*', '@/pages/*', '@/features/*'],
-              message:
-                'entities may depend on shared code, but not on app, pages, or features.',
+              message: 'entities may depend on shared code, but not on app, pages, or features.',
             },
           ],
         },
@@ -109,11 +107,7 @@ export default tseslint.config(
     },
   },
   {
-    files: [
-      'src/**/*.spec.{ts,tsx}',
-      'scripts/**/*.spec.{ts,tsx}',
-      'test/**/*.integration-spec.{ts,tsx}',
-    ],
+    files: ['src/**/*.spec.{ts,tsx}', 'scripts/**/*.spec.{ts,tsx}', 'test/**/*.integration-spec.{ts,tsx}'],
     rules: {
       '@typescript-eslint/unbound-method': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',

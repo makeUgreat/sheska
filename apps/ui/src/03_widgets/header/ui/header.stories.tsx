@@ -1,10 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import {
-  HttpClientProvider,
-  type HttpClientType as HttpClient,
-} from '@/shared/api';
+import { HttpClientProvider, type HttpClientType as HttpClient } from '@/shared/api';
 import { Header } from './header';
 
 function buildStoryHttpClient(authenticated: boolean): HttpClient {

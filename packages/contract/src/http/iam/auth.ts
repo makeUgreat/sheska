@@ -35,11 +35,7 @@ export const AuthApi = {
     method: 'POST',
     path: '/auth/session',
     request: logInRequestSchema,
-    errors: [
-      CommonErrorCode.VALIDATION_FAILED,
-      AuthErrorCode.INVALID_CREDENTIALS,
-      AuthErrorCode.TOO_MANY_ATTEMPTS,
-    ],
+    errors: [CommonErrorCode.VALIDATION_FAILED, AuthErrorCode.INVALID_CREDENTIALS, AuthErrorCode.TOO_MANY_ATTEMPTS],
   }),
 
   /** 세션을 지우고 쿠키를 만료시킨다. 세션이 없어도 204다. */

@@ -20,10 +20,7 @@ function storedToken(lastUsedAt: Date | null = null) {
   });
 }
 
-function build({
-  sessionActive = false,
-  token = null,
-}: { sessionActive?: boolean; token?: ApiToken | null } = {}) {
+function build({ sessionActive = false, token = null }: { sessionActive?: boolean; token?: ApiToken | null } = {}) {
   const sessions = {
     issue: vi.fn(),
     isActive: vi.fn().mockResolvedValue(sessionActive),
@@ -68,12 +65,7 @@ describe('AuthenticateRequestUseCase', () => {
     const { useCase, sessions } = build({ sessionActive: true });
 
     await expect(useCase.execute({ credential: SESSION })).resolves.toEqual({
-      permissions: [
-        'sources:sync',
-        'sources:read',
-        'posts:publish',
-        'api_tokens:manage',
-      ],
+      permissions: ['sources:sync', 'sources:read', 'posts:publish', 'api_tokens:manage'],
     });
     expect(sessions.isActive).toHaveBeenCalledWith('session-token');
   });
@@ -81,9 +73,7 @@ describe('AuthenticateRequestUseCase', () => {
   it('만료된 세션이면 401 auth.unauthenticated이다', async () => {
     const { useCase } = build({ sessionActive: false });
 
-    await expect(
-      useCase.execute({ credential: SESSION }),
-    ).rejects.toMatchObject({
+    await expect(useCase.execute({ credential: SESSION })).rejects.toMatchObject({
       kind: 'unauthenticated',
       code: 'auth.unauthenticated',
     });
@@ -103,9 +93,7 @@ describe('AuthenticateRequestUseCase', () => {
   it('맞는 토큰이 없으면 401 auth.unauthenticated이다', async () => {
     const { useCase } = build({ token: null });
 
-    await expect(useCase.execute({ credential: BEARER })).rejects.toMatchObject(
-      { code: 'auth.unauthenticated' },
-    );
+    await expect(useCase.execute({ credential: BEARER })).rejects.toMatchObject({ code: 'auth.unauthenticated' });
   });
 
   it('토큰으로 인증하면 사용 시각을 저장한다', async () => {
@@ -113,9 +101,7 @@ describe('AuthenticateRequestUseCase', () => {
 
     await useCase.execute({ credential: BEARER });
 
-    expect(apiTokens.update.mock.calls[0][0].getProps().lastUsedAt).toEqual(
-      NOW,
-    );
+    expect(apiTokens.update.mock.calls[0][0].getProps().lastUsedAt).toEqual(NOW);
   });
 
   it('1분 안에 다시 인증하면 사용 시각을 저장하지 않는다', async () => {

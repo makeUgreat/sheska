@@ -2,15 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { ConcurrencyConflictError } from '@core/errors';
-import {
-  classifyPostgresError,
-  DATABASE_TOKENS,
-  resiliencePipeline,
-} from '@kernels/infrastructure';
-import {
-  type SourceEmbedding,
-  type SourceEmbeddingRepository,
-} from '@contexts/ingestion/domain';
+import { classifyPostgresError, DATABASE_TOKENS, resiliencePipeline } from '@kernels/infrastructure';
+import { type SourceEmbedding, type SourceEmbeddingRepository } from '@contexts/ingestion/domain';
 import * as schema from './schema';
 import type { SourceEmbeddingInsert } from './schema';
 import { SourceEmbeddingPgDrizzleMapper } from './source-embedding.pg-drizzle.mapper';
@@ -29,9 +22,7 @@ export class SourceEmbeddingPgDrizzleRepository implements SourceEmbeddingReposi
       .where(eq(schema.sourceEmbeddings.sourceId, criteria.sourceId))
       .orderBy(asc(schema.sourceEmbeddings.chunkIndex));
 
-    return rows.length > 0
-      ? SourceEmbeddingPgDrizzleMapper.toDomain(rows)
-      : null;
+    return rows.length > 0 ? SourceEmbeddingPgDrizzleMapper.toDomain(rows) : null;
   }
 
   async upsert(sourceEmbedding: SourceEmbedding): Promise<void> {
@@ -50,15 +41,10 @@ export class SourceEmbeddingPgDrizzleRepository implements SourceEmbeddingReposi
       .execute(() => this.replaceOnce(sourceId, inserts));
   }
 
-  private async replaceOnce(
-    sourceId: string,
-    inserts: SourceEmbeddingInsert[],
-  ): Promise<void> {
+  private async replaceOnce(sourceId: string, inserts: SourceEmbeddingInsert[]): Promise<void> {
     try {
       await this.db.transaction(async (tx) => {
-        await tx
-          .delete(schema.sourceEmbeddings)
-          .where(eq(schema.sourceEmbeddings.sourceId, sourceId));
+        await tx.delete(schema.sourceEmbeddings).where(eq(schema.sourceEmbeddings.sourceId, sourceId));
         await tx.insert(schema.sourceEmbeddings).values(inserts);
       });
     } catch (error: unknown) {

@@ -36,11 +36,7 @@ describe('sliceForCursor', () => {
   });
 
   it('returns no next cursor for an empty result', () => {
-    const result = sliceForCursor<{ id: string }, { id: string }>(
-      [],
-      2,
-      (row) => ({ id: row.id }),
-    );
+    const result = sliceForCursor<{ id: string }, { id: string }>([], 2, (row) => ({ id: row.id }));
 
     expect(result.data).toEqual([]);
     expect(result.nextCursor).toBeNull();

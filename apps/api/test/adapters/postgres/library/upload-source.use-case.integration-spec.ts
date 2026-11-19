@@ -6,31 +6,15 @@ import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type Queue } from 'bullmq';
 import { sha256Hex } from '@core/hash';
-import {
-  DATABASE_TOKENS,
-  OutboxRelay,
-  outboxMessages,
-} from '@kernels/infrastructure';
-import {
-  type SourceRepository,
-  type SourceSyncJobRepository,
-} from '@contexts/library/domain';
-import {
-  SOURCE_EMBEDDING_CHUNK_QUEUE,
-  SOURCE_EMBEDDING_FINALIZATION_QUEUE,
-} from '@contexts/ingestion/application/ports';
+import { DATABASE_TOKENS, OutboxRelay, outboxMessages } from '@kernels/infrastructure';
+import { type SourceRepository, type SourceSyncJobRepository } from '@contexts/library/domain';
+import { SOURCE_EMBEDDING_CHUNK_QUEUE, SOURCE_EMBEDDING_FINALIZATION_QUEUE } from '@contexts/ingestion/application/ports';
 import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upload-source.use-case';
 import * as schema from '@contexts/library/infrastructure/persistence/postgres-drizzle/schema';
 import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
-import {
-  SOURCE_REPOSITORY,
-  SOURCE_SYNC_JOB_REPOSITORY,
-} from '@contexts/library/library.di-tokens';
+import { SOURCE_REPOSITORY, SOURCE_SYNC_JOB_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
-import {
-  sourceContentByteSize,
-  sourceContentOf,
-} from '../../../support/domains/fixtures/source.fixture';
+import { sourceContentByteSize, sourceContentOf } from '../../../support/domains/fixtures/source.fixture';
 import { VALID_EMBEDDING } from '../../../support/domains/fixtures/source-embedding.fixture';
 
 describe('UploadSourceUseCase', () => {
@@ -49,17 +33,11 @@ describe('UploadSourceUseCase', () => {
     }).compile();
     app = moduleFixture.createNestApplication();
     await app.init();
-    embeddingChunksQueue = app.get<Queue>(
-      getQueueToken(SOURCE_EMBEDDING_CHUNK_QUEUE),
-    );
-    embeddingFinalizeQueue = app.get<Queue>(
-      getQueueToken(SOURCE_EMBEDDING_FINALIZATION_QUEUE),
-    );
+    embeddingChunksQueue = app.get<Queue>(getQueueToken(SOURCE_EMBEDDING_CHUNK_QUEUE));
+    embeddingFinalizeQueue = app.get<Queue>(getQueueToken(SOURCE_EMBEDDING_FINALIZATION_QUEUE));
     await embeddingChunksQueue.pause();
     await embeddingFinalizeQueue.pause();
-    database = app.get<NodePgDatabase<typeof schema>>(
-      DATABASE_TOKENS.drizzleDatabase,
-    );
+    database = app.get<NodePgDatabase<typeof schema>>(DATABASE_TOKENS.drizzleDatabase);
     sources = app.get<SourceRepository>(SOURCE_REPOSITORY);
     syncJobs = app.get<SourceSyncJobRepository>(SOURCE_SYNC_JOB_REPOSITORY);
     useCase = app.get(UploadSourceUseCase);
@@ -106,15 +84,8 @@ describe('UploadSourceUseCase', () => {
       status: 'waiting',
     });
 
-    const persistedMessages = await database
-      .select()
-      .from(outboxMessages)
-      .where(eq(outboxMessages.eventType, 'source.sync_job.created'));
-    const outboxMessage = persistedMessages.find(
-      (message) =>
-        (message.payload as { syncJobId?: string }).syncJobId ===
-        result.syncJobId,
-    );
+    const persistedMessages = await database.select().from(outboxMessages).where(eq(outboxMessages.eventType, 'source.sync_job.created'));
+    const outboxMessage = persistedMessages.find((message) => (message.payload as { syncJobId?: string }).syncJobId === result.syncJobId);
 
     expect(outboxMessage).toMatchObject({
       eventType: 'source.sync_job.created',
@@ -125,21 +96,14 @@ describe('UploadSourceUseCase', () => {
         content: '# Source note',
       },
     });
-    expect(outboxMessage?.eventId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
-    );
+    expect(outboxMessage?.eventId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
 
     await outboxRelay.relayPending();
 
-    const [publishedEvent] = await database
-      .select()
-      .from(outboxMessages)
-      .where(eq(outboxMessages.eventId, outboxMessage!.eventId));
+    const [publishedEvent] = await database.select().from(outboxMessages).where(eq(outboxMessages.eventId, outboxMessage!.eventId));
     expect(publishedEvent?.publishedAt).toBeInstanceOf(Date);
 
-    const queuedJob = await embeddingChunksQueue.getJob(
-      `${result.syncJobId!}-0`,
-    );
+    const queuedJob = await embeddingChunksQueue.getJob(`${result.syncJobId!}-0`);
     expect(queuedJob?.data).toEqual({
       sourceId: result.sourceId,
       syncJobId: result.syncJobId,
@@ -165,9 +129,7 @@ describe('UploadSourceUseCase', () => {
       syncJobId: firstResult.syncJobId,
     });
 
-    const persistedSyncJobs = await findSyncJobsBySourceId(
-      firstResult.sourceId,
-    );
+    const persistedSyncJobs = await findSyncJobsBySourceId(firstResult.sourceId);
 
     expect(persistedSyncJobs).toHaveLength(1);
   });
@@ -203,15 +165,8 @@ custom:
       size: sourceContentByteSize(content),
     });
 
-    const messages = await database
-      .select()
-      .from(outboxMessages)
-      .where(eq(outboxMessages.eventType, 'source.sync_job.created'));
-    const message = messages.find(
-      (candidate) =>
-        (candidate.payload as { syncJobId?: string }).syncJobId ===
-        result.syncJobId,
-    );
+    const messages = await database.select().from(outboxMessages).where(eq(outboxMessages.eventType, 'source.sync_job.created'));
+    const message = messages.find((candidate) => (candidate.payload as { syncJobId?: string }).syncJobId === result.syncJobId);
     expect(message?.payload).toMatchObject({ content: '# Retry body' });
   });
 
@@ -244,9 +199,7 @@ custom:
       fingerprint,
     });
 
-    const persistedSyncJobs = await findSyncJobsBySourceId(
-      firstResult.sourceId,
-    );
+    const persistedSyncJobs = await findSyncJobsBySourceId(firstResult.sourceId);
 
     expect(persistedSyncJobs).toHaveLength(1);
   });
@@ -286,14 +239,10 @@ custom:
       size: sourceContentByteSize(newContent),
     });
 
-    const persistedSyncJobs = await findSyncJobsBySourceId(
-      firstResult.sourceId,
-    );
+    const persistedSyncJobs = await findSyncJobsBySourceId(firstResult.sourceId);
 
     expect(persistedSyncJobs).toHaveLength(2);
-    expect(persistedSyncJobs.map((syncJob) => syncJob.fingerprint)).toEqual(
-      expect.arrayContaining([oldFingerprint, newFingerprint]),
-    );
+    expect(persistedSyncJobs.map((syncJob) => syncJob.fingerprint)).toEqual(expect.arrayContaining([oldFingerprint, newFingerprint]));
   });
 
   // nocap: library-sync-5
@@ -301,8 +250,7 @@ custom:
   it('본문은 그대로이고 frontmatter만 바뀌면 source만 갱신하고 sync job은 만들지 않는다', async () => {
     const externalSourceId = 'Notes/upload-usecase-frontmatter-only.md';
     const oldContent = '---\nsheska: true\ntags: [a]\n---\n# Same body';
-    const newContent =
-      '---\nsheska: true\ntitle: Renamed\ntags: [a, b]\n---\n# Same body';
+    const newContent = '---\nsheska: true\ntitle: Renamed\ntags: [a, b]\n---\n# Same body';
     const firstResult = await useCase.execute({
       externalSourceId,
       content: oldContent,
@@ -337,8 +285,7 @@ custom:
   // nocap: library-sync-5
   it('frontmatter 키 순서만 다른 같은 파일은 다시 저장하지 않는다', async () => {
     const externalSourceId = 'Notes/upload-usecase-frontmatter-key-order.md';
-    const content =
-      '---\nsheska: true\nzeta: 1\nalpha: { b: 1, a: 2 }\n---\n# Body';
+    const content = '---\nsheska: true\nzeta: 1\nalpha: { b: 1, a: 2 }\n---\n# Body';
     const firstResult = await useCase.execute({ externalSourceId, content });
     const firstSyncJob = await syncJobs.findLatest({
       sourceId: firstResult.sourceId,
@@ -358,9 +305,7 @@ custom:
     const externalSourceId = 'Notes/upload-usecase-not-sync-target.md';
     const content = '---\nsheska: "true"\n---\n# Not opted in';
 
-    await expect(
-      useCase.execute({ externalSourceId, content }),
-    ).rejects.toMatchObject({ code: 'source.not_sync_target' });
+    await expect(useCase.execute({ externalSourceId, content })).rejects.toMatchObject({ code: 'source.not_sync_target' });
 
     expect(await sources.find({ externalSourceId })).toBeNull();
   });
@@ -370,16 +315,10 @@ custom:
   }
 
   async function findSourceRow(externalSourceId: string) {
-    return database
-      .select()
-      .from(schema.sources)
-      .where(eq(schema.sources.externalSourceId, externalSourceId));
+    return database.select().from(schema.sources).where(eq(schema.sources.externalSourceId, externalSourceId));
   }
 
   async function findSyncJobsBySourceId(sourceId: string) {
-    return database
-      .select()
-      .from(schema.sourceSyncJobs)
-      .where(eq(schema.sourceSyncJobs.sourceId, sourceId));
+    return database.select().from(schema.sourceSyncJobs).where(eq(schema.sourceSyncJobs.sourceId, sourceId));
   }
 });

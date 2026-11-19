@@ -59,28 +59,14 @@ describe('useInfinitePostsScroll', () => {
   });
 
   it('enabled가 false면 observer를 만들지 않는다', () => {
-    render(
-      <InfiniteScrollHarness
-        enabled={false}
-        hasNextPage
-        isFetchingNextPage={false}
-        fetchNextPage={vi.fn()}
-      />,
-    );
+    render(<InfiniteScrollHarness enabled={false} hasNextPage isFetchingNextPage={false} fetchNextPage={vi.fn()} />);
 
     expect(observers).toHaveLength(0);
   });
 
   it('sentinel이 보이고 다음 page가 있으면 fetchNextPage를 호출한다', () => {
     const fetchNextPage = vi.fn();
-    render(
-      <InfiniteScrollHarness
-        enabled
-        hasNextPage
-        isFetchingNextPage={false}
-        fetchNextPage={fetchNextPage}
-      />,
-    );
+    render(<InfiniteScrollHarness enabled hasNextPage isFetchingNextPage={false} fetchNextPage={fetchNextPage} />);
 
     observers[0].trigger(true);
 
@@ -91,24 +77,12 @@ describe('useInfinitePostsScroll', () => {
     const noNextPageFetch = vi.fn();
     const fetchingFetch = vi.fn();
     const { unmount } = render(
-      <InfiniteScrollHarness
-        enabled
-        hasNextPage={false}
-        isFetchingNextPage={false}
-        fetchNextPage={noNextPageFetch}
-      />,
+      <InfiniteScrollHarness enabled hasNextPage={false} isFetchingNextPage={false} fetchNextPage={noNextPageFetch} />,
     );
 
     observers[0].trigger(true);
     unmount();
-    render(
-      <InfiniteScrollHarness
-        enabled
-        hasNextPage
-        isFetchingNextPage
-        fetchNextPage={fetchingFetch}
-      />,
-    );
+    render(<InfiniteScrollHarness enabled hasNextPage isFetchingNextPage fetchNextPage={fetchingFetch} />);
     observers[1].trigger(true);
 
     expect(noNextPageFetch).not.toHaveBeenCalled();
@@ -116,14 +90,7 @@ describe('useInfinitePostsScroll', () => {
   });
 
   it('unmount되면 observer를 해제한다', () => {
-    const { unmount } = render(
-      <InfiniteScrollHarness
-        enabled
-        hasNextPage
-        isFetchingNextPage={false}
-        fetchNextPage={vi.fn()}
-      />,
-    );
+    const { unmount } = render(<InfiniteScrollHarness enabled hasNextPage isFetchingNextPage={false} fetchNextPage={vi.fn()} />);
 
     unmount();
 

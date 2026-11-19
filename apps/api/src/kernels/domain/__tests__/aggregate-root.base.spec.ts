@@ -1,8 +1,4 @@
-import {
-  AggregateRoot,
-  DomainEvent,
-  type CreateEntityProps,
-} from '@kernels/domain';
+import { AggregateRoot, DomainEvent, type CreateEntityProps } from '@kernels/domain';
 import { describe, expect, it } from 'vitest';
 
 interface SampleProps {
@@ -20,10 +16,7 @@ class SampleDomainEvent extends DomainEvent {
 }
 
 class SampleAggregateRoot extends AggregateRoot<SampleProps> {
-  static create(params: {
-    id: string;
-    props?: SampleProps;
-  }): SampleAggregateRoot {
+  static create(params: { id: string; props?: SampleProps }): SampleAggregateRoot {
     return new SampleAggregateRoot({
       id: params.id,
       props: params.props ?? { name: 'spring' },

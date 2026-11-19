@@ -3,10 +3,7 @@ import type { TAbstractFile } from 'obsidian';
 import { SheskaApiClient } from '@/api/client';
 import { readApiToken } from '@/api-token';
 import { AutoSyncService } from '@/auto-sync';
-import {
-  FileExplorerSyncDecorator,
-  type FileExplorerSyncStatus,
-} from '@/file-explorer-sync-decorator';
+import { FileExplorerSyncDecorator, type FileExplorerSyncStatus } from '@/file-explorer-sync-decorator';
 import { HealthCheckScheduler } from '@/health-check';
 import { SheskaSettingTab } from '@/settings';
 import type { SheskaSettings } from '@/settings';
@@ -88,9 +85,7 @@ export default class SheskaPlugin extends Plugin {
 
   async saveSettings(): Promise<void> {
     await this.persistData();
-    this.api = new SheskaApiClient(this.settings.apiBaseUrl, () =>
-      readApiToken(this.app),
-    );
+    this.api = new SheskaApiClient(this.settings.apiBaseUrl, () => readApiToken(this.app));
     if (this.healthCheckScheduler && this.autoSyncService) {
       this.healthCheckScheduler.configure(this.api, this.settings);
       this.autoSyncService.configure(this.api, this.settings);
@@ -118,8 +113,7 @@ export default class SheskaPlugin extends Plugin {
 
   private async persistData(): Promise<void> {
     this.syncCache = this.autoSyncService?.getSyncCache() ?? this.syncCache;
-    this.attachmentCache =
-      this.autoSyncService?.getAttachmentCache() ?? this.attachmentCache;
+    this.attachmentCache = this.autoSyncService?.getAttachmentCache() ?? this.attachmentCache;
     await this.dataStore.save({
       settings: this.settings,
       syncCache: this.syncCache,
@@ -192,14 +186,8 @@ export default class SheskaPlugin extends Plugin {
   }
 
   private initializeServices(): void {
-    this.api = new SheskaApiClient(this.settings.apiBaseUrl, () =>
-      readApiToken(this.app),
-    );
-    this.healthCheckScheduler = new HealthCheckScheduler(
-      this.api,
-      this.settings,
-      (id) => this.registerInterval(id),
-    );
+    this.api = new SheskaApiClient(this.settings.apiBaseUrl, () => readApiToken(this.app));
+    this.healthCheckScheduler = new HealthCheckScheduler(this.api, this.settings, (id) => this.registerInterval(id));
     this.autoSyncService = new AutoSyncService({
       vault: this.app.vault,
       metadataCache: this.app.metadataCache,
@@ -212,21 +200,16 @@ export default class SheskaPlugin extends Plugin {
       onSyncStart: (path) => this.refreshSyncIndicators(path),
       onSyncFinished: (path) => this.refreshSyncIndicators(path),
       onSyncStateChanged: (path) => this.refreshSyncIndicators(path),
-      shouldPollSyncJob: (path) =>
-        this.app.workspace.getActiveFile()?.path === path,
+      shouldPollSyncJob: (path) => this.app.workspace.getActiveFile()?.path === path,
     });
   }
 
   private registerFileExplorerSyncBadges(): void {
-    this.fileExplorerSyncDecorator = new FileExplorerSyncDecorator((path) =>
-      this.getFileExplorerSyncStatus(path),
-    );
+    this.fileExplorerSyncDecorator = new FileExplorerSyncDecorator((path) => this.getFileExplorerSyncStatus(path));
     this.fileExplorerSyncDecorator.start();
   }
 
-  private getFileExplorerSyncStatus(
-    path: string,
-  ): FileExplorerSyncStatus | null {
+  private getFileExplorerSyncStatus(path: string): FileExplorerSyncStatus | null {
     const file = this.app.vault.getAbstractFileByPath(path);
     if (!(file instanceof TFile)) return null;
     if (this.autoSyncService.isSyncing(file)) return 'uploading';
@@ -261,14 +244,9 @@ export default class SheskaPlugin extends Plugin {
 
   private pollActiveFileSyncJob(file: TFile | null): void {
     if (!file) return;
-    void this.autoSyncService
-      .pollSyncJobForFile(file)
-      .catch((error: unknown) => {
-        console.error(
-          `[Sheska] Sync job polling failed for "${file.path}":`,
-          error,
-        );
-      });
+    void this.autoSyncService.pollSyncJobForFile(file).catch((error: unknown) => {
+      console.error(`[Sheska] Sync job polling failed for "${file.path}":`, error);
+    });
   }
 
   private getSyncStatus(file: TFile): SyncStatus {
@@ -335,9 +313,7 @@ export default class SheskaPlugin extends Plugin {
       name: 'Reset Sheska sync cache (force full re-sync)',
       callback: async () => {
         await this.resetSyncCache();
-        new Notice(
-          'Sheska sync cache cleared. All notes and their images will re-sync.',
-        );
+        new Notice('Sheska sync cache cleared. All notes and their images will re-sync.');
       },
     });
   }
@@ -357,18 +333,10 @@ export default class SheskaPlugin extends Plugin {
   }
 
   private registerAutoSyncEvents(): void {
-    this.registerEvent(
-      this.app.vault.on('modify', (file) => this.handleVaultFileChanged(file)),
-    );
-    this.registerEvent(
-      this.app.vault.on('create', (file) => this.handleVaultFileChanged(file)),
-    );
+    this.registerEvent(this.app.vault.on('modify', (file) => this.handleVaultFileChanged(file)));
+    this.registerEvent(this.app.vault.on('create', (file) => this.handleVaultFileChanged(file)));
     // `modify` fires before the frontmatter is re-indexed, so a new `sheska` value shows up only here.
-    this.registerEvent(
-      this.app.metadataCache.on('changed', (file) =>
-        this.handleVaultFileChanged(file),
-      ),
-    );
+    this.registerEvent(this.app.metadataCache.on('changed', (file) => this.handleVaultFileChanged(file)));
   }
 
   private handleVaultFileChanged(file: TAbstractFile): void {

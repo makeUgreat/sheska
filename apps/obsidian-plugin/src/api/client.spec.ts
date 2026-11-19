@@ -38,10 +38,7 @@ describe('SheskaApiClient', () => {
           json: () => Promise.resolve({}),
         }),
       );
-      const withToken = new SheskaApiClient(
-        'http://localhost:3000',
-        () => 'shk_secret',
-      );
+      const withToken = new SheskaApiClient('http://localhost:3000', () => 'shk_secret');
 
       await withToken.get('/health', passthrough);
 
@@ -62,10 +59,7 @@ describe('SheskaApiClient', () => {
         }),
       );
       let token: string | null = null;
-      const withToken = new SheskaApiClient(
-        'http://localhost:3000',
-        () => token,
-      );
+      const withToken = new SheskaApiClient('http://localhost:3000', () => token);
 
       await withToken.get('/health', passthrough);
       token = 'shk_later';
@@ -73,10 +67,7 @@ describe('SheskaApiClient', () => {
 
       const calls = vi.mocked(fetch).mock.calls;
       expect(calls[0][1]?.headers).not.toHaveProperty('Authorization');
-      expect(calls[1][1]?.headers).toHaveProperty(
-        'Authorization',
-        'Bearer shk_later',
-      );
+      expect(calls[1][1]?.headers).toHaveProperty('Authorization', 'Bearer shk_later');
     });
 
     it('throws with status when response body is empty', async () => {
@@ -90,9 +81,7 @@ describe('SheskaApiClient', () => {
         }),
       );
 
-      await expect(client.get('/health', passthrough)).rejects.toThrow(
-        'Sheska API error: 401 Unauthorized',
-      );
+      await expect(client.get('/health', passthrough)).rejects.toThrow('Sheska API error: 401 Unauthorized');
     });
 
     it('throws with body when response includes error details', async () => {
@@ -106,9 +95,7 @@ describe('SheskaApiClient', () => {
         }),
       );
 
-      await expect(client.get('/health', passthrough)).rejects.toThrow(
-        'Sheska API error: 401 Unauthorized — invalid token',
-      );
+      await expect(client.get('/health', passthrough)).rejects.toThrow('Sheska API error: 401 Unauthorized — invalid token');
     });
   });
 
@@ -175,23 +162,13 @@ describe('SheskaApiClient', () => {
 
   describe('isRetryableApiError', () => {
     it('treats 429 and 5xx as retryable', () => {
-      expect(
-        isRetryableApiError(new SheskaApiError(429, 'Too Many Requests', '')),
-      ).toBe(true);
-      expect(
-        isRetryableApiError(new SheskaApiError(503, 'Service Unavailable', '')),
-      ).toBe(true);
+      expect(isRetryableApiError(new SheskaApiError(429, 'Too Many Requests', ''))).toBe(true);
+      expect(isRetryableApiError(new SheskaApiError(503, 'Service Unavailable', ''))).toBe(true);
     });
 
     it('treats 4xx other than 429 as non-retryable', () => {
-      expect(
-        isRetryableApiError(
-          new SheskaApiError(422, 'Unprocessable Entity', ''),
-        ),
-      ).toBe(false);
-      expect(
-        isRetryableApiError(new SheskaApiError(401, 'Unauthorized', '')),
-      ).toBe(false);
+      expect(isRetryableApiError(new SheskaApiError(422, 'Unprocessable Entity', ''))).toBe(false);
+      expect(isRetryableApiError(new SheskaApiError(401, 'Unauthorized', ''))).toBe(false);
     });
 
     it('treats a failure without a status as retryable', () => {
@@ -232,9 +209,7 @@ describe('SheskaApiClient', () => {
         }),
       );
 
-      await expect(client.post('/sources', {}, passthrough)).rejects.toThrow(
-        'Sheska API error: 422 Unprocessable Entity',
-      );
+      await expect(client.post('/sources', {}, passthrough)).rejects.toThrow('Sheska API error: 422 Unprocessable Entity');
     });
   });
 
@@ -268,21 +243,15 @@ describe('SheskaApiClient', () => {
           json: () => Promise.reject(new SyntaxError('Unexpected end of JSON')),
         }),
       );
-      const withToken = new SheskaApiClient(
-        'http://localhost:3000',
-        () => 'shk_secret',
-      );
+      const withToken = new SheskaApiClient('http://localhost:3000', () => 'shk_secret');
 
       await expect(withToken.syncCheck()).resolves.toBeUndefined();
-      expect(fetch).toHaveBeenCalledWith(
-        'http://localhost:3000/auth/sync-check',
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer shk_secret',
-          },
+      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/auth/sync-check', {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer shk_secret',
         },
-      );
+      });
     });
 
     it('carries the failure code when the token lacks sources:sync', async () => {
@@ -376,9 +345,9 @@ describe('SheskaApiClient', () => {
         }),
       );
 
-      await expect(
-        client.uploadSource({ externalSourceId: '', content: '' }),
-      ).rejects.toThrow('Sheska API error: 422 Unprocessable Entity');
+      await expect(client.uploadSource({ externalSourceId: '', content: '' })).rejects.toThrow(
+        'Sheska API error: 422 Unprocessable Entity',
+      );
     });
   });
 
@@ -401,14 +370,11 @@ describe('SheskaApiClient', () => {
 
       const result = await client.uploadAttachment('att/my img.png', data);
 
-      expect(fetch).toHaveBeenCalledWith(
-        'http://localhost:3000/attachments?path=att%2Fmy+img.png',
-        {
-          method: 'PUT',
-          body: data,
-          headers: { 'Content-Type': 'application/octet-stream' },
-        },
-      );
+      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/attachments?path=att%2Fmy+img.png', {
+        method: 'PUT',
+        body: data,
+        headers: { 'Content-Type': 'application/octet-stream' },
+      });
       expect(result).toEqual(response);
     });
 
@@ -431,9 +397,7 @@ describe('SheskaApiClient', () => {
         }),
       );
 
-      await expect(
-        client.uploadAttachment('att/a.pdf', new ArrayBuffer(0)),
-      ).rejects.toMatchObject({
+      await expect(client.uploadAttachment('att/a.pdf', new ArrayBuffer(0))).rejects.toMatchObject({
         status: 422,
         code: 'attachment.unsupported_media_type',
       });
@@ -460,10 +424,7 @@ describe('SheskaApiClient', () => {
       );
 
       await expect(client.getSyncJob('job/1')).resolves.toEqual(response);
-      expect(fetch).toHaveBeenCalledWith(
-        'http://localhost:3000/sync-jobs/job%2F1',
-        { headers: { 'Content-Type': 'application/json' } },
-      );
+      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/sync-jobs/job%2F1', { headers: { 'Content-Type': 'application/json' } });
     });
   });
 });

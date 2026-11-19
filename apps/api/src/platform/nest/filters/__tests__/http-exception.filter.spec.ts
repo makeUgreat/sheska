@@ -248,21 +248,21 @@ describe('HttpExceptionFilter', () => {
       });
     });
 
-    it.each([
-      new UnavailableError(persistenceParams),
-      new TimeoutError(persistenceParams),
-    ])('503이 되는 $name은 어댑터 정보를 노출하지 않는다', (error) => {
-      const { host, json } = buildMockHost();
-      const filter = new HttpExceptionFilter(buildMockLogger());
+    it.each([new UnavailableError(persistenceParams), new TimeoutError(persistenceParams)])(
+      '503이 되는 $name은 어댑터 정보를 노출하지 않는다',
+      (error) => {
+        const { host, json } = buildMockHost();
+        const filter = new HttpExceptionFilter(buildMockLogger());
 
-      filter.catch(error, host);
+        filter.catch(error, host);
 
-      expect(json).toHaveBeenCalledWith({
-        code: 'internal.unavailable',
-        message: 'Service temporarily unavailable',
-        details: {},
-      });
-    });
+        expect(json).toHaveBeenCalledWith({
+          code: 'internal.unavailable',
+          message: 'Service temporarily unavailable',
+          details: {},
+        });
+      },
+    );
   });
 
   describe('로그 레벨', () => {
@@ -301,19 +301,18 @@ describe('HttpExceptionFilter', () => {
       expect(logger.error).not.toHaveBeenCalled();
     });
 
-    it.each([
-      new UnavailableError(persistenceParams),
-      new TimeoutError(persistenceParams),
-      new UnexpectedError(persistenceParams),
-    ])('5xx가 되는 $name은 error로 남긴다', (error) => {
-      const { host } = buildMockHost();
-      const logger = buildMockLogger();
-      const filter = new HttpExceptionFilter(logger);
+    it.each([new UnavailableError(persistenceParams), new TimeoutError(persistenceParams), new UnexpectedError(persistenceParams)])(
+      '5xx가 되는 $name은 error로 남긴다',
+      (error) => {
+        const { host } = buildMockHost();
+        const logger = buildMockLogger();
+        const filter = new HttpExceptionFilter(logger);
 
-      filter.catch(error, host);
+        filter.catch(error, host);
 
-      expect(logger.error).toHaveBeenCalledOnce();
-    });
+        expect(logger.error).toHaveBeenCalledOnce();
+      },
+    );
 
     it('알 수 없는 예외는 error로 남긴다', () => {
       const { host } = buildMockHost();
@@ -346,10 +345,7 @@ describe('HttpExceptionFilter', () => {
       const { host, status, json } = buildMockHost();
       const filter = new HttpExceptionFilter(buildMockLogger());
 
-      filter.catch(
-        new HttpException('Cannot GET /unknown', HttpStatus.NOT_FOUND),
-        host,
-      );
+      filter.catch(new HttpException('Cannot GET /unknown', HttpStatus.NOT_FOUND), host);
 
       expect(status).toHaveBeenCalledWith(HttpStatus.NOT_FOUND);
       expect(json).toHaveBeenCalledWith({
@@ -374,15 +370,10 @@ describe('HttpExceptionFilter', () => {
       const { host, status, json } = buildMockHost();
       const filter = new HttpExceptionFilter(buildMockLogger());
 
-      filter.catch(
-        new HttpException('Bad Gateway', HttpStatus.BAD_GATEWAY),
-        host,
-      );
+      filter.catch(new HttpException('Bad Gateway', HttpStatus.BAD_GATEWAY), host);
 
       expect(status).toHaveBeenCalledWith(HttpStatus.BAD_GATEWAY);
-      expect(json).toHaveBeenCalledWith(
-        expect.objectContaining({ code: 'internal.unexpected' }),
-      );
+      expect(json).toHaveBeenCalledWith(expect.objectContaining({ code: 'internal.unexpected' }));
     });
   });
 
@@ -394,9 +385,7 @@ describe('HttpExceptionFilter', () => {
       filter.catch(new Error('unexpected'), host);
 
       expect(status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
-      expect(json).toHaveBeenCalledWith(
-        expect.objectContaining({ code: 'internal.unexpected' }),
-      );
+      expect(json).toHaveBeenCalledWith(expect.objectContaining({ code: 'internal.unexpected' }));
     });
 
     it('kind와 code만 흉내 낸 Error는 이 프로젝트 error로 보지 않는다', () => {
@@ -411,9 +400,7 @@ describe('HttpExceptionFilter', () => {
       filter.catch(lookalike, host);
 
       expect(status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
-      expect(json).toHaveBeenCalledWith(
-        expect.objectContaining({ code: 'internal.unexpected' }),
-      );
+      expect(json).toHaveBeenCalledWith(expect.objectContaining({ code: 'internal.unexpected' }));
       expect(logger.error).toHaveBeenCalledOnce();
     });
   });

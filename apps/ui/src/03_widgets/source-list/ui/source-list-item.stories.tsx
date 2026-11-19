@@ -80,8 +80,7 @@ export const LongTitle: Story = {
   args: {
     source: {
       ...sampleSource,
-      title:
-        'A deliberately long source title that should wrap cleanly inside the source list row',
+      title: 'A deliberately long source title that should wrap cleanly inside the source list row',
     },
   },
 };

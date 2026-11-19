@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  RecursiveCharacterChunker,
-  DEFAULT_SEPARATORS,
-} from '../recursive-character.chunker';
+import { RecursiveCharacterChunker, DEFAULT_SEPARATORS } from '../recursive-character.chunker';
 
 function buildChunker(chunkSize: number, chunkOverlap: number) {
   return new RecursiveCharacterChunker({
@@ -86,11 +83,7 @@ describe('RecursiveCharacterChunker', () => {
       const chunker = buildChunker(10, 0);
       const result = chunker.chunk('line one\nline two\nline three');
 
-      expect(result.map((c) => c.content)).toEqual([
-        'line one',
-        'line two',
-        'line three',
-      ]);
+      expect(result.map((c) => c.content)).toEqual(['line one', 'line two', 'line three']);
     });
 
     it('줄바꿈이 없으면 공백 기준으로 분할한다', () => {

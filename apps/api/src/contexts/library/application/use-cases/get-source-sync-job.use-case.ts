@@ -2,10 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { LOGGER, type LoggerPort } from '@kernels/application';
 import { type SyncJobProgressLookup } from '@contexts/library/application/ports';
 import { type SourceSyncJobRepository } from '@contexts/library/domain';
-import {
-  SOURCE_SYNC_JOB_REPOSITORY,
-  SYNC_JOB_PROGRESS_LOOKUP,
-} from '@contexts/library/library.di-tokens';
+import { SOURCE_SYNC_JOB_REPOSITORY, SYNC_JOB_PROGRESS_LOOKUP } from '@contexts/library/library.di-tokens';
 
 export interface GetSourceSyncJobCommand {
   readonly syncJobId: string;
@@ -32,9 +29,7 @@ export class GetSourceSyncJobUseCase {
     private readonly logger: LoggerPort,
   ) {}
 
-  async execute(
-    command: GetSourceSyncJobCommand,
-  ): Promise<GetSourceSyncJobResult> {
+  async execute(command: GetSourceSyncJobCommand): Promise<GetSourceSyncJobResult> {
     const [syncJob, liveProgress] = await Promise.all([
       this.syncJobs.get({ id: command.syncJobId }),
       this.findLiveProgress(command.syncJobId),

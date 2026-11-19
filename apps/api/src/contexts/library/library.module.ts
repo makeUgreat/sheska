@@ -83,8 +83,7 @@ export class LibraryModule {
         },
         {
           provide: SOURCE_EMBEDDING_LOOKUP,
-          useFactory: (ingestionLookup: IngestionSourceEmbeddingLookup) =>
-            new SourceEmbeddingFromIngestionLookup(ingestionLookup),
+          useFactory: (ingestionLookup: IngestionSourceEmbeddingLookup) => new SourceEmbeddingFromIngestionLookup(ingestionLookup),
           inject: [INGESTION_SOURCE_EMBEDDING_LOOKUP],
         },
         {
@@ -97,8 +96,7 @@ export class LibraryModule {
         },
         {
           provide: SYNC_JOB_PROGRESS_LOOKUP,
-          useFactory: (progress: EmbeddingWorkflowProgressLookup) =>
-            new SyncJobProgressFromIngestionLookup(progress),
+          useFactory: (progress: EmbeddingWorkflowProgressLookup) => new SyncJobProgressFromIngestionLookup(progress),
           inject: [EMBEDDING_WORKFLOW_PROGRESS_LOOKUP],
         },
         {
@@ -111,8 +109,7 @@ export class LibraryModule {
         },
         {
           provide: SEARCH_QUERY_EMBEDDER,
-          useFactory: (embedder: Embedder) =>
-            new SearchQueryFromIngestionEmbedder(embedder),
+          useFactory: (embedder: Embedder) => new SearchQueryFromIngestionEmbedder(embedder),
           inject: [EMBEDDER],
         },
         {
@@ -158,17 +155,8 @@ export class LibraryModule {
     return {
       module: LibraryModule,
       imports: [LibraryModule.forFeature()],
-      controllers: [
-        SourcesHttpController,
-        SourceSyncJobsHttpController,
-        PostsHttpController,
-        AttachmentsHttpController,
-      ],
-      providers: [
-        ApplyIngestionUpdateUseCase,
-        IngestionIntegrationEventConsumer,
-        OutboxDeadLetteredIntegrationEventConsumer,
-      ],
+      controllers: [SourcesHttpController, SourceSyncJobsHttpController, PostsHttpController, AttachmentsHttpController],
+      providers: [ApplyIngestionUpdateUseCase, IngestionIntegrationEventConsumer, OutboxDeadLetteredIntegrationEventConsumer],
     };
   }
 }

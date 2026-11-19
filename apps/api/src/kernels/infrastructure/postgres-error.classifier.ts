@@ -1,10 +1,4 @@
-import {
-  ConcurrencyConflictError,
-  ConstraintViolationError,
-  TimeoutError,
-  UnavailableError,
-  UnexpectedError,
-} from '@core/errors';
+import { ConcurrencyConflictError, ConstraintViolationError, TimeoutError, UnavailableError, UnexpectedError } from '@core/errors';
 
 export type PostgresErrorClass =
   | typeof UnavailableError
@@ -56,12 +50,7 @@ export function classifyPostgresError(error: unknown): PostgresErrorClass {
 }
 
 function classifyByCode(error: unknown): PostgresErrorClass {
-  if (
-    error !== null &&
-    typeof error === 'object' &&
-    'code' in error &&
-    typeof error.code === 'string'
-  ) {
+  if (error !== null && typeof error === 'object' && 'code' in error && typeof error.code === 'string') {
     const mapped = POSTGRES_ERROR_CLASS_MAP[error.code];
     if (mapped !== undefined) {
       return mapped;

@@ -1,9 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InvalidDataError, ValidationFailedError } from '@core/errors';
-import {
-  type ParsedSourceDocument,
-  type SourceDocumentParser,
-} from '@contexts/library/application/ports';
+import { type ParsedSourceDocument, type SourceDocumentParser } from '@contexts/library/application/ports';
 import { type SourceFrontmatterProps } from '@contexts/library/domain';
 import { SOURCE_DOCUMENT_PARSER } from '@contexts/library/library.di-tokens';
 

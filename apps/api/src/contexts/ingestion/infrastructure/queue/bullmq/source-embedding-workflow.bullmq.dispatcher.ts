@@ -43,11 +43,7 @@ export class SourceEmbeddingWorkflowBullMqDispatcher implements EmbeddingWorkflo
     };
   }
 
-  private createChunkJobs({
-    sourceId,
-    syncJobId,
-    chunks,
-  }: EmbeddingWorkflowPayload): FlowChildJob[] {
+  private createChunkJobs({ sourceId, syncJobId, chunks }: EmbeddingWorkflowPayload): FlowChildJob[] {
     return chunks.map((chunk) => ({
       name: 'embed-chunk',
       queueName: SOURCE_EMBEDDING_CHUNK_QUEUE,

@@ -1,12 +1,6 @@
 export { type Embedder } from './embedder';
-export {
-  type IngestionUnitOfWork,
-  type IngestionUnitOfWorkResources,
-} from './ingestion.unit-of-work';
-export {
-  type SourceEmbeddingLookup,
-  type EmbeddingMetadata,
-} from './source-embedding.lookup';
+export { type IngestionUnitOfWork, type IngestionUnitOfWorkResources } from './ingestion.unit-of-work';
+export { type SourceEmbeddingLookup, type EmbeddingMetadata } from './source-embedding.lookup';
 export {
   SOURCE_EMBEDDING_CHUNK_QUEUE,
   SOURCE_EMBEDDING_FINALIZATION_QUEUE,
@@ -15,7 +9,4 @@ export {
   type EmbeddingWorkflowPayload,
   type EmbeddingWorkflowDispatcher,
 } from './embedding-workflow.dispatcher';
-export {
-  type EmbeddingWorkflowProgress,
-  type EmbeddingWorkflowProgressLookup,
-} from './embedding-workflow-progress.lookup';
+export { type EmbeddingWorkflowProgress, type EmbeddingWorkflowProgressLookup } from './embedding-workflow-progress.lookup';

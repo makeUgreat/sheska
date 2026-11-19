@@ -5,15 +5,8 @@ import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type LibraryUnitOfWork } from '@contexts/library/application/ports';
 import { SourceSyncJobCreatedIntegrationEvent } from '@contexts/library/application/events/source-sync-job-created.integration-event';
-import {
-  type SourceRepository,
-  type SourceSyncJobRepository,
-} from '@contexts/library/domain';
-import {
-  SOURCE_REPOSITORY,
-  SOURCE_SYNC_JOB_REPOSITORY,
-  LIBRARY_UNIT_OF_WORK,
-} from '@contexts/library/library.di-tokens';
+import { type SourceRepository, type SourceSyncJobRepository } from '@contexts/library/domain';
+import { SOURCE_REPOSITORY, SOURCE_SYNC_JOB_REPOSITORY, LIBRARY_UNIT_OF_WORK } from '@contexts/library/library.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
 import { DATABASE_TOKENS, outboxMessages } from '@kernels/infrastructure';
 import * as schema from '@contexts/library/infrastructure/persistence/postgres-drizzle/schema';
@@ -34,9 +27,7 @@ describe('LibraryPgDrizzleUnitOfWork', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
     unitOfWork = app.get<LibraryUnitOfWork>(LIBRARY_UNIT_OF_WORK);
-    database = app.get<NodePgDatabase<typeof schema>>(
-      DATABASE_TOKENS.drizzleDatabase,
-    );
+    database = app.get<NodePgDatabase<typeof schema>>(DATABASE_TOKENS.drizzleDatabase);
     sources = app.get<SourceRepository>(SOURCE_REPOSITORY);
     syncJobs = app.get<SourceSyncJobRepository>(SOURCE_SYNC_JOB_REPOSITORY);
   });
@@ -100,10 +91,7 @@ describe('LibraryPgDrizzleUnitOfWork', () => {
 
     await expect(sources.find({ id: source.id })).resolves.toBeNull();
     await expect(syncJobs.find({ id: firstSyncJob.id })).resolves.toBeNull();
-    const persistedMessages = await database
-      .select()
-      .from(outboxMessages)
-      .where(eq(outboxMessages.eventId, event.eventId));
+    const persistedMessages = await database.select().from(outboxMessages).where(eq(outboxMessages.eventId, event.eventId));
     expect(persistedMessages).toHaveLength(0);
   });
 });

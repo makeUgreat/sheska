@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  buildSourceEmbedding,
-  VALID_EMBEDDING,
-} from '../../../../../../../test/support/domains/fixtures/source-embedding.fixture';
+import { buildSourceEmbedding, VALID_EMBEDDING } from '../../../../../../../test/support/domains/fixtures/source-embedding.fixture';
 import { buildSourceEmbeddingRow } from '../../../../../../../test/adapters/postgres/ingestion/fixtures/source-embedding-row.fixture';
 import { SourceEmbeddingPgDrizzleMapper } from '../source-embedding.pg-drizzle.mapper';
 
@@ -16,24 +13,16 @@ describe('SourceEmbeddingPgDrizzleMapper', () => {
     const sourceEmbedding = SourceEmbeddingPgDrizzleMapper.toDomain(rows);
 
     expect(sourceEmbedding.id).toBe('source-1');
-    expect(sourceEmbedding.getProps().model.unpack()).toBe(
-      'qwen3-embedding:0.6b',
-    );
+    expect(sourceEmbedding.getProps().model.unpack()).toBe('qwen3-embedding:0.6b');
     expect(sourceEmbedding.getProps().chunks).toHaveLength(2);
-    expect(sourceEmbedding.getProps().chunks[0].unpack().chunkContent).toBe(
-      'first',
-    );
-    expect(sourceEmbedding.getProps().chunks[1].unpack().chunkContent).toBe(
-      'second',
-    );
+    expect(sourceEmbedding.getProps().chunks[0].unpack().chunkContent).toBe('first');
+    expect(sourceEmbedding.getProps().chunks[1].unpack().chunkContent).toBe('second');
   });
 
   it('source embedding row의 model이 지원하지 않으면 throw한다', () => {
     const rows = [buildSourceEmbeddingRow({ model: 'unsupported-model' })];
 
-    expect(() => SourceEmbeddingPgDrizzleMapper.toDomain(rows)).toThrow(
-      'Unsupported embedding model: unsupported-model',
-    );
+    expect(() => SourceEmbeddingPgDrizzleMapper.toDomain(rows)).toThrow('Unsupported embedding model: unsupported-model');
   });
 
   it('SourceEmbedding aggregate를 insert rows로 변환한다', () => {

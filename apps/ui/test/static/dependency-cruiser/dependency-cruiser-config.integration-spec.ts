@@ -5,11 +5,7 @@ import { cruise } from 'dependency-cruiser';
 import extractDepcruiseConfig from 'dependency-cruiser/config-utl/extract-depcruise-config';
 import extractDepcruiseOptions from 'dependency-cruiser/config-utl/extract-depcruise-options';
 import { describe, expect, it } from 'vitest';
-import type {
-  ICruiseOptions,
-  ICruiseResult,
-  IReporterOutput,
-} from 'dependency-cruiser';
+import type { ICruiseOptions, ICruiseResult, IReporterOutput } from 'dependency-cruiser';
 
 // fixture 는 alias 가 아니라 상대경로로 import 한다. dependency-cruiser 의 fixture 해석기는
 // baseDir 밖의 tsconfig paths 를 적용하지 못해 alias import 가 그래프에서 누락되기 때문이다.
@@ -207,11 +203,7 @@ const invalidFiles: Record<string, string> = {
   `,
 };
 
-async function writeFixtureFile(
-  fixtureRoot: string,
-  filePath: string,
-  content: string,
-): Promise<void> {
+async function writeFixtureFile(fixtureRoot: string, filePath: string, content: string): Promise<void> {
   const absolutePath = path.join(fixtureRoot, filePath);
 
   await mkdir(path.dirname(absolutePath), { recursive: true });
@@ -219,35 +211,21 @@ async function writeFixtureFile(
 }
 
 async function createFixture(files: Record<string, string>): Promise<string> {
-  const fixtureRoot = await realpath(
-    await mkdtemp(path.join(tmpdir(), 'ui-dependency-cruiser-')),
-  );
+  const fixtureRoot = await realpath(await mkdtemp(path.join(tmpdir(), 'ui-dependency-cruiser-')));
 
-  await writeFixtureFile(
-    fixtureRoot,
-    'package.json',
-    JSON.stringify({ name: 'ui-fixture', private: true }, null, 2),
-  );
-  await Promise.all(
-    Object.entries(files).map(([filePath, content]) =>
-      writeFixtureFile(fixtureRoot, filePath, content),
-    ),
-  );
+  await writeFixtureFile(fixtureRoot, 'package.json', JSON.stringify({ name: 'ui-fixture', private: true }, null, 2));
+  await Promise.all(Object.entries(files).map(([filePath, content]) => writeFixtureFile(fixtureRoot, filePath, content)));
 
   return fixtureRoot;
 }
 
-async function createFixtureCruiseOptions(
-  fixtureRoot: string,
-): Promise<ICruiseOptions> {
+async function createFixtureCruiseOptions(fixtureRoot: string): Promise<ICruiseOptions> {
   const options = await extractDepcruiseOptions(configPath);
 
   return { ...options, baseDir: fixtureRoot };
 }
 
-async function cruiseFixture(
-  files: Record<string, string>,
-): Promise<IReporterOutput> {
+async function cruiseFixture(files: Record<string, string>): Promise<IReporterOutput> {
   const fixtureRoot = await createFixture(files);
 
   try {
@@ -260,9 +238,7 @@ async function cruiseFixture(
 function getViolationRuleNames(result: IReporterOutput): string[] {
   const cruiseResult = result.output as ICruiseResult;
 
-  return cruiseResult.summary.violations.map(
-    (violation) => violation.rule.name,
-  );
+  return cruiseResult.summary.violations.map((violation) => violation.rule.name);
 }
 
 describe('dependency-cruiser/config.cjs', () => {
@@ -284,8 +260,6 @@ describe('dependency-cruiser/config.cjs', () => {
   it('FSD 경계 violation을 rule name으로 보고한다', async () => {
     const result = await cruiseFixture(invalidFiles);
 
-    expect(getViolationRuleNames(result)).toEqual(
-      expect.arrayContaining(fsdRuleNames),
-    );
+    expect(getViolationRuleNames(result)).toEqual(expect.arrayContaining(fsdRuleNames));
   });
 });

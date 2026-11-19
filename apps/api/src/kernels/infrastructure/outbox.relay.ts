@@ -37,10 +37,7 @@ export class OutboxRelay {
 
     this.isRelaying = true;
     try {
-      const claimedMessages = await this.store.claimDue(
-        this.options.batchSize,
-        this.options.claimLeaseMs,
-      );
+      const claimedMessages = await this.store.claimDue(this.options.batchSize, this.options.claimLeaseMs);
 
       for (const claimed of claimedMessages) {
         await this.relay(claimed);
@@ -50,10 +47,7 @@ export class OutboxRelay {
     }
   }
 
-  private async relay({
-    event,
-    attemptCount,
-  }: ClaimedOutboxMessage): Promise<void> {
+  private async relay({ event, attemptCount }: ClaimedOutboxMessage): Promise<void> {
     try {
       await this.dispatcher.dispatch(event);
       await this.store.markPublished(event.eventId);
@@ -69,18 +63,9 @@ export class OutboxRelay {
     }
   }
 
-  private async scheduleRetry(
-    event: IntegrationEvent,
-    attemptCount: number,
-    lastFailureReason: string,
-    error: unknown,
-  ): Promise<void> {
+  private async scheduleRetry(event: IntegrationEvent, attemptCount: number, lastFailureReason: string, error: unknown): Promise<void> {
     const failedAttemptIndex = attemptCount - 1;
-    const delayMs = computeRetryDelayMs(
-      failedAttemptIndex,
-      this.options,
-      this.runtime.random,
-    );
+    const delayMs = computeRetryDelayMs(failedAttemptIndex, this.options, this.runtime.random);
 
     await this.store.scheduleRetry(event.eventId, delayMs, lastFailureReason);
     this.logger.warn('Integration event relay failed', error, {
@@ -93,12 +78,7 @@ export class OutboxRelay {
     });
   }
 
-  private async deadLetter(
-    event: IntegrationEvent,
-    attemptCount: number,
-    lastFailureReason: string,
-    error: unknown,
-  ): Promise<void> {
+  private async deadLetter(event: IntegrationEvent, attemptCount: number, lastFailureReason: string, error: unknown): Promise<void> {
     await this.store.markDeadLettered(event.eventId, lastFailureReason);
     this.logger.error('Integration event dead-lettered', error, {
       eventId: event.eventId,
@@ -112,10 +92,7 @@ export class OutboxRelay {
     await this.notifyDeadLettered(event, attemptCount);
   }
 
-  private async notifyDeadLettered(
-    event: IntegrationEvent,
-    attemptCount: number,
-  ): Promise<void> {
+  private async notifyDeadLettered(event: IntegrationEvent, attemptCount: number): Promise<void> {
     try {
       await this.dispatcher.dispatch(
         new OutboxDeadLetteredIntegrationEvent({

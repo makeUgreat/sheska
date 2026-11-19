@@ -12,8 +12,6 @@ export abstract class DomainEvent {
 
   protected constructor(params: DomainEventParams) {
     this.aggregateId = params.aggregateId;
-    this.occurredAt = params.occurredAt
-      ? new Date(params.occurredAt)
-      : new Date();
+    this.occurredAt = params.occurredAt ? new Date(params.occurredAt) : new Date();
   }
 }

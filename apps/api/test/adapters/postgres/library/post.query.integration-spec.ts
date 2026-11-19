@@ -4,22 +4,13 @@ import { Test } from '@nestjs/testing';
 import { type PostQuery } from '@contexts/library/application/ports';
 import { type PostRepository } from '@contexts/library/domain';
 import { type SourceRepository } from '@contexts/library/domain';
-import {
-  POST_QUERY,
-  POST_REPOSITORY,
-} from '@contexts/library/library.di-tokens';
+import { POST_QUERY, POST_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
-import {
-  type SourceEmbeddingRepository,
-  SOURCE_EMBEDDING_REPOSITORY,
-} from '@contexts/ingestion/ingestion.di-tokens';
+import { type SourceEmbeddingRepository, SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
 import { buildPost } from '../../../support/domains/fixtures/post.fixture';
 import { buildSource } from '../../../support/domains/fixtures/source.fixture';
-import {
-  buildSourceEmbedding,
-  VALID_EMBEDDING,
-} from '../../../support/domains/fixtures/source-embedding.fixture';
+import { buildSourceEmbedding, VALID_EMBEDDING } from '../../../support/domains/fixtures/source-embedding.fixture';
 
 describe('PostPgDrizzleQuery', () => {
   let app: INestApplication;
@@ -37,9 +28,7 @@ describe('PostPgDrizzleQuery', () => {
     postQuery = app.get<PostQuery>(POST_QUERY);
     posts = app.get<PostRepository>(POST_REPOSITORY);
     sources = app.get<SourceRepository>(SOURCE_REPOSITORY);
-    sourceEmbeddings = app.get<SourceEmbeddingRepository>(
-      SOURCE_EMBEDDING_REPOSITORY,
-    );
+    sourceEmbeddings = app.get<SourceEmbeddingRepository>(SOURCE_EMBEDDING_REPOSITORY);
   });
 
   afterAll(async () => {
@@ -75,9 +64,7 @@ describe('PostPgDrizzleQuery', () => {
   });
 
   it('viewCount 증가 후 getById가 갱신된 값을 반환한다', async () => {
-    const source = await sources.insert(
-      buildSource({ externalSourceId: 'Notes/post-query-viewcount.md' }),
-    );
+    const source = await sources.insert(buildSource({ externalSourceId: 'Notes/post-query-viewcount.md' }));
     const post = buildPost({ sourceId: source.id });
     await posts.insert(post);
 
@@ -90,12 +77,8 @@ describe('PostPgDrizzleQuery', () => {
   });
 
   it('post 목록을 페이지네이션으로 반환한다', async () => {
-    const source1 = await sources.insert(
-      buildSource({ externalSourceId: 'Notes/post-query-paginate-1.md' }),
-    );
-    const source2 = await sources.insert(
-      buildSource({ externalSourceId: 'Notes/post-query-paginate-2.md' }),
-    );
+    const source1 = await sources.insert(buildSource({ externalSourceId: 'Notes/post-query-paginate-1.md' }));
+    const source2 = await sources.insert(buildSource({ externalSourceId: 'Notes/post-query-paginate-2.md' }));
     const post1 = buildPost({ sourceId: source1.id });
     const post2 = buildPost({ sourceId: source2.id });
     await posts.insert(post1);
@@ -113,15 +96,9 @@ describe('PostPgDrizzleQuery', () => {
 
   describe('paginate — cursor pagination', () => {
     it('limit보다 많은 포스트가 있으면 nextCursor를 반환한다', async () => {
-      const s1 = await sources.insert(
-        buildSource({ externalSourceId: 'Notes/pq-cursor-1.md' }),
-      );
-      const s2 = await sources.insert(
-        buildSource({ externalSourceId: 'Notes/pq-cursor-2.md' }),
-      );
-      const s3 = await sources.insert(
-        buildSource({ externalSourceId: 'Notes/pq-cursor-3.md' }),
-      );
+      const s1 = await sources.insert(buildSource({ externalSourceId: 'Notes/pq-cursor-1.md' }));
+      const s2 = await sources.insert(buildSource({ externalSourceId: 'Notes/pq-cursor-2.md' }));
+      const s3 = await sources.insert(buildSource({ externalSourceId: 'Notes/pq-cursor-3.md' }));
       await posts.insert(buildPost({ sourceId: s1.id }));
       await posts.insert(buildPost({ sourceId: s2.id }));
       await posts.insert(buildPost({ sourceId: s3.id }));
@@ -136,15 +113,9 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('nextCursor로 다음 페이지를 가져온다', async () => {
-      const s1 = await sources.insert(
-        buildSource({ externalSourceId: 'Notes/pq-cursor-page-1.md' }),
-      );
-      const s2 = await sources.insert(
-        buildSource({ externalSourceId: 'Notes/pq-cursor-page-2.md' }),
-      );
-      const s3 = await sources.insert(
-        buildSource({ externalSourceId: 'Notes/pq-cursor-page-3.md' }),
-      );
+      const s1 = await sources.insert(buildSource({ externalSourceId: 'Notes/pq-cursor-page-1.md' }));
+      const s2 = await sources.insert(buildSource({ externalSourceId: 'Notes/pq-cursor-page-2.md' }));
+      const s3 = await sources.insert(buildSource({ externalSourceId: 'Notes/pq-cursor-page-3.md' }));
       const post1 = buildPost({ sourceId: s1.id });
       const post2 = buildPost({ sourceId: s2.id });
       const post3 = buildPost({ sourceId: s3.id });
@@ -166,9 +137,7 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('마지막 포스트 이후의 cursor로 조회하면 nextCursor가 null이다', async () => {
-      const s1 = await sources.insert(
-        buildSource({ externalSourceId: 'Notes/pq-cursor-last-1.md' }),
-      );
+      const s1 = await sources.insert(buildSource({ externalSourceId: 'Notes/pq-cursor-last-1.md' }));
       await posts.insert(buildPost({ sourceId: s1.id }));
 
       const veryOldCursor = { id: '00000000-0000-0000-0000-000000000000' };
@@ -182,9 +151,7 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('cursor와 동일한 id를 가진 포스트는 결과에서 제외된다', async () => {
-      const s1 = await sources.insert(
-        buildSource({ externalSourceId: 'Notes/pq-cursor-tie-1.md' }),
-      );
+      const s1 = await sources.insert(buildSource({ externalSourceId: 'Notes/pq-cursor-tie-1.md' }));
       const post1 = buildPost({ sourceId: s1.id });
       await posts.insert(post1);
 
@@ -202,12 +169,8 @@ describe('PostPgDrizzleQuery', () => {
     });
 
     it('cursor 없이 호출하면 최신순으로 첫 페이지를 반환한다', async () => {
-      const s1 = await sources.insert(
-        buildSource({ externalSourceId: 'Notes/pq-cursor-order-1.md' }),
-      );
-      const s2 = await sources.insert(
-        buildSource({ externalSourceId: 'Notes/pq-cursor-order-2.md' }),
-      );
+      const s1 = await sources.insert(buildSource({ externalSourceId: 'Notes/pq-cursor-order-1.md' }));
+      const s2 = await sources.insert(buildSource({ externalSourceId: 'Notes/pq-cursor-order-2.md' }));
       const post1 = buildPost({ sourceId: s1.id });
       const post2 = buildPost({ sourceId: s2.id });
       await posts.insert(post1);
@@ -341,9 +304,7 @@ describe('PostPgDrizzleQuery', () => {
       });
 
       const ids = result.map((p) => p.postId);
-      expect(ids.indexOf(exactPost.id)).toBeLessThan(
-        ids.indexOf(partialPost.id),
-      );
+      expect(ids.indexOf(exactPost.id)).toBeLessThan(ids.indexOf(partialPost.id));
     });
 
     it('검색 결과를 nextCursor로 다음 페이지 조회한다', async () => {
@@ -450,9 +411,7 @@ describe('PostPgDrizzleQuery', () => {
       });
 
       const ids = result.map((p) => p.postId);
-      expect(ids.indexOf(titleMatch.id)).toBeLessThan(
-        ids.indexOf(contentMatch.id),
-      );
+      expect(ids.indexOf(titleMatch.id)).toBeLessThan(ids.indexOf(contentMatch.id));
     });
 
     it('검색어에 일치하는 post가 없으면 빈 배열을 반환한다', async () => {
@@ -586,9 +545,7 @@ describe('PostPgDrizzleQuery', () => {
       });
 
       const ids = result.map((p) => p.postId);
-      expect(ids.indexOf(bothPost.id)).toBeLessThan(
-        ids.indexOf(ftsOnlyPost.id),
-      );
+      expect(ids.indexOf(bothPost.id)).toBeLessThan(ids.indexOf(ftsOnlyPost.id));
     });
 
     // nocap: library-search-5
@@ -638,9 +595,7 @@ describe('PostPgDrizzleQuery', () => {
       });
 
       const ids = result.map((p) => p.postId);
-      expect(ids.indexOf(titleOnlyPost.id)).toBeLessThan(
-        ids.indexOf(contentBothPost.id),
-      );
+      expect(ids.indexOf(titleOnlyPost.id)).toBeLessThan(ids.indexOf(contentBothPost.id));
     });
 
     it('본문에 검색어가 그대로 있으면 앞뒤 문맥이 포함된 snippet을 반환한다', async () => {
@@ -779,9 +734,7 @@ describe('PostPgDrizzleQuery', () => {
   describe('count', () => {
     it('post를 저장하면 전체 갯수가 증가한다', async () => {
       const before = await postQuery.count();
-      const source = await sources.insert(
-        buildSource({ externalSourceId: 'Notes/post-query-count.md' }),
-      );
+      const source = await sources.insert(buildSource({ externalSourceId: 'Notes/post-query-count.md' }));
       await posts.insert(buildPost({ sourceId: source.id }));
 
       const after = await postQuery.count();

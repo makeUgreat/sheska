@@ -1,11 +1,7 @@
 // @ts-check
 
 function isSqlTaggedTemplate(node) {
-  return (
-    node?.type === 'TaggedTemplateExpression' &&
-    node.tag.type === 'Identifier' &&
-    node.tag.name === 'sql'
-  );
+  return node?.type === 'TaggedTemplateExpression' && node.tag.type === 'Identifier' && node.tag.name === 'sql';
 }
 
 function isExecuteCall(node) {
@@ -62,7 +58,7 @@ export default {
     },
     messages: {
       verbNotSameLine:
-        'Keep the leading SQL verb and the next token on the same line — @opentelemetry/instrumentation-pg parses this query\'s operation name as {{ operation }}, fragmenting the Prometheus db_operation_name/span-name label. See apps/api/docs/ko/persistence/persistence.md#raw-sql.',
+        "Keep the leading SQL verb and the next token on the same line — @opentelemetry/instrumentation-pg parses this query's operation name as {{ operation }}, fragmenting the Prometheus db_operation_name/span-name label. See apps/api/docs/ko/persistence/persistence.md#raw-sql.",
     },
     schema: [],
   },

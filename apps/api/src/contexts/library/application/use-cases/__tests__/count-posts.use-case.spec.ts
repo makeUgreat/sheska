@@ -46,12 +46,8 @@ function createPostQueryMock(): PostQueryMock {
   return {
     get: vi.fn<PostQuery['get']>().mockResolvedValue(null as never),
     find: vi.fn<PostQuery['find']>().mockResolvedValue(null),
-    paginate: vi
-      .fn<PostQuery['paginate']>()
-      .mockResolvedValue({ posts: [], nextCursor: null }),
-    search: vi
-      .fn<PostQuery['search']>()
-      .mockResolvedValue({ posts: [], nextCursor: null }),
+    paginate: vi.fn<PostQuery['paginate']>().mockResolvedValue({ posts: [], nextCursor: null }),
+    search: vi.fn<PostQuery['search']>().mockResolvedValue({ posts: [], nextCursor: null }),
     count: vi.fn<PostQuery['count']>().mockResolvedValue(0),
   };
 }

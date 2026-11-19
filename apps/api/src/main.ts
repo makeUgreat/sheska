@@ -11,9 +11,7 @@ async function bootstrap() {
   app.useLogger(app.get(Logger));
   app.enableShutdownHooks();
 
-  const { port, corsOrigins } = app.get<ConfigType<typeof httpConfig>>(
-    httpConfig.KEY,
-  );
+  const { port, corsOrigins } = app.get<ConfigType<typeof httpConfig>>(httpConfig.KEY);
   app.enableCors({ origin: corsOrigins, credentials: true });
   await app.listen(port);
 }

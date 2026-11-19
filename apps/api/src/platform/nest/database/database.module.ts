@@ -1,10 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import { DATABASE_TOKENS } from '@kernels/infrastructure';
-import {
-  DrizzlePostgresProvider,
-  type DrizzlePostgresProviderOptions,
-} from './drizzle-postgres.provider';
+import { DrizzlePostgresProvider, type DrizzlePostgresProviderOptions } from './drizzle-postgres.provider';
 import { databaseConfig } from './database.config';
 
 const DRIZZLE_POSTGRES_PROVIDER = Symbol('DRIZZLE_POSTGRES_PROVIDER');
@@ -14,9 +11,7 @@ const DRIZZLE_POSTGRES_PROVIDER = Symbol('DRIZZLE_POSTGRES_PROVIDER');
   providers: [
     {
       provide: DRIZZLE_POSTGRES_PROVIDER,
-      useFactory: (
-        config: ConfigType<typeof databaseConfig>,
-      ): DrizzlePostgresProvider => {
+      useFactory: (config: ConfigType<typeof databaseConfig>): DrizzlePostgresProvider => {
         const options: DrizzlePostgresProviderOptions = {
           databaseUrl: config.databaseUrl,
         };

@@ -1,14 +1,7 @@
 import { type FormEvent, type Ref, useState } from 'react';
 import { type PostSummary } from '@/entities/post';
 import { formatDate } from '@/shared/lib';
-import {
-  ArchiveIndex,
-  EmptyState,
-  EndOfList,
-  ErrorState,
-  LoadingState,
-  PeekLayout,
-} from '@/shared/ui';
+import { ArchiveIndex, EmptyState, EndOfList, ErrorState, LoadingState, PeekLayout } from '@/shared/ui';
 
 const ARCHIVE_SPACING = 'mt-16';
 
@@ -35,9 +28,7 @@ function Highlighted({ text, query }: { text: string; query: string }) {
   return (
     <>
       {text.slice(0, index)}
-      <mark className="bg-accent/15 text-inherit">
-        {text.slice(index, index + query.length)}
-      </mark>
+      <mark className="bg-accent/15 text-inherit">{text.slice(index, index + query.length)}</mark>
       {text.slice(index + query.length)}
     </>
   );
@@ -60,8 +51,7 @@ export function PostsListSection({
   const isSearching = search.normalizedQuery.length > 0;
   const highlight = isSearching ? search.normalizedQuery : '';
   const posts = state.status === 'success' ? state.posts : [];
-  const activePost =
-    posts.find((post) => post.postId === activeId) ?? posts.at(0);
+  const activePost = posts.find((post) => post.postId === activeId) ?? posts.at(0);
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -70,11 +60,7 @@ export function PostsListSection({
 
   return (
     <section id="posts" className="px-4 pb-32 pt-16">
-      <PeekLayout
-        peek={
-          activePost && <PostPeek post={activePost} highlight={highlight} />
-        }
-      >
+      <PeekLayout peek={activePost && <PostPeek post={activePost} highlight={highlight} />}>
         <h1 className="text-body-md font-semibold text-text-primary">Posts</h1>
 
         <form className="mt-6" role="search" onSubmit={handleSubmit}>
@@ -111,11 +97,7 @@ export function PostsListSection({
             <ErrorState error={state.error} />
           ) : state.status === 'empty' ? (
             isSearching ? (
-              <EmptyState
-                variant="search"
-                query={search.normalizedQuery}
-                className={ARCHIVE_SPACING}
-              />
+              <EmptyState variant="search" query={search.normalizedQuery} className={ARCHIVE_SPACING} />
             ) : (
               <EmptyState variant="list" className={ARCHIVE_SPACING} />
             )
@@ -127,23 +109,13 @@ export function PostsListSection({
                   href: `/posts/${post.postId}`,
                   title: <Highlighted text={post.title} query={highlight} />,
                   date: post.createdAt,
-                  detail: post.snippet && (
-                    <Highlighted text={post.snippet} query={highlight} />
-                  ),
+                  detail: post.snippet && <Highlighted text={post.snippet} query={highlight} />,
                 }))}
                 onActivate={setActiveId}
               />
-              <div
-                ref={state.sentinelRef}
-                className="h-px"
-                aria-hidden="true"
-              />
-              {state.isFetchingNextPage && (
-                <LoadingState className={ARCHIVE_SPACING} />
-              )}
-              {!state.hasNextPage && (
-                <EndOfList label="End of posts" className={ARCHIVE_SPACING} />
-              )}
+              <div ref={state.sentinelRef} className="h-px" aria-hidden="true" />
+              {state.isFetchingNextPage && <LoadingState className={ARCHIVE_SPACING} />}
+              {!state.hasNextPage && <EndOfList label="End of posts" className={ARCHIVE_SPACING} />}
             </>
           )}
         </div>
@@ -152,13 +124,7 @@ export function PostsListSection({
   );
 }
 
-function PostPeek({
-  post,
-  highlight,
-}: {
-  post: PostSummary;
-  highlight: string;
-}) {
+function PostPeek({ post, highlight }: { post: PostSummary; highlight: string }) {
   return (
     <div>
       <p className="font-mono text-label-sm tracking-normal text-text-muted">

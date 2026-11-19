@@ -17,11 +17,7 @@ export function readSessionCookie(request: Request): string | null {
   return parse(header)[SESSION_COOKIE_NAME] ?? null;
 }
 
-export function writeSessionCookie(
-  response: Response,
-  token: string,
-  expiresAt: Date,
-): void {
+export function writeSessionCookie(response: Response, token: string, expiresAt: Date): void {
   response.cookie(SESSION_COOKIE_NAME, token, {
     ...SESSION_COOKIE_OPTIONS,
     expires: expiresAt,

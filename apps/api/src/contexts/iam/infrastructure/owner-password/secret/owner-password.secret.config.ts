@@ -7,21 +7,12 @@ const ownerPasswordEnvSchema = z.object({
   OWNER_PASSWORD: z.string().min(8),
 });
 
-export const ownerPasswordSecretConfig = registerAs(
-  'ownerPasswordSecret',
-  () => {
-    const result = ownerPasswordEnvSchema.safeParse(
-      withFileSecrets(process.env, ['OWNER_PASSWORD']),
-    );
-    if (!result.success) {
-      throw new Error(
-        `Invalid owner password configuration.\n${z.prettifyError(result.error)}`,
-      );
-    }
-    return { password: result.data.OWNER_PASSWORD };
-  },
-);
+export const ownerPasswordSecretConfig = registerAs('ownerPasswordSecret', () => {
+  const result = ownerPasswordEnvSchema.safeParse(withFileSecrets(process.env, ['OWNER_PASSWORD']));
+  if (!result.success) {
+    throw new Error(`Invalid owner password configuration.\n${z.prettifyError(result.error)}`);
+  }
+  return { password: result.data.OWNER_PASSWORD };
+});
 
-export type OwnerPasswordSecretConfig = ConfigType<
-  typeof ownerPasswordSecretConfig
->;
+export type OwnerPasswordSecretConfig = ConfigType<typeof ownerPasswordSecretConfig>;

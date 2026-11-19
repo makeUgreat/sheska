@@ -3,14 +3,7 @@ const docs = {
 };
 
 // FSD 레이어는 디렉터리 접두사 번호가 곧 순위다. 상위 번호가 상위 레이어.
-const LAYERS = [
-  '01_app',
-  '02_pages',
-  '03_widgets',
-  '04_features',
-  '05_entities',
-  '06_shared',
-];
+const LAYERS = ['01_app', '02_pages', '03_widgets', '04_features', '05_entities', '06_shared'];
 
 const SLICED_LAYERS = ['02_pages', '03_widgets', '04_features', '05_entities'];
 
@@ -113,9 +106,4 @@ function sharedModuleRules() {
   ];
 }
 
-module.exports = [
-  ...upwardImportRules(),
-  ...sliceIsolationRules(),
-  ...publicApiRules(),
-  ...sharedModuleRules(),
-];
+module.exports = [...upwardImportRules(), ...sliceIsolationRules(), ...publicApiRules(), ...sharedModuleRules()];

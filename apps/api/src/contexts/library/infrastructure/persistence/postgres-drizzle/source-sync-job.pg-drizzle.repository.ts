@@ -1,15 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
 import { ConstraintViolationError, NotFoundError } from '@core/errors';
-import {
-  type SourceSyncJob,
-  type SourceSyncJobRepository,
-} from '@contexts/library/domain';
-import {
-  classifyPostgresError,
-  DATABASE_TOKENS,
-  type PgDrizzleSession,
-} from '@kernels/infrastructure';
+import { type SourceSyncJob, type SourceSyncJobRepository } from '@contexts/library/domain';
+import { classifyPostgresError, DATABASE_TOKENS, type PgDrizzleSession } from '@kernels/infrastructure';
 import * as schema from './schema';
 import { SourceSyncJobPgDrizzleMapper } from './source-sync-job.pg-drizzle.mapper';
 
@@ -43,9 +36,7 @@ export class SourceSyncJobPgDrizzleRepository implements SourceSyncJobRepository
     return row ? SourceSyncJobPgDrizzleMapper.toDomain(row) : null;
   }
 
-  async findLatest(criteria: {
-    sourceId: string;
-  }): Promise<SourceSyncJob | null> {
+  async findLatest(criteria: { sourceId: string }): Promise<SourceSyncJob | null> {
     const row = await this.db
       .select()
       .from(schema.sourceSyncJobs)
@@ -62,17 +53,13 @@ export class SourceSyncJobPgDrizzleRepository implements SourceSyncJobRepository
     let row: schema.SourceSyncJobRow;
 
     try {
-      [row] = await this.db
-        .insert(schema.sourceSyncJobs)
-        .values(insert)
-        .returning();
+      [row] = await this.db.insert(schema.sourceSyncJobs).values(insert).returning();
     } catch (error: unknown) {
       const ErrorClass = classifyPostgresError(error);
       if (ErrorClass === ConstraintViolationError) {
         throw new ConstraintViolationError({
           code: 'source_sync_job.already_active',
-          message:
-            'An active sync job for the same source and fingerprint already exists',
+          message: 'An active sync job for the same source and fingerprint already exists',
           details: {
             sourceId: insert.sourceId,
             fingerprint: insert.fingerprint,

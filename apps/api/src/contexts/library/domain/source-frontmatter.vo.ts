@@ -10,9 +10,7 @@ export type SourceFrontmatterValue =
   | SourceFrontmatterValue[]
   | { readonly [key: string]: SourceFrontmatterValue };
 
-export type SourceFrontmatterProps = Readonly<
-  Record<string, SourceFrontmatterValue>
->;
+export type SourceFrontmatterProps = Readonly<Record<string, SourceFrontmatterValue>>;
 
 export class SourceFrontmatter extends ValueObject<SourceFrontmatterProps> {
   private constructor(props: SourceFrontmatterProps) {

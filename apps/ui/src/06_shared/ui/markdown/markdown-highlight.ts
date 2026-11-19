@@ -33,7 +33,4 @@ const LANGUAGES = {
 };
 
 /** 이 module은 gzip 기준 70KB에 가깝다. Entry bundle에서 떼어내 필요할 때만 받는다. */
-export const highlightPlugin: RehypePlugins[number] = [
-  rehypeHighlight,
-  { languages: LANGUAGES },
-];
+export const highlightPlugin: RehypePlugins[number] = [rehypeHighlight, { languages: LANGUAGES }];

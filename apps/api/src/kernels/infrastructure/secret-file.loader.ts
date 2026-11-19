@@ -1,9 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-export function withFileSecrets(
-  env: Record<string, unknown>,
-  names: readonly string[],
-): Record<string, unknown> {
+export function withFileSecrets(env: Record<string, unknown>, names: readonly string[]): Record<string, unknown> {
   const secretsFromFiles: Record<string, string> = {};
 
   for (const name of names) {

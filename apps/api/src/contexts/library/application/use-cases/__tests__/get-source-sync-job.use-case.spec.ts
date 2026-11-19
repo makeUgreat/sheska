@@ -22,15 +22,9 @@ describe('GetSourceSyncJobUseCase', () => {
     const progress = {
       find: vi.fn().mockResolvedValue({ totalChunks: 3, processedChunks: 2 }),
     };
-    const useCase = new GetSourceSyncJobUseCase(
-      syncJobs as never,
-      progress,
-      logger,
-    );
+    const useCase = new GetSourceSyncJobUseCase(syncJobs as never, progress, logger);
 
-    await expect(
-      useCase.execute({ syncJobId: 'sync-job-1' }),
-    ).resolves.toMatchObject({
+    await expect(useCase.execute({ syncJobId: 'sync-job-1' })).resolves.toMatchObject({
       syncJobId: 'sync-job-1',
       sourceId: 'source-1',
       fingerprint: 'fingerprint-1',
@@ -53,9 +47,7 @@ describe('GetSourceSyncJobUseCase', () => {
       logger,
     );
 
-    await expect(
-      useCase.execute({ syncJobId: 'sync-job-1' }),
-    ).resolves.toMatchObject({
+    await expect(useCase.execute({ syncJobId: 'sync-job-1' })).resolves.toMatchObject({
       status: 'waiting',
       totalChunks: null,
       processedChunks: null,
@@ -76,9 +68,7 @@ describe('GetSourceSyncJobUseCase', () => {
       logger,
     );
 
-    await expect(
-      useCase.execute({ syncJobId: 'sync-job-1' }),
-    ).resolves.toMatchObject({ totalChunks: 3, processedChunks: null });
+    await expect(useCase.execute({ syncJobId: 'sync-job-1' })).resolves.toMatchObject({ totalChunks: 3, processedChunks: null });
   });
 
   it('workflow progress 조회가 실패하면 저장된 progress로 폴백한다', async () => {
@@ -95,18 +85,12 @@ describe('GetSourceSyncJobUseCase', () => {
       logger,
     );
 
-    await expect(
-      useCase.execute({ syncJobId: 'sync-job-1' }),
-    ).resolves.toMatchObject({
+    await expect(useCase.execute({ syncJobId: 'sync-job-1' })).resolves.toMatchObject({
       status: 'waiting',
       totalChunks: null,
       processedChunks: null,
     });
-    expect(logger.warn).toHaveBeenCalledWith(
-      'Failed to read live sync job progress',
-      progressError,
-      { syncJobId: 'sync-job-1' },
-    );
+    expect(logger.warn).toHaveBeenCalledWith('Failed to read live sync job progress', progressError, { syncJobId: 'sync-job-1' });
   });
 
   it('repository exception을 전파한다', async () => {
@@ -114,11 +98,7 @@ describe('GetSourceSyncJobUseCase', () => {
     const syncJobs = {
       get: vi.fn().mockRejectedValue(error),
     };
-    const useCase = new GetSourceSyncJobUseCase(
-      syncJobs as never,
-      { find: vi.fn() },
-      logger,
-    );
+    const useCase = new GetSourceSyncJobUseCase(syncJobs as never, { find: vi.fn() }, logger);
 
     await expect(useCase.execute({ syncJobId: 'missing' })).rejects.toBe(error);
   });

@@ -59,19 +59,11 @@ function takeTrailingMarker(node: RootContent): string | null {
 }
 
 /** Tight list의 문단은 element로 남지 않으므로 항목 자체가 표시를 받는다. */
-function anchorTarget(
-  parent: Root | (RootContent & MarkdownParent),
-  node: RootContent,
-): RootContent | Root {
-  return parent.type === 'listItem' && node.type === 'paragraph'
-    ? parent
-    : node;
+function anchorTarget(parent: Root | (RootContent & MarkdownParent), node: RootContent): RootContent | Root {
+  return parent.type === 'listItem' && node.type === 'paragraph' ? parent : node;
 }
 
-function markerOwner(
-  parent: Root | (RootContent & MarkdownParent),
-  previous: RootContent | undefined,
-): RootContent | Root | undefined {
+function markerOwner(parent: Root | (RootContent & MarkdownParent), previous: RootContent | undefined): RootContent | Root | undefined {
   if (parent.type === 'table') return parent;
   return previous && anchorTarget(parent, previous);
 }

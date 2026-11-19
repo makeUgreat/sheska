@@ -1,16 +1,9 @@
-import {
-  type CanActivate,
-  type ExecutionContext,
-  Injectable,
-} from '@nestjs/common';
+import { type CanActivate, type ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { type Request } from 'express';
 import { UnexpectedError } from '@core/errors';
 import { ROUTE_ACCESS, type RouteAccess } from '@kernels/presentation';
-import {
-  AuthenticateRequestUseCase,
-  type Credential,
-} from '@contexts/iam/application/use-cases/authenticate-request.use-case';
+import { AuthenticateRequestUseCase, type Credential } from '@contexts/iam/application/use-cases/authenticate-request.use-case';
 import { AuthorizeRequestUseCase } from '@contexts/iam/application/use-cases/authorize-request.use-case';
 import { readSessionCookie } from './session.cookie';
 
@@ -25,10 +18,7 @@ export class AccessHttpGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const access = this.reflector.getAllAndOverride<RouteAccess | undefined>(
-      ROUTE_ACCESS,
-      [context.getHandler(), context.getClass()],
-    );
+    const access = this.reflector.getAllAndOverride<RouteAccess | undefined>(ROUTE_ACCESS, [context.getHandler(), context.getClass()]);
     if (access === undefined) {
       throw new UnexpectedError({
         code: 'auth.route_access_undeclared',
@@ -39,9 +29,7 @@ export class AccessHttpGuard implements CanActivate {
     if (access.kind === 'public') return true;
 
     const identity = await this.authenticateRequest.execute({
-      credential: readCredentialPreferringBearer(
-        context.switchToHttp().getRequest<Request>(),
-      ),
+      credential: readCredentialPreferringBearer(context.switchToHttp().getRequest<Request>()),
     });
     this.authorizeRequest.execute({
       identity,
@@ -60,7 +48,5 @@ function readCredentialPreferringBearer(request: Request): Credential | null {
     };
   }
   const sessionToken = readSessionCookie(request);
-  return sessionToken === null
-    ? null
-    : { type: 'session', token: sessionToken };
+  return sessionToken === null ? null : { type: 'session', token: sessionToken };
 }

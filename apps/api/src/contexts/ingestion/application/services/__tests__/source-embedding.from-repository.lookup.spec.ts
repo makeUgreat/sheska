@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  SourceEmbedding,
-  type SourceEmbeddingRepository,
-} from '@contexts/ingestion/domain';
+import { SourceEmbedding, type SourceEmbeddingRepository } from '@contexts/ingestion/domain';
 import { SourceEmbeddingFromRepositoryLookup } from '../source-embedding.from-repository.lookup';
 
 const fakeEmbedding = Array.from({ length: 1024 }, () => 0.1);
@@ -18,13 +15,9 @@ describe('SourceEmbeddingFromRepositoryLookup', () => {
       const sourceEmbedding = SourceEmbedding.create({
         sourceId: 'source-1',
         model: fakeModel,
-        chunks: [
-          { chunkIndex: 0, chunkContent: 'chunk', embedding: fakeEmbedding },
-        ],
+        chunks: [{ chunkIndex: 0, chunkContent: 'chunk', embedding: fakeEmbedding }],
       });
-      const repository = buildMockRepository(
-        vi.fn().mockResolvedValue(sourceEmbedding),
-      );
+      const repository = buildMockRepository(vi.fn().mockResolvedValue(sourceEmbedding));
       const service = new SourceEmbeddingFromRepositoryLookup(repository);
 
       const result = await service.find({ sourceId: 'source-1' });

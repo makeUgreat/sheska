@@ -1,36 +1,11 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Header,
-  HttpCode,
-  HttpStatus,
-  Post,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Header, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/common';
 import { type Request, type Response } from 'express';
-import {
-  type ApiRequest,
-  type ApiResponse,
-  AuthApi,
-  PERMISSION,
-} from '@sheska/contract';
-import {
-  ErrorCodes,
-  Permission,
-  Public,
-  ZodValidationPipe,
-} from '@kernels/presentation';
+import { type ApiRequest, type ApiResponse, AuthApi, PERMISSION } from '@sheska/contract';
+import { ErrorCodes, Permission, Public, ZodValidationPipe } from '@kernels/presentation';
 import { GetSessionUseCase } from '@contexts/iam/application/use-cases/get-session.use-case';
 import { LogInUseCase } from '@contexts/iam/application/use-cases/log-in.use-case';
 import { LogOutUseCase } from '@contexts/iam/application/use-cases/log-out.use-case';
-import {
-  clearSessionCookie,
-  readSessionCookie,
-  writeSessionCookie,
-} from './session.cookie';
+import { clearSessionCookie, readSessionCookie, writeSessionCookie } from './session.cookie';
 
 @Controller()
 export class AuthHttpController {
@@ -63,10 +38,7 @@ export class AuthHttpController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @Header('Cache-Control', 'no-store')
   @ErrorCodes(AuthApi.logOut.errors)
-  async logOut(
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response,
-  ): Promise<void> {
+  async logOut(@Req() request: Request, @Res({ passthrough: true }) response: Response): Promise<void> {
     await this.logOutUseCase.execute({
       sessionToken: readSessionCookie(request),
     });
@@ -77,15 +49,11 @@ export class AuthHttpController {
   @Public()
   @Header('Cache-Control', 'no-store')
   @ErrorCodes(AuthApi.session.errors)
-  async session(
-    @Req() request: Request,
-  ): Promise<ApiResponse<typeof AuthApi.session>> {
+  async session(@Req() request: Request): Promise<ApiResponse<typeof AuthApi.session>> {
     const result = await this.getSessionUseCase.execute({
       sessionToken: readSessionCookie(request),
     });
-    return AuthApi.session.response.parse(
-      result satisfies ApiResponse<typeof AuthApi.session>,
-    );
+    return AuthApi.session.response.parse(result satisfies ApiResponse<typeof AuthApi.session>);
   }
 
   @Get(AuthApi.syncCheck.path)

@@ -24,32 +24,20 @@ export function defineApi<const T extends ApiContract>(api: T): T {
   return api;
 }
 
-export type ApiQuery<T extends ApiContract> = T['query'] extends z.ZodType
-  ? z.input<T['query']>
-  : never;
+export type ApiQuery<T extends ApiContract> = T['query'] extends z.ZodType ? z.input<T['query']> : never;
 
-export type ApiRequest<T extends ApiContract> = T['request'] extends z.ZodType
-  ? z.input<T['request']>
-  : never;
+export type ApiRequest<T extends ApiContract> = T['request'] extends z.ZodType ? z.input<T['request']> : never;
 
-export type ApiResponse<T extends ApiContract> = T['response'] extends z.ZodType
-  ? z.infer<T['response']>
-  : never;
+export type ApiResponse<T extends ApiContract> = T['response'] extends z.ZodType ? z.infer<T['response']> : never;
 
 export type ApiErrorCode<T extends ApiContract> = T['errors'][number];
 
-type PathParam<P extends string> =
-  P extends `${string}:${infer Name}/${infer Rest}`
-    ? Name | PathParam<`/${Rest}`>
-    : P extends `${string}:${infer Name}`
-      ? Name
-      : never;
+type PathParam<P extends string> = P extends `${string}:${infer Name}/${infer Rest}`
+  ? Name | PathParam<`/${Rest}`>
+  : P extends `${string}:${infer Name}`
+    ? Name
+    : never;
 
-export function pathOf<T extends ApiContract>(
-  api: T,
-  params: Record<PathParam<T['path']>, string>,
-): string {
-  return api.path.replace(/:(\w+)/g, (_, name: string) =>
-    encodeURIComponent((params as Record<string, string>)[name]),
-  );
+export function pathOf<T extends ApiContract>(api: T, params: Record<PathParam<T['path']>, string>): string {
+  return api.path.replace(/:(\w+)/g, (_, name: string) => encodeURIComponent((params as Record<string, string>)[name]));
 }
