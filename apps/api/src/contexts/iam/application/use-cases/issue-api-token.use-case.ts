@@ -3,6 +3,7 @@ import { type ApiTokenQueryListItem } from '@contexts/iam/application/ports';
 import {
   ApiToken,
   ApiTokenName,
+  ApiTokenPermissions,
   type ApiTokenRepository,
   ApiTokenSecret,
 } from '@contexts/iam/domain';
@@ -10,6 +11,7 @@ import { API_TOKEN_REPOSITORY } from '@contexts/iam/iam.di-tokens';
 
 export interface IssueApiTokenCommand {
   readonly name: string;
+  readonly permissions: readonly string[];
 }
 
 export interface IssueApiTokenResult extends ApiTokenQueryListItem {
@@ -28,6 +30,7 @@ export class IssueApiTokenUseCase {
     const apiToken = ApiToken.create({
       name: ApiTokenName.of(command.name),
       secret,
+      permissions: ApiTokenPermissions.of(command.permissions),
     });
 
     const saved = await this.apiTokens.insert(apiToken);
@@ -37,6 +40,7 @@ export class IssueApiTokenUseCase {
       apiTokenId: saved.id,
       name: props.name.unpack(),
       hint: props.hint,
+      permissions: props.permissions.unpack(),
       createdAt: saved.createdAt,
       lastUsedAt: props.lastUsedAt,
       token: secret.unpack(),

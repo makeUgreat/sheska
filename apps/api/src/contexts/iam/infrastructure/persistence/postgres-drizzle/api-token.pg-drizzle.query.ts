@@ -25,6 +25,7 @@ export class ApiTokenPgDrizzleQuery implements ApiTokenQuery {
           apiTokenId: schema.apiTokens.id,
           name: schema.apiTokens.name,
           hint: schema.apiTokens.hint,
+          permissions: schema.apiTokens.permissions,
           createdAt: schema.apiTokens.createdAt,
           lastUsedAt: schema.apiTokens.lastUsedAt,
         })

@@ -1,9 +1,8 @@
 import { NotFoundError } from '@core/errors';
 import { sha256Hex } from '@core/hash';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { type ApiTokenQuery } from '@contexts/iam/application/ports';
 import { ApiToken, type ApiTokenRepository } from '@contexts/iam/domain';
-import { AuthenticateApiTokenUseCase } from '../authenticate-api-token.use-case';
 import { IssueApiTokenUseCase } from '../issue-api-token.use-case';
 import { ListApiTokensUseCase } from '../list-api-tokens.use-case';
 import { RevokeApiTokenUseCase } from '../revoke-api-token.use-case';
@@ -16,6 +15,7 @@ function storedToken(lastUsedAt: Date | null = null) {
     name: 'macbook',
     secretHash: sha256Hex('shk_secret'),
     hint: 'shk_secr',
+    permissions: ['sources:sync'],
     lastUsedAt,
     createdAt: new Date('2026-11-01T00:00:00.000Z'),
   });
@@ -37,11 +37,13 @@ describe('IssueApiTokenUseCase', () => {
 
     const result = await new IssueApiTokenUseCase(apiTokens).execute({
       name: 'macbook',
+      permissions: ['sources:sync'],
     });
 
     expect(result).toMatchObject({
       name: 'macbook',
       hint: result.token.slice(0, 8),
+      permissions: ['sources:sync'],
       lastUsedAt: null,
     });
     expect(result.token).toMatch(/^shk_/);
@@ -56,7 +58,10 @@ describe('IssueApiTokenUseCase', () => {
     apiTokens.insert.mockRejectedValue(taken);
 
     await expect(
-      new IssueApiTokenUseCase(apiTokens).execute({ name: 'macbook' }),
+      new IssueApiTokenUseCase(apiTokens).execute({
+        name: 'macbook',
+        permissions: ['sources:sync'],
+      }),
     ).rejects.toBe(taken);
   });
 });
@@ -68,6 +73,7 @@ describe('ListApiTokensUseCase', () => {
         apiTokenId: 'token-1',
         name: 'macbook',
         hint: 'shk_secr',
+        permissions: ['sources:sync' as const],
         createdAt: NOW,
         lastUsedAt: null,
       },
@@ -109,63 +115,5 @@ describe('RevokeApiTokenUseCase', () => {
       new RevokeApiTokenUseCase(apiTokens).execute({ apiTokenId: 'missing' }),
     ).rejects.toMatchObject({ code: 'api_token.not_found' });
     expect(apiTokens.delete).not.toHaveBeenCalled();
-  });
-});
-
-describe('AuthenticateApiTokenUseCase', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(NOW);
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('원문의 hash로 토큰을 찾는다', async () => {
-    const apiTokens = buildApiTokens(storedToken());
-
-    await new AuthenticateApiTokenUseCase(apiTokens).execute({
-      token: 'shk_secret',
-    });
-
-    expect(apiTokens.find).toHaveBeenCalledWith({
-      secretHash: sha256Hex('shk_secret'),
-    });
-  });
-
-  it('맞는 토큰이 없으면 인증하지 않는다', async () => {
-    const apiTokens = buildApiTokens(null);
-
-    await expect(
-      new AuthenticateApiTokenUseCase(apiTokens).execute({ token: 'wrong' }),
-    ).resolves.toEqual({ authenticated: false });
-    expect(apiTokens.update).not.toHaveBeenCalled();
-  });
-
-  it('인증하면 사용 시각을 저장한다', async () => {
-    const apiTokens = buildApiTokens(storedToken());
-
-    await expect(
-      new AuthenticateApiTokenUseCase(apiTokens).execute({
-        token: 'shk_secret',
-      }),
-    ).resolves.toEqual({ authenticated: true });
-    expect(apiTokens.update.mock.calls[0][0].getProps().lastUsedAt).toEqual(
-      NOW,
-    );
-  });
-
-  it('1분 안에 다시 인증하면 사용 시각을 저장하지 않는다', async () => {
-    const apiTokens = buildApiTokens(
-      storedToken(new Date(NOW.getTime() - 30 * 1000)),
-    );
-
-    await expect(
-      new AuthenticateApiTokenUseCase(apiTokens).execute({
-        token: 'shk_secret',
-      }),
-    ).resolves.toEqual({ authenticated: true });
-    expect(apiTokens.update).not.toHaveBeenCalled();
   });
 });

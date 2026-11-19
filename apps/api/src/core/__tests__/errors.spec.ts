@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ForbiddenError,
   BadResponseError,
   ConcurrencyConflictError,
   ConstraintViolationError,
@@ -22,6 +23,7 @@ const ERROR_CLASSES = [
   ValidationFailedError,
   NotFoundError,
   UnauthenticatedError,
+  ForbiddenError,
   RateLimitedError,
   StateConflictError,
   ConstraintViolationError,

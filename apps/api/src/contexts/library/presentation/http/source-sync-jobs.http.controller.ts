@@ -1,6 +1,10 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { type ApiResponse, SourceSyncJobApi } from '@sheska/contract';
-import { ErrorCodes } from '@kernels/presentation';
+import {
+  type ApiResponse,
+  SourceSyncJobApi,
+  PERMISSION,
+} from '@sheska/contract';
+import { ErrorCodes, Permission } from '@kernels/presentation';
 import { GetSourceSyncJobUseCase } from '@contexts/library/application/use-cases/get-source-sync-job.use-case';
 
 @Controller()
@@ -8,6 +12,7 @@ export class SourceSyncJobsHttpController {
   constructor(private readonly getSourceSyncJob: GetSourceSyncJobUseCase) {}
 
   @Get(SourceSyncJobApi.get.path)
+  @Permission(PERMISSION.SOURCES_SYNC)
   @ErrorCodes(SourceSyncJobApi.get.errors)
   async get(
     @Param('id') id: string,

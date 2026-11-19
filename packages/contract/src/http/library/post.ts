@@ -1,5 +1,6 @@
 import * as z from 'zod';
 import { defineApi } from '../api.js';
+import { AuthErrorCode } from '../iam/auth.js';
 import { CommonErrorCode } from '../error.js';
 import { SourceErrorCode } from './source.js';
 
@@ -114,6 +115,8 @@ export const PostApi = {
       CommonErrorCode.VALIDATION_FAILED,
       SourceErrorCode.NOT_FOUND,
       PostErrorCode.ALREADY_EXISTS,
+      AuthErrorCode.UNAUTHENTICATED,
+      AuthErrorCode.FORBIDDEN,
     ],
   }),
 };

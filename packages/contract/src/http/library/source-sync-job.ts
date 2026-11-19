@@ -1,5 +1,6 @@
 import * as z from 'zod';
 import { defineApi } from '../api.js';
+import { AuthErrorCode } from '../iam/auth.js';
 
 /** 저장된 sync job 상태. 대기(`waiting`), 완료(`completed`), 실패(`failed`) 중 하나다. */
 const storedStatusSchema = z.enum(['waiting', 'completed', 'failed']);
@@ -54,6 +55,10 @@ export const SourceSyncJobApi = {
     method: 'GET',
     path: '/sync-jobs/:id',
     response: syncJobSchema,
-    errors: [SourceSyncJobErrorCode.NOT_FOUND],
+    errors: [
+      SourceSyncJobErrorCode.NOT_FOUND,
+      AuthErrorCode.UNAUTHENTICATED,
+      AuthErrorCode.FORBIDDEN,
+    ],
   }),
 };

@@ -9,8 +9,17 @@ import {
   Query,
 } from '@nestjs/common';
 import { type z } from 'zod';
-import { type ApiRequest, type ApiResponse, SourceApi } from '@sheska/contract';
-import { ErrorCodes, ZodValidationPipe } from '@kernels/presentation';
+import {
+  type ApiRequest,
+  type ApiResponse,
+  SourceApi,
+  PERMISSION,
+} from '@sheska/contract';
+import {
+  ErrorCodes,
+  Permission,
+  ZodValidationPipe,
+} from '@kernels/presentation';
 import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upload-source.use-case';
 import { ListSourcesUseCase } from '@contexts/library/application/use-cases/list-sources.use-case';
 import { GetSourceUseCase } from '@contexts/library/application/use-cases/get-source.use-case';
@@ -27,6 +36,7 @@ export class SourcesHttpController {
   ) {}
 
   @Get(SourceApi.list.path)
+  @Permission(PERMISSION.SOURCES_READ)
   @ErrorCodes(SourceApi.list.errors)
   async list(
     @Query(new ZodValidationPipe(SourceApi.list.query))
@@ -44,6 +54,7 @@ export class SourcesHttpController {
   }
 
   @Get(SourceApi.get.path)
+  @Permission(PERMISSION.SOURCES_READ)
   @ErrorCodes(SourceApi.get.errors)
   async get(
     @Param('id') id: string,
@@ -66,6 +77,7 @@ export class SourcesHttpController {
   }
 
   @Post(SourceApi.upload.path)
+  @Permission(PERMISSION.SOURCES_SYNC)
   @HttpCode(HttpStatus.CREATED)
   @ErrorCodes(SourceApi.upload.errors)
   async upload(

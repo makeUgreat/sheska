@@ -5,6 +5,7 @@ import { type ApiTokenQuery } from '@contexts/iam/application/ports';
 import {
   ApiToken,
   ApiTokenName,
+  ApiTokenPermissions,
   type ApiTokenRepository,
   ApiTokenSecret,
 } from '@contexts/iam/domain';
@@ -14,10 +15,14 @@ import {
 } from '@contexts/iam/iam.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
 
-function buildApiToken(name: string) {
+function buildApiToken(name: string, permissions: string[] = ['sources:sync']) {
   const secret = ApiTokenSecret.generate();
   return {
-    apiToken: ApiToken.create({ name: ApiTokenName.of(name), secret }),
+    apiToken: ApiToken.create({
+      name: ApiTokenName.of(name),
+      secret,
+      permissions: ApiTokenPermissions.of(permissions),
+    }),
     secret,
   };
 }
@@ -49,6 +54,21 @@ describe('ApiTokenPgDrizzleRepository', () => {
 
     expect(found?.id).toBe(apiToken.id);
     expect(found?.getProps().name.unpack()).toBe('repo-find');
+  });
+
+  it('권한을 저장하고 같은 순서로 복원한다', async () => {
+    const { apiToken } = buildApiToken('repo-permissions', [
+      'posts:publish',
+      'sources:sync',
+    ]);
+    await apiTokens.insert(apiToken);
+
+    const stored = await apiTokens.get({ id: apiToken.id });
+
+    expect(stored.getProps().permissions.unpack()).toEqual([
+      'posts:publish',
+      'sources:sync',
+    ]);
   });
 
   it('맞는 hash가 없으면 null을 준다', async () => {
@@ -145,6 +165,7 @@ describe('ApiTokenPgDrizzleRepository', () => {
           apiTokenId: first.apiToken.id,
           name: 'query-first',
           hint: first.secret.hint(),
+          permissions: ['sources:sync'],
           createdAt: first.apiToken.createdAt,
           lastUsedAt: null,
         },
@@ -152,6 +173,7 @@ describe('ApiTokenPgDrizzleRepository', () => {
           apiTokenId: second.apiToken.id,
           name: 'query-second',
           hint: second.secret.hint(),
+          permissions: ['sources:sync'],
           createdAt: second.apiToken.createdAt,
           lastUsedAt: null,
         },

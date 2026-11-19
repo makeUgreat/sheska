@@ -8,23 +8,26 @@ import {
   HttpStatus,
   Param,
   Post,
-  UseGuards,
 } from '@nestjs/common';
 import {
   type ApiRequest,
   type ApiResponse,
   ApiTokenApi,
   type ApiTokenResponse,
+  PERMISSION,
 } from '@sheska/contract';
-import { ErrorCodes, ZodValidationPipe } from '@kernels/presentation';
+import {
+  ErrorCodes,
+  Permission,
+  ZodValidationPipe,
+} from '@kernels/presentation';
 import { type ApiTokenQueryListItem } from '@contexts/iam/application/ports';
 import { IssueApiTokenUseCase } from '@contexts/iam/application/use-cases/issue-api-token.use-case';
 import { ListApiTokensUseCase } from '@contexts/iam/application/use-cases/list-api-tokens.use-case';
 import { RevokeApiTokenUseCase } from '@contexts/iam/application/use-cases/revoke-api-token.use-case';
-import { SessionGuard } from './session.guard';
 
 @Controller()
-@UseGuards(SessionGuard)
+@Permission(PERMISSION.API_TOKENS_MANAGE)
 export class ApiTokenHttpController {
   constructor(
     private readonly issueApiTokenUseCase: IssueApiTokenUseCase,
@@ -42,6 +45,7 @@ export class ApiTokenHttpController {
   ): Promise<ApiResponse<typeof ApiTokenApi.issue>> {
     const result = await this.issueApiTokenUseCase.execute({
       name: body.name,
+      permissions: body.permissions,
     });
 
     return ApiTokenApi.issue.response.parse({
@@ -74,6 +78,7 @@ function toApiTokenResponse(item: ApiTokenQueryListItem): ApiTokenResponse {
     apiTokenId: item.apiTokenId,
     name: item.name,
     hint: item.hint,
+    permissions: [...item.permissions],
     createdAt: item.createdAt.toISOString(),
     lastUsedAt: item.lastUsedAt?.toISOString() ?? null,
   };

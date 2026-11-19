@@ -3,6 +3,7 @@ export const ERROR_KIND = {
   VALIDATION_FAILED: 'validation_failed',
   NOT_FOUND: 'not_found',
   UNAUTHENTICATED: 'unauthenticated',
+  FORBIDDEN: 'forbidden',
   RATE_LIMITED: 'rate_limited',
   STATE_CONFLICT: 'state_conflict',
   CONSTRAINT_VIOLATION: 'constraint_violation',
@@ -63,6 +64,10 @@ export class NotFoundError extends SheskaError<Record<string, unknown>> {
 
 export class UnauthenticatedError extends SheskaError<Record<string, unknown>> {
   readonly kind = ERROR_KIND.UNAUTHENTICATED;
+}
+
+export class ForbiddenError extends SheskaError<Record<string, unknown>> {
+  readonly kind = ERROR_KIND.FORBIDDEN;
 }
 
 export type RateLimitedDetails = {

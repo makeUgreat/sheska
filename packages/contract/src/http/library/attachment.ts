@@ -1,5 +1,6 @@
 import * as z from 'zod';
 import { defineApi } from '../api.js';
+import { AuthErrorCode } from '../iam/auth.js';
 import { CommonErrorCode } from '../error.js';
 
 export const ATTACHMENT_MAX_BYTES = 20 * 1024 * 1024;
@@ -53,6 +54,8 @@ export const AttachmentApi = {
       AttachmentErrorCode.TOO_LARGE,
       AttachmentErrorCode.TOO_MANY_PIXELS,
       AttachmentErrorCode.CORRUPT_IMAGE,
+      AuthErrorCode.UNAUTHENTICATED,
+      AuthErrorCode.FORBIDDEN,
     ],
   }),
 };

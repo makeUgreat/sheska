@@ -1,5 +1,6 @@
 import * as z from 'zod';
 import { defineApi } from '../api.js';
+import { permissionSchema } from './permission.js';
 import { CommonErrorCode } from '../error.js';
 import { AuthErrorCode } from './auth.js';
 
@@ -20,6 +21,7 @@ const apiTokenSchema = z.object({
   name: z.string(),
   /** 원문의 앞 몇 글자. 어느 토큰인지 알아보는 데만 쓴다. 이것으로 인증할 수 없다. */
   hint: z.string(),
+  permissions: z.array(permissionSchema),
   createdAt: z.iso.datetime(),
   /** 이 토큰으로 인증한 마지막 시각. 한 번도 쓰지 않았으면 `null`이다. */
   lastUsedAt: z.iso.datetime().nullable(),
@@ -36,7 +38,6 @@ export const ApiTokenErrorCode = {
 
 /**
  * 소유자가 플러그인 같은 프로그램에 줄 토큰을 발급하고 폐기하는 API다.
- * 로그인 세션으로만 부를 수 있다. API 토큰으로는 부를 수 없다.
  * 토큰은 요청 헤더 `Authorization: Bearer <token>`으로 보낸다.
  */
 export const ApiTokenApi = {
@@ -44,13 +45,18 @@ export const ApiTokenApi = {
   issue: defineApi({
     method: 'POST',
     path: '/api-tokens',
-    request: z.strictObject({ name: nameSchema }),
+    request: z.strictObject({
+      name: nameSchema,
+      /** 같은 권한은 한 번만 남긴다. */
+      permissions: z.array(permissionSchema).min(1),
+    }),
     response: apiTokenSchema.extend({
       token: z.string().startsWith(API_TOKEN_PREFIX),
     }),
     errors: [
       CommonErrorCode.VALIDATION_FAILED,
       AuthErrorCode.UNAUTHENTICATED,
+      AuthErrorCode.FORBIDDEN,
       ApiTokenErrorCode.NAME_TAKEN,
     ],
   }),
@@ -60,13 +66,17 @@ export const ApiTokenApi = {
     method: 'GET',
     path: '/api-tokens',
     response: z.object({ apiTokens: z.array(apiTokenSchema) }),
-    errors: [AuthErrorCode.UNAUTHENTICATED],
+    errors: [AuthErrorCode.UNAUTHENTICATED, AuthErrorCode.FORBIDDEN],
   }),
 
   /** 204다. 폐기한 토큰은 다음 요청부터 거절한다. */
   revoke: defineApi({
     method: 'DELETE',
     path: '/api-tokens/:id',
-    errors: [AuthErrorCode.UNAUTHENTICATED, ApiTokenErrorCode.NOT_FOUND],
+    errors: [
+      AuthErrorCode.UNAUTHENTICATED,
+      AuthErrorCode.FORBIDDEN,
+      ApiTokenErrorCode.NOT_FOUND,
+    ],
   }),
 };

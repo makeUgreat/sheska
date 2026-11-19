@@ -1,4 +1,5 @@
 import { pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { type Permission } from '@contexts/iam/domain';
 
 export const apiTokens = pgTable(
   'api_tokens',
@@ -7,6 +8,7 @@ export const apiTokens = pgTable(
     name: text('name').notNull(),
     secretHash: text('secret_hash').notNull(),
     hint: text('hint').notNull(),
+    permissions: text('permissions').$type<Permission>().array().notNull(),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()

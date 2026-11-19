@@ -22,8 +22,10 @@ export const AuthErrorCode = {
    * `details.retryAfterSeconds`초가 지나면 다시 시도할 수 있다.
    */
   TOO_MANY_ATTEMPTS: 'auth.too_many_attempts',
-  /** 이 API는 로그인 세션이 있어야 한다. 세션이 없거나 만료됐다. */
+  /** 이 API는 인증이 필요하다. 세션이나 API 토큰이 없거나, 만료됐거나, 폐기됐다. */
   UNAUTHENTICATED: 'auth.unauthenticated',
+  /** 인증은 됐지만 이 API에 필요한 권한이 없다. */
+  FORBIDDEN: 'auth.forbidden',
 } as const;
 
 /** 소유자가 브라우저에서 로그인하고 로그아웃하는 API다. 세션은 `HttpOnly` 쿠키로 주고받는다. */
@@ -53,5 +55,12 @@ export const AuthApi = {
     path: '/auth/session',
     response: sessionSchema,
     errors: [],
+  }),
+
+  /** 204다. 플러그인이 주소와 API 토큰으로 동기화할 수 있는지 확인한다. */
+  syncCheck: defineApi({
+    method: 'GET',
+    path: '/auth/sync-check',
+    errors: [AuthErrorCode.UNAUTHENTICATED, AuthErrorCode.FORBIDDEN],
   }),
 };

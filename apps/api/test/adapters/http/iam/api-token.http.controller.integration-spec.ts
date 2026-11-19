@@ -1,41 +1,67 @@
 import { type Server } from 'node:http';
 import { type INestApplication } from '@nestjs/common';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import { ApiTokenApi, errorResponseSchema } from '@sheska/contract';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ConstraintViolationError, NotFoundError } from '@core/errors';
+import {
+  ConstraintViolationError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthenticatedError,
+} from '@core/errors';
 import { LOGGER } from '@kernels/application';
-import { GetSessionUseCase } from '@contexts/iam/application/use-cases/get-session.use-case';
+import { AuthenticateRequestUseCase } from '@contexts/iam/application/use-cases/authenticate-request.use-case';
+import { AuthorizeRequestUseCase } from '@contexts/iam/application/use-cases/authorize-request.use-case';
 import { IssueApiTokenUseCase } from '@contexts/iam/application/use-cases/issue-api-token.use-case';
 import { ListApiTokensUseCase } from '@contexts/iam/application/use-cases/list-api-tokens.use-case';
 import { RevokeApiTokenUseCase } from '@contexts/iam/application/use-cases/revoke-api-token.use-case';
 import { ApiTokenHttpController } from '@contexts/iam/presentation/http/api-token.http.controller';
+import { AccessHttpGuard } from '@contexts/iam/presentation/http/access.http.guard';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
 import { DeclaredErrorCodesInterceptor } from '@platform/nest/interceptors/declared-error-codes.interceptor';
-
 const SESSION = '__Host-sheska_session=session-token';
+const UNAUTHENTICATED = new UnauthenticatedError({
+  code: 'auth.unauthenticated',
+  message: 'Authentication is required',
+  details: {},
+});
 const CREATED_AT = new Date('2026-11-19T00:00:00.000Z');
 const LAST_USED_AT = new Date('2026-11-19T01:00:00.000Z');
+
+const OWNER = {
+  permissions: [
+    'sources:sync',
+    'sources:read',
+    'posts:publish',
+    'api_tokens:manage',
+  ],
+} as const;
 
 describe('ApiTokenHttpController', () => {
   let app: INestApplication;
   let httpServer: Server;
-  const getSession = vi.fn<GetSessionUseCase['execute']>();
+  const authenticate = vi.fn<AuthenticateRequestUseCase['execute']>();
+  const authorize = vi.fn<AuthorizeRequestUseCase['execute']>();
   const issue = vi.fn<IssueApiTokenUseCase['execute']>();
   const list = vi.fn<ListApiTokensUseCase['execute']>();
   const revoke = vi.fn<RevokeApiTokenUseCase['execute']>();
 
   beforeEach(async () => {
-    for (const mock of [getSession, issue, list, revoke]) mock.mockReset();
-    getSession.mockImplementation(({ sessionToken }) =>
-      Promise.resolve({ authenticated: sessionToken === 'session-token' }),
-    );
+    for (const mock of [authenticate, authorize, issue, list, revoke]) {
+      mock.mockReset();
+    }
+    authenticate.mockResolvedValue(OWNER);
     const testingModule = await Test.createTestingModule({
       controllers: [ApiTokenHttpController],
       providers: [
-        { provide: GetSessionUseCase, useValue: { execute: getSession } },
+        {
+          provide: AuthenticateRequestUseCase,
+          useValue: { execute: authenticate },
+        },
+        { provide: AuthorizeRequestUseCase, useValue: { execute: authorize } },
+        { provide: APP_GUARD, useClass: AccessHttpGuard },
         { provide: IssueApiTokenUseCase, useValue: { execute: issue } },
         { provide: ListApiTokensUseCase, useValue: { execute: list } },
         { provide: RevokeApiTokenUseCase, useValue: { execute: revoke } },
@@ -62,31 +88,31 @@ describe('ApiTokenHttpController', () => {
 
   afterEach(async () => app.close());
 
-  describe('세션 검사', () => {
+  describe('접근 검사', () => {
     it.each([
       ['post', '/api-tokens'],
       ['get', '/api-tokens'],
       ['delete', '/api-tokens/token-1'],
     ] as const)(
-      '%s %s는 세션 쿠키가 없으면 401 auth.unauthenticated이다',
+      '%s %s는 api_tokens:manage 권한을 요구한다',
       async (method, path) => {
-        const response = await request(httpServer)
+        await request(httpServer)
           [method](path)
-          .send({ name: 'macbook' })
-          .expect(401);
+          .set('Cookie', SESSION)
+          .send({ name: 'macbook', permissions: ['sources:sync'] });
 
-        expect(errorResponseSchema.parse(response.body).code).toBe(
-          'auth.unauthenticated',
-        );
-        expect(getSession).toHaveBeenCalledWith({ sessionToken: null });
-        expect(issue).not.toHaveBeenCalled();
-        expect(list).not.toHaveBeenCalled();
-        expect(revoke).not.toHaveBeenCalled();
+        expect(authenticate).toHaveBeenCalledWith({
+          credential: { type: 'session', token: 'session-token' },
+        });
+        expect(authorize).toHaveBeenCalledWith({
+          identity: OWNER,
+          permission: 'api_tokens:manage',
+        });
       },
     );
 
-    it('만료된 세션이면 401 auth.unauthenticated이다', async () => {
-      getSession.mockResolvedValue({ authenticated: false });
+    it('인증하지 못하면 401 auth.unauthenticated이고 처리하지 않는다', async () => {
+      authenticate.mockRejectedValue(UNAUTHENTICATED);
 
       const response = await request(httpServer)
         .get('/api-tokens')
@@ -96,19 +122,25 @@ describe('ApiTokenHttpController', () => {
       expect(errorResponseSchema.parse(response.body).code).toBe(
         'auth.unauthenticated',
       );
-      expect(getSession).toHaveBeenCalledWith({
-        sessionToken: 'session-token',
-      });
+      expect(list).not.toHaveBeenCalled();
     });
 
-    it('API 토큰으로는 부를 수 없다', async () => {
+    it('권한이 없으면 403 auth.forbidden이고 처리하지 않는다', async () => {
+      authorize.mockImplementation(() => {
+        throw new ForbiddenError({
+          code: 'auth.forbidden',
+          message: 'The credential does not allow this request',
+          details: {},
+        });
+      });
+
       const response = await request(httpServer)
         .get('/api-tokens')
         .set('Authorization', 'Bearer shk_secret')
-        .expect(401);
+        .expect(403);
 
       expect(errorResponseSchema.parse(response.body).code).toBe(
-        'auth.unauthenticated',
+        'auth.forbidden',
       );
       expect(list).not.toHaveBeenCalled();
     });
@@ -120,6 +152,7 @@ describe('ApiTokenHttpController', () => {
         apiTokenId: 'token-1',
         name: 'macbook',
         hint: 'shk_Ab3d',
+        permissions: ['sources:sync'],
         createdAt: CREATED_AT,
         lastUsedAt: null,
         token: 'shk_Ab3dXYZ',
@@ -128,7 +161,7 @@ describe('ApiTokenHttpController', () => {
       const response = await request(httpServer)
         .post('/api-tokens')
         .set('Cookie', SESSION)
-        .send({ name: 'macbook' })
+        .send({ name: 'macbook', permissions: ['sources:sync'] })
         .expect(201)
         .expect('Cache-Control', 'no-store');
 
@@ -136,11 +169,15 @@ describe('ApiTokenHttpController', () => {
         apiTokenId: 'token-1',
         name: 'macbook',
         hint: 'shk_Ab3d',
+        permissions: ['sources:sync'],
         createdAt: CREATED_AT.toISOString(),
         lastUsedAt: null,
         token: 'shk_Ab3dXYZ',
       });
-      expect(issue).toHaveBeenCalledWith({ name: 'macbook' });
+      expect(issue).toHaveBeenCalledWith({
+        name: 'macbook',
+        permissions: ['sources:sync'],
+      });
     });
 
     it.each(['', 'MacBook', 'my token', 'a'.repeat(33)])(
@@ -149,7 +186,7 @@ describe('ApiTokenHttpController', () => {
         const response = await request(httpServer)
           .post('/api-tokens')
           .set('Cookie', SESSION)
-          .send({ name })
+          .send({ name, permissions: ['sources:sync'] })
           .expect(400);
 
         expect(errorResponseSchema.parse(response.body).code).toBe(
@@ -158,6 +195,22 @@ describe('ApiTokenHttpController', () => {
         expect(issue).not.toHaveBeenCalled();
       },
     );
+
+    it.each([
+      ['권한이 없으면', []],
+      ['없는 권한이면', ['sources:delete']],
+    ])('%s 400 request.validation_failed이다', async (_, permissions) => {
+      const response = await request(httpServer)
+        .post('/api-tokens')
+        .set('Cookie', SESSION)
+        .send({ name: 'macbook', permissions })
+        .expect(400);
+
+      expect(errorResponseSchema.parse(response.body).code).toBe(
+        'request.validation_failed',
+      );
+      expect(issue).not.toHaveBeenCalled();
+    });
 
     it('같은 이름이 있으면 409 api_token.name_taken이다', async () => {
       issue.mockRejectedValue(
@@ -171,7 +224,7 @@ describe('ApiTokenHttpController', () => {
       const response = await request(httpServer)
         .post('/api-tokens')
         .set('Cookie', SESSION)
-        .send({ name: 'macbook' })
+        .send({ name: 'macbook', permissions: ['sources:sync'] })
         .expect(409);
 
       expect(errorResponseSchema.parse(response.body).code).toBe(
@@ -187,6 +240,7 @@ describe('ApiTokenHttpController', () => {
           apiTokenId: 'token-1',
           name: 'macbook',
           hint: 'shk_Ab3d',
+          permissions: ['sources:sync', 'posts:publish'],
           createdAt: CREATED_AT,
           lastUsedAt: LAST_USED_AT,
         },
@@ -204,6 +258,7 @@ describe('ApiTokenHttpController', () => {
             apiTokenId: 'token-1',
             name: 'macbook',
             hint: 'shk_Ab3d',
+            permissions: ['sources:sync', 'posts:publish'],
             createdAt: CREATED_AT.toISOString(),
             lastUsedAt: LAST_USED_AT.toISOString(),
           },
