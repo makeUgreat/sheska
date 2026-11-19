@@ -399,7 +399,7 @@ describe('LandingPage terminal', () => {
       ).toBeDefined();
       expect(post).toHaveBeenCalledWith(
         '/api-tokens',
-        { name: 'desktop' },
+        { name: 'desktop', permissions: ['sources:sync'] },
         expect.anything(),
       );
     });
