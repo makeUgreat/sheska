@@ -66,14 +66,8 @@ function outlineMetrics(page: Page) {
     return {
       panelWidth: Math.round(panelBox.width),
       gapFromArticle: Math.round(panelBox.left - articleBox.right),
-      lines: links.map((link) =>
-        Math.round(
-          link.getBoundingClientRect().height /
-            parseFloat(getComputedStyle(link).lineHeight),
-        ),
-      ),
-      clipped: links.filter((link) => link.scrollWidth > link.clientWidth + 1)
-        .length,
+      lines: links.map((link) => Math.round(link.getBoundingClientRect().height / parseFloat(getComputedStyle(link).lineHeight))),
+      clipped: links.filter((link) => link.scrollWidth > link.clientWidth + 1).length,
       fullTextKept: links.every((link) => link.title === link.textContent),
     };
   });

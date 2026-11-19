@@ -5,11 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type SourceSummary } from '@/entities/source';
 import { SourceListPage } from '@/pages/source-list';
-import {
-  HttpClientProvider,
-  HttpError,
-  type HttpClientType as HttpClient,
-} from '@/shared/api';
+import { HttpClientProvider, HttpError, type HttpClientType as HttpClient } from '@/shared/api';
 
 type MockHttpClientOverrides = {
   get?: ReturnType<typeof vi.fn>;
@@ -21,9 +17,7 @@ function createTestQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
 }
 
-function buildMockHttpClient(
-  overrides: MockHttpClientOverrides = {},
-): HttpClient {
+function buildMockHttpClient(overrides: MockHttpClientOverrides = {}): HttpClient {
   return {
     get: vi.fn().mockResolvedValue({
       sources: [],
@@ -38,10 +32,7 @@ function buildMockHttpClient(
   } as unknown as HttpClient;
 }
 
-function renderPage(
-  client: HttpClient,
-  queryClient: QueryClient = createTestQueryClient(),
-) {
+function renderPage(client: HttpClient, queryClient: QueryClient = createTestQueryClient()) {
   return render(
     <MemoryRouter>
       <QueryClientProvider client={queryClient}>
@@ -117,9 +108,7 @@ describe('SourceListPage', () => {
       const link = screen.getByRole('link', { name: 'Source Title' });
       expect(link).toBeDefined();
       expect(link.getAttribute('href')).toBe('/sources/source-1');
-      expect(
-        within(screen.getByRole('list')).getByText('completed'),
-      ).toBeDefined();
+      expect(within(screen.getByRole('list')).getByText('completed')).toBeDefined();
       expect(screen.getByText(/0\.1 KB/)).toBeDefined();
     });
   });
@@ -155,9 +144,7 @@ describe('SourceListPage', () => {
     renderPage(client);
 
     await waitFor(() => {
-      expect(
-        within(screen.getByRole('list')).getByText('waiting'),
-      ).toBeDefined();
+      expect(within(screen.getByRole('list')).getByText('waiting')).toBeDefined();
       expect(screen.queryByRole('progressbar')).toBeNull();
     });
   });
@@ -271,9 +258,7 @@ describe('SourceListPage', () => {
 
   it('에러가 발생하면 상태 코드와 실패한 대상을 보여준다', async () => {
     const client = buildMockHttpClient({
-      get: vi
-        .fn()
-        .mockRejectedValue(new HttpError(500, 'Internal Server Error')),
+      get: vi.fn().mockRejectedValue(new HttpError(500, 'Internal Server Error')),
     });
 
     renderPage(client);
@@ -281,9 +266,7 @@ describe('SourceListPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeDefined();
       expect(screen.getByText('500')).toBeDefined();
-      expect(
-        screen.getByText('Something went wrong while loading.'),
-      ).toBeDefined();
+      expect(screen.getByText('Something went wrong while loading.')).toBeDefined();
     });
   });
 

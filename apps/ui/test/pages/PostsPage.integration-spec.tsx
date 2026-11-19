@@ -5,11 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type PostSummary } from '@/entities/post';
 import { PostsPage } from '@/pages/posts';
-import {
-  HttpClientProvider,
-  HttpError,
-  type HttpClientType as HttpClient,
-} from '@/shared/api';
+import { HttpClientProvider, HttpError, type HttpClientType as HttpClient } from '@/shared/api';
 
 function createTestQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -119,12 +115,8 @@ describe('PostsPage', () => {
 
     const thisYear = await screen.findByRole('region', { name: '2026' });
     const lastYear = screen.getByRole('region', { name: '2025' });
-    expect(
-      within(thisYear).getByRole('link', { name: /올해 포스트/ }),
-    ).toBeDefined();
-    expect(
-      within(lastYear).getByRole('link', { name: /작년 포스트/ }),
-    ).toBeDefined();
+    expect(within(thisYear).getByRole('link', { name: /올해 포스트/ })).toBeDefined();
+    expect(within(lastYear).getByRole('link', { name: /작년 포스트/ })).toBeDefined();
   });
 
   it('목록 항목에 마우스를 올리면 미리보기가 그 post로 바뀐다', async () => {
@@ -164,9 +156,7 @@ describe('PostsPage', () => {
 
   it('에러가 발생하면 상태 코드와 실패한 대상을 보여준다', async () => {
     const client = buildMockHttpClient({
-      listPosts: vi
-        .fn()
-        .mockRejectedValue(new HttpError(500, 'Internal Server Error')),
+      listPosts: vi.fn().mockRejectedValue(new HttpError(500, 'Internal Server Error')),
     });
 
     renderPage(client);
@@ -174,16 +164,12 @@ describe('PostsPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeDefined();
       expect(screen.getByText('500')).toBeDefined();
-      expect(
-        screen.getByText('Something went wrong while loading.'),
-      ).toBeDefined();
+      expect(screen.getByText('Something went wrong while loading.')).toBeDefined();
     });
   });
 
   it('렌더링 즉시 post 목록 API를 호출한다', async () => {
-    const listPosts = vi
-      .fn()
-      .mockResolvedValue({ posts: [], nextCursor: null });
+    const listPosts = vi.fn().mockResolvedValue({ posts: [], nextCursor: null });
     const client = buildMockHttpClient({ listPosts });
 
     renderPage(client);
@@ -198,24 +184,17 @@ describe('PostsPage', () => {
 
     renderPage(client);
 
-    expect(
-      screen.getByRole('heading', { level: 1, name: 'Posts' }),
-    ).toBeDefined();
+    expect(screen.getByRole('heading', { level: 1, name: 'Posts' })).toBeDefined();
   });
 
   it('검색어 입력만으로는 searchPosts를 호출하지 않는다', async () => {
     const user = userEvent.setup();
-    const searchPosts = vi
-      .fn()
-      .mockResolvedValue({ posts: [], nextCursor: null });
+    const searchPosts = vi.fn().mockResolvedValue({ posts: [], nextCursor: null });
     const client = buildMockHttpClient({ searchPosts });
 
     renderPage(client);
 
-    await user.type(
-      screen.getByLabelText('Search posts by title or content'),
-      'garden',
-    );
+    await user.type(screen.getByLabelText('Search posts by title or content'), 'garden');
 
     expect(searchPosts).not.toHaveBeenCalled();
   });
@@ -240,16 +219,11 @@ describe('PostsPage', () => {
 
     renderPage(client);
 
-    await user.type(
-      screen.getByLabelText('Search posts by title or content'),
-      'garden{Enter}',
-    );
+    await user.type(screen.getByLabelText('Search posts by title or content'), 'garden{Enter}');
 
     await waitFor(() => {
       expect(searchPosts).toHaveBeenCalledTimes(1);
-      expect(
-        screen.getByRole('link', { name: /Garden Search Result/ }),
-      ).toBeDefined();
+      expect(screen.getByRole('link', { name: /Garden Search Result/ })).toBeDefined();
     });
   });
 
@@ -264,10 +238,7 @@ describe('PostsPage', () => {
 
     renderPage(client);
 
-    await user.type(
-      screen.getByLabelText('Search posts by title or content'),
-      'fts',
-    );
+    await user.type(screen.getByLabelText('Search posts by title or content'), 'fts');
     await user.click(screen.getByRole('button', { name: 'Search' }));
 
     await waitFor(() => {

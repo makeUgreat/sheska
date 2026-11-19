@@ -7,9 +7,7 @@ export function useArticleOutline(body: string | undefined): {
   activeHeadingId: string | null;
 } {
   const outline = useMemo(() => parseOutline(body ?? ''), [body]);
-  const activeHeadingId = useActiveHeading(
-    outline.map((heading) => heading.id),
-  );
+  const activeHeadingId = useActiveHeading(outline.map((heading) => heading.id));
 
   return { outline, activeHeadingId };
 }

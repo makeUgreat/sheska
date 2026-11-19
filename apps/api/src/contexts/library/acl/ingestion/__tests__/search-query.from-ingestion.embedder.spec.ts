@@ -11,12 +11,10 @@ function buildContext(remainingMs = 60_000): CallContext {
   };
 }
 
-function createEmbedder(
-  impl: (
-    text: string,
-    context: CallContext,
-  ) => Promise<{ embedding: number[]; model: string }>,
-): { embedder: Embedder; embed: Mock } {
+function createEmbedder(impl: (text: string, context: CallContext) => Promise<{ embedding: number[]; model: string }>): {
+  embedder: Embedder;
+  embed: Mock;
+} {
   const embed = vi.fn(impl);
   return { embedder: { embed }, embed };
 }
@@ -24,9 +22,7 @@ function createEmbedder(
 describe('SearchQueryFromIngestionEmbedder', () => {
   it('embed 성공 시 embedding을 반환한다', async () => {
     const embedding = [0.1, 0.2, 0.3];
-    const { embedder } = createEmbedder(() =>
-      Promise.resolve({ embedding, model: 'test-model' }),
-    );
+    const { embedder } = createEmbedder(() => Promise.resolve({ embedding, model: 'test-model' }));
     const searchQueryEmbedder = new SearchQueryFromIngestionEmbedder(embedder);
 
     const result = await searchQueryEmbedder.embed('query', buildContext());
@@ -47,9 +43,7 @@ describe('SearchQueryFromIngestionEmbedder', () => {
   });
 
   it('context를 감싸고 있는 embedder에 그대로 전달한다 (자체 retry/timeout 로직을 갖지 않는다)', async () => {
-    const { embedder, embed } = createEmbedder(() =>
-      Promise.resolve({ embedding: [1], model: 'test-model' }),
-    );
+    const { embedder, embed } = createEmbedder(() => Promise.resolve({ embedding: [1], model: 'test-model' }));
     const searchQueryEmbedder = new SearchQueryFromIngestionEmbedder(embedder);
     const context = buildContext();
 

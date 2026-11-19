@@ -1,9 +1,5 @@
 const docs = require('../docs.cjs');
-const {
-  frameworkDependency,
-  nestCommonDependency,
-  sourceTestFiles,
-} = require('../patterns.cjs');
+const { frameworkDependency, nestCommonDependency, sourceTestFiles } = require('../patterns.cjs');
 
 module.exports = [
   {
@@ -27,11 +23,7 @@ module.exports = [
       'Core and domain, including the domain kernel, must stay framework-independent. Keep framework decorators and SDK imports in platform, feature root modules, presentation, infrastructure adapters, or the narrow application DI exception. ' +
       `See ${docs.runtimeWiring}#nestjs-di.`,
     from: {
-      path: [
-        '^src/core/',
-        '^src/kernels/domain/',
-        '^src/contexts/[^/]+/domain/',
-      ],
+      path: ['^src/core/', '^src/kernels/domain/', '^src/contexts/[^/]+/domain/'],
     },
     to: {
       path: frameworkDependency,

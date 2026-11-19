@@ -21,12 +21,7 @@ export abstract class Entity<EntityProps> {
   private readonly _createdAt: Date;
   private _updatedAt: Date;
 
-  protected constructor({
-    id,
-    createdAt,
-    updatedAt,
-    props,
-  }: CreateEntityProps<EntityProps>) {
+  protected constructor({ id, createdAt, updatedAt, props }: CreateEntityProps<EntityProps>) {
     this.setId(id);
     this.validateProps(props);
     const now = new Date();
@@ -80,9 +75,7 @@ export abstract class Entity<EntityProps> {
     const maxProps = 50;
 
     if (Object.keys(props).length > maxProps) {
-      throw new Error(
-        `Entity props should not have more than ${maxProps} properties`,
-      );
+      throw new Error(`Entity props should not have more than ${maxProps} properties`);
     }
   }
 }

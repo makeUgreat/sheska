@@ -58,9 +58,7 @@ describe('SourceSyncJobsHttpController', () => {
       createdAt,
     });
 
-    const response = await request(httpServer)
-      .get('/sync-jobs/sync-job-1')
-      .expect(200);
+    const response = await request(httpServer).get('/sync-jobs/sync-job-1').expect(200);
 
     SourceSyncJobApi.get.response.parse(response.body);
     expect(response.body).toEqual({

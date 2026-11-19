@@ -15,11 +15,7 @@ import {
   type PostQuerySearchCursor,
   type PostMatchReason,
 } from '@contexts/library/application/ports';
-import {
-  classifyPostgresError,
-  DATABASE_TOKENS,
-  sliceForCursor,
-} from '@kernels/infrastructure';
+import { classifyPostgresError, DATABASE_TOKENS, sliceForCursor } from '@kernels/infrastructure';
 import * as postsSchema from './schema';
 
 type QuerySchema = typeof postsSchema;
@@ -123,10 +119,7 @@ export class PostPgDrizzleQuery implements PostQuery {
     };
   }
 
-  async paginate({
-    limit,
-    cursor,
-  }: PostQueryPaginateOptions): Promise<PostQueryPaginateResult> {
+  async paginate({ limit, cursor }: PostQueryPaginateOptions): Promise<PostQueryPaginateResult> {
     const isFirstPage = cursor === null;
 
     try {
@@ -144,9 +137,7 @@ export class PostPgDrizzleQuery implements PostQuery {
         .orderBy(desc(postsSchema.posts.id))
         .limit(limit + 1);
 
-      const rows = isFirstPage
-        ? await baseQuery
-        : await baseQuery.where(lt(postsSchema.posts.id, cursor.id));
+      const rows = isFirstPage ? await baseQuery : await baseQuery.where(lt(postsSchema.posts.id, cursor.id));
 
       const { data, nextCursor } = sliceForCursor(rows, limit, (row) => ({
         id: row.id,
@@ -166,9 +157,7 @@ export class PostPgDrizzleQuery implements PostQuery {
 
   async count(): Promise<number> {
     try {
-      const [row] = await this.db
-        .select({ count: count() })
-        .from(postsSchema.posts);
+      const [row] = await this.db.select({ count: count() }).from(postsSchema.posts);
       return row?.count ?? 0;
     } catch (error: unknown) {
       const ErrorClass = classifyPostgresError(error);
@@ -182,12 +171,7 @@ export class PostPgDrizzleQuery implements PostQuery {
   }
 
   // todo: 추후에 score 계산 서브쿼리 최적화 필요성 부하테스트 후 검증
-  async search({
-    query,
-    limit,
-    cursor,
-    queryEmbedding,
-  }: PostQuerySearchOptions): Promise<PostQuerySearchResult> {
+  async search({ query, limit, cursor, queryEmbedding }: PostQuerySearchOptions): Promise<PostQuerySearchResult> {
     try {
       const result =
         queryEmbedding === null
@@ -217,19 +201,13 @@ export class PostPgDrizzleQuery implements PostQuery {
     }
   }
 
-  private async searchByFts(
-    query: string,
-    limit: number,
-    cursor: PostQuerySearchOptions['cursor'],
-  ) {
+  private async searchByFts(query: string, limit: number, cursor: PostQuerySearchOptions['cursor']) {
     const tsQuery = sql`bigram_tsquery(${query})`;
     const score = this.ftsRelevanceScore(tsQuery);
     const matchWhere = this.ftsMatchCondition(tsQuery);
 
     const isFirstPage = cursor === null;
-    const where = isFirstPage
-      ? matchWhere
-      : this.matchWhereAfterCursor(matchWhere, score, cursor);
+    const where = isFirstPage ? matchWhere : this.matchWhereAfterCursor(matchWhere, score, cursor);
 
     return this.db.execute<SearchPostRow>(sql`
       SELECT p.id  AS "id",
@@ -250,12 +228,7 @@ export class PostPgDrizzleQuery implements PostQuery {
     `);
   }
 
-  private async searchHybrid(
-    query: string,
-    queryEmbedding: number[],
-    limit: number,
-    cursor: PostQuerySearchOptions['cursor'],
-  ) {
+  private async searchHybrid(query: string, queryEmbedding: number[], limit: number, cursor: PostQuerySearchOptions['cursor']) {
     const tsQuery = sql`bigram_tsquery(${query})`;
     const embeddingLiteral = `[${queryEmbedding.join(',')}]`;
 
@@ -346,22 +319,14 @@ export class PostPgDrizzleQuery implements PostQuery {
     )`;
   }
 
-  private keysetTieBreak(
-    scoreExpr: SQL,
-    idExpr: SQL,
-    cursor: { score: number; id: string },
-  ): SQL {
+  private keysetTieBreak(scoreExpr: SQL, idExpr: SQL, cursor: { score: number; id: string }): SQL {
     return sql`(
       (${scoreExpr}) < ${cursor.score}
       OR ((${scoreExpr}) = ${cursor.score} AND (${idExpr}) < ${cursor.id})
     )`;
   }
 
-  private matchWhereAfterCursor(
-    matchWhere: SQL,
-    scoreExpr: SQL,
-    cursor: { score: number; id: string },
-  ): SQL {
+  private matchWhereAfterCursor(matchWhere: SQL, scoreExpr: SQL, cursor: { score: number; id: string }): SQL {
     return sql`${matchWhere} AND ${this.keysetTieBreak(scoreExpr, sql`p.id`, cursor)}`;
   }
 
@@ -388,11 +353,7 @@ export class PostPgDrizzleQuery implements PostQuery {
     };
   }
 
-  private toSearchResult(
-    data: SearchPostRow[],
-    nextCursor: PostQuerySearchCursor | null,
-    query: string,
-  ): PostQuerySearchResult {
+  private toSearchResult(data: SearchPostRow[], nextCursor: PostQuerySearchCursor | null, query: string): PostQuerySearchResult {
     return {
       posts: data.map((row) => ({
         postId: row.id,
@@ -403,17 +364,14 @@ export class PostPgDrizzleQuery implements PostQuery {
         updatedAt: row.updatedAt,
         matchReason: row.matchReason,
         similarity: this.toSimilarityPercent(row.embeddingDistance),
-        snippet:
-          row.content === null ? null : this.toSnippet(row.content, query),
+        snippet: row.content === null ? null : this.toSnippet(row.content, query),
       })),
       nextCursor,
     };
   }
 
   private toSimilarityPercent(embeddingDistance: number | null): number | null {
-    return embeddingDistance === null
-      ? null
-      : Math.round((1 - embeddingDistance) * 100);
+    return embeddingDistance === null ? null : Math.round((1 - embeddingDistance) * 100);
   }
 
   private toSnippet(content: string, query: string): string | null {

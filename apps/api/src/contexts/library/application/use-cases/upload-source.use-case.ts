@@ -14,11 +14,7 @@ import {
 } from '../services/source-content-snapshot-calculator.service';
 import { type LibraryUnitOfWork } from '@contexts/library/application/ports';
 import { SourceSyncJobCreatedIntegrationEvent } from '@contexts/library/application/events/source-sync-job-created.integration-event';
-import {
-  SOURCE_REPOSITORY,
-  SOURCE_SYNC_JOB_REPOSITORY,
-  LIBRARY_UNIT_OF_WORK,
-} from '@contexts/library/library.di-tokens';
+import { SOURCE_REPOSITORY, SOURCE_SYNC_JOB_REPOSITORY, LIBRARY_UNIT_OF_WORK } from '@contexts/library/library.di-tokens';
 
 export interface UploadSourceCommand {
   readonly externalSourceId: string;
@@ -50,25 +46,18 @@ export class UploadSourceUseCase {
   ) {}
 
   async execute(command: UploadSourceCommand): Promise<UploadSourceResult> {
-    const externalSourceId = ExternalSourceId.of(
-      command.externalSourceId,
-    ).unpack();
+    const externalSourceId = ExternalSourceId.of(command.externalSourceId).unpack();
     const snapshot = this.contentSnapshotCalculator.calculate(command.content);
     this.ensureSyncTarget(snapshot);
 
     const existingSource = await this.sources.find({ externalSourceId });
-    const changes = existingSource
-      ? await this.syncSource(existingSource, snapshot)
-      : this.createSource(externalSourceId, snapshot);
+    const changes = existingSource ? await this.syncSource(existingSource, snapshot) : this.createSource(externalSourceId, snapshot);
 
     await this.persist(changes);
     return this.toResult(changes);
   }
 
-  private createSource(
-    externalSourceId: string,
-    snapshot: SourceContentSnapshotCalculation,
-  ): UploadChanges {
+  private createSource(externalSourceId: string, snapshot: SourceContentSnapshotCalculation): UploadChanges {
     const source = Source.create({ externalSourceId, ...snapshot });
 
     return {
@@ -79,10 +68,7 @@ export class UploadSourceUseCase {
     };
   }
 
-  private async syncSource(
-    source: Source,
-    snapshot: SourceContentSnapshotCalculation,
-  ): Promise<UploadChanges> {
+  private async syncSource(source: Source, snapshot: SourceContentSnapshotCalculation): Promise<UploadChanges> {
     const sourceChanged = source.syncContent(snapshot);
     const latestSyncJob = await this.syncJobs.findLatest({
       sourceId: source.id,
@@ -98,12 +84,7 @@ export class UploadSourceUseCase {
     };
   }
 
-  private async persist({
-    source,
-    sourceWrite,
-    syncJob,
-    isNewSyncJob,
-  }: UploadChanges): Promise<void> {
+  private async persist({ source, sourceWrite, syncJob, isNewSyncJob }: UploadChanges): Promise<void> {
     if (sourceWrite === null && !isNewSyncJob) return;
 
     await this.unitOfWork.execute(async (resources) => {
@@ -136,17 +117,14 @@ export class UploadSourceUseCase {
 
     throw new ValidationFailedError({
       code: 'source.not_sync_target',
-      message:
-        'Only a file whose frontmatter has `sheska: true` can be uploaded',
+      message: 'Only a file whose frontmatter has `sheska: true` can be uploaded',
       details: {
         fields: [{ path: 'frontmatter.sheska', messages: ['must be true'] }],
       },
     });
   }
 
-  private toIntegrationEvents(
-    syncJob: SourceSyncJob,
-  ): SourceSyncJobCreatedIntegrationEvent[] {
+  private toIntegrationEvents(syncJob: SourceSyncJob): SourceSyncJobCreatedIntegrationEvent[] {
     return syncJob.domainEvents.map(
       (event) =>
         new SourceSyncJobCreatedIntegrationEvent({

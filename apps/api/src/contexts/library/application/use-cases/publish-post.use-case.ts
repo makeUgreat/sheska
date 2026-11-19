@@ -1,10 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { Post, type PostRepository } from '@contexts/library/domain';
-import {
-  POST_REPOSITORY,
-  SOURCE_LOOKUP,
-} from '@contexts/library/library.di-tokens';
+import { POST_REPOSITORY, SOURCE_LOOKUP } from '@contexts/library/library.di-tokens';
 import { type SourceLookup } from '@contexts/library/application/ports';
 
 export interface PublishPostCommand {

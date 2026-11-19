@@ -1,38 +1,20 @@
 import { pathOf, SourceApi, SourceSyncJobApi } from '@sheska/contract';
 import { type HttpClientType as HttpClient } from '@/shared/api';
-import {
-  type GetSourceResponse,
-  type ListSourcesParams,
-  type ListSourcesResponse,
-  type SyncJob,
-} from './types';
+import { type GetSourceResponse, type ListSourcesParams, type ListSourcesResponse, type SyncJob } from './types';
 
-export function listSources(
-  http: HttpClient,
-  params?: ListSourcesParams,
-): Promise<ListSourcesResponse> {
+export function listSources(http: HttpClient, params?: ListSourcesParams): Promise<ListSourcesResponse> {
   const queryParams: Record<string, string> = {};
   if (params?.page) queryParams.page = String(params.page);
   if (params?.pageSize) queryParams.pageSize = String(params.pageSize);
   if (params?.syncJobStatus) queryParams.syncJobStatus = params.syncJobStatus;
 
-  return http.get(
-    SourceApi.list.path,
-    SourceApi.list.response,
-    Object.keys(queryParams).length > 0 ? queryParams : undefined,
-  );
+  return http.get(SourceApi.list.path, SourceApi.list.response, Object.keys(queryParams).length > 0 ? queryParams : undefined);
 }
 
-export function getSource(
-  http: HttpClient,
-  id: string,
-): Promise<GetSourceResponse> {
+export function getSource(http: HttpClient, id: string): Promise<GetSourceResponse> {
   return http.get(pathOf(SourceApi.get, { id }), SourceApi.get.response);
 }
 
 export function getSyncJob(http: HttpClient, id: string): Promise<SyncJob> {
-  return http.get(
-    pathOf(SourceSyncJobApi.get, { id }),
-    SourceSyncJobApi.get.response,
-  );
+  return http.get(pathOf(SourceSyncJobApi.get, { id }), SourceSyncJobApi.get.response);
 }

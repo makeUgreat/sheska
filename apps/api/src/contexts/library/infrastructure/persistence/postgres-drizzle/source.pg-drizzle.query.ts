@@ -7,10 +7,7 @@ import {
   type SourceQueryPaginateOptions,
   type SourceQueryPaginateResult,
 } from '@contexts/library/application/ports';
-import {
-  classifyPostgresError,
-  DATABASE_TOKENS,
-} from '@kernels/infrastructure';
+import { classifyPostgresError, DATABASE_TOKENS } from '@kernels/infrastructure';
 import * as schema from './schema';
 
 type QuerySchema = typeof schema;
@@ -38,16 +35,10 @@ export class SourcePgDrizzleQuery implements SourceQuery {
     private readonly db: NodePgDatabase<QuerySchema>,
   ) {}
 
-  async paginate({
-    page,
-    pageSize,
-    syncJobStatus,
-  }: SourceQueryPaginateOptions): Promise<SourceQueryPaginateResult> {
+  async paginate({ page, pageSize, syncJobStatus }: SourceQueryPaginateOptions): Promise<SourceQueryPaginateResult> {
     try {
       const offset = (page - 1) * pageSize;
-      const statusFilter = syncJobStatus
-        ? sql`WHERE ssj.status = ${syncJobStatus}`
-        : sql``;
+      const statusFilter = syncJobStatus ? sql`WHERE ssj.status = ${syncJobStatus}` : sql``;
 
       const result = await this.db.execute<SourceWithLatestJobRow>(sql`
         SELECT s.id,
@@ -107,11 +98,7 @@ export class SourcePgDrizzleQuery implements SourceQuery {
     }
   }
 
-  private toPaginateResult(
-    rows: SourceWithLatestJobRow[],
-    page: number,
-    pageSize: number,
-  ): SourceQueryPaginateResult {
+  private toPaginateResult(rows: SourceWithLatestJobRow[], page: number, pageSize: number): SourceQueryPaginateResult {
     const totalCount = rows[0] ? Number(rows[0].total_count) : 0;
 
     return {

@@ -9,15 +9,7 @@ import { HealthController } from '@platform/nest/health/health.controller';
 import { QueueHealthProbe } from '@platform/nest/queue/queue-health.probe';
 import { HealthApi } from '@sheska/contract';
 import request from 'supertest';
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  type MockedFunction,
-  vi,
-} from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type MockedFunction, vi } from 'vitest';
 
 type DbMock = {
   execute: MockedFunction<() => Promise<unknown>>;

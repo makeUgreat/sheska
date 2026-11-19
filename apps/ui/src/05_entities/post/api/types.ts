@@ -8,8 +8,7 @@ import {
   type PostSummaryResponse,
 } from '@sheska/contract';
 
-export type PostSummary = PostSummaryResponse &
-  Partial<Pick<PostSearchResultResponse, 'similarity' | 'snippet'>>;
+export type PostSummary = PostSummaryResponse & Partial<Pick<PostSearchResultResponse, 'similarity' | 'snippet'>>;
 
 export type ListPostsParams = ApiQuery<typeof PostApi.list>;
 

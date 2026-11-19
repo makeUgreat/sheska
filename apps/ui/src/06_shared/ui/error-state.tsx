@@ -3,15 +3,11 @@ import { HttpError } from '@/shared/api';
 const UNREACHABLE_CAUSE = 'The server could not be reached.';
 const REQUEST_CAUSE = 'Something went wrong while loading.';
 
-const WATERMARK =
-  'pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none text-accent/8';
+const WATERMARK = 'pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none text-accent/8';
 
 function StatusWatermark({ status }: { status: number }) {
   return (
-    <span
-      aria-hidden="true"
-      className={`${WATERMARK} font-mono text-[clamp(88px,22vw,150px)] font-medium leading-none tracking-tight`}
-    >
+    <span aria-hidden="true" className={`${WATERMARK} font-mono text-[clamp(88px,22vw,150px)] font-medium leading-none tracking-tight`}>
       {status}
     </span>
   );
@@ -42,23 +38,16 @@ export function ErrorState({ error, className = '' }: ErrorStateProps) {
   return (
     <div
       role="alert"
-      className={[
-        'relative flex min-h-[300px] flex-col items-center justify-center overflow-hidden text-center',
-        className,
-      ]
+      className={['relative flex min-h-[300px] flex-col items-center justify-center overflow-hidden text-center', className]
         .filter(Boolean)
         .join(' ')}
     >
       {status !== null && <StatusWatermark status={status} />}
       <div className="relative flex w-full justify-center">
         {status === null && <SeveredWatermark />}
-        <p className="relative font-mono text-label-sm uppercase text-accent-strong">
-          Error
-        </p>
+        <p className="relative font-mono text-label-sm uppercase text-accent-strong">Error</p>
       </div>
-      <p className="relative mt-3.5 text-body-md text-text-secondary">
-        {status === null ? UNREACHABLE_CAUSE : REQUEST_CAUSE}
-      </p>
+      <p className="relative mt-3.5 text-body-md text-text-secondary">{status === null ? UNREACHABLE_CAUSE : REQUEST_CAUSE}</p>
     </div>
   );
 }

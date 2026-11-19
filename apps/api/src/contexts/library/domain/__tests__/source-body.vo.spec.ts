@@ -18,16 +18,12 @@ describe('SourceBody', () => {
 
   // nocap: library-sync-6
   it('본문이 같으면 같은 본문이다', () => {
-    expect(SourceBody.of('# Same').hasSameTextAs(SourceBody.of('# Same'))).toBe(
-      true,
-    );
+    expect(SourceBody.of('# Same').hasSameTextAs(SourceBody.of('# Same'))).toBe(true);
   });
 
   // nocap: library-sync-6
   it('본문이 다르면 다른 본문이다', () => {
-    expect(SourceBody.of('# A').hasSameTextAs(SourceBody.of('# B'))).toBe(
-      false,
-    );
+    expect(SourceBody.of('# A').hasSameTextAs(SourceBody.of('# B'))).toBe(false);
   });
 
   it('복원은 저장된 fingerprint를 그대로 쓴다', () => {
@@ -40,8 +36,6 @@ describe('SourceBody', () => {
   });
 
   it('복원할 fingerprint가 공백뿐이면 throw한다', () => {
-    expect(() =>
-      SourceBody.restore({ text: '# Source note', fingerprint: ' ' }),
-    ).toThrow('Source fingerprint cannot be empty');
+    expect(() => SourceBody.restore({ text: '# Source note', fingerprint: ' ' })).toThrow('Source fingerprint cannot be empty');
   });
 });

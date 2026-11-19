@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  FileExplorerSyncDecorator,
-  type FileExplorerSyncStatus,
-} from '@/file-explorer-sync-decorator';
+import { FileExplorerSyncDecorator, type FileExplorerSyncStatus } from '@/file-explorer-sync-decorator';
 
 class FakeClassList {
   private readonly values = new Set<string>();
@@ -85,10 +82,7 @@ describe('FileExplorerSyncDecorator', () => {
     root = new FakeDocument();
     root.titles.push(new FakeTitle('note.md', root));
     statuses = { 'note.md': 'accepted' };
-    decorator = new FileExplorerSyncDecorator(
-      (path) => statuses[path] ?? null,
-      root as unknown as Document,
-    );
+    decorator = new FileExplorerSyncDecorator((path) => statuses[path] ?? null, root as unknown as Document);
   });
 
   it('renders the matching status badge beside a file title', () => {
@@ -108,9 +102,7 @@ describe('FileExplorerSyncDecorator', () => {
 
     expect(root.titles[0].badges).toHaveLength(1);
     expect(root.titles[0].badges[0].dataset.status).toBe('failed');
-    expect(root.titles[0].badges[0].attributes.get('data-icon')).toBe(
-      'alert-triangle',
-    );
+    expect(root.titles[0].badges[0].attributes.get('data-icon')).toBe('alert-triangle');
   });
 
   it('removes the badge when the file no longer has a sync status', () => {

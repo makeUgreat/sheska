@@ -5,9 +5,7 @@ import { sourceSyncJobCreatedIntegrationEventSchema } from './dto/source-sync-jo
 
 @Injectable()
 export class SourceSyncJobCreatedIntegrationEventConsumer {
-  constructor(
-    private readonly initiateSourceEmbedding: InitiateSourceEmbeddingUseCase,
-  ) {}
+  constructor(private readonly initiateSourceEmbedding: InitiateSourceEmbeddingUseCase) {}
 
   @OnEvent('source.sync_job.created')
   async handle(message: unknown): Promise<void> {

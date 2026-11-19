@@ -2,14 +2,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { sha256Hex } from '@core/hash';
-import {
-  type SourceRepository,
-  type SourceSyncJobRepository,
-} from '@contexts/library/domain';
-import {
-  SOURCE_REPOSITORY,
-  SOURCE_SYNC_JOB_REPOSITORY,
-} from '@contexts/library/library.di-tokens';
+import { type SourceRepository, type SourceSyncJobRepository } from '@contexts/library/domain';
+import { SOURCE_REPOSITORY, SOURCE_SYNC_JOB_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
 import { buildSourceSyncJob } from '../../../support/domains/fixtures/source-sync-job.fixture';
 import { buildSource } from '../../../support/domains/fixtures/source.fixture';
@@ -141,9 +135,7 @@ describe('SourceSyncJobDrizzleRepository', () => {
   });
 
   it('존재하지 않는 id는 NotFoundError를 throw한다', async () => {
-    await expect(
-      repository.get({ id: 'non-existent-id' }),
-    ).rejects.toMatchObject({
+    await expect(repository.get({ id: 'non-existent-id' })).rejects.toMatchObject({
       kind: 'not_found',
       code: 'source_sync_job.not_found',
     });

@@ -1,19 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import {
-  type IntegrationEvent,
-  type IntegrationEventDispatcher,
-} from '@kernels/application';
+import { type IntegrationEvent, type IntegrationEventDispatcher } from '@kernels/application';
 
 @Injectable()
 export class IntegrationEventEmitterDispatcher implements IntegrationEventDispatcher {
   constructor(private readonly eventEmitter: EventEmitter2) {}
 
   async dispatch(event: IntegrationEvent): Promise<void> {
-    const listenerResults = await this.eventEmitter.emitAsync(
-      event.eventType,
-      event,
-    );
+    const listenerResults = await this.eventEmitter.emitAsync(event.eventType, event);
 
     const hadListeners = listenerResults.length > 0;
 

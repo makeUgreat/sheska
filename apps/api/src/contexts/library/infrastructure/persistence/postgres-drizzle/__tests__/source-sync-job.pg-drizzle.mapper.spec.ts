@@ -30,9 +30,7 @@ describe('SourceSyncJobPgDrizzleMapper', () => {
       status: 'unknown_status',
     });
 
-    expect(() => SourceSyncJobPgDrizzleMapper.toDomain(row)).toThrow(
-      'Source sync job status is invalid',
-    );
+    expect(() => SourceSyncJobPgDrizzleMapper.toDomain(row)).toThrow('Source sync job status is invalid');
   });
 
   it('SourceSyncJob aggregate를 sync job insert row로 변환한다', () => {

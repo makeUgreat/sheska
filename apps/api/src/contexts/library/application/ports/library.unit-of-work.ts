@@ -1,7 +1,4 @@
-import {
-  type SourceRepository,
-  type SourceSyncJobRepository,
-} from '@contexts/library/domain';
+import { type SourceRepository, type SourceSyncJobRepository } from '@contexts/library/domain';
 import { type OutboxWriter, type UnitOfWork } from '@kernels/application';
 
 export interface LibraryUnitOfWorkResources {

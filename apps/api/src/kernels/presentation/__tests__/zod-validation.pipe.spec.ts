@@ -16,9 +16,7 @@ describe('ZodValidationPipe', () => {
     });
 
     it('zod가 변환한 값을 반환한다', () => {
-      const pipe = new ZodValidationPipe(
-        z.object({ count: z.coerce.number() }),
-      );
+      const pipe = new ZodValidationPipe(z.object({ count: z.coerce.number() }));
 
       const result = pipe.transform({ count: '42' });
 
@@ -30,9 +28,7 @@ describe('ZodValidationPipe', () => {
     it('ValidationFailedError를 던진다', () => {
       const pipe = new ZodValidationPipe(schema);
 
-      expect(() => pipe.transform({ name: 123 })).toThrow(
-        ValidationFailedError,
-      );
+      expect(() => pipe.transform({ name: 123 })).toThrow(ValidationFailedError);
     });
 
     it('기본 error code를 사용한다', () => {
@@ -41,9 +37,7 @@ describe('ZodValidationPipe', () => {
       try {
         pipe.transform({ name: 123 });
       } catch (e) {
-        expect((e as ValidationFailedError).code).toBe(
-          'request.validation_failed',
-        );
+        expect((e as ValidationFailedError).code).toBe('request.validation_failed');
       }
     });
 
@@ -82,15 +76,13 @@ describe('ZodValidationPipe', () => {
 
       it('같은 path의 여러 issue를 하나의 field entry로 합친다', () => {
         const pipe = new ZodValidationPipe(
-          z
-            .object({ value: z.string().min(3).max(10) })
-            .superRefine((data, ctx) => {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ['value'],
-                message: 'custom error',
-              });
-            }),
+          z.object({ value: z.string().min(3).max(10) }).superRefine((data, ctx) => {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ['value'],
+              message: 'custom error',
+            });
+          }),
         );
 
         try {

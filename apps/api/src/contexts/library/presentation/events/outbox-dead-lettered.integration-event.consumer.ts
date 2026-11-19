@@ -18,9 +18,7 @@ export class OutboxDeadLetteredIntegrationEventConsumer {
     const { payload } = outboxDeadLetteredIntegrationEventSchema.parse(message);
     if (payload.deadLetteredEventType !== 'source.sync_job.created') return;
 
-    const { syncJobId } = deadLetteredSyncJobCreatedPayloadSchema.parse(
-      payload.deadLetteredPayload,
-    );
+    const { syncJobId } = deadLetteredSyncJobCreatedPayloadSchema.parse(payload.deadLetteredPayload);
     await this.applyIngestionUpdate.execute({ kind: 'failed', syncJobId });
   }
 }

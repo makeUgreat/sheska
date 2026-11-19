@@ -6,10 +6,7 @@ import { SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-to
 import { type SourceRepository } from '@contexts/library/domain';
 import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
-import {
-  buildSourceEmbedding,
-  VALID_EMBEDDING,
-} from '../../../support/domains/fixtures/source-embedding.fixture';
+import { buildSourceEmbedding, VALID_EMBEDDING } from '../../../support/domains/fixtures/source-embedding.fixture';
 import { buildSource } from '../../../support/domains/fixtures/source.fixture';
 
 describe('SourceEmbeddingDrizzleRepository', () => {
@@ -24,9 +21,7 @@ describe('SourceEmbeddingDrizzleRepository', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
     sourceRepository = app.get<SourceRepository>(SOURCE_REPOSITORY);
-    repository = app.get<SourceEmbeddingRepository>(
-      SOURCE_EMBEDDING_REPOSITORY,
-    );
+    repository = app.get<SourceEmbeddingRepository>(SOURCE_EMBEDDING_REPOSITORY);
   });
 
   afterAll(async () => {
@@ -89,12 +84,8 @@ describe('SourceEmbeddingDrizzleRepository', () => {
 
     expect(result).not.toBeNull();
     expect(result?.getProps().chunks).toHaveLength(3);
-    expect(result?.getProps().chunks[0].unpack().chunkContent).toBe(
-      'first chunk',
-    );
-    expect(result?.getProps().chunks[2].unpack().chunkContent).toBe(
-      'third chunk',
-    );
+    expect(result?.getProps().chunks[0].unpack().chunkContent).toBe('first chunk');
+    expect(result?.getProps().chunks[2].unpack().chunkContent).toBe('third chunk');
   });
 
   it('sourceId로 source embedding을 반환한다', async () => {

@@ -8,10 +8,7 @@ import { remarkHeadingId } from './remark-heading-id';
  * 렌더러와 목차가 이 목록 하나를 같이 써야 같은 트리를 얻는다.
  * Heading id는 wiki link가 label로 바뀐 뒤에 새겨야 slug가 화면 글자와 맞는다.
  */
-export const MARKDOWN_PLUGINS: PluggableList = [
-  ...OBSIDIAN_SYNTAX,
-  remarkHeadingId,
-];
+export const MARKDOWN_PLUGINS: PluggableList = [...OBSIDIAN_SYNTAX, remarkHeadingId];
 
 const processor = unified().use(remarkParse).use(MARKDOWN_PLUGINS);
 

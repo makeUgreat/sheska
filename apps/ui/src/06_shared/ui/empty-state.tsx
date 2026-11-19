@@ -57,15 +57,11 @@ function GhostDocument() {
 
 function QueryMark({ query }: { query: string }) {
   return (
-    <span className="rounded-md bg-accent/10 px-4 py-2.5 font-mono text-display-terminal text-accent-strong">
-      &quot;{query}&quot;
-    </span>
+    <span className="rounded-md bg-accent/10 px-4 py-2.5 font-mono text-display-terminal text-accent-strong">&quot;{query}&quot;</span>
   );
 }
 
-type EmptyMark =
-  | { variant: 'search'; query: string }
-  | { variant: Exclude<EmptyVariant, 'search'>; query?: never };
+type EmptyMark = { variant: 'search'; query: string } | { variant: Exclude<EmptyVariant, 'search'>; query?: never };
 
 export type EmptyStateProps = EmptyMark & { className?: string };
 
@@ -81,17 +77,11 @@ export function EmptyState(props: EmptyStateProps) {
   const { kicker, label } = COPY[variant];
 
   return (
-    <div
-      className={['flex flex-col items-center text-center', className]
-        .filter(Boolean)
-        .join(' ')}
-    >
+    <div className={['flex flex-col items-center text-center', className].filter(Boolean).join(' ')}>
       <div className="mb-6 flex items-center justify-center" aria-hidden="true">
         <Mark {...props} />
       </div>
-      <p className="font-mono text-label-sm uppercase text-text-muted">
-        {kicker}
-      </p>
+      <p className="font-mono text-label-sm uppercase text-text-muted">{kicker}</p>
       <p className="mt-3.5 text-body-md text-text-secondary">{label}</p>
     </div>
   );

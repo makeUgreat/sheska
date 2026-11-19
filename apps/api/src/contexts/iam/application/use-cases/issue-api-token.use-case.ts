@@ -1,12 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { type ApiTokenQueryListItem } from '@contexts/iam/application/ports';
-import {
-  ApiToken,
-  ApiTokenName,
-  ApiTokenPermissions,
-  type ApiTokenRepository,
-  ApiTokenSecret,
-} from '@contexts/iam/domain';
+import { ApiToken, ApiTokenName, ApiTokenPermissions, type ApiTokenRepository, ApiTokenSecret } from '@contexts/iam/domain';
 import { API_TOKEN_REPOSITORY } from '@contexts/iam/iam.di-tokens';
 
 export interface IssueApiTokenCommand {

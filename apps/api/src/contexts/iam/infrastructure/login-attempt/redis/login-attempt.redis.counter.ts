@@ -1,10 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { type Redis } from 'ioredis';
 import { REDIS_TOKENS } from '@kernels/infrastructure';
-import {
-  type LoginAttempt,
-  type LoginAttemptCounter,
-} from '@contexts/iam/application/ports';
+import { type LoginAttempt, type LoginAttemptCounter } from '@contexts/iam/application/ports';
 import { UnexpectedError } from '@core/errors';
 import { type LoginAttemptPolicy } from '@contexts/iam/domain';
 import { toRedisError } from '@contexts/iam/infrastructure/redis-error';
@@ -17,10 +14,7 @@ type TransactionReply = [error: Error | null, reply: unknown];
 export class LoginAttemptRedisCounter implements LoginAttemptCounter {
   constructor(@Inject(REDIS_TOKENS.client) private readonly redis: Redis) {}
 
-  async register(
-    clientAddress: string,
-    policy: LoginAttemptPolicy,
-  ): Promise<LoginAttempt> {
+  async register(clientAddress: string, policy: LoginAttemptPolicy): Promise<LoginAttempt> {
     try {
       return await this.registerOnce(keyOf(clientAddress), policy);
     } catch (error: unknown) {
@@ -36,14 +30,8 @@ export class LoginAttemptRedisCounter implements LoginAttemptCounter {
     }
   }
 
-  private async registerOnce(
-    key: string,
-    policy: LoginAttemptPolicy,
-  ): Promise<LoginAttempt> {
-    const { count, ttlSeconds } = await this.increment(
-      key,
-      policy.windowSeconds,
-    );
+  private async registerOnce(key: string, policy: LoginAttemptPolicy): Promise<LoginAttempt> {
+    const { count, ttlSeconds } = await this.increment(key, policy.windowSeconds);
     if (count === policy.maxFailures) {
       await this.redis.expire(key, policy.lockSeconds);
       return { attemptNumber: count, retryAfterSeconds: policy.lockSeconds };
@@ -52,16 +40,8 @@ export class LoginAttemptRedisCounter implements LoginAttemptCounter {
     return { attemptNumber: count, retryAfterSeconds: Math.max(ttlSeconds, 0) };
   }
 
-  private async increment(
-    key: string,
-    windowSeconds: number,
-  ): Promise<{ count: number; ttlSeconds: number }> {
-    const replies = await this.redis
-      .multi()
-      .incr(key)
-      .expire(key, windowSeconds, 'NX')
-      .ttl(key)
-      .exec();
+  private async increment(key: string, windowSeconds: number): Promise<{ count: number; ttlSeconds: number }> {
+    const replies = await this.redis.multi().incr(key).expire(key, windowSeconds, 'NX').ttl(key).exec();
 
     if (replies === null) {
       throw new UnexpectedError({

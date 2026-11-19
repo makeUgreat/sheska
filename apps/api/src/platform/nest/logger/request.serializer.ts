@@ -9,11 +9,7 @@ export function serializeRequest(req: SerializedRequest) {
     url: req.url,
     query: req.query,
     params: req.params,
-    headers: Object.fromEntries(
-      SAFE_HEADERS.filter((key) => req.headers[key] !== undefined).map(
-        (key) => [key, req.headers[key]],
-      ),
-    ),
+    headers: Object.fromEntries(SAFE_HEADERS.filter((key) => req.headers[key] !== undefined).map((key) => [key, req.headers[key]])),
     remoteAddress: req.remoteAddress,
     remotePort: req.remotePort,
   };

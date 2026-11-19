@@ -19,12 +19,9 @@ export async function stopRuntime(): Promise<void> {
 }
 
 async function getRuntimeBaseUrl(): Promise<string> {
-  const { stdout } = await execDockerCompose(
-    ['port', 'api', API_CONTAINER_PORT],
-    {
-      inheritOutput: false,
-    },
-  );
+  const { stdout } = await execDockerCompose(['port', 'api', API_CONTAINER_PORT], {
+    inheritOutput: false,
+  });
   const endpoint = stdout.trim().split('\n').at(-1);
 
   if (!endpoint) {
@@ -61,22 +58,10 @@ export async function waitForRuntimeReady(): Promise<string> {
   throw new Error(`Timed out waiting for API runtime: ${readyUrl.toString()}`);
 }
 
-async function execDockerCompose(
-  args: string[],
-  options: { inheritOutput?: boolean } = {},
-): Promise<{ stdout: string; stderr: string }> {
-  const { stdout, stderr } = await execFileAsync(
-    'docker',
-    [
-      'compose',
-      '-p',
-      RUNTIME_PROJECT_NAME,
-      '-f',
-      RUNTIME_COMPOSE_FILE,
-      ...args,
-    ],
-    { cwd: API_ROOT },
-  );
+async function execDockerCompose(args: string[], options: { inheritOutput?: boolean } = {}): Promise<{ stdout: string; stderr: string }> {
+  const { stdout, stderr } = await execFileAsync('docker', ['compose', '-p', RUNTIME_PROJECT_NAME, '-f', RUNTIME_COMPOSE_FILE, ...args], {
+    cwd: API_ROOT,
+  });
 
   if (options.inheritOutput !== false && stdout) {
     process.stdout.write(stdout);

@@ -1,7 +1,4 @@
-import {
-  type PostQuery,
-  type PostQueryPaginateResult,
-} from '@contexts/library/application/ports';
+import { type PostQuery, type PostQueryPaginateResult } from '@contexts/library/application/ports';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { ListPostsUseCase } from '../list-posts.use-case';
 
@@ -13,9 +10,7 @@ type PostQueryMock = {
   count: MockedFunction<PostQuery['count']>;
 };
 
-function buildPaginateResult(
-  overrides: Partial<PostQueryPaginateResult> = {},
-): PostQueryPaginateResult {
+function buildPaginateResult(overrides: Partial<PostQueryPaginateResult> = {}): PostQueryPaginateResult {
   return {
     posts: [],
     nextCursor: null,
@@ -105,9 +100,7 @@ describe('ListPostsUseCase', () => {
 
   it('nextCursor가 없으면 null을 반환한다', async () => {
     const postQuery = createPostQueryMock();
-    postQuery.paginate.mockResolvedValue(
-      buildPaginateResult({ nextCursor: null }),
-    );
+    postQuery.paginate.mockResolvedValue(buildPaginateResult({ nextCursor: null }));
     const useCase = new ListPostsUseCase(postQuery);
 
     const result = await useCase.execute({ limit: 20, cursor: null });
@@ -135,9 +128,7 @@ describe('ListPostsUseCase', () => {
     postQuery.paginate.mockRejectedValue(paginateFailure);
     const useCase = new ListPostsUseCase(postQuery);
 
-    await expect(useCase.execute({ limit: 20, cursor: null })).rejects.toBe(
-      paginateFailure,
-    );
+    await expect(useCase.execute({ limit: 20, cursor: null })).rejects.toBe(paginateFailure);
   });
 });
 
@@ -145,12 +136,8 @@ function createPostQueryMock(): PostQueryMock {
   return {
     get: vi.fn<PostQuery['get']>().mockResolvedValue(null as never),
     find: vi.fn<PostQuery['find']>().mockResolvedValue(null),
-    paginate: vi
-      .fn<PostQuery['paginate']>()
-      .mockResolvedValue(buildPaginateResult()),
-    search: vi
-      .fn<PostQuery['search']>()
-      .mockResolvedValue({ posts: [], nextCursor: null }),
+    paginate: vi.fn<PostQuery['paginate']>().mockResolvedValue(buildPaginateResult()),
+    search: vi.fn<PostQuery['search']>().mockResolvedValue({ posts: [], nextCursor: null }),
     count: vi.fn<PostQuery['count']>().mockResolvedValue(0),
   };
 }

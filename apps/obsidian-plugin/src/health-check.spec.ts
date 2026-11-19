@@ -5,16 +5,9 @@ import { HealthCheckScheduler } from '@/health-check';
 import { DEFAULT_SETTINGS } from '@/settings';
 import type { SheskaSettings } from '@/settings';
 
-function makeScheduler(
-  settings: Partial<SheskaSettings> = {},
-  api = { health: vi.fn().mockResolvedValue({ status: 'ok' }) },
-) {
+function makeScheduler(settings: Partial<SheskaSettings> = {}, api = { health: vi.fn().mockResolvedValue({ status: 'ok' }) }) {
   const registerInterval = vi.fn((id: number) => id);
-  const scheduler = new HealthCheckScheduler(
-    api as unknown as SheskaApiClient,
-    { ...DEFAULT_SETTINGS, ...settings },
-    registerInterval,
-  );
+  const scheduler = new HealthCheckScheduler(api as unknown as SheskaApiClient, { ...DEFAULT_SETTINGS, ...settings }, registerInterval);
   return { api, registerInterval, scheduler };
 }
 
@@ -68,18 +61,13 @@ describe('HealthCheckScheduler', () => {
     scheduler.start();
     await vi.advanceTimersByTimeAsync(60 * 1000);
 
-    expect(noticeMessages).toContain(
-      'Sheska API health check failed. Check settings.',
-    );
+    expect(noticeMessages).toContain('Sheska API health check failed. Check settings.');
   });
 
   it('restarts with a replacement API client and settings', async () => {
     const oldApi = { health: vi.fn().mockResolvedValue({ status: 'old' }) };
     const newApi = { health: vi.fn().mockResolvedValue({ status: 'new' }) };
-    const { scheduler } = makeScheduler(
-      { healthCheckIntervalMinutes: 1 },
-      oldApi,
-    );
+    const { scheduler } = makeScheduler({ healthCheckIntervalMinutes: 1 }, oldApi);
     scheduler.start();
 
     scheduler.configure(newApi as unknown as SheskaApiClient, {

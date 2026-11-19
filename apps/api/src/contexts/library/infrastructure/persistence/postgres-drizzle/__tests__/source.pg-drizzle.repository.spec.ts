@@ -7,9 +7,7 @@ import { ConstraintViolationError, UnexpectedError } from '@core/errors';
 
 describe('SourcePgDrizzleRepository', () => {
   it('unique violation은 ConstraintViolationError로 전파한다', async () => {
-    const repository = new SourcePgDrizzleRepository(
-      createSourceSaveRejectingDb(createPostgresError('23505')),
-    );
+    const repository = new SourcePgDrizzleRepository(createSourceSaveRejectingDb(createPostgresError('23505')));
 
     const result = repository.insert(buildSource());
 
@@ -20,9 +18,7 @@ describe('SourcePgDrizzleRepository', () => {
   });
 
   it('unknown failure는 UnexpectedError로 전파한다', async () => {
-    const repository = new SourcePgDrizzleRepository(
-      createSourceSaveRejectingDb(new Error('connection failed')),
-    );
+    const repository = new SourcePgDrizzleRepository(createSourceSaveRejectingDb(new Error('connection failed')));
 
     const result = repository.insert(buildSource());
 
@@ -35,9 +31,7 @@ describe('SourcePgDrizzleRepository', () => {
 
 describe('SourceSyncJobPgDrizzleRepository', () => {
   it('unique violation은 ConstraintViolationError로 전파한다', async () => {
-    const repository = new SourceSyncJobPgDrizzleRepository(
-      createSourceSyncJobSaveRejectingDb(createPostgresError('23505')),
-    );
+    const repository = new SourceSyncJobPgDrizzleRepository(createSourceSyncJobSaveRejectingDb(createPostgresError('23505')));
 
     const result = repository.insert(buildSourceSyncJob());
 
@@ -48,9 +42,7 @@ describe('SourceSyncJobPgDrizzleRepository', () => {
   });
 
   it('unknown failure는 UnexpectedError로 전파한다', async () => {
-    const repository = new SourceSyncJobPgDrizzleRepository(
-      createSourceSyncJobSaveRejectingDb(new Error('connection failed')),
-    );
+    const repository = new SourceSyncJobPgDrizzleRepository(createSourceSyncJobSaveRejectingDb(new Error('connection failed')));
 
     const result = repository.insert(buildSourceSyncJob());
 
@@ -61,9 +53,7 @@ describe('SourceSyncJobPgDrizzleRepository', () => {
   });
 });
 
-function createSourceSaveRejectingDb(
-  error: Error,
-): ConstructorParameters<typeof SourcePgDrizzleRepository>[0] {
+function createSourceSaveRejectingDb(error: Error): ConstructorParameters<typeof SourcePgDrizzleRepository>[0] {
   return {
     insert: () => ({
       values: () => ({
@@ -73,18 +63,14 @@ function createSourceSaveRejectingDb(
   } as unknown as ConstructorParameters<typeof SourcePgDrizzleRepository>[0];
 }
 
-function createSourceSyncJobSaveRejectingDb(
-  error: Error,
-): ConstructorParameters<typeof SourceSyncJobPgDrizzleRepository>[0] {
+function createSourceSyncJobSaveRejectingDb(error: Error): ConstructorParameters<typeof SourceSyncJobPgDrizzleRepository>[0] {
   return {
     insert: () => ({
       values: () => ({
         returning: () => Promise.reject(error),
       }),
     }),
-  } as unknown as ConstructorParameters<
-    typeof SourceSyncJobPgDrizzleRepository
-  >[0];
+  } as unknown as ConstructorParameters<typeof SourceSyncJobPgDrizzleRepository>[0];
 }
 
 function createPostgresError(code: string): Error {

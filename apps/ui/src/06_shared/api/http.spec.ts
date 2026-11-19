@@ -1,11 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { HealthApi } from '@sheska/contract';
-import {
-  HttpClient,
-  HttpError,
-  isRetryableHttpError,
-  type ResponseSchema,
-} from './http';
+import { HttpClient, HttpError, isRetryableHttpError, type ResponseSchema } from './http';
 
 const passthrough: ResponseSchema<unknown> = { parse: (data) => data };
 
@@ -64,13 +59,10 @@ describe('HttpClient', () => {
         limit: '5',
       });
 
-      expect(fetch).toHaveBeenCalledWith(
-        'http://localhost:3000/posts/search?q=garden&limit=5',
-        {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        },
-      );
+      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/posts/search?q=garden&limit=5', {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
     });
 
     it('응답 본문을 schema로 parse한 값을 돌려준다', async () => {
@@ -111,17 +103,13 @@ describe('HttpClient', () => {
     it('응답이 ok가 아니면 throw한다', async () => {
       stubFailure(500, 'Internal Server Error');
 
-      await expect(client.get('/sources', passthrough)).rejects.toThrow(
-        'HTTP error: 500 Internal Server Error',
-      );
+      await expect(client.get('/sources', passthrough)).rejects.toThrow('HTTP error: 500 Internal Server Error');
     });
 
     it('실패 응답의 status를 HttpError에 담는다', async () => {
       stubFailure(404, 'Not Found');
 
-      await expect(
-        client.get('/sources/unknown', passthrough),
-      ).rejects.toMatchObject({
+      await expect(client.get('/sources/unknown', passthrough)).rejects.toMatchObject({
         name: 'HttpError',
         status: 404,
       });
@@ -172,19 +160,13 @@ describe('HttpClient', () => {
 
   describe('isRetryableHttpError', () => {
     it('429와 5xx는 재시도 대상이다', () => {
-      expect(
-        isRetryableHttpError(new HttpError(429, 'Too Many Requests')),
-      ).toBe(true);
-      expect(
-        isRetryableHttpError(new HttpError(503, 'Service Unavailable')),
-      ).toBe(true);
+      expect(isRetryableHttpError(new HttpError(429, 'Too Many Requests'))).toBe(true);
+      expect(isRetryableHttpError(new HttpError(503, 'Service Unavailable'))).toBe(true);
     });
 
     it('429를 제외한 4xx는 재시도 대상이 아니다', () => {
       expect(isRetryableHttpError(new HttpError(404, 'Not Found'))).toBe(false);
-      expect(isRetryableHttpError(new HttpError(400, 'Bad Request'))).toBe(
-        false,
-      );
+      expect(isRetryableHttpError(new HttpError(400, 'Bad Request'))).toBe(false);
     });
 
     it('네트워크 실패는 일시적일 수 있으므로 재시도 대상이다', () => {
@@ -198,9 +180,7 @@ describe('HttpClient', () => {
     });
 
     it('응답 본문이 JSON이 아니면 재시도 대상이 아니다', () => {
-      expect(isRetryableHttpError(new SyntaxError('Unexpected token'))).toBe(
-        false,
-      );
+      expect(isRetryableHttpError(new SyntaxError('Unexpected token'))).toBe(false);
     });
   });
 
@@ -215,11 +195,7 @@ describe('HttpClient', () => {
         }),
       );
 
-      const result = await client.post(
-        '/posts',
-        { sourceId: 'source-1' },
-        passthrough,
-      );
+      const result = await client.post('/posts', { sourceId: 'source-1' }, passthrough);
 
       expect(fetch).toHaveBeenCalledWith('http://localhost:3000/posts', {
         method: 'POST',
@@ -234,14 +210,9 @@ describe('HttpClient', () => {
   describe('post without a response schema', () => {
     it('본문을 읽지 않고 끝난다', async () => {
       const json = vi.fn();
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({ ok: true, status: 204, json }),
-      );
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 204, json }));
 
-      await expect(
-        client.post('/auth/session', { password: 'secret' }),
-      ).resolves.toBeUndefined();
+      await expect(client.post('/auth/session', { password: 'secret' })).resolves.toBeUndefined();
       expect(json).not.toHaveBeenCalled();
     });
   });
@@ -249,10 +220,7 @@ describe('HttpClient', () => {
   describe('delete', () => {
     it('DELETE 요청을 보내고 본문을 읽지 않는다', async () => {
       const json = vi.fn();
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({ ok: true, status: 204, json }),
-      );
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 204, json }));
 
       await client.delete('/auth/session');
 
@@ -284,21 +252,14 @@ describe('HttpClient', () => {
         }),
       );
 
-      const result = await client.patch(
-        '/resources/resource-1',
-        { status: 'active' },
-        passthrough,
-      );
+      const result = await client.patch('/resources/resource-1', { status: 'active' }, passthrough);
 
-      expect(fetch).toHaveBeenCalledWith(
-        'http://localhost:3000/resources/resource-1',
-        {
-          method: 'PATCH',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'active' }),
-        },
-      );
+      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/resources/resource-1', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'active' }),
+      });
       expect(result).toEqual(response);
     });
   });

@@ -1,7 +1,4 @@
-import {
-  IntegrationEvent,
-  type IntegrationEventParams,
-} from './integration-event.base';
+import { IntegrationEvent, type IntegrationEventParams } from './integration-event.base';
 
 interface OutboxDeadLetteredIntegrationEventParams extends IntegrationEventParams {
   readonly deadLetteredEventId: string;

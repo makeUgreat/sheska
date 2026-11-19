@@ -12,11 +12,7 @@ export interface UseListSourcesParams {
   syncJobStatus?: SyncJobSummaryStatus;
 }
 
-export function useListSources({
-  page,
-  pageSize,
-  syncJobStatus,
-}: UseListSourcesParams) {
+export function useListSources({ page, pageSize, syncJobStatus }: UseListSourcesParams) {
   const http = useHttpClient();
   return useQuery({
     queryKey: ['sources', 'list', page, pageSize, syncJobStatus],
@@ -24,9 +20,7 @@ export function useListSources({
     placeholderData: (previousData) => previousData,
     refetchInterval: (query) => {
       const hasActiveSyncJob = query.state.data?.sources.some(
-        (source) =>
-          source.latestSyncJob &&
-          ACTIVE_SYNC_JOB_STATUSES.has(source.latestSyncJob.status),
+        (source) => source.latestSyncJob && ACTIVE_SYNC_JOB_STATUSES.has(source.latestSyncJob.status),
       );
       return hasActiveSyncJob ? SYNC_JOB_POLL_INTERVAL_MS : false;
     },
@@ -42,16 +36,10 @@ export function useSource(id: string | undefined) {
   });
 }
 
-export function useSyncJob(
-  syncJob: SyncJobSummary | null | undefined,
-  sourceId: string | undefined,
-) {
+export function useSyncJob(syncJob: SyncJobSummary | null | undefined, sourceId: string | undefined) {
   const http = useHttpClient();
   const queryClient = useQueryClient();
-  const isActive =
-    syncJob !== null &&
-    syncJob !== undefined &&
-    ACTIVE_SYNC_JOB_STATUSES.has(syncJob.status);
+  const isActive = syncJob !== null && syncJob !== undefined && ACTIVE_SYNC_JOB_STATUSES.has(syncJob.status);
 
   return useQuery({
     queryKey: ['sync-jobs', syncJob?.syncJobId],
@@ -64,8 +52,6 @@ export function useSyncJob(
     },
     enabled: isActive,
     refetchInterval: (query) =>
-      query.state.data && ACTIVE_SYNC_JOB_STATUSES.has(query.state.data.status)
-        ? SYNC_JOB_POLL_INTERVAL_MS
-        : false,
+      query.state.data && ACTIVE_SYNC_JOB_STATUSES.has(query.state.data.status) ? SYNC_JOB_POLL_INTERVAL_MS : false,
   });
 }

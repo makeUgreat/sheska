@@ -11,16 +11,10 @@ describe('hasCodeBlock', () => {
   });
 
   it('목록 항목 안의 fence도 code block으로 본다', () => {
-    expect(
-      readsCodeBlock(
-        ['- item', '', '    ```js', '    const a = 1', '    ```'].join('\n'),
-      ),
-    ).toBe(true);
+    expect(readsCodeBlock(['- item', '', '    ```js', '    const a = 1', '    ```'].join('\n'))).toBe(true);
   });
 
   it('callout 안의 fence도 code block으로 본다', () => {
-    expect(
-      readsCodeBlock(['> [!note]', '> ```ts', '> x', '> ```'].join('\n')),
-    ).toBe(true);
+    expect(readsCodeBlock(['> [!note]', '> ```ts', '> x', '> ```'].join('\n'))).toBe(true);
   });
 });

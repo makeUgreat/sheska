@@ -17,14 +17,11 @@ describe('databaseConfig', () => {
     expect(databaseConfig()).toEqual({ databaseUrl: validDatabaseUrl });
   });
 
-  it.each([undefined, '', 'not-a-url'])(
-    'DATABASE_URL이 %j이면 거부한다',
-    (value) => {
-      vi.stubEnv('DATABASE_URL', value);
+  it.each([undefined, '', 'not-a-url'])('DATABASE_URL이 %j이면 거부한다', (value) => {
+    vi.stubEnv('DATABASE_URL', value);
 
-      expect(() => databaseConfig()).toThrow('DATABASE_URL');
-    },
-  );
+    expect(() => databaseConfig()).toThrow('DATABASE_URL');
+  });
 
   it('DATABASE_URL_FILE이 가리키는 파일에서 DATABASE_URL을 읽는다', () => {
     const directory = mkdtempSync(join(tmpdir(), 'sheska-database-'));

@@ -13,11 +13,7 @@ import {
   type EmbeddingWorkflowDispatcher,
   type IngestionUnitOfWork,
 } from '@contexts/ingestion/application/ports';
-import {
-  EMBEDDER,
-  EMBEDDING_WORKFLOW_DISPATCHER,
-  INGESTION_UNIT_OF_WORK,
-} from '@contexts/ingestion/ingestion.di-tokens';
+import { EMBEDDER, EMBEDDING_WORKFLOW_DISPATCHER, INGESTION_UNIT_OF_WORK } from '@contexts/ingestion/ingestion.di-tokens';
 import { EmbedSourceChunkUseCase } from '@contexts/ingestion/application/use-cases/embed-source-chunk.use-case';
 import { FinalizeEmbeddingWorkflowUseCase } from '@contexts/ingestion/application/use-cases/finalize-embedding-workflow.use-case';
 import { SourceEmbeddingWorkflowBullMqDispatcher } from '@contexts/ingestion/infrastructure/queue/bullmq/source-embedding-workflow.bullmq.dispatcher';
@@ -33,8 +29,7 @@ describe('Embedding workflow consumers', () => {
   let finalizeQueue: Queue;
   let finalizeQueueEvents: QueueEvents;
   let workflowDispatcher: EmbeddingWorkflowDispatcher;
-  const embed =
-    vi.fn<(text: string) => Promise<{ embedding: number[]; model: string }>>();
+  const embed = vi.fn<(text: string) => Promise<{ embedding: number[]; model: string }>>();
   const upsert = vi.fn();
   const append = vi.fn();
 
@@ -139,12 +134,10 @@ describe('Embedding workflow consumers', () => {
   });
 
   it('실패한 chunk만 다시 시도하고 성공한 chunk는 다시 embed하지 않는다', async () => {
-    embed
-      .mockRejectedValueOnce(new Error('embedder unavailable'))
-      .mockResolvedValue({
-        embedding: VALID_EMBEDDING,
-        model: 'qwen3-embedding:0.6b',
-      });
+    embed.mockRejectedValueOnce(new Error('embedder unavailable')).mockResolvedValue({
+      embedding: VALID_EMBEDDING,
+      model: 'qwen3-embedding:0.6b',
+    });
     upsert.mockResolvedValue(undefined);
 
     await workflowDispatcher.dispatch({
@@ -176,9 +169,7 @@ describe('Embedding workflow consumers', () => {
     });
 
     const parent = await finalizeQueue.getJob('sync-job-1');
-    await expect(
-      parent!.waitUntilFinished(finalizeQueueEvents),
-    ).rejects.toThrow();
+    await expect(parent!.waitUntilFinished(finalizeQueueEvents)).rejects.toThrow();
 
     expect(embed).toHaveBeenCalledTimes(3);
     const child = await chunkQueue.getJob('sync-job-1-0');

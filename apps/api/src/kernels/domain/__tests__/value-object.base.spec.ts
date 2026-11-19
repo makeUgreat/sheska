@@ -102,18 +102,14 @@ describe('ValueObject', () => {
     });
 
     it('constructor validation이 실패하면 throw한다', () => {
-      expect(() => new SampleName({ value: '' })).toThrow(
-        'Sample cannot be empty',
-      );
+      expect(() => new SampleName({ value: '' })).toThrow('Sample cannot be empty');
     });
 
     it.each<[string, unknown]>([
       ['null', null],
       ['undefined', undefined],
     ])('constructor props가 %s이면 throw한다', (_caseName, props) => {
-      expect(() => new SampleName(props as DomainPrimitive<string>)).toThrow(
-        'Value object props cannot be empty',
-      );
+      expect(() => new SampleName(props as DomainPrimitive<string>)).toThrow('Value object props cannot be empty');
     });
   });
 

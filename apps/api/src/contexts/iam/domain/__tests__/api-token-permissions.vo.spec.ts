@@ -5,11 +5,7 @@ import { PERMISSION } from '../permission';
 
 describe('ApiTokenPermissions', () => {
   it('같은 권한은 한 번만 남긴다', () => {
-    const permissions = ApiTokenPermissions.of([
-      'posts:publish',
-      'sources:sync',
-      'posts:publish',
-    ]);
+    const permissions = ApiTokenPermissions.of(['posts:publish', 'sources:sync', 'posts:publish']);
 
     expect(permissions.unpack()).toEqual(['posts:publish', 'sources:sync']);
   });

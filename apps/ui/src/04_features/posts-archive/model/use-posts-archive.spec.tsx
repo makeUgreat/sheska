@@ -3,10 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, type Mock, vi } from 'vitest';
 import { type PostSummary } from '@/entities/post';
-import {
-  HttpClientProvider,
-  type HttpClientType as HttpClient,
-} from '@/shared/api';
+import { HttpClientProvider, type HttpClientType as HttpClient } from '@/shared/api';
 import { usePostsArchive } from './use-posts-archive';
 
 type MockHttpClientOverrides = {
@@ -30,9 +27,7 @@ function buildPost(postId: string, title: string): PostSummary {
   };
 }
 
-function buildMockHttpClient(
-  overrides: MockHttpClientOverrides = {},
-): HttpClient {
+function buildMockHttpClient(overrides: MockHttpClientOverrides = {}): HttpClient {
   return {
     get: vi.fn((path: string) => {
       if (path === '/posts/count') {
@@ -162,14 +157,10 @@ describe('usePostsArchive', () => {
 
     await waitFor(() => {
       expect(result.current.normalizedQuery).toBe('garden');
-      expect(client.get).toHaveBeenCalledWith(
-        '/posts/search',
-        expect.anything(),
-        {
-          q: 'garden',
-          limit: '3',
-        },
-      );
+      expect(client.get).toHaveBeenCalledWith('/posts/search', expect.anything(), {
+        q: 'garden',
+        limit: '3',
+      });
       expect(result.current.isSearching).toBe(true);
       expect(result.current.semanticSearchApplied).toBe(true);
       expect(result.current.posts).toEqual([searchPost]);
@@ -220,11 +211,7 @@ describe('usePostsArchive', () => {
       await result.current.fetchNextPage();
     });
 
-    expect(client.get as Mock).toHaveBeenLastCalledWith(
-      '/posts/search',
-      expect.anything(),
-      { q: 'term', cursor: 'search-next' },
-    );
+    expect(client.get as Mock).toHaveBeenLastCalledWith('/posts/search', expect.anything(), { q: 'term', cursor: 'search-next' });
   });
 
   it('semantic search가 적용되지 않은 검색 폴백 상태를 반환한다', async () => {

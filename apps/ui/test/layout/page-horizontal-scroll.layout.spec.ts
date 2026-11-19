@@ -3,8 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 const NOW = '2026-01-01T00:00:00.000Z';
 
 /** Titles arrive from note filenames, so one unbreakable token is not exotic. */
-const UNBREAKABLE =
-  'pneumonoultramicroscopicsilicovolcanoconiosis-antidisestablishmentarianism';
+const UNBREAKABLE = 'pneumonoultramicroscopicsilicovolcanoconiosis-antidisestablishmentarianism';
 
 const BODY = `# Heading one
 
@@ -108,22 +107,14 @@ function horizontalOverflow(page: Page) {
   });
 }
 
-const ROUTES = [
-  '/',
-  '/posts',
-  '/posts/post-0',
-  '/sources',
-  '/sources/source-0',
-];
+const ROUTES = ['/', '/posts', '/posts/post-0', '/sources', '/sources/source-0'];
 
 /** 320px is the support floor, 640px is where the header and the search row change shape. */
 const WIDTHS = [320, 640, 1280];
 
 test.describe('페이지 가로 스크롤', () => {
   for (const width of WIDTHS) {
-    test(`${width}px에서는 어떤 route도 가로로 밀리지 않는다`, async ({
-      page,
-    }) => {
+    test(`${width}px에서는 어떤 route도 가로로 밀리지 않는다`, async ({ page }) => {
       await serveFixtures(page);
       await page.setViewportSize({ width, height: 900 });
 

@@ -47,9 +47,7 @@ describe('attachmentContentS3Config', () => {
   it('ATTACHMENT_STORAGE_ENDPOINT가 URL이 아니면 거부한다', () => {
     stubEnv({ ...VALID_ENV, ATTACHMENT_STORAGE_ENDPOINT: 'not-a-url' });
 
-    expect(() => attachmentContentS3Config()).toThrow(
-      'ATTACHMENT_STORAGE_ENDPOINT',
-    );
+    expect(() => attachmentContentS3Config()).toThrow('ATTACHMENT_STORAGE_ENDPOINT');
   });
 
   it.each([

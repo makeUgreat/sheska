@@ -5,11 +5,7 @@ import { Test } from '@nestjs/testing';
 import { type SourceRepository } from '@contexts/library/domain';
 import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { AppModule } from '@platform/nest/app.module';
-import {
-  buildSource,
-  sourceContentByteSize,
-  sourceContentOf,
-} from '../../../support/domains/fixtures/source.fixture';
+import { buildSource, sourceContentByteSize, sourceContentOf } from '../../../support/domains/fixtures/source.fixture';
 
 describe('SourceDrizzleRepository', () => {
   let app: INestApplication;
@@ -95,9 +91,7 @@ describe('SourceDrizzleRepository', () => {
   });
 
   it('존재하지 않는 id는 NotFoundError를 throw한다', async () => {
-    await expect(
-      repository.get({ id: 'non-existent-id' }),
-    ).rejects.toMatchObject({
+    await expect(repository.get({ id: 'non-existent-id' })).rejects.toMatchObject({
       kind: 'not_found',
       code: 'source.not_found',
     });

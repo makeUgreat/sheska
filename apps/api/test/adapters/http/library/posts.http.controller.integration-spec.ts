@@ -14,15 +14,7 @@ import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filte
 import { DeclaredErrorCodesInterceptor } from '@platform/nest/interceptors/declared-error-codes.interceptor';
 import { errorResponseSchema, PostApi } from '@sheska/contract';
 import request from 'supertest';
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  type MockedFunction,
-  vi,
-} from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type MockedFunction, vi } from 'vitest';
 
 type PublishPostUseCaseMock = {
   execute: MockedFunction<PublishPostUseCase['execute']>;
@@ -106,10 +98,7 @@ describe('PostsHttpController', () => {
         updatedAt: now,
       });
 
-      const response = await request(httpServer)
-        .post('/posts')
-        .send({ sourceId: 'source-1' })
-        .expect(201);
+      const response = await request(httpServer).post('/posts').send({ sourceId: 'source-1' }).expect(201);
 
       PostApi.publish.response.parse(response.body);
       expect(response.body).toEqual({
@@ -126,10 +115,7 @@ describe('PostsHttpController', () => {
     });
 
     it('요청 body가 유효하지 않으면 400 응답을 반환하고 use case를 호출하지 않는다', async () => {
-      const response = await request(httpServer)
-        .post('/posts')
-        .send({})
-        .expect(400);
+      const response = await request(httpServer).post('/posts').send({}).expect(400);
 
       expect(response.body).toMatchObject({
         code: 'request.validation_failed',
@@ -146,10 +132,7 @@ describe('PostsHttpController', () => {
         }),
       );
 
-      const response = await request(httpServer)
-        .post('/posts')
-        .send({ sourceId: 'non-existent' })
-        .expect(404);
+      const response = await request(httpServer).post('/posts').send({ sourceId: 'non-existent' }).expect(404);
 
       expect(response.body).toEqual({
         code: 'source.not_found',
@@ -168,10 +151,7 @@ describe('PostsHttpController', () => {
         }),
       );
 
-      const response = await request(httpServer)
-        .post('/posts')
-        .send({ sourceId: 'source-1' })
-        .expect(409);
+      const response = await request(httpServer).post('/posts').send({ sourceId: 'source-1' }).expect(409);
 
       expect(response.body).toEqual({
         code: 'post.already_exists',
@@ -181,14 +161,9 @@ describe('PostsHttpController', () => {
     });
 
     it('예기치 못한 오류는 500 응답으로 마스킹한다', async () => {
-      publishPostUseCase.execute.mockRejectedValue(
-        new Error('DB connection lost'),
-      );
+      publishPostUseCase.execute.mockRejectedValue(new Error('DB connection lost'));
 
-      const response = await request(httpServer)
-        .post('/posts')
-        .send({ sourceId: 'source-1' })
-        .expect(500);
+      const response = await request(httpServer).post('/posts').send({ sourceId: 'source-1' }).expect(500);
 
       expect(response.body).toEqual({
         code: 'internal.unexpected',
@@ -238,17 +213,13 @@ describe('PostsHttpController', () => {
     });
 
     it('cursor 쿼리 파라미터를 디코딩하여 use case에 전달한다', async () => {
-      const encodedCursor = Buffer.from(
-        JSON.stringify({ id: 'post-1' }),
-      ).toString('base64url');
+      const encodedCursor = Buffer.from(JSON.stringify({ id: 'post-1' })).toString('base64url');
       listPostsUseCase.execute.mockResolvedValue({
         posts: [],
         nextCursor: null,
       });
 
-      await request(httpServer)
-        .get(`/posts?cursor=${encodedCursor}&limit=5`)
-        .expect(200);
+      await request(httpServer).get(`/posts?cursor=${encodedCursor}&limit=5`).expect(200);
 
       expect(listPostsUseCase.execute).toHaveBeenCalledWith({
         cursor: { id: 'post-1' },
@@ -257,9 +228,7 @@ describe('PostsHttpController', () => {
     });
 
     it('유효하지 않은 limit이면 400 응답을 반환한다', async () => {
-      const response = await request(httpServer)
-        .get('/posts?limit=-1')
-        .expect(400);
+      const response = await request(httpServer).get('/posts?limit=-1').expect(400);
 
       expect(response.body).toMatchObject({
         code: 'request.validation_failed',
@@ -268,9 +237,7 @@ describe('PostsHttpController', () => {
     });
 
     it('limit이 100을 초과하면 400 응답을 반환한다', async () => {
-      const response = await request(httpServer)
-        .get('/posts?limit=101')
-        .expect(400);
+      const response = await request(httpServer).get('/posts?limit=101').expect(400);
 
       expect(response.body).toMatchObject({
         code: 'request.validation_failed',
@@ -279,9 +246,7 @@ describe('PostsHttpController', () => {
     });
 
     it('유효하지 않은 cursor이면 400 응답을 반환한다', async () => {
-      const response = await request(httpServer)
-        .get('/posts?cursor=not-a-cursor')
-        .expect(400);
+      const response = await request(httpServer).get('/posts?cursor=not-a-cursor').expect(400);
 
       expect(response.body).toMatchObject({
         code: 'request.validation_failed',
@@ -312,10 +277,7 @@ describe('PostsHttpController', () => {
         semanticSearchApplied: true,
       });
 
-      const response = await request(httpServer)
-        .get('/posts/search')
-        .query({ q: 'TypeScript' })
-        .expect(200);
+      const response = await request(httpServer).get('/posts/search').query({ q: 'TypeScript' }).expect(200);
       const body = response.body as {
         posts: unknown[];
         nextCursor: unknown;
@@ -353,19 +315,14 @@ describe('PostsHttpController', () => {
     });
 
     it('cursor와 limit 쿼리 파라미터를 디코딩하여 use case에 전달한다', async () => {
-      const encodedCursor = Buffer.from(
-        JSON.stringify({ id: 'post-1', score: 0.8 }),
-      ).toString('base64url');
+      const encodedCursor = Buffer.from(JSON.stringify({ id: 'post-1', score: 0.8 })).toString('base64url');
       searchPostsUseCase.execute.mockResolvedValue({
         posts: [],
         nextCursor: null,
         semanticSearchApplied: false,
       });
 
-      await request(httpServer)
-        .get('/posts/search')
-        .query({ q: 'TypeScript', cursor: encodedCursor, limit: 5 })
-        .expect(200);
+      await request(httpServer).get('/posts/search').query({ q: 'TypeScript', cursor: encodedCursor, limit: 5 }).expect(200);
 
       expect(searchPostsUseCase.execute).toHaveBeenCalledWith(
         {
@@ -382,14 +339,9 @@ describe('PostsHttpController', () => {
     });
 
     it('score가 없는 cursor이면 400 응답을 반환한다', async () => {
-      const cursorWithoutScore = Buffer.from(
-        JSON.stringify({ id: 'post-1' }),
-      ).toString('base64url');
+      const cursorWithoutScore = Buffer.from(JSON.stringify({ id: 'post-1' })).toString('base64url');
 
-      const response = await request(httpServer)
-        .get('/posts/search')
-        .query({ q: 'TypeScript', cursor: cursorWithoutScore })
-        .expect(400);
+      const response = await request(httpServer).get('/posts/search').query({ q: 'TypeScript', cursor: cursorWithoutScore }).expect(400);
 
       expect(response.body).toMatchObject({
         code: 'request.validation_failed',
@@ -398,9 +350,7 @@ describe('PostsHttpController', () => {
     });
 
     it('q가 없으면 400 응답을 반환하고 use case를 호출하지 않는다', async () => {
-      const response = await request(httpServer)
-        .get('/posts/search')
-        .expect(400);
+      const response = await request(httpServer).get('/posts/search').expect(400);
 
       expect(response.body).toMatchObject({
         code: 'request.validation_failed',
@@ -409,10 +359,7 @@ describe('PostsHttpController', () => {
     });
 
     it('q가 공백이면 400 응답을 반환하고 use case를 호출하지 않는다', async () => {
-      const response = await request(httpServer)
-        .get('/posts/search')
-        .query({ q: '   ' })
-        .expect(400);
+      const response = await request(httpServer).get('/posts/search').query({ q: '   ' }).expect(400);
 
       expect(response.body).toMatchObject({
         code: 'request.validation_failed',
@@ -427,10 +374,7 @@ describe('PostsHttpController', () => {
         semanticSearchApplied: false,
       });
 
-      await request(httpServer)
-        .get('/posts/search')
-        .query({ q: 'a' })
-        .expect(200);
+      await request(httpServer).get('/posts/search').query({ q: 'a' }).expect(200);
 
       expect(searchPostsUseCase.execute).toHaveBeenCalledWith(
         {
@@ -447,14 +391,9 @@ describe('PostsHttpController', () => {
     });
 
     it('예기치 못한 오류는 500 응답으로 마스킹한다', async () => {
-      searchPostsUseCase.execute.mockRejectedValue(
-        new Error('DB connection lost'),
-      );
+      searchPostsUseCase.execute.mockRejectedValue(new Error('DB connection lost'));
 
-      const response = await request(httpServer)
-        .get('/posts/search')
-        .query({ q: 'TypeScript' })
-        .expect(500);
+      const response = await request(httpServer).get('/posts/search').query({ q: 'TypeScript' }).expect(500);
 
       expect(response.body).toEqual({
         code: 'internal.unexpected',
@@ -468,9 +407,7 @@ describe('PostsHttpController', () => {
     it('post의 전체 갯수를 200 응답으로 반환한다', async () => {
       countPostsUseCase.execute.mockResolvedValue(42);
 
-      const response = await request(httpServer)
-        .get('/posts/count')
-        .expect(200);
+      const response = await request(httpServer).get('/posts/count').expect(200);
 
       PostApi.count.response.parse(response.body);
       expect(response.body).toEqual({ count: 42 });
@@ -478,13 +415,9 @@ describe('PostsHttpController', () => {
     });
 
     it('예기치 못한 오류는 500 응답으로 마스킹한다', async () => {
-      countPostsUseCase.execute.mockRejectedValue(
-        new Error('DB connection lost'),
-      );
+      countPostsUseCase.execute.mockRejectedValue(new Error('DB connection lost'));
 
-      const response = await request(httpServer)
-        .get('/posts/count')
-        .expect(500);
+      const response = await request(httpServer).get('/posts/count').expect(500);
 
       expect(response.body).toEqual({
         code: 'internal.unexpected',
@@ -507,9 +440,7 @@ describe('PostsHttpController', () => {
         body: '테스트 본문',
       });
 
-      const response = await request(httpServer)
-        .get('/posts/post-1')
-        .expect(200);
+      const response = await request(httpServer).get('/posts/post-1').expect(200);
 
       PostApi.get.response.parse(response.body);
       expect(response.body).toEqual({
@@ -533,9 +464,7 @@ describe('PostsHttpController', () => {
         }),
       );
 
-      const response = await request(httpServer)
-        .get('/posts/non-existent')
-        .expect(404);
+      const response = await request(httpServer).get('/posts/non-existent').expect(404);
 
       expect(response.body).toEqual({
         code: 'post.not_found',
@@ -547,9 +476,7 @@ describe('PostsHttpController', () => {
     it('예기치 못한 오류는 500 응답으로 마스킹한다', async () => {
       getPostUseCase.execute.mockRejectedValue(new Error('DB connection lost'));
 
-      const response = await request(httpServer)
-        .get('/posts/post-1')
-        .expect(500);
+      const response = await request(httpServer).get('/posts/post-1').expect(500);
 
       errorResponseSchema.parse(response.body);
       expect(response.body).toEqual({

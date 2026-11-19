@@ -1,16 +1,8 @@
-import {
-  type ApiRequest,
-  ApiTokenApi,
-  PERMISSION,
-  pathOf,
-} from '@sheska/contract';
+import { type ApiRequest, ApiTokenApi, PERMISSION, pathOf } from '@sheska/contract';
 import { type HttpClientType as HttpClient } from '@/shared/api';
 import { type ApiToken, type IssuedApiToken } from './types';
 
-export function issueApiToken(
-  http: HttpClient,
-  name: string,
-): Promise<IssuedApiToken> {
+export function issueApiToken(http: HttpClient, name: string): Promise<IssuedApiToken> {
   return http.post(
     ApiTokenApi.issue.path,
     {
@@ -22,10 +14,7 @@ export function issueApiToken(
 }
 
 export async function listApiTokens(http: HttpClient): Promise<ApiToken[]> {
-  const { apiTokens } = await http.get(
-    ApiTokenApi.list.path,
-    ApiTokenApi.list.response,
-  );
+  const { apiTokens } = await http.get(ApiTokenApi.list.path, ApiTokenApi.list.response);
   return apiTokens;
 }
 

@@ -1,9 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { type CallContext } from '@core/call-context';
-import {
-  INTEGRATION_EVENT_DISPATCHER,
-  type IntegrationEventDispatcher,
-} from '@kernels/application';
+import { INTEGRATION_EVENT_DISPATCHER, type IntegrationEventDispatcher } from '@kernels/application';
 import { IngestionFailedIntegrationEvent } from '@contexts/ingestion/application/events/ingestion.integration-event';
 import { type Embedder } from '@contexts/ingestion/application/ports';
 import { EMBEDDER } from '@contexts/ingestion/ingestion.di-tokens';
@@ -32,10 +29,7 @@ export class EmbedSourceChunkUseCase {
     private readonly integrationEventDispatcher: IntegrationEventDispatcher,
   ) {}
 
-  async execute(
-    payload: EmbedSourceChunkCommand,
-    context: CallContext,
-  ): Promise<EmbedSourceChunkResult> {
+  async execute(payload: EmbedSourceChunkCommand, context: CallContext): Promise<EmbedSourceChunkResult> {
     const result = await this.embedder.embed(payload.chunkContent, context);
 
     return {

@@ -45,9 +45,7 @@ function makeTab(
 
 describe('SheskaSettingTab', () => {
   it('does not define getSettingDefinitions, so Obsidian renders display()', () => {
-    expect(
-      Object.getOwnPropertyNames(SheskaSettingTab.prototype),
-    ).not.toContain('getSettingDefinitions');
+    expect(Object.getOwnPropertyNames(SheskaSettingTab.prototype)).not.toContain('getSettingDefinitions');
   });
 
   describe('display', () => {
@@ -95,9 +93,7 @@ describe('SheskaSettingTab', () => {
         const tab = makeTab(undefined, undefined, app);
         tab.display();
 
-        const onChange = tokenRow().onChange.mock.calls[0][0] as (
-          value: string,
-        ) => void;
+        const onChange = tokenRow().onChange.mock.calls[0][0] as (value: string) => void;
         onChange(' shk_new ');
 
         expect(app.secretStorage.getSecret('sheska-api-token')).toBe('shk_new');
@@ -153,9 +149,7 @@ describe('SheskaSettingTab', () => {
 
       tab.display();
 
-      expect(renderedSettings[3].toggles[0].value).toBe(
-        DEFAULT_SETTINGS.autoSyncEnabled,
-      );
+      expect(renderedSettings[3].toggles[0].value).toBe(DEFAULT_SETTINGS.autoSyncEnabled);
     });
 
     it('updates autoSyncEnabled and saves when the toggle changes', async () => {
@@ -181,10 +175,7 @@ describe('SheskaSettingTab', () => {
 
       tab.display();
 
-      expect(
-        (tab as unknown as { containerEl: { empty: ReturnType<typeof vi.fn> } })
-          .containerEl.empty,
-      ).toHaveBeenCalledOnce();
+      expect((tab as unknown as { containerEl: { empty: ReturnType<typeof vi.fn> } }).containerEl.empty).toHaveBeenCalledOnce();
     });
 
     describe('ping button', () => {
@@ -209,26 +200,14 @@ describe('SheskaSettingTab', () => {
         const api = await clickPing(() => Promise.resolve());
 
         expect(api.syncCheck).toHaveBeenCalledOnce();
-        expect(noticeMessages).toContain(
-          'Sheska API is reachable and the API token can sync.',
-        );
+        expect(noticeMessages).toContain('Sheska API is reachable and the API token can sync.');
       });
 
       it.each([
-        [
-          'auth.unauthenticated',
-          401,
-          'The API token is missing or invalid. Enter a valid token.',
-        ],
-        [
-          'auth.forbidden',
-          403,
-          'The API token cannot sync. Issue a token with the sources:sync permission.',
-        ],
+        ['auth.unauthenticated', 401, 'The API token is missing or invalid. Enter a valid token.'],
+        ['auth.forbidden', 403, 'The API token cannot sync. Issue a token with the sources:sync permission.'],
       ])('shows a token Notice for %s', async (code, status, message) => {
-        await clickPing(() =>
-          Promise.reject(new SheskaApiError(status, '', '', code)),
-        );
+        await clickPing(() => Promise.reject(new SheskaApiError(status, '', '', code)));
 
         expect(noticeMessages).toContain(message);
       });
@@ -239,9 +218,7 @@ describe('SheskaSettingTab', () => {
       ])('asks to check the URL on %s', async (_, error) => {
         await clickPing(() => Promise.reject(error));
 
-        expect(noticeMessages).toContain(
-          'Failed to reach Sheska API. Check the URL.',
-        );
+        expect(noticeMessages).toContain('Failed to reach Sheska API. Check the URL.');
       });
     });
 
@@ -263,9 +240,7 @@ describe('SheskaSettingTab', () => {
         await renderedSettings.at(-1)!.buttons[0].click();
 
         expect(resetSyncCache).toHaveBeenCalledOnce();
-        expect(noticeMessages).toContain(
-          'Sheska sync cache cleared. All notes and their images will re-sync.',
-        );
+        expect(noticeMessages).toContain('Sheska sync cache cleared. All notes and their images will re-sync.');
       });
     });
   });

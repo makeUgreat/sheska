@@ -11,13 +11,9 @@ const databaseEnvSchema = z.object({
 });
 
 export const databaseConfig = registerAs('database', () => {
-  const result = databaseEnvSchema.safeParse(
-    withFileSecrets(process.env, ['DATABASE_URL']),
-  );
+  const result = databaseEnvSchema.safeParse(withFileSecrets(process.env, ['DATABASE_URL']));
   if (!result.success) {
-    throw new Error(
-      `Invalid database configuration.\n${z.prettifyError(result.error)}`,
-    );
+    throw new Error(`Invalid database configuration.\n${z.prettifyError(result.error)}`);
   }
   return { databaseUrl: result.data.DATABASE_URL };
 });

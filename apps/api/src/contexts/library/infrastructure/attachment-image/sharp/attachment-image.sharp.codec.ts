@@ -1,11 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import sharp, { type Metadata } from 'sharp';
 import { InvalidDataError } from '@core/errors';
-import type {
-  AttachmentImageCodec,
-  AttachmentImageInfo,
-  AttachmentImageMediaType,
-} from '@contexts/library/application/ports';
+import type { AttachmentImageCodec, AttachmentImageInfo, AttachmentImageMediaType } from '@contexts/library/application/ports';
 
 @Injectable()
 export class AttachmentImageSharpCodec implements AttachmentImageCodec {
@@ -39,10 +35,7 @@ export class AttachmentImageSharpCodec implements AttachmentImageCodec {
     };
   }
 
-  async encodeWebp(
-    data: Uint8Array,
-    { maxWidth, quality }: { maxWidth: number; quality: number },
-  ): Promise<Uint8Array> {
+  async encodeWebp(data: Uint8Array, { maxWidth, quality }: { maxWidth: number; quality: number }): Promise<Uint8Array> {
     try {
       return await sharp(data, { animated: true })
         .rotate()
@@ -60,10 +53,7 @@ export class AttachmentImageSharpCodec implements AttachmentImageCodec {
   }
 }
 
-function toMediaType({
-  format,
-  compression,
-}: Metadata): AttachmentImageMediaType | null {
+function toMediaType({ format, compression }: Metadata): AttachmentImageMediaType | null {
   switch (format) {
     case 'png':
       return 'image/png';

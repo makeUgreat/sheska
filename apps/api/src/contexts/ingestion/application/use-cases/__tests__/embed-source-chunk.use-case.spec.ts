@@ -9,10 +9,7 @@ describe('EmbedSourceChunkUseCase', () => {
       model: 'qwen3-embedding:0.6b',
       embedding: [0.1, 0.2],
     });
-    const useCase = new EmbedSourceChunkUseCase(
-      { embed },
-      { dispatch: vi.fn() },
-    );
+    const useCase = new EmbedSourceChunkUseCase({ embed }, { dispatch: vi.fn() });
     const context = {
       deadline: computeDeadline(1_000),
       maxRetries: 2,
@@ -39,13 +36,8 @@ describe('EmbedSourceChunkUseCase', () => {
   });
 
   it('최종 실패를 sync job 실패 이벤트로 변환한다', async () => {
-    const dispatch = vi
-      .fn<IntegrationEventDispatcher['dispatch']>()
-      .mockResolvedValue(undefined);
-    const useCase = new EmbedSourceChunkUseCase(
-      { embed: vi.fn() },
-      { dispatch },
-    );
+    const dispatch = vi.fn<IntegrationEventDispatcher['dispatch']>().mockResolvedValue(undefined);
+    const useCase = new EmbedSourceChunkUseCase({ embed: vi.fn() }, { dispatch });
 
     await useCase.handleFailure({
       sourceId: 'source-1',

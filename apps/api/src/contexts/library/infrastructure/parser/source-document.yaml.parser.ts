@@ -1,13 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { parse, YAMLParseError } from 'yaml';
-import {
-  type ParsedSourceDocument,
-  type SourceDocumentParser,
-} from '@contexts/library/application/ports';
-import {
-  type SourceFrontmatterProps,
-  type SourceFrontmatterValue,
-} from '@contexts/library/domain';
+import { type ParsedSourceDocument, type SourceDocumentParser } from '@contexts/library/application/ports';
+import { type SourceFrontmatterProps, type SourceFrontmatterValue } from '@contexts/library/domain';
 import { InvalidDataError } from '@core/errors';
 import { Guard } from '@core/guard';
 
@@ -17,20 +11,15 @@ const DELIMITER = '---';
 @Injectable()
 export class SourceDocumentYamlParser implements SourceDocumentParser {
   parse(content: string): ParsedSourceDocument {
-    const text = content.startsWith(BYTE_ORDER_MARK)
-      ? content.slice(BYTE_ORDER_MARK.length)
-      : content;
+    const text = content.startsWith(BYTE_ORDER_MARK) ? content.slice(BYTE_ORDER_MARK.length) : content;
     const lines = this.splitLinesKeepingEnds(text);
     const [opening] = lines;
-    const opensFrontmatter =
-      this.isDelimiterLine(opening) && opening.endsWith('\n');
+    const opensFrontmatter = this.isDelimiterLine(opening) && opening.endsWith('\n');
     if (!opensFrontmatter) {
       return { body: content, frontmatter: {} };
     }
 
-    const closingIndex = lines.findIndex(
-      (line, index) => index > 0 && this.isDelimiterLine(line),
-    );
+    const closingIndex = lines.findIndex((line, index) => index > 0 && this.isDelimiterLine(line));
     if (closingIndex < 0) {
       throw new InvalidDataError({
         code: 'source_document.unclosed_frontmatter',
@@ -76,27 +65,16 @@ export class SourceDocumentYamlParser implements SourceDocumentParser {
   }
 
   private isFrontmatter(value: unknown): value is SourceFrontmatterProps {
-    return (
-      Guard.isPlainObject(value) &&
-      Object.values(value).every((entry) => this.isFrontmatterValue(entry))
-    );
+    return Guard.isPlainObject(value) && Object.values(value).every((entry) => this.isFrontmatterValue(entry));
   }
 
   private isFrontmatterValue(value: unknown): value is SourceFrontmatterValue {
-    if (
-      value === null ||
-      typeof value === 'string' ||
-      typeof value === 'number' ||
-      typeof value === 'boolean'
-    ) {
+    if (value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
       return true;
     }
     if (Array.isArray(value)) {
       return value.every((entry) => this.isFrontmatterValue(entry));
     }
-    return (
-      Guard.isPlainObject(value) &&
-      Object.values(value).every((entry) => this.isFrontmatterValue(entry))
-    );
+    return Guard.isPlainObject(value) && Object.values(value).every((entry) => this.isFrontmatterValue(entry));
   }
 }

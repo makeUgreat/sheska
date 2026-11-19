@@ -4,15 +4,11 @@ import { describe, expect, it } from 'vitest';
 describe('PostViewCount', () => {
   describe('of', () => {
     it('음수이면 throw한다', () => {
-      expect(() => PostViewCount.of(-1)).toThrow(
-        'Post view count must be a non-negative integer',
-      );
+      expect(() => PostViewCount.of(-1)).toThrow('Post view count must be a non-negative integer');
     });
 
     it('정수가 아니면 throw한다', () => {
-      expect(() => PostViewCount.of(1.5)).toThrow(
-        'Post view count must be a non-negative integer',
-      );
+      expect(() => PostViewCount.of(1.5)).toThrow('Post view count must be a non-negative integer');
     });
   });
 

@@ -37,8 +37,7 @@ module.exports = [
     name: 'api-domain-not-to-external',
     severity: 'error',
     comment:
-      'Domain code must not import an external module directly; use the wrapper in core. ' +
-      `See ${docs.sourceDependency}#외부-모듈.`,
+      'Domain code must not import an external module directly; use the wrapper in core. ' + `See ${docs.sourceDependency}#외부-모듈.`,
     from: {
       path: '^src/contexts/[^/]+/domain/',
       pathNot: sourceTestFiles,
@@ -63,9 +62,7 @@ module.exports = [
   {
     name: 'api-domain-kernel-stays-inner',
     severity: 'error',
-    comment:
-      'The domain kernel may depend only on core and its own files. ' +
-      `See ${docs.sourceDependency}#source-area.`,
+    comment: 'The domain kernel may depend only on core and its own files. ' + `See ${docs.sourceDependency}#source-area.`,
     from: {
       path: '^src/kernels/domain/',
     },
@@ -99,8 +96,7 @@ module.exports = [
     },
     to: {
       path: '^src/',
-      pathNot:
-        '^src/(core/|kernels/(domain|application|infrastructure)/)',
+      pathNot: '^src/(core/|kernels/(domain|application|infrastructure)/)',
     },
   },
   {
@@ -155,8 +151,7 @@ module.exports = [
     },
     to: {
       path: '^src/',
-      pathNot:
-        '^src/(core/|kernels/application/|contexts/$1/(domain|application)/|contexts/$1/[^/]+[.]di-tokens[.]ts$)',
+      pathNot: '^src/(core/|kernels/application/|contexts/$1/(domain|application)/|contexts/$1/[^/]+[.]di-tokens[.]ts$)',
     },
   },
   {
@@ -203,7 +198,7 @@ module.exports = [
     name: 'api-acl-stays-narrow',
     severity: 'error',
     comment:
-      "The Anti-Corruption Layer implements a consumer-owned port to reach across a context boundary. It may depend " +
+      'The Anti-Corruption Layer implements a consumer-owned port to reach across a context boundary. It may depend ' +
       "only on core, this context's own application ports, and the producer context's public surface — never this " +
       "context's own domain or infrastructure internals, presentation, or platform. " +
       `See ${docs.contextIntegration}#구현-규칙.`,

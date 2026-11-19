@@ -36,16 +36,11 @@ describe('PgDrizzleOutboxStore', () => {
       createdAt: new Date('2026-09-18T00:00:01.000Z'),
       attemptCount: 1,
     });
-    const store = new PgDrizzleOutboxStore(
-      claimDatabase(vi.fn().mockResolvedValue([later, earlier])),
-    );
+    const store = new PgDrizzleOutboxStore(claimDatabase(vi.fn().mockResolvedValue([later, earlier])));
 
     const result = await store.claimDue(50, 30_000);
 
-    expect(result.map(({ event }) => event.eventId)).toEqual([
-      'event-earlier',
-      'event-later',
-    ]);
+    expect(result.map(({ event }) => event.eventId)).toEqual(['event-earlier', 'event-later']);
     expect(result[0]).toEqual({
       event: {
         eventId: 'event-earlier',
@@ -62,28 +57,18 @@ describe('PgDrizzleOutboxStore', () => {
     const createdAt = new Date('2026-09-18T00:00:00.000Z');
     const store = new PgDrizzleOutboxStore(
       claimDatabase(
-        vi
-          .fn()
-          .mockResolvedValue([
-            buildClaimedRow({ eventId: 'event-b', createdAt }),
-            buildClaimedRow({ eventId: 'event-a', createdAt }),
-          ]),
+        vi.fn().mockResolvedValue([buildClaimedRow({ eventId: 'event-b', createdAt }), buildClaimedRow({ eventId: 'event-a', createdAt })]),
       ),
     );
 
     const result = await store.claimDue(50, 30_000);
 
-    expect(result.map(({ event }) => event.eventId)).toEqual([
-      'event-a',
-      'event-b',
-    ]);
+    expect(result.map(({ event }) => event.eventId)).toEqual(['event-a', 'event-b']);
   });
 
   it('claim 실패를 infrastructure exception으로 감싼다', async () => {
     const failure = new Error('connection terminated');
-    const store = new PgDrizzleOutboxStore(
-      claimDatabase(vi.fn().mockRejectedValue(failure)),
-    );
+    const store = new PgDrizzleOutboxStore(claimDatabase(vi.fn().mockRejectedValue(failure)));
 
     await expect(store.claimDue(50, 30_000)).rejects.toMatchObject({
       code: 'outbox.claim_due_failed',
@@ -153,9 +138,7 @@ function buildIntegrationEvent(): IntegrationEvent {
   };
 }
 
-function buildClaimedRow(
-  overrides: Partial<OutboxMessageRow> = {},
-): OutboxMessageRow {
+function buildClaimedRow(overrides: Partial<OutboxMessageRow> = {}): OutboxMessageRow {
   return {
     eventId: 'event-1',
     eventType: 'source.sync_job.created',
@@ -172,9 +155,7 @@ function buildClaimedRow(
   };
 }
 
-function claimDatabase(
-  returning: ReturnType<typeof vi.fn>,
-): PgDrizzleSession<typeof outboxSchema> {
+function claimDatabase(returning: ReturnType<typeof vi.fn>): PgDrizzleSession<typeof outboxSchema> {
   return asDatabase({
     select: vi.fn(() => ({
       from: vi.fn(() => ({

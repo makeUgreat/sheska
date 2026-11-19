@@ -12,12 +12,9 @@ describe('ollamaConfig', () => {
     expect(ollamaConfig()).toEqual({ baseUrl: 'http://localhost:11434' });
   });
 
-  it.each([undefined, '', 'not-a-url'])(
-    'EMBEDDING_BASE_URL이 %j이면 거부한다',
-    (value) => {
-      vi.stubEnv('EMBEDDING_BASE_URL', value);
+  it.each([undefined, '', 'not-a-url'])('EMBEDDING_BASE_URL이 %j이면 거부한다', (value) => {
+    vi.stubEnv('EMBEDDING_BASE_URL', value);
 
-      expect(() => ollamaConfig()).toThrow('EMBEDDING_BASE_URL');
-    },
-  );
+    expect(() => ollamaConfig()).toThrow('EMBEDDING_BASE_URL');
+  });
 });

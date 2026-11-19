@@ -3,38 +3,25 @@ import { render, screen } from '@testing-library/react';
 import { parseOutline } from '../lib/markdown';
 import { ArticleLayout } from './article-layout';
 
-const TWO_HEADINGS = ['## 배경', '', '본문', '', '## 결론', '', '본문'].join(
-  '\n',
-);
+const TWO_HEADINGS = ['## 배경', '', '본문', '', '## 결론', '', '본문'].join('\n');
 
 const ONE_HEADING = ['## 배경', '', '본문'].join('\n');
 
 function renderLayout(body: string) {
-  render(
-    <ArticleLayout
-      header={<h1>제목</h1>}
-      body={body}
-      outline={parseOutline(body)}
-      activeHeadingId={null}
-    />,
-  );
+  render(<ArticleLayout header={<h1>제목</h1>} body={body} outline={parseOutline(body)} activeHeadingId={null} />);
 }
 
 describe('ArticleLayout', () => {
   it('heading이 둘 이상이면 outline navigation을 보여준다', () => {
     renderLayout(TWO_HEADINGS);
 
-    expect(
-      screen.getByRole('navigation', { name: 'On this page' }),
-    ).toBeDefined();
+    expect(screen.getByRole('navigation', { name: 'On this page' })).toBeDefined();
   });
 
   it('heading이 하나뿐이면 outline navigation을 보여주지 않는다', () => {
     renderLayout(ONE_HEADING);
 
-    expect(
-      screen.queryByRole('navigation', { name: 'On this page' }),
-    ).toBeNull();
+    expect(screen.queryByRole('navigation', { name: 'On this page' })).toBeNull();
   });
 
   it('본문이 비어 있어도 header는 보여준다', () => {
@@ -54,8 +41,6 @@ describe('ArticleLayout', () => {
       />,
     );
 
-    expect(
-      screen.getByRole('article').contains(screen.getByText('topics')),
-    ).toBe(true);
+    expect(screen.getByRole('article').contains(screen.getByText('topics'))).toBe(true);
   });
 });

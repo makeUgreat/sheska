@@ -81,9 +81,7 @@ custom:
   it('유효하지 않은 YAML이면 틀린 위치를 message에 담는다', () => {
     const parseInvalidYaml = () => parser.parse('---\ntitle: [\n---\nBody');
 
-    expect(parseInvalidYaml).toThrow(
-      expect.objectContaining({ code: 'source_document.invalid_yaml' }),
-    );
+    expect(parseInvalidYaml).toThrow(expect.objectContaining({ code: 'source_document.invalid_yaml' }));
     expect(parseInvalidYaml).toThrow(/at line \d+, column \d+/);
   });
 });

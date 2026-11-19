@@ -1,9 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { StateConflictError } from '@core/errors';
-import {
-  INTEGRATION_EVENT_DISPATCHER,
-  type IntegrationEventDispatcher,
-} from '@kernels/application';
+import { INTEGRATION_EVENT_DISPATCHER, type IntegrationEventDispatcher } from '@kernels/application';
 import { SourceEmbedding } from '@contexts/ingestion/domain';
 import {
   IngestionCompletedIntegrationEvent,
@@ -28,10 +25,7 @@ export class FinalizeEmbeddingWorkflowUseCase {
     private readonly integrationEventDispatcher: IntegrationEventDispatcher,
   ) {}
 
-  async execute(
-    command: FinalizeEmbeddingWorkflowCommand,
-    chunks: readonly EmbedSourceChunkResult[],
-  ): Promise<void> {
+  async execute(command: FinalizeEmbeddingWorkflowCommand, chunks: readonly EmbedSourceChunkResult[]): Promise<void> {
     const { syncJobId, totalChunks } = command;
     this.ensureCompleteChunkResults(command, chunks);
 
@@ -47,19 +41,14 @@ export class FinalizeEmbeddingWorkflowUseCase {
     });
   }
 
-  async handleFailure(
-    command: FinalizeEmbeddingWorkflowCommand,
-  ): Promise<void> {
+  async handleFailure(command: FinalizeEmbeddingWorkflowCommand): Promise<void> {
     const failedEvent = new IngestionFailedIntegrationEvent({
       syncJobId: command.syncJobId,
     });
     await this.integrationEventDispatcher.dispatch(failedEvent);
   }
 
-  private assembleSourceEmbedding(
-    command: FinalizeEmbeddingWorkflowCommand,
-    chunks: readonly EmbedSourceChunkResult[],
-  ): SourceEmbedding {
+  private assembleSourceEmbedding(command: FinalizeEmbeddingWorkflowCommand, chunks: readonly EmbedSourceChunkResult[]): SourceEmbedding {
     const models = [...new Set(chunks.map((chunk) => chunk.model))];
     const hasInconsistentModels = models.length > 1;
     if (hasInconsistentModels) {
@@ -73,9 +62,7 @@ export class FinalizeEmbeddingWorkflowUseCase {
       });
     }
 
-    const sortedChunks = [...chunks].sort(
-      (left, right) => left.chunkIndex - right.chunkIndex,
-    );
+    const sortedChunks = [...chunks].sort((left, right) => left.chunkIndex - right.chunkIndex);
 
     return SourceEmbedding.create({
       sourceId: command.sourceId,
@@ -84,10 +71,7 @@ export class FinalizeEmbeddingWorkflowUseCase {
     });
   }
 
-  private ensureCompleteChunkResults(
-    command: FinalizeEmbeddingWorkflowCommand,
-    chunks: readonly EmbedSourceChunkResult[],
-  ): void {
+  private ensureCompleteChunkResults(command: FinalizeEmbeddingWorkflowCommand, chunks: readonly EmbedSourceChunkResult[]): void {
     const hasNoChunkResults = chunks.length === 0;
     const hasUnexpectedChunkCount = chunks.length !== command.totalChunks;
     if (hasNoChunkResults || hasUnexpectedChunkCount) {

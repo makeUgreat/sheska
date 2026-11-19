@@ -6,9 +6,7 @@ export interface DomainPrimitive<T extends Primitives | Date> {
   value: T;
 }
 
-export type ValueObjectProps<T> = T extends Primitives | Date
-  ? DomainPrimitive<T>
-  : T;
+export type ValueObjectProps<T> = T extends Primitives | Date ? DomainPrimitive<T> : T;
 
 export abstract class ValueObject<T> {
   protected readonly props: ValueObjectProps<T>;
@@ -33,9 +31,7 @@ export abstract class ValueObject<T> {
     return isDeepEqual(this.props, other.props);
   }
 
-  private isDomainPrimitive(
-    obj: unknown,
-  ): obj is DomainPrimitive<T & (Primitives | Date)> {
+  private isDomainPrimitive(obj: unknown): obj is DomainPrimitive<T & (Primitives | Date)> {
     if (!this.isRecord(obj)) {
       return false;
     }
@@ -54,12 +50,7 @@ export abstract class ValueObject<T> {
   }
 
   private isPrimitiveValue(value: unknown): value is Primitives | Date {
-    return (
-      typeof value === 'string' ||
-      typeof value === 'number' ||
-      typeof value === 'boolean' ||
-      value instanceof Date
-    );
+    return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value instanceof Date;
   }
 
   private checkIfEmpty(props: ValueObjectProps<T>): void {

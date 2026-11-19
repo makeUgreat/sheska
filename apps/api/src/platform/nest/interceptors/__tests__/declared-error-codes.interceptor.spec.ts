@@ -31,15 +31,10 @@ function failingWith(error: unknown): CallHandler {
   return { handle: () => throwError(() => error) };
 }
 
-async function rejectionOf(
-  handler: () => void,
-  error: unknown,
-): Promise<unknown> {
+async function rejectionOf(handler: () => void, error: unknown): Promise<unknown> {
   const interceptor = new DeclaredErrorCodesInterceptor(new Reflector());
 
-  return firstValueFrom(
-    interceptor.intercept(contextOf(handler), failingWith(error)),
-  ).catch((rejected: unknown) => rejected);
+  return firstValueFrom(interceptor.intercept(contextOf(handler), failingWith(error))).catch((rejected: unknown) => rejected);
 }
 
 const notFound = new NotFoundError({
@@ -56,10 +51,7 @@ describe('DeclaredErrorCodesInterceptor', () => {
   });
 
   it('handler를 감싼 함수가 metadata만 복사해도 선언한 code의 error를 그대로 전달한다', async () => {
-    const rejected = await rejectionOf(
-      wrappedLikeOpenTelemetry(Handlers.prototype.declared),
-      notFound,
-    );
+    const rejected = await rejectionOf(wrappedLikeOpenTelemetry(Handlers.prototype.declared), notFound);
 
     expect(rejected).toBe(notFound);
   });
@@ -79,10 +71,7 @@ describe('DeclaredErrorCodesInterceptor', () => {
       details: {},
     });
 
-    const rejected = await rejectionOf(
-      Handlers.prototype.undeclared,
-      unavailable,
-    );
+    const rejected = await rejectionOf(Handlers.prototype.undeclared, unavailable);
 
     expect(rejected).toBe(unavailable);
   });

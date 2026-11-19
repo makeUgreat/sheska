@@ -14,21 +14,13 @@ export interface PaginationProps {
   disabled?: boolean;
 }
 
-export function Pagination({
-  page,
-  totalPages,
-  onPageChange,
-  disabled = false,
-}: PaginationProps) {
+export function Pagination({ page, totalPages, onPageChange, disabled = false }: PaginationProps) {
   if (totalPages <= 1) return null;
 
   const visiblePages = getVisiblePageRange(page, totalPages);
 
   return (
-    <nav
-      aria-label="Pagination"
-      className="mt-8 flex items-center justify-center gap-2 font-mono text-label-sm uppercase"
-    >
+    <nav aria-label="Pagination" className="mt-8 flex items-center justify-center gap-2 font-mono text-label-sm uppercase">
       <button
         type="button"
         onClick={() => onPageChange(page - 1)}

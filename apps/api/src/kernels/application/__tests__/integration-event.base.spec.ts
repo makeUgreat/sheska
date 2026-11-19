@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import {
-  IntegrationEvent,
-  type IntegrationEventParams,
-} from '../integration-event.base';
+import { IntegrationEvent, type IntegrationEventParams } from '../integration-event.base';
 
-const UUID_V7_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const UUID_V7_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 interface SourceCreatedIntegrationEventParams extends IntegrationEventParams {
   readonly sourceId: string;
@@ -64,9 +60,7 @@ describe('IntegrationEvent', () => {
       reason: 'requested',
     });
 
-    const readPayload = (
-      event: SourceCreatedIntegrationEvent | SourceDeletedIntegrationEvent,
-    ): string => {
+    const readPayload = (event: SourceCreatedIntegrationEvent | SourceDeletedIntegrationEvent): string => {
       switch (event.eventType) {
         case 'source.created':
           return event.payload.sourceId;

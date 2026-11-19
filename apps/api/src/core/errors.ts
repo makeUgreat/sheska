@@ -85,18 +85,14 @@ export class StateConflictError extends SheskaError<Record<string, unknown>> {
 // 유일성 위반. 호출자가 원하는 행이 이미 있다는 뜻이라 동시성 아래에서 기대되는 결과이고, 그 의미는
 // 경계가 아니라 호출자가 정한다. 같은 데이터는 같은 위반을 내므로 재시도해도 소용없다. 나머지 제약
 // 위반(foreign key, not-null, check)은 코드가 잘못된 데이터를 넘긴 것이라 UnexpectedError로 분류한다.
-export class ConstraintViolationError extends SheskaError<
-  Record<string, unknown>
-> {
+export class ConstraintViolationError extends SheskaError<Record<string, unknown>> {
   readonly kind = ERROR_KIND.CONSTRAINT_VIOLATION;
 }
 
 // 데이터베이스가 알린 동시성 충돌(serialization failure, deadlock). 데이터 문제가 아니라 작업 단위를
 // 처음부터 다시 실행하면 대개 성공한다. 호출 단위 재시도로는 풀리지 않아 retry-error.classifier.ts의
 // 재시도 대상에서 일부러 빠져 있다.
-export class ConcurrencyConflictError extends SheskaError<
-  Record<string, unknown>
-> {
+export class ConcurrencyConflictError extends SheskaError<Record<string, unknown>> {
   readonly kind = ERROR_KIND.CONCURRENCY_CONFLICT;
 }
 

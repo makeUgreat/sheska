@@ -1,7 +1,4 @@
-import {
-  type SourceQuery,
-  type SourceQueryPaginateResult,
-} from '@contexts/library/application/ports';
+import { type SourceQuery, type SourceQueryPaginateResult } from '@contexts/library/application/ports';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { ListSourcesUseCase } from '../list-sources.use-case';
 
@@ -10,9 +7,7 @@ type SourceQueryMock = {
   find: MockedFunction<SourceQuery['find']>;
 };
 
-function buildPaginateResult(
-  overrides: Partial<SourceQueryPaginateResult> = {},
-): SourceQueryPaginateResult {
+function buildPaginateResult(overrides: Partial<SourceQueryPaginateResult> = {}): SourceQueryPaginateResult {
   return {
     sources: [],
     page: 1,
@@ -117,9 +112,7 @@ describe('ListSourcesUseCase', () => {
 
     await useCase.execute({ page: 1, pageSize: 10, syncJobStatus: 'failed' });
 
-    expect(sourceQuery.paginate).toHaveBeenCalledWith(
-      expect.objectContaining({ syncJobStatus: 'failed' }),
-    );
+    expect(sourceQuery.paginate).toHaveBeenCalledWith(expect.objectContaining({ syncJobStatus: 'failed' }));
   });
 
   it('sourceQuery paginate exception을 전파한다', async () => {
@@ -128,17 +121,13 @@ describe('ListSourcesUseCase', () => {
     sourceQuery.paginate.mockRejectedValue(paginateFailure);
     const useCase = new ListSourcesUseCase(sourceQuery);
 
-    await expect(useCase.execute({ page: 1, pageSize: 10 })).rejects.toBe(
-      paginateFailure,
-    );
+    await expect(useCase.execute({ page: 1, pageSize: 10 })).rejects.toBe(paginateFailure);
   });
 });
 
 function createSourceQueryMock(): SourceQueryMock {
   return {
-    paginate: vi
-      .fn<SourceQuery['paginate']>()
-      .mockResolvedValue(buildPaginateResult()),
+    paginate: vi.fn<SourceQuery['paginate']>().mockResolvedValue(buildPaginateResult()),
     find: vi.fn<SourceQuery['find']>().mockResolvedValue(null),
   };
 }

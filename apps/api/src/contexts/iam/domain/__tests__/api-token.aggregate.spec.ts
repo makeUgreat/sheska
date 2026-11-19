@@ -45,10 +45,7 @@ describe('ApiToken', () => {
       permissions: ApiTokenPermissions.of(['sources:sync', 'sources:read']),
     });
 
-    expect(apiToken.getProps().permissions.unpack()).toEqual([
-      'sources:sync',
-      'sources:read',
-    ]);
+    expect(apiToken.getProps().permissions.unpack()).toEqual(['sources:sync', 'sources:read']);
   });
 
   it('쓴 적이 없는 상태로 시작한다', () => {

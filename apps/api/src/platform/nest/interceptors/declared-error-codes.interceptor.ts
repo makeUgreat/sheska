@@ -1,9 +1,4 @@
-import {
-  type CallHandler,
-  type ExecutionContext,
-  Injectable,
-  type NestInterceptor,
-} from '@nestjs/common';
+import { type CallHandler, type ExecutionContext, Injectable, type NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { catchError, type Observable, throwError } from 'rxjs';
 import { SheskaError } from '@core/errors';
@@ -25,10 +20,7 @@ export class DeclaredErrorCodesInterceptor implements NestInterceptor {
         catchError((error: unknown) =>
           throwError(() =>
             isUndeclared(error, declared)
-              ? new Error(
-                  `Error code not declared in the HTTP contract: ${error.code}`,
-                  { cause: error },
-                )
+              ? new Error(`Error code not declared in the HTTP contract: ${error.code}`, { cause: error })
               : error,
           ),
         ),
@@ -36,13 +28,6 @@ export class DeclaredErrorCodesInterceptor implements NestInterceptor {
   }
 }
 
-function isUndeclared(
-  error: unknown,
-  declared: readonly string[],
-): error is SheskaError {
-  return (
-    error instanceof SheskaError &&
-    exposesCode(error.kind) &&
-    !declared.includes(error.code)
-  );
+function isUndeclared(error: unknown, declared: readonly string[]): error is SheskaError {
+  return error instanceof SheskaError && exposesCode(error.kind) && !declared.includes(error.code);
 }

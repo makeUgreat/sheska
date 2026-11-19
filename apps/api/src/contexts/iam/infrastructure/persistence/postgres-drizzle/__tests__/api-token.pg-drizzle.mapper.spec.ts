@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  ApiToken,
-  ApiTokenName,
-  ApiTokenPermissions,
-  ApiTokenSecret,
-} from '@contexts/iam/domain';
+import { ApiToken, ApiTokenName, ApiTokenPermissions, ApiTokenSecret } from '@contexts/iam/domain';
 import { ApiTokenPgDrizzleMapper } from '../api-token.pg-drizzle.mapper';
 
 describe('ApiTokenPgDrizzleMapper', () => {

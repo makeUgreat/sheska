@@ -1,20 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  type SourceRepository,
-  type SourceFrontmatterProps,
-  type SourceSyncJobRepository,
-} from '@contexts/library/domain';
-import {
-  SOURCE_REPOSITORY,
-  SOURCE_SYNC_JOB_REPOSITORY,
-  SOURCE_EMBEDDING_LOOKUP,
-  SOURCE_QUERY,
-} from '@contexts/library/library.di-tokens';
-import {
-  type SourceEmbeddingLookup,
-  type SourceEmbeddingMetadata,
-  type SourceQuery,
-} from '@contexts/library/application/ports';
+import { type SourceRepository, type SourceFrontmatterProps, type SourceSyncJobRepository } from '@contexts/library/domain';
+import { SOURCE_REPOSITORY, SOURCE_SYNC_JOB_REPOSITORY, SOURCE_EMBEDDING_LOOKUP, SOURCE_QUERY } from '@contexts/library/library.di-tokens';
+import { type SourceEmbeddingLookup, type SourceEmbeddingMetadata, type SourceQuery } from '@contexts/library/application/ports';
 
 export interface GetSourceCommand {
   readonly sourceId: string;

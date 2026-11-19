@@ -15,17 +15,8 @@ export function usePostsArchive() {
   const searchResult = useInfiniteSearchPosts(normalizedQuery, limit);
   const result = isSearching ? searchResult : listResult;
   const firstSearchPage = searchResult.data?.pages[0];
-  const semanticSearchApplied = isSearching
-    ? (firstSearchPage?.semanticSearchApplied ?? null)
-    : null;
-  const {
-    data,
-    isLoading,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = result;
+  const semanticSearchApplied = isSearching ? (firstSearchPage?.semanticSearchApplied ?? null) : null;
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = result;
 
   function submitSearch() {
     const nextQuery = query.trim();

@@ -28,9 +28,7 @@ type SearchQueryEmbedderMock = {
   embed: MockedFunction<SearchQueryEmbedder['embed']>;
 };
 
-function buildPaginateResult(
-  overrides: Partial<PostQueryPaginateResult> = {},
-): PostQueryPaginateResult {
+function buildPaginateResult(overrides: Partial<PostQueryPaginateResult> = {}): PostQueryPaginateResult {
   return {
     posts: [],
     nextCursor: null,
@@ -38,9 +36,7 @@ function buildPaginateResult(
   };
 }
 
-function buildSearchResult(
-  overrides: Partial<PostQuerySearchResult> = {},
-): PostQuerySearchResult {
+function buildSearchResult(overrides: Partial<PostQuerySearchResult> = {}): PostQuerySearchResult {
   return {
     posts: [],
     nextCursor: null,
@@ -131,12 +127,7 @@ describe('SearchPostsUseCase', () => {
     const searchQueryEmbedder = createSearchQueryEmbedderMock();
     const useCase = new SearchPostsUseCase(postQuery, searchQueryEmbedder);
 
-    await expect(
-      useCase.execute(
-        { query: 'TypeScript', cursor: null, limit: 20 },
-        buildContext(),
-      ),
-    ).rejects.toBe(searchFailure);
+    await expect(useCase.execute({ query: 'TypeScript', cursor: null, limit: 20 }, buildContext())).rejects.toBe(searchFailure);
   });
 
   // nocap: library-search-4
@@ -200,15 +191,9 @@ describe('SearchPostsUseCase', () => {
     const useCase = new SearchPostsUseCase(postQuery, searchQueryEmbedder);
     const context = buildContext();
 
-    await useCase.execute(
-      { query: 'TypeScript', cursor: null, limit: 20 },
-      context,
-    );
+    await useCase.execute({ query: 'TypeScript', cursor: null, limit: 20 }, context);
 
-    expect(searchQueryEmbedder.embed).toHaveBeenCalledWith(
-      'TypeScript',
-      context,
-    );
+    expect(searchQueryEmbedder.embed).toHaveBeenCalledWith('TypeScript', context);
   });
 });
 
@@ -216,9 +201,7 @@ function createPostQueryMock(): PostQueryMock {
   return {
     get: vi.fn<PostQuery['get']>().mockResolvedValue(null as never),
     find: vi.fn<PostQuery['find']>().mockResolvedValue(null),
-    paginate: vi
-      .fn<PostQuery['paginate']>()
-      .mockResolvedValue(buildPaginateResult()),
+    paginate: vi.fn<PostQuery['paginate']>().mockResolvedValue(buildPaginateResult()),
     search: vi.fn<PostQuery['search']>().mockResolvedValue(buildSearchResult()),
     count: vi.fn<PostQuery['count']>().mockResolvedValue(0),
   };

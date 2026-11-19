@@ -55,14 +55,9 @@ describe('OllamaHttpEmbedder', () => {
   });
 
   it('fetch가 계속 실패하면 재시도가 소진된 뒤 UnavailableError를 던진다', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockRejectedValue(new Error('Network error')),
-    );
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')));
 
-    await expect(client.embed('hello', buildContext())).rejects.toThrow(
-      UnavailableError,
-    );
+    await expect(client.embed('hello', buildContext())).rejects.toThrow(UnavailableError);
     await expect(client.embed('hello', buildContext())).rejects.toMatchObject({
       code: 'ollama.request_failed',
       cause: expect.objectContaining({
@@ -81,36 +76,26 @@ describe('OllamaHttpEmbedder', () => {
       }),
     );
 
-    await expect(client.embed('hello', buildContext())).rejects.toThrow(
-      InvalidDataError,
-    );
+    await expect(client.embed('hello', buildContext())).rejects.toThrow(InvalidDataError);
     await expect(client.embed('hello', buildContext())).rejects.toMatchObject({
       code: 'ollama.invalid_response',
     });
   });
 
   it('호출자가 넘긴 maxRetries만큼만 재시도한다', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockRejectedValue(new Error('connection refused'));
+    const fetchMock = vi.fn().mockRejectedValue(new Error('connection refused'));
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(
-      client.embed('hello', buildContext(60_000, 2)),
-    ).rejects.toMatchObject({ kind: 'unavailable' });
+    await expect(client.embed('hello', buildContext(60_000, 2))).rejects.toMatchObject({ kind: 'unavailable' });
 
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it('호출자가 maxRetries를 0으로 넘기면 재시도하지 않는다', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockRejectedValue(new Error('connection refused'));
+    const fetchMock = vi.fn().mockRejectedValue(new Error('connection refused'));
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(
-      client.embed('hello', buildContext(60_000, 0)),
-    ).rejects.toMatchObject({ kind: 'unavailable' });
+    await expect(client.embed('hello', buildContext(60_000, 0))).rejects.toMatchObject({ kind: 'unavailable' });
 
     expect(fetchMock).toHaveBeenCalledOnce();
   });
@@ -152,9 +137,7 @@ describe('OllamaHttpEmbedder', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(
-      client.embed('hello', buildContext(1_000, 0)),
-    ).rejects.toMatchObject({
+    await expect(client.embed('hello', buildContext(1_000, 0))).rejects.toMatchObject({
       kind: 'timeout',
       details: { deadlineBound: true },
     });
@@ -168,9 +151,7 @@ describe('OllamaHttpEmbedder', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(
-      client.embed('hello', buildContext(120_000, 0)),
-    ).rejects.toMatchObject({
+    await expect(client.embed('hello', buildContext(120_000, 0))).rejects.toMatchObject({
       kind: 'timeout',
       details: { deadlineBound: false },
     });

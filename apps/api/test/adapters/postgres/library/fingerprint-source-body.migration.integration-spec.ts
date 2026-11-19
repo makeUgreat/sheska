@@ -11,10 +11,7 @@ import { type ApiDrizzleDatabase } from '@platform/nest/database/drizzle-postgre
 import { AppModule } from '@platform/nest/app.module';
 import { buildSourceRow } from './fixtures/source-row.fixture';
 
-const MIGRATION = join(
-  __dirname,
-  '../../../../database/drizzle/20261024020000_fingerprint_source_body/migration.sql',
-);
+const MIGRATION = join(__dirname, '../../../../database/drizzle/20261024020000_fingerprint_source_body/migration.sql');
 
 describe('20261024020000_fingerprint_source_body', () => {
   let app: INestApplication;
@@ -50,10 +47,7 @@ describe('20261024020000_fingerprint_source_body', () => {
 
     await database.execute(sql.raw(await readFile(MIGRATION, 'utf8')));
 
-    const [migrated] = await database
-      .select({ fingerprint: sources.fingerprint })
-      .from(sources)
-      .where(eq(sources.id, row.id));
+    const [migrated] = await database.select({ fingerprint: sources.fingerprint }).from(sources).where(eq(sources.id, row.id));
     expect(migrated?.fingerprint).toBe(sha256Hex(body));
   });
 });

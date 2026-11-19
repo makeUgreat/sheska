@@ -1,11 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { parseOutline } from '../../lib/markdown';
 import { AttachmentBaseUrlProvider } from './attachment-base-url';
@@ -28,18 +22,10 @@ function renderWithAttachments(body: string) {
 
 describe('Markdown', () => {
   it('GFM 표 문법을 table로 렌더한다', () => {
-    render(
-      <Markdown
-        body={['| Option | Default |', '| --- | --- |', '| retry | 3 |'].join(
-          '\n',
-        )}
-      />,
-    );
+    render(<Markdown body={['| Option | Default |', '| --- | --- |', '| retry | 3 |'].join('\n')} />);
 
     const table = screen.getByRole('table');
-    expect(
-      within(table).getByRole('columnheader', { name: 'Option' }),
-    ).toBeDefined();
+    expect(within(table).getByRole('columnheader', { name: 'Option' })).toBeDefined();
     expect(within(table).getByRole('cell', { name: 'retry' })).toBeDefined();
   });
 
@@ -66,23 +52,13 @@ describe('Markdown', () => {
   it('맨 URL을 링크로 만든다', () => {
     render(<Markdown body="참고: https://example.com/docs" />);
 
-    expect(
-      screen.getByRole('link', { name: 'https://example.com/docs' }),
-    ).toBeDefined();
+    expect(screen.getByRole('link', { name: 'https://example.com/docs' })).toBeDefined();
   });
 
   it('page 제목 아래에 놓이도록 heading을 한 단계씩 낮춘다', () => {
-    render(
-      <Markdown
-        body={['# 하나', '## 둘', '### 셋', '#### 넷', '##### 다섯'].join('\n')}
-      />,
-    );
+    render(<Markdown body={['# 하나', '## 둘', '### 셋', '#### 넷', '##### 다섯'].join('\n')} />);
 
-    expect(
-      [2, 3, 4, 5, 6].map(
-        (level) => screen.getByRole('heading', { level }).textContent,
-      ),
-    ).toEqual(['하나', '둘', '셋', '넷', '다섯']);
+    expect([2, 3, 4, 5, 6].map((level) => screen.getByRole('heading', { level }).textContent)).toEqual(['하나', '둘', '셋', '넷', '다섯']);
   });
 
   it('더 내려갈 단계가 없는 `######`은 h6에 둔다', () => {
@@ -100,9 +76,7 @@ function fence(language: string, ...lines: string[]) {
 async function renderFence(body: string) {
   const view = render(<Markdown body={body} />);
 
-  await waitFor(() =>
-    expect(view.container.querySelector('.hljs')).not.toBe(null),
-  );
+  await waitFor(() => expect(view.container.querySelector('.hljs')).not.toBe(null));
   return view;
 }
 
@@ -120,17 +94,13 @@ describe('Markdown 코드 펜스', () => {
   });
 
   it('목록 항목 안의 fence도 highlight한다', async () => {
-    const { container } = await renderFence(
-      ['- 설정', '', '  ```ts', '  const retry = 3;', '  ```'].join('\n'),
-    );
+    const { container } = await renderFence(['- 설정', '', '  ```ts', '  const retry = 3;', '  ```'].join('\n'));
 
     expect(container.querySelector('.hljs-keyword')?.textContent).toBe('const');
   });
 
   it('등록하지 않은 언어는 원문 그대로 둔다', async () => {
-    const { container } = await renderFence(
-      fence('brainfuck', '+[----->+++<]>+.'),
-    );
+    const { container } = await renderFence(fence('brainfuck', '+[----->+++<]>+.'));
 
     expect(container.querySelector('.hljs-keyword')).toBe(null);
     expect(screen.getByText('+[----->+++<]>+.')).toBeDefined();
@@ -177,9 +147,7 @@ describe('Markdown vault 문법', () => {
   });
 
   it('표 안의 wiki link도 unresolved 표기로 바꾼다', () => {
-    renderBody(
-      ['| Note |', '| --- |', '| [[feature-sliced-design\\|FSD]] |'].join('\n'),
-    );
+    renderBody(['| Note |', '| --- |', '| [[feature-sliced-design\\|FSD]] |'].join('\n'));
 
     expect(screen.getByTitle('FSD — no note yet')).toBeDefined();
   });
@@ -210,30 +178,15 @@ describe('Markdown vault 문법', () => {
   });
 
   it('인용 안 code fence 뒤의 블록 표시도 인용 전체를 anchor로 만든다', () => {
-    const { container } = renderBody(
-      [
-        '> [!example] 문법',
-        '>',
-        '> ```ts',
-        '> const a = 1;',
-        '> ```',
-        '>^b33468',
-      ].join('\n'),
-    );
+    const { container } = renderBody(['> [!example] 문법', '>', '> ```ts', '> const a = 1;', '> ```', '>^b33468'].join('\n'));
 
     expect(container.querySelector('blockquote')?.id).toBe('block-b33468');
   });
 
   it('같은 노트 block reference는 그 anchor로 가는 링크가 된다', () => {
-    renderBody(
-      ['- [[#^c58057|의존성 배열]]', '', '> 인용한 문장', '> ^c58057'].join(
-        '\n',
-      ),
-    );
+    renderBody(['- [[#^c58057|의존성 배열]]', '', '> 인용한 문장', '> ^c58057'].join('\n'));
 
-    expect(
-      screen.getByRole('link', { name: '의존성 배열' }).getAttribute('href'),
-    ).toBe('#block-c58057');
+    expect(screen.getByRole('link', { name: '의존성 배열' }).getAttribute('href')).toBe('#block-c58057');
   });
 
   it('본문에 없는 block을 가리키는 참조는 unresolved로 둔다', () => {
@@ -244,23 +197,15 @@ describe('Markdown vault 문법', () => {
   });
 
   it('tight list 항목 끝의 블록 표시는 항목 자체를 anchor로 만든다', () => {
-    const { container } = renderBody(
-      ['- 첫 항목', '- 둘째 항목', '  ^e23126'].join('\n'),
-    );
+    const { container } = renderBody(['- 첫 항목', '- 둘째 항목', '  ^e23126'].join('\n'));
 
-    expect(container.querySelector('li#block-e23126')?.textContent).toBe(
-      '둘째 항목',
-    );
+    expect(container.querySelector('li#block-e23126')?.textContent).toBe('둘째 항목');
   });
 
   it('표 바로 뒤의 블록 표시는 표 전체를 anchor로 만든다', () => {
-    const { container } = renderBody(
-      ['| 칸 |', '| --- |', '| 값 |', '^c5ce9a'].join('\n'),
-    );
+    const { container } = renderBody(['| 칸 |', '| --- |', '| 값 |', '^c5ce9a'].join('\n'));
 
-    expect(
-      container.querySelector('#block-c5ce9a')?.querySelector('table'),
-    ).not.toBe(null);
+    expect(container.querySelector('#block-c5ce9a')?.querySelector('table')).not.toBe(null);
   });
 
   it('code fence 안의 블록 표시는 원문 그대로 둔다', () => {
@@ -272,9 +217,7 @@ describe('Markdown vault 문법', () => {
   it('heading에 outline과 같은 id를 붙인다', () => {
     renderBody('# 설치 방법');
 
-    expect(screen.getByRole('heading', { level: 2 }).id).toBe(
-      parseOutline('# 설치 방법')[0].id,
-    );
+    expect(screen.getByRole('heading', { level: 2 }).id).toBe(parseOutline('# 설치 방법')[0].id);
   });
 
   describe('이미지', () => {
@@ -283,24 +226,18 @@ describe('Markdown vault 문법', () => {
       renderWithAttachments('![도식](att/my%20img.png)');
 
       const image = screen.getByRole('img', { name: '도식' });
-      expect(image.getAttribute('src')).toBe(
-        'https://files.example.com/vault/att/my%20img.png',
-      );
+      expect(image.getAttribute('src')).toBe('https://files.example.com/vault/att/my%20img.png');
       expect(image.getAttribute('loading')).toBe('lazy');
     });
 
     it('scheme이 있는 주소는 그대로 쓴다', () => {
       renderWithAttachments('![외부](https://example.com/a.png)');
 
-      expect(
-        screen.getByRole('img', { name: '외부' }).getAttribute('src'),
-      ).toBe('https://example.com/a.png');
+      expect(screen.getByRole('img', { name: '외부' }).getAttribute('src')).toBe('https://example.com/a.png');
     });
 
     it('Obsidian 크기 문법을 alt에서 떼어 폭과 높이로 쓴다', () => {
-      const { container } = renderWithAttachments(
-        ['![설명|300](att/a.png)', '', '![|300x200](att/b.png)'].join('\n'),
-      );
+      const { container } = renderWithAttachments(['![설명|300](att/a.png)', '', '![|300x200](att/b.png)'].join('\n'));
 
       const [widthOnly, both] = container.querySelectorAll('img');
       expect(widthOnly.getAttribute('alt')).toBe('설명');
@@ -327,11 +264,7 @@ describe('Markdown vault 문법', () => {
 
       fireEvent.error(screen.getByRole('presentation'));
 
-      expect(
-        screen
-          .getByRole('img', { name: 'Image unavailable' })
-          .getAttribute('src'),
-      ).toBe(imageUnavailable);
+      expect(screen.getByRole('img', { name: 'Image unavailable' }).getAttribute('src')).toBe(imageUnavailable);
     });
   });
 });

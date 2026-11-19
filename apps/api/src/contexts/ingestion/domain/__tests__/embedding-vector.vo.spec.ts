@@ -17,9 +17,7 @@ describe('EmbeddingVector', () => {
     it('dimension이 모델 spec과 다르면 throw한다', () => {
       const wrongDimension = [0.1, 0.2, 0.3];
 
-      expect(() => EmbeddingVector.of(wrongDimension, model)).toThrow(
-        'Embedding vector must have 1024 dimensions, got 3',
-      );
+      expect(() => EmbeddingVector.of(wrongDimension, model)).toThrow('Embedding vector must have 1024 dimensions, got 3');
     });
   });
 });

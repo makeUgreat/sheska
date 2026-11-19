@@ -1,23 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InvalidDataError, ValidationFailedError } from '@core/errors';
-import {
-  type AttachmentImageCodec,
-  type AttachmentImageInfo,
-  type AttachmentImageMediaType,
-} from '@contexts/library/application/ports';
+import { type AttachmentImageCodec, type AttachmentImageInfo, type AttachmentImageMediaType } from '@contexts/library/application/ports';
 import { ATTACHMENT_IMAGE_CODEC } from '@contexts/library/library.di-tokens';
 
 const MAX_WIDTH = 1360;
 const WEBP_QUALITY = 80;
 const MAX_PIXELS = 40_000_000;
 
-const ENCODABLE_MEDIA_TYPES: readonly AttachmentImageMediaType[] = [
-  'image/png',
-  'image/jpeg',
-  'image/gif',
-  'image/webp',
-  'image/avif',
-];
+const ENCODABLE_MEDIA_TYPES: readonly AttachmentImageMediaType[] = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif'];
 
 export interface OptimizedAttachmentImage {
   readonly data: Uint8Array;
@@ -43,10 +33,7 @@ export class AttachmentImageOptimizer {
     return this.pickSmaller(original, encoded);
   }
 
-  private pickSmaller(
-    original: OptimizedAttachmentImage,
-    encoded: OptimizedAttachmentImage,
-  ): OptimizedAttachmentImage {
+  private pickSmaller(original: OptimizedAttachmentImage, encoded: OptimizedAttachmentImage): OptimizedAttachmentImage {
     return encoded.data.length < original.data.length ? encoded : original;
   }
 
@@ -64,9 +51,7 @@ export class AttachmentImageOptimizer {
     }
   }
 
-  private async encodeWebp(
-    data: Uint8Array,
-  ): Promise<OptimizedAttachmentImage> {
+  private async encodeWebp(data: Uint8Array): Promise<OptimizedAttachmentImage> {
     try {
       const encoded = await this.codec.encodeWebp(data, {
         maxWidth: MAX_WIDTH,

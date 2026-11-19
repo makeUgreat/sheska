@@ -5,11 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type GetSourceResponse } from '@/entities/source';
 import { SourceDetailPage } from '@/pages/source-detail';
-import {
-  HttpClientProvider,
-  HttpError,
-  type HttpClientType as HttpClient,
-} from '@/shared/api';
+import { HttpClientProvider, HttpError, type HttpClientType as HttpClient } from '@/shared/api';
 
 type MockHttpClientOverrides = {
   get?: ReturnType<typeof vi.fn>;
@@ -56,9 +52,7 @@ const MOCK_POST = {
   updatedAt: NOW,
 };
 
-function buildMockHttpClient(
-  overrides: MockHttpClientOverrides = {},
-): HttpClient {
+function buildMockHttpClient(overrides: MockHttpClientOverrides = {}): HttpClient {
   return {
     get: vi.fn().mockResolvedValue(MOCK_SOURCE),
     post: vi.fn().mockResolvedValue(MOCK_POST),
@@ -89,9 +83,7 @@ describe('SourceDetailPage', () => {
 
     renderPage(client);
 
-    expect(
-      screen.getByRole('link', { name: '← Back to sources' }),
-    ).toBeDefined();
+    expect(screen.getByRole('link', { name: '← Back to sources' })).toBeDefined();
     expect(screen.getByText('Loading')).toBeDefined();
   });
 
@@ -101,15 +93,11 @@ describe('SourceDetailPage', () => {
     renderPage(client);
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { name: 'Source note', level: 1 }),
-      ).toBeDefined();
+      expect(screen.getByRole('heading', { name: 'Source note', level: 1 })).toBeDefined();
       expect(screen.getByText('Notes/source.md')).toBeDefined();
       expect(screen.getByText('tags')).toBeDefined();
       expect(screen.getByText('["note","e2e"]')).toBeDefined();
-      expect(
-        screen.getByRole('heading', { name: 'Source note', level: 2 }),
-      ).toBeDefined();
+      expect(screen.getByRole('heading', { name: 'Source note', level: 2 })).toBeDefined();
       expect(screen.getByText('source-1')).toBeDefined();
       expect(screen.getByText('fingerprint-1')).toBeDefined();
       expect(screen.getByText('completed')).toBeDefined();
@@ -139,11 +127,7 @@ describe('SourceDetailPage', () => {
       get: vi
         .fn()
         .mockImplementation((path: string) =>
-          Promise.resolve(
-            path.startsWith('/sync-jobs/')
-              ? processingJob
-              : { ...MOCK_SOURCE, latestSyncJob: waitingSummary },
-          ),
+          Promise.resolve(path.startsWith('/sync-jobs/') ? processingJob : { ...MOCK_SOURCE, latestSyncJob: waitingSummary }),
         ),
     });
 
@@ -176,24 +160,15 @@ describe('SourceDetailPage', () => {
           processedChunks: 4,
         });
       }
-      return Promise.resolve(
-        get.mock.calls.filter(([calledPath]) => calledPath === path).length > 1
-          ? MOCK_SOURCE
-          : activeSource,
-      );
+      return Promise.resolve(get.mock.calls.filter(([calledPath]) => calledPath === path).length > 1 ? MOCK_SOURCE : activeSource);
     });
     const client = buildMockHttpClient({ get });
 
     renderPage(client);
 
     await waitFor(() => {
-      expect(get).toHaveBeenCalledWith(
-        '/sync-jobs/sync-job-1',
-        expect.anything(),
-      );
-      expect(
-        get.mock.calls.filter(([path]) => path === '/sources/source-1').length,
-      ).toBe(2);
+      expect(get).toHaveBeenCalledWith('/sync-jobs/sync-job-1', expect.anything());
+      expect(get.mock.calls.filter(([path]) => path === '/sources/source-1').length).toBe(2);
       expect(screen.getByText('text-embedding-3-small')).toBeDefined();
     });
   });
@@ -225,9 +200,7 @@ describe('SourceDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeDefined();
       expect(screen.getByText('503')).toBeDefined();
-      expect(
-        screen.getByText('Something went wrong while loading.'),
-      ).toBeDefined();
+      expect(screen.getByText('Something went wrong while loading.')).toBeDefined();
     });
   });
 
@@ -239,9 +212,7 @@ describe('SourceDetailPage', () => {
     renderPage(client);
 
     await waitFor(() => {
-      expect(
-        screen.getByText('This page does not exist, or it was removed.'),
-      ).toBeDefined();
+      expect(screen.getByText('This page does not exist, or it was removed.')).toBeDefined();
     });
   });
 
@@ -252,10 +223,7 @@ describe('SourceDetailPage', () => {
     renderPage(client, 'source-1');
 
     await waitFor(() => {
-      expect(getSource).toHaveBeenCalledWith(
-        '/sources/source-1',
-        expect.anything(),
-      );
+      expect(getSource).toHaveBeenCalledWith('/sources/source-1', expect.anything());
     });
   });
 
@@ -300,11 +268,7 @@ describe('SourceDetailPage', () => {
       await user.click(screen.getByRole('button', { name: '게시하기' }));
 
       await waitFor(() => {
-        expect(publishPost).toHaveBeenCalledWith(
-          '/posts',
-          { sourceId: 'source-1' },
-          expect.anything(),
-        );
+        expect(publishPost).toHaveBeenCalledWith('/posts', { sourceId: 'source-1' }, expect.anything());
       });
     });
 
@@ -343,9 +307,7 @@ describe('SourceDetailPage', () => {
       await waitFor(() => {
         expect(getSource).toHaveBeenCalledTimes(2);
       });
-      expect(
-        screen.getAllByRole('link', { name: '게시된 포스트 보기' }),
-      ).toHaveLength(1);
+      expect(screen.getAllByRole('link', { name: '게시된 포스트 보기' })).toHaveLength(1);
       expect(screen.queryByText(/이미 게시되었습니다/)).toBeNull();
     });
 
@@ -370,9 +332,7 @@ describe('SourceDetailPage', () => {
     it('게시 실패 시 에러 메시지가 표시된다', async () => {
       const user = userEvent.setup();
       const client = buildMockHttpClient({
-        post: vi
-          .fn()
-          .mockRejectedValue(new Error('이미 게시된 포스트가 있습니다')),
+        post: vi.fn().mockRejectedValue(new Error('이미 게시된 포스트가 있습니다')),
       });
 
       renderPage(client);
@@ -383,9 +343,7 @@ describe('SourceDetailPage', () => {
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeDefined();
-        expect(
-          screen.getByText('오류: 이미 게시된 포스트가 있습니다'),
-        ).toBeDefined();
+        expect(screen.getByText('오류: 이미 게시된 포스트가 있습니다')).toBeDefined();
       });
     });
   });

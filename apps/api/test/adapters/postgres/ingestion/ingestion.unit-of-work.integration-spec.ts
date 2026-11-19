@@ -5,10 +5,7 @@ import { eq } from 'drizzle-orm';
 import { type IngestionUnitOfWork } from '@contexts/ingestion/application/ports';
 import { IngestionCompletedIntegrationEvent } from '@contexts/ingestion/application/events/ingestion.integration-event';
 import { type SourceEmbeddingRepository } from '@contexts/ingestion/domain';
-import {
-  INGESTION_UNIT_OF_WORK,
-  SOURCE_EMBEDDING_REPOSITORY,
-} from '@contexts/ingestion/ingestion.di-tokens';
+import { INGESTION_UNIT_OF_WORK, SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
 import { type SourceRepository } from '@contexts/library/domain';
 import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { DATABASE_TOKENS, outboxMessages } from '@kernels/infrastructure';
@@ -59,12 +56,8 @@ describe('IngestionPgDrizzleUnitOfWork', () => {
       await resources.outbox.append(completedEvent);
     });
 
-    await expect(
-      sourceEmbeddings.find({ sourceId: source.id }),
-    ).resolves.not.toBeNull();
-    await expect(
-      findOutboxMessage(completedEvent.eventId),
-    ).resolves.toHaveLength(1);
+    await expect(sourceEmbeddings.find({ sourceId: source.id })).resolves.not.toBeNull();
+    await expect(findOutboxMessage(completedEvent.eventId)).resolves.toHaveLength(1);
   });
 
   // nocap: ingestion-sourceEmbedding-5
@@ -89,18 +82,11 @@ describe('IngestionPgDrizzleUnitOfWork', () => {
       }),
     ).rejects.toBe(transactionFailure);
 
-    await expect(
-      sourceEmbeddings.find({ sourceId: source.id }),
-    ).resolves.toBeNull();
-    await expect(
-      findOutboxMessage(completedEvent.eventId),
-    ).resolves.toHaveLength(0);
+    await expect(sourceEmbeddings.find({ sourceId: source.id })).resolves.toBeNull();
+    await expect(findOutboxMessage(completedEvent.eventId)).resolves.toHaveLength(0);
   });
 
   function findOutboxMessage(eventId: string) {
-    return database
-      .select()
-      .from(outboxMessages)
-      .where(eq(outboxMessages.eventId, eventId));
+    return database.select().from(outboxMessages).where(eq(outboxMessages.eventId, eventId));
   }
 });

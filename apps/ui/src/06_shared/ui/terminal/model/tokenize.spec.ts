@@ -3,11 +3,7 @@ import { commonPrefix, tokenize } from './tokenize';
 
 describe('tokenize', () => {
   it('공백 여러 개를 구분자 하나로 본다', () => {
-    expect(tokenize('  grep   redis  세션 ')).toEqual([
-      'grep',
-      'redis',
-      '세션',
-    ]);
+    expect(tokenize('  grep   redis  세션 ')).toEqual(['grep', 'redis', '세션']);
   });
 
   it('빈 줄이면 빈 목록을 돌려준다', () => {

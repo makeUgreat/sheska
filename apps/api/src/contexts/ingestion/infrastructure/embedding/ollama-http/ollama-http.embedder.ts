@@ -1,18 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { z } from 'zod';
-import {
-  BadResponseError,
-  InvalidDataError,
-  TimeoutError,
-  UnavailableError,
-} from '@core/errors';
+import { BadResponseError, InvalidDataError, TimeoutError, UnavailableError } from '@core/errors';
 import { type CallContext } from '@core/call-context';
-import {
-  classifyInfrastructureRetry,
-  parseRetryAfterMs,
-  resiliencePipeline,
-  type ResilienceAttempt,
-} from '@kernels/infrastructure';
+import { classifyInfrastructureRetry, parseRetryAfterMs, resiliencePipeline, type ResilienceAttempt } from '@kernels/infrastructure';
 import type { Embedder } from '@contexts/ingestion/application/ports';
 import { ollamaConfig, type OllamaConfig } from './ollama-http.config';
 
@@ -33,10 +23,7 @@ export class OllamaHttpEmbedder implements Embedder {
     private readonly config: OllamaConfig,
   ) {}
 
-  async embed(
-    text: string,
-    context: CallContext,
-  ): Promise<{ embedding: number[]; model: string }> {
+  async embed(text: string, context: CallContext): Promise<{ embedding: number[]; model: string }> {
     return resiliencePipeline()
       .retry({
         maxRetries: context.maxRetries,
@@ -51,10 +38,7 @@ export class OllamaHttpEmbedder implements Embedder {
       .execute((attempt) => this.embedOnce(text, attempt));
   }
 
-  private async embedOnce(
-    text: string,
-    attempt: ResilienceAttempt,
-  ): Promise<{ embedding: number[]; model: string }> {
+  private async embedOnce(text: string, attempt: ResilienceAttempt): Promise<{ embedding: number[]; model: string }> {
     let response: Response;
 
     try {

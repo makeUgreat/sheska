@@ -1,22 +1,11 @@
 import { AuthErrorCode } from '@sheska/contract';
 import { useLogIn, useLogOut, type Viewer } from '@/entities/session';
 import { HttpError } from '@/shared/api';
-import {
-  printRequestFailure,
-  TerminalText,
-  type TerminalCommand,
-  type TerminalIo,
-} from '@/shared/ui';
+import { printRequestFailure, TerminalText, type TerminalCommand, type TerminalIo } from '@/shared/ui';
 
 const OWNER = 'owner';
 
-export function useSwitchUserCommands({
-  viewer,
-  onLoggedOut,
-}: {
-  viewer: Viewer;
-  onLoggedOut: () => void;
-}): TerminalCommand[] {
+export function useSwitchUserCommands({ viewer, onLoggedOut }: { viewer: Viewer; onLoggedOut: () => void }): TerminalCommand[] {
   const logIn = useLogIn();
   const logOut = useLogOut();
 
@@ -27,17 +16,11 @@ export function useSwitchUserCommands({
     async run(args, io) {
       const user = args[0] ?? OWNER;
       if (user !== OWNER) {
-        io.print(
-          <TerminalText tone="error">
-            su: user {user} does not exist
-          </TerminalText>,
-        );
+        io.print(<TerminalText tone="error">su: user {user} does not exist</TerminalText>);
         return;
       }
       if (viewer === 'owner') {
-        io.print(
-          <TerminalText tone="muted">already logged in as owner</TerminalText>,
-        );
+        io.print(<TerminalText tone="muted">already logged in as owner</TerminalText>);
         return;
       }
       const password = await io.ask('Password:', {
@@ -50,11 +33,7 @@ export function useSwitchUserCommands({
       }
       try {
         await logIn.mutateAsync({ password });
-        io.print(
-          <TerminalText tone="success">
-            Welcome back. This browser stays logged in for 30 days.
-          </TerminalText>,
-        );
+        io.print(<TerminalText tone="success">Welcome back. This browser stays logged in for 30 days.</TerminalText>);
       } catch (error) {
         printLogInFailure(io, error);
       }
@@ -100,9 +79,7 @@ export function useSwitchUserCommands({
 }
 
 function printAuthenticationFailure(io: TerminalIo) {
-  io.print(
-    <TerminalText tone="error">su: Authentication failure</TerminalText>,
-  );
+  io.print(<TerminalText tone="error">su: Authentication failure</TerminalText>);
 }
 
 function printLogInFailure(io: TerminalIo, error: unknown) {
@@ -114,17 +91,13 @@ function printLogInFailure(io: TerminalIo, error: unknown) {
     const minutes = minutesUntilRetry(error.details.retryAfterSeconds);
     io.print(
       <TerminalText tone="error">
-        su: too many attempts. Try again in {minutes}{' '}
-        {minutes === 1 ? 'minute' : 'minutes'}.
+        su: too many attempts. Try again in {minutes} {minutes === 1 ? 'minute' : 'minutes'}.
       </TerminalText>,
     );
     return;
   }
   // 1024자를 넘는 비밀번호는 검증 오류(400)로 온다. 틀린 비밀번호와 같게 알린다.
-  if (
-    error.status === 400 ||
-    error.code === AuthErrorCode.INVALID_CREDENTIALS
-  ) {
+  if (error.status === 400 || error.code === AuthErrorCode.INVALID_CREDENTIALS) {
     printAuthenticationFailure(io);
     return;
   }

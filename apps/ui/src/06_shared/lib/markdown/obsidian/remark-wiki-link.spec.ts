@@ -9,9 +9,7 @@ function collect(node: Root | RootContent, type: string): RootContent[] {
 }
 
 function labels(body: string): string[] {
-  return collect(parseMarkdown(body), 'wikiLink').map((node) =>
-    node.type === 'wikiLink' ? node.label : '',
-  );
+  return collect(parseMarkdown(body), 'wikiLink').map((node) => (node.type === 'wikiLink' ? node.label : ''));
 }
 
 describe('remarkWikiLink', () => {

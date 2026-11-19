@@ -2,10 +2,7 @@ import * as z from 'zod';
 import { defineApi } from '../api.js';
 import { AuthErrorCode } from '../iam/auth.js';
 import { CommonErrorCode } from '../error.js';
-import {
-  SourceSyncJobErrorCode,
-  SourceSyncJobSchema,
-} from './source-sync-job.js';
+import { SourceSyncJobErrorCode, SourceSyncJobSchema } from './source-sync-job.js';
 
 const embeddingSchema = z.object({
   model: z.string(),
@@ -78,22 +75,14 @@ export const SourceApi = {
       totalCount: z.number().int().nonnegative(),
       totalPages: z.number().int().nonnegative(),
     }),
-    errors: [
-      CommonErrorCode.VALIDATION_FAILED,
-      AuthErrorCode.UNAUTHENTICATED,
-      AuthErrorCode.FORBIDDEN,
-    ],
+    errors: [CommonErrorCode.VALIDATION_FAILED, AuthErrorCode.UNAUTHENTICATED, AuthErrorCode.FORBIDDEN],
   }),
 
   get: defineApi({
     method: 'GET',
     path: '/sources/:id',
     response: sourceSchema,
-    errors: [
-      SourceErrorCode.NOT_FOUND,
-      AuthErrorCode.UNAUTHENTICATED,
-      AuthErrorCode.FORBIDDEN,
-    ],
+    errors: [SourceErrorCode.NOT_FOUND, AuthErrorCode.UNAUTHENTICATED, AuthErrorCode.FORBIDDEN],
   }),
 
   /**

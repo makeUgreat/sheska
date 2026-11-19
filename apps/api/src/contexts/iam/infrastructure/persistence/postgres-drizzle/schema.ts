@@ -10,14 +10,9 @@ export const apiTokens = pgTable(
     hint: text('hint').notNull(),
     permissions: text('permissions').$type<Permission>().array().notNull(),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [
-    uniqueIndex('api_tokens_name_unique').on(table.name),
-    uniqueIndex('api_tokens_secret_hash_unique').on(table.secretHash),
-  ],
+  (table) => [uniqueIndex('api_tokens_name_unique').on(table.name), uniqueIndex('api_tokens_secret_hash_unique').on(table.secretHash)],
 );
 
 export type ApiTokenRow = typeof apiTokens.$inferSelect;

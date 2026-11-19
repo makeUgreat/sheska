@@ -25,9 +25,7 @@ export class SheskaApiError extends Error {
   readonly code?: string;
 
   constructor(status: number, statusText: string, body: string, code?: string) {
-    super(
-      `Sheska API error: ${status} ${statusText}${body ? ` — ${body}` : ''}`,
-    );
+    super(`Sheska API error: ${status} ${statusText}${body ? ` — ${body}` : ''}`);
     this.name = 'SheskaApiError';
     this.status = status;
     this.code = code;
@@ -47,11 +45,7 @@ export class SheskaApiClient {
     private readonly readApiToken: () => string | null = () => null,
   ) {}
 
-  private async request<T>(
-    path: string,
-    schema: ResponseSchema<T>,
-    init?: RequestInit,
-  ): Promise<T> {
+  private async request<T>(path: string, schema: ResponseSchema<T>, init?: RequestInit): Promise<T> {
     const res = await this.send(path, init);
     return schema.parse(await res.json());
   }
@@ -70,12 +64,7 @@ export class SheskaApiClient {
 
     if (!res.ok) {
       const body = await res.text().catch(() => '');
-      throw new SheskaApiError(
-        res.status,
-        res.statusText,
-        body,
-        readFailureCode(body),
-      );
+      throw new SheskaApiError(res.status, res.statusText, body, readFailureCode(body));
     }
     return res;
   }
@@ -103,27 +92,17 @@ export class SheskaApiClient {
     return this.post(SourceApi.upload.path, body, SourceApi.upload.response);
   }
 
-  uploadAttachment(
-    path: string,
-    data: ArrayBuffer,
-  ): Promise<UploadAttachmentResponse> {
+  uploadAttachment(path: string, data: ArrayBuffer): Promise<UploadAttachmentResponse> {
     const query = new URLSearchParams({ path });
-    return this.request(
-      `${AttachmentApi.upload.path}?${query}`,
-      AttachmentApi.upload.response,
-      {
-        method: 'PUT',
-        body: data,
-        headers: { 'Content-Type': 'application/octet-stream' },
-      },
-    );
+    return this.request(`${AttachmentApi.upload.path}?${query}`, AttachmentApi.upload.response, {
+      method: 'PUT',
+      body: data,
+      headers: { 'Content-Type': 'application/octet-stream' },
+    });
   }
 
   getSyncJob(syncJobId: string): Promise<SourceSyncJobResponse> {
-    return this.get(
-      pathOf(SourceSyncJobApi.get, { id: syncJobId }),
-      SourceSyncJobApi.get.response,
-    );
+    return this.get(pathOf(SourceSyncJobApi.get, { id: syncJobId }), SourceSyncJobApi.get.response);
   }
 }
 

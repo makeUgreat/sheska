@@ -54,21 +54,13 @@ describe('ApplyIngestionUpdateUseCase', () => {
 });
 
 function createUseCase(syncJobs: SourceSyncJobRepositoryMock) {
-  return new ApplyIngestionUpdateUseCase(
-    syncJobs as unknown as SourceSyncJobRepository,
-  );
+  return new ApplyIngestionUpdateUseCase(syncJobs as unknown as SourceSyncJobRepository);
 }
 
-function createSyncJobRepositoryMock(
-  syncJob: Awaited<ReturnType<SourceSyncJobRepository['find']>>,
-): SourceSyncJobRepositoryMock {
+function createSyncJobRepositoryMock(syncJob: Awaited<ReturnType<SourceSyncJobRepository['find']>>): SourceSyncJobRepositoryMock {
   return {
     find: vi.fn<SourceSyncJobRepository['find']>().mockResolvedValue(syncJob),
-    insert: vi
-      .fn<SourceSyncJobRepository['insert']>()
-      .mockImplementation((job) => Promise.resolve(job)),
-    update: vi
-      .fn<SourceSyncJobRepository['update']>()
-      .mockImplementation((job) => Promise.resolve(job)),
+    insert: vi.fn<SourceSyncJobRepository['insert']>().mockImplementation((job) => Promise.resolve(job)),
+    update: vi.fn<SourceSyncJobRepository['update']>().mockImplementation((job) => Promise.resolve(job)),
   };
 }

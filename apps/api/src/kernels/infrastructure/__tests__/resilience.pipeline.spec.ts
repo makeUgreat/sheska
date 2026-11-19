@@ -24,9 +24,7 @@ describe('resiliencePipeline', () => {
     const signals: AbortSignal[] = [];
     const operation = vi.fn(({ signal }: { signal: AbortSignal }) => {
       signals.push(signal);
-      return signals.length === 1
-        ? Promise.reject(buildUnavailableError())
-        : Promise.resolve('ok');
+      return signals.length === 1 ? Promise.reject(buildUnavailableError()) : Promise.resolve('ok');
     });
     const pipeline = resiliencePipeline()
       .retry(NO_DELAY_RETRY)

@@ -3,18 +3,8 @@ import { type HttpClient } from './http';
 
 const HttpClientContext = createContext<HttpClient | null>(null);
 
-export function HttpClientProvider({
-  client,
-  children,
-}: {
-  client: HttpClient;
-  children: ReactNode;
-}) {
-  return (
-    <HttpClientContext.Provider value={client}>
-      {children}
-    </HttpClientContext.Provider>
-  );
+export function HttpClientProvider({ client, children }: { client: HttpClient; children: ReactNode }) {
+  return <HttpClientContext.Provider value={client}>{children}</HttpClientContext.Provider>;
 }
 
 export function useHttpClient(): HttpClient {

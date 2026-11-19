@@ -3,9 +3,7 @@ import { VALID_EMBEDDING } from '../../../../support/domains/fixtures/source-emb
 
 const persistedAt = new Date('2026-01-01T00:00:00.000Z');
 
-export function buildSourceEmbeddingRow(
-  params: Partial<SourceEmbeddingRow> = {},
-): SourceEmbeddingRow {
+export function buildSourceEmbeddingRow(params: Partial<SourceEmbeddingRow> = {}): SourceEmbeddingRow {
   return {
     sourceId: params.sourceId ?? 'source-1',
     chunkIndex: params.chunkIndex ?? 0,

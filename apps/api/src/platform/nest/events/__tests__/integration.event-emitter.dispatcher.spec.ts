@@ -7,9 +7,7 @@ describe('IntegrationEventEmitterDispatcher', () => {
   it('event type으로 전체 integration event를 전달한다', async () => {
     const event = buildIntegrationEvent();
     const emitAsync = vi.fn().mockResolvedValue([undefined]);
-    const dispatcher = new IntegrationEventEmitterDispatcher(
-      asEventEmitter({ emitAsync }),
-    );
+    const dispatcher = new IntegrationEventEmitterDispatcher(asEventEmitter({ emitAsync }));
 
     await dispatcher.dispatch(event);
 
@@ -18,13 +16,9 @@ describe('IntegrationEventEmitterDispatcher', () => {
 
   it('등록된 listener가 없으면 실패한다', async () => {
     const event = buildIntegrationEvent();
-    const dispatcher = new IntegrationEventEmitterDispatcher(
-      asEventEmitter({ emitAsync: vi.fn().mockResolvedValue([]) }),
-    );
+    const dispatcher = new IntegrationEventEmitterDispatcher(asEventEmitter({ emitAsync: vi.fn().mockResolvedValue([]) }));
 
-    await expect(dispatcher.dispatch(event)).rejects.toThrow(
-      'No listener registered for source.sync_job.created',
-    );
+    await expect(dispatcher.dispatch(event)).rejects.toThrow('No listener registered for source.sync_job.created');
   });
 });
 

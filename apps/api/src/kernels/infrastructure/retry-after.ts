@@ -1,7 +1,4 @@
-export function parseRetryAfterMs(
-  headerValue: string | null | undefined,
-  now: () => number = Date.now,
-): number | undefined {
+export function parseRetryAfterMs(headerValue: string | null | undefined, now: () => number = Date.now): number | undefined {
   if (!headerValue) {
     return undefined;
   }

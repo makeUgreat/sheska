@@ -17,18 +17,12 @@ function setup(options: { passwordMatches: boolean; attempt?: LoginAttempt }) {
     matches: vi.fn().mockResolvedValue(options.passwordMatches),
   } satisfies OwnerPasswordVerifier;
   const sessions = {
-    issue: vi
-      .fn()
-      .mockResolvedValue({ token: 'session-token', expiresAt: EXPIRES_AT }),
+    issue: vi.fn().mockResolvedValue({ token: 'session-token', expiresAt: EXPIRES_AT }),
     isActive: vi.fn(),
     revoke: vi.fn(),
   } satisfies SessionStore;
   const attempts = {
-    register: vi
-      .fn()
-      .mockResolvedValue(
-        options.attempt ?? { attemptNumber: 1, retryAfterSeconds: 300 },
-      ),
+    register: vi.fn().mockResolvedValue(options.attempt ?? { attemptNumber: 1, retryAfterSeconds: 300 }),
     clear: vi.fn(),
   } satisfies LoginAttemptCounter;
   const useCase = new LogInUseCase(ownerPassword, sessions, attempts);
@@ -39,9 +33,7 @@ describe('LogInUseCase', () => {
   it('비밀번호가 맞으면 30일짜리 세션을 발급한다', async () => {
     const { useCase, sessions } = setup({ passwordMatches: true });
 
-    await expect(
-      useCase.execute({ password: 'secret', clientAddress: CLIENT_ADDRESS }),
-    ).resolves.toEqual({
+    await expect(useCase.execute({ password: 'secret', clientAddress: CLIENT_ADDRESS })).resolves.toEqual({
       sessionToken: 'session-token',
       expiresAt: EXPIRES_AT,
     });
@@ -58,13 +50,8 @@ describe('LogInUseCase', () => {
       clientAddress: CLIENT_ADDRESS,
     });
 
-    expect(attempts.register).toHaveBeenCalledWith(
-      CLIENT_ADDRESS,
-      LoginAttemptPolicy.STANDARD,
-    );
-    expect(attempts.register.mock.invocationCallOrder[0]).toBeLessThan(
-      ownerPassword.matches.mock.invocationCallOrder[0],
-    );
+    expect(attempts.register).toHaveBeenCalledWith(CLIENT_ADDRESS, LoginAttemptPolicy.STANDARD);
+    expect(attempts.register.mock.invocationCallOrder[0]).toBeLessThan(ownerPassword.matches.mock.invocationCallOrder[0]);
   });
 
   it('비밀번호가 맞으면 그 IP의 시도 기록을 지운다', async () => {

@@ -31,10 +31,7 @@ describe('OutboxRelayRunner', () => {
   it('relay batch 오류를 기록하고 다음 polling을 계속한다', async () => {
     vi.useFakeTimers();
     const failure = new Error('Database unavailable');
-    const relayPending = vi
-      .fn()
-      .mockRejectedValueOnce(failure)
-      .mockResolvedValueOnce(undefined);
+    const relayPending = vi.fn().mockRejectedValueOnce(failure).mockResolvedValueOnce(undefined);
     const logger = createLogger();
     const runner = new OutboxRelayRunner(
       {
@@ -48,10 +45,7 @@ describe('OutboxRelayRunner', () => {
     await vi.advanceTimersByTimeAsync(500);
 
     expect(relayPending).toHaveBeenCalledTimes(2);
-    expect(logger.error).toHaveBeenCalledWith(
-      'Outbox relay polling failed',
-      failure,
-    );
+    expect(logger.error).toHaveBeenCalledWith('Outbox relay polling failed', failure);
 
     runner.onApplicationShutdown();
   });

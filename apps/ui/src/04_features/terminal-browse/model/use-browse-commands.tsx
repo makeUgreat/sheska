@@ -50,10 +50,7 @@ export function useBrowseCommands({
 
   async function fetchPosts(all: boolean) {
     if (!all) {
-      const [page, { count }] = await Promise.all([
-        listPosts(http, { limit: PAGE_SIZE }),
-        countPosts(http),
-      ]);
+      const [page, { count }] = await Promise.all([listPosts(http, { limit: PAGE_SIZE }), countPosts(http)]);
       return { entries: page.posts.map(postEntry), total: count };
     }
     const posts: PostSummary[] = [];
@@ -88,8 +85,7 @@ export function useBrowseCommands({
   }
 
   async function fetchEverything(): Promise<TerminalListedEntry[]> {
-    const { entries } =
-      where === 'home' ? await fetchPosts(true) : await fetchSources(true);
+    const { entries } = where === 'home' ? await fetchPosts(true) : await fetchSources(true);
     return entries;
   }
 
@@ -100,11 +96,7 @@ export function useBrowseCommands({
     async run(args, io) {
       const unknown = args.find((arg) => arg !== '-a');
       if (unknown) {
-        io.print(
-          <TerminalText tone="error">
-            ls: cannot access &apos;{unknown}&apos;: No such file or directory
-          </TerminalText>,
-        );
+        io.print(<TerminalText tone="error">ls: cannot access &apos;{unknown}&apos;: No such file or directory</TerminalText>);
         return;
       }
       const all = args.includes('-a');
@@ -121,10 +113,7 @@ export function useBrowseCommands({
           );
           return;
         }
-        const [{ entries, total }, sourceCount] = await Promise.all([
-          fetchPosts(all),
-          owner ? countSources() : Promise.resolve(null),
-        ]);
+        const [{ entries, total }, sourceCount] = await Promise.all([fetchPosts(all), owner ? countSources() : Promise.resolve(null)]);
         recent.current = entries;
         const folder: TerminalTreeItem[] =
           sourceCount === null
@@ -132,12 +121,7 @@ export function useBrowseCommands({
             : [
                 {
                   key: 'sources',
-                  head: (
-                    <TerminalTreeRoot
-                      label="sources/"
-                      note={notes(sourceCount)}
-                    />
-                  ),
+                  head: <TerminalTreeRoot label="sources/" note={notes(sourceCount)} />,
                 },
               ];
         io.print(
@@ -160,15 +144,11 @@ export function useBrowseCommands({
     async run(args, io) {
       const target = args.join(' ');
       if (!target) {
-        io.print(
-          <TerminalText tone="error">cat: missing operand</TerminalText>,
-        );
+        io.print(<TerminalText tone="error">cat: missing operand</TerminalText>);
         return;
       }
       try {
-        const entry =
-          findEntry(recent.current, target) ??
-          findEntry(await fetchEverything(), target);
+        const entry = findEntry(recent.current, target) ?? findEntry(await fetchEverything(), target);
         if (!entry) {
           io.print(
             <TerminalText tone="error">
@@ -184,9 +164,7 @@ export function useBrowseCommands({
     },
     complete: (argument) => {
       const typed = argument.toLowerCase();
-      return recent.current
-        .map((entry) => entry.title)
-        .filter((title) => title.toLowerCase().startsWith(typed));
+      return recent.current.map((entry) => entry.title).filter((title) => title.toLowerCase().startsWith(typed));
     },
   };
 
@@ -199,11 +177,7 @@ export function useBrowseCommands({
       const target = args[0] ?? '~';
       const next = resolveDirectory(target, where);
       if (!next || (next === 'sources' && !owner)) {
-        io.print(
-          <TerminalText tone="error">
-            cd: no such file or directory: {target}
-          </TerminalText>,
-        );
+        io.print(<TerminalText tone="error">cd: no such file or directory: {target}</TerminalText>);
         return;
       }
       onDirectoryChange(next);
@@ -217,20 +191,12 @@ export function useBrowseCommands({
 function entryItem(entry: Entry): TerminalTreeItem {
   return {
     key: entry.id,
-    head: (
-      <TerminalEntryLink
-        title={entry.title}
-        to={entry.to}
-        date={formatMonthDay(entry.date)}
-      />
-    ),
+    head: <TerminalEntryLink title={entry.title} to={entry.to} date={formatMonthDay(entry.date)} />,
   };
 }
 
 function moreFooter(shown: number, total: number) {
-  return total > shown
-    ? `… ${(total - shown).toLocaleString('en-US')} more · ls -a`
-    : undefined;
+  return total > shown ? `… ${(total - shown).toLocaleString('en-US')} more · ls -a` : undefined;
 }
 
 function posts(count: number) {
@@ -260,23 +226,15 @@ function sourceEntry(source: SourceSummary): Entry {
 }
 
 /** 제목이 같거나, 앞부분이 한 항목에만 맞으면 그 항목을 고른다. */
-function findEntry(
-  entries: TerminalListedEntry[],
-  target: string,
-): TerminalListedEntry | undefined {
+function findEntry(entries: TerminalListedEntry[], target: string): TerminalListedEntry | undefined {
   const wanted = target.toLowerCase();
   const exact = entries.find((entry) => entry.title.toLowerCase() === wanted);
   if (exact) return exact;
-  const prefixed = entries.filter((entry) =>
-    entry.title.toLowerCase().startsWith(wanted),
-  );
+  const prefixed = entries.filter((entry) => entry.title.toLowerCase().startsWith(wanted));
   return prefixed.length === 1 ? prefixed[0] : undefined;
 }
 
-function resolveDirectory(
-  target: string,
-  current: Directory,
-): Directory | null {
+function resolveDirectory(target: string, current: Directory): Directory | null {
   const path = target.replace(/\/+$/, '');
   if (['~', '', '/', '..'].includes(path)) return 'home';
   if (['sources', '~/sources', '/sources'].includes(path)) return 'sources';

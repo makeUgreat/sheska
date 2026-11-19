@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { type EmbeddingWorkflowDispatcher } from '@contexts/ingestion/application/ports';
-import {
-  DEFAULT_SEPARATORS,
-  RecursiveCharacterChunker,
-} from '@contexts/ingestion/application/services/recursive-character.chunker';
+import { DEFAULT_SEPARATORS, RecursiveCharacterChunker } from '@contexts/ingestion/application/services/recursive-character.chunker';
 import { InitiateSourceEmbeddingUseCase } from '../initiate-source-embedding.use-case';
 
 describe('InitiateSourceEmbeddingUseCase', () => {

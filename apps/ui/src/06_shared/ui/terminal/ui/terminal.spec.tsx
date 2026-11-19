@@ -1,13 +1,6 @@
 import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type TerminalCommand, type TerminalHandle } from '../model/types';
 import { Terminal } from './terminal';
@@ -30,13 +23,7 @@ const hiddenCommand: TerminalCommand = {
 
 function renderTerminal(commands: TerminalCommand[] = [echoCommand]) {
   const ref = createRef<TerminalHandle>();
-  render(
-    <Terminal
-      ref={ref}
-      commands={commands}
-      prompt={{ identity: 'visitor@hash', rest: ':~$' }}
-    />,
-  );
+  render(<Terminal ref={ref} commands={commands} prompt={{ identity: 'visitor@hash', rest: ':~$' }} />);
   const log = screen.getByRole('log');
   return {
     ref,
@@ -50,10 +37,7 @@ describe('Terminal', () => {
     const user = userEvent.setup();
     const { log } = renderTerminal();
 
-    await user.type(
-      screen.getByLabelText('visitor@hash:~$'),
-      'echo hi there{Enter}',
-    );
+    await user.type(screen.getByLabelText('visitor@hash:~$'), 'echo hi there{Enter}');
 
     expect(within(log).getByText('echo hi there')).toBeDefined();
     expect(within(log).getByText('hi there')).toBeDefined();
@@ -83,14 +67,9 @@ describe('Terminal', () => {
     const user = userEvent.setup();
     const { log } = renderTerminal();
 
-    await user.type(
-      screen.getByLabelText('visitor@hash:~$'),
-      'redis 세션{Enter}',
-    );
+    await user.type(screen.getByLabelText('visitor@hash:~$'), 'redis 세션{Enter}');
 
-    expect(
-      within(log).getByText('hash: command not found: redis'),
-    ).toBeDefined();
+    expect(within(log).getByText('hash: command not found: redis')).toBeDefined();
     expect(within(log).getByText('print words')).toBeDefined();
   });
 
@@ -158,9 +137,7 @@ describe('Terminal', () => {
   });
 
   describe('비밀번호 질문', () => {
-    function buildAskCommand(
-      onAnswer: (answer: string) => void,
-    ): TerminalCommand {
+    function buildAskCommand(onAnswer: (answer: string) => void): TerminalCommand {
       return {
         name: 'su',
         summary: 'log in',

@@ -3,10 +3,7 @@ import { newId } from '@core/id';
 import { AggregateRoot } from '@kernels/domain';
 import { ExternalSourceId } from './external-source-id.vo';
 import { SourceBody } from './source-body.vo';
-import {
-  SourceFrontmatter,
-  type SourceFrontmatterProps,
-} from './source-frontmatter.vo';
+import { SourceFrontmatter, type SourceFrontmatterProps } from './source-frontmatter.vo';
 import { SourceSize } from './source-size.vo';
 import { SourceSyncJob } from './source-sync-job.aggregate';
 
@@ -34,16 +31,7 @@ export class Source extends AggregateRoot<SourceProps> {
   }
 
   static restore(params: SourceRestoreParams): Source {
-    const {
-      id,
-      externalSourceId,
-      frontmatter,
-      body,
-      fingerprint,
-      size,
-      createdAt,
-      updatedAt,
-    } = params;
+    const { id, externalSourceId, frontmatter, body, fingerprint, size, createdAt, updatedAt } = params;
 
     return new Source({
       id,
@@ -58,20 +46,13 @@ export class Source extends AggregateRoot<SourceProps> {
     });
   }
 
-  syncContent(params: {
-    frontmatter: SourceFrontmatterProps;
-    body: string;
-    size: number;
-  }): boolean {
+  syncContent(params: { frontmatter: SourceFrontmatterProps; body: string; size: number }): boolean {
     const frontmatter = SourceFrontmatter.of(params.frontmatter);
     Source.ensureSyncTarget(frontmatter);
     const body = SourceBody.of(params.body);
     const size = SourceSize.of(params.size);
 
-    const changed =
-      !this.props.body.hasSameTextAs(body) ||
-      !this.props.frontmatter.equals(frontmatter) ||
-      !this.props.size.equals(size);
+    const changed = !this.props.body.hasSameTextAs(body) || !this.props.frontmatter.equals(frontmatter) || !this.props.size.equals(size);
     if (!changed) return false;
 
     this.props.frontmatter = frontmatter;
@@ -97,9 +78,7 @@ export class Source extends AggregateRoot<SourceProps> {
     const { title } = this.props.frontmatter.unpack();
     const trimmedTitle = typeof title === 'string' ? title.trim() : '';
 
-    return trimmedTitle.length > 0
-      ? trimmedTitle
-      : this.props.externalSourceId.unpack();
+    return trimmedTitle.length > 0 ? trimmedTitle : this.props.externalSourceId.unpack();
   }
 
   public validate(): void {}

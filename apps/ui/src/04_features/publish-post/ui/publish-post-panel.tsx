@@ -1,17 +1,9 @@
 import { Link } from 'react-router-dom';
 import { usePublishPost } from '@/entities/post';
 
-export function PublishPostPanel({
-  sourceId,
-  publishedPostId,
-}: {
-  sourceId: string;
-  publishedPostId: string | null;
-}) {
+export function PublishPostPanel({ sourceId, publishedPostId }: { sourceId: string; publishedPostId: string | null }) {
   const publishPost = usePublishPost();
-  const justPublishedPostId = publishPost.isSuccess
-    ? publishPost.data.postId
-    : null;
+  const justPublishedPostId = publishPost.isSuccess ? publishPost.data.postId : null;
   const postId = justPublishedPostId ?? publishedPostId;
 
   return (
@@ -19,13 +11,8 @@ export function PublishPostPanel({
       <h2 className="text-base font-semibold text-gray-950">게시하기</h2>
       {postId ? (
         <p className="mt-4 text-sm text-gray-700">
-          {justPublishedPostId
-            ? '포스트가 게시되었습니다.'
-            : '이미 게시되었습니다.'}{' '}
-          <Link
-            to={`/posts/${postId}`}
-            className="font-medium text-accent-hover underline"
-          >
+          {justPublishedPostId ? '포스트가 게시되었습니다.' : '이미 게시되었습니다.'}{' '}
+          <Link to={`/posts/${postId}`} className="font-medium text-accent-hover underline">
             게시된 포스트 보기
           </Link>
         </p>
@@ -41,10 +28,7 @@ export function PublishPostPanel({
         </div>
       )}
       {publishPost.isError && (
-        <p
-          role="alert"
-          className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700"
-        >
+        <p role="alert" className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
           오류: {publishPost.error.message}
         </p>
       )}

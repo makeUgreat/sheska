@@ -23,9 +23,7 @@ function stackWithCauses(error: Error, seen = new Set<Error>()): string {
   }
   seen.add(error);
 
-  return error.cause instanceof Error
-    ? `${stack}\ncaused by: ${stackWithCauses(error.cause, seen)}`
-    : stack;
+  return error.cause instanceof Error ? `${stack}\ncaused by: ${stackWithCauses(error.cause, seen)}` : stack;
 }
 
 export function toErrorLogContext(error: unknown): Record<string, unknown> {

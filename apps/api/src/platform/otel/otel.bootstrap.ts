@@ -6,10 +6,7 @@ import { resourceFromAttributes } from '@opentelemetry/resources';
 import { BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK } from '@opentelemetry/sdk-node';
-import {
-  ATTR_SERVICE_NAME,
-  ATTR_SERVICE_VERSION,
-} from '@opentelemetry/semantic-conventions';
+import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
 import { otelConfig } from './otel.config';
 
 // Fixed identity of this codebase, not a per-deployment setting — unlike
@@ -50,7 +47,5 @@ if (otlpEndpoint) {
     void sdk.shutdown();
   });
 } else {
-  console.info(
-    '[otel] tracing/logs/metrics disabled (no OTEL_EXPORTER_OTLP_ENDPOINT)',
-  );
+  console.info('[otel] tracing/logs/metrics disabled (no OTEL_EXPORTER_OTLP_ENDPOINT)');
 }

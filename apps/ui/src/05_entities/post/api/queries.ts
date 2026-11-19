@@ -1,17 +1,6 @@
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useHttpClient } from '@/shared/api';
-import {
-  countPosts,
-  getPost,
-  listPosts,
-  publishPost,
-  searchPosts,
-} from './client';
+import { countPosts, getPost, listPosts, publishPost, searchPosts } from './client';
 import { type PublishPostRequest } from './types';
 
 export function usePost(id: string | undefined) {
@@ -42,16 +31,11 @@ export function useInfiniteListPosts(limit?: number, enabled = true) {
   });
 }
 
-export function useInfiniteSearchPosts(
-  query: string,
-  limit?: number,
-  enabled = true,
-) {
+export function useInfiniteSearchPosts(query: string, limit?: number, enabled = true) {
   const http = useHttpClient();
   return useInfiniteQuery({
     queryKey: ['posts', 'search', query, limit],
-    queryFn: ({ pageParam }) =>
-      searchPosts(http, { query, cursor: pageParam, limit }),
+    queryFn: ({ pageParam }) => searchPosts(http, { query, cursor: pageParam, limit }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: enabled && query.length >= 1,

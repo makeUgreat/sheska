@@ -8,21 +8,9 @@ import { AttachmentsHttpController } from '@contexts/library/presentation/http/a
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
 import { DeclaredErrorCodesInterceptor } from '@platform/nest/interceptors/declared-error-codes.interceptor';
 import { LOGGER } from '@kernels/application';
-import {
-  ATTACHMENT_MAX_BYTES,
-  AttachmentApi,
-  errorResponseSchema,
-} from '@sheska/contract';
+import { ATTACHMENT_MAX_BYTES, AttachmentApi, errorResponseSchema } from '@sheska/contract';
 import request from 'supertest';
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  type MockedFunction,
-  vi,
-} from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type MockedFunction, vi } from 'vitest';
 
 type UploadAttachmentUseCaseMock = {
   execute: MockedFunction<UploadAttachmentUseCase['execute']>;
@@ -69,9 +57,7 @@ describe('AttachmentsHttpController', () => {
 
   function upload(path: string | undefined, body: Buffer = IMAGE) {
     const req = request(httpServer).put('/attachments');
-    return (path === undefined ? req : req.query({ path }))
-      .set('Content-Type', 'application/octet-stream')
-      .send(body);
+    return (path === undefined ? req : req.query({ path })).set('Content-Type', 'application/octet-stream').send(body);
   }
 
   describe('PUT /attachments', () => {
@@ -100,27 +86,17 @@ describe('AttachmentsHttpController', () => {
       ['없으면', undefined],
       ['앞에 /가 있으면', '/att/a.png'],
       ['.. segment가 있으면', 'att/../a.png'],
-    ])(
-      'path가 %s 400 request.validation_failed를 돌려준다',
-      async (_, path) => {
-        const response = await upload(path).expect(400);
+    ])('path가 %s 400 request.validation_failed를 돌려준다', async (_, path) => {
+      const response = await upload(path).expect(400);
 
-        expect(errorResponseSchema.parse(response.body).code).toBe(
-          'request.validation_failed',
-        );
-        expect(uploadAttachmentUseCase.execute).not.toHaveBeenCalled();
-      },
-    );
+      expect(errorResponseSchema.parse(response.body).code).toBe('request.validation_failed');
+      expect(uploadAttachmentUseCase.execute).not.toHaveBeenCalled();
+    });
 
     it('본문이 상한을 넘으면 use case를 부르지 않고 400 attachment.too_large를 돌려준다', async () => {
-      const response = await upload(
-        'att/a.png',
-        Buffer.alloc(ATTACHMENT_MAX_BYTES + 1),
-      ).expect(400);
+      const response = await upload('att/a.png', Buffer.alloc(ATTACHMENT_MAX_BYTES + 1)).expect(400);
 
-      expect(errorResponseSchema.parse(response.body).code).toBe(
-        'attachment.too_large',
-      );
+      expect(errorResponseSchema.parse(response.body).code).toBe('attachment.too_large');
       expect(uploadAttachmentUseCase.execute).not.toHaveBeenCalled();
     });
 

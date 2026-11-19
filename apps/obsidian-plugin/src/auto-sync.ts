@@ -27,13 +27,8 @@ interface AutoSyncServiceOptions {
 
 /** `library-sync-12`: 공개 주소에 vault 경로와 파일 이름이 드러나지 않게 경로의 해시를 쓴다. */
 async function attachmentKey(image: TFile): Promise<string> {
-  const digest = await crypto.subtle.digest(
-    'SHA-256',
-    new TextEncoder().encode(image.path),
-  );
-  const hex = Array.from(new Uint8Array(digest), (byte) =>
-    byte.toString(16).padStart(2, '0'),
-  ).join('');
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(image.path));
+  const hex = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
   return `attachments/${hex}.${image.extension.toLowerCase()}`;
 }
 
@@ -141,19 +136,12 @@ export class AutoSyncService {
 
   /** `library-source-6`: only a YAML boolean `true`, so `"true"` or `yes` stays local. */
   isSyncTarget(file: TFile): boolean {
-    return (
-      this.options.metadataCache.getFileCache(file)?.frontmatter?.sheska ===
-      true
-    );
+    return this.options.metadataCache.getFileCache(file)?.frontmatter?.sheska === true;
   }
 
   isSynced(file: TFile): boolean {
     const cached = this.syncCache[file.path];
-    return (
-      cached !== undefined &&
-      cached.mtime === file.stat.mtime &&
-      (cached.status === undefined || cached.status === 'synced')
-    );
+    return cached !== undefined && cached.mtime === file.stat.mtime && (cached.status === undefined || cached.status === 'synced');
   }
 
   isSyncing(file: TFile): boolean {
@@ -165,9 +153,7 @@ export class AutoSyncService {
     if (
       !cached?.syncJobId ||
       cached.mtime !== file.stat.mtime ||
-      (cached.status !== 'accepted' &&
-        cached.status !== 'processing' &&
-        cached.status !== 'unknown') ||
+      (cached.status !== 'accepted' && cached.status !== 'processing' && cached.status !== 'unknown') ||
       !this.shouldPollSyncJob(file.path) ||
       this.pollingFiles.has(file.path)
     ) {
@@ -209,10 +195,7 @@ export class AutoSyncService {
     }
   }
 
-  private async uploadFileCore(
-    file: TFile,
-    retryCount?: number,
-  ): Promise<void> {
+  private async uploadFileCore(file: TFile, retryCount?: number): Promise<void> {
     this.syncingFiles.add(file.path);
     this.options.onSyncStart?.(file.path);
     try {
@@ -226,8 +209,7 @@ export class AutoSyncService {
         })),
       );
       const prepared = prepareUploadContent(content, file.path, imageLinks);
-      if (!prepared.ok)
-        throw new UploadBlockedError(file.path, prepared.reason);
+      if (!prepared.ok) throw new UploadBlockedError(file.path, prepared.reason);
       await this.uploadImages(embeds.map(({ image }) => image));
       const upload = await this.api.uploadSource({
         externalSourceId: file.path,
@@ -258,10 +240,7 @@ export class AutoSyncService {
       this.options.onSyncStateChanged?.(file.path);
       if (this.shouldPollSyncJob(file.path)) {
         void this.pollSyncJobForFile(file).catch((error: unknown) => {
-          console.error(
-            `[Sheska] Sync job polling failed for "${file.path}":`,
-            error,
-          );
+          console.error(`[Sheska] Sync job polling failed for "${file.path}":`, error);
         });
       }
     } finally {
@@ -282,16 +261,10 @@ export class AutoSyncService {
     }
   }
 
-  private findEmbeddedImages(
-    note: TFile,
-  ): { original: string; image: TFile }[] {
+  private findEmbeddedImages(note: TFile): { original: string; image: TFile }[] {
     const found: { original: string; image: TFile }[] = [];
-    for (const embed of this.options.metadataCache.getFileCache(note)?.embeds ??
-      []) {
-      const image = this.options.metadataCache.getFirstLinkpathDest(
-        getLinkpath(embed.link),
-        note.path,
-      );
+    for (const embed of this.options.metadataCache.getFileCache(note)?.embeds ?? []) {
+      const image = this.options.metadataCache.getFirstLinkpathDest(getLinkpath(embed.link), note.path);
       if (image && IMAGE_EXTENSIONS.includes(image.extension.toLowerCase())) {
         found.push({ original: embed.original, image });
       }
@@ -321,15 +294,10 @@ export class AutoSyncService {
   private async uploadImageIfChanged(image: TFile): Promise<boolean> {
     const key = await attachmentKey(image);
     const cached = this.attachmentCache[image.path];
-    const sameVersion =
-      cached?.mtime === image.stat.mtime &&
-      cached.size === image.stat.size &&
-      cached.key === key;
+    const sameVersion = cached?.mtime === image.stat.mtime && cached.size === image.stat.size && cached.key === key;
     if (sameVersion && !cached.rejected) return false;
     if (image.stat.size > ATTACHMENT_MAX_BYTES) {
-      console.warn(
-        `[Sheska] Skipped "${image.path}": larger than ${ATTACHMENT_MAX_BYTES} bytes.`,
-      );
+      console.warn(`[Sheska] Skipped "${image.path}": larger than ${ATTACHMENT_MAX_BYTES} bytes.`);
       return false;
     }
 
@@ -340,10 +308,7 @@ export class AutoSyncService {
     } catch (error: unknown) {
       if (isRetryableApiError(error)) throw error;
       if (sameVersion) return false;
-      const reason =
-        error instanceof SheskaApiError
-          ? (error.code ?? `HTTP ${error.status}`)
-          : String(error);
+      const reason = error instanceof SheskaApiError ? (error.code ?? `HTTP ${error.status}`) : String(error);
       new Notice(`Sheska: "${image.path}" was rejected (${reason}).`);
       this.attachmentCache[image.path] = { ...stat, rejected: true };
       return true;
@@ -362,22 +327,14 @@ export class AutoSyncService {
     }
   }
 
-  private async waitForSyncJob(
-    path: string,
-    syncJobId: string,
-    mtime: number,
-  ): Promise<void> {
+  private async waitForSyncJob(path: string, syncJobId: string, mtime: number): Promise<void> {
     const initialDelay = this.options.syncJobPollInitialDelayMs ?? 2_000;
     const interval = this.options.syncJobPollIntervalMs ?? 5_000;
     const timeout = this.options.syncJobPollTimeoutMs ?? 120_000;
     const deadline = Date.now() + timeout;
     await this.delay(initialDelay);
 
-    while (
-      !this.cancelled &&
-      this.shouldPollSyncJob(path) &&
-      Date.now() <= deadline
-    ) {
+    while (!this.cancelled && this.shouldPollSyncJob(path) && Date.now() <= deadline) {
       const job = await this.api.getSyncJob(syncJobId);
       const cached = this.syncCache[path];
       if (!cached || cached.syncJobId !== syncJobId || cached.mtime !== mtime) {
@@ -434,18 +391,13 @@ export class AutoSyncService {
     if (
       cached?.mtime === file.stat.mtime &&
       cached.syncJobId &&
-      (cached.status === 'accepted' ||
-        cached.status === 'processing' ||
-        cached.status === 'unknown')
+      (cached.status === 'accepted' || cached.status === 'processing' || cached.status === 'unknown')
     ) {
       if (this.shouldPollSyncJob(file.path)) {
         try {
           await this.pollSyncJobForFile(file);
         } catch (err) {
-          console.error(
-            `[Sheska] Sync job polling failed for "${file.path}":`,
-            err,
-          );
+          console.error(`[Sheska] Sync job polling failed for "${file.path}":`, err);
         }
       }
       return;
@@ -464,11 +416,7 @@ export class AutoSyncService {
 
   private async reconcileCachedFile(file: TFile): Promise<void> {
     if (!this.isSyncTarget(file)) return;
-    if (
-      this.syncingFiles.has(file.path) ||
-      this.pollingFiles.has(file.path) ||
-      this.reconcilingFiles.has(file.path)
-    ) {
+    if (this.syncingFiles.has(file.path) || this.pollingFiles.has(file.path) || this.reconcilingFiles.has(file.path)) {
       return;
     }
 
@@ -488,36 +436,22 @@ export class AutoSyncService {
       try {
         await this.retryFailedSync(file, cached);
       } catch (err) {
-        console.error(
-          `[Sheska] Auto-sync retry failed for "${file.path}":`,
-          err,
-        );
+        console.error(`[Sheska] Auto-sync retry failed for "${file.path}":`, err);
       }
       return;
     }
-    if (
-      !cached.syncJobId ||
-      cached.status === undefined ||
-      cached.status === 'synced'
-    ) {
+    if (!cached.syncJobId || cached.status === undefined || cached.status === 'synced') {
       return;
     }
 
     try {
       await this.reconcileSyncJob(file, cached.syncJobId, cached.mtime);
     } catch (err) {
-      console.error(
-        `[Sheska] Sync job reconciliation failed for "${file.path}":`,
-        err,
-      );
+      console.error(`[Sheska] Sync job reconciliation failed for "${file.path}":`, err);
     }
   }
 
-  private async reconcileSyncJob(
-    file: TFile,
-    syncJobId: string,
-    mtime: number,
-  ): Promise<void> {
+  private async reconcileSyncJob(file: TFile, syncJobId: string, mtime: number): Promise<void> {
     const job = await this.api.getSyncJob(syncJobId);
     const cached = this.syncCache[file.path];
     if (!cached || cached.syncJobId !== syncJobId || cached.mtime !== mtime) {
@@ -542,10 +476,7 @@ export class AutoSyncService {
     this.options.onSyncStateChanged?.(file.path);
   }
 
-  private async retryFailedSync(
-    file: TFile,
-    cached: SyncCache[string],
-  ): Promise<void> {
+  private async retryFailedSync(file: TFile, cached: SyncCache[string]): Promise<void> {
     const retryCount = cached.retryCount ?? 0;
 
     if (cached.status !== 'failed' || cached.nextRetryAt === undefined) {
@@ -595,15 +526,10 @@ export class AutoSyncService {
   }
 
   private retryDelayMs(retryCount: number): number {
-    return AUTO_RETRY_BACKOFF_MS[
-      Math.min(retryCount, AUTO_RETRY_BACKOFF_MS.length - 1)
-    ];
+    return AUTO_RETRY_BACKOFF_MS[Math.min(retryCount, AUTO_RETRY_BACKOFF_MS.length - 1)];
   }
 
-  private async recordServerFailure(
-    path: string,
-    cached: SyncCache[string],
-  ): Promise<void> {
+  private async recordServerFailure(path: string, cached: SyncCache[string]): Promise<void> {
     const retryCount = cached.retryCount ?? 0;
     this.syncCache[path] = {
       ...cached,

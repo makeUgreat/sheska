@@ -17,9 +17,7 @@ const httpEnvSchema = z.object({
 export const httpConfig = registerAs('http', () => {
   const result = httpEnvSchema.safeParse(process.env);
   if (!result.success) {
-    throw new Error(
-      `Invalid HTTP configuration.\n${z.prettifyError(result.error)}`,
-    );
+    throw new Error(`Invalid HTTP configuration.\n${z.prettifyError(result.error)}`);
   }
   return {
     port: result.data.PORT,

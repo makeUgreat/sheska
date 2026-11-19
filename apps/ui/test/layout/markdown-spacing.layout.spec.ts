@@ -44,21 +44,14 @@ async function preparePostDetail(page: Page) {
 function spacingMetrics(page: Page) {
   return page.evaluate(() => {
     const paragraphs = [...document.querySelectorAll('article p')];
-    const byText = (text: string) =>
-      paragraphs.find((paragraph) => paragraph.textContent === text);
+    const byText = (text: string) => paragraphs.find((paragraph) => paragraph.textContent === text);
 
     const bodyText = byText('본문 문단 사이의 코드 블록은 본문 간격을 쓴다.');
     const itemText = byText('의존성을 설치한다.');
     const nextItemText = byText('설정을 바꾼다.');
     const topLevelBlock = bodyText?.nextElementSibling;
     const listBlock = itemText?.nextElementSibling;
-    if (
-      !bodyText ||
-      !topLevelBlock ||
-      !listBlock ||
-      !itemText ||
-      !nextItemText
-    ) {
+    if (!bodyText || !topLevelBlock || !listBlock || !itemText || !nextItemText) {
       throw new Error('the spacing fixture is not rendered');
     }
 
@@ -79,9 +72,7 @@ test.describe('Markdown 목록 안 코드 블록 간격', () => {
     expect(metrics.blockToNextItem).toBeLessThan(metrics.bodyTextToBlock);
   });
 
-  test('항목 안 코드 블록은 다음 항목보다 자기 항목에 가깝다', async ({
-    page,
-  }) => {
+  test('항목 안 코드 블록은 다음 항목보다 자기 항목에 가깝다', async ({ page }) => {
     await preparePostDetail(page);
     const metrics = await spacingMetrics(page);
 

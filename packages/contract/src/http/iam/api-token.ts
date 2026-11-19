@@ -53,12 +53,7 @@ export const ApiTokenApi = {
     response: apiTokenSchema.extend({
       token: z.string().startsWith(API_TOKEN_PREFIX),
     }),
-    errors: [
-      CommonErrorCode.VALIDATION_FAILED,
-      AuthErrorCode.UNAUTHENTICATED,
-      AuthErrorCode.FORBIDDEN,
-      ApiTokenErrorCode.NAME_TAKEN,
-    ],
+    errors: [CommonErrorCode.VALIDATION_FAILED, AuthErrorCode.UNAUTHENTICATED, AuthErrorCode.FORBIDDEN, ApiTokenErrorCode.NAME_TAKEN],
   }),
 
   /** 폐기하지 않은 토큰만 만든 순서대로 준다. */
@@ -73,10 +68,6 @@ export const ApiTokenApi = {
   revoke: defineApi({
     method: 'DELETE',
     path: '/api-tokens/:id',
-    errors: [
-      AuthErrorCode.UNAUTHENTICATED,
-      AuthErrorCode.FORBIDDEN,
-      ApiTokenErrorCode.NOT_FOUND,
-    ],
+    errors: [AuthErrorCode.UNAUTHENTICATED, AuthErrorCode.FORBIDDEN, ApiTokenErrorCode.NOT_FOUND],
   }),
 };

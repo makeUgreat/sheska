@@ -9,9 +9,7 @@ const ollamaEnvSchema = z.object({
 export const ollamaConfig = registerAs('ollama', () => {
   const result = ollamaEnvSchema.safeParse(process.env);
   if (!result.success) {
-    throw new Error(
-      `Invalid embedding server configuration.\n${z.prettifyError(result.error)}`,
-    );
+    throw new Error(`Invalid embedding server configuration.\n${z.prettifyError(result.error)}`);
   }
   return { baseUrl: result.data.EMBEDDING_BASE_URL };
 });

@@ -3,10 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { type Redis } from 'ioredis';
 import { sha256Hex } from '@core/hash';
 import { REDIS_TOKENS } from '@kernels/infrastructure';
-import {
-  type IssuedSession,
-  type SessionStore,
-} from '@contexts/iam/application/ports';
+import { type IssuedSession, type SessionStore } from '@contexts/iam/application/ports';
 import { toRedisError } from '@contexts/iam/infrastructure/redis-error';
 
 const KEY_PREFIX = 'iam:session:';
@@ -20,12 +17,7 @@ export class SessionRedisStore implements SessionStore {
     const token = randomBytes(TOKEN_BYTES).toString('base64url');
     const expiresAt = new Date(Date.now() + lifetimeSeconds * 1000);
     try {
-      await this.redis.set(
-        keyOf(token),
-        expiresAt.toISOString(),
-        'EX',
-        lifetimeSeconds,
-      );
+      await this.redis.set(keyOf(token), expiresAt.toISOString(), 'EX', lifetimeSeconds);
     } catch (error: unknown) {
       throw toRedisError(error);
     }

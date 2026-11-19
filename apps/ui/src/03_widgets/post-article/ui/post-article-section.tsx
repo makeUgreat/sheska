@@ -1,11 +1,6 @@
 import { type GetPostResponse } from '@/entities/post';
 import { formatDate, type Heading } from '@/shared/lib';
-import {
-  ArticleLayout,
-  EmptyState,
-  ErrorState,
-  LoadingState,
-} from '@/shared/ui';
+import { ArticleLayout, EmptyState, ErrorState, LoadingState } from '@/shared/ui';
 
 export type PostArticleState =
   | { status: 'loading' }
@@ -33,22 +28,13 @@ export function PostArticleSection({ state }: { state: PostArticleState }) {
 
   const { post, outline, activeHeadingId } = state;
 
-  return (
-    <ArticleLayout
-      header={<PostHeader post={post} />}
-      body={post.body}
-      outline={outline}
-      activeHeadingId={activeHeadingId}
-    />
-  );
+  return <ArticleLayout header={<PostHeader post={post} />} body={post.body} outline={outline} activeHeadingId={activeHeadingId} />;
 }
 
 function PostHeader({ post }: { post: GetPostResponse }) {
   return (
     <>
-      <h1 className="break-words font-sans text-headline-md text-text-primary">
-        {post.title}
-      </h1>
+      <h1 className="break-words font-sans text-headline-md text-text-primary">{post.title}</h1>
       <p className="mt-2 flex flex-wrap gap-x-2 text-body-md text-text-muted">
         <time dateTime={post.updatedAt}>{formatDate(post.updatedAt)}</time>
         <span aria-hidden="true">·</span>

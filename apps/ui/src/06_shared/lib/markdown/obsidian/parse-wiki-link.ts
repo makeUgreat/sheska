@@ -1,9 +1,7 @@
 /** 표 안에서는 pipe를 `\|`로 적으므로 label 구분자로 같이 취급한다. */
 const LABEL_SEPARATOR = /\\?\|/;
 
-export type WikiLinkAnchor =
-  | { kind: 'block'; id: string }
-  | { kind: 'heading'; text: string };
+export type WikiLinkAnchor = { kind: 'block'; id: string } | { kind: 'heading'; text: string };
 
 /**
  * [[ 09_Knowledge/20260726145227 # ^c58057 | 라벨 ]]
@@ -29,9 +27,7 @@ function splitLabel(inner: string): [string, string | null] {
 
 function readAnchor(value: string): WikiLinkAnchor | null {
   if (!value) return null;
-  return value.startsWith('^')
-    ? { kind: 'block', id: value.slice(1) }
-    : { kind: 'heading', text: value };
+  return value.startsWith('^') ? { kind: 'block', id: value.slice(1) } : { kind: 'heading', text: value };
 }
 
 export function writeAnchor(anchor: WikiLinkAnchor): string {

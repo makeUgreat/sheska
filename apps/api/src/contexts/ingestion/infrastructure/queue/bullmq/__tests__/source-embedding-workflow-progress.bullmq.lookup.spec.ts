@@ -12,9 +12,7 @@ describe('SourceEmbeddingWorkflowProgressBullMqLookup', () => {
     const finalizeQueue = {
       getJob: vi.fn().mockResolvedValue(parent),
     } as unknown as Queue<FinalizeEmbeddingWorkflowCommand>;
-    const lookup = new SourceEmbeddingWorkflowProgressBullMqLookup(
-      finalizeQueue,
-    );
+    const lookup = new SourceEmbeddingWorkflowProgressBullMqLookup(finalizeQueue);
 
     await expect(lookup.find({ syncJobId: 'sync-job-1' })).resolves.toEqual({
       totalChunks: 4,

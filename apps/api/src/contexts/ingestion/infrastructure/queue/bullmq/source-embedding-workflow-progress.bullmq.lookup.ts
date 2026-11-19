@@ -1,10 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { type Queue } from 'bullmq';
-import {
-  SOURCE_EMBEDDING_FINALIZATION_QUEUE,
-  type EmbeddingWorkflowProgressLookup,
-} from '@contexts/ingestion/application/ports';
+import { SOURCE_EMBEDDING_FINALIZATION_QUEUE, type EmbeddingWorkflowProgressLookup } from '@contexts/ingestion/application/ports';
 import { type FinalizeEmbeddingWorkflowCommand } from '@contexts/ingestion/application/use-cases/finalize-embedding-workflow.use-case';
 
 @Injectable()
@@ -19,8 +16,7 @@ export class SourceEmbeddingWorkflowProgressBullMqLookup implements EmbeddingWor
     if (!parent) return null;
 
     const totalChunks = parent.data.totalChunks;
-    const { processed: processedChunkCount = 0 } =
-      await parent.getDependenciesCount({ processed: true });
+    const { processed: processedChunkCount = 0 } = await parent.getDependenciesCount({ processed: true });
 
     return {
       totalChunks,

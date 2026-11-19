@@ -1,24 +1,15 @@
-import {
-  Inject,
-  Injectable,
-  type OnApplicationBootstrap,
-  type OnApplicationShutdown,
-} from '@nestjs/common';
+import { Inject, Injectable, type OnApplicationBootstrap, type OnApplicationShutdown } from '@nestjs/common';
 import { LOGGER, type LoggerPort } from '@kernels/application';
 import { OutboxRelay } from '@kernels/infrastructure';
 
-export const OUTBOX_RELAY_RUNNER_OPTIONS = Symbol(
-  'OUTBOX_RELAY_RUNNER_OPTIONS',
-);
+export const OUTBOX_RELAY_RUNNER_OPTIONS = Symbol('OUTBOX_RELAY_RUNNER_OPTIONS');
 
 export interface OutboxRelayRunnerOptions {
   readonly pollIntervalMs: number;
 }
 
 @Injectable()
-export class OutboxRelayRunner
-  implements OnApplicationBootstrap, OnApplicationShutdown
-{
+export class OutboxRelayRunner implements OnApplicationBootstrap, OnApplicationShutdown {
   private timer: ReturnType<typeof setInterval> | undefined;
 
   constructor(
@@ -30,10 +21,7 @@ export class OutboxRelayRunner
   ) {}
 
   onApplicationBootstrap(): void {
-    this.timer = setInterval(
-      () => this.runRelay(),
-      this.options.pollIntervalMs,
-    );
+    this.timer = setInterval(() => this.runRelay(), this.options.pollIntervalMs);
     this.timer.unref();
   }
 

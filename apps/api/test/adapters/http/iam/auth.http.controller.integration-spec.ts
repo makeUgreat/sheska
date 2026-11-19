@@ -64,10 +64,7 @@ describe('AuthHttpController', () => {
         expiresAt: EXPIRES_AT,
       });
 
-      const response = await request(httpServer)
-        .post('/auth/session')
-        .send({ password: 'secret' })
-        .expect(204);
+      const response = await request(httpServer).post('/auth/session').send({ password: 'secret' }).expect(204);
 
       const cookie = response.headers['set-cookie']?.[0] ?? '';
       expect(cookie).toContain(`${SESSION_COOKIE}=session-token`);
@@ -85,10 +82,7 @@ describe('AuthHttpController', () => {
         expiresAt: EXPIRES_AT,
       });
 
-      await request(httpServer)
-        .post('/auth/session')
-        .send({ password: 'secret' })
-        .expect('Cache-Control', 'no-store');
+      await request(httpServer).post('/auth/session').send({ password: 'secret' }).expect('Cache-Control', 'no-store');
     });
 
     it('Cloudflare가 알려 준 접속 IP로 실패를 센다', async () => {
@@ -97,11 +91,7 @@ describe('AuthHttpController', () => {
         expiresAt: EXPIRES_AT,
       });
 
-      await request(httpServer)
-        .post('/auth/session')
-        .set('CF-Connecting-IP', '203.0.113.7')
-        .send({ password: 'secret' })
-        .expect(204);
+      await request(httpServer).post('/auth/session').set('CF-Connecting-IP', '203.0.113.7').send({ password: 'secret' }).expect(204);
 
       expect(logIn).toHaveBeenCalledWith({
         password: 'secret',
@@ -110,14 +100,9 @@ describe('AuthHttpController', () => {
     });
 
     it('비밀번호가 없으면 400이다', async () => {
-      const response = await request(httpServer)
-        .post('/auth/session')
-        .send({})
-        .expect(400);
+      const response = await request(httpServer).post('/auth/session').send({}).expect(400);
 
-      expect(errorResponseSchema.parse(response.body).code).toBe(
-        'request.validation_failed',
-      );
+      expect(errorResponseSchema.parse(response.body).code).toBe('request.validation_failed');
       expect(logIn).not.toHaveBeenCalled();
     });
 
@@ -130,14 +115,9 @@ describe('AuthHttpController', () => {
         }),
       );
 
-      const response = await request(httpServer)
-        .post('/auth/session')
-        .send({ password: 'wrong' })
-        .expect(401);
+      const response = await request(httpServer).post('/auth/session').send({ password: 'wrong' }).expect(401);
 
-      expect(errorResponseSchema.parse(response.body).code).toBe(
-        'auth.invalid_credentials',
-      );
+      expect(errorResponseSchema.parse(response.body).code).toBe('auth.invalid_credentials');
       expect(response.headers['set-cookie']).toBeUndefined();
     });
 
@@ -150,10 +130,7 @@ describe('AuthHttpController', () => {
         }),
       );
 
-      const response = await request(httpServer)
-        .post('/auth/session')
-        .send({ password: 'secret' })
-        .expect(429);
+      const response = await request(httpServer).post('/auth/session').send({ password: 'secret' }).expect(429);
 
       expect(errorResponseSchema.parse(response.body)).toMatchObject({
         code: 'auth.too_many_attempts',
@@ -166,10 +143,7 @@ describe('AuthHttpController', () => {
     it('쿠키의 세션을 지우고 쿠키를 만료시킨다', async () => {
       logOut.mockResolvedValue();
 
-      const response = await request(httpServer)
-        .delete('/auth/session')
-        .set('Cookie', `${SESSION_COOKIE}=session-token`)
-        .expect(204);
+      const response = await request(httpServer).delete('/auth/session').set('Cookie', `${SESSION_COOKIE}=session-token`).expect(204);
 
       expect(logOut).toHaveBeenCalledWith({ sessionToken: 'session-token' });
       const cookie = response.headers['set-cookie']?.[0] ?? '';

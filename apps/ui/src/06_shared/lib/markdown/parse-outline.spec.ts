@@ -7,9 +7,7 @@ describe('parseOutline', () => {
   });
 
   it('heading의 depth, text, id를 함께 담는다', () => {
-    expect(parseOutline('intro\n\n## Layers\n')).toEqual([
-      { depth: 2, text: 'Layers', id: 'layers' },
-    ]);
+    expect(parseOutline('intro\n\n## Layers\n')).toEqual([{ depth: 2, text: 'Layers', id: 'layers' }]);
   });
 
   it('h4 이하 단계도 문서 구조이므로 outline에 넣는다', () => {
@@ -40,17 +38,13 @@ describe('parseOutline', () => {
   });
 
   it('여는 fence보다 짧은 fence는 code block을 닫지 않는다', () => {
-    const body = ['````', '```', '# not a heading', '````', '## Real'].join(
-      '\n',
-    );
+    const body = ['````', '```', '# not a heading', '````', '## Real'].join('\n');
 
     expect(parseOutline(body).map((heading) => heading.text)).toEqual(['Real']);
   });
 
   it('밑줄 표기 heading도 outline에 넣는다', () => {
-    expect(parseOutline('Title\n=====')).toEqual([
-      { depth: 1, text: 'Title', id: 'title' },
-    ]);
+    expect(parseOutline('Title\n=====')).toEqual([{ depth: 1, text: 'Title', id: 'title' }]);
   });
 
   it('heading text에서 inline 문법 기호와 닫는 #를 뺀다', () => {
@@ -68,18 +62,12 @@ describe('parseOutline', () => {
   it('slug가 겹치지 않으면 slug를 그대로 id로 쓴다', () => {
     const body = ['## Setup', '## Usage'].join('\n');
 
-    expect(parseOutline(body).map((heading) => heading.id)).toEqual([
-      'setup',
-      'usage',
-    ]);
+    expect(parseOutline(body).map((heading) => heading.id)).toEqual(['setup', 'usage']);
   });
 
   it('slug가 겹치면 source line을 붙여 id를 구분한다', () => {
     const body = ['## Setup', 'body', '## Setup'].join('\n');
 
-    expect(parseOutline(body).map((heading) => heading.id)).toEqual([
-      'setup-1',
-      'setup-3',
-    ]);
+    expect(parseOutline(body).map((heading) => heading.id)).toEqual(['setup-1', 'setup-3']);
   });
 });

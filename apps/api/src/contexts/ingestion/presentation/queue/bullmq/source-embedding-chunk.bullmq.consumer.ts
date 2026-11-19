@@ -5,10 +5,7 @@ import { callContext } from '@core/call-context';
 import { LOGGER, type LoggerPort } from '@kernels/application';
 import { SOURCE_EMBEDDING_CHUNK_QUEUE } from '@contexts/ingestion/application/ports';
 import { EmbedSourceChunkUseCase } from '@contexts/ingestion/application/use-cases/embed-source-chunk.use-case';
-import {
-  embedSourceChunkJobInputSchema,
-  type EmbedSourceChunkJobInput,
-} from './dto/embed-source-chunk.job-input.dto';
+import { embedSourceChunkJobInputSchema, type EmbedSourceChunkJobInput } from './dto/embed-source-chunk.job-input.dto';
 import { type EmbedSourceChunkJobOutput } from './dto/embed-source-chunk.job-output.dto';
 
 @Processor(SOURCE_EMBEDDING_CHUNK_QUEUE)
@@ -22,9 +19,7 @@ export class SourceEmbeddingChunkBullMqConsumer extends WorkerHost {
     super();
   }
 
-  async process(
-    job: Job<EmbedSourceChunkJobInput>,
-  ): Promise<EmbedSourceChunkJobOutput> {
+  async process(job: Job<EmbedSourceChunkJobInput>): Promise<EmbedSourceChunkJobOutput> {
     const input = embedSourceChunkJobInputSchema.parse(job.data);
     const result = await this.embedSourceChunk.execute(
       {
@@ -47,10 +42,7 @@ export class SourceEmbeddingChunkBullMqConsumer extends WorkerHost {
   }
 
   @OnWorkerEvent('failed')
-  async onFailed(
-    job: Job<EmbedSourceChunkJobInput> | undefined,
-    error: Error,
-  ): Promise<void> {
+  async onFailed(job: Job<EmbedSourceChunkJobInput> | undefined, error: Error): Promise<void> {
     if (!job) return;
 
     const maxAttempts = job.opts.attempts ?? 1;
@@ -70,11 +62,7 @@ export class SourceEmbeddingChunkBullMqConsumer extends WorkerHost {
 
     const input = embedSourceChunkJobInputSchema.safeParse(job.data);
     if (!input.success) {
-      this.logger.error(
-        `${job.queueName} job failure compensation skipped`,
-        input.error,
-        context,
-      );
+      this.logger.error(`${job.queueName} job failure compensation skipped`, input.error, context);
       return;
     }
 
@@ -86,11 +74,7 @@ export class SourceEmbeddingChunkBullMqConsumer extends WorkerHost {
         chunkContent: input.data.chunkContent,
       });
     } catch (compensationError: unknown) {
-      this.logger.error(
-        `${job.queueName} job failure compensation failed`,
-        compensationError,
-        context,
-      );
+      this.logger.error(`${job.queueName} job failure compensation failed`, compensationError, context);
     }
   }
 

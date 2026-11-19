@@ -2,9 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { SerializedError } from 'pino-std-serializers';
 import { serializeAccessLogError } from '../access-log-error.serializer';
 
-function buildSerializedError(
-  overrides: Partial<SerializedError>,
-): SerializedError {
+function buildSerializedError(overrides: Partial<SerializedError>): SerializedError {
   return {
     type: 'Error',
     message: 'something failed',
@@ -24,14 +22,12 @@ describe('serializeAccessLogError', () => {
   it('type과 message는 유지한다', () => {
     const err = buildSerializedError({
       type: 'UnexpectedError',
-      message:
-        'Post paginate operation failed: relation "posts" does not exist',
+      message: 'Post paginate operation failed: relation "posts" does not exist',
     });
 
     expect(serializeAccessLogError(err)).toMatchObject({
       type: 'UnexpectedError',
-      message:
-        'Post paginate operation failed: relation "posts" does not exist',
+      message: 'Post paginate operation failed: relation "posts" does not exist',
     });
   });
 

@@ -1,22 +1,11 @@
-import {
-  mkdir,
-  mkdtemp,
-  realpath,
-  rm,
-  symlink,
-  writeFile,
-} from 'node:fs/promises';
+import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { cruise } from 'dependency-cruiser';
 import extractDepcruiseConfig from 'dependency-cruiser/config-utl/extract-depcruise-config';
 import extractDepcruiseOptions from 'dependency-cruiser/config-utl/extract-depcruise-options';
 import { describe, expect, it } from 'vitest';
-import type {
-  ICruiseOptions,
-  ICruiseResult,
-  IReporterOutput,
-} from 'dependency-cruiser';
+import type { ICruiseOptions, ICruiseResult, IReporterOutput } from 'dependency-cruiser';
 
 // fixture 는 alias 가 아니라 상대경로로 import 한다. fixture 해석기는 baseDir 밖의
 // tsconfig paths 를 적용하지 못해 alias import 가 의존성 그래프에서 통째로 누락되고,
@@ -278,9 +267,7 @@ const invalidFiles: Record<string, string> = {
 };
 
 async function createFixture(files: Record<string, string>): Promise<string> {
-  const fixtureRoot = await realpath(
-    await mkdtemp(path.join(tmpdir(), 'api-dependency-cruiser-')),
-  );
+  const fixtureRoot = await realpath(await mkdtemp(path.join(tmpdir(), 'api-dependency-cruiser-')));
 
   await writeFixtureFile(
     fixtureRoot,
@@ -318,21 +305,13 @@ async function createFixture(files: Record<string, string>): Promise<string> {
     ),
   );
 
-  await Promise.all(
-    Object.entries(files).map(([filePath, content]) =>
-      writeFixtureFile(fixtureRoot, filePath, content),
-    ),
-  );
+  await Promise.all(Object.entries(files).map(([filePath, content]) => writeFixtureFile(fixtureRoot, filePath, content)));
   await writeFakeNestPackages(fixtureRoot);
 
   return fixtureRoot;
 }
 
-async function writeFixtureFile(
-  fixtureRoot: string,
-  filePath: string,
-  content: string,
-): Promise<void> {
+async function writeFixtureFile(fixtureRoot: string, filePath: string, content: string): Promise<void> {
   const absolutePath = path.join(fixtureRoot, filePath);
 
   await mkdir(path.dirname(absolutePath), { recursive: true });
@@ -357,21 +336,12 @@ async function writeFakeNestPackages(fixtureRoot: string): Promise<void> {
 function pnpmStoreDirectory(packageName: string): string {
   const packageDirectory = `@nestjs+${packageName}@0.0.0`;
 
-  return packageName === 'common'
-    ? packageDirectory
-    : `${packageDirectory}_@nestjs+common@0.0.0`;
+  return packageName === 'common' ? packageDirectory : `${packageDirectory}_@nestjs+common@0.0.0`;
 }
 
-async function writeFakeNestPackage(
-  fixtureRoot: string,
-  packageName: string,
-  exports: Record<string, string>,
-): Promise<void> {
+async function writeFakeNestPackage(fixtureRoot: string, packageName: string, exports: Record<string, string>): Promise<void> {
   const packageRoot = `node_modules/.pnpm/${pnpmStoreDirectory(packageName)}/node_modules/@nestjs/${packageName}`;
-  const packageLink = path.join(
-    fixtureRoot,
-    `node_modules/@nestjs/${packageName}`,
-  );
+  const packageLink = path.join(fixtureRoot, `node_modules/@nestjs/${packageName}`);
   const exportSource = Object.entries(exports)
     .map(([name, value]) => `exports.${name} = ${value};`)
     .join('\n');
@@ -394,9 +364,7 @@ async function writeFakeNestPackage(
   await symlink(path.join(fixtureRoot, packageRoot), packageLink, 'dir');
 }
 
-async function cruiseFixture(
-  files: Record<string, string>,
-): Promise<IReporterOutput> {
+async function cruiseFixture(files: Record<string, string>): Promise<IReporterOutput> {
   const fixtureRoot = await createFixture(files);
 
   try {
@@ -408,9 +376,7 @@ async function cruiseFixture(
   }
 }
 
-async function createFixtureCruiseOptions(
-  fixtureRoot: string,
-): Promise<ICruiseOptions> {
+async function createFixtureCruiseOptions(fixtureRoot: string): Promise<ICruiseOptions> {
   const options = await extractDepcruiseOptions(configPath);
 
   return {
@@ -425,15 +391,10 @@ async function createFixtureCruiseOptions(
 function getViolationRuleNames(result: IReporterOutput): string[] {
   const cruiseResult = result.output as ICruiseResult;
 
-  return cruiseResult.summary.violations.map(
-    (violation) => violation.rule.name,
-  );
+  return cruiseResult.summary.violations.map((violation) => violation.rule.name);
 }
 
-const frameworkRuleNames = [
-  'api-inner-layers-not-to-frameworks',
-  'api-application-not-to-non-di-nest-frameworks',
-];
+const frameworkRuleNames = ['api-inner-layers-not-to-frameworks', 'api-application-not-to-non-di-nest-frameworks'];
 
 function getFrameworkViolations(result: IReporterOutput): string[] {
   const cruiseResult = result.output as ICruiseResult;
@@ -465,9 +426,7 @@ describe('dependency-cruiser/config.cjs', () => {
     const violationRuleNames = getViolationRuleNames(result);
 
     expect(violationRuleNames).toEqual(expect.arrayContaining(apiRuleNames));
-    expect(violationRuleNames.length).toBeGreaterThanOrEqual(
-      apiRuleNames.length,
-    );
+    expect(violationRuleNames.length).toBeGreaterThanOrEqual(apiRuleNames.length);
   });
 
   it('kernel은 domain에서 framework를, application에서 DI metadata 밖의 framework를 막는다', async () => {

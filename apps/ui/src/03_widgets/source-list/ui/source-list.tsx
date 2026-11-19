@@ -25,8 +25,7 @@ function getSourceListState({
 }
 
 export function SourceList() {
-  const { page, syncJobStatus, setPage, setSyncJobStatus } =
-    useSourceListFilters();
+  const { page, syncJobStatus, setPage, setSyncJobStatus } = useSourceListFilters();
   const { data, isLoading, isPlaceholderData, error } = useListSources({
     page,
     syncJobStatus,
@@ -40,11 +39,5 @@ export function SourceList() {
     isPlaceholder: isPlaceholderData,
   });
 
-  return (
-    <SourceListSection
-      filter={{ value: syncJobStatus, onChange: setSyncJobStatus }}
-      onPageChange={setPage}
-      state={state}
-    />
-  );
+  return <SourceListSection filter={{ value: syncJobStatus, onChange: setSyncJobStatus }} onPageChange={setPage} state={state} />;
 }

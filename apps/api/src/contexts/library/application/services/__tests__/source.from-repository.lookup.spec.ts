@@ -2,9 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { Source, type SourceRepository } from '@contexts/library/domain';
 import { SourceFromRepositoryLookup } from '../source.from-repository.lookup';
 
-function buildMockRepository(
-  overrides: Partial<SourceRepository> = {},
-): SourceRepository {
+function buildMockRepository(overrides: Partial<SourceRepository> = {}): SourceRepository {
   return {
     find: vi.fn(),
     get: vi.fn(),

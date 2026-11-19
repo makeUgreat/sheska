@@ -1,24 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  PutObjectCommand,
-  S3Client,
-  S3ServiceException,
-} from '@aws-sdk/client-s3';
+import { PutObjectCommand, S3Client, S3ServiceException } from '@aws-sdk/client-s3';
 import { BadResponseError, TimeoutError, UnavailableError } from '@core/errors';
 import { type CallContext } from '@core/call-context';
-import {
-  classifyInfrastructureRetry,
-  resiliencePipeline,
-  type ResilienceAttempt,
-} from '@kernels/infrastructure';
-import type {
-  AttachmentContentStore,
-  AttachmentImageMediaType,
-} from '@contexts/library/application/ports';
-import {
-  attachmentContentS3Config,
-  type AttachmentContentS3Config,
-} from './attachment-content.s3.config';
+import { classifyInfrastructureRetry, resiliencePipeline, type ResilienceAttempt } from '@kernels/infrastructure';
+import type { AttachmentContentStore, AttachmentImageMediaType } from '@contexts/library/application/ports';
+import { attachmentContentS3Config, type AttachmentContentS3Config } from './attachment-content.s3.config';
 
 const OBJECT_KEY_PREFIX = 'vault/';
 const CACHE_CONTROL = 'no-cache';
@@ -44,12 +30,7 @@ export class AttachmentContentS3Store implements AttachmentContentStore {
     });
   }
 
-  async put(
-    path: string,
-    data: Uint8Array,
-    mediaType: AttachmentImageMediaType,
-    context: CallContext,
-  ): Promise<void> {
+  async put(path: string, data: Uint8Array, mediaType: AttachmentImageMediaType, context: CallContext): Promise<void> {
     await resiliencePipeline()
       .retry({
         maxRetries: context.maxRetries,
@@ -61,12 +42,7 @@ export class AttachmentContentS3Store implements AttachmentContentStore {
       .execute((attempt) => this.putOnce(path, data, mediaType, attempt));
   }
 
-  private async putOnce(
-    path: string,
-    data: Uint8Array,
-    mediaType: AttachmentImageMediaType,
-    attempt: ResilienceAttempt,
-  ): Promise<void> {
+  private async putOnce(path: string, data: Uint8Array, mediaType: AttachmentImageMediaType, attempt: ResilienceAttempt): Promise<void> {
     try {
       await this.client.send(
         new PutObjectCommand({
@@ -84,10 +60,7 @@ export class AttachmentContentS3Store implements AttachmentContentStore {
   }
 }
 
-function toStorageError(
-  error: unknown,
-  attempt: ResilienceAttempt,
-): BadResponseError | TimeoutError | UnavailableError {
+function toStorageError(error: unknown, attempt: ResilienceAttempt): BadResponseError | TimeoutError | UnavailableError {
   if (error instanceof S3ServiceException) {
     const statusCode = error.$metadata.httpStatusCode ?? 500;
     return new BadResponseError({

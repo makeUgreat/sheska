@@ -5,12 +5,7 @@ import { Test } from '@nestjs/testing';
 import { ApiTokenApi, errorResponseSchema } from '@sheska/contract';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  ConstraintViolationError,
-  ForbiddenError,
-  NotFoundError,
-  UnauthenticatedError,
-} from '@core/errors';
+import { ConstraintViolationError, ForbiddenError, NotFoundError, UnauthenticatedError } from '@core/errors';
 import { LOGGER } from '@kernels/application';
 import { AuthenticateRequestUseCase } from '@contexts/iam/application/use-cases/authenticate-request.use-case';
 import { AuthorizeRequestUseCase } from '@contexts/iam/application/use-cases/authorize-request.use-case';
@@ -31,12 +26,7 @@ const CREATED_AT = new Date('2026-11-19T00:00:00.000Z');
 const LAST_USED_AT = new Date('2026-11-19T01:00:00.000Z');
 
 const OWNER = {
-  permissions: [
-    'sources:sync',
-    'sources:read',
-    'posts:publish',
-    'api_tokens:manage',
-  ],
+  permissions: ['sources:sync', 'sources:read', 'posts:publish', 'api_tokens:manage'],
 } as const;
 
 describe('ApiTokenHttpController', () => {
@@ -93,35 +83,27 @@ describe('ApiTokenHttpController', () => {
       ['post', '/api-tokens'],
       ['get', '/api-tokens'],
       ['delete', '/api-tokens/token-1'],
-    ] as const)(
-      '%s %s는 api_tokens:manage 권한을 요구한다',
-      async (method, path) => {
-        await request(httpServer)
-          [method](path)
-          .set('Cookie', SESSION)
-          .send({ name: 'macbook', permissions: ['sources:sync'] });
+    ] as const)('%s %s는 api_tokens:manage 권한을 요구한다', async (method, path) => {
+      await request(httpServer)
+        [method](path)
+        .set('Cookie', SESSION)
+        .send({ name: 'macbook', permissions: ['sources:sync'] });
 
-        expect(authenticate).toHaveBeenCalledWith({
-          credential: { type: 'session', token: 'session-token' },
-        });
-        expect(authorize).toHaveBeenCalledWith({
-          identity: OWNER,
-          permission: 'api_tokens:manage',
-        });
-      },
-    );
+      expect(authenticate).toHaveBeenCalledWith({
+        credential: { type: 'session', token: 'session-token' },
+      });
+      expect(authorize).toHaveBeenCalledWith({
+        identity: OWNER,
+        permission: 'api_tokens:manage',
+      });
+    });
 
     it('인증하지 못하면 401 auth.unauthenticated이고 처리하지 않는다', async () => {
       authenticate.mockRejectedValue(UNAUTHENTICATED);
 
-      const response = await request(httpServer)
-        .get('/api-tokens')
-        .set('Cookie', SESSION)
-        .expect(401);
+      const response = await request(httpServer).get('/api-tokens').set('Cookie', SESSION).expect(401);
 
-      expect(errorResponseSchema.parse(response.body).code).toBe(
-        'auth.unauthenticated',
-      );
+      expect(errorResponseSchema.parse(response.body).code).toBe('auth.unauthenticated');
       expect(list).not.toHaveBeenCalled();
     });
 
@@ -134,14 +116,9 @@ describe('ApiTokenHttpController', () => {
         });
       });
 
-      const response = await request(httpServer)
-        .get('/api-tokens')
-        .set('Authorization', 'Bearer shk_secret')
-        .expect(403);
+      const response = await request(httpServer).get('/api-tokens').set('Authorization', 'Bearer shk_secret').expect(403);
 
-      expect(errorResponseSchema.parse(response.body).code).toBe(
-        'auth.forbidden',
-      );
+      expect(errorResponseSchema.parse(response.body).code).toBe('auth.forbidden');
       expect(list).not.toHaveBeenCalled();
     });
   });
@@ -180,21 +157,16 @@ describe('ApiTokenHttpController', () => {
       });
     });
 
-    it.each(['', 'MacBook', 'my token', 'a'.repeat(33)])(
-      '이름이 %j이면 400 request.validation_failed이다',
-      async (name) => {
-        const response = await request(httpServer)
-          .post('/api-tokens')
-          .set('Cookie', SESSION)
-          .send({ name, permissions: ['sources:sync'] })
-          .expect(400);
+    it.each(['', 'MacBook', 'my token', 'a'.repeat(33)])('이름이 %j이면 400 request.validation_failed이다', async (name) => {
+      const response = await request(httpServer)
+        .post('/api-tokens')
+        .set('Cookie', SESSION)
+        .send({ name, permissions: ['sources:sync'] })
+        .expect(400);
 
-        expect(errorResponseSchema.parse(response.body).code).toBe(
-          'request.validation_failed',
-        );
-        expect(issue).not.toHaveBeenCalled();
-      },
-    );
+      expect(errorResponseSchema.parse(response.body).code).toBe('request.validation_failed');
+      expect(issue).not.toHaveBeenCalled();
+    });
 
     it.each([
       ['권한이 없으면', []],
@@ -206,9 +178,7 @@ describe('ApiTokenHttpController', () => {
         .send({ name: 'macbook', permissions })
         .expect(400);
 
-      expect(errorResponseSchema.parse(response.body).code).toBe(
-        'request.validation_failed',
-      );
+      expect(errorResponseSchema.parse(response.body).code).toBe('request.validation_failed');
       expect(issue).not.toHaveBeenCalled();
     });
 
@@ -227,9 +197,7 @@ describe('ApiTokenHttpController', () => {
         .send({ name: 'macbook', permissions: ['sources:sync'] })
         .expect(409);
 
-      expect(errorResponseSchema.parse(response.body).code).toBe(
-        'api_token.name_taken',
-      );
+      expect(errorResponseSchema.parse(response.body).code).toBe('api_token.name_taken');
     });
   });
 
@@ -246,11 +214,7 @@ describe('ApiTokenHttpController', () => {
         },
       ]);
 
-      const response = await request(httpServer)
-        .get('/api-tokens')
-        .set('Cookie', SESSION)
-        .expect(200)
-        .expect('Cache-Control', 'no-store');
+      const response = await request(httpServer).get('/api-tokens').set('Cookie', SESSION).expect(200).expect('Cache-Control', 'no-store');
 
       expect(ApiTokenApi.list.response.parse(response.body)).toEqual({
         apiTokens: [
@@ -271,10 +235,7 @@ describe('ApiTokenHttpController', () => {
     it('토큰을 폐기하고 204를 준다', async () => {
       revoke.mockResolvedValue(undefined);
 
-      await request(httpServer)
-        .delete('/api-tokens/token-1')
-        .set('Cookie', SESSION)
-        .expect(204);
+      await request(httpServer).delete('/api-tokens/token-1').set('Cookie', SESSION).expect(204);
 
       expect(revoke).toHaveBeenCalledWith({ apiTokenId: 'token-1' });
     });
@@ -288,14 +249,9 @@ describe('ApiTokenHttpController', () => {
         }),
       );
 
-      const response = await request(httpServer)
-        .delete('/api-tokens/missing')
-        .set('Cookie', SESSION)
-        .expect(404);
+      const response = await request(httpServer).delete('/api-tokens/missing').set('Cookie', SESSION).expect(404);
 
-      expect(errorResponseSchema.parse(response.body).code).toBe(
-        'api_token.not_found',
-      );
+      expect(errorResponseSchema.parse(response.body).code).toBe('api_token.not_found');
     });
   });
 });

@@ -10,10 +10,7 @@ import { redisConfig } from './redis.config';
   providers: [
     {
       provide: REDIS_TOKENS.client,
-      useFactory: (
-        config: ConfigType<typeof redisConfig>,
-        logger: LoggerPort,
-      ): Redis => {
+      useFactory: (config: ConfigType<typeof redisConfig>, logger: LoggerPort): Redis => {
         const client = new Redis(config.redisUrl, {
           maxRetriesPerRequest: 0,
         });

@@ -9,19 +9,14 @@ function isRetryableStatusCode(statusCode: number): boolean {
   return statusCode === 429 || (statusCode >= 500 && statusCode <= 599);
 }
 
-export function classifyInfrastructureRetry(
-  error: unknown,
-): RetryClassification {
+export function classifyInfrastructureRetry(error: unknown): RetryClassification {
   if (error instanceof BadResponseError) {
     const { statusCode, retryAfterMs } = error.details;
-    return isRetryableStatusCode(statusCode)
-      ? { retryable: true, retryAfterMs }
-      : { retryable: false };
+    return isRetryableStatusCode(statusCode) ? { retryable: true, retryAfterMs } : { retryable: false };
   }
 
   // TimeoutError/UnavailableError are the network-level retryables per docs/ko/operability/fault-tolerance.md.
   return {
-    retryable:
-      error instanceof TimeoutError || error instanceof UnavailableError,
+    retryable: error instanceof TimeoutError || error instanceof UnavailableError,
   };
 }

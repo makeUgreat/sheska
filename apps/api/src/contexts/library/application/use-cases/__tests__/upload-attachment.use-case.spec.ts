@@ -2,10 +2,7 @@ import { ValidationFailedError } from '@core/errors';
 import { callContext } from '@core/call-context';
 import { type AttachmentContentStore } from '@contexts/library/application/ports';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
-import {
-  type UploadAttachmentImageOptimizer,
-  UploadAttachmentUseCase,
-} from '../upload-attachment.use-case';
+import { type UploadAttachmentImageOptimizer, UploadAttachmentUseCase } from '../upload-attachment.use-case';
 
 type OptimizerMock = {
   optimize: MockedFunction<UploadAttachmentImageOptimizer['optimize']>;
@@ -21,9 +18,7 @@ const CONTEXT = callContext({ deadlineMs: 1_000, maxRetries: 0 });
 
 function setup() {
   const optimizer: OptimizerMock = {
-    optimize: vi
-      .fn<UploadAttachmentImageOptimizer['optimize']>()
-      .mockResolvedValue({ data: OPTIMIZED, mediaType: 'image/webp' }),
+    optimize: vi.fn<UploadAttachmentImageOptimizer['optimize']>().mockResolvedValue({ data: OPTIMIZED, mediaType: 'image/webp' }),
   };
   const store: StoreMock = {
     put: vi.fn<AttachmentContentStore['put']>().mockResolvedValue(undefined),
@@ -43,21 +38,13 @@ describe('UploadAttachmentUseCase', () => {
     await useCase.execute({ path: 'att/a.jpg', data: ORIGINAL }, CONTEXT);
 
     expect(optimizer.optimize).toHaveBeenCalledWith(ORIGINAL);
-    expect(store.put).toHaveBeenCalledWith(
-      'att/a.jpg',
-      OPTIMIZED,
-      'image/webp',
-      CONTEXT,
-    );
+    expect(store.put).toHaveBeenCalledWith('att/a.jpg', OPTIMIZED, 'image/webp', CONTEXT);
   });
 
   it('저장한 형식과 원본, 결과의 크기를 돌려준다', async () => {
     const { useCase } = setup();
 
-    const result = await useCase.execute(
-      { path: 'att/a.jpg', data: ORIGINAL },
-      CONTEXT,
-    );
+    const result = await useCase.execute({ path: 'att/a.jpg', data: ORIGINAL }, CONTEXT);
 
     expect(result).toEqual({
       path: 'att/a.jpg',
@@ -77,9 +64,9 @@ describe('UploadAttachmentUseCase', () => {
       }),
     );
 
-    await expect(
-      useCase.execute({ path: 'att/a.pdf', data: ORIGINAL }, CONTEXT),
-    ).rejects.toMatchObject({ code: 'attachment.unsupported_media_type' });
+    await expect(useCase.execute({ path: 'att/a.pdf', data: ORIGINAL }, CONTEXT)).rejects.toMatchObject({
+      code: 'attachment.unsupported_media_type',
+    });
     expect(store.put).not.toHaveBeenCalled();
   });
 });

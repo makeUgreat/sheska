@@ -1,9 +1,6 @@
 import { usePost, type GetPostResponse } from '@/entities/post';
 import { useArticleOutline, type Heading } from '@/shared/lib';
-import {
-  PostArticleSection,
-  type PostArticleState,
-} from './post-article-section';
+import { PostArticleSection, type PostArticleState } from './post-article-section';
 
 function getPostArticleState({
   isLoading,

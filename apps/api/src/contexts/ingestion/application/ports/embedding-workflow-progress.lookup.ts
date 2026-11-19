@@ -4,7 +4,5 @@ export interface EmbeddingWorkflowProgress {
 }
 
 export interface EmbeddingWorkflowProgressLookup {
-  find(criteria: {
-    syncJobId: string;
-  }): Promise<EmbeddingWorkflowProgress | null>;
+  find(criteria: { syncJobId: string }): Promise<EmbeddingWorkflowProgress | null>;
 }
