@@ -27,6 +27,11 @@ export const ERROR_KIND_POLICY: Record<ErrorKind, HttpFailurePolicy> = {
     exposure: 'code_only',
     logLevel: null,
   },
+  [ERROR_KIND.FORBIDDEN]: {
+    status: HttpStatus.FORBIDDEN,
+    exposure: 'code_only',
+    logLevel: null,
+  },
   [ERROR_KIND.RATE_LIMITED]: {
     status: HttpStatus.TOO_MANY_REQUESTS,
     exposure: 'with_details',

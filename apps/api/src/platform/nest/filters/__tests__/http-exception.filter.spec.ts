@@ -10,6 +10,7 @@ import {
   RateLimitedError,
   StateConflictError,
   TimeoutError,
+  ForbiddenError,
   UnauthenticatedError,
   UnavailableError,
   UnexpectedError,
@@ -98,6 +99,14 @@ describe('HttpExceptionFilter', () => {
           details: {},
         }),
         expectedStatus: HttpStatus.UNAUTHORIZED,
+      },
+      {
+        error: new ForbiddenError({
+          code: 'auth.forbidden',
+          message: 'Permission required',
+          details: {},
+        }),
+        expectedStatus: HttpStatus.FORBIDDEN,
       },
       {
         error: new RateLimitedError({
