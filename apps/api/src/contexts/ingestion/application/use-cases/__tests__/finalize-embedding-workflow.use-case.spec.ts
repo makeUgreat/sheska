@@ -36,6 +36,7 @@ function buildUseCase() {
     execute: (work) => work({ sourceEmbeddings: { upsert, find: vi.fn() }, outbox: { append } }),
   };
   const dispatch = vi.fn<IntegrationEventDispatcher['dispatch']>().mockResolvedValue(undefined);
+
   return {
     useCase: new FinalizeEmbeddingWorkflowUseCase(unitOfWork, { dispatch }),
     upsert,

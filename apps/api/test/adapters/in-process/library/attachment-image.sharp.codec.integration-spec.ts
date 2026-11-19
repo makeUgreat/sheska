@@ -126,6 +126,7 @@ describe('AttachmentImageSharpCodec (integration)', () => {
         .withIccProfile('p3')
         .withXmp(XMP)
         .toBuffer();
+
       const input = await sharp(jpeg).metadata();
       expect(input.exif).toBeDefined();
       expect(input.icc).toBeDefined();

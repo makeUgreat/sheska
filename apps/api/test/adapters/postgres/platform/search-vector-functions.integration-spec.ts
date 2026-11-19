@@ -126,6 +126,7 @@ describe('Search vector Postgres functions', () => {
 
     it('title_search_vector에 직접 쓰려고 하면 에러가 발생한다', async () => {
       const source = await sources.insert(buildSource({ externalSourceId: 'Notes/svf-title-direct-write.md' }));
+
       await expect(
         db.execute(sql`
           UPDATE sources SET title_search_vector = ''::tsvector WHERE id = ${source.id}

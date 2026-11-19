@@ -85,6 +85,7 @@ function createSaveFailingNTimesDb(
       }),
     });
   });
+
   return {
     db: { transaction } as unknown as ConstructorParameters<typeof SourceEmbeddingPgDrizzleRepository>[0],
     transaction,

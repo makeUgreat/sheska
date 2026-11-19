@@ -25,6 +25,7 @@ function setup(options: { passwordMatches: boolean; attempt?: LoginAttempt }) {
     register: vi.fn().mockResolvedValue(options.attempt ?? { attemptNumber: 1, retryAfterSeconds: 300 }),
     clear: vi.fn(),
   } satisfies LoginAttemptCounter;
+
   const useCase = new LogInUseCase(ownerPassword, sessions, attempts);
   return { useCase, ownerPassword, sessions, attempts };
 }

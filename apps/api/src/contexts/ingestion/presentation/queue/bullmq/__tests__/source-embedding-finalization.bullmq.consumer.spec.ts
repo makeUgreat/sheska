@@ -42,6 +42,7 @@ function buildDependencies() {
     execute,
     handleFailure,
   } as unknown as FinalizeEmbeddingWorkflowUseCase;
+
   return { useCase, execute, handleFailure, logger };
 }
 

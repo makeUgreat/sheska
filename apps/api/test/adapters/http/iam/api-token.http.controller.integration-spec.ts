@@ -43,6 +43,7 @@ describe('ApiTokenHttpController', () => {
       mock.mockReset();
     }
     authenticate.mockResolvedValue(OWNER);
+
     const testingModule = await Test.createTestingModule({
       controllers: [ApiTokenHttpController],
       providers: [
@@ -71,6 +72,7 @@ describe('ApiTokenHttpController', () => {
         },
       ],
     }).compile();
+
     app = testingModule.createNestApplication();
     await app.init();
     httpServer = app.getHttpServer() as Server;

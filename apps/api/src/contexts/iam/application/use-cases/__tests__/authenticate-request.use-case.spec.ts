@@ -33,6 +33,7 @@ function build({ sessionActive = false, token = null }: { sessionActive?: boolea
     update: vi.fn((apiToken: ApiToken) => Promise.resolve(apiToken)),
     delete: vi.fn(),
   } satisfies ApiTokenRepository;
+
   return {
     sessions,
     apiTokens,

@@ -106,8 +106,8 @@ describe('ApiTokenPgDrizzleRepository', () => {
     const { apiToken } = buildApiToken('repo-update-deleted');
     await apiTokens.insert(apiToken);
     await apiTokens.delete(apiToken);
-
     apiToken.tryRecordUse(new Date());
+
     await expect(apiTokens.update(apiToken)).rejects.toMatchObject({
       kind: 'not_found',
       code: 'api_token.not_found',

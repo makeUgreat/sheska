@@ -38,6 +38,7 @@ function buildMockHost(): {
       getResponse: vi.fn().mockReturnValue(response),
     }),
   } as unknown as ArgumentsHost;
+
   return { host, status, json, response };
 }
 

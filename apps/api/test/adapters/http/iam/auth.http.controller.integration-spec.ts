@@ -28,6 +28,7 @@ describe('AuthHttpController', () => {
     logIn.mockReset();
     logOut.mockReset();
     getSession.mockReset();
+
     const testingModule = await Test.createTestingModule({
       controllers: [AuthHttpController],
       providers: [
@@ -50,6 +51,7 @@ describe('AuthHttpController', () => {
         },
       ],
     }).compile();
+
     app = testingModule.createNestApplication();
     await app.init();
     httpServer = app.getHttpServer() as Server;
