@@ -1,1 +1,2 @@
-export { directoryPath, useBrowseCommands, type Directory } from './model/use-browse-commands';
+export { canEnter, displayPath, HOME } from './model/file-system';
+export { useBrowseCommands } from './model/use-browse-commands';
