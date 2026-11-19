@@ -14,6 +14,7 @@ export abstract class ValueObject<T> {
   protected constructor(props: ValueObjectProps<T>) {
     this.checkIfEmpty(props);
     this.validate(props);
+
     this.props = props;
   }
 

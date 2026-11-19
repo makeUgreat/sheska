@@ -57,6 +57,7 @@ describe('AccessHttpGuard', () => {
     authenticate.mockReset();
     authenticate.mockResolvedValue(OWNER);
     authorize.mockReset();
+
     const testingModule = await Test.createTestingModule({
       controllers: [ProbeController, AuthHttpController],
       providers: [
@@ -81,6 +82,7 @@ describe('AccessHttpGuard', () => {
         { provide: APP_FILTER, useClass: HttpExceptionFilter },
       ],
     }).compile();
+
     app = testingModule.createNestApplication();
     await app.init();
     httpServer = app.getHttpServer() as Server;

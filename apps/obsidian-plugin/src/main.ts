@@ -56,6 +56,7 @@ export default class SheskaPlugin extends Plugin {
 
     this.app.workspace.onLayoutReady(() => {
       if (!this.settings.autoSyncEnabled) return;
+
       void this.runSweep();
       void this.runSyncJobReconcile();
     });
@@ -85,6 +86,7 @@ export default class SheskaPlugin extends Plugin {
 
   async saveSettings(): Promise<void> {
     await this.persistData();
+
     this.api = new SheskaApiClient(this.settings.apiBaseUrl, () => readApiToken(this.app));
     if (this.healthCheckScheduler && this.autoSyncService) {
       this.healthCheckScheduler.configure(this.api, this.settings);
@@ -92,6 +94,7 @@ export default class SheskaPlugin extends Plugin {
     } else {
       this.initializeServices();
     }
+
     this.stopAutoSyncSweepInterval();
     this.startAutoSyncSweepInterval();
     this.stopSyncJobReconcileInterval();
@@ -106,6 +109,7 @@ export default class SheskaPlugin extends Plugin {
     this.autoSyncService.resetSyncCache();
     this.lastNotifiedStatus.clear();
     await this.saveSyncCache();
+
     this.fileExplorerSyncDecorator.renderAll();
     const activeFile = this.app.workspace.getActiveFile();
     if (activeFile) this.updateSyncStatusBar(activeFile);
@@ -114,6 +118,7 @@ export default class SheskaPlugin extends Plugin {
   private async persistData(): Promise<void> {
     this.syncCache = this.autoSyncService?.getSyncCache() ?? this.syncCache;
     this.attachmentCache = this.autoSyncService?.getAttachmentCache() ?? this.attachmentCache;
+
     await this.dataStore.save({
       settings: this.settings,
       syncCache: this.syncCache,
@@ -125,6 +130,7 @@ export default class SheskaPlugin extends Plugin {
     if (!this.settings.autoSyncEnabled) return;
     const minutes = this.settings.autoSyncSweepIntervalMinutes;
     if (minutes <= 0) return;
+
     this.autoSyncSweepIntervalId = this.registerInterval(
       window.setInterval(
         () => {
@@ -146,6 +152,7 @@ export default class SheskaPlugin extends Plugin {
     if (!this.settings.autoSyncEnabled) return;
     const minutes = this.settings.syncJobReconcileIntervalMinutes;
     if (minutes <= 0) return;
+
     this.syncJobReconcileIntervalId = this.registerInterval(
       window.setInterval(
         () => {
@@ -212,6 +219,7 @@ export default class SheskaPlugin extends Plugin {
   private getFileExplorerSyncStatus(path: string): FileExplorerSyncStatus | null {
     const file = this.app.vault.getAbstractFileByPath(path);
     if (!(file instanceof TFile)) return null;
+
     if (this.autoSyncService.isSyncing(file)) return 'uploading';
     if (!this.syncCache[path]) return null;
     return this.getSyncStatus(file);
@@ -234,6 +242,7 @@ export default class SheskaPlugin extends Plugin {
     const activeFile = this.app.workspace.getActiveFile();
     this.updateSyncStatusBar(activeFile);
     this.pollActiveFileSyncJob(activeFile);
+
     this.registerEvent(
       this.app.workspace.on('file-open', (file) => {
         this.updateSyncStatusBar(file);
@@ -263,6 +272,7 @@ export default class SheskaPlugin extends Plugin {
       this.syncStatusBarItem.setText('');
       return;
     }
+
     const status = this.getSyncStatus(file);
     const text = SYNC_STATUS_BAR_TEXTS[status];
     this.syncStatusBarItem.setText(text);
@@ -304,6 +314,7 @@ export default class SheskaPlugin extends Plugin {
           new Notice('No active note to upload.');
           return;
         }
+
         await this.uploadFile(file);
       },
     });
@@ -323,6 +334,7 @@ export default class SheskaPlugin extends Plugin {
       this.app.workspace.on('file-menu', (menu, abstractFile) => {
         if (!(abstractFile instanceof TFile)) return;
         if (!this.autoSyncService.isSyncTarget(abstractFile)) return;
+
         menu.addItem((item) => {
           item.setTitle('Upload to Sheska').onClick(async () => {
             await this.uploadFile(abstractFile);

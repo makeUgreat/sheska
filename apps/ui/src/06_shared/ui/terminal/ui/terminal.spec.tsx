@@ -156,10 +156,11 @@ describe('Terminal', () => {
       const password = await screen.findByLabelText('Password:');
       expect(password.getAttribute('type')).toBe('password');
       expect(password.getAttribute('autocomplete')).toBe('current-password');
-      await user.type(password, 'hunter22{Enter}');
 
+      await user.type(password, 'hunter22{Enter}');
       await waitFor(() => expect(onAnswer).toHaveBeenCalledWith('hunter22'));
       expect(log.textContent).not.toContain('hunter22');
+
       const prompt = await screen.findByLabelText('visitor@hash:~$');
       await user.click(prompt);
       await user.keyboard('{ArrowUp}');

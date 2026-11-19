@@ -57,11 +57,14 @@ function rewriteImageLinks(body: string, imageLinks: ImageLink[], mask: (text: s
     ...link,
     token: `\uE000${String.fromCharCode(0xe001 + index)}\uE000`,
   }));
+
   let rewritten = body;
   for (const { original, token } of tokens) {
     rewritten = rewritten.split(original).join(token);
   }
+
   rewritten = mask(rewritten);
+
   for (const { original, target, token } of tokens) {
     rewritten = rewritten.split(token).join(`![${mask(altOf(original))}](${target})`);
   }
@@ -103,10 +106,12 @@ const OBSIDIAN_SIZE = /^\d+(?:x\d+)?$/;
 function altOf(original: string): string {
   const markdown = MARKDOWN_EMBED.exec(original);
   if (markdown) return markdown[1];
+
   const wiki = WIKI_EMBED.exec(original);
   if (!wiki) return '';
   const separator = wiki[1].indexOf('|');
   if (separator === -1) return '';
+
   const display = wiki[1].slice(separator + 1);
   return OBSIDIAN_SIZE.test(display) ? `|${display}` : display;
 }
@@ -129,6 +134,7 @@ function readReplacements(value: unknown): Map<string, string> | null {
 /** 긴 단어를 먼저 맞춰야 `Cert`와 `CertBear`가 같이 있을 때 `CertBear`가 통째로 바뀐다. */
 function createMask(replacements: Map<string, string>): (text: string) => string {
   if (replacements.size === 0) return (text) => text;
+
   const pattern = new RegExp(
     [...replacements.keys()]
       .sort((a, b) => b.length - a.length)

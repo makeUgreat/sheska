@@ -162,8 +162,8 @@ describe('AutoSyncService', () => {
       syncJobId: 'job-1',
     });
     expect(service.isSynced(asObsidianFile(file))).toBe(false);
-    await vi.advanceTimersByTimeAsync(5_000);
 
+    await vi.advanceTimersByTimeAsync(5_000);
     expect(api.getSyncJob).toHaveBeenCalledTimes(2);
     expect(syncCache['note.md']).toMatchObject({ status: 'synced' });
     expect(saveSyncCache).toHaveBeenCalledTimes(3);
@@ -542,7 +542,6 @@ describe('AutoSyncService', () => {
     const polling = service.pollSyncJobForFile(asObsidianFile(file));
     await vi.advanceTimersByTimeAsync(2_000);
     await polling;
-
     expect(api.getSyncJob).toHaveBeenCalledWith('job-1');
     expect(syncCache['note.md']).toMatchObject({ status: 'synced' });
   });
@@ -833,7 +832,6 @@ describe('AutoSyncService', () => {
 
     resolveRead('content');
     await uploadPromise;
-
     expect(service.isSyncing(asObsidianFile(file))).toBe(false);
   });
 

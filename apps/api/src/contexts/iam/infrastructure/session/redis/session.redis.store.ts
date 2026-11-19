@@ -16,11 +16,13 @@ export class SessionRedisStore implements SessionStore {
   async issue(lifetimeSeconds: number): Promise<IssuedSession> {
     const token = randomBytes(TOKEN_BYTES).toString('base64url');
     const expiresAt = new Date(Date.now() + lifetimeSeconds * 1000);
+
     try {
       await this.redis.set(keyOf(token), expiresAt.toISOString(), 'EX', lifetimeSeconds);
     } catch (error: unknown) {
       throw toRedisError(error);
     }
+
     return { token, expiresAt };
   }
 

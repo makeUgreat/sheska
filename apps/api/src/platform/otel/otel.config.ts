@@ -24,5 +24,6 @@ export const otelConfig = registerAs('otel', () => {
   if (!result.success) {
     throw new Error(`Invalid telemetry configuration.\n${z.prettifyError(result.error)}`);
   }
+
   return { otlpEndpoint: result.data.OTEL_EXPORTER_OTLP_ENDPOINT };
 });

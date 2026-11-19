@@ -112,14 +112,17 @@ export class RecursiveCharacterChunker {
   private splitByCharCount(text: string): string[] {
     const chunks: string[] = [];
     let start = 0;
+
     while (start < text.length) {
       const end = Math.min(start + this.chunkSize, text.length);
       chunks.push(text.slice(start, end));
       if (end === text.length) break;
+
       const nextStart = end - this.chunkOverlap;
       if (nextStart <= start) break;
       start = nextStart;
     }
+
     return chunks;
   }
 }

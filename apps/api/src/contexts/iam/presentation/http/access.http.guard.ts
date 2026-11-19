@@ -47,6 +47,7 @@ function readCredentialPreferringBearer(request: Request): Credential | null {
       token: BEARER.exec(authorization)?.groups?.token ?? '',
     };
   }
+
   const sessionToken = readSessionCookie(request);
   return sessionToken === null ? null : { type: 'session', token: sessionToken };
 }

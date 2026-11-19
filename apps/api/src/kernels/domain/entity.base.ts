@@ -24,10 +24,12 @@ export abstract class Entity<EntityProps> {
   protected constructor({ id, createdAt, updatedAt, props }: CreateEntityProps<EntityProps>) {
     this.setId(id);
     this.validateProps(props);
+
     const now = new Date();
     this._createdAt = createdAt || now;
     this._updatedAt = updatedAt || now;
     this.props = props;
+
     this.validate();
   }
 

@@ -12,6 +12,7 @@ export const ownerPasswordSecretConfig = registerAs('ownerPasswordSecret', () =>
   if (!result.success) {
     throw new Error(`Invalid owner password configuration.\n${z.prettifyError(result.error)}`);
   }
+
   return { password: result.data.OWNER_PASSWORD };
 });
 

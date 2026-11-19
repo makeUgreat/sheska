@@ -164,6 +164,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     () => ({
       run: (line) => {
         if (running.current) return;
+
         setValue('');
         void execute(line);
         inputRef.current?.focus();
@@ -179,6 +180,12 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   }, [lines, mode]);
 
   function interrupt() {
+    if (mode.kind === 'idle') {
+      echo(`${value}^C`);
+      setValue('');
+      return;
+    }
+
     if (mode.kind === 'asking') {
       print(
         <p>
@@ -187,13 +194,10 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
         </p>,
       );
       mode.ask.reject(new DOMException('Interrupted', 'AbortError'));
-    } else if (mode.kind === 'running') {
-      print(<p className="text-white">^C</p>);
     } else {
-      echo(`${value}^C`);
-      setValue('');
-      return;
+      print(<p className="text-white">^C</p>);
     }
+
     running.current?.abort();
     running.current = null;
     setValue('');
@@ -211,6 +215,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       );
       return;
     }
+
     const command = latestCommands.current.find((c) => c.name === name);
     const argument = rest.join(' ');
     const candidates = command?.complete?.(argument) ?? [];
@@ -220,6 +225,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
 
   function applyCompletion(matches: string[], toValue: (match: string) => string, typed: string, commandName?: string) {
     if (matches.length === 0) return;
+
     if (matches.length === 1) {
       setValue(toValue(matches[0]));
       return;
@@ -236,6 +242,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   function moveInHistory(step: -1 | 1) {
     const entries = history.current;
     if (entries.length === 0) return;
+
     const from = historyIndex.current ?? entries.length;
     const to = Math.min(Math.max(from + step, 0), entries.length);
     historyIndex.current = to === entries.length ? null : to;
@@ -255,21 +262,27 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       setLines([]);
       return;
     }
+
     if (mode.kind !== 'idle') return;
     // IME 조합 중에 값을 바꾸면 조합이 끝날 때 조합하던 글자가 끝에 다시 붙는다.
     if (event.nativeEvent.isComposing) {
       if (event.key === 'Tab') event.preventDefault();
       return;
     }
-    if (event.key === 'Tab') {
-      event.preventDefault();
-      complete();
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      moveInHistory(-1);
-    } else if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      moveInHistory(1);
+
+    switch (event.key) {
+      case 'Tab':
+        event.preventDefault();
+        complete();
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        moveInHistory(-1);
+        break;
+      case 'ArrowDown':
+        event.preventDefault();
+        moveInHistory(1);
+        break;
     }
   }
 

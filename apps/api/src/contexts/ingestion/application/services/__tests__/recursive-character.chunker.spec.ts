@@ -13,6 +13,7 @@ describe('RecursiveCharacterChunker', () => {
   describe('기본 동작', () => {
     it('빈 문자열은 빈 배열을 반환한다', () => {
       const chunker = buildChunker(100, 10);
+
       expect(chunker.chunk('')).toEqual([]);
     });
 

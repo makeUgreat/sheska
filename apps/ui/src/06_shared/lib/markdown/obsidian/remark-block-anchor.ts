@@ -34,6 +34,7 @@ function readMarker(children: RootContent[]): string | null {
   if (children.length !== 1) return null;
   const [only] = children;
   if (only.type !== 'text') return null;
+
   return MARKER_ONLY.exec(only.value.trim())?.[1] ?? null;
 }
 

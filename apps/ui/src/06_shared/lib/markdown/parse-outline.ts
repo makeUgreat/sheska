@@ -11,6 +11,7 @@ export interface Heading {
 export function parseOutline(body: string): Heading[] {
   return parseMarkdown(body).children.flatMap((node) => {
     if (!isHeading(node)) return [];
+
     const id = readHeadingId(node);
     return id ? [{ depth: node.depth, text: headingText(node), id }] : [];
   });

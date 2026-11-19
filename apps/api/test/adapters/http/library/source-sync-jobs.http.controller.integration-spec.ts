@@ -19,6 +19,7 @@ describe('SourceSyncJobsHttpController', () => {
 
   beforeEach(async () => {
     execute.mockReset();
+
     const testingModule = await Test.createTestingModule({
       controllers: [SourceSyncJobsHttpController],
       providers: [
@@ -39,6 +40,7 @@ describe('SourceSyncJobsHttpController', () => {
         },
       ],
     }).compile();
+
     app = testingModule.createNestApplication();
     await app.init();
     httpServer = app.getHttpServer() as Server;

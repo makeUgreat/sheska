@@ -16,12 +16,14 @@ export interface WikiLink {
 function splitOnce(value: string, separator: string): [string, string] {
   const at = value.indexOf(separator);
   if (at < 0) return [value, ''];
+
   return [value.slice(0, at), value.slice(at + separator.length)];
 }
 
 function splitLabel(inner: string): [string, string | null] {
   const at = inner.search(LABEL_SEPARATOR);
   if (at < 0) return [inner, null];
+
   return [inner.slice(0, at), inner.slice(at).replace(LABEL_SEPARATOR, '')];
 }
 

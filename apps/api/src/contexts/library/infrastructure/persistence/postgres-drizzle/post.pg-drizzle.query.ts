@@ -73,6 +73,7 @@ export class PostPgDrizzleQuery implements PostQuery {
         details: { id: criteria.id },
       });
     }
+
     return result;
   }
 

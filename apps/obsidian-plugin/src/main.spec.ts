@@ -431,11 +431,11 @@ describe('SheskaPlugin', () => {
         syncCache: { 'a.md': { mtime: 100, syncedAt: 1 } },
       });
       plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(null);
+
       await plugin.onload();
       expect(statusBarItems[0].text).toBe('');
 
       workspaceEventHandlers['file-open']!(new TFile('a.md', { ctime: 0, mtime: 100, size: 1 }));
-
       expect(statusBarItems[0].text).toBe('Sheska: ✓ Synced');
     });
 
@@ -457,12 +457,12 @@ describe('SheskaPlugin', () => {
       const file = new TFile('a.md', { ctime: 0, mtime: 100, size: 1 });
       plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(file);
       plugin.app.vault.read = vi.fn().mockResolvedValue('content');
+
       await plugin.onload();
       expect(statusBarItems[0].text).toBe('Sheska: ○ Not synced');
 
       vaultEventHandlers['modify']!(file);
       await vi.advanceTimersByTimeAsync(5000);
-
       expect(statusBarItems[0].text).toBe('Sheska: ✓ Synced');
       vi.useRealTimers();
     });
@@ -473,12 +473,12 @@ describe('SheskaPlugin', () => {
       });
       const file = new TFile('a.md', { ctime: 0, mtime: 100, size: 1 });
       plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(file);
+
       await plugin.onload();
       expect(statusBarItems[0].text).toBe('Sheska: ✓ Synced');
 
       file.stat.mtime = 200;
       vaultEventHandlers['modify']!(file);
-
       expect(statusBarItems[0].text).toBe('Sheska: ○ Not synced');
     });
 
@@ -509,12 +509,10 @@ describe('SheskaPlugin', () => {
 
       vaultEventHandlers['modify']!(file);
       await vi.advanceTimersByTimeAsync(5000);
-
       expect(statusBarItems[0].text).toBe('Sheska: ⟳ Uploading...');
 
       resolveRead('content');
       await vi.advanceTimersByTimeAsync(0);
-
       expect(statusBarItems[0].text).toBe('Sheska: ✓ Synced');
       vi.useRealTimers();
     });
@@ -538,12 +536,12 @@ describe('SheskaPlugin', () => {
       const otherFile = new TFile('b.md', { ctime: 0, mtime: 200, size: 1 });
       plugin.app.workspace.getActiveFile = vi.fn().mockReturnValue(activeFile);
       plugin.app.vault.read = vi.fn().mockResolvedValue('content');
+
       await plugin.onload();
       expect(statusBarItems[0].text).toBe('Sheska: ○ Not synced');
 
       vaultEventHandlers['modify']!(otherFile);
       await vi.advanceTimersByTimeAsync(5000);
-
       expect(statusBarItems[0].text).toBe('Sheska: ○ Not synced');
       vi.useRealTimers();
     });

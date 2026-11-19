@@ -16,5 +16,6 @@ export const loggerConfig = registerAs('logger', () => {
   if (!result.success) {
     throw new Error(`Invalid logger configuration.\n${z.prettifyError(result.error)}`);
   }
+
   return { level: result.data.LOG_LEVEL, format: result.data.LOG_FORMAT };
 });

@@ -15,5 +15,6 @@ export const databaseConfig = registerAs('database', () => {
   if (!result.success) {
     throw new Error(`Invalid database configuration.\n${z.prettifyError(result.error)}`);
   }
+
   return { databaseUrl: result.data.DATABASE_URL };
 });

@@ -13,6 +13,7 @@ export class SourceEmbeddingFromRepositoryLookup implements SourceEmbeddingLooku
   async find({ sourceId }: { sourceId: string }): Promise<EmbeddingMetadata | null> {
     const embedding = await this.sourceEmbeddings.find({ sourceId });
     if (!embedding) return null;
+
     const props = embedding.getProps();
     return {
       model: props.model.unpack(),

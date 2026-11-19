@@ -52,6 +52,7 @@ export class ApiToken extends AggregateRoot<ApiTokenProps> {
     if (last && at.getTime() - last.getTime() < USE_RECORD_INTERVAL_MS) {
       return false;
     }
+
     this.props.lastUsedAt = at;
     return true;
   }

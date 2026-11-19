@@ -20,6 +20,7 @@ function wrappedLikeOpenTelemetry(handler: () => void): () => void {
   for (const key of Reflect.getMetadataKeys(handler)) {
     Reflect.defineMetadata(key, Reflect.getMetadata(key, handler), wrapped);
   }
+
   return wrapped;
 }
 

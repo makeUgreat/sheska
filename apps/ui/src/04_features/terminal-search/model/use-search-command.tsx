@@ -36,6 +36,7 @@ export function useSearchCommand({
         io.print(<TerminalText tone="error">usage: grep &lt;words&gt;</TerminalText>);
         return;
       }
+
       try {
         const { posts, nextCursor } = await searchPosts(http, {
           query,
@@ -45,10 +46,12 @@ export function useSearchCommand({
           io.print(<TerminalText tone="muted">no posts match &quot;{query}&quot;</TerminalText>);
           return;
         }
+
         recent.current = posts.map((post) => ({
           title: post.title,
           to: `/posts/${post.postId}`,
         }));
+
         io.print(
           <TerminalTree
             root={<TerminalTreeRoot label={`"${query}"`} note={matches(posts.length, nextCursor !== null)} />}

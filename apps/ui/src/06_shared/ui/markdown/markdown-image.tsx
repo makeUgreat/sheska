@@ -10,6 +10,7 @@ const OBSIDIAN_SIZE = /^(.*)\|(\d+)(?:x(\d+))?$/;
 function readObsidianSize(alt: string) {
   const match = OBSIDIAN_SIZE.exec(alt);
   if (!match) return { text: alt };
+
   const [, text, width, height] = match;
   return {
     text: text.trim(),

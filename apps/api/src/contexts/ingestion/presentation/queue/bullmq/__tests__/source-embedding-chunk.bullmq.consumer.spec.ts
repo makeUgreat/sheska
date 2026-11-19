@@ -46,6 +46,7 @@ function buildDependencies() {
     execute,
     handleFailure,
   } as unknown as EmbedSourceChunkUseCase;
+
   return { useCase, execute, handleFailure, logger };
 }
 

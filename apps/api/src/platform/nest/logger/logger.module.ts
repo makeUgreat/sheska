@@ -23,6 +23,7 @@ import { serializeAccessLogError } from './access-log-error.serializer';
               if (!spanContext || !trace.isSpanContextValid(spanContext)) {
                 return {};
               }
+
               return {
                 trace_id: spanContext.traceId,
                 span_id: spanContext.spanId,

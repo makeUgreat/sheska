@@ -46,8 +46,8 @@ describe('SourceEmbeddingDrizzleRepository', () => {
       }),
     );
     const updatedEmbedding = VALID_EMBEDDING.map((v) => v + 0.001);
-
     await repository.upsert(buildSourceEmbedding({ sourceId: source.id }));
+
     await expect(
       repository.upsert(
         buildSourceEmbedding({

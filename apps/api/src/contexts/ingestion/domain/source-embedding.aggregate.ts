@@ -19,6 +19,7 @@ export class SourceEmbedding extends AggregateRoot<SourceEmbeddingProps> {
         embedding: EmbeddingVector.of(c.embedding, model),
       }),
     );
+
     return new SourceEmbedding({
       id: params.sourceId,
       props: { sourceId: params.sourceId, model, chunks },
@@ -34,6 +35,7 @@ export class SourceEmbedding extends AggregateRoot<SourceEmbeddingProps> {
         embedding: EmbeddingVector.of(c.embedding, model),
       }),
     );
+
     return new SourceEmbedding({
       id: params.sourceId,
       props: { sourceId: params.sourceId, model, chunks },

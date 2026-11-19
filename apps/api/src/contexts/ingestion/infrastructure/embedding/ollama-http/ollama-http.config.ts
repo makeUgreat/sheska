@@ -11,6 +11,7 @@ export const ollamaConfig = registerAs('ollama', () => {
   if (!result.success) {
     throw new Error(`Invalid embedding server configuration.\n${z.prettifyError(result.error)}`);
   }
+
   return { baseUrl: result.data.EMBEDDING_BASE_URL };
 });
 

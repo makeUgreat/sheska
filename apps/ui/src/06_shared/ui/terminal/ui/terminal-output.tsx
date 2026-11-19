@@ -27,6 +27,7 @@ export function TerminalHighlight({
 }) {
   const terms = words.filter(Boolean).map(escapeRegExp);
   if (terms.length === 0) return text;
+
   const parts = text.split(new RegExp(`(${terms.join('|')})`, 'gi'));
   return parts.map((part, index) =>
     index % 2 === 1 ? (
