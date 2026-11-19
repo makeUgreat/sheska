@@ -39,7 +39,7 @@ export interface TerminalListedEntry {
   to: string;
 }
 
-/** `visitor@hash:~$`를 누구(identity)와 위치(rest)로 나눈다. 누구만 accent로 칠한다. */
+/** `guest@hash:~$`를 누구(identity)와 위치(rest)로 나눈다. 누구만 accent로 칠한다. */
 export interface TerminalPrompt {
   identity: string;
   rest: string;

@@ -75,7 +75,7 @@ export function Header() {
 
       <div className="h-10 px-4">
         <div className="mx-auto flex h-full max-w-content items-center font-mono text-code-snippet">
-          <PromptText prompt={owner ? { identity: 'owner@hash', rest: ':~#' } : { identity: 'visitor@hash', rest: ':~$' }} />
+          <PromptText prompt={owner ? { identity: 'owner@hash', rest: ':~#' } : { identity: 'guest@hash', rest: ':~$' }} />
           <span className="ml-2 text-white">{toCommand(pathname)}</span>
           <span className="ml-1 h-4 w-2 animate-pulse bg-accent" aria-hidden="true" />
         </div>

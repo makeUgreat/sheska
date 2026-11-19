@@ -60,6 +60,6 @@ function withSession(authenticated: boolean) {
   );
 }
 
-export const Visitor: Story = { decorators: [withSession(false)] };
+export const Guest: Story = { decorators: [withSession(false)] };
 
 export const Owner: Story = { decorators: [withSession(true)] };

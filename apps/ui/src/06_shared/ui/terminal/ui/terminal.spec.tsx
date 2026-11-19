@@ -23,12 +23,12 @@ const hiddenCommand: TerminalCommand = {
 
 function renderTerminal(commands: TerminalCommand[] = [echoCommand]) {
   const ref = createRef<TerminalHandle>();
-  render(<Terminal ref={ref} commands={commands} prompt={{ identity: 'visitor@hash', rest: ':~$' }} />);
+  render(<Terminal ref={ref} commands={commands} prompt={{ identity: 'guest@hash', rest: ':~$' }} />);
   const log = screen.getByRole('log');
   return {
     ref,
     log,
-    input: () => screen.getByLabelText(/visitor@hash|Password:/),
+    input: () => screen.getByLabelText(/guest@hash|Password:/),
   };
 }
 
@@ -37,7 +37,7 @@ describe('Terminal', () => {
     const user = userEvent.setup();
     const { log } = renderTerminal();
 
-    await user.type(screen.getByLabelText('visitor@hash:~$'), 'echo hi there{Enter}');
+    await user.type(screen.getByLabelText('guest@hash:~$'), 'echo hi there{Enter}');
 
     expect(within(log).getByText('echo hi there')).toBeDefined();
     expect(within(log).getByText('hi there')).toBeDefined();
@@ -47,7 +47,7 @@ describe('Terminal', () => {
     const user = userEvent.setup();
     const { log } = renderTerminal([echoCommand, hiddenCommand]);
 
-    await user.type(screen.getByLabelText('visitor@hash:~$'), 'help{Enter}');
+    await user.type(screen.getByLabelText('guest@hash:~$'), 'help{Enter}');
 
     expect(within(log).getByText(/echo <words>/)).toBeDefined();
     expect(within(log).getByText('print words')).toBeDefined();
@@ -58,7 +58,7 @@ describe('Terminal', () => {
     const user = userEvent.setup();
     const { log } = renderTerminal([echoCommand, hiddenCommand]);
 
-    await user.type(screen.getByLabelText('visitor@hash:~$'), 'secret{Enter}');
+    await user.type(screen.getByLabelText('guest@hash:~$'), 'secret{Enter}');
 
     expect(within(log).getByText('found')).toBeDefined();
   });
@@ -67,7 +67,7 @@ describe('Terminal', () => {
     const user = userEvent.setup();
     const { log } = renderTerminal();
 
-    await user.type(screen.getByLabelText('visitor@hash:~$'), 'redis 세션{Enter}');
+    await user.type(screen.getByLabelText('guest@hash:~$'), 'redis 세션{Enter}');
 
     expect(within(log).getByText('hash: command not found: redis')).toBeDefined();
     expect(within(log).getByText('print words')).toBeDefined();
@@ -76,7 +76,7 @@ describe('Terminal', () => {
   it('위 화살표로 이전 명령을 불러온다', async () => {
     const user = userEvent.setup();
     renderTerminal();
-    const input = screen.getByLabelText('visitor@hash:~$');
+    const input = screen.getByLabelText('guest@hash:~$');
 
     await user.type(input, 'echo one{Enter}');
     await user.keyboard('{ArrowUp}');
@@ -87,7 +87,7 @@ describe('Terminal', () => {
   it('Tab은 후보가 하나면 명령 이름을 채운다', async () => {
     const user = userEvent.setup();
     renderTerminal();
-    const input = screen.getByLabelText('visitor@hash:~$');
+    const input = screen.getByLabelText('guest@hash:~$');
 
     await user.type(input, 'ec{Tab}');
 
@@ -97,7 +97,7 @@ describe('Terminal', () => {
   it('Tab은 후보가 여럿이면 공통 앞부분까지 채운다', async () => {
     const user = userEvent.setup();
     renderTerminal();
-    const input = screen.getByLabelText('visitor@hash:~$');
+    const input = screen.getByLabelText('guest@hash:~$');
 
     await user.type(input, 'echo a{Tab}');
 
@@ -107,7 +107,7 @@ describe('Terminal', () => {
   it('IME 조합 중 Tab은 값을 바꾸지 않는다', async () => {
     const user = userEvent.setup();
     renderTerminal();
-    const input = screen.getByLabelText('visitor@hash:~$');
+    const input = screen.getByLabelText('guest@hash:~$');
 
     await user.type(input, 'echo a');
     fireEvent.keyDown(input, { key: 'Tab', isComposing: true });
@@ -118,7 +118,7 @@ describe('Terminal', () => {
   it('IME 조합 중 위 화살표는 값을 바꾸지 않는다', async () => {
     const user = userEvent.setup();
     renderTerminal();
-    const input = screen.getByLabelText('visitor@hash:~$');
+    const input = screen.getByLabelText('guest@hash:~$');
 
     await user.type(input, 'echo one{Enter}echo t');
     fireEvent.keyDown(input, { key: 'ArrowUp', isComposing: true });
@@ -130,7 +130,7 @@ describe('Terminal', () => {
     const user = userEvent.setup();
     const { log } = renderTerminal();
 
-    await user.type(screen.getByLabelText('visitor@hash:~$'), 'echo hi{Enter}');
+    await user.type(screen.getByLabelText('guest@hash:~$'), 'echo hi{Enter}');
     await user.keyboard('{Control>}l{/Control}');
 
     expect(log.textContent).toBe('');
@@ -152,7 +152,7 @@ describe('Terminal', () => {
       const onAnswer = vi.fn();
       const { log } = renderTerminal([buildAskCommand(onAnswer)]);
 
-      await user.type(screen.getByLabelText('visitor@hash:~$'), 'su{Enter}');
+      await user.type(screen.getByLabelText('guest@hash:~$'), 'su{Enter}');
       const password = await screen.findByLabelText('Password:');
       expect(password.getAttribute('type')).toBe('password');
       expect(password.getAttribute('autocomplete')).toBe('current-password');
@@ -161,7 +161,7 @@ describe('Terminal', () => {
       await waitFor(() => expect(onAnswer).toHaveBeenCalledWith('hunter22'));
       expect(log.textContent).not.toContain('hunter22');
 
-      const prompt = await screen.findByLabelText('visitor@hash:~$');
+      const prompt = await screen.findByLabelText('guest@hash:~$');
       await user.click(prompt);
       await user.keyboard('{ArrowUp}');
       expect((prompt as HTMLInputElement).value).toBe('su');
@@ -172,11 +172,11 @@ describe('Terminal', () => {
       const onAnswer = vi.fn();
       const { log } = renderTerminal([buildAskCommand(onAnswer)]);
 
-      await user.type(screen.getByLabelText('visitor@hash:~$'), 'su{Enter}');
+      await user.type(screen.getByLabelText('guest@hash:~$'), 'su{Enter}');
       await user.type(await screen.findByLabelText('Password:'), 'hun');
       await user.keyboard('{Control>}c{/Control}');
 
-      expect(await screen.findByLabelText('visitor@hash:~$')).toBeDefined();
+      expect(await screen.findByLabelText('guest@hash:~$')).toBeDefined();
       expect(log.textContent).toContain('^C');
       expect(onAnswer).not.toHaveBeenCalled();
     });

@@ -13,12 +13,12 @@ export function useSession() {
   });
 }
 
-export type Viewer = 'visitor' | 'owner';
+export type Viewer = 'guest' | 'owner';
 
 /** 세션을 확인하는 동안에는 방문자로 본다. 권한은 어차피 API가 검사한다. */
 export function useViewer(): Viewer {
   const { data } = useSession();
-  return data?.authenticated ? 'owner' : 'visitor';
+  return data?.authenticated ? 'owner' : 'guest';
 }
 
 export function useLogIn() {

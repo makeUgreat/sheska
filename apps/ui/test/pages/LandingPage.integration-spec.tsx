@@ -138,7 +138,7 @@ describe('LandingPage terminal', () => {
     const { client } = buildMockHttpClient();
     renderPage(client);
 
-    await typeCommand('visitor@hash:~$', 'ls');
+    await typeCommand('guest@hash:~$', 'ls');
 
     const log = screen.getByRole('log');
     const link = await within(log).findByRole('link', { name: POST.title });
@@ -151,7 +151,7 @@ describe('LandingPage terminal', () => {
     const { client } = buildMockHttpClient();
     renderPage(client);
 
-    await typeCommand('visitor@hash:~$', `cat ${POST.title}`);
+    await typeCommand('guest@hash:~$', `cat ${POST.title}`);
 
     expect(await screen.findByText('post detail post-1')).toBeDefined();
   });
@@ -160,7 +160,7 @@ describe('LandingPage terminal', () => {
     const { client, get } = buildMockHttpClient();
     renderPage(client);
 
-    await typeCommand('visitor@hash:~$', 'grep redis');
+    await typeCommand('guest@hash:~$', 'grep redis');
 
     const log = screen.getByRole('log');
     expect(await within(log).findByText(/1 match/)).toBeDefined();
@@ -181,9 +181,9 @@ describe('LandingPage terminal', () => {
     const { client } = buildMockHttpClient();
     renderPage(client);
 
-    const user = await typeCommand('visitor@hash:~$', 'grep redis');
+    const user = await typeCommand('guest@hash:~$', 'grep redis');
     await within(screen.getByRole('log')).findByText(/1 match/);
-    const input = screen.getByLabelText('visitor@hash:~$');
+    const input = screen.getByLabelText('guest@hash:~$');
     await user.type(input, 'cat re{Tab}');
 
     expect((input as HTMLInputElement).value).toBe(`cat ${POST.title}`);
@@ -193,9 +193,9 @@ describe('LandingPage terminal', () => {
     const { client } = buildMockHttpClient();
     renderPage(client);
 
-    await typeCommand('visitor@hash:~$', 'ls');
+    await typeCommand('guest@hash:~$', 'ls');
     await within(screen.getByRole('log')).findByText(/12 posts/);
-    await typeCommand('visitor@hash:~$', 'cat redis');
+    await typeCommand('guest@hash:~$', 'cat redis');
 
     expect(await screen.findByText('post detail post-1')).toBeDefined();
   });
@@ -204,7 +204,7 @@ describe('LandingPage terminal', () => {
     const { client } = buildMockHttpClient();
     renderPage(client);
 
-    await typeCommand('visitor@hash:~$', 'ai 세션은 어디에 저장했어?');
+    await typeCommand('guest@hash:~$', 'ai 세션은 어디에 저장했어?');
 
     expect(await screen.findByText('ai: not ready yet. Try grep <word> for now.')).toBeDefined();
   });
@@ -213,7 +213,7 @@ describe('LandingPage terminal', () => {
     const { client } = buildMockHttpClient();
     renderPage(client);
 
-    await typeCommand('visitor@hash:~$', 'cd sources');
+    await typeCommand('guest@hash:~$', 'cd sources');
 
     expect(await screen.findByText('cd: no such file or directory: sources')).toBeDefined();
   });
@@ -223,7 +223,7 @@ describe('LandingPage terminal', () => {
       const { client, post } = buildMockHttpClient();
       renderPage(client);
 
-      const user = await typeCommand('visitor@hash:~$', 'su');
+      const user = await typeCommand('guest@hash:~$', 'su');
       await user.type(await screen.findByLabelText('Password:'), 'owner-pass{Enter}');
 
       expect(await screen.findByLabelText('owner@hash:~#')).toBeDefined();
@@ -243,11 +243,11 @@ describe('LandingPage terminal', () => {
       });
       renderPage(client);
 
-      const user = await typeCommand('visitor@hash:~$', 'su');
+      const user = await typeCommand('guest@hash:~$', 'su');
       await user.type(await screen.findByLabelText('Password:'), 'wrong{Enter}');
 
       expect(await screen.findByText('su: Authentication failure')).toBeDefined();
-      expect(screen.getByLabelText('visitor@hash:~$')).toBeDefined();
+      expect(screen.getByLabelText('guest@hash:~$')).toBeDefined();
     });
 
     it('잠기면 남은 시간을 분으로 올려 알린다', async () => {
@@ -261,7 +261,7 @@ describe('LandingPage terminal', () => {
       });
       renderPage(client);
 
-      const user = await typeCommand('visitor@hash:~$', 'su');
+      const user = await typeCommand('guest@hash:~$', 'su');
       await user.type(await screen.findByLabelText('Password:'), 'wrong{Enter}');
 
       expect(await screen.findByText('su: too many attempts. Try again in 5 minutes.')).toBeDefined();
@@ -271,7 +271,7 @@ describe('LandingPage terminal', () => {
       const { client, post } = buildMockHttpClient();
       renderPage(client);
 
-      const user = await typeCommand('visitor@hash:~$', 'su');
+      const user = await typeCommand('guest@hash:~$', 'su');
       await user.type(await screen.findByLabelText('Password:'), '{Enter}');
 
       expect(await screen.findByText('su: Authentication failure')).toBeDefined();
@@ -320,7 +320,7 @@ describe('LandingPage terminal', () => {
       await typeCommand('owner@hash:~#', 'cd sources');
       await typeCommand('owner@hash:~/sources#', 'exit');
 
-      expect(await screen.findByLabelText('visitor@hash:~$')).toBeDefined();
+      expect(await screen.findByLabelText('guest@hash:~$')).toBeDefined();
       expect(del).toHaveBeenCalledWith('/auth/session');
     });
   });
@@ -329,7 +329,7 @@ describe('LandingPage terminal', () => {
       const { client, get } = buildMockHttpClient();
       renderPage(client);
 
-      await typeCommand('visitor@hash:~$', 'token');
+      await typeCommand('guest@hash:~$', 'token');
 
       expect(await screen.findByText('token: permission denied')).toBeDefined();
       expect(get).not.toHaveBeenCalledWith('/api-tokens', expect.anything());
