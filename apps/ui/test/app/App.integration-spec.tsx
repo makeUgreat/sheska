@@ -130,13 +130,13 @@ describe('App', () => {
     });
   });
 
-  it('landing hero의 Scroll For Articles는 리로드 없이 Posts 페이지로 이동한다', async () => {
+  it('landing hero의 posts 링크는 리로드 없이 Posts 페이지로 이동한다', async () => {
     const user = userEvent.setup();
     const client = buildMockHttpClient();
 
     renderApp(client, '/');
 
-    await user.click(screen.getByRole('link', { name: /Scroll For Articles/ }));
+    await user.click(screen.getByRole('link', { name: 'posts' }));
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { level: 1, name: 'Posts' })).toBeDefined();
