@@ -1,7 +1,6 @@
 import * as z from 'zod';
 import { defineApi } from '../api.js';
 import { CommonErrorCode } from '../error.js';
-import { permissionSchema } from './permission.js';
 
 /** 이보다 긴 비밀번호는 hash 계산 전에 거부한다. */
 export const PASSWORD_MAX_LENGTH = 1024;
@@ -9,19 +8,6 @@ export const PASSWORD_MAX_LENGTH = 1024;
 const logInRequestSchema = z.object({
   password: z.string().min(1).max(PASSWORD_MAX_LENGTH),
 });
-
-const whoamiSchema = z.discriminatedUnion('via', [
-  z.object({
-    via: z.literal('session'),
-    permissions: z.array(permissionSchema),
-  }),
-  z.object({
-    via: z.literal('api_token'),
-    /** 요청에 쓴 API 토큰의 이름 */
-    name: z.string(),
-    permissions: z.array(permissionSchema),
-  }),
-]);
 
 const sessionSchema = z.object({
   /** 요청에 유효한 세션 쿠키가 있으면 `true`다. */
@@ -48,7 +34,6 @@ export const AuthApi = {
   logIn: defineApi({
     method: 'POST',
     path: '/auth/session',
-    access: 'public',
     request: logInRequestSchema,
     errors: [
       CommonErrorCode.VALIDATION_FAILED,
@@ -61,7 +46,6 @@ export const AuthApi = {
   logOut: defineApi({
     method: 'DELETE',
     path: '/auth/session',
-    access: 'public',
     errors: [],
   }),
 
@@ -69,17 +53,14 @@ export const AuthApi = {
   session: defineApi({
     method: 'GET',
     path: '/auth/session',
-    access: 'public',
     response: sessionSchema,
     errors: [],
   }),
 
-  /** 요청이 무엇으로 인증했고 어떤 권한을 가졌는지 알려 준다. 플러그인이 토큰을 확인하는 데 쓴다. */
-  whoami: defineApi({
+  /** 204다. 플러그인이 주소와 API 토큰으로 동기화할 수 있는지 확인한다. */
+  syncCheck: defineApi({
     method: 'GET',
-    path: '/auth/whoami',
-    access: 'authenticated',
-    response: whoamiSchema,
-    errors: [AuthErrorCode.UNAUTHENTICATED],
+    path: '/auth/sync-check',
+    errors: [AuthErrorCode.UNAUTHENTICATED, AuthErrorCode.FORBIDDEN],
   }),
 };

@@ -1,6 +1,5 @@
 import * as z from 'zod';
 import { defineApi } from '../api.js';
-import { Permission } from '../iam/permission.js';
 import { AuthErrorCode } from '../iam/auth.js';
 import { CommonErrorCode } from '../error.js';
 import {
@@ -66,7 +65,6 @@ export const SourceApi = {
   list: defineApi({
     method: 'GET',
     path: '/sources',
-    access: Permission.SOURCES_READ,
     query: z.strictObject({
       page: z.coerce.number<number>().int().positive().default(1),
       pageSize: z.coerce.number<number>().int().positive().max(100).default(10),
@@ -90,7 +88,6 @@ export const SourceApi = {
   get: defineApi({
     method: 'GET',
     path: '/sources/:id',
-    access: Permission.SOURCES_READ,
     response: sourceSchema,
     errors: [
       SourceErrorCode.NOT_FOUND,
@@ -106,7 +103,6 @@ export const SourceApi = {
   upload: defineApi({
     method: 'POST',
     path: '/sources',
-    access: Permission.SOURCES_SYNC,
     request: z.strictObject({
       /** vault 안의 파일 경로. 앞뒤 공백은 서버가 지운다. */
       externalSourceId: z.string().trim().min(1),

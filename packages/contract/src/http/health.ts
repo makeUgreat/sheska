@@ -18,7 +18,6 @@ export const HealthApi = {
   live: defineApi({
     method: 'GET',
     path: '/livez',
-    access: 'public',
     response: healthySchema,
     errors: [],
   }),
@@ -27,7 +26,6 @@ export const HealthApi = {
   ready: defineApi({
     method: 'GET',
     path: '/readyz',
-    access: 'public',
     response: healthySchema,
     errors: [
       HealthErrorCode.DATABASE_UNREACHABLE,

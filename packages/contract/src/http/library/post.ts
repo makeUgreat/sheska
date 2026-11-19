@@ -1,6 +1,5 @@
 import * as z from 'zod';
 import { defineApi } from '../api.js';
-import { Permission } from '../iam/permission.js';
 import { AuthErrorCode } from '../iam/auth.js';
 import { CommonErrorCode } from '../error.js';
 import { SourceErrorCode } from './source.js';
@@ -55,7 +54,6 @@ export const PostApi = {
   list: defineApi({
     method: 'GET',
     path: '/posts',
-    access: 'public',
     query: z.strictObject({
       cursor: cursorSchema.optional(),
       limit: limitSchema,
@@ -71,7 +69,6 @@ export const PostApi = {
   search: defineApi({
     method: 'GET',
     path: '/posts/search',
-    access: 'public',
     query: z.strictObject({
       /** 검색어. 앞뒤 공백은 서버가 지운다. */
       q: z.string().trim().min(1),
@@ -92,7 +89,6 @@ export const PostApi = {
   count: defineApi({
     method: 'GET',
     path: '/posts/count',
-    access: 'public',
     response: z.object({
       count: z.number().int().nonnegative(),
     }),
@@ -103,7 +99,6 @@ export const PostApi = {
   get: defineApi({
     method: 'GET',
     path: '/posts/:id',
-    access: 'public',
     response: postSchema,
     errors: [PostErrorCode.NOT_FOUND],
   }),
@@ -112,7 +107,6 @@ export const PostApi = {
   publish: defineApi({
     method: 'POST',
     path: '/posts',
-    access: Permission.POSTS_PUBLISH,
     request: z.strictObject({
       sourceId: z.string().min(1),
     }),
