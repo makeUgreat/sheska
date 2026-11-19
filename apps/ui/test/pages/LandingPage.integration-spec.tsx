@@ -134,24 +134,25 @@ async function typeCommand(prompt: string | RegExp, line: string) {
 }
 
 describe('LandingPage terminal', () => {
-  it('ls는 최신 post를 tree로 보이고 남은 수를 알린다', async () => {
+  it('ls posts는 최신 post를 tree로 보이고 남은 수를 알린다', async () => {
     const { client } = buildMockHttpClient();
     renderPage(client);
 
-    await typeCommand('guest@hash:~$', 'ls');
+    await typeCommand('guest@hash:~$', 'ls posts');
 
     const log = screen.getByRole('log');
     const link = await within(log).findByRole('link', { name: POST.title });
     expect(link.getAttribute('href')).toBe('/posts/post-1');
     expect(within(log).getByText(/12 posts/)).toBeDefined();
-    expect(within(log).getByText(/… 11 more · ls -a/)).toBeDefined();
+    expect(within(log).getByText('… 11 more · ls -a posts')).toBeDefined();
   });
 
-  it('cat은 제목으로 post 상세 페이지로 이동한다', async () => {
+  it('posts 폴더에서 cat은 제목으로 post 상세 페이지로 이동한다', async () => {
     const { client } = buildMockHttpClient();
     renderPage(client);
 
-    await typeCommand('guest@hash:~$', `cat ${POST.title}`);
+    await typeCommand('guest@hash:~$', 'cd posts');
+    await typeCommand('guest@hash:~/posts$', `cat ${POST.title}`);
 
     expect(await screen.findByText('post detail post-1')).toBeDefined();
   });
@@ -193,7 +194,7 @@ describe('LandingPage terminal', () => {
     const { client } = buildMockHttpClient();
     renderPage(client);
 
-    await typeCommand('guest@hash:~$', 'ls');
+    await typeCommand('guest@hash:~$', 'ls posts');
     await within(screen.getByRole('log')).findByText(/12 posts/);
     await typeCommand('guest@hash:~$', 'cat redis');
 
@@ -209,13 +210,91 @@ describe('LandingPage terminal', () => {
     expect(await screen.findByText('ai: not ready yet. Try grep <word> for now.')).toBeDefined();
   });
 
-  it('방문자에게 sources 폴더는 없는 것으로 답한다', async () => {
+  it('방문자의 ls는 sources 폴더를 보이되 세지 않는다', async () => {
+    const { client, get } = buildMockHttpClient();
+    renderPage(client);
+
+    await typeCommand('guest@hash:~$', 'ls');
+
+    const log = screen.getByRole('log');
+    expect(await within(log).findByText('12 posts')).toBeDefined();
+    expect(within(log).getByText('sources/')).toBeDefined();
+    expect(get.mock.calls.map(([path]) => path)).not.toContain('/sources');
+  });
+
+  it('방문자는 sources 폴더에 들어갈 수 없다', async () => {
     const { client } = buildMockHttpClient();
     renderPage(client);
 
     await typeCommand('guest@hash:~$', 'cd sources');
 
-    expect(await screen.findByText('cd: no such file or directory: sources')).toBeDefined();
+    expect(await screen.findByText('cd: permission denied: sources')).toBeDefined();
+  });
+
+  it('cd ..로 홈 밖에 나가면 프롬프트에 절대 경로를 보인다', async () => {
+    const { client } = buildMockHttpClient();
+    renderPage(client);
+
+    await typeCommand('guest@hash:~$', 'cd ..');
+
+    expect(await screen.findByLabelText('guest@hash:/home$')).toBeDefined();
+  });
+
+  it('홈에서 cat posts/<제목>은 post 상세 페이지로 이동한다', async () => {
+    const { client } = buildMockHttpClient();
+    renderPage(client);
+
+    await typeCommand('guest@hash:~$', `cat posts/${POST.title}`);
+
+    expect(await screen.findByText('post detail post-1')).toBeDefined();
+  });
+
+  it('cat은 폴더를 읽지 않는다', async () => {
+    const { client } = buildMockHttpClient();
+    renderPage(client);
+
+    await typeCommand('guest@hash:~$', 'cat posts');
+
+    expect(await screen.findByText('cat: posts: Is a directory')).toBeDefined();
+  });
+
+  it('방문자는 sources 안의 글을 cat으로 열 수 없다', async () => {
+    const { client } = buildMockHttpClient();
+    renderPage(client);
+
+    await typeCommand('guest@hash:~$', `cat sources/${SOURCE.title}`);
+
+    expect(await screen.findByText(`cat: sources/${SOURCE.title}: Permission denied`)).toBeDefined();
+  });
+
+  it('ls /dev는 secret 파일을 보이고 cat은 그 내용을 보인다', async () => {
+    const { client } = buildMockHttpClient();
+    renderPage(client);
+
+    await typeCommand('guest@hash:~$', 'ls /dev');
+    expect(await within(screen.getByRole('log')).findByText('secret')).toBeDefined();
+
+    await typeCommand('guest@hash:~$', 'cat /dev/secret');
+    expect(await screen.findByText(/-----BEGIN HASH SECRET KEY-----/)).toBeDefined();
+  });
+
+  it('cd는 파일로 들어가지 않는다', async () => {
+    const { client } = buildMockHttpClient();
+    renderPage(client);
+
+    await typeCommand('guest@hash:~$', 'cd /dev/secret');
+
+    expect(await screen.findByText('cd: not a directory: /dev/secret')).toBeDefined();
+  });
+
+  it('pwd는 현재 폴더의 절대 경로를 보인다', async () => {
+    const { client } = buildMockHttpClient();
+    renderPage(client);
+
+    await typeCommand('guest@hash:~$', 'cd posts');
+    await typeCommand('guest@hash:~/posts$', 'pwd');
+
+    expect(await screen.findByText('/home/hash/posts')).toBeDefined();
   });
 
   describe('su', () => {
@@ -290,14 +369,16 @@ describe('LandingPage terminal', () => {
   });
 
   describe('소유자', () => {
-    it('ls 맨 위에 sources 폴더를 보인다', async () => {
+    it('ls는 홈의 폴더를 개수와 함께 보인다', async () => {
       const { client } = buildMockHttpClient({ authenticated: true });
       renderPage(client);
 
       await typeCommand('owner@hash:~#', 'ls');
 
       const log = screen.getByRole('log');
-      expect(await within(log).findByText('sources/')).toBeDefined();
+      expect(await within(log).findByText('1 note')).toBeDefined();
+      expect(within(log).getByText('sources/')).toBeDefined();
+      expect(within(log).getByText('12 posts')).toBeDefined();
     });
 
     it('cd sources 뒤의 ls는 source 목록을 보인다', async () => {

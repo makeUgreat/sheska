@@ -47,7 +47,7 @@ export function LandingHero({ articlesHref, githubHref }: { articlesHref: string
                     Hi, I&apos;m <span className="text-accent">Hash</span>. Here is how I think, what I&apos;ve learned, and who I am.
                   </p>
                   <p className="text-on-surface-muted">
-                    Browse with <span className="text-white">ls</span>, search with{' '}
+                    Browse with <span className="whitespace-nowrap text-white">ls posts</span>, search with{' '}
                     <span className="whitespace-nowrap text-white">grep &lt;word&gt;</span>, or ask an AI with{' '}
                     <span className="whitespace-nowrap text-white">ai &lt;question&gt;</span>.
                   </p>

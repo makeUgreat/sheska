@@ -15,13 +15,20 @@ import {
   type TerminalListedEntry,
   type TerminalTreeItem,
 } from '@/shared/ui';
-
-/** `~`는 post 목록이고 `~/sources`는 소유자에게만 있다. */
-export type Directory = 'home' | 'sources';
-
-export function directoryPath(directory: Directory): string {
-  return directory === 'home' ? '~' : '~/sources';
-}
+import {
+  canEnter,
+  completePath,
+  displayPath,
+  entryFolderOf,
+  filesIn,
+  HOME,
+  isDirectory,
+  POSTS,
+  readFile,
+  resolvePath,
+  SOURCES,
+  subdirectories,
+} from './file-system';
 
 const PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 100;
@@ -38,15 +45,16 @@ export function useBrowseCommands({
   recent,
 }: {
   viewer: Viewer;
-  directory: Directory;
-  onDirectoryChange: (directory: Directory) => void;
+  /** 현재 폴더의 절대 경로. */
+  directory: string;
+  onDirectoryChange: (directory: string) => void;
   /** 방금 보인 목록. `grep`도 여기에 쓴다. */
   recent: MutableRefObject<TerminalListedEntry[]>;
 }): TerminalCommand[] {
   const http = useHttpClient();
   const navigate = useNavigate();
   const owner = viewer === 'owner';
-  const where: Directory = owner ? directory : 'home';
+  const where = canEnter(directory, viewer) ? directory : HOME;
 
   async function fetchPosts(all: boolean) {
     if (all) {
@@ -87,65 +95,97 @@ export function useBrowseCommands({
     return totalCount;
   }
 
-  async function fetchEverything(): Promise<TerminalListedEntry[]> {
-    const { entries } = where === 'home' ? await fetchPosts(true) : await fetchSources(true);
+  async function fetchEverything(folder: string): Promise<TerminalListedEntry[]> {
+    const { entries } = folder === POSTS ? await fetchPosts(true) : await fetchSources(true);
     return entries;
+  }
+
+  /** 방금 보인 목록에서 먼저 찾고, 없으면 폴더의 글을 모두 받아 찾는다. 폴더 밖이면 방금 보인 목록에서만 찾는다. */
+  async function findInFolder(folder: string | undefined, name: string) {
+    if (!folder) return findEntry(recent.current, name);
+
+    const page = folder === POSTS ? '/posts/' : '/sources/';
+    const recentInFolder = recent.current.filter((entry) => entry.to.startsWith(page));
+    return findEntry(recentInFolder, name) ?? findEntry(await fetchEverything(folder), name);
+  }
+
+  /** 폴더 이름 옆에 붙는 개수. 들어갈 수 없는 폴더는 세지 않는다. */
+  async function folderNote(path: string): Promise<string | undefined> {
+    switch (path) {
+      case POSTS:
+        return posts((await countPosts(http)).count);
+      case SOURCES:
+        return owner ? notes(await countSources()) : undefined;
+      default:
+        return undefined;
+    }
   }
 
   const ls: TerminalCommand = {
     name: 'ls',
-    usage: 'ls [-a]',
-    summary: where === 'home' ? 'list recent posts' : 'list recent sources',
+    usage: 'ls [-a] [dir]',
+    summary: 'list a folder',
     async run(args, io) {
-      const unknown = args.find((arg) => arg !== '-a');
-      if (unknown) {
-        io.print(<TerminalText tone="error">ls: cannot access &apos;{unknown}&apos;: No such file or directory</TerminalText>);
+      const all = args.includes('-a');
+      const [target, ...extra] = args.filter((arg) => arg !== '-a');
+      const path = resolvePath(target ?? '.', where);
+      if (extra.length > 0) {
+        io.print(<TerminalText tone="error">ls: too many arguments</TerminalText>);
+        return;
+      }
+      if (readFile(path) !== undefined) {
+        io.print(<TerminalText>{target}</TerminalText>);
+        return;
+      }
+      if (!isDirectory(path)) {
+        io.print(<TerminalText tone="error">ls: cannot access {`'${target}'`}: No such file or directory</TerminalText>);
+        return;
+      }
+      if (!canEnter(path, viewer)) {
+        io.print(<TerminalText tone="error">ls: cannot open directory {`'${target}'`}: Permission denied</TerminalText>);
         return;
       }
 
-      const all = args.includes('-a');
+      const showAll = target ? `ls -a ${target}` : 'ls -a';
       try {
-        if (where === 'sources') {
-          const { entries, total } = await fetchSources(all);
-          recent.current = entries;
-          io.print(
-            <TerminalTree
-              root={<TerminalTreeRoot label="~/sources" note={notes(total)} />}
-              items={entries.map(entryItem)}
-              footer={moreFooter(entries.length, total)}
-            />,
-          );
-          return;
+        switch (path) {
+          case POSTS: {
+            const { entries, total } = await fetchPosts(all);
+            recent.current = entries;
+            io.print(entryTree(path, posts(total), entries, moreFooter(entries.length, total, showAll)));
+            return;
+          }
+          case SOURCES: {
+            const { entries, total } = await fetchSources(all);
+            recent.current = entries;
+            io.print(entryTree(path, notes(total), entries, moreFooter(entries.length, total, showAll)));
+            return;
+          }
+          default: {
+            const folders = subdirectories(path);
+            const folderNotes = await Promise.all(folders.map((name) => folderNote(resolvePath(name, path))));
+            const folderItems = folders.map((name, index) => ({
+              key: name,
+              head: <TerminalTreeRoot label={`${name}/`} note={folderNotes[index]} />,
+            }));
+            const fileItems = filesIn(path).map((name) => ({ key: name, head: name }));
+            io.print(<TerminalTree root={<TerminalTreeRoot label={displayPath(path)} />} items={[...folderItems, ...fileItems]} />);
+          }
         }
-        const [{ entries, total }, sourceCount] = await Promise.all([fetchPosts(all), owner ? countSources() : Promise.resolve(null)]);
-        recent.current = entries;
-
-        const folder: TerminalTreeItem[] =
-          sourceCount === null
-            ? []
-            : [
-                {
-                  key: 'sources',
-                  head: <TerminalTreeRoot label="sources/" note={notes(sourceCount)} />,
-                },
-              ];
-        io.print(
-          <TerminalTree
-            root={<TerminalTreeRoot label="~" note={posts(total)} />}
-            items={[...folder, ...entries.map(entryItem)]}
-            footer={moreFooter(entries.length, total)}
-          />,
-        );
       } catch (error) {
         printRequestFailure(io, 'ls', error);
       }
+    },
+    complete: (argument) => {
+      const flag = argument.startsWith('-a ') ? '-a ' : '';
+      return completePath(argument.slice(flag.length), where, { files: true }).map((candidate) => flag + candidate);
     },
   };
 
   const cat: TerminalCommand = {
     name: 'cat',
-    usage: where === 'home' ? 'cat <post>' : 'cat <source>',
-    summary: where === 'home' ? 'read a post' : 'read a source',
+    usage: 'cat <file>',
+    summary: 'read a post or source',
     async run(args, io) {
       const target = args.join(' ');
       if (!target) {
@@ -153,14 +193,26 @@ export function useBrowseCommands({
         return;
       }
 
+      const path = resolvePath(target, where);
+      const content = readFile(path);
+      const folder = entryFolderOf(path);
+      if (isDirectory(path)) {
+        io.print(<TerminalText tone="error">cat: {target}: Is a directory</TerminalText>);
+        return;
+      }
+      if (content !== undefined) {
+        io.print(<TerminalText>{content}</TerminalText>);
+        return;
+      }
+      if (folder && !canEnter(folder, viewer)) {
+        io.print(<TerminalText tone="error">cat: {target}: Permission denied</TerminalText>);
+        return;
+      }
+
       try {
-        const entry = findEntry(recent.current, target) ?? findEntry(await fetchEverything(), target);
+        const entry = await findInFolder(folder, folder ? path.slice(folder.length + 1) : target);
         if (!entry) {
-          io.print(
-            <TerminalText tone="error">
-              cat: {target}: no such {where === 'home' ? 'post' : 'source'}
-            </TerminalText>,
-          );
+          io.print(<TerminalText tone="error">cat: {target}: No such file or directory</TerminalText>);
           return;
         }
 
@@ -171,29 +223,47 @@ export function useBrowseCommands({
     },
     complete: (argument) => {
       const typed = argument.toLowerCase();
-      return recent.current.map((entry) => entry.title).filter((title) => title.toLowerCase().startsWith(typed));
+      const titles = recent.current.map((entry) => entry.title).filter((title) => title.toLowerCase().startsWith(typed));
+      return [...titles, ...completePath(argument, where, { files: true })];
     },
   };
 
   const cd: TerminalCommand = {
     name: 'cd',
-    usage: 'cd <dir>',
+    usage: 'cd [dir]',
     summary: 'move to a folder',
-    hidden: !owner,
     run(args, io) {
       const target = args[0] ?? '~';
-      const next = resolveDirectory(target, where);
-      if (!next || (next === 'sources' && !owner)) {
+      const path = resolvePath(target, where);
+      if (readFile(path) !== undefined) {
+        io.print(<TerminalText tone="error">cd: not a directory: {target}</TerminalText>);
+        return;
+      }
+      if (!isDirectory(path)) {
         io.print(<TerminalText tone="error">cd: no such file or directory: {target}</TerminalText>);
         return;
       }
+      if (!canEnter(path, viewer)) {
+        io.print(<TerminalText tone="error">cd: permission denied: {target}</TerminalText>);
+        return;
+      }
 
-      onDirectoryChange(next);
+      onDirectoryChange(path);
     },
-    complete: () => (owner && where === 'home' ? ['sources'] : []),
+    complete: (argument) => completePath(argument, where, { files: false }),
   };
 
-  return [ls, cat, cd];
+  const pwd: TerminalCommand = {
+    name: 'pwd',
+    summary: 'print the current folder',
+    run: (_args, io) => io.print(<TerminalText>{where}</TerminalText>),
+  };
+
+  return [ls, cat, cd, pwd];
+}
+
+function entryTree(path: string, note: string, entries: Entry[], footer: string | undefined) {
+  return <TerminalTree root={<TerminalTreeRoot label={displayPath(path)} note={note} />} items={entries.map(entryItem)} footer={footer} />;
 }
 
 function entryItem(entry: Entry): TerminalTreeItem {
@@ -203,8 +273,8 @@ function entryItem(entry: Entry): TerminalTreeItem {
   };
 }
 
-function moreFooter(shown: number, total: number) {
-  return total > shown ? `… ${(total - shown).toLocaleString('en-US')} more · ls -a` : undefined;
+function moreFooter(shown: number, total: number, showAll: string) {
+  return total > shown ? `… ${(total - shown).toLocaleString('en-US')} more · ${showAll}` : undefined;
 }
 
 function posts(count: number) {
@@ -241,12 +311,4 @@ function findEntry(entries: TerminalListedEntry[], target: string): TerminalList
 
   const prefixed = entries.filter((entry) => entry.title.toLowerCase().startsWith(wanted));
   return prefixed.length === 1 ? prefixed[0] : undefined;
-}
-
-function resolveDirectory(target: string, current: Directory): Directory | null {
-  const path = target.replace(/\/+$/, '');
-  if (['~', '', '/', '..'].includes(path)) return 'home';
-  if (['sources', '~/sources', '/sources'].includes(path)) return 'sources';
-  if (path === '.') return current;
-  return null;
 }

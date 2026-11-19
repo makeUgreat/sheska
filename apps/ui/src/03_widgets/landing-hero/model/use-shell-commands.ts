@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { directoryPath, useBrowseCommands, type Directory } from '@/features/terminal-browse';
+import { canEnter, displayPath, HOME, useBrowseCommands } from '@/features/terminal-browse';
 import { useApiTokenCommand } from '@/features/terminal-api-token';
 import { useAskAiCommand } from '@/features/terminal-ask-ai';
 import { useSearchCommand } from '@/features/terminal-search';
@@ -9,12 +9,12 @@ import { clearCommand, type TerminalCommand, type TerminalListedEntry } from '@/
 
 export function useShellCommands() {
   const viewer = useViewer();
-  const [directory, setDirectory] = useState<Directory>('home');
+  const [directory, setDirectory] = useState<string>(HOME);
   // ls와 grep이 방금 보인 목록. cat이 Tab 완성과 열기에 쓴다.
   const recent = useRef<TerminalListedEntry[]>([]);
-  const where: Directory = viewer === 'owner' ? directory : 'home';
+  const where = canEnter(directory, viewer) ? directory : HOME;
 
-  const [ls, cat, cd] = useBrowseCommands({
+  const [ls, cat, cd, pwd] = useBrowseCommands({
     viewer,
     directory: where,
     onDirectoryChange: setDirectory,
@@ -25,11 +25,11 @@ export function useShellCommands() {
   const token = useApiTokenCommand({ viewer });
   const [su, exit, logout, whoami] = useSwitchUserCommands({
     viewer,
-    onLoggedOut: () => setDirectory('home'),
+    onLoggedOut: () => setDirectory(HOME),
   });
 
   // help는 이 순서로 보인다.
-  const commands: TerminalCommand[] = [ls, cat, grep, ai, cd, clearCommand, token, su, exit, logout, whoami];
+  const commands: TerminalCommand[] = [ls, cat, grep, ai, cd, pwd, clearCommand, token, su, exit, logout, whoami];
   const owner = viewer === 'owner';
 
   return {
@@ -37,7 +37,7 @@ export function useShellCommands() {
     commands,
     prompt: {
       identity: `${viewer}@hash`,
-      rest: `:${directoryPath(where)}${owner ? '#' : '$'}`,
+      rest: `:${displayPath(where)}${owner ? '#' : '$'}`,
     },
   };
 }
