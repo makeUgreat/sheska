@@ -1,4 +1,5 @@
 import { App, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { readApiToken, writeApiToken } from '@/api-token';
 
 export interface SheskaSettings {
   apiBaseUrl: string;
@@ -179,6 +180,10 @@ export class SheskaSettingTab extends PluginSettingTab {
             });
         });
       }
+
+      if (control.key === 'apiBaseUrl') {
+        this.displayApiTokenSetting(containerEl);
+      }
     }
 
     new Setting(containerEl)
@@ -221,6 +226,21 @@ export class SheskaSettingTab extends PluginSettingTab {
             button.setDisabled(false);
           }, 3000);
         });
+      });
+  }
+
+  private displayApiTokenSetting(containerEl: HTMLElement): void {
+    new Setting(containerEl)
+      .setName('API token')
+      .setDesc(
+        'Create one in the Sheska terminal with "token create <name>" and paste it here. It is kept in Obsidian secret storage, not in the plugin settings file.',
+      )
+      .addText((text) => {
+        text.inputEl.type = 'password';
+        text
+          .setPlaceholder('shk_...')
+          .setValue(readApiToken(this.app) ?? '')
+          .onChange((value) => writeApiToken(this.app, value));
       });
   }
 }
