@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { InvalidDataError, UnavailableError } from '@core/errors';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
-import { OllamaHttpEmbedder } from '../ollama-http.embedder';
+import { TextOllamaHttpEmbedder } from '../text.ollama-http.embedder';
 
 function buildContext(remainingMs = 60_000, maxRetries = 2): CallContext {
   return {
@@ -11,13 +11,13 @@ function buildContext(remainingMs = 60_000, maxRetries = 2): CallContext {
   };
 }
 
-describe('OllamaHttpEmbedder', () => {
-  let client: OllamaHttpEmbedder;
+describe('TextOllamaHttpEmbedder', () => {
+  let client: TextOllamaHttpEmbedder;
   const baseUrl = 'http://localhost:11434';
   const model = 'qwen3-embedding:0.6b';
 
   beforeEach(() => {
-    client = new OllamaHttpEmbedder({ baseUrl });
+    client = new TextOllamaHttpEmbedder({ baseUrl });
   });
 
   it('성공 시 임베딩과 모델을 반환한다', async () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, type Mock } from 'vitest';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
-import { type Embedder } from '@contexts/ingestion';
+import { type TextEmbedder } from '@contexts/ingestion';
 import { SearchQueryFromIngestionEmbedder } from '../search-query.from-ingestion.embedder';
 
 function buildContext(remainingMs = 60_000): CallContext {
@@ -12,7 +12,7 @@ function buildContext(remainingMs = 60_000): CallContext {
 }
 
 function createEmbedder(impl: (text: string, context: CallContext) => Promise<{ embedding: number[]; model: string }>): {
-  embedder: Embedder;
+  embedder: TextEmbedder;
   embed: Mock;
 } {
   const embed = vi.fn(impl);

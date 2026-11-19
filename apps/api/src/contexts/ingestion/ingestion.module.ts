@@ -12,7 +12,7 @@ import { SourceEmbeddingChunkBullMqConsumer } from '@contexts/ingestion/presenta
 import { SourceEmbeddingFinalizationBullMqConsumer } from '@contexts/ingestion/presentation/queue/bullmq/source-embedding-finalization.bullmq.consumer';
 import { SourceSyncJobCreatedIntegrationEventConsumer } from '@contexts/ingestion/presentation/events/source-sync-job-created.integration-event.consumer';
 import { SourceEmbeddingWorkflowBullMqDispatcher } from '@contexts/ingestion/infrastructure/queue/bullmq/source-embedding-workflow.bullmq.dispatcher';
-import { OllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.embedder';
+import { TextOllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/text.ollama-http.embedder';
 import {
   RecursiveCharacterChunker,
   DEFAULT_CHUNK_SIZE,
@@ -24,7 +24,7 @@ import { SourceEmbeddingPgDrizzleRepository } from '@contexts/ingestion/infrastr
 import { IngestionPgDrizzleUnitOfWork } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/ingestion.pg-drizzle.unit-of-work';
 import { SourceEmbeddingWorkflowProgressBullMqLookup } from '@contexts/ingestion/infrastructure/queue/bullmq/source-embedding-workflow-progress.bullmq.lookup';
 import {
-  EMBEDDER,
+  TEXT_EMBEDDER,
   SOURCE_EMBEDDING_REPOSITORY,
   SOURCE_EMBEDDING_LOOKUP,
   EMBEDDING_WORKFLOW_DISPATCHER,
@@ -58,8 +58,8 @@ export class IngestionModule {
           useClass: SourceEmbeddingFromRepositoryLookup,
         },
         {
-          provide: EMBEDDER,
-          useClass: OllamaHttpEmbedder,
+          provide: TEXT_EMBEDDER,
+          useClass: TextOllamaHttpEmbedder,
         },
         {
           provide: RecursiveCharacterChunker,
@@ -79,7 +79,7 @@ export class IngestionModule {
         SOURCE_EMBEDDING_REPOSITORY,
         INGESTION_UNIT_OF_WORK,
         SOURCE_EMBEDDING_LOOKUP,
-        EMBEDDER,
+        TEXT_EMBEDDER,
         RecursiveCharacterChunker,
         EMBEDDING_WORKFLOW_PROGRESS_LOOKUP,
       ],

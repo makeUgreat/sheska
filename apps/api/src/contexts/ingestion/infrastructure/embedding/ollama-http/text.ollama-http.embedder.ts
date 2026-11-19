@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { BadResponseError, InvalidDataError, TimeoutError, UnavailableError } from '@core/errors';
 import { type CallContext } from '@core/call-context';
 import { classifyInfrastructureRetry, parseRetryAfterMs, resiliencePipeline, type ResilienceAttempt } from '@kernels/infrastructure';
-import type { Embedder } from '@contexts/ingestion/application/ports';
+import type { TextEmbedder } from '@contexts/ingestion/application/ports';
 import { ollamaConfig, type OllamaConfig } from './ollama-http.config';
 
 const OLLAMA_MODEL = 'qwen3-embedding:0.6b';
@@ -15,7 +15,7 @@ const OllamaEmbedResponse = z.object({
 });
 
 @Injectable()
-export class OllamaHttpEmbedder implements Embedder {
+export class TextOllamaHttpEmbedder implements TextEmbedder {
   private readonly model = OLLAMA_MODEL;
 
   constructor(

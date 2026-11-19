@@ -2,8 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { type CallContext } from '@core/call-context';
 import { INTEGRATION_EVENT_DISPATCHER, type IntegrationEventDispatcher } from '@kernels/application';
 import { IngestionFailedIntegrationEvent } from '@contexts/ingestion/application/events/ingestion.integration-event';
-import { type Embedder } from '@contexts/ingestion/application/ports';
-import { EMBEDDER } from '@contexts/ingestion/ingestion.di-tokens';
+import { type TextEmbedder } from '@contexts/ingestion/application/ports';
+import { TEXT_EMBEDDER } from '@contexts/ingestion/ingestion.di-tokens';
 
 export interface EmbedSourceChunkCommand {
   readonly sourceId: string;
@@ -23,8 +23,8 @@ export interface EmbedSourceChunkResult {
 @Injectable()
 export class EmbedSourceChunkUseCase {
   constructor(
-    @Inject(EMBEDDER)
-    private readonly embedder: Embedder,
+    @Inject(TEXT_EMBEDDER)
+    private readonly embedder: TextEmbedder,
     @Inject(INTEGRATION_EVENT_DISPATCHER)
     private readonly integrationEventDispatcher: IntegrationEventDispatcher,
   ) {}

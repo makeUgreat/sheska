@@ -36,8 +36,8 @@ import {
   SOURCE_EMBEDDING_LOOKUP as INGESTION_SOURCE_EMBEDDING_LOOKUP,
   EMBEDDING_WORKFLOW_PROGRESS_LOOKUP,
   type EmbeddingWorkflowProgressLookup,
-  type Embedder,
-  EMBEDDER,
+  type TextEmbedder,
+  TEXT_EMBEDDER,
   IngestionModule,
 } from '@contexts/ingestion';
 import {
@@ -109,8 +109,8 @@ export class LibraryModule {
         },
         {
           provide: SEARCH_QUERY_EMBEDDER,
-          useFactory: (embedder: Embedder) => new SearchQueryFromIngestionEmbedder(embedder),
-          inject: [EMBEDDER],
+          useFactory: (embedder: TextEmbedder) => new SearchQueryFromIngestionEmbedder(embedder),
+          inject: [TEXT_EMBEDDER],
         },
         {
           provide: ATTACHMENT_IMAGE_CODEC,

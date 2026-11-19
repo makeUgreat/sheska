@@ -1,6 +1,6 @@
 import { type CallContext } from '@core/call-context';
 
-export interface Embedder {
+export interface TextEmbedder {
   embed(
     text: string,
     context: CallContext,
