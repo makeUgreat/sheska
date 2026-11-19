@@ -34,8 +34,10 @@ function useHighlightPlugins(body: string) {
 /**
  * 본문 위 여백은 감싸는 쪽이 정한다. 첫 block의 margin이 남으면 padding에 더해져
  * 여백이 두 배가 되고, 글이 제목으로 시작하는지 문단으로 시작하는지에 따라 높이도 달라진다.
+ *
+ * `word-break: normal`은 한글을 음절 단위로 줄바꿈해서 단어 중간이 잘린다.
  */
-const BODY = 'break-words [&>*:first-child]:mt-0';
+const BODY = 'break-words break-keep [&>*:first-child]:mt-0';
 
 export function Markdown({ body, className = '' }: { body: string; className?: string }) {
   return (
