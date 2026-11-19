@@ -4,6 +4,7 @@ import {
   useBrowseCommands,
   type Directory,
 } from '@/features/terminal-browse';
+import { useApiTokenCommand } from '@/features/terminal-api-token';
 import { useAskAiCommand } from '@/features/terminal-ask-ai';
 import { useSearchCommand } from '@/features/terminal-search';
 import { useSwitchUserCommands } from '@/features/terminal-switch-user';
@@ -29,6 +30,7 @@ export function useShellCommands() {
   });
   const grep = useSearchCommand({ recent });
   const ai = useAskAiCommand();
+  const token = useApiTokenCommand({ viewer });
   const [su, exit, logout, whoami] = useSwitchUserCommands({
     viewer,
     onLoggedOut: () => setDirectory('home'),
@@ -42,6 +44,7 @@ export function useShellCommands() {
     ai,
     cd,
     clearCommand,
+    token,
     su,
     exit,
     logout,

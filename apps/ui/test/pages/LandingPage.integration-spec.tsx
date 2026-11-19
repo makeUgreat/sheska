@@ -33,6 +33,22 @@ const SOURCE = {
   publishedPostId: null,
 };
 
+const API_TOKEN = {
+  apiTokenId: 'token-1',
+  name: 'macbook',
+  hint: 'shk_Ab3d',
+  createdAt: NOW,
+  lastUsedAt: null,
+};
+
+const ISSUED_TOKEN = {
+  ...API_TOKEN,
+  apiTokenId: 'token-2',
+  name: 'desktop',
+  hint: 'shk_Zx9q',
+  token: 'shk_Zx9qSECRET',
+};
+
 function buildMockHttpClient({
   authenticated = false,
   post = vi.fn().mockResolvedValue(undefined),
@@ -66,6 +82,19 @@ function buildMockHttpClient({
                 : [],
             nextCursor: null,
             semanticSearchApplied: true,
+          });
+        case '/api-tokens':
+          return Promise.resolve({
+            apiTokens: [
+              API_TOKEN,
+              {
+                ...API_TOKEN,
+                apiTokenId: 'token-3',
+                name: 'old-pc',
+                hint: 'shk_Qw7e',
+                lastUsedAt: '2026-11-10T00:00:00.000Z',
+              },
+            ],
           });
         case '/sources':
           return Promise.resolve({
@@ -326,6 +355,128 @@ describe('LandingPage terminal', () => {
 
       expect(await screen.findByLabelText('visitor@hash:~$')).toBeDefined();
       expect(del).toHaveBeenCalledWith('/auth/session');
+    });
+  });
+  describe('token', () => {
+    it('방문자에게는 권한이 없다고 답한다', async () => {
+      const { client, get } = buildMockHttpClient();
+      renderPage(client);
+
+      await typeCommand('visitor@hash:~$', 'token');
+
+      expect(await screen.findByText('token: permission denied')).toBeDefined();
+      expect(get).not.toHaveBeenCalledWith('/api-tokens', expect.anything());
+    });
+
+    it('토큰 목록을 tree로 보인다', async () => {
+      const { client } = buildMockHttpClient({ authenticated: true });
+      renderPage(client);
+
+      await typeCommand('owner@hash:~#', 'token');
+
+      const log = screen.getByRole('log');
+      expect(await within(log).findByText('2 tokens')).toBeDefined();
+      expect(within(log).getByText('macbook')).toBeDefined();
+      expect(
+        within(log).getByText(/shk_Ab3d… · created Nov 18 · never used/),
+      ).toBeDefined();
+      expect(
+        within(log).getByText(/shk_Qw7e… · created Nov 18 · used Nov 10/),
+      ).toBeDefined();
+    });
+
+    it('create는 원문을 한 번 보이고 다시 볼 수 없다고 알린다', async () => {
+      const post = vi.fn().mockResolvedValue(ISSUED_TOKEN);
+      const { client } = buildMockHttpClient({ authenticated: true, post });
+      renderPage(client);
+
+      await typeCommand('owner@hash:~#', 'token create desktop');
+
+      expect(await screen.findByText('created desktop')).toBeDefined();
+      expect(screen.getByText('shk_Zx9qSECRET')).toBeDefined();
+      expect(
+        screen.getByText('Copy it now. It will not be shown again.'),
+      ).toBeDefined();
+      expect(post).toHaveBeenCalledWith(
+        '/api-tokens',
+        { name: 'desktop' },
+        expect.anything(),
+      );
+    });
+
+    it('같은 이름이 있으면 이미 있다고 알린다', async () => {
+      const post = vi.fn().mockRejectedValue(
+        new HttpError(409, 'Conflict', {
+          code: 'api_token.name_taken',
+          details: {},
+        }),
+      );
+      const { client } = buildMockHttpClient({ authenticated: true, post });
+      renderPage(client);
+
+      await typeCommand('owner@hash:~#', 'token create macbook');
+
+      expect(
+        await screen.findByText('token: macbook already exists'),
+      ).toBeDefined();
+    });
+
+    it('revoke는 확인을 받은 뒤 이름으로 찾은 토큰을 폐기한다', async () => {
+      const { client, del } = buildMockHttpClient({ authenticated: true });
+      renderPage(client);
+
+      const user = await typeCommand('owner@hash:~#', 'token revoke macbook');
+      await user.type(
+        await screen.findByLabelText(
+          'Revoke macbook? Programs using it stop working. [y/N]',
+        ),
+        'y{Enter}',
+      );
+
+      expect(await screen.findByText('revoked macbook')).toBeDefined();
+      expect(del).toHaveBeenCalledWith('/api-tokens/token-1');
+    });
+
+    it('revoke를 확인하지 않으면 폐기하지 않는다', async () => {
+      const { client, del } = buildMockHttpClient({ authenticated: true });
+      renderPage(client);
+
+      const user = await typeCommand('owner@hash:~#', 'token revoke macbook');
+      await user.type(
+        await screen.findByLabelText(
+          'Revoke macbook? Programs using it stop working. [y/N]',
+        ),
+        '{Enter}',
+      );
+
+      expect(await screen.findByText('kept macbook')).toBeDefined();
+      expect(del).not.toHaveBeenCalled();
+    });
+
+    it('없는 이름은 폐기하지 않고 알린다', async () => {
+      const { client, del } = buildMockHttpClient({ authenticated: true });
+      renderPage(client);
+
+      await typeCommand('owner@hash:~#', 'token revoke nope');
+
+      expect(
+        await screen.findByText('token: nope: no such token'),
+      ).toBeDefined();
+      expect(del).not.toHaveBeenCalled();
+    });
+
+    it('목록을 본 뒤 revoke와 Tab을 누르면 이름을 채운다', async () => {
+      const { client } = buildMockHttpClient({ authenticated: true });
+      renderPage(client);
+
+      await typeCommand('owner@hash:~#', 'token');
+      await screen.findByText('2 tokens');
+      const user = userEvent.setup();
+      const input = screen.getByLabelText('owner@hash:~#');
+      await user.type(input, 'token revoke ma');
+      await user.keyboard('{Tab}');
+
+      expect((input as HTMLInputElement).value).toBe('token revoke macbook');
     });
   });
 });
