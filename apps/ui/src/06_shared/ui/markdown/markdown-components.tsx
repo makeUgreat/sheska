@@ -13,7 +13,7 @@ const BELOW_HEADER = 'scroll-mt-[calc(var(--spacing-header)+var(--spacing-gutter
  * 항목 안의 코드 블록과 표는 본문용 간격을 쓰면 어느 항목에 속하는지 흐려진다.
  */
 const LIST_BASE =
-  'mb-5 space-y-1.5 text-body-md text-text-secondary ' +
+  'mb-5 space-y-1.5 text-body-prose text-text-secondary ' +
   '[&_li>p]:mb-0 [&_ul]:mt-1.5 [&_ul]:mb-0 [&_ol]:mt-1.5 [&_ol]:mb-0 ' +
   '[&_li>div]:mt-2 [&_li>div]:mb-4';
 
@@ -58,7 +58,7 @@ const components: Components = {
   h5: HeadingBelowTitle('h6'),
   h6: HeadingBelowTitle('h6'),
   p: ({ id, children }) => (
-    <p id={id} className={anchored(id, 'mb-5 text-body-md text-text-secondary')}>
+    <p id={id} className={anchored(id, 'mb-5 text-body-prose text-text-secondary')}>
       {children}
     </p>
   ),
@@ -101,7 +101,7 @@ const components: Components = {
     </ol>
   ),
   blockquote: ({ id, children }) => (
-    <blockquote id={id} className={anchored(id, 'my-7 border-l-2 border-accent/40 pl-5 text-body-md italic text-text-secondary')}>
+    <blockquote id={id} className={anchored(id, 'my-7 border-l-2 border-accent/40 pl-5 text-body-prose italic text-text-secondary')}>
       {children}
     </blockquote>
   ),
