@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/makeUgreat/sheska/compare/1.3.0...1.4.0) (2026-11-19)
+
+
+### Features
+
+* **obsidian-plugin:** send an API token kept in Obsidian secret storage ([#412](https://github.com/makeUgreat/sheska/issues/412)) ([e85fd88](https://github.com/makeUgreat/sheska/commit/e85fd88c30538da03c9dcb904d58bd27b5b74732))
+
 ## [1.3.0](https://github.com/makeUgreat/sheska/compare/1.2.0...1.3.0) (2026-11-18)
 
 
