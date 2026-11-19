@@ -6,3 +6,4 @@ export * from './http/library/source.js';
 export * from './http/library/post.js';
 export * from './http/library/attachment.js';
 export * from './http/iam/auth.js';
+export * from './http/iam/api-token.js';
