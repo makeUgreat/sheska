@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/makeUgreat/sheska/compare/1.4.1...1.5.0) (2026-11-19)
+
+
+### Features
+
+* **obsidian-plugin:** check the API token in Test connection ([#417](https://github.com/makeUgreat/sheska/issues/417)) ([866dd66](https://github.com/makeUgreat/sheska/commit/866dd664e877e9fed0150f0c8e3b70f3bf8bd102))
+
 ## [1.4.1](https://github.com/makeUgreat/sheska/compare/1.4.0...1.4.1) (2026-11-19)
 
 
