@@ -8,6 +8,7 @@ export class ApiTokenPgDrizzleMapper {
       name: row.name,
       secretHash: row.secretHash,
       hint: row.hint,
+      permissions: row.permissions,
       lastUsedAt: row.lastUsedAt,
       createdAt: row.createdAt,
     });
@@ -21,6 +22,7 @@ export class ApiTokenPgDrizzleMapper {
       name: props.name.unpack(),
       secretHash: props.secretHash,
       hint: props.hint,
+      permissions: props.permissions.unpack(),
       lastUsedAt: props.lastUsedAt,
       createdAt: apiToken.createdAt,
     };

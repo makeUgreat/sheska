@@ -2,6 +2,7 @@ import { sha256Hex } from '@core/hash';
 import { describe, expect, it } from 'vitest';
 import { ApiToken } from '../api-token.aggregate';
 import { ApiTokenName } from '../api-token-name.vo';
+import { ApiTokenPermissions } from '../api-token-permissions.vo';
 import { ApiTokenSecret } from '../api-token-secret.vo';
 
 const CREATED_AT = new Date('2026-11-19T00:00:00.000Z');
@@ -12,6 +13,7 @@ function restore(lastUsedAt: Date | null = null) {
     name: 'macbook',
     secretHash: sha256Hex('shk_secret'),
     hint: 'shk_secr',
+    permissions: ['sources:sync'],
     lastUsedAt,
     createdAt: CREATED_AT,
   });
@@ -28,6 +30,7 @@ describe('ApiToken', () => {
     const props = ApiToken.create({
       name: ApiTokenName.of('macbook'),
       secret,
+      permissions: ApiTokenPermissions.of(['sources:sync']),
     }).getProps();
 
     expect(props.secretHash).toBe(sha256Hex('shk_Ab3dXYZ'));
@@ -35,10 +38,24 @@ describe('ApiToken', () => {
     expect(Object.values(props)).not.toContain('shk_Ab3dXYZ');
   });
 
+  it('고른 권한을 가진다', () => {
+    const apiToken = ApiToken.create({
+      name: ApiTokenName.of('macbook'),
+      secret: ApiTokenSecret.generate(),
+      permissions: ApiTokenPermissions.of(['sources:sync', 'sources:read']),
+    });
+
+    expect(apiToken.getProps().permissions.unpack()).toEqual([
+      'sources:sync',
+      'sources:read',
+    ]);
+  });
+
   it('쓴 적이 없는 상태로 시작한다', () => {
     const props = ApiToken.create({
       name: ApiTokenName.of('macbook'),
       secret: ApiTokenSecret.generate(),
+      permissions: ApiTokenPermissions.of(['sources:sync']),
     }).getProps();
 
     expect(props.lastUsedAt).toBeNull();

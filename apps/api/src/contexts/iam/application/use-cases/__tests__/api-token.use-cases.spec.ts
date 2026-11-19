@@ -16,6 +16,7 @@ function storedToken(lastUsedAt: Date | null = null) {
     name: 'macbook',
     secretHash: sha256Hex('shk_secret'),
     hint: 'shk_secr',
+    permissions: ['sources:sync'],
     lastUsedAt,
     createdAt: new Date('2026-11-01T00:00:00.000Z'),
   });
@@ -37,11 +38,13 @@ describe('IssueApiTokenUseCase', () => {
 
     const result = await new IssueApiTokenUseCase(apiTokens).execute({
       name: 'macbook',
+      permissions: ['sources:sync'],
     });
 
     expect(result).toMatchObject({
       name: 'macbook',
       hint: result.token.slice(0, 8),
+      permissions: ['sources:sync'],
       lastUsedAt: null,
     });
     expect(result.token).toMatch(/^shk_/);
@@ -56,7 +59,10 @@ describe('IssueApiTokenUseCase', () => {
     apiTokens.insert.mockRejectedValue(taken);
 
     await expect(
-      new IssueApiTokenUseCase(apiTokens).execute({ name: 'macbook' }),
+      new IssueApiTokenUseCase(apiTokens).execute({
+        name: 'macbook',
+        permissions: ['sources:sync'],
+      }),
     ).rejects.toBe(taken);
   });
 });
@@ -68,6 +74,7 @@ describe('ListApiTokensUseCase', () => {
         apiTokenId: 'token-1',
         name: 'macbook',
         hint: 'shk_secr',
+        permissions: ['sources:sync' as const],
         createdAt: NOW,
         lastUsedAt: null,
       },

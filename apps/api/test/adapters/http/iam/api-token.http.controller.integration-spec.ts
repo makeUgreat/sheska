@@ -72,7 +72,7 @@ describe('ApiTokenHttpController', () => {
       async (method, path) => {
         const response = await request(httpServer)
           [method](path)
-          .send({ name: 'macbook' })
+          .send({ name: 'macbook', permissions: ['sources:sync'] })
           .expect(401);
 
         expect(errorResponseSchema.parse(response.body).code).toBe(
@@ -120,6 +120,7 @@ describe('ApiTokenHttpController', () => {
         apiTokenId: 'token-1',
         name: 'macbook',
         hint: 'shk_Ab3d',
+        permissions: ['sources:sync'],
         createdAt: CREATED_AT,
         lastUsedAt: null,
         token: 'shk_Ab3dXYZ',
@@ -128,7 +129,7 @@ describe('ApiTokenHttpController', () => {
       const response = await request(httpServer)
         .post('/api-tokens')
         .set('Cookie', SESSION)
-        .send({ name: 'macbook' })
+        .send({ name: 'macbook', permissions: ['sources:sync'] })
         .expect(201)
         .expect('Cache-Control', 'no-store');
 
@@ -136,11 +137,15 @@ describe('ApiTokenHttpController', () => {
         apiTokenId: 'token-1',
         name: 'macbook',
         hint: 'shk_Ab3d',
+        permissions: ['sources:sync'],
         createdAt: CREATED_AT.toISOString(),
         lastUsedAt: null,
         token: 'shk_Ab3dXYZ',
       });
-      expect(issue).toHaveBeenCalledWith({ name: 'macbook' });
+      expect(issue).toHaveBeenCalledWith({
+        name: 'macbook',
+        permissions: ['sources:sync'],
+      });
     });
 
     it.each(['', 'MacBook', 'my token', 'a'.repeat(33)])(
@@ -149,7 +154,7 @@ describe('ApiTokenHttpController', () => {
         const response = await request(httpServer)
           .post('/api-tokens')
           .set('Cookie', SESSION)
-          .send({ name })
+          .send({ name, permissions: ['sources:sync'] })
           .expect(400);
 
         expect(errorResponseSchema.parse(response.body).code).toBe(
@@ -158,6 +163,22 @@ describe('ApiTokenHttpController', () => {
         expect(issue).not.toHaveBeenCalled();
       },
     );
+
+    it.each([
+      ['권한이 없으면', []],
+      ['없는 권한이면', ['sources:delete']],
+    ])('%s 400 request.validation_failed이다', async (_, permissions) => {
+      const response = await request(httpServer)
+        .post('/api-tokens')
+        .set('Cookie', SESSION)
+        .send({ name: 'macbook', permissions })
+        .expect(400);
+
+      expect(errorResponseSchema.parse(response.body).code).toBe(
+        'request.validation_failed',
+      );
+      expect(issue).not.toHaveBeenCalled();
+    });
 
     it('같은 이름이 있으면 409 api_token.name_taken이다', async () => {
       issue.mockRejectedValue(
@@ -171,7 +192,7 @@ describe('ApiTokenHttpController', () => {
       const response = await request(httpServer)
         .post('/api-tokens')
         .set('Cookie', SESSION)
-        .send({ name: 'macbook' })
+        .send({ name: 'macbook', permissions: ['sources:sync'] })
         .expect(409);
 
       expect(errorResponseSchema.parse(response.body).code).toBe(
@@ -187,6 +208,7 @@ describe('ApiTokenHttpController', () => {
           apiTokenId: 'token-1',
           name: 'macbook',
           hint: 'shk_Ab3d',
+          permissions: ['sources:sync', 'posts:publish'],
           createdAt: CREATED_AT,
           lastUsedAt: LAST_USED_AT,
         },
@@ -204,6 +226,7 @@ describe('ApiTokenHttpController', () => {
             apiTokenId: 'token-1',
             name: 'macbook',
             hint: 'shk_Ab3d',
+            permissions: ['sources:sync', 'posts:publish'],
             createdAt: CREATED_AT.toISOString(),
             lastUsedAt: LAST_USED_AT.toISOString(),
           },

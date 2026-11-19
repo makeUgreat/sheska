@@ -42,6 +42,7 @@ export class ApiTokenHttpController {
   ): Promise<ApiResponse<typeof ApiTokenApi.issue>> {
     const result = await this.issueApiTokenUseCase.execute({
       name: body.name,
+      permissions: body.permissions,
     });
 
     return ApiTokenApi.issue.response.parse({
@@ -74,6 +75,7 @@ function toApiTokenResponse(item: ApiTokenQueryListItem): ApiTokenResponse {
     apiTokenId: item.apiTokenId,
     name: item.name,
     hint: item.hint,
+    permissions: [...item.permissions],
     createdAt: item.createdAt.toISOString(),
     lastUsedAt: item.lastUsedAt?.toISOString() ?? null,
   };

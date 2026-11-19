@@ -1,12 +1,14 @@
 import { newId } from '@core/id';
 import { AggregateRoot } from '@kernels/domain';
 import { ApiTokenName } from './api-token-name.vo';
+import { ApiTokenPermissions } from './api-token-permissions.vo';
 import { type ApiTokenSecret } from './api-token-secret.vo';
 
 interface ApiTokenProps {
   name: ApiTokenName;
   secretHash: string;
   hint: string;
+  permissions: ApiTokenPermissions;
   lastUsedAt: Date | null;
 }
 
@@ -14,7 +16,7 @@ const USE_RECORD_INTERVAL_MS = 60 * 1000;
 
 export class ApiToken extends AggregateRoot<ApiTokenProps> {
   static create(params: ApiTokenCreateParams): ApiToken {
-    const { name, secret } = params;
+    const { name, secret, permissions } = params;
 
     return new ApiToken({
       id: newId(),
@@ -22,13 +24,15 @@ export class ApiToken extends AggregateRoot<ApiTokenProps> {
         name,
         secretHash: secret.hash(),
         hint: secret.hint(),
+        permissions,
         lastUsedAt: null,
       },
     });
   }
 
   static restore(params: ApiTokenRestoreParams): ApiToken {
-    const { id, name, secretHash, hint, lastUsedAt, createdAt } = params;
+    const { id, name, secretHash, hint, permissions, lastUsedAt, createdAt } =
+      params;
 
     return new ApiToken({
       id,
@@ -36,6 +40,7 @@ export class ApiToken extends AggregateRoot<ApiTokenProps> {
         name: ApiTokenName.of(name),
         secretHash,
         hint,
+        permissions: ApiTokenPermissions.of(permissions),
         lastUsedAt,
       },
       createdAt,
@@ -57,6 +62,7 @@ export class ApiToken extends AggregateRoot<ApiTokenProps> {
 interface ApiTokenCreateParams {
   name: ApiTokenName;
   secret: ApiTokenSecret;
+  permissions: ApiTokenPermissions;
 }
 
 interface ApiTokenRestoreParams {
@@ -64,6 +70,7 @@ interface ApiTokenRestoreParams {
   name: string;
   secretHash: string;
   hint: string;
+  permissions: readonly string[];
   lastUsedAt: Date | null;
   createdAt?: Date;
 }
