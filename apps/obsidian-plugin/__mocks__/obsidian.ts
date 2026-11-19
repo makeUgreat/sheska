@@ -166,7 +166,24 @@ class MockMetadataCache {
   }
 }
 
+export class MockSecretStorage {
+  private readonly secrets = new Map<string, string>();
+
+  setSecret(id: string, secret: string): void {
+    this.secrets.set(id, secret);
+  }
+
+  getSecret(id: string): string | null {
+    return this.secrets.get(id) ?? null;
+  }
+
+  listSecrets(): string[] {
+    return [...this.secrets.keys()];
+  }
+}
+
 export class App {
+  secretStorage = new MockSecretStorage();
   workspace = new MockWorkspace();
   vault = new MockVault();
   metadataCache = new MockMetadataCache();

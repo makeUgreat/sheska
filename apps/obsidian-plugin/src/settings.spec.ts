@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { noticeMessages, renderedSettings } from '../__mocks__/obsidian';
+import { App, noticeMessages, renderedSettings } from '../__mocks__/obsidian';
 import { DEFAULT_SETTINGS, SheskaSettingTab } from './settings';
 
 describe('DEFAULT_SETTINGS', () => {
@@ -31,6 +31,7 @@ describe('DEFAULT_SETTINGS', () => {
 function makeTab(
   api = { health: vi.fn().mockResolvedValue({ status: 'ok' }) },
   resetSyncCache = vi.fn().mockResolvedValue(undefined),
+  app = new App(),
 ): SheskaSettingTab {
   const plugin = {
     settings: { ...DEFAULT_SETTINGS },
@@ -38,7 +39,7 @@ function makeTab(
     api,
     resetSyncCache,
   };
-  return new SheskaSettingTab({} as never, plugin as never);
+  return new SheskaSettingTab(app as never, plugin as never);
 }
 
 describe('SheskaSettingTab', () => {
@@ -48,14 +49,64 @@ describe('SheskaSettingTab', () => {
       noticeMessages.length = 0;
     });
 
-    it('renders a row for each setting definition plus the ping and reset buttons', () => {
+    it('renders a row for each setting definition plus the API token, ping, and reset rows', () => {
       const tab = makeTab();
 
       tab.display();
 
       expect(renderedSettings).toHaveLength(
-        tab.getSettingDefinitions().length + 2,
+        tab.getSettingDefinitions().length + 3,
       );
+    });
+
+    describe('API token row', () => {
+      function tokenRow() {
+        const row = renderedSettings.find((each) => each.name === 'API token');
+        if (!row) throw new Error('API token row not rendered');
+        return row.textInputs[0] as unknown as {
+          inputEl: { type: string };
+          setValue: ReturnType<typeof vi.fn>;
+          onChange: ReturnType<typeof vi.fn>;
+        };
+      }
+
+      it('masks the token input', () => {
+        makeTab().display();
+
+        expect(tokenRow().inputEl.type).toBe('password');
+      });
+
+      it('shows the token kept in secret storage', () => {
+        const app = new App();
+        app.secretStorage.setSecret('sheska-api-token', 'shk_saved');
+
+        makeTab(undefined, undefined, app).display();
+
+        expect(tokenRow().setValue).toHaveBeenCalledWith('shk_saved');
+      });
+
+      it('writes a changed token to secret storage, not to the settings', () => {
+        const app = new App();
+        const tab = makeTab(undefined, undefined, app);
+        tab.display();
+
+        const onChange = tokenRow().onChange.mock.calls[0][0] as (
+          value: string,
+        ) => void;
+        onChange(' shk_new ');
+
+        expect(app.secretStorage.getSecret('sheska-api-token')).toBe('shk_new');
+        const plugin = (
+          tab as unknown as {
+            pluginWithSettings: {
+              settings: Record<string, unknown>;
+              saveSettings: ReturnType<typeof vi.fn>;
+            };
+          }
+        ).pluginWithSettings;
+        expect(Object.values(plugin.settings)).not.toContain('shk_new');
+        expect(plugin.saveSettings).not.toHaveBeenCalled();
+      });
     });
 
     it('renders apiBaseUrl as the first setting', () => {
@@ -66,12 +117,20 @@ describe('SheskaSettingTab', () => {
       expect(renderedSettings[0]).toMatchObject({ name: 'API base URL' });
     });
 
-    it('renders healthCheckIntervalMinutes as the second setting', () => {
+    it('renders the API token right below apiBaseUrl', () => {
       const tab = makeTab();
 
       tab.display();
 
-      expect(renderedSettings[1]).toMatchObject({
+      expect(renderedSettings[1]).toMatchObject({ name: 'API token' });
+    });
+
+    it('renders healthCheckIntervalMinutes after the API token', () => {
+      const tab = makeTab();
+
+      tab.display();
+
+      expect(renderedSettings[2]).toMatchObject({
         name: 'Health check interval (minutes)',
       });
     });
@@ -81,7 +140,7 @@ describe('SheskaSettingTab', () => {
 
       tab.display();
 
-      expect(renderedSettings[1].textInputs[0].inputEl.type).toBe('number');
+      expect(renderedSettings[2].textInputs[0].inputEl.type).toBe('number');
     });
 
     it('renders autoSyncEnabled as a toggle reflecting the current setting', () => {
@@ -89,7 +148,7 @@ describe('SheskaSettingTab', () => {
 
       tab.display();
 
-      expect(renderedSettings[2].toggles[0].value).toBe(
+      expect(renderedSettings[3].toggles[0].value).toBe(
         DEFAULT_SETTINGS.autoSyncEnabled,
       );
     });
@@ -98,7 +157,7 @@ describe('SheskaSettingTab', () => {
       const tab = makeTab();
       tab.display();
 
-      await renderedSettings[2].toggles[0].onChange(false);
+      await renderedSettings[3].toggles[0].onChange(false);
 
       const plugin = (
         tab as unknown as {

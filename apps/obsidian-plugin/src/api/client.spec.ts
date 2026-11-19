@@ -30,6 +30,55 @@ describe('SheskaApiClient', () => {
       expect(result).toEqual(mockData);
     });
 
+    it('sends the API token as a bearer token when one is set', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve({}),
+        }),
+      );
+      const withToken = new SheskaApiClient(
+        'http://localhost:3000',
+        () => 'shk_secret',
+      );
+
+      await withToken.get('/health', passthrough);
+
+      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/health', {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer shk_secret',
+        },
+      });
+    });
+
+    it('reads the API token on every request', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve({}),
+        }),
+      );
+      let token: string | null = null;
+      const withToken = new SheskaApiClient(
+        'http://localhost:3000',
+        () => token,
+      );
+
+      await withToken.get('/health', passthrough);
+      token = 'shk_later';
+      await withToken.get('/health', passthrough);
+
+      const calls = vi.mocked(fetch).mock.calls;
+      expect(calls[0][1]?.headers).not.toHaveProperty('Authorization');
+      expect(calls[1][1]?.headers).toHaveProperty(
+        'Authorization',
+        'Bearer shk_later',
+      );
+    });
+
     it('throws with status when response body is empty', async () => {
       vi.stubGlobal(
         'fetch',

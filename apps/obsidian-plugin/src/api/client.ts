@@ -41,7 +41,10 @@ export function isRetryableApiError(error: unknown): boolean {
 }
 
 export class SheskaApiClient {
-  constructor(private readonly baseUrl: string) {}
+  constructor(
+    private readonly baseUrl: string,
+    private readonly readApiToken: () => string | null = () => null,
+  ) {}
 
   private async request<T>(
     path: string,
@@ -49,10 +52,12 @@ export class SheskaApiClient {
     init?: RequestInit,
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
+    const token = this.readApiToken();
     const res = await fetch(url, {
       ...init,
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...init?.headers,
       },
     });

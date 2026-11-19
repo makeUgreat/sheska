@@ -1,6 +1,7 @@
 import { Notice, Plugin, TFile } from 'obsidian';
 import type { TAbstractFile } from 'obsidian';
 import { SheskaApiClient } from '@/api/client';
+import { readApiToken } from '@/api-token';
 import { AutoSyncService } from '@/auto-sync';
 import {
   FileExplorerSyncDecorator,
@@ -87,7 +88,9 @@ export default class SheskaPlugin extends Plugin {
 
   async saveSettings(): Promise<void> {
     await this.persistData();
-    this.api = new SheskaApiClient(this.settings.apiBaseUrl);
+    this.api = new SheskaApiClient(this.settings.apiBaseUrl, () =>
+      readApiToken(this.app),
+    );
     if (this.healthCheckScheduler && this.autoSyncService) {
       this.healthCheckScheduler.configure(this.api, this.settings);
       this.autoSyncService.configure(this.api, this.settings);
@@ -189,7 +192,9 @@ export default class SheskaPlugin extends Plugin {
   }
 
   private initializeServices(): void {
-    this.api = new SheskaApiClient(this.settings.apiBaseUrl);
+    this.api = new SheskaApiClient(this.settings.apiBaseUrl, () =>
+      readApiToken(this.app),
+    );
     this.healthCheckScheduler = new HealthCheckScheduler(
       this.api,
       this.settings,
