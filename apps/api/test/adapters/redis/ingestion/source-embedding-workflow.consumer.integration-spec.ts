@@ -13,7 +13,7 @@ import {
   type EmbeddingWorkflowDispatcher,
   type IngestionUnitOfWork,
 } from '@contexts/ingestion/application/ports';
-import { EMBEDDER, EMBEDDING_WORKFLOW_DISPATCHER, INGESTION_UNIT_OF_WORK } from '@contexts/ingestion/ingestion.di-tokens';
+import { TEXT_EMBEDDER, EMBEDDING_WORKFLOW_DISPATCHER, INGESTION_UNIT_OF_WORK } from '@contexts/ingestion/ingestion.di-tokens';
 import { EmbedSourceChunkUseCase } from '@contexts/ingestion/application/use-cases/embed-source-chunk.use-case';
 import { FinalizeEmbeddingWorkflowUseCase } from '@contexts/ingestion/application/use-cases/finalize-embedding-workflow.use-case';
 import { SourceEmbeddingWorkflowBullMqDispatcher } from '@contexts/ingestion/infrastructure/queue/bullmq/source-embedding-workflow.bullmq.dispatcher';
@@ -60,7 +60,7 @@ describe('Embedding workflow consumers', () => {
           provide: EMBEDDING_WORKFLOW_DISPATCHER,
           useClass: SourceEmbeddingWorkflowBullMqDispatcher,
         },
-        { provide: EMBEDDER, useValue: { embed } },
+        { provide: TEXT_EMBEDDER, useValue: { embed } },
         {
           provide: INGESTION_UNIT_OF_WORK,
           useValue: {

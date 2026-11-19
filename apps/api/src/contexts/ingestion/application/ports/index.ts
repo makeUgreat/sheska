@@ -1,4 +1,4 @@
-export { type Embedder } from './embedder';
+export { type TextEmbedder } from './text.embedder';
 export { type IngestionUnitOfWork, type IngestionUnitOfWorkResources } from './ingestion.unit-of-work';
 export { type SourceEmbeddingLookup, type EmbeddingMetadata } from './source-embedding.lookup';
 export {

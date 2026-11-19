@@ -2,7 +2,7 @@ import { describe, beforeAll, it, expect } from 'vitest';
 import { UnavailableError } from '@core/errors';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
-import { OllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.embedder';
+import { TextOllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/text.ollama-http.embedder';
 
 const OLLAMA_TEST_BASE_URL = 'http://127.0.0.1:11435';
 const OLLAMA_TEST_MODEL = 'qwen3-embedding:0.6b'; // 클래스 내부 OLLAMA_MODEL 상수와 일치해야 함 — global-setup.ts가 pull하는 모델
@@ -15,11 +15,11 @@ function buildContext(remainingMs = 60_000): CallContext {
   };
 }
 
-describe('OllamaHttpEmbedder (integration)', () => {
-  let embedder: OllamaHttpEmbedder;
+describe('TextOllamaHttpEmbedder (integration)', () => {
+  let embedder: TextOllamaHttpEmbedder;
 
   beforeAll(() => {
-    embedder = new OllamaHttpEmbedder({ baseUrl: OLLAMA_TEST_BASE_URL });
+    embedder = new TextOllamaHttpEmbedder({ baseUrl: OLLAMA_TEST_BASE_URL });
   });
 
   it('텍스트를 임베딩하면 1024차원 벡터와 모델명을 반환한다', async () => {
@@ -46,11 +46,11 @@ describe('OllamaHttpEmbedder (integration)', () => {
   });
 });
 
-describe('OllamaHttpEmbedder — 서비스 불가 (integration)', () => {
-  let unreachableEmbedder: OllamaHttpEmbedder;
+describe('TextOllamaHttpEmbedder — 서비스 불가 (integration)', () => {
+  let unreachableEmbedder: TextOllamaHttpEmbedder;
 
   beforeAll(() => {
-    unreachableEmbedder = new OllamaHttpEmbedder({
+    unreachableEmbedder = new TextOllamaHttpEmbedder({
       baseUrl: OLLAMA_UNREACHABLE_URL,
     });
   });

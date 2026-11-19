@@ -16,7 +16,7 @@ const OLLAMA_COMPOSE_CWD = resolve(__dirname, '../../..');
 const OLLAMA_LOG_CONTEXT: IntegrationAdapterLogContext = {
   adapter: 'OLLAMA',
   boundary: 'embedding-http',
-  module: 'OllamaHttpEmbedder',
+  module: 'TextOllamaHttpEmbedder',
   target: `${OLLAMA_TEST_URL} (${OLLAMA_TEST_MODEL})`,
 };
 
