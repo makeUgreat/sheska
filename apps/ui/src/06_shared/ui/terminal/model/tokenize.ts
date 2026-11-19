@@ -9,6 +9,7 @@ export function commonPrefix(values: string[]): string {
     while (length < prefix.length && length < value.length && prefix[length] === value[length]) {
       length += 1;
     }
+
     return prefix.slice(0, length);
   });
 }

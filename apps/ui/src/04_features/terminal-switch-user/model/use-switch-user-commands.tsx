@@ -23,6 +23,7 @@ export function useSwitchUserCommands({ viewer, onLoggedOut }: { viewer: Viewer;
         io.print(<TerminalText tone="muted">already logged in as owner</TerminalText>);
         return;
       }
+
       const password = await io.ask('Password:', {
         secret: true,
         username: OWNER,
@@ -31,6 +32,7 @@ export function useSwitchUserCommands({ viewer, onLoggedOut }: { viewer: Viewer;
         printAuthenticationFailure(io);
         return;
       }
+
       try {
         await logIn.mutateAsync({ password });
         io.print(<TerminalText tone="success">Welcome back. This browser stays logged in for 30 days.</TerminalText>);
@@ -87,6 +89,7 @@ function printLogInFailure(io: TerminalIo, error: unknown) {
     printRequestFailure(io, 'su', error);
     return;
   }
+
   if (error.code === AuthErrorCode.TOO_MANY_ATTEMPTS) {
     const minutes = minutesUntilRetry(error.details.retryAfterSeconds);
     io.print(

@@ -11,5 +11,6 @@ export function useAttachmentBaseUrl(): string {
   if (baseUrl === null) {
     throw new Error('useAttachmentBaseUrl must be used inside AttachmentBaseUrlProvider');
   }
+
   return baseUrl;
 }

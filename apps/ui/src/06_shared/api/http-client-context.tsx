@@ -12,5 +12,6 @@ export function useHttpClient(): HttpClient {
   if (!client) {
     throw new Error('useHttpClient must be used inside HttpClientProvider');
   }
+
   return client;
 }

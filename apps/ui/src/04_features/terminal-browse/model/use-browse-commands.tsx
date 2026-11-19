@@ -49,18 +49,19 @@ export function useBrowseCommands({
   const where: Directory = owner ? directory : 'home';
 
   async function fetchPosts(all: boolean) {
-    if (!all) {
-      const [page, { count }] = await Promise.all([listPosts(http, { limit: PAGE_SIZE }), countPosts(http)]);
-      return { entries: page.posts.map(postEntry), total: count };
+    if (all) {
+      const posts: PostSummary[] = [];
+      let cursor: string | undefined;
+      do {
+        const page = await listPosts(http, { cursor, limit: MAX_PAGE_SIZE });
+        posts.push(...page.posts);
+        cursor = page.nextCursor ?? undefined;
+      } while (cursor);
+      return { entries: posts.map(postEntry), total: posts.length };
     }
-    const posts: PostSummary[] = [];
-    let cursor: string | undefined;
-    do {
-      const page = await listPosts(http, { cursor, limit: MAX_PAGE_SIZE });
-      posts.push(...page.posts);
-      cursor = page.nextCursor ?? undefined;
-    } while (cursor);
-    return { entries: posts.map(postEntry), total: posts.length };
+
+    const [page, { count }] = await Promise.all([listPosts(http, { limit: PAGE_SIZE }), countPosts(http)]);
+    return { entries: page.posts.map(postEntry), total: count };
   }
 
   async function fetchSources(all: boolean) {
@@ -69,6 +70,7 @@ export function useBrowseCommands({
     let page = 1;
     let totalPages = 1;
     let total = 0;
+
     do {
       const result = await listSources(http, { page, pageSize });
       sources.push(...result.sources);
@@ -76,6 +78,7 @@ export function useBrowseCommands({
       total = result.totalCount;
       page += 1;
     } while (all && page <= totalPages);
+
     return { entries: sources.map(sourceEntry), total };
   }
 
@@ -99,6 +102,7 @@ export function useBrowseCommands({
         io.print(<TerminalText tone="error">ls: cannot access &apos;{unknown}&apos;: No such file or directory</TerminalText>);
         return;
       }
+
       const all = args.includes('-a');
       try {
         if (where === 'sources') {
@@ -115,6 +119,7 @@ export function useBrowseCommands({
         }
         const [{ entries, total }, sourceCount] = await Promise.all([fetchPosts(all), owner ? countSources() : Promise.resolve(null)]);
         recent.current = entries;
+
         const folder: TerminalTreeItem[] =
           sourceCount === null
             ? []
@@ -147,6 +152,7 @@ export function useBrowseCommands({
         io.print(<TerminalText tone="error">cat: missing operand</TerminalText>);
         return;
       }
+
       try {
         const entry = findEntry(recent.current, target) ?? findEntry(await fetchEverything(), target);
         if (!entry) {
@@ -157,6 +163,7 @@ export function useBrowseCommands({
           );
           return;
         }
+
         navigate(entry.to);
       } catch (error) {
         printRequestFailure(io, 'cat', error);
@@ -180,6 +187,7 @@ export function useBrowseCommands({
         io.print(<TerminalText tone="error">cd: no such file or directory: {target}</TerminalText>);
         return;
       }
+
       onDirectoryChange(next);
     },
     complete: () => (owner && where === 'home' ? ['sources'] : []),
@@ -230,6 +238,7 @@ function findEntry(entries: TerminalListedEntry[], target: string): TerminalList
   const wanted = target.toLowerCase();
   const exact = entries.find((entry) => entry.title.toLowerCase() === wanted);
   if (exact) return exact;
+
   const prefixed = entries.filter((entry) => entry.title.toLowerCase().startsWith(wanted));
   return prefixed.length === 1 ? prefixed[0] : undefined;
 }

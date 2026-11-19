@@ -33,6 +33,7 @@ export function useApiTokenCommand({ viewer }: { viewer: Viewer }): TerminalComm
       io.print(<TerminalText tone="muted">no tokens. Create one with token create &lt;name&gt;</TerminalText>);
       return;
     }
+
     io.print(<TerminalTree root={<TerminalTreeRoot label="tokens" note={countOf(tokens.length)} />} items={tokens.map(tokenItem)} />);
   }
 
@@ -41,8 +42,10 @@ export function useApiTokenCommand({ viewer }: { viewer: Viewer }): TerminalComm
       io.print(<TerminalText tone="error">usage: token create &lt;name&gt;</TerminalText>);
       return;
     }
+
     const issued = await issueApiToken(http, name);
     known.current = [...known.current, issued.name];
+
     io.print(<TerminalText tone="success">created {issued.name}</TerminalText>);
     io.print(<p className="select-all font-bold break-all text-on-surface">{issued.token}</p>);
     io.print(<TerminalText tone="muted">Copy it now. It will not be shown again.</TerminalText>);
@@ -53,18 +56,22 @@ export function useApiTokenCommand({ viewer }: { viewer: Viewer }): TerminalComm
       io.print(<TerminalText tone="error">usage: token revoke &lt;name&gt;</TerminalText>);
       return;
     }
+
     const token = (await fetchTokens()).find((each) => each.name === name);
     if (!token) {
       io.print(<TerminalText tone="error">token: {name}: no such token</TerminalText>);
       return;
     }
+
     const answer = await io.ask(`Revoke ${name}? Programs using it stop working. [y/N]`);
     if (answer.trim().toLowerCase() !== 'y') {
       io.print(<TerminalText tone="muted">kept {name}</TerminalText>);
       return;
     }
+
     await revokeApiToken(http, token.apiTokenId);
     known.current = known.current.filter((each) => each !== name);
+
     io.print(<TerminalText tone="success">revoked {name}</TerminalText>);
   }
 
@@ -78,19 +85,29 @@ export function useApiTokenCommand({ viewer }: { viewer: Viewer }): TerminalComm
         io.print(<TerminalText tone="error">token: permission denied</TerminalText>);
         return;
       }
+
       const [subcommand = 'ls', name] = args;
       try {
-        if (subcommand === 'ls') await list(io);
-        else if (subcommand === 'create') await create(name, io);
-        else if (subcommand === 'revoke') await revoke(name, io);
-        else
-          io.print(<TerminalText tone="error">token: unknown command &apos;{subcommand}&apos;. Try ls, create, or revoke.</TerminalText>);
+        switch (subcommand) {
+          case 'ls':
+            await list(io);
+            break;
+          case 'create':
+            await create(name, io);
+            break;
+          case 'revoke':
+            await revoke(name, io);
+            break;
+          default:
+            io.print(<TerminalText tone="error">token: unknown command &apos;{subcommand}&apos;. Try ls, create, or revoke.</TerminalText>);
+        }
       } catch (error) {
         printTokenFailure(io, error, name);
       }
     },
     complete(argument) {
       if (viewer !== 'owner') return [];
+
       const [subcommand, typed = ''] = argument.split(' ');
       if (subcommand === 'revoke' && argument.includes(' ')) {
         return known.current.filter((name) => name.startsWith(typed)).map((name) => `revoke ${name}`);
@@ -121,6 +138,7 @@ function countOf(count: number) {
 
 function printTokenFailure(io: TerminalIo, error: unknown, name?: string) {
   if (io.signal.aborted) return;
+
   if (error instanceof HttpError) {
     if (error.code === AuthErrorCode.UNAUTHENTICATED) {
       io.print(<TerminalText tone="error">token: your session has ended. Log in again with su.</TerminalText>);

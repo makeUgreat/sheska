@@ -4,6 +4,7 @@ function getVisiblePageRange(page: number, totalPages: number): number[] {
   const windowSize = Math.min(MAX_VISIBLE_PAGES, totalPages);
   let start = page - Math.floor(windowSize / 2);
   start = Math.max(1, Math.min(start, totalPages - windowSize + 1));
+
   return Array.from({ length: windowSize }, (_, i) => start + i);
 }
 

@@ -66,10 +66,16 @@ type EmptyMark = { variant: 'search'; query: string } | { variant: Exclude<Empty
 export type EmptyStateProps = EmptyMark & { className?: string };
 
 function Mark(mark: EmptyMark) {
-  if (mark.variant === 'search') return <QueryMark query={mark.query} />;
-  if (mark.variant === 'document') return <GhostDocument />;
-  if (mark.variant === 'list') return <GhostList />;
-  return <GhostGrid />;
+  switch (mark.variant) {
+    case 'search':
+      return <QueryMark query={mark.query} />;
+    case 'document':
+      return <GhostDocument />;
+    case 'list':
+      return <GhostList />;
+    case 'grid':
+      return <GhostGrid />;
+  }
 }
 
 export function EmptyState(props: EmptyStateProps) {
