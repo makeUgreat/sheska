@@ -145,10 +145,10 @@ export class SheskaSettingTab extends PluginSettingTab {
           if (control.max !== undefined) text.inputEl.max = String(control.max);
           text.setValue(String(this.pluginWithSettings.settings[control.key] ?? '')).onChange(async (value) => {
             const parsed = Number(value);
-            if (!Number.isNaN(parsed)) {
-              (this.pluginWithSettings.settings as unknown as Record<string, unknown>)[control.key] = parsed;
-              await this.pluginWithSettings.saveSettings();
-            }
+            if (Number.isNaN(parsed)) return;
+
+            (this.pluginWithSettings.settings as unknown as Record<string, unknown>)[control.key] = parsed;
+            await this.pluginWithSettings.saveSettings();
           });
         });
       } else if (control.type === 'toggle') {
@@ -198,6 +198,7 @@ export class SheskaSettingTab extends PluginSettingTab {
           await this.pluginWithSettings.resetSyncCache();
           button.setButtonText('✓ Cleared');
           new Notice('Sheska sync cache cleared. All notes and their images will re-sync.');
+
           window.setTimeout(() => {
             button.setButtonText('Reset');
             button.setDisabled(false);

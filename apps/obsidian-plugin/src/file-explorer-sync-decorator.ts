@@ -49,6 +49,7 @@ export class FileExplorerSyncDecorator {
 
   render(path: string): void {
     if (!this.root) return;
+
     const status = this.getStatus(path);
     for (const title of this.root.querySelectorAll<HTMLElement>(FILE_TITLE_SELECTOR)) {
       if (title.dataset.path === path) this.renderTitle(title, status);
@@ -67,6 +68,7 @@ export class FileExplorerSyncDecorator {
     this.observer?.disconnect();
     this.observer = null;
     this.renderScheduled = false;
+
     if (!this.root) return;
     for (const badge of this.root.querySelectorAll<HTMLElement>(`.${BADGE_CLASS}`)) {
       badge.remove();
@@ -97,6 +99,7 @@ export class FileExplorerSyncDecorator {
   private containsFileTitle(mutation: MutationRecord): boolean {
     const ElementConstructor = this.root?.defaultView?.Element;
     if (!ElementConstructor) return false;
+
     for (const node of mutation.addedNodes) {
       if (!(node instanceof ElementConstructor)) continue;
       if (node.matches(FILE_TITLE_SELECTOR) || node.querySelector(FILE_TITLE_SELECTOR)) {
@@ -110,6 +113,7 @@ export class FileExplorerSyncDecorator {
     if (this.renderScheduled) return;
     const view = this.root?.defaultView;
     if (!view) return;
+
     this.renderScheduled = true;
     view.requestAnimationFrame(() => {
       this.renderScheduled = false;

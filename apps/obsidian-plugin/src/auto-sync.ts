@@ -109,6 +109,7 @@ export class AutoSyncService {
   onVaultFileChanged(file: TAbstractFile): void {
     if (!this.settings.autoSyncEnabled) return;
     if (!(file instanceof TFile)) return;
+
     this.dirtyFiles.set(file.path, file);
     this.flushDebounced();
   }
@@ -180,6 +181,7 @@ export class AutoSyncService {
 
   private async flushDirtyFiles(): Promise<void> {
     if (this.isFlushing) return;
+
     this.isFlushing = true;
     try {
       const snapshot = Array.from(this.dirtyFiles.values());
@@ -208,13 +210,16 @@ export class AutoSyncService {
           target: await attachmentKey(image),
         })),
       );
+
       const prepared = prepareUploadContent(content, file.path, imageLinks);
       if (!prepared.ok) throw new UploadBlockedError(file.path, prepared.reason);
+
       await this.uploadImages(embeds.map(({ image }) => image));
       const upload = await this.api.uploadSource({
         externalSourceId: file.path,
         content: prepared.content,
       });
+
       if (!upload.syncJobId) {
         this.syncCache[file.path] = {
           mtime: mtimeAtRead,
@@ -238,6 +243,7 @@ export class AutoSyncService {
       };
       await this.options.saveSyncCache();
       this.options.onSyncStateChanged?.(file.path);
+
       if (this.shouldPollSyncJob(file.path)) {
         void this.pollSyncJobForFile(file).catch((error: unknown) => {
           console.error(`[Sheska] Sync job polling failed for "${file.path}":`, error);
@@ -252,6 +258,7 @@ export class AutoSyncService {
   private async uploadImages(images: TFile[]): Promise<void> {
     const unique = new Map(images.map((image) => [image.path, image]));
     let cacheChanged = false;
+
     try {
       for (const image of unique.values()) {
         if (await this.uploadImageIfChanged(image)) cacheChanged = true;
@@ -269,11 +276,13 @@ export class AutoSyncService {
         found.push({ original: embed.original, image });
       }
     }
+
     return found;
   }
 
   private notifyBlockedUpload(file: TFile, error: UploadBlockedError): void {
     if (this.notifiedBlockedVersions.get(file.path) === file.stat.mtime) return;
+
     this.notifiedBlockedVersions.set(file.path, file.stat.mtime);
     new Notice(`Sheska: ${error.message}.`);
   }
@@ -385,8 +394,10 @@ export class AutoSyncService {
       await this.reuploadImage(file);
       return;
     }
+
     if (!this.isSyncTarget(file)) return;
     if (this.isSynced(file)) return;
+
     const cached = this.syncCache[file.path];
     if (
       cached?.mtime === file.stat.mtime &&
@@ -403,6 +414,7 @@ export class AutoSyncService {
       return;
     }
     if (cached?.mtime === file.stat.mtime) return;
+
     await this.uploadAutomatically(file);
   }
 
@@ -411,6 +423,7 @@ export class AutoSyncService {
     const cached = this.syncCache[file.path];
     if (cached?.mtime === file.stat.mtime) return;
     if (this.syncingFiles.has(file.path)) return;
+
     await this.uploadAutomatically(file);
   }
 
@@ -431,6 +444,7 @@ export class AutoSyncService {
   private async reconcileCachedFileCore(file: TFile): Promise<void> {
     const cached = this.syncCache[file.path];
     if (!cached || cached.mtime !== file.stat.mtime) return;
+
     if (cached.status === 'failed' && cached.nextRetryAt !== undefined) {
       if (Date.now() < cached.nextRetryAt) return;
       try {
@@ -440,6 +454,7 @@ export class AutoSyncService {
       }
       return;
     }
+
     if (!cached.syncJobId || cached.status === undefined || cached.status === 'synced') {
       return;
     }
@@ -531,6 +546,7 @@ export class AutoSyncService {
 
   private async recordServerFailure(path: string, cached: SyncCache[string]): Promise<void> {
     const retryCount = cached.retryCount ?? 0;
+
     this.syncCache[path] = {
       ...cached,
       status: 'failed',

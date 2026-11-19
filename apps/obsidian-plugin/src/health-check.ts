@@ -22,6 +22,7 @@ export class HealthCheckScheduler {
   start(): void {
     const minutes = this.settings.healthCheckIntervalMinutes;
     if (minutes <= 0) return;
+
     this.intervalId = this.registerInterval(
       window.setInterval(
         () => {
