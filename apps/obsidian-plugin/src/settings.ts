@@ -1,4 +1,6 @@
 import { App, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { AuthErrorCode } from '@sheska/contract';
+import { SheskaApiError } from '@/api/client';
 import { readApiToken, writeApiToken } from '@/api-token';
 
 export interface SheskaSettings {
@@ -22,7 +24,7 @@ export const DEFAULT_SETTINGS: SheskaSettings = {
 interface PluginWithSettings extends Plugin {
   settings: SheskaSettings;
   saveSettings(): Promise<void>;
-  api: { health(): Promise<unknown> };
+  api: { syncCheck(): Promise<void> };
   resetSyncCache(): Promise<void>;
 }
 
@@ -190,17 +192,19 @@ export class SheskaSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Test connection')
-      .setDesc('Check if the Sheska API is reachable with the current URL.')
+      .setDesc(
+        'Check that the current URL and API token can sync with the Sheska API.',
+      )
       .addButton((button) => {
         button.setButtonText('Ping').onClick(async () => {
           button.setDisabled(true);
           try {
-            await this.pluginWithSettings.api.health();
+            await this.pluginWithSettings.api.syncCheck();
             button.setButtonText('✓ Connected');
-            new Notice('Sheska API is reachable.');
-          } catch {
+            new Notice('Sheska API is reachable and the API token can sync.');
+          } catch (error) {
             button.setButtonText('✗ Failed');
-            new Notice('Failed to reach Sheska API. Check settings.');
+            new Notice(connectionFailureMessage(error));
           } finally {
             window.setTimeout(() => {
               button.setButtonText('Ping');
@@ -244,5 +248,17 @@ export class SheskaSettingTab extends PluginSettingTab {
           .setValue(readApiToken(this.app) ?? '')
           .onChange((value) => writeApiToken(this.app, value));
       });
+  }
+}
+
+function connectionFailureMessage(error: unknown): string {
+  const code = error instanceof SheskaApiError ? error.code : undefined;
+  switch (code) {
+    case AuthErrorCode.UNAUTHENTICATED:
+      return 'The API token is missing or invalid. Enter a valid token.';
+    case AuthErrorCode.FORBIDDEN:
+      return 'The API token cannot sync. Issue a token with the sources:sync permission.';
+    default:
+      return 'Failed to reach Sheska API. Check the URL.';
   }
 }
