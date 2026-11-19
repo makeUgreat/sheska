@@ -40,6 +40,7 @@ const meta = {
   },
   args: {
     articlesHref: '/posts',
+    githubHref: 'https://github.com/makeUgreat',
   },
 } satisfies Meta<typeof LandingHero>;
 
