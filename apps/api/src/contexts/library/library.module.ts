@@ -21,7 +21,7 @@ import { AttachmentsHttpController } from '@contexts/library/presentation/http/a
 import { UploadAttachmentUseCase } from '@contexts/library/application/use-cases/upload-attachment.use-case';
 import { AttachmentImageOptimizer } from '@contexts/library/application/services/attachment-image-optimizer.service';
 import { AttachmentImageSharpCodec } from '@contexts/library/infrastructure/attachment-image/sharp/attachment-image.sharp.codec';
-import { AttachmentContentS3Store } from '@contexts/library/infrastructure/attachment-content/s3/attachment-content.s3.store';
+import { AttachmentContentR2Store } from '@contexts/library/infrastructure/attachment-content/r2/attachment-content.r2.store';
 import { PostsHttpController } from '@contexts/library/presentation/http/posts.http.controller';
 import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/library/application/use-cases/get-post.use-case';
@@ -118,7 +118,7 @@ export class LibraryModule {
         },
         {
           provide: ATTACHMENT_CONTENT_STORE,
-          useClass: AttachmentContentS3Store,
+          useClass: AttachmentContentR2Store,
         },
         SourceContentSnapshotCalculator,
         AttachmentImageOptimizer,
