@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { canEnter, displayPath, HOME, useBrowseCommands } from '@/features/terminal-browse';
 import { useApiTokenCommand } from '@/features/terminal-api-token';
 import { useAskAiCommand } from '@/features/terminal-ask-ai';
+import { useEasterEggCommands } from '@/features/terminal-easter-eggs';
 import { useSearchCommand } from '@/features/terminal-search';
 import { useSwitchUserCommands } from '@/features/terminal-switch-user';
 import { useViewer } from '@/entities/session';
@@ -29,7 +30,9 @@ export function useShellCommands() {
   });
 
   // help는 이 순서로 보인다.
-  const commands: TerminalCommand[] = [ls, cat, grep, ai, cd, pwd, clearCommand, token, su, exit, logout, whoami];
+  const regular: TerminalCommand[] = [ls, cat, grep, ai, cd, pwd, clearCommand, token, su, exit, logout, whoami];
+  const easterEggs = useEasterEggCommands({ viewer, commands: regular });
+  const commands = [...regular, ...easterEggs];
   const owner = viewer === 'owner';
 
   return {

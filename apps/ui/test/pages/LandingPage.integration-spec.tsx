@@ -405,6 +405,66 @@ describe('LandingPage terminal', () => {
       expect(del).toHaveBeenCalledWith('/auth/session');
     });
   });
+  describe('이스터에그', () => {
+    it('방문자의 sudo는 sudoers에 없다고 답한다', async () => {
+      const { client } = buildMockHttpClient();
+      renderPage(client);
+
+      await typeCommand('guest@hash:~$', 'sudo ls');
+
+      expect(await screen.findByText("guest is not in the sudoers file. Let's get to know each other first.")).toBeDefined();
+    });
+
+    it('소유자의 sudo는 뒤의 명령을 실행한다', async () => {
+      const { client } = buildMockHttpClient({ authenticated: true });
+      renderPage(client);
+
+      await typeCommand('owner@hash:~#', 'sudo pwd');
+
+      expect(await screen.findByText('/home/hash')).toBeDefined();
+    });
+
+    it('rm -rf /는 안전장치에 걸리고 넘는 방법을 알려 준다', async () => {
+      const { client } = buildMockHttpClient();
+      renderPage(client);
+
+      await typeCommand('guest@hash:~$', 'rm -rf /');
+
+      expect(
+        await screen.findByText("rm: it is dangerous to operate recursively on '/'. --no-preserve-root exists, if you're curious."),
+      ).toBeDefined();
+    });
+
+    it('방문자의 rm은 거의 지울 뻔하다 실패한다', async () => {
+      const { client } = buildMockHttpClient();
+      renderPage(client);
+
+      await typeCommand('guest@hash:~$', 'rm posts');
+
+      expect(await screen.findByText("rm: cannot remove 'posts': Got to 99%, then the system got cold feet.")).toBeDefined();
+    });
+
+    it('소유자의 rm은 읽기 전용을 핑계로 실패한다', async () => {
+      const { client } = buildMockHttpClient({ authenticated: true });
+      renderPage(client);
+
+      await typeCommand('owner@hash:~#', 'rm posts');
+
+      expect(await screen.findByText("rm: cannot remove 'posts': Got to 99%, then the disk remembered it's read-only.")).toBeDefined();
+    });
+
+    it('안전장치를 넘은 rm도 마지막에 실패한다', async () => {
+      const { client } = buildMockHttpClient({ authenticated: true });
+      renderPage(client);
+
+      await typeCommand('owner@hash:~#', 'rm -rf --no-preserve-root /');
+
+      expect(
+        await screen.findByText("rm: cannot remove '/': Made it past the failsafe, got to 99%, then tripped on the last byte."),
+      ).toBeDefined();
+    });
+  });
+
   describe('token', () => {
     it('방문자에게는 권한이 없다고 답한다', async () => {
       const { client, get } = buildMockHttpClient();
