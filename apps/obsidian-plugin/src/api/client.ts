@@ -2,6 +2,7 @@ import {
   type ApiRequest,
   type ApiResponse,
   AttachmentApi,
+  AuthApi,
   errorResponseSchema,
   HealthApi,
   pathOf,
@@ -51,6 +52,11 @@ export class SheskaApiClient {
     schema: ResponseSchema<T>,
     init?: RequestInit,
   ): Promise<T> {
+    const res = await this.send(path, init);
+    return schema.parse(await res.json());
+  }
+
+  private async send(path: string, init?: RequestInit): Promise<Response> {
     const url = `${this.baseUrl}${path}`;
     const token = this.readApiToken();
     const res = await fetch(url, {
@@ -71,8 +77,7 @@ export class SheskaApiClient {
         readFailureCode(body),
       );
     }
-
-    return schema.parse(await res.json());
+    return res;
   }
 
   get<T>(path: string, schema: ResponseSchema<T>): Promise<T> {
@@ -88,6 +93,10 @@ export class SheskaApiClient {
 
   health(): Promise<HealthResponse> {
     return this.get(HealthApi.ready.path, HealthApi.ready.response);
+  }
+
+  async syncCheck(): Promise<void> {
+    await this.send(AuthApi.syncCheck.path);
   }
 
   uploadSource(body: UploadSourceRequest): Promise<UploadSourceResponse> {

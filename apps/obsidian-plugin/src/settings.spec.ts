@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { App, noticeMessages, renderedSettings } from '../__mocks__/obsidian';
+import { SheskaApiError } from './api/client';
 import { DEFAULT_SETTINGS, SheskaSettingTab } from './settings';
 
 describe('DEFAULT_SETTINGS', () => {
@@ -29,7 +30,7 @@ describe('DEFAULT_SETTINGS', () => {
 });
 
 function makeTab(
-  api = { health: vi.fn().mockResolvedValue({ status: 'ok' }) },
+  api = { syncCheck: vi.fn().mockResolvedValue(undefined) },
   resetSyncCache = vi.fn().mockResolvedValue(undefined),
   app = new App(),
 ): SheskaSettingTab {
@@ -196,38 +197,51 @@ describe('SheskaSettingTab', () => {
         expect(pingRow.buttons[0].text).toBe('Ping');
       });
 
-      it('shows success Notice when API responds', async () => {
-        const api = { health: vi.fn().mockResolvedValue({ status: 'ok' }) };
+      async function clickPing(syncCheck: () => Promise<void>) {
+        const api = { syncCheck: vi.fn(syncCheck) };
         const tab = makeTab(api);
         tab.display();
-
         await renderedSettings.at(-2)!.buttons[0].click();
+        return api;
+      }
 
-        expect(noticeMessages).toContain('Sheska API is reachable.');
-      });
+      it('checks the URL and API token with api.syncCheck()', async () => {
+        const api = await clickPing(() => Promise.resolve());
 
-      it('shows failure Notice when API is unreachable', async () => {
-        const api = {
-          health: vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
-        };
-        const tab = makeTab(api);
-        tab.display();
-
-        await renderedSettings.at(-2)!.buttons[0].click();
-
+        expect(api.syncCheck).toHaveBeenCalledOnce();
         expect(noticeMessages).toContain(
-          'Failed to reach Sheska API. Check settings.',
+          'Sheska API is reachable and the API token can sync.',
         );
       });
 
-      it('calls api.health()', async () => {
-        const api = { health: vi.fn().mockResolvedValue({ status: 'ok' }) };
-        const tab = makeTab(api);
-        tab.display();
+      it.each([
+        [
+          'auth.unauthenticated',
+          401,
+          'The API token is missing or invalid. Enter a valid token.',
+        ],
+        [
+          'auth.forbidden',
+          403,
+          'The API token cannot sync. Issue a token with the sources:sync permission.',
+        ],
+      ])('shows a token Notice for %s', async (code, status, message) => {
+        await clickPing(() =>
+          Promise.reject(new SheskaApiError(status, '', '', code)),
+        );
 
-        await renderedSettings.at(-2)!.buttons[0].click();
+        expect(noticeMessages).toContain(message);
+      });
 
-        expect(api.health).toHaveBeenCalledOnce();
+      it.each([
+        ['a network failure', new TypeError('Failed to fetch')],
+        ['a server error', new SheskaApiError(503, 'Service Unavailable', '')],
+      ])('asks to check the URL on %s', async (_, error) => {
+        await clickPing(() => Promise.reject(error));
+
+        expect(noticeMessages).toContain(
+          'Failed to reach Sheska API. Check the URL.',
+        );
       });
     });
 

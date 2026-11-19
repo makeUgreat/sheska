@@ -258,6 +258,59 @@ describe('SheskaApiClient', () => {
     });
   });
 
+  describe('syncCheck', () => {
+    it('calls GET /auth/sync-check with the API token and accepts an empty 204', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          status: 204,
+          json: () => Promise.reject(new SyntaxError('Unexpected end of JSON')),
+        }),
+      );
+      const withToken = new SheskaApiClient(
+        'http://localhost:3000',
+        () => 'shk_secret',
+      );
+
+      await expect(withToken.syncCheck()).resolves.toBeUndefined();
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:3000/auth/sync-check',
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer shk_secret',
+          },
+        },
+      );
+    });
+
+    it('carries the failure code when the token lacks sources:sync', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 403,
+          statusText: 'Forbidden',
+          text: () =>
+            Promise.resolve(
+              JSON.stringify({
+                statusCode: 403,
+                code: 'auth.forbidden',
+                message: 'The credential does not allow this request',
+                details: {},
+              }),
+            ),
+        }),
+      );
+
+      await expect(client.syncCheck()).rejects.toMatchObject({
+        status: 403,
+        code: 'auth.forbidden',
+      });
+    });
+  });
+
   describe('uploadSource', () => {
     it('calls POST /sources with externalSourceId and content', async () => {
       const response = {
