@@ -51,6 +51,18 @@ export function entryFolderOf(path: string): string | undefined {
   return [POSTS, SOURCES].find((folder) => path.startsWith(`${folder}/`));
 }
 
+/** 목록 페이지가 있는 폴더만 주소를 돌려준다. */
+export function pageOf(path: string): string | undefined {
+  switch (path) {
+    case POSTS:
+      return '/posts';
+    case SOURCES:
+      return '/sources';
+    default:
+      return undefined;
+  }
+}
+
 /** sources는 권한 700이라 소유자만 들어간다. */
 export function canEnter(path: string, viewer: Viewer): boolean {
   if (path === SOURCES || path.startsWith(`${SOURCES}/`)) return viewer === 'owner';

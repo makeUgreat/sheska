@@ -23,6 +23,7 @@ import {
   filesIn,
   HOME,
   isDirectory,
+  pageOf,
   POSTS,
   readFile,
   resolvePath,
@@ -104,9 +105,15 @@ export function useBrowseCommands({
   async function findInFolder(folder: string | undefined, name: string) {
     if (!folder) return findEntry(recent.current, name);
 
-    const page = folder === POSTS ? '/posts/' : '/sources/';
-    const recentInFolder = recent.current.filter((entry) => entry.to.startsWith(page));
+    const recentInFolder = recent.current.filter((entry) => entry.to.startsWith(`${pageOf(folder)}/`));
     return findEntry(recentInFolder, name) ?? findEntry(await fetchEverything(folder), name);
+  }
+
+  /** 방금 보인 글 제목과 파일 경로를 함께 채운다. */
+  function completeFile(argument: string) {
+    const typed = argument.toLowerCase();
+    const titles = recent.current.map((entry) => entry.title).filter((title) => title.toLowerCase().startsWith(typed));
+    return [...titles, ...completePath(argument, where, { files: true })];
   }
 
   /** 폴더 이름 옆에 붙는 개수. 들어갈 수 없는 폴더는 세지 않는다. */
@@ -221,11 +228,7 @@ export function useBrowseCommands({
         printRequestFailure(io, 'cat', error);
       }
     },
-    complete: (argument) => {
-      const typed = argument.toLowerCase();
-      const titles = recent.current.map((entry) => entry.title).filter((title) => title.toLowerCase().startsWith(typed));
-      return [...titles, ...completePath(argument, where, { files: true })];
-    },
+    complete: completeFile,
   };
 
   const cd: TerminalCommand = {
@@ -253,13 +256,50 @@ export function useBrowseCommands({
     complete: (argument) => completePath(argument, where, { files: false }),
   };
 
+  const open: TerminalCommand = {
+    name: 'open',
+    usage: 'open [path]',
+    summary: 'open a folder or file as a page',
+    async run(args, io) {
+      const target = args.join(' ') || '.';
+      const path = resolvePath(target, where);
+      const page = pageOf(path);
+      const folder = entryFolderOf(path);
+      if (!canEnter(path, viewer)) {
+        io.print(<TerminalText tone="error">open: {target}: Permission denied</TerminalText>);
+        return;
+      }
+      if (page) {
+        navigate(page);
+        return;
+      }
+      if (isDirectory(path) || readFile(path) !== undefined) {
+        io.print(<TerminalText tone="error">open: {target}: no page to open</TerminalText>);
+        return;
+      }
+
+      try {
+        const entry = await findInFolder(folder, folder ? path.slice(folder.length + 1) : target);
+        if (!entry) {
+          io.print(<TerminalText tone="error">open: {target}: No such file or directory</TerminalText>);
+          return;
+        }
+
+        navigate(entry.to);
+      } catch (error) {
+        printRequestFailure(io, 'open', error);
+      }
+    },
+    complete: completeFile,
+  };
+
   const pwd: TerminalCommand = {
     name: 'pwd',
     summary: 'print the current folder',
     run: (_args, io) => io.print(<TerminalText>{where}</TerminalText>),
   };
 
-  return [ls, cat, cd, pwd];
+  return [ls, cat, open, cd, pwd];
 }
 
 function entryTree(path: string, note: string, entries: Entry[], footer: string | undefined) {

@@ -13,7 +13,7 @@ const FOCUS_RING =
 /** The prompt names the section you are in, not the document. */
 function toCommand(pathname: string) {
   const [section] = pathname.split('/').filter(Boolean);
-  return section ? `cd /${section}` : 'cd ~';
+  return section ? `open ~/${section}` : 'cd ~';
 }
 
 function isCurrent(pathname: string, href: string) {

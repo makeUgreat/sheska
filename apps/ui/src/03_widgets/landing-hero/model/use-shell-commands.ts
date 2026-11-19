@@ -15,7 +15,7 @@ export function useShellCommands() {
   const recent = useRef<TerminalListedEntry[]>([]);
   const where = canEnter(directory, viewer) ? directory : HOME;
 
-  const [ls, cat, cd, pwd] = useBrowseCommands({
+  const [ls, cat, open, cd, pwd] = useBrowseCommands({
     viewer,
     directory: where,
     onDirectoryChange: setDirectory,
@@ -30,7 +30,7 @@ export function useShellCommands() {
   });
 
   // help는 이 순서로 보인다.
-  const regular: TerminalCommand[] = [ls, cat, grep, ai, cd, pwd, clearCommand, token, su, exit, logout, whoami];
+  const regular: TerminalCommand[] = [ls, cat, open, grep, ai, cd, pwd, clearCommand, token, su, exit, logout, whoami];
   const easterEggs = useEasterEggCommands({ viewer, commands: regular });
   const commands = [...regular, ...easterEggs];
   const owner = viewer === 'owner';
