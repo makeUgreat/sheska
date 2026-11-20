@@ -119,39 +119,40 @@ describe('PostsPage', () => {
     expect(within(lastYear).getByRole('link', { name: /작년 포스트/ })).toBeDefined();
   });
 
-  it('목록 항목에 마우스를 올리면 미리보기가 그 post로 바뀐다', async () => {
+  it('의미 검색으로 찾은 항목은 유사도를 항목 안에 보여준다', async () => {
     const user = userEvent.setup();
     const now = '2026-01-01T00:00:00.000Z';
     const posts: PostSummary[] = [
       {
-        postId: 'post-1',
+        postId: 'semantic-1',
         sourceId: 'source-1',
-        title: '첫 번째 포스트',
+        title: '의미로 찾은 포스트',
         viewCount: 1,
         createdAt: now,
         updatedAt: now,
+        similarity: 91,
       },
       {
-        postId: 'post-2',
+        postId: 'keyword-1',
         sourceId: 'source-2',
-        title: '두 번째 포스트',
+        title: '키워드로 찾은 포스트',
         viewCount: 2,
         createdAt: now,
         updatedAt: now,
+        similarity: null,
       },
     ];
     const client = buildMockHttpClient({
-      listPosts: vi.fn().mockResolvedValue({ posts, nextCursor: null }),
+      searchPosts: vi.fn().mockResolvedValue({ posts, nextCursor: null, semanticSearchApplied: true }),
     });
 
     renderPage(client);
+    await user.type(screen.getByLabelText('Search posts by title or content'), 'garden{Enter}');
 
-    expect(await screen.findByText(/1 views/)).toBeDefined();
-
-    await user.hover(screen.getByRole('link', { name: /두 번째 포스트/ }));
-
-    expect(screen.getByText(/2 views/)).toBeDefined();
-    expect(screen.queryByText(/1 views/)).toBeNull();
+    const semantic = await screen.findByRole('link', { name: /의미로 찾은 포스트/ });
+    const keyword = screen.getByRole('link', { name: /키워드로 찾은 포스트/ });
+    expect(within(semantic).getByText('91% match')).toBeDefined();
+    expect(within(keyword).queryByText(/% match/)).toBeNull();
   });
 
   it('에러가 발생하면 상태 코드와 실패한 대상을 보여준다', async () => {
