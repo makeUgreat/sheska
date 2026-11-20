@@ -1,18 +1,13 @@
 import { Link } from 'react-router-dom';
 import { AI_SUMMARY_NOTICE, type AiSummary, type GetPostResponse } from '@/entities/post';
-import { formatDottedDate, type Heading } from '@/shared/lib';
+import { formatDottedDate } from '@/shared/lib';
 import { AiMark, ArticleLayout, EmptyState, ErrorState, LoadingState } from '@/shared/ui';
 
 export type PostArticleState =
   | { status: 'loading' }
   | { status: 'error'; error: Error }
   | { status: 'empty' }
-  | {
-      status: 'success';
-      post: GetPostResponse;
-      outline: Heading[];
-      activeHeadingId: string | null;
-    };
+  | { status: 'success'; post: GetPostResponse };
 
 const FOCUS_RING = 'rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2';
 
@@ -44,9 +39,9 @@ export function PostArticleSection({ state }: { state: PostArticleState }) {
     );
   }
 
-  const { post, outline, activeHeadingId } = state;
+  const { post } = state;
 
-  return <ArticleLayout header={<PostHeader post={post} />} body={post.body} outline={outline} activeHeadingId={activeHeadingId} />;
+  return <ArticleLayout header={<PostHeader post={post} />} body={post.body} />;
 }
 
 /** 글 제목을 함께 적어 지금 어느 글에 있는지 보인다. 긴 제목은 한 줄에서 자르고 전문은 `title`에 남긴다. */

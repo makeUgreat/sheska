@@ -129,7 +129,7 @@ export function normalizeListIndent(body: string): string {
   return output.join('\n');
 }
 
-/** 정규화한 본문을 parser에 넘긴다. Renderer와 목차가 같은 plugin 목록을 쓰므로 둘 다 같은 목록 구조를 얻는다. */
+/** 정규화한 본문을 parser에 넘긴다. Renderer와 `parseOutline`이 같은 plugin 목록을 쓰므로 둘 다 같은 목록 구조를 얻는다. */
 export function remarkListIndent(this: Processor) {
   const parse = this.parser;
   if (!parse) return;

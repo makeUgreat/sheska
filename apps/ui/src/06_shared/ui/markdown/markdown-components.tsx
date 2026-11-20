@@ -200,7 +200,7 @@ const components: Components = {
 };
 
 /**
- * Heading id를 여기서 따로 만들지 않는다. 목차 링크와 어긋나지 않으려면
+ * Heading id를 여기서 따로 만들지 않는다. `parseOutline`이 읽는 id와 어긋나지 않으려면
  * `remarkHeadingId`가 트리에 새긴 값을 그대로 받아야 한다.
  */
 export const MARKDOWN_COMPONENTS = {

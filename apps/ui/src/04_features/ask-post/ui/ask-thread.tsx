@@ -242,7 +242,7 @@ function AnswerText({ text }: { text: string }) {
 
 /**
  * 근거 링크를 누르면 그 절로 가면서 본문의 섹션 강조를 고정한다. 제목을 누른 것과 같은 모양이다.
- * heading 글자가 본문 목차에 없으면 링크 없이 글자만 둔다.
+ * heading 글자가 본문 heading에 없으면 링크 없이 글자만 둔다.
  */
 function Sources({ sources, headings }: { sources: string[]; headings: readonly Heading[] }) {
   if (sources.length === 0) return null;

@@ -39,7 +39,7 @@ function wrapSections(tree: Root) {
 
 /**
  * 제목부터 같은 단계 이하의 다음 제목 전까지를 `<section>`으로 묶는다. 첫 제목 앞의 글은 섹션 밖에 둔다.
- * 목차와 block anchor는 mdast를 읽으므로 hast에서 묶어야 두 곳의 판정이 바뀌지 않는다.
+ * `parseOutline`과 block anchor는 mdast를 읽으므로 hast에서 묶어야 두 곳의 판정이 바뀌지 않는다.
  */
 export function rehypeSection() {
   return (tree: Root) => wrapSections(tree);
