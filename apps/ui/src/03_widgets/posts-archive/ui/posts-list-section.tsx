@@ -1,6 +1,6 @@
 import { type FormEvent, type Ref } from 'react';
 import { AI_SUMMARY_NOTICE, type AiSummary, type PostSummary } from '@/entities/post';
-import { AiMark, ArchiveIndex, EmptyState, EndOfList, ErrorState, LoadingState } from '@/shared/ui';
+import { AiMark, ArchiveIndex, EmptyState, EndOfList, ErrorState } from '@/shared/ui';
 
 const ARCHIVE_SPACING = 'mt-16';
 
@@ -14,7 +14,6 @@ export type PostsListState =
       status: 'success';
       posts: PostSummary[];
       hasNextPage: boolean;
-      isFetchingNextPage: boolean;
       sentinelRef: Ref<HTMLDivElement>;
     };
 
@@ -114,9 +113,7 @@ export function PostsListSection({
         </form>
 
         <div className="mt-10">
-          {state.status === 'loading' ? (
-            <LoadingState className={ARCHIVE_SPACING} />
-          ) : state.status === 'error' ? (
+          {state.status === 'loading' ? null : state.status === 'error' ? (
             <ErrorState error={state.error} />
           ) : state.status === 'empty' ? (
             isSearching ? (
@@ -147,7 +144,6 @@ export function PostsListSection({
                 }))}
               />
               <div ref={state.sentinelRef} className="h-px" aria-hidden="true" />
-              {state.isFetchingNextPage && <LoadingState className={ARCHIVE_SPACING} />}
               {!state.hasNextPage && <EndOfList label="End of posts" className={ARCHIVE_SPACING} />}
             </>
           )}

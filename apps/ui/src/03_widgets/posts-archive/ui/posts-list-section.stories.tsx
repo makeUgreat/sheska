@@ -66,7 +66,6 @@ const meta = {
       status: 'success',
       posts: samplePosts,
       hasNextPage: false,
-      isFetchingNextPage: false,
       sentinelRef: null,
     },
   },
@@ -126,7 +125,6 @@ export const SmartSearch: Story = {
         snippet: 'Storybook renders each UI state from a fixture, so a review covers loading, empty and error screens.',
       })),
       hasNextPage: false,
-      isFetchingNextPage: false,
       sentinelRef: null,
     },
   },
@@ -149,18 +147,6 @@ export const ErrorState: Story = {
     state: {
       status: 'error',
       error: new Error('Failed to load posts.'),
-    },
-  },
-};
-
-export const FetchingNextPage: Story = {
-  args: {
-    state: {
-      status: 'success',
-      posts: samplePosts,
-      hasNextPage: true,
-      isFetchingNextPage: true,
-      sentinelRef: null,
     },
   },
 };

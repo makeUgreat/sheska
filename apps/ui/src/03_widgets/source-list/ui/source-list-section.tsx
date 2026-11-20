@@ -1,5 +1,5 @@
 import { type SourceSummary, type SyncJobSummaryStatus } from '@/entities/source';
-import { EmptyState, ErrorState, LoadingState, Pagination } from '@/shared/ui';
+import { EmptyState, ErrorState, Pagination } from '@/shared/ui';
 import { SourceListItem } from './source-list-item';
 import { SourceStatusFilter } from './source-status-filter';
 
@@ -31,9 +31,7 @@ export function SourceListSection({
     <>
       <SourceStatusFilter value={filter.value} onChange={filter.onChange} />
 
-      {state.status === 'loading' ? (
-        <LoadingState className="py-24" />
-      ) : state.status === 'error' ? (
+      {state.status === 'loading' ? null : state.status === 'error' ? (
         <ErrorState error={state.error} />
       ) : state.status === 'empty' ? (
         filter.value ? (

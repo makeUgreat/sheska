@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { AI_SUMMARY_NOTICE, type AiSummary, type GetPostResponse } from '@/entities/post';
 import { formatDottedDate } from '@/shared/lib';
-import { AiMark, ArticleLayout, EmptyState, ErrorState, LoadingState } from '@/shared/ui';
+import { AiMark, ArticleLayout, EmptyState, ErrorState } from '@/shared/ui';
 
 export type PostArticleState =
   | { status: 'loading' }
@@ -14,7 +14,6 @@ export function PostArticleSection({ state }: { state: PostArticleState }) {
     return (
       <div className="pt-10">
         <PendingBack />
-        <LoadingState className="py-24" />
       </div>
     );
   }

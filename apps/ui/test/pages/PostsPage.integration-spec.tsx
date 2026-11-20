@@ -44,16 +44,15 @@ function renderPage(client: HttpClient) {
 }
 
 describe('PostsPage', () => {
-  it('렌더링 즉시 post 목록을 로딩하며 Loading 텍스트를 보여준다', async () => {
+  it('목록을 기다리는 동안 빈 상태를 그리지 않는다', () => {
     const client = buildMockHttpClient({
       listPosts: vi.fn().mockReturnValue(new Promise(() => {})),
     });
 
     renderPage(client);
 
-    await waitFor(() => {
-      expect(screen.getAllByText('Loading').length).toBeGreaterThan(0);
-    });
+    expect(screen.getByRole('heading', { name: 'Posts' })).toBeDefined();
+    expect(screen.queryByText('Empty')).toBeNull();
   });
 
   it('post 목록이 없으면 빈 상태 메시지를 보여준다', async () => {
