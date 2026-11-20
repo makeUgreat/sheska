@@ -34,9 +34,15 @@
   --text-headline-lg--line-height: 1.1;
   --text-headline-lg--font-weight: 700;
   --text-headline-lg--letter-spacing: -0.02em;
-  --text-headline-md: 24px;
-  --text-headline-md--line-height: 1.3;
+  --text-headline-md: 32px;
+  --text-headline-md--line-height: 1.2;
   --text-headline-md--font-weight: 600;
+  --text-headline-sm: 26px;
+  --text-headline-sm--line-height: 1.3;
+  --text-headline-sm--font-weight: 600;
+  --text-title-lg: 21px;
+  --text-title-lg--line-height: 1.4;
+  --text-title-lg--font-weight: 600;
   --text-body-lg: 18px;
   --text-body-lg--line-height: 1.6;
   --text-body-lg--font-weight: 400;
