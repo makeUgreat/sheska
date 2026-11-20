@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useSeason } from '@/shared/lib';
 import { Terminal, type TerminalHandle, type TerminalLaunchState } from '@/shared/ui';
 import { useShellCommands } from '../model/use-shell-commands';
 import { HeroLinks } from './hero-links';
 import { TerminalWindow } from './terminal-window';
+import { WinterLogo } from './winter/winter-logo';
 
 /** figlet small 글꼴. 웹 글꼴에 없는 블록 문자 대신 ASCII만 써서 폭이 어긋나지 않는다. */
 const LOGO = [' _  _   _   ___ _  _ ', '| || | /_\\ / __| || |', '| __ |/ _ \\\\__ \\ __ |', '|_||_/_/ \\_\\___/_||_|'].join('\n');
@@ -15,6 +17,7 @@ export function LandingHero({ articlesHref, githubHref }: { articlesHref: string
   const location = useLocation();
   const navigate = useNavigate();
   const launch = (location.state as TerminalLaunchState | null)?.run;
+  const winter = useSeason() === 'winter';
 
   useEffect(() => {
     if (!launch) return;
@@ -41,7 +44,7 @@ export function LandingHero({ articlesHref, githubHref }: { articlesHref: string
               banner={
                 <div className="mb-4">
                   <pre aria-hidden="true" className="mb-3 font-[inherit] leading-[1.15] text-accent">
-                    {LOGO}
+                    {winter ? <WinterLogo logo={LOGO} /> : LOGO}
                   </pre>
                   <p className="text-on-surface-muted">
                     Hi, I&apos;m <span className="text-accent">Hash</span>. Here is how I think, what I&apos;ve learned, and who I am.
