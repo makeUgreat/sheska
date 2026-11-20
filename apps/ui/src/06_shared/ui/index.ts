@@ -4,6 +4,7 @@ export { BackLink } from './back-link';
 export { EmptyState, type EmptyStateProps, type EmptyVariant } from './empty-state';
 export { EndOfList } from './end-of-list';
 export { ErrorState, type ErrorStateProps } from './error-state';
+export { LINE_IN, lineDelay } from './line-in';
 export { LoadingDots } from './loading-dots';
 export { LoadingState } from './loading-state';
 export { AttachmentBaseUrlProvider, CodeBlock, Markdown } from './markdown';
