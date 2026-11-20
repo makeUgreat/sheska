@@ -8,7 +8,7 @@ import { ArticleLayout } from './article-layout';
  * centred measure column is what makes that measurement mean anything: without
  * it the outline still renders, beside a body that is nowhere near where the
  * real page puts it. Widen the canvas past 1024px to see the outline at all,
- * and past 1200px to see it stay open.
+ * and past 1220px to see it stay open.
  */
 const AS_THE_DETAIL_PAGE_PLACES_IT = 'min-h-screen bg-page-background px-4 py-14';
 

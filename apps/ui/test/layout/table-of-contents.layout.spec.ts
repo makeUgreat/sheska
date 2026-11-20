@@ -87,9 +87,9 @@ test.describe('TableOfContents 배치', () => {
 
   test('본문에서 gutter만큼 떨어져 선다', async ({ page }) => {
     for (const [width, expected] of [
-      [1200, 205],
-      [1280, 245],
-      [1440, 320],
+      [1220, 205],
+      [1280, 235],
+      [1440, 315],
       [1920, 320],
     ]) {
       await preparePostDetail(page, width);
@@ -101,18 +101,18 @@ test.describe('TableOfContents 배치', () => {
     }
   });
 
-  test('1200px 미만에서는 목차를 두지 않는다', async ({ page }) => {
-    for (const width of [1024, 1199]) {
+  test('1220px 미만에서는 목차를 두지 않는다', async ({ page }) => {
+    for (const width of [1024, 1219]) {
       await preparePostDetail(page, width);
       await expect(outline(page), `${width}px`).toBeHidden();
     }
 
-    await preparePostDetail(page, 1200);
+    await preparePostDetail(page, 1220);
     await expect(outline(page)).toBeVisible();
   });
 
   test('어떤 폭에서도 항목은 한 줄을 넘지 않는다', async ({ page }) => {
-    for (const width of [1200, 1280, 1440, 1920]) {
+    for (const width of [1220, 1280, 1440, 1920]) {
       await preparePostDetail(page, width);
 
       const { lines, clipped, fullTextKept } = await outlineMetrics(page);
