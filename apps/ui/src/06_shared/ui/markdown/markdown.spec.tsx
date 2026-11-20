@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { parseOutline } from '../../lib/markdown';
+import ReactMarkdown from 'react-markdown';
+import { MARKDOWN_PLUGINS, parseOutline } from '../../lib/markdown';
 import { AttachmentBaseUrlProvider } from './attachment-base-url';
 import imageUnavailable from './image-unavailable.svg';
 import { Markdown } from './markdown';
+import { MARKDOWN_COMPONENTS } from './markdown-components';
 
 function renderBody(body: string) {
   return render(<Markdown body={body} />);
@@ -130,6 +132,78 @@ describe('Markdown 코드 펜스', () => {
 
     expect(screen.queryByRole('button', { name: 'Copy code' })).toBe(null);
     expect(screen.getByText('retry').tagName).toBe('CODE');
+  });
+});
+
+/** KaTeX는 나중에 도착하므로 수식에 katex class가 붙을 때까지 기다린다. */
+async function renderMath(body: string) {
+  const view = render(<Markdown body={body} />);
+
+  await waitFor(() => expect(view.container.querySelector('.katex')).not.toBe(null));
+  return view;
+}
+
+describe('Markdown 수식', () => {
+  it('`$`로 감싼 글자를 inline 수식으로 그리고 `$`는 보이지 않는다', async () => {
+    const { container } = await renderMath('관계 수는 $M:N$이다');
+
+    expect(container.querySelector('.katex-display')).toBe(null);
+    expect(container.textContent).not.toContain('$');
+  });
+
+  it('`$$` block을 display 수식으로 그린다', async () => {
+    const { container } = await renderMath(['$$', 'N \\times M', '$$'].join('\n'));
+
+    expect(container.querySelector('.katex-display')).not.toBe(null);
+    expect(screen.queryByRole('button', { name: 'Copy code' })).toBe(null);
+  });
+
+  it('한 줄 `$$` 수식만 있는 문단을 display 수식으로 그린다', async () => {
+    const { container } = await renderMath('$$N \\times M$$');
+
+    expect(container.querySelector('.katex-display')).not.toBe(null);
+  });
+
+  it('한 번 받은 KaTeX는 다음 글의 첫 화면부터 쓴다', async () => {
+    const first = await renderMath('$N$');
+    first.unmount();
+
+    const { container } = render(<Markdown body="$M$" />);
+
+    expect(container.querySelector('.katex')).not.toBe(null);
+  });
+
+  it('잘못된 수식은 본문을 깨뜨리지 않고 원문을 남긴다', async () => {
+    const { container } = render(<Markdown body={'앞 $\\frac{1$ 뒤'} />);
+
+    await waitFor(() => expect(container.querySelector('.katex-error')?.textContent).toBe('\\frac{1'));
+    expect(container.textContent).toContain('뒤');
+  });
+});
+
+/** KaTeX를 받기 전의 화면은 rehype plugin 없이 그린 결과와 같다. */
+function renderBeforeKatex(body: string) {
+  return render(
+    <ReactMarkdown components={MARKDOWN_COMPONENTS} remarkPlugins={MARKDOWN_PLUGINS}>
+      {body}
+    </ReactMarkdown>,
+  );
+}
+
+describe('KaTeX가 도착하기 전의 수식', () => {
+  it('inline 수식을 code 모양 없이 원문 글자로 둔다', () => {
+    const { container } = renderBeforeKatex('관계 수는 $M:N$이다');
+
+    expect(container.querySelector('code')).toBe(null);
+    expect(container.textContent).toBe('관계 수는 M:N이다');
+  });
+
+  it('수식 block에 code fence의 언어 라벨과 복사 버튼을 붙이지 않는다', () => {
+    const { container } = renderBeforeKatex(['$$', 'N \\times M', '$$'].join('\n'));
+
+    expect(container.querySelector('pre')).toBe(null);
+    expect(screen.queryByRole('button', { name: 'Copy code' })).toBe(null);
+    expect(container.textContent).toBe('N \\times M');
   });
 });
 

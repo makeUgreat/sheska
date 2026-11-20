@@ -24,6 +24,11 @@ function languageOf(node?: Element) {
   return tag?.slice(LANGUAGE_PREFIX.length);
 }
 
+/** `$$` block 수식도 `remark-math`가 `language-math` fence 모양으로 넘긴다. */
+export function isMathBlock(node?: Element) {
+  return languageOf(node) === 'math';
+}
+
 function Glyph({ children }: { children: ReactNode }) {
   return (
     <svg

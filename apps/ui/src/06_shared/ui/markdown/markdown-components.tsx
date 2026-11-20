@@ -1,6 +1,7 @@
+import { type Element } from 'hast';
 import { type ReactNode } from 'react';
 import { type Components } from 'react-markdown';
-import { CodeBlock, useInsideCodeBlock } from './code-block';
+import { CodeBlock, isMathBlock, useInsideCodeBlock } from './code-block';
 import { MarkdownImage } from './markdown-image';
 import { WIKI_LINK_ELEMENT } from '../../lib/markdown';
 import { WikiLink } from './obsidian/wiki-link';
@@ -21,13 +22,28 @@ function anchored(id: string | undefined, className: string) {
   return id ? `${className} ${BELOW_HEADER}`.trim() : className;
 }
 
-/** Fence 안의 code는 highlighter가 붙인 class를 그대로 들고 가야 token ink가 걸린다. */
+/** KaTeX의 `.katex-display`와 같은 여백이라야 수식이 도착할 때 아래 글이 덜 움직인다. */
+const DISPLAY_MATH_SOURCE = 'my-[1em] block text-center';
+
+/**
+ * KaTeX가 도착하기 전의 수식은 code 모양 없이 원문 글자로 둔다.
+ * Fence 안의 code는 highlighter가 붙인 class를 그대로 들고 가야 token ink가 걸린다.
+ */
 function CodeText({ className, children }: { className?: string; children?: ReactNode }) {
-  return useInsideCodeBlock() ? (
+  const insideCodeBlock = useInsideCodeBlock();
+  if (className?.includes('math-display')) return <span className={DISPLAY_MATH_SOURCE}>{children}</span>;
+  if (className?.includes('math-inline')) return <span>{children}</span>;
+
+  return insideCodeBlock ? (
     <code className={className}>{children}</code>
   ) : (
     <code className="mx-0.5 font-mono text-code-snippet text-accent-strong">{children}</code>
   );
+}
+
+/** 수식 block에 code fence의 언어 라벨과 복사 버튼을 붙이면 KaTeX가 도착할 때 사라진다. */
+function Pre({ node, children }: { node?: Element; children?: ReactNode }) {
+  return isMathBlock(node) ? <>{children}</> : <CodeBlock node={node}>{children}</CodeBlock>;
 }
 
 /** 넓은 화면에서는 얕은 단계일수록 본문 왼쪽 끝보다 더 왼쪽에서 시작해 깊이가 위치로도 보인다. */
@@ -178,7 +194,7 @@ const components: Components = {
     </a>
   ),
   img: MarkdownImage,
-  pre: CodeBlock,
+  pre: Pre,
   code: CodeText,
 };
 

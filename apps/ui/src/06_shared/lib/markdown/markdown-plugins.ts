@@ -28,7 +28,15 @@ export function parseMarkdown(body: string): Root {
   return tree;
 }
 
+function contains(node: Root | RootContent, types: readonly string[]): boolean {
+  if (types.includes(node.type)) return true;
+  return 'children' in node && node.children.some((child) => contains(child, types));
+}
+
 export function hasCodeBlock(node: Root | RootContent): boolean {
-  if (node.type === 'code') return true;
-  return 'children' in node && node.children.some(hasCodeBlock);
+  return contains(node, ['code']);
+}
+
+export function hasMath(node: Root | RootContent): boolean {
+  return contains(node, ['math', 'inlineMath']);
 }
