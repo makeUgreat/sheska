@@ -29,6 +29,7 @@ const POST = {
   sourceId: 'source-outline',
   title: '목차가 본문 옆에 서는 방법',
   viewCount: 128,
+  summary: { status: 'pending' },
   createdAt: NOW,
   updatedAt: NOW,
   body: BODY,

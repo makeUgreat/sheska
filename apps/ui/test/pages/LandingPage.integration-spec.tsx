@@ -13,6 +13,7 @@ const POST = {
   sourceId: 'post-1',
   title: 'Redis에 로그인 세션 저장하기',
   viewCount: 0,
+  summary: { status: 'pending' },
   createdAt: NOW,
   updatedAt: NOW,
 };

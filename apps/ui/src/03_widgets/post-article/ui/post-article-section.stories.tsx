@@ -3,6 +3,15 @@ import { type GetPostResponse } from '@/entities/post';
 import { parseOutline } from '@/shared/lib';
 import { PostArticleSection } from './post-article-section';
 
+const READY_SUMMARY = {
+  status: 'ready',
+  lines: [
+    '페이지는 widget을, widget은 feature와 entity를 조합한다.',
+    'slice는 index.ts로만 밖에 드러난다.',
+    '같은 layer의 slice끼리는 import하지 않는다.',
+  ],
+} as const;
+
 const body = [
   'A published post carries the same markdown body as the [[note|노트]] it came from.',
   '',
@@ -32,6 +41,7 @@ const post: GetPostResponse = {
   sourceId: 'source-fsd',
   title: 'Feature-Sliced Design in the Sheska UI',
   viewCount: 128,
+  summary: { status: 'pending' },
   body,
   createdAt: '2026-09-01T12:00:00.000Z',
   updatedAt: '2026-09-21T12:00:00.000Z',
@@ -51,6 +61,23 @@ type Story = StoryObj<typeof meta>;
 export const Success: Story = {
   args: {
     state: { status: 'success', post, outline, activeHeadingId: outline[0].id },
+  },
+};
+
+export const SummaryReady: Story = {
+  args: {
+    state: {
+      status: 'success',
+      post: { ...post, summary: { ...READY_SUMMARY, lines: [...READY_SUMMARY.lines] } },
+      outline,
+      activeHeadingId: null,
+    },
+  },
+};
+
+export const SummaryFailed: Story = {
+  args: {
+    state: { status: 'success', post: { ...post, summary: { status: 'failed' } }, outline, activeHeadingId: null },
   },
 };
 

@@ -22,6 +22,7 @@ const MOCK_POST: GetPostResponse = {
   sourceId: 'source-1',
   title: '테스트 포스트',
   viewCount: 7,
+  summary: { status: 'pending' },
   createdAt: NOW,
   updatedAt: NOW,
   body: [
@@ -94,6 +95,36 @@ describe('PostDetailPage', () => {
     });
     expect(screen.getByText('Jan 5, 2026')).toBeDefined();
     expect(screen.getByText('7 views')).toBeDefined();
+  });
+
+  it('AI 요약 자리에 요약이 준비되지 않았다고 알린다', async () => {
+    renderPage(buildMockHttpClient());
+
+    const summary = await screen.findByRole('region', { name: 'AI summary' });
+    expect(within(summary).getByText('Summary not ready yet')).toBeDefined();
+  });
+
+  it('요약이 있으면 콜아웃에 받은 줄을 모두 보여준다', async () => {
+    const lines = ['첫 문장이다.', '둘째 문장이다.', '셋째 문장이다.', '넷째 문장이다.'];
+    const client = buildMockHttpClient({
+      get: vi.fn().mockResolvedValue({ ...MOCK_POST, summary: { status: 'ready', lines } }),
+    });
+
+    renderPage(client);
+
+    const summary = await screen.findByRole('region', { name: 'AI summary' });
+    lines.forEach((line) => expect(within(summary).getByText(line)).toBeDefined());
+  });
+
+  it('요약을 만들지 못했으면 콜아웃을 남기고 실패를 알린다', async () => {
+    const client = buildMockHttpClient({
+      get: vi.fn().mockResolvedValue({ ...MOCK_POST, summary: { status: 'failed' } }),
+    });
+
+    renderPage(client);
+
+    const summary = await screen.findByRole('region', { name: 'AI summary' });
+    expect(within(summary).getByText('Summary could not be generated.')).toBeDefined();
   });
 
   it('본문 heading에 outline과 같은 anchor id를 붙인다', async () => {

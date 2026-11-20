@@ -1,5 +1,5 @@
 import { type FormEvent, type Ref } from 'react';
-import { type PostSummary } from '@/entities/post';
+import { AI_SUMMARY_NOTICE, type AiSummary, type PostSummary } from '@/entities/post';
 import { AiMark, ArchiveIndex, EmptyState, EndOfList, ErrorState, LoadingState } from '@/shared/ui';
 
 const ARCHIVE_SPACING = 'mt-16';
@@ -22,11 +22,25 @@ function formatViews(count: number) {
   return `${count.toLocaleString('en-US')} ${count === 1 ? 'view' : 'views'}`;
 }
 
-function SummaryPending() {
+/** 요약 줄 수는 정해져 있지 않다. 줄을 자르지 않고 받은 만큼 쌓는다. */
+function SummaryLines({ summary }: { summary: AiSummary }) {
+  if (summary.status === 'pending' || summary.status === 'failed') {
+    return (
+      <span className="mt-1 grid grid-cols-[20px_minmax(0,1fr)] items-start">
+        <AiMark className="mt-[5px] -ml-0.5 text-text-muted opacity-60" />
+        <span className="font-mono text-label-sm leading-[26px] tracking-normal text-text-muted">{AI_SUMMARY_NOTICE[summary.status]}</span>
+      </span>
+    );
+  }
+
   return (
     <span className="mt-1 grid grid-cols-[20px_minmax(0,1fr)] items-start">
-      <AiMark className="mt-[5px] -ml-0.5 text-text-muted opacity-60" />
-      <span className="font-mono text-label-sm leading-[26px] tracking-normal text-text-muted">Summary not ready yet</span>
+      <AiMark className="mt-[5px] -ml-0.5 text-accent" />
+      <span className="flex min-w-0 flex-col text-body-md leading-[26px] text-text-muted">
+        {summary.lines.map((line, index) => (
+          <span key={index}>{line}</span>
+        ))}
+      </span>
     </span>
   );
 }
@@ -128,7 +142,7 @@ export function PostsListSection({
                       </span>
                     )
                   ) : (
-                    <SummaryPending />
+                    <SummaryLines summary={post.summary} />
                   ),
                 }))}
               />
