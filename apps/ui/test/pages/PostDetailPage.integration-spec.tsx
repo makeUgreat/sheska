@@ -104,7 +104,7 @@ function renderPageWithoutId(client: HttpClient) {
 }
 
 describe('PostDetailPage', () => {
-  it('로딩 중에 Loading 텍스트를 보여준다', () => {
+  it('로딩 중에는 돌아가는 링크만 그리고 빈 상태나 오류를 그리지 않는다', () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockReturnValue(new Promise(() => {})),
     });
@@ -112,7 +112,8 @@ describe('PostDetailPage', () => {
     renderPage(client);
 
     expect(screen.getByRole('link', { name: 'Back to posts' })).toBeDefined();
-    expect(screen.getByText('Loading')).toBeDefined();
+    expect(screen.queryByText('Not found')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('post 제목과 갱신 일자, 조회수를 렌더링한다', async () => {

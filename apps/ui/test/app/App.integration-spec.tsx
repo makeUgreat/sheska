@@ -143,6 +143,18 @@ describe('App', () => {
     });
   });
 
+  it('post 목록을 기다리는 동안 header가 Loading을 알린다', async () => {
+    const client = buildMockHttpClient({
+      get: vi.fn((path: string) => (path === '/auth/session' ? Promise.resolve({ authenticated: false }) : new Promise(() => {}))),
+    });
+
+    renderApp(client, '/posts');
+
+    await waitFor(() => {
+      expect(screen.getByRole('status').textContent).toBe('Loading');
+    });
+  });
+
   it('header nav의 posts 링크를 클릭하면 Posts 페이지로 이동한다', async () => {
     const user = userEvent.setup();
     const client = buildMockHttpClient();

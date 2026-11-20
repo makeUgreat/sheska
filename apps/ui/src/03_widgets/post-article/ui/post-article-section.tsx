@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { AI_SUMMARY_NOTICE, type AiSummary, type GetPostResponse } from '@/entities/post';
 import { formatDottedDate } from '@/shared/lib';
-import { AiMark, ArticleLayout, EmptyState, ErrorState, LoadingState } from '@/shared/ui';
+import { AiMark, ArticleLayout, EmptyState, ErrorState } from '@/shared/ui';
 
 export type PostArticleState =
   | { status: 'loading' }
@@ -9,14 +9,11 @@ export type PostArticleState =
   | { status: 'empty' }
   | { status: 'success'; post: GetPostResponse };
 
-const FOCUS_RING = 'rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2';
-
 export function PostArticleSection({ state }: { state: PostArticleState }) {
   if (state.status === 'loading') {
     return (
       <div className="pt-10">
-        <PostCrumb />
-        <LoadingState className="py-24" />
+        <PendingBack />
       </div>
     );
   }
@@ -24,7 +21,7 @@ export function PostArticleSection({ state }: { state: PostArticleState }) {
   if (state.status === 'error') {
     return (
       <div className="pt-10">
-        <PostCrumb />
+        <PendingBack />
         <ErrorState error={state.error} />
       </div>
     );
@@ -33,7 +30,7 @@ export function PostArticleSection({ state }: { state: PostArticleState }) {
   if (state.status === 'empty') {
     return (
       <div className="pt-10">
-        <PostCrumb />
+        <PendingBack />
         <EmptyState variant="document" className="py-24" />
       </div>
     );
@@ -44,47 +41,55 @@ export function PostArticleSection({ state }: { state: PostArticleState }) {
   return <ArticleLayout header={<PostHeader post={post} />} body={post.body} />;
 }
 
-/** 글 제목을 함께 적어 지금 어느 글에 있는지 보인다. 긴 제목은 한 줄에서 자르고 전문은 `title`에 남긴다. */
-function PostCrumb({ title }: { title?: string }) {
+/** 목록으로 돌아가는 아이콘이다. 칸 32px 안에 그림 18px을 가운데 두므로 그림 양옆에 7px씩 빈 칸이 있다. */
+function BackLink({ className = '' }: { className?: string }) {
   return (
-    <nav aria-label="Breadcrumb" className="mb-5 flex min-w-0 items-center gap-2 font-mono text-label-sm tracking-normal text-text-muted">
-      <Link
-        to="/posts"
-        aria-label="Back to posts"
-        className={`inline-flex shrink-0 items-center gap-1.5 transition-colors hover:text-accent-strong ${FOCUS_RING}`}
+    <Link
+      to="/posts"
+      aria-label="Back to posts"
+      title="목록으로"
+      className={`flex size-8 shrink-0 items-center justify-center rounded-md text-text-muted transition-colors hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${className}`}
+    >
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        className="size-[18px]"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="size-3.5"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M19 12H5" />
-          <path d="M11 6l-6 6 6 6" />
-        </svg>
-        posts
-      </Link>
-      {title && (
-        <>
-          <span aria-hidden="true">/</span>
-          <span title={title} className="min-w-0 truncate text-text-secondary">
-            {title}
-          </span>
-        </>
-      )}
-    </nav>
+        <path d="M19 12H5" />
+        <path d="M11 6l-6 6 6 6" />
+      </svg>
+    </Link>
   );
 }
+
+/** 글을 아직 못 그린 동안에는 제목이 없으므로 돌아가는 아이콘을 맨 위 왼쪽에 둔다. */
+function PendingBack() {
+  return (
+    <div className="mb-5">
+      <BackLink className="-ml-2.5" />
+    </div>
+  );
+}
+
+/**
+ * 좁은 화면에서는 제목 위 왼쪽에 선다. 넓은 화면에서는 본문 heading의 `##`처럼 제목 첫 줄 왼쪽 여백에 건다.
+ * 그림의 오른쪽 끝과 제목 사이를 `##`과 같은 gutter로 둔다. 제목 첫 줄 높이 38.4px의 가운데에 맞춘다.
+ */
+const BACK_BESIDE_TITLE =
+  'mb-3.5 -ml-2.5 margin-label:absolute margin-label:top-[3px] margin-label:right-[calc(100%+var(--spacing-gutter)-7px)] margin-label:m-0';
 
 function PostHeader({ post }: { post: GetPostResponse }) {
   return (
     <>
-      <PostCrumb title={post.title} />
-      <h1 className="break-words font-sans text-headline-md text-text-primary">{post.title}</h1>
+      <div className="relative">
+        <BackLink className={BACK_BESIDE_TITLE} />
+        <h1 className="break-words font-sans text-headline-md text-text-primary">{post.title}</h1>
+      </div>
       <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-mono text-label-sm uppercase text-text-muted">
         <span>
           Updated{' '}

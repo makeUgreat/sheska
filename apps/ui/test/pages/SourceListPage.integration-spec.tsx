@@ -45,7 +45,7 @@ function renderPage(client: HttpClient, queryClient: QueryClient = createTestQue
 }
 
 describe('SourceListPage', () => {
-  it('로딩 중에 Loading 텍스트를 보여준다', () => {
+  it('목록을 기다리는 동안 빈 상태를 그리지 않는다', () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockReturnValue(new Promise(() => {})),
     });
@@ -53,7 +53,7 @@ describe('SourceListPage', () => {
     renderPage(client);
 
     expect(screen.getByRole('heading', { name: 'Sources' })).toBeDefined();
-    expect(screen.getByText('Loading')).toBeDefined();
+    expect(screen.queryByText('Empty')).toBeNull();
   });
 
   it('source 목록이 없으면 빈 상태 메시지를 보여준다', async () => {

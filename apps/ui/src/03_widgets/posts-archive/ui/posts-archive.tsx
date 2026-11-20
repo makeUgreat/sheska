@@ -14,14 +14,12 @@ function getPostsListState({
   error,
   posts,
   hasNextPage,
-  isFetchingNextPage,
   sentinelRef,
 }: {
   isLoading: boolean;
   error: Error | null;
   posts: PostSummary[];
   hasNextPage: boolean;
-  isFetchingNextPage: boolean;
   sentinelRef: Ref<HTMLDivElement>;
 }): PostsListState {
   if (isLoading) return { status: 'loading' };
@@ -32,7 +30,6 @@ function getPostsListState({
     status: 'success',
     posts,
     hasNextPage,
-    isFetchingNextPage,
     sentinelRef,
   };
 }
@@ -64,7 +61,6 @@ export function PostsArchive() {
     error,
     posts,
     hasNextPage,
-    isFetchingNextPage,
     sentinelRef,
   });
 
