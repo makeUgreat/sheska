@@ -34,5 +34,10 @@ export function PostArticle({ postId }: { postId: string | undefined }) {
     activeHeadingId,
   });
 
-  return <PostArticleSection state={state} ask={post && <AskPost key={post.postId} postId={post.postId} headings={outline} />} />;
+  return (
+    <>
+      <PostArticleSection state={state} />
+      {post && <AskPost key={post.postId} postId={post.postId} headings={outline} />}
+    </>
+  );
 }

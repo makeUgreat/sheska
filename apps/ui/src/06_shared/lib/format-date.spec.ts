@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatDate, formatMonthDay } from './format-date';
+import { formatDate, formatDottedDate, formatMonthDay } from './format-date';
 
 describe('formatDate', () => {
   it('ISO 날짜 문자열을 짧은 월 이름 형식으로 표시한다', () => {
@@ -14,5 +14,11 @@ describe('formatDate', () => {
 describe('formatMonthDay', () => {
   it('연도 없이 월과 두 자리 일자만 표시한다', () => {
     expect(formatMonthDay('2026-01-05T12:00:00.000Z')).toBe('Jan 05');
+  });
+});
+
+describe('formatDottedDate', () => {
+  it('연도, 두 자리 월, 두 자리 일을 점으로 잇는다', () => {
+    expect(formatDottedDate('2026-01-05T12:00:00.000Z')).toBe('2026.01.05');
   });
 });

@@ -7,6 +7,7 @@ import { AttachmentBaseUrlProvider } from './attachment-base-url';
 import imageUnavailable from './image-unavailable.svg';
 import { Markdown } from './markdown';
 import { MARKDOWN_COMPONENTS } from './markdown-components';
+import { pinSectionOnClick } from './use-section-focus';
 
 function renderBody(body: string) {
   return render(<Markdown body={body} />);
@@ -463,6 +464,17 @@ describe('Markdown 섹션 강조', () => {
     window.getSelection()?.removeAllRanges();
 
     expect(isFocused('서버')).toBe(true);
+  });
+
+  it('본문 밖의 고정 요청 링크를 누르면 그 제목의 섹션을 고정한다', () => {
+    renderBody(SECTIONED);
+    render(<a {...pinSectionOnClick(heading('다음').id)}>근거</a>);
+    fireEvent.click(heading('서버'));
+
+    fireEvent.click(screen.getByText('근거'));
+
+    expect(isFocused('다음')).toBe(true);
+    expect(isFocused('서버')).toBe(false);
   });
 
   it('마우스 hover는 고정보다 앞서 미리 보이고, 본문을 벗어나면 고정으로 돌아온다', () => {
