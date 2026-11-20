@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { type AskEntry } from '../model/use-ask-post';
-import { AskPostSection } from './ask-post-section';
+import { AskDock } from './ask-dock';
 
 const headings = [
   { depth: 2, text: '데이터플레인 교체', id: 'dataplane' },
@@ -17,31 +17,38 @@ const done: AskEntry = {
 };
 
 const meta = {
-  title: 'Features/Posts/AskPostSection',
-  component: AskPostSection,
+  title: 'Features/Posts/AskDock',
+  component: AskDock,
   args: {
     entries: [],
     busy: false,
     lockedSeconds: 0,
     headings,
+    initialMode: 'open',
     onAsk: () => undefined,
     onRetry: () => undefined,
     onClear: () => undefined,
   },
   decorators: [
     (Story) => (
-      <div className="mx-auto max-w-measure px-4 py-10">
+      <div className="min-h-[720px]">
         <Story />
       </div>
     ),
   ],
-} satisfies Meta<typeof AskPostSection>;
+} satisfies Meta<typeof AskDock>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const Idle: Story = {};
+export const Collapsed: Story = { args: { initialMode: 'pill' } };
+
+export const Minimized: Story = { args: { initialMode: 'mini', entries: [done] } };
+
+export const Empty: Story = {};
+
+export const Answered: Story = { args: { entries: [done] } };
 
 export const Streaming: Story = {
   args: {
@@ -60,27 +67,21 @@ export const Waiting: Story = {
   },
 };
 
-export const Answered: Story = {
-  args: { entries: [done] },
-};
-
-export const Unreachable: Story = {
+export const LongThread: Story = {
   args: {
-    entries: [{ id: 1, question: '메모리는 얼마나 더 써?', answer: '', status: 'failed', sources: [], failure: { kind: 'unreachable' } }],
+    entries: Array.from({ length: 8 }, (_, index) => ({
+      ...done,
+      id: index + 1,
+      question: `${index + 1}번째 질문: kube-proxy는 왜 껐어?`,
+    })),
   },
 };
 
-export const CutOff: Story = {
+export const Failed: Story = {
   args: {
     entries: [
-      {
-        id: 1,
-        question: '메모리는 얼마나 더 써?',
-        answer: 'cilium-agent가 노드마다 약 180MiB를',
-        status: 'failed',
-        sources: [],
-        failure: { kind: 'cut' },
-      },
+      done,
+      { id: 2, question: '측정은 어떻게 했어?', answer: '', status: 'failed', sources: [], failure: { kind: 'unreachable' } },
     ],
   },
 };
@@ -88,6 +89,6 @@ export const CutOff: Story = {
 export const RateLimited: Story = {
   args: {
     lockedSeconds: 42,
-    entries: [{ id: 1, question: '메모리는 얼마나 더 써?', answer: '', status: 'failed', sources: [], failure: { kind: 'rate_limited' } }],
+    entries: [done, { id: 2, question: '하나 더 물어볼게', answer: '', status: 'failed', sources: [], failure: { kind: 'rate_limited' } }],
   },
 };
