@@ -109,8 +109,11 @@ function horizontalOverflow(page: Page) {
 
 const ROUTES = ['/', '/posts', '/posts/post-0', '/sources', '/sources/source-0'];
 
-/** 320px is the support floor, 640px is where the header and the search row change shape. */
-const WIDTHS = [320, 640, 1280];
+/**
+ * 320px is the support floor, 640px is where the header and the search row change shape,
+ * 880px is where the archive year moves into the left margin.
+ */
+const WIDTHS = [320, 640, 880, 1280];
 
 test.describe('페이지 가로 스크롤', () => {
   for (const width of WIDTHS) {

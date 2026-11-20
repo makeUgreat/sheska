@@ -7,6 +7,7 @@ export interface ArchiveEntry {
   href: string;
   title: ReactNode;
   date: string;
+  note?: ReactNode;
   detail?: ReactNode;
 }
 
@@ -35,22 +36,30 @@ const ENTRY =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page-background ' +
   'motion-reduce:transition-none';
 
-export function ArchiveIndex({ entries, onActivate }: { entries: readonly ArchiveEntry[]; onActivate?: (id: string) => void }) {
+const YEAR_IN_MARGIN =
+  'year-margin:-ml-[calc(var(--spacing-archive-year)+var(--spacing-gutter))] year-margin:grid ' +
+  'year-margin:grid-cols-[var(--spacing-archive-year)_minmax(0,1fr)] year-margin:items-baseline year-margin:gap-x-gutter';
+
+export function ArchiveIndex({ entries }: { entries: readonly ArchiveEntry[] }) {
   return (
     <div className="flex flex-col gap-10">
       {groupByYear(entries).map(({ year, entries: yearEntries }) => (
-        <section key={yearEntries[0].id} aria-labelledby={`archive-${yearEntries[0].id}`}>
-          <h2 id={`archive-${yearEntries[0].id}`} className="mb-1 font-mono text-label-sm tracking-normal text-text-muted">
+        <section key={yearEntries[0].id} aria-labelledby={`archive-${yearEntries[0].id}`} className={YEAR_IN_MARGIN}>
+          <h2
+            id={`archive-${yearEntries[0].id}`}
+            className="mb-1 font-mono text-label-sm tracking-normal text-text-muted year-margin:mb-0 year-margin:text-right"
+          >
             {year}
           </h2>
           <ul className="group/archive">
             {yearEntries.map((entry) => (
               <li key={entry.id}>
-                <Link to={entry.href} className={ENTRY} onMouseEnter={() => onActivate?.(entry.id)} onFocus={() => onActivate?.(entry.id)}>
+                <Link to={entry.href} className={ENTRY}>
                   <span className="truncate text-body-md">{entry.title}</span>
-                  <time dateTime={entry.date} className="font-mono text-label-sm tracking-normal text-text-muted">
-                    {formatMonthDay(entry.date)}
-                  </time>
+                  <span className="flex gap-3 font-mono text-label-sm tracking-normal text-text-muted tabular-nums">
+                    {entry.note}
+                    <time dateTime={entry.date}>{formatMonthDay(entry.date)}</time>
+                  </span>
                   {entry.detail && <span className="col-span-2 line-clamp-2 text-body-md text-text-muted">{entry.detail}</span>}
                 </Link>
               </li>

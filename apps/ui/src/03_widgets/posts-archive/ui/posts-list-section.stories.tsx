@@ -108,6 +108,17 @@ export const SmartSearch: Story = {
       normalizedQuery: 'storybook',
       mode: 'smart',
     },
+    state: {
+      status: 'success',
+      posts: samplePosts.map((post, index) => ({
+        ...post,
+        similarity: [91, 74, null][index],
+        snippet: 'Storybook renders each UI state from a fixture, so a review covers loading, empty and error screens.',
+      })),
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      sentinelRef: null,
+    },
   },
 };
 
