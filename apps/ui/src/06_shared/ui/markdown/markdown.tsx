@@ -36,8 +36,10 @@ function useHighlightPlugins(body: string) {
  * 여백이 두 배가 되고, 글이 제목으로 시작하는지 문단으로 시작하는지에 따라 높이도 달라진다.
  *
  * `word-break: normal`은 한글을 음절 단위로 줄바꿈해서 단어 중간이 잘린다.
+ *
+ * 넓은 화면에서는 본문 바로 아래 목록의 기호를 왼쪽 여백에 건다. 중첩 목록은 들여쓰기로 깊이를 보여야 하므로 남긴다.
  */
-const BODY = 'break-words break-keep [&>*:first-child]:mt-0';
+const BODY = 'break-words break-keep [&>*:first-child]:mt-0 margin-label:[&>ul]:pl-0 margin-label:[&>ol]:pl-0';
 
 export function Markdown({ body, className = '' }: { body: string; className?: string }) {
   return (
