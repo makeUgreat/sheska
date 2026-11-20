@@ -337,14 +337,14 @@
     },
     "measure": {
    "$description": "Maximum reading column width for prose. Note and post bodies cap at this so the line length stays readable at every viewport.",
-   "$value": "680px"
+   "$value": "700px"
   },
   "container-terminal": {
       "$description": "Terminal hero container max width.",
       "$value": "1100px"
     },
     "toc-min": {
-      "$description": "Minimum width of the table of contents panel. `--breakpoint-toc` (1200px) is derived from it. The reading column is centred, so both margins must hold this width plus a gutter on each side: measure + 2 × (this width + 2 gutters) = 1176px, about 1191px with the reserved scrollbar gutter, rounded up to 1200px. The table of contents is only shown where the margin can hold at least this much without covering the reading column.",
+      "$description": "Minimum width of the table of contents panel. `--breakpoint-toc` (1220px) is derived from it. The reading column is centred, so both margins must hold this width plus a gutter on each side: measure + 2 × (this width + 2 gutters) = 1196px, about 1211px with the reserved scrollbar gutter, rounded up to 1220px. The table of contents is only shown where the margin can hold at least this much without covering the reading column.",
       "$value": "200px"
     },
     "toc-max": {
@@ -352,7 +352,7 @@
       "$value": "320px"
     },
     "archive-year": {
-      "$description": "Width of the year column an archive list hangs in its left margin. `--breakpoint-year-margin` (880px) is derived from it. The list is centred at the measure, so each margin must hold this width, a gutter and the 16px page padding: measure + 2 × (this width + gutter + 16px) = 856px, about 871px with the reserved scrollbar gutter, rounded up to 880px. Below that the year sits above its entries.",
+      "$description": "Width of the year column an archive list hangs in its left margin. `--breakpoint-year-margin` (900px) is derived from it. The list is centred at the measure, so each margin must hold this width, a gutter and the 16px page padding: measure + 2 × (this width + gutter + 16px) = 876px, about 891px with the reserved scrollbar gutter, rounded up to 900px. Below that the year sits above its entries.",
       "$value": "48px"
     },
     "header": {
