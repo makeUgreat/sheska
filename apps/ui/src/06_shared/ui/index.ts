@@ -13,6 +13,7 @@ export { Tag } from './tag';
 export { TrafficLights } from './traffic-lights';
 export {
   clearCommand,
+  prefersReducedMotion,
   printRequestFailure,
   PromptText,
   Terminal,
