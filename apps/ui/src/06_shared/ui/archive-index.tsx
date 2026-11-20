@@ -37,8 +37,8 @@ const ENTRY =
   'motion-reduce:transition-none';
 
 const YEAR_IN_MARGIN =
-  'year-margin:-ml-[calc(var(--spacing-archive-year)+var(--spacing-gutter))] year-margin:grid ' +
-  'year-margin:grid-cols-[var(--spacing-archive-year)_minmax(0,1fr)] year-margin:items-baseline year-margin:gap-x-gutter';
+  'margin-label:-ml-[calc(var(--spacing-margin-label)+var(--spacing-gutter))] margin-label:grid ' +
+  'margin-label:grid-cols-[var(--spacing-margin-label)_minmax(0,1fr)] margin-label:items-baseline margin-label:gap-x-gutter';
 
 export function ArchiveIndex({ entries }: { entries: readonly ArchiveEntry[] }) {
   return (
@@ -47,7 +47,7 @@ export function ArchiveIndex({ entries }: { entries: readonly ArchiveEntry[] }) 
         <section key={yearEntries[0].id} aria-labelledby={`archive-${yearEntries[0].id}`} className={YEAR_IN_MARGIN}>
           <h2
             id={`archive-${yearEntries[0].id}`}
-            className="mb-1 font-mono text-label-sm tracking-normal text-text-muted year-margin:mb-0 year-margin:text-right"
+            className="mb-1 font-mono text-label-sm tracking-normal text-text-muted margin-label:mb-0 margin-label:text-right"
           >
             {year}
           </h2>
