@@ -3,6 +3,7 @@ export {
   TerminalCountUp,
   TerminalEntryLink,
   TerminalHighlight,
+  TerminalMeter,
   TerminalText,
   TerminalTree,
   TerminalTreeRoot,

@@ -64,17 +64,7 @@ function buildMockHttpClient({
         return Promise.resolve({ count: 12 });
       case '/posts/search':
         return Promise.resolve({
-          posts:
-            params?.q === 'redis'
-              ? [
-                  {
-                    ...POST,
-                    matchReason: 'both',
-                    similarity: 92,
-                    snippet: '세션 토큰은 Redis에\n저장한다',
-                  },
-                ]
-              : [],
+          posts: searchHits(params?.q),
           nextCursor: null,
           semanticSearchApplied: true,
         });
@@ -105,6 +95,17 @@ function buildMockHttpClient({
   });
   const client = { get, post, delete: del } as unknown as HttpClient;
   return { client, get, post, del };
+}
+
+function searchHits(query: string | undefined) {
+  switch (query) {
+    case 'redis':
+      return [{ ...POST, matchReason: 'both', similarity: 92, snippet: '세션 토큰은 Redis에\n저장한다' }];
+    case 'session':
+      return [{ ...POST, matchReason: 'semantic', similarity: 71, snippet: null }];
+    default:
+      return [];
+  }
 }
 
 function PostDetailStub() {
@@ -178,6 +179,17 @@ describe('LandingPage terminal', () => {
       q: 'redis',
       limit: '10',
     });
+  });
+
+  it('grep은 의미로만 찾은 글에 유사도를 보인다', async () => {
+    const { client } = buildMockHttpClient();
+    renderPage(client);
+
+    await typeCommand('guest@hash:~$', 'grep session');
+
+    const log = screen.getByRole('log');
+    expect(await within(log).findByText('71%', { ignore: '[aria-hidden="true"]' })).toBeDefined();
+    expect(within(log).getByText(/similar in meaning/)).toBeDefined();
   });
 
   it('grep 뒤에 cat과 Tab을 누르면 결과 제목을 채운다', async () => {

@@ -131,6 +131,8 @@ export function TerminalEntryLink({ title, to, date, highlight = [] }: { title: 
 }
 
 const COUNT_UP_MS = 450;
+const METER_CELLS = 10;
+const METER_FILL_MS = 600;
 
 /** 0부터 값까지 숫자를 올린다. 올라가는 숫자는 화면 낭독기에 숨기고 최종 값만 읽힌다. */
 export function TerminalCountUp({ value, format }: { value: number; format: (count: number) => string }) {
@@ -140,6 +142,22 @@ export function TerminalCountUp({ value, format }: { value: number; format: (cou
     <>
       <span aria-hidden="true">{format(shown)}</span>
       <span className="sr-only">{format(value)}</span>
+    </>
+  );
+}
+
+/** 10칸 막대와 퍼센트를 함께 채운다. 막대는 장식이라 화면 낭독기에는 퍼센트만 읽힌다. */
+export function TerminalMeter({ percent }: { percent: number }) {
+  const shown = useCountUp(percent, METER_FILL_MS);
+  const filled = Math.round((shown / 100) * METER_CELLS);
+
+  return (
+    <>
+      <span aria-hidden="true" className="whitespace-nowrap">
+        <span className="text-primary">{'█'.repeat(filled)}</span>
+        <span className="text-on-surface-muted/50">{'░'.repeat(METER_CELLS - filled)}</span> {shown}%
+      </span>
+      <span className="sr-only">{percent}%</span>
     </>
   );
 }
