@@ -40,9 +40,15 @@
   --text-headline-sm: 26px;
   --text-headline-sm--line-height: 1.3;
   --text-headline-sm--font-weight: 600;
-  --text-title-lg: 21px;
+  --text-title-lg: 23px;
   --text-title-lg--line-height: 1.4;
   --text-title-lg--font-weight: 600;
+  --text-title-md: 20px;
+  --text-title-md--line-height: 1.5;
+  --text-title-md--font-weight: 600;
+  --text-title-sm: 18px;
+  --text-title-sm--line-height: 1.6;
+  --text-title-sm--font-weight: 600;
   --text-body-lg: 18px;
   --text-body-lg--line-height: 1.6;
   --text-body-lg--font-weight: 400;
