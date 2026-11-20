@@ -133,6 +133,37 @@ describe('Markdown 코드 펜스', () => {
   });
 });
 
+/** KaTeX는 나중에 도착하므로 수식에 katex class가 붙을 때까지 기다린다. */
+async function renderMath(body: string) {
+  const view = render(<Markdown body={body} />);
+
+  await waitFor(() => expect(view.container.querySelector('.katex')).not.toBe(null));
+  return view;
+}
+
+describe('Markdown 수식', () => {
+  it('`$`로 감싼 글자를 inline 수식으로 그리고 `$`는 보이지 않는다', async () => {
+    const { container } = await renderMath('관계 수는 $M:N$이다');
+
+    expect(container.querySelector('.katex-display')).toBe(null);
+    expect(container.textContent).not.toContain('$');
+  });
+
+  it('`$$` block을 display 수식으로 그린다', async () => {
+    const { container } = await renderMath(['$$', 'N \\times M', '$$'].join('\n'));
+
+    expect(container.querySelector('.katex-display')).not.toBe(null);
+    expect(screen.queryByRole('button', { name: 'Copy code' })).toBe(null);
+  });
+
+  it('잘못된 수식은 본문을 깨뜨리지 않고 원문을 남긴다', async () => {
+    const { container } = render(<Markdown body={'앞 $\\frac{1$ 뒤'} />);
+
+    await waitFor(() => expect(container.querySelector('.katex-error')?.textContent).toBe('\\frac{1'));
+    expect(container.textContent).toContain('뒤');
+  });
+});
+
 describe('Markdown vault 문법', () => {
   it('wiki link를 unresolved 표기로 바꾼다', () => {
     renderBody('[[feature-sliced-design|FSD]]를 따른다');
