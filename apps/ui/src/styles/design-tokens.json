@@ -220,7 +220,7 @@
       }
     },
     "headline-sm": {
-      "$description": "Body heading for a vault `#`. About 1.2x apart from the next heading level, so each level reads as its own step.",
+      "$description": "Body heading for a vault `#`. About 1.13x apart from the next heading level. Wide screens also set levels apart by how far a heading hangs left, so size steps stay small.",
       "$type": "typography",
       "$value": {
         "fontFamily": "{typography.font-family.sans}",
@@ -230,13 +230,33 @@
       }
     },
     "title-lg": {
-      "$description": "Body heading for a vault `##`. Fills the step between headline-sm and body-lg.",
+      "$description": "Body heading for a vault `##`.",
       "$type": "typography",
       "$value": {
         "fontFamily": "{typography.font-family.sans}",
-        "fontSize": "21px",
+        "fontSize": "23px",
         "fontWeight": "600",
         "lineHeight": "1.4"
+      }
+    },
+    "title-md": {
+      "$description": "Body heading for a vault `###`.",
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.font-family.sans}",
+        "fontSize": "20px",
+        "fontWeight": "600",
+        "lineHeight": "1.5"
+      }
+    },
+    "title-sm": {
+      "$description": "Body heading for a vault `####`. The lowest sans heading; 18px keeps it larger than 16px bold body text.",
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.font-family.sans}",
+        "fontSize": "18px",
+        "fontWeight": "600",
+        "lineHeight": "1.6"
       }
     },
     "body-lg": {
