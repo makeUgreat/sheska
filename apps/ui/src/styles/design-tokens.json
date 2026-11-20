@@ -330,7 +330,7 @@
       "$type": "typography",
       "$value": {
         "fontFamily": "{typography.font-family.mono}",
-        "fontSize": "18px",
+        "fontSize": "16px",
         "fontWeight": "500",
         "lineHeight": "1.6"
       }
@@ -340,7 +340,7 @@
       "$type": "typography",
       "$value": {
         "fontFamily": "{typography.font-family.mono}",
-        "fontSize": "14px",
+        "fontSize": "13px",
         "fontWeight": "500",
         "lineHeight": "1.6"
       }
