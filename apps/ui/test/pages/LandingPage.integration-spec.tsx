@@ -170,6 +170,7 @@ describe('LandingPage terminal', () => {
     const log = screen.getByRole('log');
     expect(await within(log).findByText(/1 match/)).toBeDefined();
     expect(within(log).getByText(/세션 토큰은/).textContent).toBe('세션 토큰은 Redis에 저장한다');
+    expect(within(log).getByText('92%', { ignore: '[aria-hidden="true"]' })).toBeDefined();
     // 강조한 부분이 링크 안에서 별도 요소라서 이름 대신 글자로 찾는다.
     const link = within(log).getByRole('link', {
       name: /에 로그인 세션 저장하기/,

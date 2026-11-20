@@ -52,8 +52,8 @@ export interface TerminalTreeItem {
   key: string;
   /** 가지 기호 뒤에 오는 첫 줄 */
   head: ReactNode;
-  /** 첫 줄 아래에 가지에 맞춰 붙는 둘째 줄 */
-  detail?: ReactNode;
+  /** 첫 줄 아래에 가지에 맞춰 한 줄씩 붙는 줄들 */
+  details?: ReactNode[];
 }
 
 /**
@@ -75,14 +75,14 @@ export function TerminalTree({ root, items, footer }: { root: ReactNode; items: 
                 </span>
                 <span className="min-w-0 break-words">{item.head}</span>
               </p>
-              {item.detail && (
-                <p className="flex">
+              {item.details?.map((detail, detailIndex) => (
+                <p key={detailIndex} className="flex">
                   <span aria-hidden="true" className={BRANCH}>
                     {last ? '    ' : '│   '}
                   </span>
-                  <span className="min-w-0 break-words text-on-surface-muted">{item.detail}</span>
+                  <span className="min-w-0 break-words text-on-surface-muted">{detail}</span>
                 </p>
-              )}
+              ))}
             </li>
           );
         })}

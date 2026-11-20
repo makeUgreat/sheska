@@ -1,4 +1,4 @@
-import { type MutableRefObject } from 'react';
+import { type MutableRefObject, type ReactNode } from 'react';
 import { searchPosts, type SearchPostsResponse } from '@/entities/post';
 import { useHttpClient } from '@/shared/api';
 import { formatMonthDay } from '@/shared/lib';
@@ -72,23 +72,25 @@ function hitItem(post: SearchHit, words: string[]): TerminalTreeItem {
   return {
     key: post.postId,
     head: <TerminalEntryLink title={post.title} to={`/posts/${post.postId}`} date={formatMonthDay(post.createdAt)} highlight={words} />,
-    detail: detailOf(post, words),
+    details: detailsOf(post, words),
   };
 }
 
-/** 본문 발췌가 있으면 발췌를, 의미로만 찾았으면 유사도를 보인다. */
-function detailOf(post: SearchHit, words: string[]) {
+/** 본문 발췌와 의미 검색 유사도 중 있는 것을 한 줄씩 보인다. */
+function detailsOf(post: SearchHit, words: string[]) {
+  const details: ReactNode[] = [];
   if (post.snippet) {
-    return <TerminalHighlight text={toOneLine(post.snippet)} words={words} className="text-primary" />;
+    details.push(<TerminalHighlight text={toOneLine(post.snippet)} words={words} className="text-primary" />);
   }
-  if (post.matchReason === 'semantic' && post.similarity !== null) {
-    return (
+  if (post.similarity !== null) {
+    details.push(
       <>
         similar in meaning <TerminalMeter percent={post.similarity} />
-      </>
+      </>,
     );
   }
-  return undefined;
+
+  return details;
 }
 
 /** 발췌는 markdown 원문이라 줄 앞의 제목 기호를 지우고 한 줄로 만든다. */
