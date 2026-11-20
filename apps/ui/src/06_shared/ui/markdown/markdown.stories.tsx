@@ -219,17 +219,17 @@ export const NestedCodeFences: Story = {
   },
 };
 
-/** 수식이 있는 글에서만 KaTeX를 불러온다. 본문 폭을 넘는 수식 block은 자기 안에서 가로로 스크롤한다. */
+/** 수식이 있는 글에서만 KaTeX를 불러온다. 한 줄에서 닫은 `$$`도 display로 그리고, 본문 폭을 넘는 수식 block은 자기 안에서 가로로 스크롤한다. */
 export const Math: Story = {
   args: {
     body: [
       '관계 수는 $1:1$, $1:N$, $M:N$으로 달랐다. 비교 횟수는 $N \\times M$에서 $N + M$으로 줄었다.',
       '',
-      '$$',
-      'a \\cdot b = |a| \\times |b| \\times \\cos(\\theta)',
-      '$$',
+      '$$a \\cdot b = |a| \\times |b| \\times \\cos(\\theta)$$',
       '',
       '- 목록 안의 수식: $\\text{RRF score} = \\sum \\frac{1}{k + \\text{rank}}$',
+      '\t- 각 검색에서 몇 등이었는지만 본다',
+      '\t\t$$\\text{RRF score} = \\sum \\frac{1}{k + \\text{rank}}$$',
       '',
       '$$',
       '\\sum_{i=1}^{n} \\frac{1}{k + \\text{rank}_i} + \\sum_{j=1}^{m} \\frac{1}{k + \\text{rank}_j} + \\sum_{l=1}^{p} \\frac{1}{k + \\text{rank}_l} + \\sum_{q=1}^{r} \\frac{1}{k + \\text{rank}_q}',

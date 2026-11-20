@@ -156,6 +156,12 @@ describe('Markdown 수식', () => {
     expect(screen.queryByRole('button', { name: 'Copy code' })).toBe(null);
   });
 
+  it('한 줄 `$$` 수식만 있는 문단을 display 수식으로 그린다', async () => {
+    const { container } = await renderMath('$$N \\times M$$');
+
+    expect(container.querySelector('.katex-display')).not.toBe(null);
+  });
+
   it('잘못된 수식은 본문을 깨뜨리지 않고 원문을 남긴다', async () => {
     const { container } = render(<Markdown body={'앞 $\\frac{1$ 뒤'} />);
 

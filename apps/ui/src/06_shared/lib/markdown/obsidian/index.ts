@@ -2,6 +2,7 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import { type PluggableList } from 'unified';
 import { remarkBlockAnchor } from './remark-block-anchor';
+import { remarkDisplayMath } from './remark-display-math';
 import { remarkListIndent } from './remark-list-indent';
 import { remarkWikiLink } from './remark-wiki-link';
 
@@ -14,6 +15,7 @@ export const OBSIDIAN_SYNTAX: PluggableList = [
   remarkListIndent,
   [remarkGfm, { singleTilde: false }],
   remarkMath,
+  remarkDisplayMath,
   remarkBlockAnchor,
   remarkWikiLink,
 ];
