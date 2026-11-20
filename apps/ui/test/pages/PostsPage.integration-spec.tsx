@@ -75,6 +75,7 @@ describe('PostsPage', () => {
       sourceId: 'source-1',
       title: '테스트 포스트',
       viewCount: 5,
+      summary: { status: 'pending' },
       createdAt: now,
       updatedAt: now,
     };
@@ -91,8 +92,24 @@ describe('PostsPage', () => {
   it('post 항목 안에 조회수를 보여준다', async () => {
     const now = '2026-01-01T00:00:00.000Z';
     const posts: PostSummary[] = [
-      { postId: 'post-1', sourceId: 'source-1', title: '많이 읽은 포스트', viewCount: 1208, createdAt: now, updatedAt: now },
-      { postId: 'post-2', sourceId: 'source-2', title: '한 번 읽은 포스트', viewCount: 1, createdAt: now, updatedAt: now },
+      {
+        postId: 'post-1',
+        sourceId: 'source-1',
+        title: '많이 읽은 포스트',
+        viewCount: 1208,
+        summary: { status: 'pending' },
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        postId: 'post-2',
+        sourceId: 'source-2',
+        title: '한 번 읽은 포스트',
+        viewCount: 1,
+        summary: { status: 'pending' },
+        createdAt: now,
+        updatedAt: now,
+      },
     ];
     const client = buildMockHttpClient({
       listPosts: vi.fn().mockResolvedValue({ posts, nextCursor: null }),
@@ -113,6 +130,7 @@ describe('PostsPage', () => {
       sourceId: 'source-1',
       title: '요약 없는 포스트',
       viewCount: 1,
+      summary: { status: 'pending' },
       createdAt: now,
       updatedAt: now,
     };
@@ -126,6 +144,49 @@ describe('PostsPage', () => {
     expect(within(link).getByText('Summary not ready yet')).toBeDefined();
   });
 
+  it('요약이 있으면 받은 줄을 모두 보여준다', async () => {
+    const now = '2026-01-01T00:00:00.000Z';
+    const lines = ['첫 문장이다.', '둘째 문장이다.'];
+    const post: PostSummary = {
+      postId: 'post-1',
+      sourceId: 'source-1',
+      title: '요약 있는 포스트',
+      viewCount: 1,
+      summary: { status: 'ready', lines },
+      createdAt: now,
+      updatedAt: now,
+    };
+    const client = buildMockHttpClient({
+      listPosts: vi.fn().mockResolvedValue({ posts: [post], nextCursor: null }),
+    });
+
+    renderPage(client);
+
+    const link = await screen.findByRole('link', { name: /요약 있는 포스트/ });
+    lines.forEach((line) => expect(within(link).getByText(line)).toBeDefined());
+  });
+
+  it('요약을 만들지 못했으면 숨기지 않고 실패를 알린다', async () => {
+    const now = '2026-01-01T00:00:00.000Z';
+    const post: PostSummary = {
+      postId: 'post-1',
+      sourceId: 'source-1',
+      title: '요약 실패한 포스트',
+      viewCount: 1,
+      summary: { status: 'failed' },
+      createdAt: now,
+      updatedAt: now,
+    };
+    const client = buildMockHttpClient({
+      listPosts: vi.fn().mockResolvedValue({ posts: [post], nextCursor: null }),
+    });
+
+    renderPage(client);
+
+    const link = await screen.findByRole('link', { name: /요약 실패한 포스트/ });
+    expect(within(link).getByText('Summary could not be generated.')).toBeDefined();
+  });
+
   it('검색 결과에는 요약 안내 대신 검색어 주변 본문을 보여준다', async () => {
     const user = userEvent.setup();
     const now = '2026-01-01T00:00:00.000Z';
@@ -134,6 +195,7 @@ describe('PostsPage', () => {
       sourceId: 'source-1',
       title: '검색된 포스트',
       viewCount: 1,
+      summary: { status: 'pending' },
       createdAt: now,
       updatedAt: now,
       snippet: 'garden 근처 본문',
@@ -157,6 +219,7 @@ describe('PostsPage', () => {
         sourceId: 'source-1',
         title: '올해 포스트',
         viewCount: 1,
+        summary: { status: 'pending' },
         createdAt: '2026-03-01T12:00:00.000Z',
         updatedAt: '2026-03-01T12:00:00.000Z',
       },
@@ -165,6 +228,7 @@ describe('PostsPage', () => {
         sourceId: 'source-2',
         title: '작년 포스트',
         viewCount: 2,
+        summary: { status: 'pending' },
         createdAt: '2025-03-01T12:00:00.000Z',
         updatedAt: '2025-03-01T12:00:00.000Z',
       },
@@ -190,6 +254,7 @@ describe('PostsPage', () => {
         sourceId: 'source-1',
         title: '의미로 찾은 포스트',
         viewCount: 1,
+        summary: { status: 'pending' },
         createdAt: now,
         updatedAt: now,
         similarity: 91,
@@ -199,6 +264,7 @@ describe('PostsPage', () => {
         sourceId: 'source-2',
         title: '키워드로 찾은 포스트',
         viewCount: 2,
+        summary: { status: 'pending' },
         createdAt: now,
         updatedAt: now,
         similarity: null,
@@ -270,6 +336,7 @@ describe('PostsPage', () => {
       sourceId: 'source-1',
       title: 'Garden Search Result',
       viewCount: 3,
+      summary: { status: 'pending' },
       createdAt: now,
       updatedAt: now,
     };

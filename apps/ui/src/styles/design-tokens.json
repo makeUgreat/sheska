@@ -129,6 +129,14 @@
         "hex": "#a13c46"
       }
     },
+    "accent-tint": {
+      "$description": "Fill behind the AI summary callout on the light page. AI-written text sits on it so it never reads as the vault note. No other light-page element uses a fill.",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.9922, 0.9529, 0.9569],
+        "hex": "#fdf3f4"
+      }
+    },
     "text-primary": {
       "$value": "{color.surface}"
     },

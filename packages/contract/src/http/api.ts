@@ -14,6 +14,11 @@ export interface ApiContract {
   readonly binaryRequest?: true;
   readonly response?: z.ZodType;
   /**
+   * 응답 본문이 JSON 한 덩어리가 아니라 `application/x-ndjson` stream이다. 한 줄이 이 schema를 따르는 사건 하나다.
+   * 첫 줄을 보내기 전의 실패는 다른 API처럼 오류 status와 오류 본문으로 온다.
+   */
+  readonly streamEvent?: z.ZodType;
+  /**
    * 이 API가 돌려줄 수 있는 오류 code.
    * 모든 API가 돌려줄 수 있는 `internal.unexpected`, `internal.unavailable`은 넣지 않는다.
    */
@@ -29,6 +34,8 @@ export type ApiQuery<T extends ApiContract> = T['query'] extends z.ZodType ? z.i
 export type ApiRequest<T extends ApiContract> = T['request'] extends z.ZodType ? z.input<T['request']> : never;
 
 export type ApiResponse<T extends ApiContract> = T['response'] extends z.ZodType ? z.infer<T['response']> : never;
+
+export type ApiStreamEvent<T extends ApiContract> = T['streamEvent'] extends z.ZodType ? z.infer<T['streamEvent']> : never;
 
 export type ApiErrorCode<T extends ApiContract> = T['errors'][number];
 

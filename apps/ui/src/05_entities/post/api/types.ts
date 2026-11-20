@@ -2,6 +2,7 @@ import {
   type ApiQuery,
   type ApiRequest,
   type ApiResponse,
+  type PostAiSummaryResponse,
   type PostApi,
   type PostResponse,
   type PostSearchResultResponse,
@@ -22,3 +23,4 @@ export type CountPostsResponse = ApiResponse<typeof PostApi.count>;
 export type PublishPostRequest = ApiRequest<typeof PostApi.publish>;
 export type PublishPostResponse = ApiResponse<typeof PostApi.publish>;
 export type GetPostResponse = PostResponse;
+export type AiSummary = PostAiSummaryResponse;

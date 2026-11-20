@@ -22,6 +22,7 @@ function buildPost(postId: string, title: string): PostSummary {
     sourceId: `source-${postId}`,
     title,
     viewCount: 0,
+    summary: { status: 'pending' },
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   };

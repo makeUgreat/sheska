@@ -23,6 +23,7 @@ const POST = {
   sourceId: 'source-spacing',
   title: '목록 안 코드 블록의 간격',
   viewCount: 0,
+  summary: { status: 'pending' },
   createdAt: NOW,
   updatedAt: NOW,
   body: BODY,

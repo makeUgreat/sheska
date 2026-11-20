@@ -48,6 +48,7 @@ const MOCK_POST = {
   sourceId: 'source-1',
   title: '테스트 포스트',
   viewCount: 0,
+  summary: { status: 'pending' },
   createdAt: NOW,
   updatedAt: NOW,
 };
