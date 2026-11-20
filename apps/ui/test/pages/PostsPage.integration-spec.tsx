@@ -88,6 +88,24 @@ describe('PostsPage', () => {
     expect(link.getAttribute('href')).toBe('/posts/post-1');
   });
 
+  it('post 항목 안에 조회수를 보여준다', async () => {
+    const now = '2026-01-01T00:00:00.000Z';
+    const posts: PostSummary[] = [
+      { postId: 'post-1', sourceId: 'source-1', title: '많이 읽은 포스트', viewCount: 1208, createdAt: now, updatedAt: now },
+      { postId: 'post-2', sourceId: 'source-2', title: '한 번 읽은 포스트', viewCount: 1, createdAt: now, updatedAt: now },
+    ];
+    const client = buildMockHttpClient({
+      listPosts: vi.fn().mockResolvedValue({ posts, nextCursor: null }),
+    });
+
+    renderPage(client);
+
+    const popular = await screen.findByRole('link', { name: /많이 읽은 포스트/ });
+    const once = screen.getByRole('link', { name: /한 번 읽은 포스트/ });
+    expect(within(popular).getByText('1,208 views')).toBeDefined();
+    expect(within(once).getByText('1 view')).toBeDefined();
+  });
+
   it('post를 작성 연도별로 묶어 보여준다', async () => {
     const posts: PostSummary[] = [
       {

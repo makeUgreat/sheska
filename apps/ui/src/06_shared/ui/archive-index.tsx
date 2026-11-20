@@ -8,7 +8,7 @@ export interface ArchiveEntry {
   href: string;
   title: ReactNode;
   date: string;
-  note?: ReactNode;
+  meta?: readonly string[];
   detail?: ReactNode;
 }
 
@@ -32,14 +32,16 @@ function groupByYear(entries: readonly ArchiveEntry[]): YearGroup[] {
 }
 
 const ENTRY =
-  'grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-1 border-b border-outline-variant/12 py-2.5 ' +
-  'text-text-primary transition-colors duration-150 group-hover/archive:not-hover:text-text-muted ' +
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page-background ' +
-  'motion-reduce:transition-none';
+  'group/entry flex flex-col gap-1.5 border-b border-outline-variant/12 py-6 ' +
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page-background';
 
 const YEAR_IN_MARGIN =
   'margin-label:-ml-[calc(var(--spacing-margin-label)+var(--spacing-gutter))] margin-label:grid ' +
-  'margin-label:grid-cols-[var(--spacing-margin-label)_minmax(0,1fr)] margin-label:items-baseline margin-label:gap-x-gutter';
+  'margin-label:grid-cols-[var(--spacing-margin-label)_minmax(0,1fr)] margin-label:items-start margin-label:gap-x-gutter';
+
+const YEAR =
+  'border-b border-text-primary pb-3 font-mono text-label-sm font-semibold tracking-normal text-text-primary tabular-nums ' +
+  'margin-label:sticky margin-label:top-[var(--spacing-header)] margin-label:border-0 margin-label:pb-0 margin-label:pt-6 margin-label:text-right';
 
 /** 이번 render에서 처음 보이는 항목에만 0부터 순서를 매긴다. 무한 스크롤로 붙은 묶음도 0부터 다시 센다. */
 function useAppearOrders(entries: readonly ArchiveEntry[]) {
@@ -64,12 +66,21 @@ function ArchiveRow({ entry, appearOrder }: { entry: ArchiveEntry; appearOrder: 
   return (
     <li className={LINE_IN} style={delay}>
       <Link to={entry.href} className={ENTRY}>
-        <span className="truncate text-body-md">{entry.title}</span>
-        <span className="flex gap-3 font-mono text-label-sm tracking-normal text-text-muted tabular-nums">
-          {entry.note}
+        <span className="flex flex-wrap font-mono text-label-sm tracking-normal text-text-muted tabular-nums">
           <time dateTime={entry.date}>{formatMonthDay(entry.date)}</time>
+          {entry.meta?.map((item) => (
+            <span key={item}>
+              <span aria-hidden="true" className="mx-2">
+                ·
+              </span>
+              {item}
+            </span>
+          ))}
         </span>
-        {entry.detail && <span className="col-span-2 line-clamp-2 text-body-md text-text-muted">{entry.detail}</span>}
+        <span className="break-words text-title-md text-text-primary transition-colors duration-150 group-hover/entry:text-accent-strong motion-reduce:transition-none">
+          {entry.title}
+        </span>
+        {entry.detail && <span className="line-clamp-2 text-body-md text-text-muted">{entry.detail}</span>}
       </Link>
     </li>
   );
@@ -79,16 +90,13 @@ export function ArchiveIndex({ entries }: { entries: readonly ArchiveEntry[] }) 
   const appearOrders = useAppearOrders(entries);
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-14">
       {groupByYear(entries).map(({ year, entries: yearEntries }) => (
         <section key={yearEntries[0].id} aria-labelledby={`archive-${yearEntries[0].id}`} className={YEAR_IN_MARGIN}>
-          <h2
-            id={`archive-${yearEntries[0].id}`}
-            className="mb-1 font-mono text-label-sm tracking-normal text-text-muted margin-label:mb-0 margin-label:text-right"
-          >
+          <h2 id={`archive-${yearEntries[0].id}`} className={YEAR}>
             {year}
           </h2>
-          <ul className="group/archive">
+          <ul>
             {yearEntries.map((entry) => (
               <ArchiveRow key={entry.id} entry={entry} appearOrder={appearOrders.get(entry.id) ?? 0} />
             ))}

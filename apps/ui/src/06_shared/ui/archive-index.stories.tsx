@@ -18,7 +18,7 @@ const entries: ArchiveEntry[] = [
   {
     id: 'long',
     href: '/posts/long',
-    title: 'A deliberately long archive title that must stay on one line and end with an ellipsis instead of wrapping',
+    title: 'A deliberately long archive title that wraps onto a second line instead of ending with an ellipsis',
     date: '2026-01-20T12:00:00.000Z',
   },
   {
@@ -59,8 +59,11 @@ export const WithDetail: Story = {
   },
 };
 
-export const WithNote: Story = {
+export const WithMeta: Story = {
   args: {
-    entries: entries.map((entry, index) => ({ ...entry, note: index % 2 === 0 ? `${91 - index * 9}% match` : undefined })),
+    entries: entries.map((entry, index) => ({
+      ...entry,
+      meta: index % 2 === 0 ? [`${91 - index * 9}% match`, '1,208 views'] : ['342 views'],
+    })),
   },
 };
