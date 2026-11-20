@@ -6,22 +6,28 @@ import { type RehypePlugins } from './markdown-highlight';
 
 type RehypePlugin = RehypePlugins[number];
 
+type Loader = () => Promise<RehypePlugin>;
+
+/** `import()`는 이미 받은 module도 비동기로 돌려준다. 기억해 두지 않으면 글을 열 때마다 plugin 없는 첫 화면이 한 번 보인다. */
+const loadedPlugins = new Map<Loader, RehypePlugin>();
+
 /** 받는 동안에는 본문을 plugin 없이 먼저 보여 준다. */
-function useLazyPlugin(needed: boolean, load: () => Promise<RehypePlugin>) {
-  const [plugin, setPlugin] = useState<RehypePlugin>();
+function useLazyPlugin(needed: boolean, load: Loader) {
+  const [plugin, setPlugin] = useState(() => loadedPlugins.get(load));
 
   useEffect(() => {
-    if (!needed) return;
+    if (!needed || plugin) return;
 
     let live = true;
     void load().then((loaded) => {
+      loadedPlugins.set(load, loaded);
       if (live) setPlugin(() => loaded);
     });
 
     return () => {
       live = false;
     };
-  }, [needed, load]);
+  }, [needed, plugin, load]);
 
   return plugin;
 }
