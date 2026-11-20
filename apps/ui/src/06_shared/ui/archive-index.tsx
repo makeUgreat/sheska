@@ -1,6 +1,7 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatMonthDay } from '../lib';
+import { LINE_IN, lineDelay } from './line-in';
 
 export interface ArchiveEntry {
   id: string;
@@ -40,7 +41,43 @@ const YEAR_IN_MARGIN =
   'margin-label:-ml-[calc(var(--spacing-margin-label)+var(--spacing-gutter))] margin-label:grid ' +
   'margin-label:grid-cols-[var(--spacing-margin-label)_minmax(0,1fr)] margin-label:items-baseline margin-label:gap-x-gutter';
 
+/** 이번 render에서 처음 보이는 항목에만 0부터 순서를 매긴다. 무한 스크롤로 붙은 묶음도 0부터 다시 센다. */
+function useAppearOrders(entries: readonly ArchiveEntry[]) {
+  const shownIds = useRef<ReadonlySet<string>>(new Set());
+
+  useEffect(() => {
+    shownIds.current = new Set(entries.map(({ id }) => id));
+  });
+
+  const orders = new Map<string, number>();
+  for (const { id } of entries) {
+    if (!shownIds.current.has(id)) orders.set(id, orders.size);
+  }
+
+  return orders;
+}
+
+function ArchiveRow({ entry, appearOrder }: { entry: ArchiveEntry; appearOrder: number }) {
+  /** 다음 render에서 지연이 바뀌면 진행 중인 animation이 어긋나므로 mount 때 값으로 고정한다. */
+  const [delay] = useState(() => lineDelay(appearOrder));
+
+  return (
+    <li className={LINE_IN} style={delay}>
+      <Link to={entry.href} className={ENTRY}>
+        <span className="truncate text-body-md">{entry.title}</span>
+        <span className="flex gap-3 font-mono text-label-sm tracking-normal text-text-muted tabular-nums">
+          {entry.note}
+          <time dateTime={entry.date}>{formatMonthDay(entry.date)}</time>
+        </span>
+        {entry.detail && <span className="col-span-2 line-clamp-2 text-body-md text-text-muted">{entry.detail}</span>}
+      </Link>
+    </li>
+  );
+}
+
 export function ArchiveIndex({ entries }: { entries: readonly ArchiveEntry[] }) {
+  const appearOrders = useAppearOrders(entries);
+
   return (
     <div className="flex flex-col gap-10">
       {groupByYear(entries).map(({ year, entries: yearEntries }) => (
@@ -53,16 +90,7 @@ export function ArchiveIndex({ entries }: { entries: readonly ArchiveEntry[] }) 
           </h2>
           <ul className="group/archive">
             {yearEntries.map((entry) => (
-              <li key={entry.id}>
-                <Link to={entry.href} className={ENTRY}>
-                  <span className="truncate text-body-md">{entry.title}</span>
-                  <span className="flex gap-3 font-mono text-label-sm tracking-normal text-text-muted tabular-nums">
-                    {entry.note}
-                    <time dateTime={entry.date}>{formatMonthDay(entry.date)}</time>
-                  </span>
-                  {entry.detail && <span className="col-span-2 line-clamp-2 text-body-md text-text-muted">{entry.detail}</span>}
-                </Link>
-              </li>
+              <ArchiveRow key={entry.id} entry={entry} appearOrder={appearOrders.get(entry.id) ?? 0} />
             ))}
           </ul>
         </section>
