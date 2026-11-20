@@ -54,7 +54,11 @@ export const WithDetail: Story = {
   args: {
     entries: entries.map((entry) => ({
       ...entry,
-      detail: 'Flannel로는 네트워크 정책을 걸 수 없었다. 노드 3대에서 eBPF 기반 데이터플레인으로 옮기며 바뀐 지연과 운영 비용을 정리한다.',
+      detail: (
+        <span className="line-clamp-2 text-body-md text-text-muted">
+          Flannel로는 네트워크 정책을 걸 수 없었다. 노드 3대에서 eBPF 기반 데이터플레인으로 옮기며 바뀐 지연과 운영 비용을 정리한다.
+        </span>
+      ),
     })),
   },
 };
