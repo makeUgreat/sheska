@@ -89,6 +89,12 @@ describe('Markdown 코드 펜스', () => {
     expect(screen.getByText('ts')).toBeDefined();
   });
 
+  it('언어를 적지 않은 fence는 text로 라벨을 단다', () => {
+    render(<Markdown body={fence('', 'plain line')} />);
+
+    expect(screen.getByText('text')).toBeDefined();
+  });
+
   it('등록한 언어의 keyword를 highlight token으로 쪼갠다', async () => {
     const { container } = await renderFence(fence('ts', 'const retry = 3;'));
 
