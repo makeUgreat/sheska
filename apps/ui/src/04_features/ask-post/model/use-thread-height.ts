@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 
 const STORAGE_KEY = 'sheska.ask.thread-height';
-const MIN_HEIGHT = 160;
+/** 빈 대화 카드의 안내 문구가 한 줄씩 들어가는 높이다. 문구가 줄바꿈되면 대화 창이 `min-content`로 더 늘어난다. */
+const MIN_HEIGHT = 104;
 /** 대화 창이 본문을 다 덮지 않게 화면 높이의 이 비율에서 멈춘다. */
 const MAX_VIEWPORT_SHARE = 0.7;
 const KEY_STEP = 24;
