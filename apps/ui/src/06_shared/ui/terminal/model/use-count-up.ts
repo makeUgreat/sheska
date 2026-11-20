@@ -17,7 +17,8 @@ export function useCountUp(target: number, durationMs: number) {
     const start = performance.now();
     let frame = 0;
     const tick = (now: number) => {
-      const progress = Math.min(1, (now - start) / durationMs);
+      // rAF 시각은 프레임 시작 시각이라 start보다 이를 수 있다.
+      const progress = Math.min(1, Math.max(0, (now - start) / durationMs));
       setValue(Math.round(target * (1 - (1 - progress) ** 3)));
       if (progress < 1) frame = requestAnimationFrame(tick);
     };
