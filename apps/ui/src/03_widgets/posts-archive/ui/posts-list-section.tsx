@@ -18,6 +18,10 @@ export type PostsListState =
       sentinelRef: Ref<HTMLDivElement>;
     };
 
+function formatViews(count: number) {
+  return `${count.toLocaleString('en-US')} ${count === 1 ? 'view' : 'views'}`;
+}
+
 function Highlighted({ text, query }: { text: string; query: string }) {
   if (!query) return <>{text}</>;
 
@@ -57,7 +61,7 @@ export function PostsListSection({
   return (
     <section id="posts" className="px-4 pb-32 pt-16">
       <div className="mx-auto max-w-measure">
-        <h1 className="text-body-md font-semibold text-text-primary">Posts</h1>
+        <h1 className="text-headline-md text-text-primary">Posts</h1>
 
         <form className="mt-6" role="search" onSubmit={handleSubmit}>
           <label htmlFor="posts-archive-search" className="sr-only">
@@ -105,7 +109,9 @@ export function PostsListSection({
                   href: `/posts/${post.postId}`,
                   title: <Highlighted text={post.title} query={highlight} />,
                   date: post.createdAt,
-                  note: post.similarity != null && `${post.similarity}% match`,
+                  meta: [post.similarity != null && `${post.similarity}% match`, formatViews(post.viewCount)].filter(
+                    (item) => typeof item === 'string',
+                  ),
                   detail: post.snippet && <Highlighted text={post.snippet} query={highlight} />,
                 }))}
               />
