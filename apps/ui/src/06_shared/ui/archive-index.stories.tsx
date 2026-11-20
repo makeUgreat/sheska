@@ -58,3 +58,9 @@ export const WithDetail: Story = {
     })),
   },
 };
+
+export const WithNote: Story = {
+  args: {
+    entries: entries.map((entry, index) => ({ ...entry, note: index % 2 === 0 ? `${91 - index * 9}% match` : undefined })),
+  },
+};

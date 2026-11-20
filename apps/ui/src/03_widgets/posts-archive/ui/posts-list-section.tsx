@@ -1,7 +1,6 @@
-import { type FormEvent, type Ref, useState } from 'react';
+import { type FormEvent, type Ref } from 'react';
 import { type PostSummary } from '@/entities/post';
-import { formatDate } from '@/shared/lib';
-import { ArchiveIndex, EmptyState, EndOfList, ErrorState, LoadingState, PeekLayout } from '@/shared/ui';
+import { ArchiveIndex, EmptyState, EndOfList, ErrorState, LoadingState } from '@/shared/ui';
 
 const ARCHIVE_SPACING = 'mt-16';
 
@@ -47,11 +46,8 @@ export function PostsListSection({
   };
   state: PostsListState;
 }) {
-  const [activeId, setActiveId] = useState<string | null>(null);
   const isSearching = search.normalizedQuery.length > 0;
   const highlight = isSearching ? search.normalizedQuery : '';
-  const posts = state.status === 'success' ? state.posts : [];
-  const activePost = posts.find((post) => post.postId === activeId) ?? posts.at(0);
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -60,7 +56,7 @@ export function PostsListSection({
 
   return (
     <section id="posts" className="px-4 pb-32 pt-16">
-      <PeekLayout peek={activePost && <PostPeek post={activePost} highlight={highlight} />}>
+      <div className="mx-auto max-w-measure">
         <h1 className="text-body-md font-semibold text-text-primary">Posts</h1>
 
         <form className="mt-6" role="search" onSubmit={handleSubmit}>
@@ -109,9 +105,9 @@ export function PostsListSection({
                   href: `/posts/${post.postId}`,
                   title: <Highlighted text={post.title} query={highlight} />,
                   date: post.createdAt,
+                  note: post.similarity != null && `${post.similarity}% match`,
                   detail: post.snippet && <Highlighted text={post.snippet} query={highlight} />,
                 }))}
-                onActivate={setActiveId}
               />
               <div ref={state.sentinelRef} className="h-px" aria-hidden="true" />
               {state.isFetchingNextPage && <LoadingState className={ARCHIVE_SPACING} />}
@@ -119,26 +115,7 @@ export function PostsListSection({
             </>
           )}
         </div>
-      </PeekLayout>
+      </div>
     </section>
-  );
-}
-
-function PostPeek({ post, highlight }: { post: PostSummary; highlight: string }) {
-  return (
-    <div>
-      <p className="font-mono text-label-sm tracking-normal text-text-muted">
-        {formatDate(post.createdAt)} · {post.viewCount} views
-        {post.similarity != null && ` · ${post.similarity}% match`}
-      </p>
-      <p className="mt-2 break-words text-headline-md text-text-primary">
-        <Highlighted text={post.title} query={highlight} />
-      </p>
-      {post.snippet && (
-        <p className="mt-3 text-body-md text-text-secondary">
-          <Highlighted text={post.snippet} query={highlight} />
-        </p>
-      )}
-    </div>
   );
 }

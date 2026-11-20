@@ -8,7 +8,6 @@ export { LoadingDots } from './loading-dots';
 export { LoadingState } from './loading-state';
 export { AttachmentBaseUrlProvider, CodeBlock, Markdown } from './markdown';
 export { Pagination } from './pagination';
-export { PeekLayout } from './peek-layout';
 export { TableOfContents } from './table-of-contents';
 export { Tag } from './tag';
 export { TrafficLights } from './traffic-lights';
