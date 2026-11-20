@@ -1,10 +1,6 @@
 import { type ReactNode } from 'react';
-import { type Heading } from '../lib/markdown';
 import { LINE_IN, lineDelay } from './line-in';
 import { Markdown } from './markdown';
-import { TableOfContents } from './table-of-contents';
-
-const OUTLINE_MINIMUM_HEADINGS = 2;
 
 /**
  * 머리판은 읽는 칸 밖으로 화면 폭 전체에 깐다. 판의 아래 경계가 AI가 쓴 머리와 vault 원문을 나눈다.
@@ -14,36 +10,20 @@ const PLATE =
   'relative isolate pt-10 pb-8 before:absolute before:inset-y-0 before:left-1/2 before:-z-10 before:w-screen before:-translate-x-1/2 ' +
   'before:border-b before:border-plate-line before:bg-plate';
 
-export function ArticleLayout({
-  header,
-  body,
-  outline,
-  activeHeadingId,
-  footer,
-}: {
-  header: ReactNode;
-  body: string;
-  outline: readonly Heading[];
-  activeHeadingId: string | null;
-  footer?: ReactNode;
-}) {
+export function ArticleLayout({ header, body, footer }: { header: ReactNode; body: string; footer?: ReactNode }) {
   return (
-    <>
-      <article>
-        <header className={`${PLATE} ${LINE_IN}`} style={lineDelay(0)}>
-          {header}
-        </header>
+    <article>
+      <header className={`${PLATE} ${LINE_IN}`} style={lineDelay(0)}>
+        {header}
+      </header>
 
-        {body && (
-          <div className={`mt-11 ${LINE_IN}`} style={lineDelay(1)}>
-            <Markdown body={body} />
-          </div>
-        )}
+      {body && (
+        <div className={`mt-11 ${LINE_IN}`} style={lineDelay(1)}>
+          <Markdown body={body} />
+        </div>
+      )}
 
-        {footer}
-      </article>
-
-      {outline.length >= OUTLINE_MINIMUM_HEADINGS && <TableOfContents headings={outline} activeId={activeHeadingId} />}
-    </>
+      {footer}
+    </article>
   );
 }

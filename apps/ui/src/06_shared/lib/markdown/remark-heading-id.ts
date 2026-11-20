@@ -16,9 +16,9 @@ export function readHeadingId(node: Heading): string | null {
 }
 
 /**
- * 목차와 렌더링이 같은 트리에서 같은 id를 얻도록 heading node에 id를 새긴다.
+ * `parseOutline`과 렌더링이 같은 트리에서 같은 id를 얻도록 heading node에 id를 새긴다.
  * 인용문이나 목록 안의 heading은 문서 구조가 아니므로 최상위 heading만 받는다.
- * 같은 slug가 여러 번 나오면 id가 겹쳐 목차 링크가 모두 첫 heading으로 가므로 source line을 붙여 구분한다.
+ * 같은 slug가 여러 번 나오면 id가 겹쳐 heading 링크가 모두 첫 heading으로 가므로 source line을 붙여 구분한다.
  */
 export function remarkHeadingId() {
   return (tree: Root) => {

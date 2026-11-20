@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { type GetPostResponse } from '@/entities/post';
-import { parseOutline } from '@/shared/lib';
 import { PostArticleSection } from './post-article-section';
 
 const READY_SUMMARY = {
@@ -20,7 +19,7 @@ const body = [
   'A page composes widgets; a widget composes features, entities and shared UI.',
   '',
   '```txt',
-  '# this heading lives in a code fence and stays out of the outline',
+  '# this heading lives in a code fence and stays a code line',
   'app -> pages -> widgets -> features -> entities -> shared',
   '```',
   '',
@@ -47,8 +46,6 @@ const post: GetPostResponse = {
   updatedAt: '2026-09-21T12:00:00.000Z',
 };
 
-const outline = parseOutline(body);
-
 const meta = {
   title: 'Features/Posts/PostArticleSection',
   component: PostArticleSection,
@@ -60,7 +57,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Success: Story = {
   args: {
-    state: { status: 'success', post, outline, activeHeadingId: outline[0].id },
+    state: { status: 'success', post },
   },
 };
 
@@ -69,26 +66,13 @@ export const SummaryReady: Story = {
     state: {
       status: 'success',
       post: { ...post, summary: { ...READY_SUMMARY, lines: [...READY_SUMMARY.lines] } },
-      outline,
-      activeHeadingId: null,
     },
   },
 };
 
 export const SummaryFailed: Story = {
   args: {
-    state: { status: 'success', post: { ...post, summary: { status: 'failed' } }, outline, activeHeadingId: null },
-  },
-};
-
-export const WithoutOutline: Story = {
-  args: {
-    state: {
-      status: 'success',
-      post: { ...post, body: 'A short post that carries no heading at all.' },
-      outline: [],
-      activeHeadingId: null,
-    },
+    state: { status: 'success', post: { ...post, summary: { status: 'failed' } } },
   },
 };
 

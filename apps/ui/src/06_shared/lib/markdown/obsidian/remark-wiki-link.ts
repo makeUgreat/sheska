@@ -8,7 +8,7 @@ const WIKI_LINK = /(!?)\[\[([^\]\n]+)\]\]/g;
 
 export interface WikiLinkNode extends WikiLink {
   type: 'wikiLink';
-  /** 목차처럼 글자만 읽는 곳에서 wiki link가 label로 읽히게 한다. */
+  /** `parseOutline`처럼 글자만 읽는 곳에서 wiki link가 label로 읽히게 한다. */
   value: string;
   data: {
     hName: typeof WIKI_LINK_ELEMENT;

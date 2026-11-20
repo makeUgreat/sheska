@@ -354,33 +354,6 @@ describe('PostDetailPage', () => {
     expect(screen.getByRole('heading', { name: 'Segments' }).id).toBe('segments');
   });
 
-  it('heading이 둘 이상이면 outline navigation을 보여준다', async () => {
-    renderPage(buildMockHttpClient());
-
-    const outline = await screen.findByRole('navigation', {
-      name: 'On this page',
-    });
-
-    expect(
-      within(outline)
-        .getAllByRole('link')
-        .map((link) => link.getAttribute('href')),
-    ).toEqual(['#layers', '#segments']);
-  });
-
-  it('heading이 없으면 outline navigation을 보여주지 않는다', async () => {
-    const client = buildMockHttpClient({
-      get: vi.fn().mockResolvedValue({ ...MOCK_POST, body: '제목 없는 본문' }),
-    });
-
-    renderPage(client);
-
-    await waitFor(() => {
-      expect(screen.getByText('제목 없는 본문')).toBeDefined();
-    });
-    expect(screen.queryByRole('navigation', { name: 'On this page' })).toBeNull();
-  });
-
   it('resolve되지 않은 wiki link를 label만 남겨 렌더링한다', async () => {
     renderPage(buildMockHttpClient());
 

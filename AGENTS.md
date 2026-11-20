@@ -27,7 +27,7 @@ Before adding or changing a convention document (`docs/ko/`, `apps/*/docs/ko/`, 
 ## UI (`apps/ui/docs/ko/`)
 
 - [Structure](apps/ui/docs/ko/structure.md): FSD layers and slices, markdown body rendering
-- [Design](apps/ui/docs/ko/design.md): color, type, spacing, code fences, effects, table of contents, responsive layout, overflow
+- [Design](apps/ui/docs/ko/design.md): color, type, spacing, code fences, effects, responsive layout, overflow
 
 ## Dev Integrations
 

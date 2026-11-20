@@ -5,7 +5,7 @@ import { OBSIDIAN_SYNTAX } from './obsidian';
 import { remarkHeadingId } from './remark-heading-id';
 
 /**
- * 렌더러와 목차가 이 목록 하나를 같이 써야 같은 트리를 얻는다.
+ * 렌더러와 `parseOutline`이 이 목록 하나를 같이 써야 같은 트리를 얻는다.
  * Heading id는 wiki link가 label로 바뀐 뒤에 새겨야 slug가 화면 글자와 맞는다.
  */
 export const MARKDOWN_PLUGINS: PluggableList = [...OBSIDIAN_SYNTAX, remarkHeadingId];
@@ -15,7 +15,7 @@ const processor = unified().use(remarkParse).use(MARKDOWN_PLUGINS);
 let lastParsed: { body: string; tree: Root } | null = null;
 
 /**
- * 렌더러와 같은 plugin 목록으로 읽어 목차와 highlighter 판정이 화면과 맞게 한다.
+ * 렌더러와 같은 plugin 목록으로 읽어 `parseOutline`과 highlighter 판정이 화면과 맞게 한다.
  * 둘이 같은 본문을 연달아 읽으므로 마지막 결과를 재사용한다.
  * 트리를 호출한 곳끼리 나눠 쓰므로 한 곳에서 고치면 다른 곳이 바뀐 트리를 받는다.
  */

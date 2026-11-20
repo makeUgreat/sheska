@@ -9,7 +9,6 @@ export { LoadingDots } from './loading-dots';
 export { LoadingState } from './loading-state';
 export { AttachmentBaseUrlProvider, CodeBlock, Markdown, pinSectionOnClick } from './markdown';
 export { Pagination } from './pagination';
-export { TableOfContents } from './table-of-contents';
 export { Tag } from './tag';
 export { TrafficLights } from './traffic-lights';
 export {
