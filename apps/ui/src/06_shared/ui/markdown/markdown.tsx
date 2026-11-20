@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { hasCodeBlock, hasMath, MARKDOWN_PLUGINS, parseMarkdown } from '../../lib/markdown';
 import { MARKDOWN_COMPONENTS } from './markdown-components';
 import { type RehypePlugins } from './markdown-highlight';
+import { rehypeSection } from './rehype-section';
+import { useSectionFocus } from './use-section-focus';
 
 type RehypePlugin = RehypePlugins[number];
 
@@ -47,7 +49,7 @@ function useRehypePlugins(body: string) {
   const math = useLazyPlugin(hasMath(tree), loadMath);
   const highlight = useLazyPlugin(hasCodeBlock(tree), loadHighlight);
 
-  return useMemo(() => [math, highlight].filter((plugin) => plugin !== undefined), [math, highlight]);
+  return useMemo(() => [rehypeSection, ...[math, highlight].filter((plugin) => plugin !== undefined)], [math, highlight]);
 }
 
 /**
@@ -56,17 +58,23 @@ function useRehypePlugins(body: string) {
  *
  * `word-break: normal`은 한글을 음절 단위로 줄바꿈해서 단어 중간이 잘린다.
  *
+ * 제목 아래 글은 `<section>` 안에 든다. 본문 바로 아래 block을 고르는 규칙은 섹션 바로 아래 block도 함께 고른다.
+ *
  * 넓은 화면에서는 본문 바로 아래 목록의 기호를 왼쪽 여백에 건다. 중첩 목록은 들여쓰기로 깊이를 보여야 하므로 남긴다.
  *
  * 긴 수식 block은 줄일 수 없으므로 자기 안에서 가로로 스크롤한다.
  */
 const BODY =
-  'break-words break-keep [&>*:first-child]:mt-0 margin-label:[&>ul]:pl-0 margin-label:[&>ol]:pl-0 ' +
+  'section-focus break-words break-keep [&>*:first-child]:mt-0 [&>section:first-child>:first-child]:mt-0 ' +
+  'margin-label:[&>ul]:pl-0 margin-label:[&>ol]:pl-0 margin-label:[&_section>ul]:pl-0 margin-label:[&_section>ol]:pl-0 ' +
   '[&_.katex-display]:overflow-x-auto [&_.katex-display]:overflow-y-hidden';
 
 export function Markdown({ body, className = '' }: { body: string; className?: string }) {
+  const article = useRef<HTMLDivElement>(null);
+  useSectionFocus(article, body);
+
   return (
-    <div className={[BODY, className].filter(Boolean).join(' ')}>
+    <div ref={article} className={[BODY, className].filter(Boolean).join(' ')}>
       <ReactMarkdown components={MARKDOWN_COMPONENTS} remarkPlugins={MARKDOWN_PLUGINS} rehypePlugins={useRehypePlugins(body)}>
         {body}
       </ReactMarkdown>

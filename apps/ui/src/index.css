@@ -3,6 +3,7 @@
 @import "./styles/theme.css";
 @import "./styles/code-highlight.css";
 @import "./styles/table-of-contents.css";
+@import "./styles/section-focus.css";
 
 @theme {
   --breakpoint-toc: 1220px;

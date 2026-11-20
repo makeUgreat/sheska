@@ -381,3 +381,107 @@ describe('Markdown vault 문법', () => {
     });
   });
 });
+
+describe('Markdown 섹션 강조', () => {
+  const SECTIONED = [
+    '머리말',
+    '',
+    '# 서버',
+    '',
+    '서버 본문',
+    '',
+    '## 후보',
+    '',
+    '후보 본문',
+    '',
+    '##### 메모',
+    '',
+    '메모 본문',
+    '',
+    '# 다음',
+    '',
+    '다음 본문',
+  ].join('\n');
+
+  const heading = (name: string) => screen.getByRole('heading', { name });
+
+  const section = (name: string) => heading(name).closest('section');
+
+  const isFocused = (name: string) => section(name)?.hasAttribute('data-focus');
+
+  /** jsdom에는 PointerEvent가 없어서 fireEvent.pointerOver에 넘긴 pointerType이 사라진다. */
+  const pointer = (type: 'pointerover' | 'pointerleave', target: Element, pointerType: string) =>
+    fireEvent(target, Object.assign(new MouseEvent(type, { bubbles: type === 'pointerover' }), { pointerType }));
+
+  it('제목부터 같은 단계 이하의 다음 제목 전까지를 section으로 묶는다', () => {
+    const { container } = renderBody(SECTIONED);
+
+    const article = container.firstElementChild;
+    expect([...(article?.children ?? [])].map((child) => child.tagName)).toEqual(['P', 'SECTION', 'SECTION']);
+    expect(section('후보')?.parentElement).toBe(section('서버'));
+    expect(screen.getByText('메모 본문').closest('section')).toBe(section('후보'));
+  });
+
+  it('제목을 누르면 그 섹션을 고정하고, 다른 제목을 누르면 고정을 옮긴다', () => {
+    const { container } = renderBody(SECTIONED);
+
+    fireEvent.click(heading('서버'));
+    expect(isFocused('서버')).toBe(true);
+    expect(container.firstElementChild?.hasAttribute('data-focusing')).toBe(true);
+
+    fireEvent.click(heading('다음'));
+    expect(isFocused('서버')).toBe(false);
+    expect(isFocused('다음')).toBe(true);
+  });
+
+  it('같은 제목을 다시 누르거나, 제목 밖을 누르거나, Esc를 누르면 풀린다', () => {
+    const { container } = renderBody(SECTIONED);
+    const article = container.firstElementChild;
+
+    fireEvent.click(heading('서버'));
+    fireEvent.click(heading('서버'));
+    expect(article?.hasAttribute('data-focusing')).toBe(false);
+
+    fireEvent.click(heading('서버'));
+    fireEvent.click(document.body);
+    expect(article?.hasAttribute('data-focusing')).toBe(false);
+
+    fireEvent.click(heading('서버'));
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(article?.hasAttribute('data-focusing')).toBe(false);
+  });
+
+  it('글자를 드래그해 선택한 채 끝난 click은 고정을 풀지 않는다', () => {
+    renderBody(SECTIONED);
+    fireEvent.click(heading('서버'));
+
+    const range = document.createRange();
+    range.selectNodeContents(screen.getByText('서버 본문'));
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(range);
+    fireEvent.click(screen.getByText('서버 본문'));
+    window.getSelection()?.removeAllRanges();
+
+    expect(isFocused('서버')).toBe(true);
+  });
+
+  it('마우스 hover는 고정보다 앞서 미리 보이고, 본문을 벗어나면 고정으로 돌아온다', () => {
+    const { container } = renderBody(SECTIONED);
+    fireEvent.click(heading('서버'));
+
+    pointer('pointerover', heading('다음'), 'mouse');
+    expect(isFocused('다음')).toBe(true);
+    expect(isFocused('서버')).toBe(false);
+
+    pointer('pointerleave', container.firstElementChild as Element, 'mouse');
+    expect(isFocused('서버')).toBe(true);
+  });
+
+  it('터치의 pointerover는 미리 보기로 보지 않는다', () => {
+    const { container } = renderBody(SECTIONED);
+
+    pointer('pointerover', heading('다음'), 'touch');
+
+    expect(container.firstElementChild?.hasAttribute('data-focusing')).toBe(false);
+  });
+});
