@@ -1,3 +1,4 @@
+import { type Properties } from 'hast';
 import { type Root, type RootContent } from 'mdast';
 
 const MARKER_ONLY = /^\^([A-Za-z0-9-]+)$/;
@@ -19,8 +20,11 @@ function readAnchorId(node: RootContent | Root): string | null {
   return typeof id === 'string' ? id : null;
 }
 
+/** Callout 제목처럼 id 말고도 property를 가진 block이 있다. */
 function clearAnchor(node: RootContent | Root) {
-  node.data = { ...node.data, hProperties: {} };
+  const properties: Properties = { ...node.data?.hProperties };
+  delete properties.id;
+  node.data = { ...node.data, hProperties: properties };
 }
 
 function setBlockAnchor(node: RootContent | Root, id: string) {

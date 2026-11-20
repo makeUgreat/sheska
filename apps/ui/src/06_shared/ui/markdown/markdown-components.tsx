@@ -1,9 +1,10 @@
 import { type Element } from 'hast';
-import { type ReactNode } from 'react';
+import { type ComponentProps, type ReactNode } from 'react';
 import { type Components } from 'react-markdown';
 import { CodeBlock, isMathBlock, useInsideCodeBlock } from './code-block';
 import { MarkdownImage } from './markdown-image';
-import { WIKI_LINK_ELEMENT } from '../../lib/markdown';
+import { CALLOUT_ELEMENT, CALLOUT_TITLE_ELEMENT, WIKI_LINK_ELEMENT } from '../../lib/markdown';
+import { Callout, CalloutTitle } from './obsidian/callout';
 import { WikiLink } from './obsidian/wiki-link';
 
 /** Anchor로 이동하면 목적지가 sticky header 뒤에 가려진다. */
@@ -205,4 +206,10 @@ const components: Components = {
 export const MARKDOWN_COMPONENTS = {
   ...components,
   [WIKI_LINK_ELEMENT]: WikiLink,
+  [CALLOUT_ELEMENT]: ({ id, type, fold, children }: ComponentProps<typeof Callout>) => (
+    <Callout id={id} type={type} fold={fold} className={anchored(id, '')}>
+      {children}
+    </Callout>
+  ),
+  [CALLOUT_TITLE_ELEMENT]: CalloutTitle,
 } as Components;

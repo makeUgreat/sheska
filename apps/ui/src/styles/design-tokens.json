@@ -137,6 +137,14 @@
         "hex": "#fdf3f4"
       }
     },
+    "caution": {
+      "$description": "Line and label ink for warning-type callouts in post bodies. Amber so a warning never reads as the red accent. 5.93:1 on page-background.",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.5412, 0.3529, 0],
+        "hex": "#8a5a00"
+      }
+    },
     "text-primary": {
       "$value": "{color.surface}"
     },
