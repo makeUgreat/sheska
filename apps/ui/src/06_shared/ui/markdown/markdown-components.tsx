@@ -26,7 +26,7 @@ function CodeText({ className, children }: { className?: string; children?: Reac
   return useInsideCodeBlock() ? (
     <code className={className}>{children}</code>
   ) : (
-    <code className="rounded bg-outline-variant/10 px-1.5 py-0.5 font-mono text-code-snippet text-accent-strong">{children}</code>
+    <code className="font-mono text-code-snippet text-accent-strong">{children}</code>
   );
 }
 
