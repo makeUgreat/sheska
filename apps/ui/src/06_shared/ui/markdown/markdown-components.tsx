@@ -26,17 +26,17 @@ function CodeText({ className, children }: { className?: string; children?: Reac
   return useInsideCodeBlock() ? (
     <code className={className}>{children}</code>
   ) : (
-    <code className="font-mono text-code-snippet text-accent-strong">{children}</code>
+    <code className="mx-0.5 font-mono text-code-snippet text-accent-strong">{children}</code>
   );
 }
 
 /** 넓은 화면에서는 얕은 단계일수록 본문 왼쪽 끝보다 더 왼쪽에서 시작해 깊이가 위치로도 보인다. */
 const HEADING_STYLE = {
-  h2: 'mt-12 mb-4 font-sans text-headline-sm text-accent-strong margin-label:-ml-8',
-  h3: 'mt-10 mb-3 font-sans text-title-lg text-accent-strong margin-label:-ml-6',
-  h4: 'mt-8 mb-2 font-sans text-title-md text-accent-strong margin-label:-ml-4',
-  h5: 'mt-6 mb-2 font-sans text-title-sm text-accent-strong margin-label:-ml-2',
-  h6: 'mt-4 mb-2 font-mono text-label-sm uppercase text-accent-strong',
+  h2: 'mt-12 mb-4 font-sans text-headline-sm text-text-primary margin-label:-ml-8',
+  h3: 'mt-10 mb-3 font-sans text-title-lg text-text-primary margin-label:-ml-6',
+  h4: 'mt-8 mb-2 font-sans text-title-md text-text-primary margin-label:-ml-4',
+  h5: 'mt-6 mb-2 font-sans text-title-sm text-text-primary margin-label:-ml-2',
+  h6: 'mt-4 mb-2 font-mono text-label-sm uppercase text-text-primary',
 } as const;
 
 type HeadingTag = keyof typeof HEADING_STYLE;
