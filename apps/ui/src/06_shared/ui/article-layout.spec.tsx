@@ -43,4 +43,13 @@ describe('ArticleLayout', () => {
 
     expect(screen.getByRole('article').contains(screen.getByText('topics'))).toBe(true);
   });
+
+  it('머리, 구분선, 본문 순서로 24ms 간격을 두고 나타난다', () => {
+    renderLayout(ONE_HEADING);
+
+    const header = screen.getByRole('heading', { name: '제목' }).closest('header');
+    const rule = screen.getByRole('separator');
+    const body = screen.getByRole('heading', { name: '배경' }).closest<HTMLElement>('div[style]');
+    expect([header?.style.animationDelay, rule.style.animationDelay, body?.style.animationDelay]).toEqual(['0ms', '24ms', '48ms']);
+  });
 });
