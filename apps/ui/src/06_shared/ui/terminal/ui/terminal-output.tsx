@@ -124,8 +124,16 @@ export function TerminalEntryLink({ title, to, date, highlight = [] }: { title: 
 }
 
 const COUNT_UP_MS = 450;
-const METER_CELLS = 10;
 const METER_FILL_MS = 600;
+const METER_COLUMNS = 20;
+const METER_ROWS = [0, 1, 2, 3];
+const BOTTOM_ROW = 3;
+/** 단위는 1000 = 1em. 높이는 JetBrains Mono의 cap height라 막대가 옆 숫자와 같은 키로 기준선에 선다. */
+const DOT_PITCH = 300;
+const DOT_RADIUS = 62;
+const METER_HEIGHT = 730;
+const ROW_GAP = (METER_HEIGHT - DOT_RADIUS * 2) / BOTTOM_ROW;
+const METER_WIDTH = METER_COLUMNS * DOT_PITCH;
 
 /** 0부터 값까지 숫자를 올린다. 올라가는 숫자는 화면 낭독기에 숨기고 최종 값만 읽힌다. */
 export function TerminalCountUp({ value, format }: { value: number; format: (count: number) => string }) {
@@ -139,18 +147,45 @@ export function TerminalCountUp({ value, format }: { value: number; format: (cou
   );
 }
 
-/** 10칸 막대와 퍼센트를 함께 채운다. 막대는 장식이라 화면 낭독기에는 퍼센트만 읽힌다. */
+/** 점 막대와 퍼센트를 함께 채운다. 막대는 장식이라 화면 낭독기에는 퍼센트만 읽힌다. */
 export function TerminalMeter({ percent }: { percent: number }) {
   const shown = useCountUp(percent, METER_FILL_MS);
-  const filled = Math.round((shown / 100) * METER_CELLS);
+  const litColumns = Math.round((shown / 100) * METER_COLUMNS);
 
   return (
     <>
       <span aria-hidden="true" className="whitespace-nowrap">
-        <span className="text-primary">{'█'.repeat(filled)}</span>
-        <span className="text-on-surface-muted/50">{'░'.repeat(METER_CELLS - filled)}</span> {shown}%
+        <DotBar litColumns={litColumns} /> {shown}%
       </span>
       <span className="sr-only">{percent}%</span>
     </>
+  );
+}
+
+/** 점자 ⣿처럼 열마다 점 4개를 세운다. 빈 열은 바닥 점만 남겨 막대 길이를 보인다. */
+function DotBar({ litColumns }: { litColumns: number }) {
+  const dots = Array.from({ length: METER_COLUMNS }, (_, column) => {
+    const lit = column < litColumns;
+    const rows = lit ? METER_ROWS : [BOTTOM_ROW];
+
+    return rows.map((row) => (
+      <circle
+        key={`${column}-${row}`}
+        cx={DOT_PITCH * column + DOT_PITCH / 2}
+        cy={DOT_RADIUS + ROW_GAP * row}
+        r={DOT_RADIUS}
+        className={lit ? 'fill-primary' : 'fill-on-surface-muted/50'}
+      />
+    ));
+  });
+
+  return (
+    <svg
+      viewBox={`0 0 ${METER_WIDTH} ${METER_HEIGHT}`}
+      className="inline-block h-[1cap] align-baseline"
+      style={{ width: `${METER_WIDTH / 1000}em` }}
+    >
+      {dots}
+    </svg>
   );
 }
