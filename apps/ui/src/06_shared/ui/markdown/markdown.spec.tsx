@@ -257,10 +257,43 @@ describe('Markdown vault 문법', () => {
     expect(container.querySelector('blockquote')?.id).toBe('block-c58057');
   });
 
-  it('인용 안 code fence 뒤의 블록 표시도 인용 전체를 anchor로 만든다', () => {
+  it('callout 안 code fence 뒤의 블록 표시도 callout 전체를 anchor로 만든다', () => {
     const { container } = renderBody(['> [!example] 문법', '>', '> ```ts', '> const a = 1;', '> ```', '>^b33468'].join('\n'));
 
-    expect(container.querySelector('blockquote')?.id).toBe('block-b33468');
+    const callout = container.querySelector('#block-b33468');
+    expect(callout?.textContent).toContain('문법');
+    expect(callout?.textContent).toContain('const a = 1;');
+  });
+
+  it('접힌 callout은 닫힌 details로 그리고 type label과 제목을 summary에 둔다', () => {
+    const { container } = renderBody(['> [!info]- 먼저 알아 둘 용어', '> - **SNI**: 도메인 이름을 함께 보내는 기능'].join('\n'));
+
+    const details = container.querySelector('details');
+    expect(details?.open).toBe(false);
+    expect(details?.querySelector('summary')?.textContent).toBe('info먼저 알아 둘 용어');
+    expect(container.textContent).not.toContain('[!info]');
+  });
+
+  it('`+` callout은 열린 details로 그린다', () => {
+    const { container } = renderBody(['> [!tip]+ 캐시 비우기', '> 배포 뒤에 비운다.'].join('\n'));
+
+    expect(container.querySelector('details')?.open).toBe(true);
+  });
+
+  it('접기 표시가 없는 callout은 접을 수 없는 블록으로 그린다', () => {
+    const { container } = renderBody(['> [!note] 재시도 정책', '> 재시도는 지수 백오프로 한다.'].join('\n'));
+
+    expect(container.querySelector('details')).toBe(null);
+    expect(container.querySelector('blockquote')).toBe(null);
+    expect(screen.getByText('재시도는 지수 백오프로 한다.')).toBeDefined();
+  });
+
+  it('callout 선 색은 type 별칭과 모르는 type을 묶음으로 나눈다', () => {
+    const colorOf = (body: string) => renderBody(body).container.querySelector('.border-l-2')?.className;
+
+    expect(colorOf('> [!error] 실패')).toContain('border-caution');
+    expect(colorOf('> [!faq] 질문')).toContain('border-accent-strong');
+    expect(colorOf('> [!constructor] 모르는 type')).toContain('border-text-muted');
   });
 
   it('같은 노트 block reference는 그 anchor로 가는 링크가 된다', () => {

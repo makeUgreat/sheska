@@ -181,8 +181,8 @@ export const BlockReferences: Story = {
 };
 
 /**
- * Callout 문법은 아직 해석하지 않아 인용으로 그리고, `[!note]` 표시와 제목은 첫 문단의 글자로 남는다.
- * 안의 목록과 code fence는 본문과 같은 규칙을 따른다.
+ * Callout은 면 없이 type 색의 왼쪽 선으로 그린다. 색은 기본, 강조, 주의 세 묶음이다.
+ * `-`는 접힌 채로, `+`는 펼친 채로 시작한다. 안의 목록과 code fence는 본문과 같은 규칙을 따른다.
  */
 export const Callout: Story = {
   args: {
@@ -196,6 +196,19 @@ export const Callout: Story = {
       '> ```ts',
       '> const delay = 2 ** attempt * 1000;',
       '> ```',
+      '',
+      '> [!info]- 먼저 알아 둘 용어',
+      '> - **fencing token**: 더 오래된 번호의 쓰기를 거부하게 하는 번호',
+      '> - **UUIDv7**: 앞부분에 생성 시각이 들어가는 UUID',
+      '',
+      '> [!tip]+ 캐시 비우기',
+      '> 배포 뒤 화면이 그대로면 `pnpm cache:clear`를 먼저 돌린다.',
+      '',
+      '> [!warning] 운영 DB에 직접 연결하지 않는다',
+      '> 로컬에서는 가짜 값만 쓴다.',
+      '',
+      '> [!NOTE]',
+      '> 제목 없는 callout은 type label만 남는다.',
     ].join('\n'),
   },
 };
