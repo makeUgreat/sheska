@@ -37,6 +37,7 @@ export function useSearchCommand({
         return;
       }
 
+      io.progress(`searching titles and bodies for "${query}"`);
       try {
         const { posts, nextCursor } = await searchPosts(http, {
           query,

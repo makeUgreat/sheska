@@ -182,6 +182,31 @@ describe('Terminal', () => {
     });
   });
 
+  it('명령이 기다리는 동안 progress 글을 보이고 끝나면 지운다', async () => {
+    const user = userEvent.setup();
+    let finish = () => {};
+    const waitCommand: TerminalCommand = {
+      name: 'wait',
+      summary: 'wait for a request',
+      run: async (_args, io) => {
+        io.progress('reading ~/posts');
+        await new Promise<void>((resolve) => {
+          finish = resolve;
+        });
+      },
+    };
+    renderTerminal([waitCommand]);
+
+    await user.type(screen.getByLabelText('guest@hash:~$'), 'wait{Enter}');
+    expect((await screen.findByRole('status')).textContent).toContain('reading ~/posts');
+
+    await act(() => {
+      finish();
+      return Promise.resolve();
+    });
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
   it('run은 사용자가 입력한 것처럼 명령을 실행한다', async () => {
     const { ref, log } = renderTerminal();
 

@@ -14,9 +14,12 @@ import {
 } from 'react';
 import { commonPrefix, tokenize } from '../model/tokenize';
 import { type AskOptions, type TerminalCommand, type TerminalHandle, type TerminalIo, type TerminalPrompt } from '../model/types';
+import { prefersReducedMotion } from '../model/use-count-up';
 import { TerminalText } from './terminal-output';
 
 const MAX_LINES = 500;
+const SPINNER_FRAMES = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
+const SPINNER_FRAME_MS = 80;
 
 interface Line {
   id: number;
@@ -31,7 +34,7 @@ interface PendingAsk {
   reject: (reason: unknown) => void;
 }
 
-type Mode = { kind: 'idle' } | { kind: 'running' } | { kind: 'asking'; ask: PendingAsk };
+type Mode = { kind: 'idle' } | { kind: 'running'; progress?: string } | { kind: 'asking'; ask: PendingAsk };
 
 export interface TerminalProps {
   commands: TerminalCommand[];
@@ -140,6 +143,11 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
               },
             });
           }),
+        progress: (text) => {
+          if (controller.signal.aborted) return;
+
+          setMode((current) => (current.kind === 'running' ? { kind: 'running', progress: text } : current));
+        },
       };
 
       try {
@@ -323,6 +331,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
           <div key={line.id}>{line.node}</div>
         ))}
       </div>
+      {mode.kind === 'running' && mode.progress && <Spinner text={mode.progress} />}
       <form onSubmit={handleSubmit} className="flex flex-wrap items-baseline gap-x-[1ch]">
         <label htmlFor={inputId} className={mode.kind === 'running' ? 'sr-only' : asking ? 'text-on-surface' : undefined}>
           {asking ? asking.prompt : <PromptText prompt={prompt} />}
@@ -381,6 +390,26 @@ function BlockCursor({ text, caret, scrollLeft, focused }: { text: string; caret
         </span>
       </span>
     </span>
+  );
+}
+
+function Spinner({ text }: { text: string }) {
+  const [frame, setFrame] = useState(0);
+
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+
+    const timer = setInterval(() => setFrame((current) => (current + 1) % SPINNER_FRAMES.length), SPINNER_FRAME_MS);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <p role="status" className="whitespace-pre-wrap break-words text-on-surface-muted">
+      <span aria-hidden="true" className="text-accent">
+        {SPINNER_FRAMES[frame]}{' '}
+      </span>
+      {text}
+    </p>
   );
 }
 

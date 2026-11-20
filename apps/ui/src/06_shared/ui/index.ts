@@ -17,6 +17,7 @@ export {
   printRequestFailure,
   PromptText,
   Terminal,
+  TerminalCountUp,
   TerminalEntryLink,
   TerminalHighlight,
   TerminalText,

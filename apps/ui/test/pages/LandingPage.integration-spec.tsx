@@ -144,7 +144,8 @@ describe('LandingPage terminal', () => {
     const log = screen.getByRole('log');
     const link = await within(log).findByRole('link', { name: POST.title });
     expect(link.getAttribute('href')).toBe('/posts/post-1');
-    expect(within(log).getByText(/12 posts/)).toBeDefined();
+    // 올라가는 숫자는 aria-hidden이라 화면 낭독기가 읽는 최종 값으로 찾는다.
+    expect(within(log).getByText('12 posts', { ignore: '[aria-hidden="true"]' })).toBeDefined();
     expect(within(log).getByText('… 11 more · ls -a posts')).toBeDefined();
   });
 

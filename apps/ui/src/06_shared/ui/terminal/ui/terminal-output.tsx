@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { useCountUp } from '../model/use-count-up';
 
 /** 오류는 accent와 섞이지 않게 amber를 쓴다. */
 const TONE = {
@@ -103,7 +104,7 @@ export function TerminalTree({ root, items, footer }: { root: ReactNode; items: 
   );
 }
 
-export function TerminalTreeRoot({ label, note }: { label: string; note?: string }) {
+export function TerminalTreeRoot({ label, note }: { label: string; note?: ReactNode }) {
   return (
     <>
       <span className="font-bold text-white">{label}</span>
@@ -125,6 +126,20 @@ export function TerminalEntryLink({ title, to, date, highlight = [] }: { title: 
           {date}
         </span>
       )}
+    </>
+  );
+}
+
+const COUNT_UP_MS = 450;
+
+/** 0부터 값까지 숫자를 올린다. 올라가는 숫자는 화면 낭독기에 숨기고 최종 값만 읽힌다. */
+export function TerminalCountUp({ value, format }: { value: number; format: (count: number) => string }) {
+  const shown = useCountUp(value, COUNT_UP_MS);
+
+  return (
+    <>
+      <span aria-hidden="true">{format(shown)}</span>
+      <span className="sr-only">{format(value)}</span>
     </>
   );
 }

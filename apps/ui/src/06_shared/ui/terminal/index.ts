@@ -1,5 +1,6 @@
 export { PromptText, Terminal } from './ui/terminal';
 export {
+  TerminalCountUp,
   TerminalEntryLink,
   TerminalHighlight,
   TerminalText,
