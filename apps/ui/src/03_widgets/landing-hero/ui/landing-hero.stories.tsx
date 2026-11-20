@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HttpClientProvider, type HttpClientType as HttpClient } from '@/shared/api';
+import { SeasonProvider, type Season } from '@/shared/lib';
 import { LandingHero } from './landing-hero';
 
 const NOW = '2026-11-18T00:00:00.000Z';
@@ -48,12 +49,14 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-function withSession(authenticated: boolean) {
+function withSession(authenticated: boolean, season: Season | null = null) {
   return (Story: () => React.JSX.Element) => (
     <MemoryRouter>
       <QueryClientProvider client={new QueryClient()}>
         <HttpClientProvider client={buildStoryHttpClient(authenticated)}>
-          <Story />
+          <SeasonProvider season={season}>
+            <Story />
+          </SeasonProvider>
         </HttpClientProvider>
       </QueryClientProvider>
     </MemoryRouter>
@@ -63,3 +66,5 @@ function withSession(authenticated: boolean) {
 export const Guest: Story = { decorators: [withSession(false)] };
 
 export const Owner: Story = { decorators: [withSession(true)] };
+
+export const Winter: Story = { decorators: [withSession(false, 'winter')] };

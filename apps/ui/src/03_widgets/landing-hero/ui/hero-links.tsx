@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { useSeason } from '@/shared/lib';
+import { SantaHat } from './winter/santa-hat';
 
 const SURFACE =
   'group/link grid h-10 w-10 place-items-center rounded-md text-text-muted transition-colors ' +
@@ -17,7 +19,7 @@ const SMILE_CURVES = ['M7.6 13q1.4-1.6 2.8 0', 'M13.6 13q1.4-1.6 2.8 0', 'M10 16
 const CAT_SMILE_CURVES = ['M5.2 8q.8-.9 1.6 0', 'M9.2 8q.8-.9 1.6 0', 'M7.2 9.6q.8.7 1.6 0'];
 
 /** 문서가 칠해진 부분이라 얼굴은 바탕색 선으로 뚫는다. */
-function PostsIcon() {
+function PostsIcon({ hat }: { hat: boolean }) {
   return (
     <svg aria-hidden="true" className="h-6 w-6 overflow-visible" viewBox="0 0 24 24">
       <g className={`${TILT} group-hover/link:rotate-[10deg] group-focus-visible/link:rotate-[10deg]`}>
@@ -33,6 +35,7 @@ function PostsIcon() {
             <path key={d} d={d} className="fill-none stroke-page-background" strokeWidth={1.6} strokeLinecap="round" />
           ))}
         </g>
+        {hat && <SantaHat transform="translate(1.4 -3.6) rotate(-14 6 6)" />}
       </g>
     </svg>
   );
@@ -42,7 +45,7 @@ function PostsIcon() {
  * Octicons mark-github. 칸을 꽉 채우면 posts 아이콘보다 넓어 보여서 24 격자에서 지름 22로 줄였다.
  * 고양이는 원에서 오려 낸 부분이라 얼굴은 아이콘 색 선으로 그린다.
  */
-function GitHubIcon() {
+function GitHubIcon({ hat }: { hat: boolean }) {
   return (
     <svg aria-hidden="true" className="h-6 w-6 overflow-visible" viewBox="0 0 24 24">
       <g className={`${TILT} group-hover/link:-rotate-12 group-focus-visible/link:-rotate-12`}>
@@ -57,6 +60,7 @@ function GitHubIcon() {
             ))}
           </g>
         </g>
+        {hat && <SantaHat transform="translate(7.2 -5.4) rotate(12 6 6)" />}
       </g>
     </svg>
   );
@@ -68,13 +72,15 @@ function GitHubIcon() {
  * 그림은 40px 칸 가운데에 있어 칸 끝보다 8px 안쪽이므로 칸은 16px만 들인다.
  */
 export function HeroLinks({ articlesHref, githubHref }: { articlesHref: string; githubHref: string }) {
+  const winter = useSeason() === 'winter';
+
   return (
     <nav aria-label="Links" className="absolute bottom-full right-4 mb-1 flex gap-1">
       <Link to={articlesHref} aria-label="posts" className={SURFACE}>
-        <PostsIcon />
+        <PostsIcon hat={winter} />
       </Link>
       <a href={githubHref} target="_blank" rel="noreferrer" aria-label="GitHub (opens in a new tab)" className={SURFACE}>
-        <GitHubIcon />
+        <GitHubIcon hat={winter} />
       </a>
     </nav>
   );
