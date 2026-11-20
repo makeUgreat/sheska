@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { type Heading } from '../lib/markdown';
+import { LINE_IN, lineDelay } from './line-in';
 import { Markdown } from './markdown';
 import { TableOfContents } from './table-of-contents';
 
@@ -23,11 +24,17 @@ export function ArticleLayout({
   return (
     <>
       <article>
-        <header className="mb-6">{header}</header>
+        <header className={`mb-6 ${LINE_IN}`} style={lineDelay(0)}>
+          {header}
+        </header>
 
-        <hr className={`mb-12 h-px border-0 ${FADE_RULE}`} />
+        <hr className={`mb-12 h-px border-0 ${FADE_RULE} ${LINE_IN}`} style={lineDelay(1)} />
 
-        {body && <Markdown body={body} />}
+        {body && (
+          <div className={LINE_IN} style={lineDelay(2)}>
+            <Markdown body={body} />
+          </div>
+        )}
 
         {footer}
       </article>

@@ -35,6 +35,7 @@ const meta = {
   ],
   args: {
     source: sampleSource,
+    appearOrder: 0,
   },
 } satisfies Meta<typeof SourceListItem>;
 

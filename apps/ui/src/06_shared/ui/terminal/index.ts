@@ -11,6 +11,7 @@ export {
 } from './ui/terminal-output';
 export { printRequestFailure } from './ui/request-failure';
 export { clearCommand } from './model/clear-command';
+export { prefersReducedMotion } from './model/use-count-up';
 export type {
   AskOptions,
   TerminalCommand,

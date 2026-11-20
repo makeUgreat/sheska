@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLogOut, useViewer } from '@/entities/session';
 import { PromptText, TrafficLights, type TerminalLaunchState } from '@/shared/ui';
+import { useRetypedCommand } from '../model/use-retyped-command';
 
 const SECTIONS = [
   { href: '/posts', label: 'posts', ownerOnly: false },
@@ -26,6 +27,7 @@ export function Header() {
   const viewer = useViewer();
   const logOut = useLogOut();
   const owner = viewer === 'owner';
+  const command = useRetypedCommand(toCommand(pathname));
 
   function handleYellowClick() {
     if (!owner) {
@@ -76,7 +78,7 @@ export function Header() {
       <div className="h-10 px-4">
         <div className="mx-auto flex h-full max-w-content items-center font-mono text-code-snippet">
           <PromptText prompt={owner ? { identity: 'owner@hash', rest: ':~#' } : { identity: 'guest@hash', rest: ':~$' }} />
-          <span className="ml-2 text-white">{toCommand(pathname)}</span>
+          <span className="ml-2 text-white">{command}</span>
           <span className="ml-1 h-4 w-2 animate-pulse bg-accent" aria-hidden="true" />
         </div>
       </div>

@@ -54,8 +54,8 @@ export function SourceListSection({
 function SourceItemList({ sources, isPlaceholder }: { sources: SourceSummary[]; isPlaceholder: boolean }) {
   return (
     <ul className={`border-t border-outline-variant/12 transition-opacity duration-200 ${isPlaceholder ? 'opacity-40' : 'opacity-100'}`}>
-      {sources.map((source) => (
-        <SourceListItem key={source.sourceId} source={source} />
+      {sources.map((source, index) => (
+        <SourceListItem key={source.sourceId} source={source} appearOrder={index} />
       ))}
     </ul>
   );

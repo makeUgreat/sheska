@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { SyncJobProgress, type SourceSummary, type SyncJobSummaryStatus } from '@/entities/source';
 import { formatBytes, formatDate } from '@/shared/lib';
+import { LINE_IN, lineDelay } from '@/shared/ui';
 
 /** 색을 늘리지 않고 모양으로 상태를 가른다. 실패만 accent로 칠해 먼저 눈에 띄게 한다. */
 const STATUS_GLYPH: Record<SyncJobSummaryStatus, string> = {
@@ -11,12 +12,12 @@ const STATUS_GLYPH: Record<SyncJobSummaryStatus, string> = {
 
 const META = 'font-mono text-label-sm tracking-normal text-text-muted';
 
-export function SourceListItem({ source }: { source: SourceSummary }) {
+export function SourceListItem({ source, appearOrder }: { source: SourceSummary; appearOrder: number }) {
   const syncJob = source.latestSyncJob;
   const failed = syncJob?.status === 'failed';
 
   return (
-    <li>
+    <li className={LINE_IN} style={lineDelay(appearOrder)}>
       <Link
         to={`/sources/${source.sourceId}`}
         aria-label={source.title}
