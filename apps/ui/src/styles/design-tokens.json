@@ -210,12 +210,33 @@
       }
     },
     "headline-md": {
+      "$description": "Post title. It is the top of the body heading scale, so body headings stay below it.",
       "$type": "typography",
       "$value": {
         "fontFamily": "{typography.font-family.sans}",
-        "fontSize": "24px",
+        "fontSize": "32px",
+        "fontWeight": "600",
+        "lineHeight": "1.2"
+      }
+    },
+    "headline-sm": {
+      "$description": "Body heading for a vault `#`. About 1.2x apart from the next heading level, so each level reads as its own step.",
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.font-family.sans}",
+        "fontSize": "26px",
         "fontWeight": "600",
         "lineHeight": "1.3"
+      }
+    },
+    "title-lg": {
+      "$description": "Body heading for a vault `##`. Fills the step between headline-sm and body-lg.",
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.font-family.sans}",
+        "fontSize": "21px",
+        "fontWeight": "600",
+        "lineHeight": "1.4"
       }
     },
     "body-lg": {

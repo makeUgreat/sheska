@@ -31,9 +31,9 @@ function CodeText({ className, children }: { className?: string; children?: Reac
 }
 
 const HEADING_STYLE = {
-  h2: 'mt-12 mb-4 font-sans text-headline-md text-text-primary',
-  h3: 'mt-8 mb-3 font-sans text-body-lg font-semibold text-text-primary',
-  h4: 'mt-6 mb-2 font-sans text-body-md font-semibold text-text-primary',
+  h2: 'mt-12 mb-4 font-sans text-headline-sm text-text-primary',
+  h3: 'mt-10 mb-3 font-sans text-title-lg text-text-primary',
+  h4: 'mt-8 mb-2 font-sans text-body-lg font-semibold text-text-primary',
   h5: 'mt-5 mb-2 font-sans text-body-md font-semibold text-text-secondary',
   h6: 'mt-4 mb-2 font-mono text-label-sm uppercase text-text-muted',
 } as const;
