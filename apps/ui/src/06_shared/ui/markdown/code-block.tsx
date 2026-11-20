@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 
 const COPIED_RESET_MS = 2000;
 
-/** 원문의 fence 첫 줄처럼 읽히게 한다. 언어를 적지 않은 fence에는 `` ``` ``만 남는다. */
+/** 원문의 fence 첫 줄처럼 읽히게 한다. */
 const LANGUAGE_LABEL = "font-mono text-label-sm tracking-normal text-on-surface-muted before:content-['```'_/_'']";
 
 const InsideCodeBlock = createContext(false);
@@ -14,6 +14,9 @@ export function useInsideCodeBlock() {
 }
 
 const LANGUAGE_PREFIX = 'language-';
+
+/** 언어를 적지 않은 fence의 라벨이 `` ``` ``만 남지 않게 한다. */
+const PLAIN_TEXT_LABEL = 'text';
 
 function languageOf(node?: Element) {
   const code = node?.children[0];
@@ -99,7 +102,7 @@ function CopyButton({ source }: { source: RefObject<HTMLPreElement | null> }) {
 /** Highlighting만으로는 코드 블록임이 드러나지 않아 chrome 한 줄을 함께 얹는다. */
 export function CodeBlock({ children, node }: { children?: ReactNode; node?: Element }) {
   const body = useRef<HTMLPreElement>(null);
-  const language = languageOf(node);
+  const language = languageOf(node) ?? PLAIN_TEXT_LABEL;
 
   return (
     <div className="my-7 overflow-hidden rounded-lg bg-surface">
