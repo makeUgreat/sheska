@@ -6,6 +6,7 @@ import {
   printRequestFailure,
   TerminalEntryLink,
   TerminalHighlight,
+  TerminalMeter,
   TerminalText,
   TerminalTree,
   TerminalTreeRoot,
@@ -37,6 +38,7 @@ export function useSearchCommand({
         return;
       }
 
+      io.progress(`searching titles and bodies for "${query}"`);
       try {
         const { posts, nextCursor } = await searchPosts(http, {
           query,
@@ -80,7 +82,11 @@ function detailOf(post: SearchHit, words: string[]) {
     return <TerminalHighlight text={toOneLine(post.snippet)} words={words} className="text-primary" />;
   }
   if (post.matchReason === 'semantic' && post.similarity !== null) {
-    return `similar in meaning · ${post.similarity}%`;
+    return (
+      <>
+        similar in meaning <TerminalMeter percent={post.similarity} />
+      </>
+    );
   }
   return undefined;
 }

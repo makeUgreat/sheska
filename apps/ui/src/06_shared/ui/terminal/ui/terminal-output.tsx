@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { useCountUp } from '../model/use-count-up';
 
 /** 오류는 accent와 섞이지 않게 amber를 쓴다. */
 const TONE = {
@@ -45,6 +46,14 @@ function escapeRegExp(value: string) {
 }
 
 const BRANCH = 'flex-none whitespace-pre text-on-surface-muted/50';
+const LINE_IN = 'animate-terminal-line-in motion-reduce:animate-none';
+const LINE_STAGGER_MS = 24;
+/** 긴 목록도 400ms 안에 다 보이게 이 줄부터는 더 늦추지 않는다. */
+const LAST_STAGGERED_LINE = 10;
+
+function lineDelay(index: number) {
+  return { animationDelay: `${Math.min(index, LAST_STAGGERED_LINE) * LINE_STAGGER_MS}ms` };
+}
 
 export interface TerminalTreeItem {
   key: string;
@@ -61,12 +70,12 @@ export interface TerminalTreeItem {
 export function TerminalTree({ root, items, footer }: { root: ReactNode; items: TerminalTreeItem[]; footer?: ReactNode }) {
   return (
     <div>
-      <p>{root}</p>
+      <p className={LINE_IN}>{root}</p>
       <ul>
         {items.map((item, index) => {
           const last = index === items.length - 1;
           return (
-            <li key={item.key}>
+            <li key={item.key} className={LINE_IN} style={lineDelay(index + 1)}>
               <p className="flex">
                 <span aria-hidden="true" className={BRANCH}>
                   {last ? '└── ' : '├── '}
@@ -86,7 +95,7 @@ export function TerminalTree({ root, items, footer }: { root: ReactNode; items: 
         })}
       </ul>
       {footer && (
-        <p className="whitespace-pre-wrap text-on-surface-muted">
+        <p className={`whitespace-pre-wrap text-on-surface-muted ${LINE_IN}`} style={lineDelay(items.length + 1)}>
           {'    '}
           {footer}
         </p>
@@ -95,7 +104,7 @@ export function TerminalTree({ root, items, footer }: { root: ReactNode; items: 
   );
 }
 
-export function TerminalTreeRoot({ label, note }: { label: string; note?: string }) {
+export function TerminalTreeRoot({ label, note }: { label: string; note?: ReactNode }) {
   return (
     <>
       <span className="font-bold text-white">{label}</span>
@@ -117,6 +126,38 @@ export function TerminalEntryLink({ title, to, date, highlight = [] }: { title: 
           {date}
         </span>
       )}
+    </>
+  );
+}
+
+const COUNT_UP_MS = 450;
+const METER_CELLS = 10;
+const METER_FILL_MS = 600;
+
+/** 0부터 값까지 숫자를 올린다. 올라가는 숫자는 화면 낭독기에 숨기고 최종 값만 읽힌다. */
+export function TerminalCountUp({ value, format }: { value: number; format: (count: number) => string }) {
+  const shown = useCountUp(value, COUNT_UP_MS);
+
+  return (
+    <>
+      <span aria-hidden="true">{format(shown)}</span>
+      <span className="sr-only">{format(value)}</span>
+    </>
+  );
+}
+
+/** 10칸 막대와 퍼센트를 함께 채운다. 막대는 장식이라 화면 낭독기에는 퍼센트만 읽힌다. */
+export function TerminalMeter({ percent }: { percent: number }) {
+  const shown = useCountUp(percent, METER_FILL_MS);
+  const filled = Math.round((shown / 100) * METER_CELLS);
+
+  return (
+    <>
+      <span aria-hidden="true" className="whitespace-nowrap">
+        <span className="text-primary">{'█'.repeat(filled)}</span>
+        <span className="text-on-surface-muted/50">{'░'.repeat(METER_CELLS - filled)}</span> {shown}%
+      </span>
+      <span className="sr-only">{percent}%</span>
     </>
   );
 }

@@ -12,6 +12,8 @@ export interface TerminalIo {
   clear(): void;
   /** 사용자가 Ctrl+C로 멈추면 AbortError로 reject한다. */
   ask(prompt: string, options?: AskOptions): Promise<string>;
+  /** 기다리는 동안 스피너 옆에 보일 글. 명령이 끝나거나 입력을 물으면 사라진다. */
+  progress(text: string): void;
   /** Ctrl+C로 명령을 멈추면 abort된다. */
   readonly signal: AbortSignal;
 }

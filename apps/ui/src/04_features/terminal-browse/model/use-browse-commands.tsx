@@ -1,4 +1,4 @@
-import { type MutableRefObject } from 'react';
+import { type MutableRefObject, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { countPosts, listPosts, type PostSummary } from '@/entities/post';
 import { type Viewer } from '@/entities/session';
@@ -7,6 +7,7 @@ import { useHttpClient } from '@/shared/api';
 import { formatMonthDay } from '@/shared/lib';
 import {
   printRequestFailure,
+  TerminalCountUp,
   TerminalEntryLink,
   TerminalText,
   TerminalTree,
@@ -154,18 +155,23 @@ export function useBrowseCommands({
       }
 
       const showAll = target ? `ls -a ${target}` : 'ls -a';
+      io.progress(`reading ${displayPath(path)}`);
       try {
         switch (path) {
           case POSTS: {
             const { entries, total } = await fetchPosts(all);
             recent.current = entries;
-            io.print(entryTree(path, posts(total), entries, moreFooter(entries.length, total, showAll)));
+            io.print(
+              entryTree(path, <TerminalCountUp value={total} format={posts} />, entries, moreFooter(entries.length, total, showAll)),
+            );
             return;
           }
           case SOURCES: {
             const { entries, total } = await fetchSources(all);
             recent.current = entries;
-            io.print(entryTree(path, notes(total), entries, moreFooter(entries.length, total, showAll)));
+            io.print(
+              entryTree(path, <TerminalCountUp value={total} format={notes} />, entries, moreFooter(entries.length, total, showAll)),
+            );
             return;
           }
           default: {
@@ -302,7 +308,7 @@ export function useBrowseCommands({
   return [ls, cat, open, cd, pwd];
 }
 
-function entryTree(path: string, note: string, entries: Entry[], footer: string | undefined) {
+function entryTree(path: string, note: ReactNode, entries: Entry[], footer: string | undefined) {
   return <TerminalTree root={<TerminalTreeRoot label={displayPath(path)} note={note} />} items={entries.map(entryItem)} footer={footer} />;
 }
 
