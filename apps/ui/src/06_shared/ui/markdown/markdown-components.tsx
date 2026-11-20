@@ -85,6 +85,16 @@ const HeadingBelowTitle = (source: SourceHeading): Components['h1'] => {
 /** `::marker`의 글꼴은 Safari가 무시한다. 그래도 기호 문자 자체는 같으므로 그대로 둔다. */
 const LIST_MARK = 'marker:font-mono marker:text-code-snippet marker:text-text-muted';
 
+/**
+ * 중첩 목록은 `-` 대신 tree 연결선으로 부모와 이어 그린다. 마지막 항목에서 세로선이 끝나 목록의 끝이 보인다.
+ * 선의 높이는 본문 첫 줄 가운데(28px 줄의 14px)와 항목 사이 간격(6px)에 맞춘 값이다.
+ */
+const TREE_BRANCH =
+  '[li>&]:list-none [li>&]:pl-5.5 [li>&>li]:relative ' +
+  "[li>&>li]:before:absolute [li>&>li]:before:-top-1.5 [li>&>li]:before:-left-4 [li>&>li]:before:h-5 [li>&>li]:before:w-2.5 [li>&>li]:before:border-b [li>&>li]:before:border-l [li>&>li]:before:border-outline-variant/30 [li>&>li]:before:content-[''] " +
+  '[li>&>li:first-child]:before:top-0 [li>&>li:first-child]:before:h-3.5 ' +
+  "[li>&>li:not(:last-child)]:after:absolute [li>&>li:not(:last-child)]:after:top-3.5 [li>&>li:not(:last-child)]:after:bottom-0 [li>&>li:not(:last-child)]:after:-left-4 [li>&>li:not(:last-child)]:after:border-l [li>&>li:not(:last-child)]:after:border-outline-variant/30 [li>&>li:not(:last-child)]:after:content-['']";
+
 /** Checkbox는 상태를 읽기 도구에 전하려고 남기고, 눈에는 원문 표기만 보인다. */
 const TASK_MARK = 'shrink-0 font-mono text-code-snippet margin-label:-ml-[calc(3ch+--spacing(2))]';
 
@@ -146,7 +156,7 @@ const components: Components = {
         {children}
       </ul>
     ) : (
-      <ul id={id} className={anchored(id, `${LIST_BASE} ${LIST_MARK} list-['-_'] pl-4`)}>
+      <ul id={id} className={anchored(id, `${LIST_BASE} ${LIST_MARK} list-['-_'] pl-4 ${TREE_BRANCH}`)}>
         {children}
       </ul>
     ),
