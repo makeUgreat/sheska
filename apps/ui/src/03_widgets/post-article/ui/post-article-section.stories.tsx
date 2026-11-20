@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { MemoryRouter } from 'react-router-dom';
 import { type GetPostResponse } from '@/entities/post';
 import { PostArticleSection } from './post-article-section';
 
@@ -49,6 +50,13 @@ const post: GetPostResponse = {
 const meta = {
   title: 'Features/Posts/PostArticleSection',
   component: PostArticleSection,
+  decorators: [
+    (Story) => (
+      <MemoryRouter>
+        <Story />
+      </MemoryRouter>
+    ),
+  ],
 } satisfies Meta<typeof PostArticleSection>;
 
 export default meta;
