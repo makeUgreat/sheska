@@ -1,0 +1,53 @@
+/*
+ * 본문 제목의 섹션 강조다. 규칙의 근거는 docs/ko/design.md의 "섹션 강조"에 있다.
+ * 섹션은 rehypeSection이 만든 <section>이고 제목은 그 첫 자식이다.
+ * 강조할 섹션은 useSectionFocus가 data-focus로, 강조 중인 본문은 data-focusing으로 표시한다.
+ */
+@utility section-focus {
+  & section > :is(h2, h3, h4, h5) {
+    cursor: pointer;
+    transition: color 160ms ease;
+  }
+
+  & section > :is(h2, h3, h4, h5)::before {
+    transition: color 160ms ease;
+  }
+
+  & section[data-focus] > :is(h2, h3, h4, h5) {
+    color: var(--color-accent-strong);
+  }
+
+  & section[data-focus] > :is(h3, h4, h5)::before {
+    color: var(--color-accent);
+  }
+
+  /* Vault `#`의 기호는 평소에도 accent라서 한 단계 진하게 바꾼다. */
+  & section[data-focus] > h2::before {
+    color: var(--color-accent-strong);
+  }
+
+  /* 풀릴 때는 천천히 돌아온다. */
+  & > :not(section),
+  & section > :not(section) {
+    transition: opacity 320ms ease-out;
+  }
+
+  /* 흐리기는 늦게 시작해서 제목을 스쳐 지나는 마우스에 본문이 깜빡이지 않게 한다. */
+  &[data-focusing] > :not(section),
+  &[data-focusing] section > :not(section) {
+    opacity: 0.3;
+    transition: opacity 200ms ease 100ms;
+  }
+
+  &[data-focusing] section[data-focus] :not(section) {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    & section > :is(h2, h3, h4, h5),
+    & > :not(section),
+    & section > :not(section) {
+      transition: none;
+    }
+  }
+}
