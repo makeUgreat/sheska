@@ -80,7 +80,7 @@ function ArchiveRow({ entry, appearOrder }: { entry: ArchiveEntry; appearOrder: 
         <span className="break-words text-title-md text-text-primary transition-colors duration-150 group-hover/entry:text-accent-strong motion-reduce:transition-none">
           {entry.title}
         </span>
-        {entry.detail && <span className="line-clamp-2 text-body-md text-text-muted">{entry.detail}</span>}
+        {entry.detail}
       </Link>
     </li>
   );

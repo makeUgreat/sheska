@@ -1,6 +1,6 @@
 import { type FormEvent, type Ref } from 'react';
 import { type PostSummary } from '@/entities/post';
-import { ArchiveIndex, EmptyState, EndOfList, ErrorState, LoadingState } from '@/shared/ui';
+import { AiMark, ArchiveIndex, EmptyState, EndOfList, ErrorState, LoadingState } from '@/shared/ui';
 
 const ARCHIVE_SPACING = 'mt-16';
 
@@ -20,6 +20,15 @@ export type PostsListState =
 
 function formatViews(count: number) {
   return `${count.toLocaleString('en-US')} ${count === 1 ? 'view' : 'views'}`;
+}
+
+function SummaryPending() {
+  return (
+    <span className="mt-1 grid grid-cols-[20px_minmax(0,1fr)] items-start">
+      <AiMark className="mt-[5px] -ml-0.5 text-text-muted opacity-60" />
+      <span className="font-mono text-label-sm leading-[26px] tracking-normal text-text-muted">Summary not ready yet</span>
+    </span>
+  );
 }
 
 function Highlighted({ text, query }: { text: string; query: string }) {
@@ -112,7 +121,15 @@ export function PostsListSection({
                   meta: [post.similarity != null && `${post.similarity}% match`, formatViews(post.viewCount)].filter(
                     (item) => typeof item === 'string',
                   ),
-                  detail: post.snippet && <Highlighted text={post.snippet} query={highlight} />,
+                  detail: isSearching ? (
+                    post.snippet && (
+                      <span className="line-clamp-2 text-body-md text-text-muted">
+                        <Highlighted text={post.snippet} query={highlight} />
+                      </span>
+                    )
+                  ) : (
+                    <SummaryPending />
+                  ),
                 }))}
               />
               <div ref={state.sentinelRef} className="h-px" aria-hidden="true" />

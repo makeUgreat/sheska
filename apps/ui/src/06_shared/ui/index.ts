@@ -1,3 +1,4 @@
+export { AiMark } from './ai-mark';
 export { ArchiveIndex, type ArchiveEntry } from './archive-index';
 export { ArticleLayout } from './article-layout';
 export { BackLink } from './back-link';

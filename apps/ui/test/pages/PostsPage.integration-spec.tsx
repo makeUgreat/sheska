@@ -106,6 +106,50 @@ describe('PostsPage', () => {
     expect(within(once).getByText('1 view')).toBeDefined();
   });
 
+  it('검색 중이 아니면 post마다 요약이 준비되지 않았다고 알린다', async () => {
+    const now = '2026-01-01T00:00:00.000Z';
+    const post: PostSummary = {
+      postId: 'post-1',
+      sourceId: 'source-1',
+      title: '요약 없는 포스트',
+      viewCount: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const client = buildMockHttpClient({
+      listPosts: vi.fn().mockResolvedValue({ posts: [post], nextCursor: null }),
+    });
+
+    renderPage(client);
+
+    const link = await screen.findByRole('link', { name: /요약 없는 포스트/ });
+    expect(within(link).getByText('Summary not ready yet')).toBeDefined();
+  });
+
+  it('검색 결과에는 요약 안내 대신 검색어 주변 본문을 보여준다', async () => {
+    const user = userEvent.setup();
+    const now = '2026-01-01T00:00:00.000Z';
+    const post: PostSummary = {
+      postId: 'search-1',
+      sourceId: 'source-1',
+      title: '검색된 포스트',
+      viewCount: 1,
+      createdAt: now,
+      updatedAt: now,
+      snippet: 'garden 근처 본문',
+    };
+    const client = buildMockHttpClient({
+      searchPosts: vi.fn().mockResolvedValue({ posts: [post], nextCursor: null, semanticSearchApplied: false }),
+    });
+
+    renderPage(client);
+    await user.type(screen.getByLabelText('Search posts by title or content'), 'garden{Enter}');
+
+    const link = await screen.findByRole('link', { name: /검색된 포스트/ });
+    expect(within(link).getByText(/근처 본문/)).toBeDefined();
+    expect(within(link).queryByText('Summary not ready yet')).toBeNull();
+  });
+
   it('post를 작성 연도별로 묶어 보여준다', async () => {
     const posts: PostSummary[] = [
       {
