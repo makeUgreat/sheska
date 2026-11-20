@@ -45,6 +45,14 @@ function escapeRegExp(value: string) {
 }
 
 const BRANCH = 'flex-none whitespace-pre text-on-surface-muted/50';
+const LINE_IN = 'animate-terminal-line-in motion-reduce:animate-none';
+const LINE_STAGGER_MS = 24;
+/** 긴 목록도 400ms 안에 다 보이게 이 줄부터는 더 늦추지 않는다. */
+const LAST_STAGGERED_LINE = 10;
+
+function lineDelay(index: number) {
+  return { animationDelay: `${Math.min(index, LAST_STAGGERED_LINE) * LINE_STAGGER_MS}ms` };
+}
 
 export interface TerminalTreeItem {
   key: string;
@@ -61,12 +69,12 @@ export interface TerminalTreeItem {
 export function TerminalTree({ root, items, footer }: { root: ReactNode; items: TerminalTreeItem[]; footer?: ReactNode }) {
   return (
     <div>
-      <p>{root}</p>
+      <p className={LINE_IN}>{root}</p>
       <ul>
         {items.map((item, index) => {
           const last = index === items.length - 1;
           return (
-            <li key={item.key}>
+            <li key={item.key} className={LINE_IN} style={lineDelay(index + 1)}>
               <p className="flex">
                 <span aria-hidden="true" className={BRANCH}>
                   {last ? '└── ' : '├── '}
@@ -86,7 +94,7 @@ export function TerminalTree({ root, items, footer }: { root: ReactNode; items: 
         })}
       </ul>
       {footer && (
-        <p className="whitespace-pre-wrap text-on-surface-muted">
+        <p className={`whitespace-pre-wrap text-on-surface-muted ${LINE_IN}`} style={lineDelay(items.length + 1)}>
           {'    '}
           {footer}
         </p>
