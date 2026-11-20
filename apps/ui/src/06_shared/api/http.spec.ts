@@ -263,4 +263,54 @@ describe('HttpClient', () => {
       expect(result).toEqual(response);
     });
   });
+
+  describe('postStream', () => {
+    function streamOf(chunks: string[]) {
+      const encoder = new TextEncoder();
+      return new ReadableStream<Uint8Array>({
+        start(controller) {
+          chunks.forEach((chunk) => controller.enqueue(encoder.encode(chunk)));
+          controller.close();
+        },
+      });
+    }
+
+    async function collect<T>(stream: AsyncGenerator<T>) {
+      const items: T[] = [];
+      for await (const item of stream) items.push(item);
+      return items;
+    }
+
+    it('조각에 걸쳐 끊긴 줄도 한 줄씩 parse해 내준다', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, body: streamOf(['{"n":1}\n{"n"', ':2}\n\n{"n":3}']) }));
+
+      const items = await collect(client.postStream('/posts/p/questions', { question: 'q' }, passthrough));
+
+      expect(items).toEqual([{ n: 1 }, { n: 2 }, { n: 3 }]);
+    });
+
+    it('JSON body와 abort signal을 실어 POST 요청을 보낸다', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, body: streamOf([]) }));
+      const signal = new AbortController().signal;
+
+      await collect(client.postStream('/posts/p/questions', { question: 'q' }, passthrough, signal));
+
+      expect(fetch).toHaveBeenCalledWith('http://localhost:3000/posts/p/questions', {
+        method: 'POST',
+        body: JSON.stringify({ question: 'q' }),
+        signal,
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
+
+    it('응답이 ok가 아니면 첫 줄 전에 HttpError를 던진다', async () => {
+      stubFailure(429, 'Too Many Requests', JSON.stringify({ code: 'post.question_rate_limited', message: '', details: {} }));
+
+      await expect(collect(client.postStream('/posts/p/questions', {}, passthrough))).rejects.toMatchObject({
+        status: 429,
+        code: 'post.question_rate_limited',
+      });
+    });
+  });
 });

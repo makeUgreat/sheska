@@ -1,6 +1,8 @@
-import { pathOf, PostApi } from '@sheska/contract';
+import { pathOf, PostApi, PostSchema } from '@sheska/contract';
 import { type HttpClientType as HttpClient } from '@/shared/api';
 import {
+  type AnswerEvent,
+  type AskPostRequest,
   type CountPostsResponse,
   type GetPostResponse,
   type ListPostsParams,
@@ -37,4 +39,8 @@ export function getPost(http: HttpClient, id: string): Promise<GetPostResponse> 
 
 export function publishPost(http: HttpClient, req: PublishPostRequest): Promise<PublishPostResponse> {
   return http.post(PostApi.publish.path, req, PostApi.publish.response);
+}
+
+export function askAboutPost(http: HttpClient, id: string, req: AskPostRequest, signal?: AbortSignal): AsyncGenerator<AnswerEvent> {
+  return http.postStream(pathOf(PostApi.ask, { id }), req, PostSchema.answerEvent, signal);
 }

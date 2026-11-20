@@ -59,6 +59,28 @@ export class HttpClient {
     return this.send(path, { method: 'DELETE' });
   }
 
+  /** 응답 본문이 NDJSON stream이다. 줄 하나를 schema로 parse해 도착하는 대로 내준다. */
+  async *postStream<T>(path: string, body: unknown, schema: ResponseSchema<T>, signal?: AbortSignal): AsyncGenerator<T> {
+    const res = await this.fetch(path, { method: 'POST', body: JSON.stringify(body), signal });
+    if (!res.body) return;
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let pending = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const lines = (pending + decoder.decode(value, { stream: true })).split('\n');
+      pending = lines.pop() ?? '';
+      for (const line of lines) {
+        if (line.trim()) yield schema.parse(JSON.parse(line));
+      }
+    }
+
+    if (pending.trim()) yield schema.parse(JSON.parse(pending));
+  }
+
   private async request<T>(path: string, schema: ResponseSchema<T>, init?: RequestInit): Promise<T> {
     const res = await this.fetch(path, init);
     return schema.parse(await res.json());

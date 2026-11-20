@@ -1,3 +1,4 @@
+import { AskPost } from '@/features/ask-post';
 import { usePost, type GetPostResponse } from '@/entities/post';
 import { useArticleOutline, type Heading } from '@/shared/lib';
 import { PostArticleSection, type PostArticleState } from './post-article-section';
@@ -33,5 +34,5 @@ export function PostArticle({ postId }: { postId: string | undefined }) {
     activeHeadingId,
   });
 
-  return <PostArticleSection state={state} />;
+  return <PostArticleSection state={state} ask={post && <AskPost key={post.postId} postId={post.postId} headings={outline} />} />;
 }
