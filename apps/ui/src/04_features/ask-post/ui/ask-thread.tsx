@@ -96,7 +96,7 @@ export function AskThread({ entries, busy, headings, onRetry, onClear, cardRef }
         data-scrolled={scrolled || undefined}
         data-moving={moving || undefined}
         style={height === null ? undefined : { height }}
-        className={`${THREAD} ${height === null ? 'max-h-[min(360px,46vh)]' : ''} ${entries.length === 0 ? 'pb-4' : ''}`}
+        className={`${THREAD} ${height === null ? 'max-h-[min(360px,46vh)]' : ''} ${entries.length === 0 ? 'min-h-min pb-4' : ''}`}
       >
         {entries.length === 0 ? (
           <EmptyThread />
