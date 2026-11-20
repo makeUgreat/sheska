@@ -130,6 +130,7 @@ function toPostSummaryResponse(post: PostSummary): PostSummaryResponse {
     sourceId: post.sourceId,
     title: post.title,
     viewCount: post.viewCount,
+    summary: { status: 'pending' },
     createdAt: post.createdAt.toISOString(),
     updatedAt: post.updatedAt.toISOString(),
   };
