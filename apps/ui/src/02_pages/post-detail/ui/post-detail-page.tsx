@@ -1,22 +1,16 @@
 import { useParams } from 'react-router-dom';
 import { PostArticle } from '@/widgets/post-article';
-import { BackLink } from '@/shared/ui';
 
-/** 여백에서는 펼쳐질 label 자리가 모자라서 화살표만 둔다. label은 링크 이름으로 남는다. */
-const BACK_LINK_IN_MARGIN =
-  'margin-label:absolute margin-label:top-1 margin-label:right-[calc(100%+var(--spacing-gutter))] ' +
-  'margin-label:[&>span]:max-w-0! margin-label:[&>span]:opacity-0!';
-
+/**
+ * 머리판은 화면 폭 전체에 깔리므로 가로로 넘친 부분을 여기서 자른다. `clip`은 scroll 컨테이너를 만들지 않아 sticky를 깨지 않는다.
+ * 아래 여백은 화면 아래에 떠 있는 질문 줄이 마지막 문단을 가리지 않을 만큼 둔다.
+ */
 export function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
 
   return (
-    <main className="min-h-screen bg-page-background px-4 py-14">
+    <main className="min-h-screen overflow-x-clip bg-page-background px-4 pb-36">
       <div className="relative mx-auto max-w-measure">
-        <BackLink to="/posts" className={`mb-10 ${BACK_LINK_IN_MARGIN}`}>
-          Back to posts
-        </BackLink>
-
         <PostArticle postId={id} />
       </div>
     </main>

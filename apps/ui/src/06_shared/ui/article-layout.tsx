@@ -6,7 +6,13 @@ import { TableOfContents } from './table-of-contents';
 
 const OUTLINE_MINIMUM_HEADINGS = 2;
 
-const FADE_RULE = 'bg-linear-to-r from-outline-variant/26 via-outline-variant/8 via-60% to-transparent';
+/**
+ * 머리판은 읽는 칸 밖으로 화면 폭 전체에 깐다. 판의 아래 경계가 AI가 쓴 머리와 vault 원문을 나눈다.
+ * `100vw`는 scrollbar 자리까지 넓으므로 감싸는 쪽이 가로로 넘친 부분을 잘라야 한다.
+ */
+const PLATE =
+  'relative isolate pt-10 pb-8 before:absolute before:inset-y-0 before:left-1/2 before:-z-10 before:w-screen before:-translate-x-1/2 ' +
+  'before:border-b before:border-plate-line before:bg-plate';
 
 export function ArticleLayout({
   header,
@@ -24,14 +30,12 @@ export function ArticleLayout({
   return (
     <>
       <article>
-        <header className={`mb-6 ${LINE_IN}`} style={lineDelay(0)}>
+        <header className={`${PLATE} ${LINE_IN}`} style={lineDelay(0)}>
           {header}
         </header>
 
-        <hr className={`mb-12 h-px border-0 ${FADE_RULE} ${LINE_IN}`} style={lineDelay(1)} />
-
         {body && (
-          <div className={LINE_IN} style={lineDelay(2)}>
+          <div className={`mt-11 ${LINE_IN}`} style={lineDelay(1)}>
             <Markdown body={body} />
           </div>
         )}

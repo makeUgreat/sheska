@@ -130,11 +130,27 @@
       }
     },
     "accent-tint": {
-      "$description": "Fill behind the AI summary callout on the light page. AI-written text sits on it so it never reads as the vault note. No other light-page element uses a fill.",
+      "$description": "Hover ring around the collapsed ask button. A soft accent halo marks it as the AI entry point without filling the button.",
       "$value": {
         "colorSpace": "srgb",
         "components": [0.9922, 0.9529, 0.9569],
         "hex": "#fdf3f4"
+      }
+    },
+    "plate": {
+      "$description": "Ground of the post detail header plate. The title, meta and AI summary sit on it, so the AI-written header reads apart from the vault body below.",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.9843, 0.9843, 0.9882],
+        "hex": "#fbfbfc"
+      }
+    },
+    "plate-line": {
+      "$description": "Bottom edge of the header plate, and the line between the ask card and the input it grows from.",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.9333, 0.9373, 0.949],
+        "hex": "#eeeff2"
       }
     },
     "caution": {
@@ -425,7 +441,7 @@
       "$value": "320px"
     },
     "margin-label": {
-      "$description": "Width of the column a page hangs in the left margin of the reading column: the archive year and the post detail back link. `--breakpoint-margin-label` (900px) is derived from it. The column is centred at the measure, so each margin must hold this width, a gutter and the 16px page padding: measure + 2 × (this width + gutter + 16px) = 876px, about 891px with the reserved scrollbar gutter, rounded up to 900px. Below that the label sits above the content it marks.",
+      "$description": "Width of the column a page hangs in the left margin of the reading column: the archive year. `--breakpoint-margin-label` (900px) is derived from it. The column is centred at the measure, so each margin must hold this width, a gutter and the 16px page padding: measure + 2 × (this width + gutter + 16px) = 876px, about 891px with the reserved scrollbar gutter, rounded up to 900px. Below that the label sits above the content it marks.",
       "$value": "48px"
     },
     "header": {

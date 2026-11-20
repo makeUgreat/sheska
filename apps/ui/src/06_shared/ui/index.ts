@@ -1,7 +1,6 @@
 export { AiMark } from './ai-mark';
 export { ArchiveIndex, type ArchiveEntry } from './archive-index';
 export { ArticleLayout } from './article-layout';
-export { BackLink } from './back-link';
 export { EmptyState, type EmptyStateProps, type EmptyVariant } from './empty-state';
 export { EndOfList } from './end-of-list';
 export { ErrorState, type ErrorStateProps } from './error-state';

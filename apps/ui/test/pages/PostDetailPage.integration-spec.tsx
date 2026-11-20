@@ -117,8 +117,8 @@ describe('PostDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { level: 1, name: '테스트 포스트' })).toBeDefined();
     });
-    expect(screen.getByText('Jan 5, 2026')).toBeDefined();
-    expect(screen.getByText('7 views')).toBeDefined();
+    expect(screen.getAllByText('2026.01.05')).toHaveLength(2);
+    expect(screen.getByText((_, element) => element?.tagName === 'SPAN' && element.textContent === '7 views')).toBeDefined();
   });
 
   it('AI 요약 자리에 요약이 준비되지 않았다고 알린다', async () => {
@@ -128,7 +128,7 @@ describe('PostDetailPage', () => {
     expect(within(summary).getByText('Summary not ready yet')).toBeDefined();
   });
 
-  it('요약이 있으면 콜아웃에 받은 줄을 모두 보여준다', async () => {
+  it('요약이 있으면 요약 자리에 받은 줄을 모두 보여준다', async () => {
     const lines = ['첫 문장이다.', '둘째 문장이다.', '셋째 문장이다.', '넷째 문장이다.'];
     const client = buildMockHttpClient({
       get: vi.fn().mockResolvedValue({ ...MOCK_POST, summary: { status: 'ready', lines } }),
@@ -140,7 +140,7 @@ describe('PostDetailPage', () => {
     lines.forEach((line) => expect(within(summary).getByText(line)).toBeDefined());
   });
 
-  it('요약을 만들지 못했으면 콜아웃을 남기고 실패를 알린다', async () => {
+  it('요약을 만들지 못했으면 요약 자리를 남기고 실패를 알린다', async () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockResolvedValue({ ...MOCK_POST, summary: { status: 'failed' } }),
     });
