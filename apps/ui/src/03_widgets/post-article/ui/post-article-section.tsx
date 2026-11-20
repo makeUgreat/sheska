@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react';
 import { AI_SUMMARY_NOTICE, type AiSummary, type GetPostResponse } from '@/entities/post';
 import { formatDate, type Heading } from '@/shared/lib';
 import { AiMark, ArticleLayout, EmptyState, ErrorState, LoadingState } from '@/shared/ui';
@@ -13,7 +14,8 @@ export type PostArticleState =
       activeHeadingId: string | null;
     };
 
-export function PostArticleSection({ state }: { state: PostArticleState }) {
+/** `ask`는 요약 콜아웃 바로 아래, 본문 구분선 위에 놓인다. */
+export function PostArticleSection({ state, ask }: { state: PostArticleState; ask?: ReactNode }) {
   if (state.status === 'loading') {
     return <LoadingState className="py-24" />;
   }
@@ -28,10 +30,12 @@ export function PostArticleSection({ state }: { state: PostArticleState }) {
 
   const { post, outline, activeHeadingId } = state;
 
-  return <ArticleLayout header={<PostHeader post={post} />} body={post.body} outline={outline} activeHeadingId={activeHeadingId} />;
+  return (
+    <ArticleLayout header={<PostHeader post={post} ask={ask} />} body={post.body} outline={outline} activeHeadingId={activeHeadingId} />
+  );
 }
 
-function PostHeader({ post }: { post: GetPostResponse }) {
+function PostHeader({ post, ask }: { post: GetPostResponse; ask: ReactNode }) {
   return (
     <>
       <h1 className="break-words font-sans text-headline-md text-text-primary">{post.title}</h1>
@@ -41,6 +45,7 @@ function PostHeader({ post }: { post: GetPostResponse }) {
         <span>{post.viewCount} views</span>
       </p>
       <SummaryCallout summary={post.summary} />
+      {ask}
     </>
   );
 }
