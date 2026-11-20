@@ -1,20 +1,28 @@
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useSeason } from '@/shared/lib';
 import { Terminal, type TerminalHandle, type TerminalLaunchState } from '@/shared/ui';
 import { useShellCommands } from '../model/use-shell-commands';
+import { useSnowCommand } from '../model/use-snow-command';
 import { HeroLinks } from './hero-links';
 import { TerminalWindow } from './terminal-window';
+import { SnowHeap } from './winter/snow-heap';
+import { Snowfall } from './winter/snowfall';
+import { WinterLogo } from './winter/winter-logo';
 
 /** figlet small 글꼴. 웹 글꼴에 없는 블록 문자 대신 ASCII만 써서 폭이 어긋나지 않는다. */
 const LOGO = [' _  _   _   ___ _  _ ', '| || | /_\\ / __| || |', '| __ |/ _ \\\\__ \\ __ |', '|_||_/_/ \\_\\___/_||_|'].join('\n');
 
 export function LandingHero({ articlesHref, githubHref }: { articlesHref: string; githubHref: string }) {
   const terminal = useRef<TerminalHandle>(null);
-  const { viewer, commands, prompt } = useShellCommands();
+  const { viewer, commands: shellCommands, prompt } = useShellCommands();
   const owner = viewer === 'owner';
   const location = useLocation();
   const navigate = useNavigate();
   const launch = (location.state as TerminalLaunchState | null)?.run;
+  const winter = useSeason() === 'winter';
+  const snow = useSnowCommand();
+  const commands = winter ? [...shellCommands, snow.command] : shellCommands;
 
   useEffect(() => {
     if (!launch) return;
@@ -31,17 +39,19 @@ export function LandingHero({ articlesHref, githubHref }: { articlesHref: string
 
       <div className="z-10 mx-auto w-full max-w-container-terminal px-0 sm:px-6">
         <div className="relative">
+          {winter && <SnowHeap falling={snow.snowing} />}
           <HeroLinks articlesHref={articlesHref} githubHref={githubHref} />
           <TerminalWindow yellowLabel={owner ? 'Log out' : 'Log in'} onYellowClick={() => terminal.current?.run(owner ? 'exit' : 'su')}>
+            {winter && snow.snowing && <Snowfall />}
             <Terminal
               ref={terminal}
               commands={commands}
               prompt={prompt}
-              className="h-full p-4 [scrollbar-color:rgb(255_255_255/0.2)_transparent] [scrollbar-width:thin] sm:p-6"
+              className="relative h-full p-4 [scrollbar-color:rgb(255_255_255/0.2)_transparent] [scrollbar-width:thin] sm:p-6"
               banner={
                 <div className="mb-4">
                   <pre aria-hidden="true" className="mb-3 font-[inherit] leading-[1.15] text-accent">
-                    {LOGO}
+                    {winter ? <WinterLogo logo={LOGO} /> : LOGO}
                   </pre>
                   <p className="text-on-surface-muted">
                     Hi, I&apos;m <span className="text-accent">Hash</span>. Here is how I think, what I&apos;ve learned, and who I am.
@@ -54,6 +64,11 @@ export function LandingHero({ articlesHref, githubHref }: { articlesHref: string
                   <p className="text-on-surface-muted">
                     Type <span className="text-white">help</span> for more.
                   </p>
+                  {winter && (
+                    <p className="text-on-surface-muted">
+                      Merry Christmas. Type <span className="text-white">snow</span> to stop the snowfall.
+                    </p>
+                  )}
                 </div>
               }
             />

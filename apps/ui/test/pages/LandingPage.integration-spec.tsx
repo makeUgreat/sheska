@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LandingPage } from '@/pages/landing';
 import { HttpClientProvider, HttpError, type HttpClientType as HttpClient } from '@/shared/api';
+import { SeasonProvider, type Season } from '@/shared/lib';
 
 const NOW = '2026-11-18T00:00:00.000Z';
 
@@ -114,16 +115,18 @@ function PostDetailStub() {
   return <p>post detail {id}</p>;
 }
 
-function renderPage(client: HttpClient) {
+function renderPage(client: HttpClient, season: Season | null = null) {
   return render(
     <MemoryRouter>
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
         <HttpClientProvider client={client}>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/posts" element={<p>posts page</p>} />
-            <Route path="/posts/:id" element={<PostDetailStub />} />
-          </Routes>
+          <SeasonProvider season={season}>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/posts" element={<p>posts page</p>} />
+              <Route path="/posts/:id" element={<PostDetailStub />} />
+            </Routes>
+          </SeasonProvider>
         </HttpClientProvider>
       </QueryClientProvider>
     </MemoryRouter>,
@@ -469,6 +472,28 @@ describe('LandingPage terminal', () => {
       expect(del).toHaveBeenCalledWith('/auth/session');
     });
   });
+  describe('겨울 시즌', () => {
+    it('snow는 내리는 눈을 멈추고, 다시 입력하면 다시 내리게 한다', async () => {
+      const { client } = buildMockHttpClient();
+      renderPage(client, 'winter');
+
+      await typeCommand('guest@hash:~$', 'snow');
+      expect(await screen.findByText('Snowfall stopped. Type snow to start it again.')).toBeDefined();
+
+      await typeCommand('guest@hash:~$', 'snow');
+      expect(await screen.findByText('Snowfall started.')).toBeDefined();
+    });
+
+    it('겨울이 아니면 snow 명령이 없다', async () => {
+      const { client } = buildMockHttpClient();
+      renderPage(client);
+
+      await typeCommand('guest@hash:~$', 'snow');
+
+      expect(await screen.findByText('hash: command not found: snow')).toBeDefined();
+    });
+  });
+
   describe('이스터에그', () => {
     it('방문자의 sudo는 sudoers에 없다고 답한다', async () => {
       const { client } = buildMockHttpClient();
