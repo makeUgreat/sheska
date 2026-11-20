@@ -6,6 +6,7 @@ import { useShellCommands } from '../model/use-shell-commands';
 import { useSnowCommand } from '../model/use-snow-command';
 import { HeroLinks } from './hero-links';
 import { TerminalWindow } from './terminal-window';
+import { SnowHeap } from './winter/snow-heap';
 import { Snowfall } from './winter/snowfall';
 import { WinterLogo } from './winter/winter-logo';
 
@@ -38,6 +39,7 @@ export function LandingHero({ articlesHref, githubHref }: { articlesHref: string
 
       <div className="z-10 mx-auto w-full max-w-container-terminal px-0 sm:px-6">
         <div className="relative">
+          {winter && <SnowHeap falling={snow.snowing} />}
           <HeroLinks articlesHref={articlesHref} githubHref={githubHref} />
           <TerminalWindow yellowLabel={owner ? 'Log out' : 'Log in'} onYellowClick={() => terminal.current?.run(owner ? 'exit' : 'su')}>
             {winter && snow.snowing && <Snowfall />}

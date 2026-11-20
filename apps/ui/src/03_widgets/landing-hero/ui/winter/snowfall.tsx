@@ -1,16 +1,9 @@
 import { type CSSProperties } from 'react';
+import { seededRandom } from './seeded-random';
 
 const FLAKE_COUNT = 46;
 
-/** 렌더마다 자리가 바뀌지 않게 seed를 고정한 난수다. */
-function seeded(seed: number) {
-  return () => {
-    seed = (seed * 16807) % 2147483647;
-    return seed / 2147483647;
-  };
-}
-
-const random = seeded(42);
+const random = seededRandom(42);
 const FLAKES = Array.from({ length: FLAKE_COUNT }, () => {
   const duration = 14 + random() * 16;
   return {

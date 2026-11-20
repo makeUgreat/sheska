@@ -28,6 +28,8 @@
   --color-terminal-green: #27c93f;
   --color-terminal-output-error: #e3b341;
   --color-terminal-output-success: #7ee787;
+  --color-snow: #eef2f7;
+  --color-snow-shade: #c9d1de;
 
   --font-sans: "Geist", "Arial", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
