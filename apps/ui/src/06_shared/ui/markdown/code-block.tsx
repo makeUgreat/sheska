@@ -3,7 +3,8 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 
 const COPIED_RESET_MS = 2000;
 
-const LANGUAGE_LABEL = 'font-mono text-label-sm uppercase text-on-surface-muted';
+/** 원문의 fence 첫 줄처럼 읽히게 한다. 언어를 적지 않은 fence에는 `` ``` ``만 남는다. */
+const LANGUAGE_LABEL = "font-mono text-label-sm tracking-normal text-on-surface-muted before:content-['```'_/_'']";
 
 const InsideCodeBlock = createContext(false);
 

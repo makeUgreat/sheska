@@ -40,22 +40,71 @@ const HEADING_STYLE = {
 
 type HeadingTag = keyof typeof HEADING_STYLE;
 
+/**
+ * 넓은 화면에서는 기호를 왼쪽 여백에 걸어 heading 글자가 본문 왼쪽 끝에 맞게 한다.
+ * Pseudo-element라 복사 결과에 섞이지 않고, `/ ''` 대체 텍스트로 스크린 리더도 읽지 않는다.
+ * `######`는 여백 폭보다 넓다. `justify-end`라야 넘친 부분이 heading 쪽이 아니라 바깥으로 나간다.
+ */
+const SOURCE_MARK =
+  'before:mr-2 before:font-mono before:font-normal before:tracking-normal ' +
+  'margin-label:before:-ml-[calc(var(--spacing-margin-label)+var(--spacing-gutter))] margin-label:before:mr-gutter ' +
+  'margin-label:before:inline-flex margin-label:before:w-(--spacing-margin-label) margin-label:before:justify-end';
+
+const SECTION_MARK = `${SOURCE_MARK} before:text-accent`;
+
+const SUBSECTION_MARK = `${SOURCE_MARK} before:text-code-snippet before:text-text-muted`;
+
+/** 기호는 낮춘 뒤의 tag가 아니라 원문 단계를 따른다. `#####`와 `######`는 같은 h6로 그려진다. */
+const HEADING_MARK = {
+  h1: `${SECTION_MARK} before:content-['#'_/_'']`,
+  h2: `${SUBSECTION_MARK} before:content-['##'_/_'']`,
+  h3: `${SUBSECTION_MARK} before:content-['###'_/_'']`,
+  h4: `${SUBSECTION_MARK} before:content-['####'_/_'']`,
+  h5: `${SUBSECTION_MARK} before:content-['#####'_/_'']`,
+  h6: `${SUBSECTION_MARK} before:content-['######'_/_'']`,
+} as const;
+
+type SourceHeading = keyof typeof HEADING_MARK;
+
 /** 본문은 page 제목 `<h1>` 아래에 놓이므로 모든 heading을 한 단계씩 낮춘다. */
-const HeadingBelowTitle = (Tag: HeadingTag): Components['h1'] =>
-  function Heading({ children, id }) {
+const BELOW_TITLE = { h1: 'h2', h2: 'h3', h3: 'h4', h4: 'h5', h5: 'h6', h6: 'h6' } as const satisfies Record<SourceHeading, HeadingTag>;
+
+const HeadingBelowTitle = (source: SourceHeading): Components['h1'] => {
+  const Tag = BELOW_TITLE[source];
+
+  return function Heading({ children, id }) {
     return (
-      <Tag id={id} className={`${HEADING_STYLE[Tag]} ${BELOW_HEADER}`}>
+      <Tag id={id} className={`${HEADING_STYLE[Tag]} ${HEADING_MARK[source]} ${BELOW_HEADER}`}>
         {children}
       </Tag>
     );
   };
+};
+
+/** `::marker`의 글꼴은 Safari가 무시한다. 그래도 기호 문자 자체는 같으므로 그대로 둔다. */
+const LIST_MARK = 'marker:font-mono marker:text-code-snippet marker:text-text-muted';
+
+/** Checkbox는 상태를 읽기 도구에 전하려고 남기고, 눈에는 원문 표기만 보인다. */
+const TASK_MARK = 'shrink-0 font-mono text-code-snippet margin-label:-ml-[calc(3ch+--spacing(2))]';
+
+const DONE_MARK = `${TASK_MARK} text-accent-strong before:content-['[x]'_/_'']`;
+
+const TODO_MARK = `${TASK_MARK} text-text-muted before:content-['[_]'_/_'']`;
+
+/**
+ * 인용 안의 문단마다 `>`를 붙인다. 문단이 여럿이면 첫 문단에만 붙여서는 인용의 끝이 보이지 않는다.
+ * 인용은 여백에 걸지 않고 들여 쓴다. 안에 든 목록과 code fence는 기호가 없어 들여쓰기로만 인용에 속함이 보인다.
+ */
+const QUOTE_MARK =
+  '[&>p]:before:inline-flex [&>p]:before:-ml-5 [&>p]:before:w-5 [&>p]:before:font-mono [&>p]:before:text-code-snippet ' +
+  "[&>p]:before:text-text-muted [&>p]:before:content-['>'_/_'']";
 
 const components: Components = {
-  h1: HeadingBelowTitle('h2'),
-  h2: HeadingBelowTitle('h3'),
-  h3: HeadingBelowTitle('h4'),
-  h4: HeadingBelowTitle('h5'),
-  h5: HeadingBelowTitle('h6'),
+  h1: HeadingBelowTitle('h1'),
+  h2: HeadingBelowTitle('h2'),
+  h3: HeadingBelowTitle('h3'),
+  h4: HeadingBelowTitle('h4'),
+  h5: HeadingBelowTitle('h5'),
   h6: HeadingBelowTitle('h6'),
   p: ({ id, children }) => (
     <p id={id} className={anchored(id, 'mb-5 text-body-prose text-text-secondary')}>
@@ -64,7 +113,7 @@ const components: Components = {
   ),
   li: ({ className, children, id }) =>
     className?.includes('task-list-item') ? (
-      <li id={id} className={anchored(id, 'flex items-start gap-2')}>
+      <li id={id} className={anchored(id, 'flex items-baseline gap-2')}>
         {children}
       </li>
     ) : (
@@ -72,7 +121,12 @@ const components: Components = {
         {children}
       </li>
     ),
-  input: ({ checked }) => <input type="checkbox" checked={checked} disabled className="mt-1 h-3.5 w-3.5 shrink-0 accent-accent-strong" />,
+  input: ({ checked }) => (
+    <>
+      <input type="checkbox" checked={checked} disabled className="sr-only" />
+      <span aria-hidden="true" className={checked ? DONE_MARK : TODO_MARK} />
+    </>
+  ),
   del: ({ children }) => <del className="text-text-muted line-through">{children}</del>,
   table: ({ id, children }) => (
     <div id={id} className={anchored(id, 'my-7 overflow-x-auto')}>
@@ -91,21 +145,22 @@ const components: Components = {
         {children}
       </ul>
     ) : (
-      <ul id={id} className={anchored(id, `${LIST_BASE} list-disc pl-4 marker:text-outline-variant`)}>
+      <ul id={id} className={anchored(id, `${LIST_BASE} ${LIST_MARK} list-['-_'] pl-4`)}>
         {children}
       </ul>
     ),
+  /** Mono 숫자와 마침표는 `pl-4`보다 넓어서 두 자리 번호가 화면 밖으로 나간다. */
   ol: ({ id, children }) => (
-    <ol id={id} className={anchored(id, `${LIST_BASE} list-decimal pl-4 marker:text-outline-variant`)}>
+    <ol id={id} className={anchored(id, `${LIST_BASE} ${LIST_MARK} list-decimal pl-6`)}>
       {children}
     </ol>
   ),
   blockquote: ({ id, children }) => (
-    <blockquote id={id} className={anchored(id, 'my-7 border-l-2 border-accent/40 pl-5 text-body-prose italic text-text-secondary')}>
+    <blockquote id={id} className={anchored(id, `my-7 pl-5 text-body-prose text-text-secondary ${QUOTE_MARK}`)}>
       {children}
     </blockquote>
   ),
-  hr: () => <hr className="mx-auto my-12 h-px w-18 border-0 bg-outline-variant/30" />,
+  hr: () => <hr className="my-12 h-auto border-0 text-center font-mono text-code-snippet text-text-muted before:content-['---'_/_'']" />,
   a: ({ children, href }) => (
     <a href={href} className="text-accent-strong underline underline-offset-2 transition-colors hover:text-accent-hover">
       {children}
