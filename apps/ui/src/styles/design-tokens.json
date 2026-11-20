@@ -351,8 +351,8 @@
       "$description": "Maximum width of the table of contents panel. The panel grows into the margin beside the reading column up to this width; past it the extra margin stays empty so the outline never reads as a second column.",
       "$value": "320px"
     },
-    "archive-year": {
-      "$description": "Width of the year column an archive list hangs in its left margin. `--breakpoint-year-margin` (900px) is derived from it. The list is centred at the measure, so each margin must hold this width, a gutter and the 16px page padding: measure + 2 × (this width + gutter + 16px) = 876px, about 891px with the reserved scrollbar gutter, rounded up to 900px. Below that the year sits above its entries.",
+    "margin-label": {
+      "$description": "Width of the column a page hangs in the left margin of the reading column: the archive year and the post detail back link. `--breakpoint-margin-label` (900px) is derived from it. The column is centred at the measure, so each margin must hold this width, a gutter and the 16px page padding: measure + 2 × (this width + gutter + 16px) = 876px, about 891px with the reserved scrollbar gutter, rounded up to 900px. Below that the label sits above the content it marks.",
       "$value": "48px"
     },
     "header": {
