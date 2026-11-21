@@ -37,6 +37,10 @@ export function getPost(http: HttpClient, id: string): Promise<GetPostResponse> 
   return http.get(pathOf(PostApi.get, { id }), PostApi.get.response);
 }
 
+export function recordPostView(http: HttpClient, id: string): Promise<void> {
+  return http.post(pathOf(PostApi.recordView, { id }), {});
+}
+
 export function publishPost(http: HttpClient, req: PublishPostRequest): Promise<PublishPostResponse> {
   return http.post(PostApi.publish.path, req, PostApi.publish.response);
 }
