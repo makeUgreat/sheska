@@ -5,6 +5,7 @@ import {
   ConcurrencyConflictError,
   ConstraintViolationError,
   ERROR_KIND,
+  InputTooLargeError,
   InvalidDataError,
   InvariantViolationError,
   NotFoundError,
@@ -32,6 +33,7 @@ const ERROR_CLASSES = [
   TimeoutError,
   InvalidDataError,
   BadResponseError,
+  InputTooLargeError,
   UnexpectedError,
 ];
 

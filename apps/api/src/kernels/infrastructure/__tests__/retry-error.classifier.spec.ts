@@ -4,6 +4,7 @@ import {
   BadResponseError,
   ConcurrencyConflictError,
   ConstraintViolationError,
+  InputTooLargeError,
   InvalidDataError,
   NotFoundError,
   TimeoutError,
@@ -53,6 +54,7 @@ describe('classifyInfrastructureRetry', () => {
     new ConstraintViolationError(ERROR_BASE),
     new NotFoundError(ERROR_BASE),
     new UnexpectedError(ERROR_BASE),
+    new InputTooLargeError(ERROR_BASE),
   ])('$name은 재시도 불가하다', (error) => {
     expect(classifyInfrastructureRetry(error)).toEqual({ retryable: false });
   });
