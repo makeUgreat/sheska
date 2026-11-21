@@ -20,8 +20,9 @@ import { SourceEmbeddingWorkflowBullMqDispatcher } from '@contexts/ingestion/inf
 import { SourceEmbeddingChunkBullMqConsumer } from '@contexts/ingestion/presentation/queue/bullmq/source-embedding-chunk.bullmq.consumer';
 import { SourceEmbeddingFinalizationBullMqConsumer } from '@contexts/ingestion/presentation/queue/bullmq/source-embedding-finalization.bullmq.consumer';
 import { VALID_EMBEDDING } from '../../../support/domains/fixtures/source-embedding.fixture';
+import { REDIS_TEST_URL } from '../support/redis.connection';
 
-const REDIS_CONNECTION = { host: '127.0.0.1', port: 56379 };
+const REDIS_CONNECTION = { url: REDIS_TEST_URL };
 
 describe('Embedding workflow consumers', () => {
   let app: INestApplication;

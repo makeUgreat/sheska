@@ -6,8 +6,8 @@ describe('AppModule', () => {
   let testingModule: TestingModule | undefined;
 
   beforeAll(() => {
-    vi.stubEnv('DATABASE_URL', 'postgres://sheska:sheska@127.0.0.1:56432/sheska_test');
-    vi.stubEnv('REDIS_URL', 'redis://127.0.0.1:56379');
+    vi.stubEnv('DATABASE_URL', 'postgres://unused@database-unavailable:5432/sheska');
+    vi.stubEnv('REDIS_URL', 'redis://redis-unavailable:6379');
     vi.stubEnv('EMBEDDING_BASE_URL', 'http://embedding-unavailable:3000');
     vi.stubEnv('ATTACHMENT_STORAGE_ENDPOINT', 'http://attachment-storage-unavailable:9000');
     vi.stubEnv('ATTACHMENT_STORAGE_BUCKET', 'sheska-attachments');
