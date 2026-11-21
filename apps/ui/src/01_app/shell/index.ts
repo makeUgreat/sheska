@@ -1,1 +1,1 @@
-export { App } from './ui/app';
+export { routes } from './model/routes';

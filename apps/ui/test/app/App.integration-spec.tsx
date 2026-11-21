@@ -1,10 +1,10 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type GetSourceResponse, type SourceSummary } from '@/entities/source';
-import { App } from '@/app/shell';
+import { routes } from '@/app/shell';
 import { HttpClientProvider, type HttpClientType as HttpClient } from '@/shared/api';
 
 type MockHttpClientOverrides = {
@@ -77,18 +77,26 @@ function buildMockHttpClient(
 }
 
 function renderApp(client: HttpClient, initialEntry = '/sources') {
-  return render(
-    <MemoryRouter initialEntries={[initialEntry]}>
-      <QueryClientProvider client={createTestQueryClient()}>
-        <HttpClientProvider client={client}>
-          <App />
-        </HttpClientProvider>
-      </QueryClientProvider>
-    </MemoryRouter>,
+  const router = createMemoryRouter(routes, { initialEntries: [initialEntry] });
+  render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      <HttpClientProvider client={client}>
+        <RouterProvider router={router} />
+      </HttpClientProvider>
+    </QueryClientProvider>,
   );
+  return router;
 }
 
 describe('App', () => {
+  beforeEach(() => {
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('source 목록에서 상세 화면으로 이동한다', async () => {
     const user = userEvent.setup();
     const getSource = vi.fn().mockResolvedValue(SOURCE_DETAIL);
@@ -212,6 +220,36 @@ describe('App', () => {
 
       expect(client.delete).toHaveBeenCalledWith('/auth/session');
       expect(await screen.findByLabelText('guest@hash:~$')).toBeDefined();
+    });
+  });
+
+  describe('scroll', () => {
+    it('다른 페이지로 이동하면 맨 위에서 시작한다', async () => {
+      const user = userEvent.setup();
+      const client = buildMockHttpClient();
+
+      renderApp(client, '/sources');
+      vi.mocked(window.scrollTo).mockClear();
+      await user.click(screen.getByRole('link', { name: 'posts' }));
+
+      await waitFor(() => {
+        expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
+      });
+    });
+
+    it('뒤로 가면 떠날 때의 위치로 돌아간다', async () => {
+      const user = userEvent.setup();
+      const client = buildMockHttpClient();
+      vi.spyOn(window, 'scrollY', 'get').mockReturnValue(1500);
+
+      const router = renderApp(client, '/sources');
+      await user.click(screen.getByRole('link', { name: 'posts' }));
+      vi.mocked(window.scrollTo).mockClear();
+      await router.navigate(-1);
+
+      await waitFor(() => {
+        expect(window.scrollTo).toHaveBeenCalledWith(0, 1500);
+      });
     });
   });
 });
