@@ -10,7 +10,6 @@ import { IngestionModule } from '@contexts/ingestion/ingestion.module';
 import { attachmentContentR2Config } from '@contexts/library/infrastructure/attachment-content/r2/attachment-content.r2.config';
 import { databaseConfig } from './database/database.config';
 import { DatabaseModule } from './database/database.module';
-import { IntegrationEventsModule } from './events/integration-events.module';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { HealthModule } from './health/health.module';
 import { httpConfig } from './http/http.config';
@@ -31,7 +30,6 @@ import { RedisModule } from './redis/redis.module';
     }),
     LoggerModule,
     EventEmitterModule.forRoot({ wildcard: false }),
-    IntegrationEventsModule,
     QueueModule,
     RedisModule,
     DatabaseModule,

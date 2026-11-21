@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, asc, eq, inArray, isNull, lte, sql } from 'drizzle-orm';
-import { type ClaimedOutboxMessage, type IntegrationEvent, type OutboxRelayStore, type OutboxWriter } from '@kernels/application';
+import { type ClaimedOutboxMessage, type OutboxMessage, type OutboxRelayStore, type OutboxWriter } from '@kernels/application';
 import { DATABASE_TOKENS } from '../../database.tokens';
 import { type PgDrizzleSession } from '../../pg-drizzle.session';
 import { classifyPostgresError } from '../../postgres-error.classifier';
@@ -13,14 +13,14 @@ export class PgDrizzleOutboxStore implements OutboxWriter, OutboxRelayStore {
     private readonly db: PgDrizzleSession<typeof outboxSchema>,
   ) {}
 
-  async append(event: IntegrationEvent): Promise<void> {
+  async append(message: OutboxMessage): Promise<void> {
     try {
       await this.db.insert(outboxSchema.outboxMessages).values({
-        eventId: event.eventId,
-        eventType: event.eventType,
-        eventVersion: event.eventVersion,
-        payload: event.payload,
-        occurredAt: event.occurredAt,
+        eventId: message.eventId,
+        eventType: message.eventType,
+        eventVersion: message.eventVersion,
+        payload: message.payload,
+        occurredAt: message.occurredAt,
       });
     } catch (error: unknown) {
       const ErrorClass = classifyPostgresError(error);
@@ -28,8 +28,8 @@ export class PgDrizzleOutboxStore implements OutboxWriter, OutboxRelayStore {
         code: 'outbox.append_failed',
         message: 'Outbox append operation failed',
         details: {
-          eventId: event.eventId,
-          eventType: event.eventType,
+          eventId: message.eventId,
+          eventType: message.eventType,
         },
         cause: error,
       });
@@ -62,7 +62,7 @@ export class PgDrizzleOutboxStore implements OutboxWriter, OutboxRelayStore {
         .returning();
 
       return rows.sort(byClaimOrder).map((row) => ({
-        event: {
+        message: {
           eventId: row.eventId,
           eventType: row.eventType,
           eventVersion: row.eventVersion,
