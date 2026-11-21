@@ -25,7 +25,7 @@ export const POST_SUMMARY_INSTRUCTIONS = `<role>
 <sentence>둘째 문장</sentence>
 </output_format>`;
 
-const POST_SUMMARY_MAX_OUTPUT_TOKENS = 512;
+const POST_SUMMARY_MAX_OUTPUT_TOKENS = 2_048;
 
 const SENTENCE_TAG = /<sentence>([\s\S]*?)<\/sentence>/g;
 
