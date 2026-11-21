@@ -29,6 +29,14 @@ const summarySchema = z.object({
   updatedAt: z.iso.datetime(),
 });
 
+/** 조회수를 늘린 조회 하나다. */
+const viewSchema = z.object({
+  viewedAt: z.iso.datetime(),
+  ip: z.string(),
+  /** 방문자의 User-Agent 원문. User-Agent가 없었으면 `unknown`이다. */
+  client: z.string(),
+});
+
 const postSchema = summarySchema.extend({
   body: z.string(),
 });
@@ -68,6 +76,7 @@ export const PostSchema = {
   summary: summarySchema,
   post: postSchema,
   searchResult: searchResultSchema,
+  view: viewSchema,
   cursor: cursorSchema,
   answerEvent: answerEventSchema,
 };
@@ -76,6 +85,7 @@ export type PostSummaryResponse = z.infer<typeof summarySchema>;
 export type PostAiSummaryResponse = z.infer<typeof aiSummarySchema>;
 export type PostResponse = z.infer<typeof postSchema>;
 export type PostSearchResultResponse = z.infer<typeof searchResultSchema>;
+export type PostViewResponse = z.infer<typeof viewSchema>;
 
 export const PostErrorCode = {
   /** 경로의 식별자로 된 post가 없다. */
@@ -147,6 +157,22 @@ export const PostApi = {
     method: 'POST',
     path: '/posts/:id/views',
     errors: [PostErrorCode.NOT_FOUND],
+  }),
+
+  /** 조회내역을 최신순으로 읽는다. 소유자만 읽을 수 있다. */
+  listViews: defineApi({
+    method: 'GET',
+    path: '/posts/:id/views',
+    query: z.strictObject({
+      cursor: cursorSchema.optional(),
+      limit: limitSchema,
+    }),
+    response: z.object({
+      views: z.array(viewSchema),
+      /** 마지막 페이지면 `null`이다. */
+      nextCursor: cursorSchema.nullable(),
+    }),
+    errors: [CommonErrorCode.VALIDATION_FAILED, PostErrorCode.NOT_FOUND, AuthErrorCode.UNAUTHENTICATED, AuthErrorCode.FORBIDDEN],
   }),
 
   /**

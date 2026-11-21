@@ -16,6 +16,7 @@ import { SourcePgDrizzleQuery } from '@contexts/library/infrastructure/persisten
 import { PostPgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.repository';
 import { PostPgDrizzleQuery } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.query';
 import { PostViewPgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post-view.pg-drizzle.repository';
+import { PostViewPgDrizzleQuery } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post-view.pg-drizzle.query';
 import { LibraryPgDrizzleUnitOfWork } from '@contexts/library/infrastructure/persistence/postgres-drizzle/library.pg-drizzle.unit-of-work';
 import { SourcesHttpController } from '@contexts/library/presentation/http/sources.http.controller';
 import { AttachmentsHttpController } from '@contexts/library/presentation/http/attachments.http.controller';
@@ -27,6 +28,7 @@ import { PostsHttpController } from '@contexts/library/presentation/http/posts.h
 import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/library/application/use-cases/get-post.use-case';
 import { RecordPostViewUseCase } from '@contexts/library/application/use-cases/record-post-view.use-case';
+import { ListPostViewsUseCase } from '@contexts/library/application/use-cases/list-post-views.use-case';
 import { ListPostsUseCase } from '@contexts/library/application/use-cases/list-posts.use-case';
 import { SearchPostsUseCase } from '@contexts/library/application/use-cases/search-posts.use-case';
 import { CountPostsUseCase } from '@contexts/library/application/use-cases/count-posts.use-case';
@@ -54,6 +56,7 @@ import {
   POST_REPOSITORY,
   POST_QUERY,
   POST_VIEW_REPOSITORY,
+  POST_VIEW_QUERY,
   SEARCH_QUERY_EMBEDDER,
   ATTACHMENT_IMAGE_CODEC,
   ATTACHMENT_CONTENT_STORE,
@@ -115,6 +118,10 @@ export class LibraryModule {
           useClass: PostViewPgDrizzleRepository,
         },
         {
+          provide: POST_VIEW_QUERY,
+          useClass: PostViewPgDrizzleQuery,
+        },
+        {
           provide: SEARCH_QUERY_EMBEDDER,
           useFactory: (embedder: TextEmbedder) => new SearchQueryFromIngestionEmbedder(embedder),
           inject: [TEXT_EMBEDDER],
@@ -136,6 +143,7 @@ export class LibraryModule {
         PublishPostUseCase,
         GetPostUseCase,
         RecordPostViewUseCase,
+        ListPostViewsUseCase,
         ListPostsUseCase,
         SearchPostsUseCase,
         CountPostsUseCase,
@@ -152,6 +160,7 @@ export class LibraryModule {
         PublishPostUseCase,
         GetPostUseCase,
         RecordPostViewUseCase,
+        ListPostViewsUseCase,
         ListPostsUseCase,
         SearchPostsUseCase,
         CountPostsUseCase,

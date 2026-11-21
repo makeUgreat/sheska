@@ -15,11 +15,16 @@ import {
 import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/library/application/use-cases/get-post.use-case';
 import { RecordPostViewUseCase } from '@contexts/library/application/use-cases/record-post-view.use-case';
+import { ListPostViewsUseCase } from '@contexts/library/application/use-cases/list-post-views.use-case';
 import { ListPostsUseCase } from '@contexts/library/application/use-cases/list-posts.use-case';
 import { SearchPostsUseCase } from '@contexts/library/application/use-cases/search-posts.use-case';
 import { CountPostsUseCase } from '@contexts/library/application/use-cases/count-posts.use-case';
 
 const listPostsQuerySchema = PostApi.list.query.extend({
+  cursor: cursorQueryParamSchema.optional(),
+});
+
+const listViewsQuerySchema = PostApi.listViews.query.extend({
   cursor: cursorQueryParamSchema.optional(),
 });
 
@@ -42,6 +47,7 @@ export class PostsHttpController {
     private readonly publishPostUseCase: PublishPostUseCase,
     private readonly getPostUseCase: GetPostUseCase,
     private readonly recordPostViewUseCase: RecordPostViewUseCase,
+    private readonly listPostViewsUseCase: ListPostViewsUseCase,
     private readonly listPostsUseCase: ListPostsUseCase,
     private readonly searchPostsUseCase: SearchPostsUseCase,
     private readonly countPostsUseCase: CountPostsUseCase,
@@ -144,6 +150,30 @@ export class PostsHttpController {
       ip: clientAddressOf(request),
       userAgent: request.headers['user-agent'],
     });
+  }
+
+  @Get(PostApi.listViews.path)
+  @Permission(PERMISSION.POST_VIEWS_READ)
+  @ErrorCodes(PostApi.listViews.errors)
+  async listViews(
+    @Param('id') id: string,
+    @Query(new ZodValidationPipe(listViewsQuerySchema))
+    query: z.output<typeof listViewsQuerySchema>,
+  ): Promise<ApiResponse<typeof PostApi.listViews>> {
+    const result = await this.listPostViewsUseCase.execute({
+      postId: id,
+      cursor: query.cursor ?? null,
+      limit: query.limit,
+    });
+
+    return PostApi.listViews.response.parse({
+      views: result.views.map((view) => ({
+        viewedAt: view.viewedAt.toISOString(),
+        ip: view.ip,
+        client: view.client,
+      })),
+      nextCursor: result.nextCursor ? encodeCursor(result.nextCursor) : null,
+    } satisfies ApiResponse<typeof PostApi.listViews>);
   }
 }
 

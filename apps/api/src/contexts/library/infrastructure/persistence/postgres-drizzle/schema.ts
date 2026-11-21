@@ -66,7 +66,10 @@ export const postViews = pgTable(
     client: text('client').notNull(),
     viewedAt: timestamp('viewed_at', { withTimezone: true }).notNull(),
   },
-  (table) => [index('post_views_post_id_ip_viewed_at_idx').on(table.postId, table.ip, table.viewedAt.desc())],
+  (table) => [
+    index('post_views_post_id_ip_viewed_at_idx').on(table.postId, table.ip, table.viewedAt.desc()),
+    index('post_views_post_id_viewed_at_id_idx').on(table.postId, table.viewedAt.desc(), table.id.desc()),
+  ],
 );
 
 export type PostViewRow = typeof postViews.$inferSelect;
