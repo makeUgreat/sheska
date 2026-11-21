@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { type PostQuery } from '@contexts/library/application/ports';
+import { type PostQuery, type PostQuerySummary } from '@contexts/library/application/ports';
 import { POST_QUERY } from '@contexts/library/library.di-tokens';
 
 export interface GetPostCommand {
@@ -12,6 +12,7 @@ export interface GetPostResult {
   readonly title: string;
   readonly body: string;
   readonly viewCount: number;
+  readonly summary: PostQuerySummary;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }

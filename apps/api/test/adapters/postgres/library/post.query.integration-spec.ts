@@ -1,9 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type TestingModule } from '@nestjs/testing';
 import { type PostQuery } from '@contexts/library/application/ports';
-import { type PostRepository } from '@contexts/library/domain';
+import { PostSummary, SourceFingerprint, type PostRepository, type PostSummaryRepository } from '@contexts/library/domain';
 import { type SourceRepository } from '@contexts/library/domain';
-import { POST_QUERY, POST_REPOSITORY } from '@contexts/library/library.di-tokens';
+import { POST_QUERY, POST_REPOSITORY, POST_SUMMARY_REPOSITORY } from '@contexts/library/library.di-tokens';
+import { PostSummaryPgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post-summary.pg-drizzle.repository';
 import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { type SourceEmbeddingRepository, SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
 import { SourcePgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
@@ -21,6 +22,7 @@ describe('PostPgDrizzleQuery', () => {
   let posts: PostRepository;
   let sources: SourceRepository;
   let sourceEmbeddings: SourceEmbeddingRepository;
+  let summaries: PostSummaryRepository;
 
   beforeAll(async () => {
     testingModule = await setupPostgresTestingModule([
@@ -28,11 +30,13 @@ describe('PostPgDrizzleQuery', () => {
       { provide: POST_REPOSITORY, useClass: PostPgDrizzleRepository },
       { provide: POST_QUERY, useClass: PostPgDrizzleQuery },
       { provide: SOURCE_EMBEDDING_REPOSITORY, useClass: SourceEmbeddingPgDrizzleRepository },
+      { provide: POST_SUMMARY_REPOSITORY, useClass: PostSummaryPgDrizzleRepository },
     ]);
     postQuery = testingModule.get<PostQuery>(POST_QUERY);
     posts = testingModule.get<PostRepository>(POST_REPOSITORY);
     sources = testingModule.get<SourceRepository>(SOURCE_REPOSITORY);
     sourceEmbeddings = testingModule.get<SourceEmbeddingRepository>(SOURCE_EMBEDDING_REPOSITORY);
+    summaries = testingModule.get<PostSummaryRepository>(POST_SUMMARY_REPOSITORY);
   });
 
   afterAll(async () => {
@@ -732,6 +736,51 @@ describe('PostPgDrizzleQuery', () => {
       expect(firstIds).toHaveLength(2);
       expect(secondIds.length).toBeGreaterThanOrEqual(1);
       expect(firstIds.some((id) => secondIds.includes(id))).toBe(false);
+    });
+  });
+
+  describe('요약', () => {
+    const FINISHED_AT = new Date('2026-11-22T00:00:00Z');
+
+    it('요약이 없으면 준비 중을 돌려준다', async () => {
+      const source = await sources.insert(buildSource({ externalSourceId: 'Notes/pq-summary-none.md' }));
+      await posts.insert(buildPost({ sourceId: source.id }));
+
+      const result = await postQuery.find({ id: source.id });
+
+      expect(result?.summary).toEqual({ kind: 'pending' });
+    });
+
+    it('완료한 요약은 문장과 모델을 돌려준다', async () => {
+      const source = await sources.insert(buildSource({ externalSourceId: 'Notes/pq-summary-completed.md' }));
+      await posts.insert(buildPost({ sourceId: source.id }));
+      await summaries.upsert(
+        PostSummary.complete({
+          postId: source.id,
+          fingerprint: SourceFingerprint.of('fingerprint-1'),
+          sentences: ['첫 문장임', '둘째 문장임'],
+          model: 'claude-haiku-5-5',
+          finishedAt: FINISHED_AT,
+        }),
+      );
+
+      const result = await postQuery.find({ id: source.id });
+
+      expect(result?.summary).toEqual({ kind: 'completed', sentences: ['첫 문장임', '둘째 문장임'], model: 'claude-haiku-5-5' });
+    });
+
+    it('목록과 검색도 post마다 요약을 돌려준다', async () => {
+      const source = await sources.insert(buildSource({ externalSourceId: 'Notes/pq-summary-list.md', title: 'Outbox 요약 목록' }));
+      await posts.insert(buildPost({ sourceId: source.id }));
+      await summaries.upsert(
+        PostSummary.fail({ postId: source.id, fingerprint: SourceFingerprint.of('fingerprint-1'), finishedAt: FINISHED_AT }),
+      );
+
+      const listed = await postQuery.paginate({ limit: 100, cursor: null });
+      const searched = await postQuery.search({ query: 'Outbox 요약 목록', limit: 20, cursor: null, queryEmbedding: null });
+
+      expect(listed.posts.find((post) => post.postId === source.id)?.summary).toEqual({ kind: 'failed' });
+      expect(searched.posts.find((post) => post.postId === source.id)?.summary).toEqual({ kind: 'failed' });
     });
   });
 

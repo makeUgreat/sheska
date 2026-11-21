@@ -27,6 +27,7 @@ export type {
   PostQueryPaginateResult,
   PostQuerySearchResult,
   PostQuery,
+  PostQuerySummary,
 } from './post.query';
 export type {
   PostViewQuery,
