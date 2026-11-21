@@ -160,20 +160,6 @@ select {
   }
 }
 
-/* 밝은 띠가 지나가는 동안 일이 진행 중임을 알린다. 멈추면 띠가 보이지 않는 0% 자리에 선다. */
-@utility shimmer-text {
-  background-image: linear-gradient(90deg, var(--color-text-muted) 40%, var(--color-secondary) 50%, var(--color-text-muted) 60%);
-  background-size: 250% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: var(--animate-shimmer);
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
-}
-
 /* 글자가 왼쪽부터 쓰이듯 드러난다. mask가 글자 폭의 2.5배라 흐린 경계가 오른쪽 밖에서 들어와 왼쪽 밖으로 나간다. */
 @utility reveal-sweep {
   mask-image: linear-gradient(90deg, #000 45%, transparent 55%);
@@ -186,6 +172,7 @@ select {
   }
 }
 
+/* 밝은 띠가 지나가는 동안 일이 진행 중임을 알린다. 멈추면 띠가 보이지 않는 0% 자리에 선다. */
 @utility shimmer-bar {
   background-image: linear-gradient(90deg, var(--color-plate-line) 40%, var(--color-page-background) 50%, var(--color-plate-line) 60%);
   background-size: 250% 100%;
