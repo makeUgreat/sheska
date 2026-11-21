@@ -1,4 +1,5 @@
 import { Module, type DynamicModule } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 import { SourceContentSnapshotCalculator } from '@contexts/library/application/services/source-content-snapshot-calculator.service';
 import { SourceFromRepositoryLookup } from '@contexts/library/application/services/source.from-repository.lookup';
 import { GetSourceUseCase } from '@contexts/library/application/use-cases/get-source.use-case';
@@ -35,6 +36,10 @@ import { CountPostsUseCase } from '@contexts/library/application/use-cases/count
 import { SourceSyncJobsHttpController } from '@contexts/library/presentation/http/source-sync-jobs.http.controller';
 import { IngestionIntegrationEventConsumer } from '@contexts/library/presentation/events/ingestion.integration-event.consumer';
 import { OutboxDeadLetteredIntegrationEventConsumer } from '@contexts/library/presentation/events/outbox-dead-lettered.integration-event.consumer';
+import { PostSummaryOutboxMessageConsumer } from '@contexts/library/presentation/events/post-summary.outbox-message.consumer';
+import { RequestPostSummaryUseCase } from '@contexts/library/application/use-cases/request-post-summary.use-case';
+import { PostSummaryJobBullMqDispatcher } from '@contexts/library/infrastructure/queue/bullmq/post-summary-job.bullmq.dispatcher';
+import { POST_SUMMARY_QUEUE } from '@contexts/library/application/ports';
 import {
   type SourceEmbeddingLookup as IngestionSourceEmbeddingLookup,
   SOURCE_EMBEDDING_LOOKUP as INGESTION_SOURCE_EMBEDDING_LOOKUP,
@@ -57,6 +62,7 @@ import {
   POST_QUERY,
   POST_VIEW_REPOSITORY,
   POST_VIEW_QUERY,
+  POST_SUMMARY_JOB_DISPATCHER,
   SEARCH_QUERY_EMBEDDER,
   ATTACHMENT_IMAGE_CODEC,
   ATTACHMENT_CONTENT_STORE,
@@ -153,6 +159,7 @@ export class LibraryModule {
         SOURCE_REPOSITORY,
         SOURCE_SYNC_JOB_REPOSITORY,
         SOURCE_LOOKUP,
+        POST_QUERY,
         ListSourcesUseCase,
         GetSourceUseCase,
         GetSourceSyncJobUseCase,
@@ -172,9 +179,19 @@ export class LibraryModule {
   static forRoot(_options: LibraryModuleOptions = {}): DynamicModule {
     return {
       module: LibraryModule,
-      imports: [LibraryModule.forFeature()],
+      imports: [LibraryModule.forFeature(), BullModule.registerQueue({ name: POST_SUMMARY_QUEUE })],
       controllers: [SourcesHttpController, SourceSyncJobsHttpController, PostsHttpController, AttachmentsHttpController],
-      providers: [ApplyIngestionUpdateUseCase, IngestionIntegrationEventConsumer, OutboxDeadLetteredIntegrationEventConsumer],
+      providers: [
+        ApplyIngestionUpdateUseCase,
+        IngestionIntegrationEventConsumer,
+        OutboxDeadLetteredIntegrationEventConsumer,
+        RequestPostSummaryUseCase,
+        PostSummaryOutboxMessageConsumer,
+        {
+          provide: POST_SUMMARY_JOB_DISPATCHER,
+          useClass: PostSummaryJobBullMqDispatcher,
+        },
+      ],
     };
   }
 }

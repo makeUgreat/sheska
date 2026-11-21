@@ -34,3 +34,5 @@ export type {
   PostViewQueryPaginateOptions,
   PostViewQueryPaginateResult,
 } from './post-view.query';
+export { POST_SUMMARY_QUEUE } from './post-summary-job.dispatcher';
+export type { PostSummaryJob, PostSummaryJobDispatcher } from './post-summary-job.dispatcher';

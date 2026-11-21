@@ -1,5 +1,5 @@
 import { sha256Hex } from '@core/hash';
-import { Source, SourceSyncJob, type SourceFrontmatterProps } from '@contexts/library/domain';
+import { Source, SourceBodyChangedDomainEvent, SourceSyncJob, type SourceFrontmatterProps } from '@contexts/library/domain';
 import { describe, expect, it } from 'vitest';
 import { sourceContentOf } from '../../../../../test/support/domains/fixtures/source.fixture';
 
@@ -159,6 +159,37 @@ describe('Source', () => {
       title: 'Source note',
       fingerprint: sha256Hex('# Changed'),
     });
+  });
+
+  it('본문이 바뀌면 본문 변경 사건을 기록한다', () => {
+    const source = Source.create({
+      externalSourceId: 'Notes/source.md',
+      ...content,
+    });
+
+    source.syncContent({ ...content, body: '# Changed' });
+
+    expect(source.domainEvents).toHaveLength(1);
+    expect(source.domainEvents[0]).toBeInstanceOf(SourceBodyChangedDomainEvent);
+    expect(source.domainEvents[0]?.aggregateId).toBe(source.id);
+  });
+
+  it.each([
+    { name: '새로 만들 때', change: (source: Source) => source },
+    {
+      name: 'frontmatter만 바뀔 때',
+      change: (source: Source) => source.syncContent({ ...content, frontmatter: { sheska: true, title: 'Renamed' } }),
+    },
+    { name: '크기만 바뀔 때', change: (source: Source) => source.syncContent({ ...content, size: 51 }) },
+  ])('$name는 본문 변경 사건을 기록하지 않는다', ({ change }) => {
+    const source = Source.create({
+      externalSourceId: 'Notes/source.md',
+      ...content,
+    });
+
+    change(source);
+
+    expect(source.domainEvents).toEqual([]);
   });
 
   it('복원은 저장된 fingerprint를 그대로 쓴다', () => {
