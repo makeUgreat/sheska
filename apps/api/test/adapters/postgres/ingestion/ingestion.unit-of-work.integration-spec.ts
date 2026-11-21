@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { type TestingModule } from '@nestjs/testing';
 import { eq } from 'drizzle-orm';
 import { type IngestionUnitOfWork } from '@contexts/ingestion/application/ports';
 import { IngestionCompletedIntegrationEvent } from '@contexts/ingestion/application/events/ingestion.integration-event';
@@ -10,32 +9,35 @@ import { type SourceRepository } from '@contexts/library/domain';
 import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { DATABASE_TOKENS, outboxMessages } from '@kernels/infrastructure';
 import { type ApiDrizzleDatabase } from '@platform/nest/database/drizzle-postgres.provider';
-import { AppModule } from '@platform/nest/app.module';
+import { SourcePgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
+import { SourceEmbeddingPgDrizzleRepository } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/source-embedding.pg-drizzle.repository';
+import { IngestionPgDrizzleUnitOfWork } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/ingestion.pg-drizzle.unit-of-work';
 import { buildSourceEmbedding } from '../../../support/domains/fixtures/source-embedding.fixture';
 import { buildSource } from '../../../support/domains/fixtures/source.fixture';
+import { setupPostgresTestingModule } from '../support/setup-postgres-testing-module';
 
 describe('IngestionPgDrizzleUnitOfWork', () => {
-  let app: INestApplication;
+  let testingModule: TestingModule;
   let database: ApiDrizzleDatabase;
   let unitOfWork: IngestionUnitOfWork;
   let sources: SourceRepository;
   let sourceEmbeddings: SourceEmbeddingRepository;
 
   beforeAll(async () => {
-    const moduleFixture = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-    app = moduleFixture.createNestApplication();
-    await app.init();
+    testingModule = await setupPostgresTestingModule([
+      { provide: SOURCE_REPOSITORY, useClass: SourcePgDrizzleRepository },
+      { provide: SOURCE_EMBEDDING_REPOSITORY, useClass: SourceEmbeddingPgDrizzleRepository },
+      { provide: INGESTION_UNIT_OF_WORK, useClass: IngestionPgDrizzleUnitOfWork },
+    ]);
 
-    database = app.get(DATABASE_TOKENS.drizzleDatabase);
-    unitOfWork = app.get(INGESTION_UNIT_OF_WORK);
-    sources = app.get(SOURCE_REPOSITORY);
-    sourceEmbeddings = app.get(SOURCE_EMBEDDING_REPOSITORY);
+    database = testingModule.get(DATABASE_TOKENS.drizzleDatabase);
+    unitOfWork = testingModule.get(INGESTION_UNIT_OF_WORK);
+    sources = testingModule.get(SOURCE_REPOSITORY);
+    sourceEmbeddings = testingModule.get(SOURCE_EMBEDDING_REPOSITORY);
   });
 
   afterAll(async () => {
-    await app.close();
+    await testingModule.close();
   });
 
   // nocap: ingestion-sourceEmbedding-5

@@ -1,37 +1,41 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { type TestingModule } from '@nestjs/testing';
 import { type SourceQuery } from '@contexts/library/application/ports';
 import { type SourceRepository, type SourceSyncJobRepository } from '@contexts/library/domain';
 import { type PostRepository } from '@contexts/library/domain';
 import { SOURCE_QUERY, SOURCE_REPOSITORY, SOURCE_SYNC_JOB_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { POST_REPOSITORY } from '@contexts/library/library.di-tokens';
-import { AppModule } from '@platform/nest/app.module';
+import { SourcePgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
+import { SourceSyncJobPgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source-sync-job.pg-drizzle.repository';
+import { SourcePgDrizzleQuery } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.query';
+import { PostPgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.repository';
 import { buildSource } from '../../../support/domains/fixtures/source.fixture';
 import { buildSourceSyncJob } from '../../../support/domains/fixtures/source-sync-job.fixture';
 import { buildPost } from '../../../support/domains/fixtures/post.fixture';
+import { setupPostgresTestingModule } from '../support/setup-postgres-testing-module';
 
 describe('SourcePgDrizzleQuery', () => {
-  let app: INestApplication;
+  let testingModule: TestingModule;
   let sourceQuery: SourceQuery;
   let sources: SourceRepository;
   let syncJobs: SourceSyncJobRepository;
   let posts: PostRepository;
 
   beforeAll(async () => {
-    const moduleFixture = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-    app = moduleFixture.createNestApplication();
-    await app.init();
-    sourceQuery = app.get<SourceQuery>(SOURCE_QUERY);
-    sources = app.get<SourceRepository>(SOURCE_REPOSITORY);
-    syncJobs = app.get<SourceSyncJobRepository>(SOURCE_SYNC_JOB_REPOSITORY);
-    posts = app.get<PostRepository>(POST_REPOSITORY);
+    testingModule = await setupPostgresTestingModule([
+      { provide: SOURCE_REPOSITORY, useClass: SourcePgDrizzleRepository },
+      { provide: SOURCE_SYNC_JOB_REPOSITORY, useClass: SourceSyncJobPgDrizzleRepository },
+      { provide: SOURCE_QUERY, useClass: SourcePgDrizzleQuery },
+      { provide: POST_REPOSITORY, useClass: PostPgDrizzleRepository },
+    ]);
+    sourceQuery = testingModule.get<SourceQuery>(SOURCE_QUERY);
+    sources = testingModule.get<SourceRepository>(SOURCE_REPOSITORY);
+    syncJobs = testingModule.get<SourceSyncJobRepository>(SOURCE_SYNC_JOB_REPOSITORY);
+    posts = testingModule.get<PostRepository>(POST_REPOSITORY);
   });
 
   afterAll(async () => {
-    await app.close();
+    await testingModule.close();
   });
 
   it('source 목록을 반환한다', async () => {

@@ -1,10 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { type TestingModule } from '@nestjs/testing';
 import { type ApiTokenQuery } from '@contexts/iam/application/ports';
 import { ApiToken, ApiTokenName, ApiTokenPermissions, type ApiTokenRepository, ApiTokenSecret } from '@contexts/iam/domain';
 import { API_TOKEN_QUERY, API_TOKEN_REPOSITORY } from '@contexts/iam/iam.di-tokens';
-import { AppModule } from '@platform/nest/app.module';
+import { ApiTokenPgDrizzleRepository } from '@contexts/iam/infrastructure/persistence/postgres-drizzle/api-token.pg-drizzle.repository';
+import { ApiTokenPgDrizzleQuery } from '@contexts/iam/infrastructure/persistence/postgres-drizzle/api-token.pg-drizzle.query';
+import { setupPostgresTestingModule } from '../support/setup-postgres-testing-module';
 
 function buildApiToken(name: string, permissions: string[] = ['sources:sync']) {
   const secret = ApiTokenSecret.generate();
@@ -19,22 +20,21 @@ function buildApiToken(name: string, permissions: string[] = ['sources:sync']) {
 }
 
 describe('ApiTokenPgDrizzleRepository', () => {
-  let app: INestApplication;
+  let testingModule: TestingModule;
   let apiTokens: ApiTokenRepository;
   let apiTokenQuery: ApiTokenQuery;
 
   beforeAll(async () => {
-    const moduleFixture = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-    app = moduleFixture.createNestApplication();
-    await app.init();
-    apiTokens = app.get<ApiTokenRepository>(API_TOKEN_REPOSITORY);
-    apiTokenQuery = app.get<ApiTokenQuery>(API_TOKEN_QUERY);
+    testingModule = await setupPostgresTestingModule([
+      { provide: API_TOKEN_REPOSITORY, useClass: ApiTokenPgDrizzleRepository },
+      { provide: API_TOKEN_QUERY, useClass: ApiTokenPgDrizzleQuery },
+    ]);
+    apiTokens = testingModule.get<ApiTokenRepository>(API_TOKEN_REPOSITORY);
+    apiTokenQuery = testingModule.get<ApiTokenQuery>(API_TOKEN_QUERY);
   });
 
   afterAll(async () => {
-    await app.close();
+    await testingModule.close();
   });
 
   it('저장한 토큰을 원문의 hash로 찾는다', async () => {

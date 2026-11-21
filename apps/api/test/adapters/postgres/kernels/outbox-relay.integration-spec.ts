@@ -1,31 +1,26 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { type TestingModule } from '@nestjs/testing';
 import { eq, sql } from 'drizzle-orm';
 import { DATABASE_TOKENS, outboxMessages, PgDrizzleOutboxStore } from '@kernels/infrastructure';
 import { type ApiDrizzleDatabase } from '@platform/nest/database/drizzle-postgres.provider';
-import { AppModule } from '@platform/nest/app.module';
+import { setupPostgresTestingModule } from '../support/setup-postgres-testing-module';
 
 const LEASE_MS = 30_000;
 
 describe('PgDrizzleOutboxStore claim', () => {
-  let app: INestApplication;
+  let testingModule: TestingModule;
   let database: ApiDrizzleDatabase;
   let store: PgDrizzleOutboxStore;
 
   beforeAll(async () => {
-    const moduleFixture = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-    app = moduleFixture.createNestApplication();
-    await app.init();
+    testingModule = await setupPostgresTestingModule([]);
 
-    database = app.get(DATABASE_TOKENS.drizzleDatabase);
+    database = testingModule.get(DATABASE_TOKENS.drizzleDatabase);
     store = new PgDrizzleOutboxStore(database);
   });
 
   afterAll(async () => {
-    await app.close();
+    await testingModule.close();
   });
 
   beforeEach(async () => {

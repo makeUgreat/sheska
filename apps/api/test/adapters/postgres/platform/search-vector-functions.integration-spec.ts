@@ -1,31 +1,27 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { type TestingModule } from '@nestjs/testing';
 import { sql } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { type SourceRepository } from '@contexts/library/domain';
 import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { DATABASE_TOKENS } from '@kernels/infrastructure';
-import { AppModule } from '@platform/nest/app.module';
+import { SourcePgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
 import { buildSource, sourceContentByteSize } from '../../../support/domains/fixtures/source.fixture';
+import { setupPostgresTestingModule } from '../support/setup-postgres-testing-module';
 
 describe('Search vector Postgres functions', () => {
-  let app: INestApplication;
+  let testingModule: TestingModule;
   let db: NodePgDatabase;
   let sources: SourceRepository;
 
   beforeAll(async () => {
-    const moduleFixture = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-    app = moduleFixture.createNestApplication();
-    await app.init();
-    db = app.get(DATABASE_TOKENS.drizzleDatabase);
-    sources = app.get<SourceRepository>(SOURCE_REPOSITORY);
+    testingModule = await setupPostgresTestingModule([{ provide: SOURCE_REPOSITORY, useClass: SourcePgDrizzleRepository }]);
+    db = testingModule.get(DATABASE_TOKENS.drizzleDatabase);
+    sources = testingModule.get<SourceRepository>(SOURCE_REPOSITORY);
   });
 
   afterAll(async () => {
-    await app.close();
+    await testingModule.close();
   });
 
   describe('bigram_tokens', () => {
