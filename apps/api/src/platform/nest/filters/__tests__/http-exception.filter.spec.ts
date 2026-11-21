@@ -4,6 +4,7 @@ import {
   BadResponseError,
   ConcurrencyConflictError,
   ConstraintViolationError,
+  InputTooLargeError,
   InvalidDataError,
   InvariantViolationError,
   NotFoundError,
@@ -146,6 +147,10 @@ describe('HttpExceptionFilter', () => {
         expectedStatus: HttpStatus.INTERNAL_SERVER_ERROR,
       },
       {
+        error: new InputTooLargeError(persistenceParams),
+        expectedStatus: HttpStatus.INTERNAL_SERVER_ERROR,
+      },
+      {
         error: new UnexpectedError(persistenceParams),
         expectedStatus: HttpStatus.INTERNAL_SERVER_ERROR,
       },
@@ -234,6 +239,7 @@ describe('HttpExceptionFilter', () => {
     it.each([
       new InvalidDataError(invalidDataParams),
       new BadResponseError(badResponseParams),
+      new InputTooLargeError(persistenceParams),
       new UnexpectedError(persistenceParams),
       buildInvariantViolation(),
     ])('500이 되는 $name은 code와 message를 마스킹한다', (error) => {
@@ -302,18 +308,20 @@ describe('HttpExceptionFilter', () => {
       expect(logger.error).not.toHaveBeenCalled();
     });
 
-    it.each([new UnavailableError(persistenceParams), new TimeoutError(persistenceParams), new UnexpectedError(persistenceParams)])(
-      '5xx가 되는 $name은 error로 남긴다',
-      (error) => {
-        const { host } = buildMockHost();
-        const logger = buildMockLogger();
-        const filter = new HttpExceptionFilter(logger);
+    it.each([
+      new UnavailableError(persistenceParams),
+      new TimeoutError(persistenceParams),
+      new InputTooLargeError(persistenceParams),
+      new UnexpectedError(persistenceParams),
+    ])('5xx가 되는 $name은 error로 남긴다', (error) => {
+      const { host } = buildMockHost();
+      const logger = buildMockLogger();
+      const filter = new HttpExceptionFilter(logger);
 
-        filter.catch(error, host);
+      filter.catch(error, host);
 
-        expect(logger.error).toHaveBeenCalledOnce();
-      },
-    );
+      expect(logger.error).toHaveBeenCalledOnce();
+    });
 
     it('알 수 없는 예외는 error로 남긴다', () => {
       const { host } = buildMockHost();

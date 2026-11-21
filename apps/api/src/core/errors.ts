@@ -12,6 +12,7 @@ export const ERROR_KIND = {
   TIMEOUT: 'timeout',
   INVALID_DATA: 'invalid_data',
   BAD_RESPONSE: 'bad_response',
+  INPUT_TOO_LARGE: 'input_too_large',
   UNEXPECTED: 'unexpected',
 } as const;
 
@@ -119,6 +120,10 @@ export type BadResponseDetails = {
 
 export class BadResponseError extends SheskaError<BadResponseDetails> {
   readonly kind = ERROR_KIND.BAD_RESPONSE;
+}
+
+export class InputTooLargeError extends SheskaError<Record<string, unknown>> {
+  readonly kind = ERROR_KIND.INPUT_TOO_LARGE;
 }
 
 export class UnexpectedError extends SheskaError<Record<string, unknown>> {
