@@ -11,6 +11,8 @@ export const PERMISSION = {
   SOURCES_READ: 'sources:read',
   /** 올린 노트를 블로그 글로 공개한다. */
   POSTS_PUBLISH: 'posts:publish',
+  /** post의 조회내역(방문자의 IP와 방문 수단)을 읽는다. */
+  POST_VIEWS_READ: 'post_views:read',
   /** API 토큰을 발급하고, 목록을 보고, 폐기한다. 이 권한을 받은 토큰은 다른 토큰을 만들 수 있다. */
   API_TOKENS_MANAGE: 'api_tokens:manage',
 } as const;

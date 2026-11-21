@@ -27,3 +27,10 @@ export type {
   PostQuerySearchResult,
   PostQuery,
 } from './post.query';
+export type {
+  PostViewQuery,
+  PostViewQueryCursor,
+  PostViewQueryListItem,
+  PostViewQueryPaginateOptions,
+  PostViewQueryPaginateResult,
+} from './post-view.query';

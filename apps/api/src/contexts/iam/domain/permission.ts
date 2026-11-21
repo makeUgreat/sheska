@@ -2,6 +2,7 @@ export const PERMISSION = {
   SOURCES_SYNC: 'sources:sync',
   SOURCES_READ: 'sources:read',
   POSTS_PUBLISH: 'posts:publish',
+  POST_VIEWS_READ: 'post_views:read',
   API_TOKENS_MANAGE: 'api_tokens:manage',
 } as const;
 

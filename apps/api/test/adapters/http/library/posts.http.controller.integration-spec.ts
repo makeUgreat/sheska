@@ -6,6 +6,7 @@ import { ConstraintViolationError, NotFoundError } from '@core/errors';
 import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/library/application/use-cases/get-post.use-case';
 import { RecordPostViewUseCase } from '@contexts/library/application/use-cases/record-post-view.use-case';
+import { ListPostViewsUseCase } from '@contexts/library/application/use-cases/list-post-views.use-case';
 import { ListPostsUseCase } from '@contexts/library/application/use-cases/list-posts.use-case';
 import { SearchPostsUseCase } from '@contexts/library/application/use-cases/search-posts.use-case';
 import { CountPostsUseCase } from '@contexts/library/application/use-cases/count-posts.use-case';
@@ -14,6 +15,7 @@ import { PostsHttpController } from '@contexts/library/presentation/http/posts.h
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
 import { DeclaredErrorCodesInterceptor } from '@platform/nest/interceptors/declared-error-codes.interceptor';
 import { errorResponseSchema, PostApi } from '@sheska/contract';
+import { encodeCursor } from '@kernels/presentation';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, type MockedFunction, vi } from 'vitest';
 
@@ -27,6 +29,10 @@ type GetPostUseCaseMock = {
 
 type RecordPostViewUseCaseMock = {
   execute: MockedFunction<RecordPostViewUseCase['execute']>;
+};
+
+type ListPostViewsUseCaseMock = {
+  execute: MockedFunction<ListPostViewsUseCase['execute']>;
 };
 
 type ListPostsUseCaseMock = {
@@ -47,6 +53,7 @@ describe('PostsHttpController', () => {
   let publishPostUseCase: PublishPostUseCaseMock;
   let getPostUseCase: GetPostUseCaseMock;
   let recordPostViewUseCase: RecordPostViewUseCaseMock;
+  let listPostViewsUseCase: ListPostViewsUseCaseMock;
   let listPostsUseCase: ListPostsUseCaseMock;
   let searchPostsUseCase: SearchPostsUseCaseMock;
   let countPostsUseCase: CountPostsUseCaseMock;
@@ -55,6 +62,7 @@ describe('PostsHttpController', () => {
     publishPostUseCase = { execute: vi.fn<PublishPostUseCase['execute']>() };
     getPostUseCase = { execute: vi.fn<GetPostUseCase['execute']>() };
     recordPostViewUseCase = { execute: vi.fn<RecordPostViewUseCase['execute']>() };
+    listPostViewsUseCase = { execute: vi.fn<ListPostViewsUseCase['execute']>() };
     listPostsUseCase = { execute: vi.fn<ListPostsUseCase['execute']>() };
     searchPostsUseCase = { execute: vi.fn<SearchPostsUseCase['execute']>() };
     countPostsUseCase = { execute: vi.fn<CountPostsUseCase['execute']>() };
@@ -65,6 +73,7 @@ describe('PostsHttpController', () => {
         { provide: PublishPostUseCase, useValue: publishPostUseCase },
         { provide: GetPostUseCase, useValue: getPostUseCase },
         { provide: RecordPostViewUseCase, useValue: recordPostViewUseCase },
+        { provide: ListPostViewsUseCase, useValue: listPostViewsUseCase },
         { provide: ListPostsUseCase, useValue: listPostsUseCase },
         { provide: SearchPostsUseCase, useValue: searchPostsUseCase },
         { provide: CountPostsUseCase, useValue: countPostsUseCase },
@@ -540,6 +549,42 @@ describe('PostsHttpController', () => {
         message: 'Post not found',
         details: {},
       });
+    });
+  });
+
+  describe('GET /posts/:id/views', () => {
+    it('조회내역 한 페이지와 다음 cursor를 200 응답으로 반환한다', async () => {
+      listPostViewsUseCase.execute.mockResolvedValue({
+        views: [{ viewedAt: new Date('2026-11-21T10:00:00.000Z'), ip: '203.0.113.1', client: 'unknown' }],
+        nextCursor: { id: '7' },
+      });
+
+      const response = await request(httpServer).get('/posts/post-1/views').query({ limit: 1 }).expect(200);
+
+      PostApi.listViews.response.parse(response.body);
+      expect(response.body).toEqual({
+        views: [{ viewedAt: '2026-11-21T10:00:00.000Z', ip: '203.0.113.1', client: 'unknown' }],
+        nextCursor: encodeCursor({ id: '7' }),
+      });
+      expect(listPostViewsUseCase.execute).toHaveBeenCalledWith({ postId: 'post-1', cursor: null, limit: 1 });
+    });
+
+    it('받은 cursor를 풀어서 넘긴다', async () => {
+      listPostViewsUseCase.execute.mockResolvedValue({ views: [], nextCursor: null });
+
+      await request(httpServer)
+        .get('/posts/post-1/views')
+        .query({ cursor: encodeCursor({ id: '7' }) })
+        .expect(200);
+
+      expect(listPostViewsUseCase.execute).toHaveBeenCalledWith({ postId: 'post-1', cursor: { id: '7' }, limit: 20 });
+    });
+
+    it('잘못된 cursor는 400 응답을 반환한다', async () => {
+      const response = await request(httpServer).get('/posts/post-1/views').query({ cursor: 'not-a-cursor' }).expect(400);
+
+      expect(response.body).toMatchObject({ code: 'request.validation_failed' });
+      expect(listPostViewsUseCase.execute).not.toHaveBeenCalled();
     });
   });
 });
