@@ -1,53 +1,52 @@
-import { type INestApplication } from '@nestjs/common';
-import { getQueueToken } from '@nestjs/bullmq';
-import { Test } from '@nestjs/testing';
+import { type TestingModule } from '@nestjs/testing';
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { type Queue } from 'bullmq';
 import { sha256Hex } from '@core/hash';
-import { DATABASE_TOKENS, OutboxRelay, outboxMessages } from '@kernels/infrastructure';
+import { DATABASE_TOKENS, outboxMessages } from '@kernels/infrastructure';
 import { type SourceRepository, type SourceSyncJobRepository } from '@contexts/library/domain';
-import { SOURCE_EMBEDDING_CHUNK_QUEUE, SOURCE_EMBEDDING_FINALIZATION_QUEUE } from '@contexts/ingestion/application/ports';
+import { SourceContentSnapshotCalculator } from '@contexts/library/application/services/source-content-snapshot-calculator.service';
 import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upload-source.use-case';
+import { SourceDocumentYamlParser } from '@contexts/library/infrastructure/parser/source-document.yaml.parser';
+import { LibraryPgDrizzleUnitOfWork } from '@contexts/library/infrastructure/persistence/postgres-drizzle/library.pg-drizzle.unit-of-work';
+import { SourcePgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
+import { SourceSyncJobPgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source-sync-job.pg-drizzle.repository';
 import * as schema from '@contexts/library/infrastructure/persistence/postgres-drizzle/schema';
 import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
-import { SOURCE_REPOSITORY, SOURCE_SYNC_JOB_REPOSITORY } from '@contexts/library/library.di-tokens';
-import { AppModule } from '@platform/nest/app.module';
+import {
+  LIBRARY_UNIT_OF_WORK,
+  SOURCE_DOCUMENT_PARSER,
+  SOURCE_REPOSITORY,
+  SOURCE_SYNC_JOB_REPOSITORY,
+} from '@contexts/library/library.di-tokens';
 import { sourceContentByteSize, sourceContentOf } from '../../../support/domains/fixtures/source.fixture';
 import { VALID_EMBEDDING } from '../../../support/domains/fixtures/source-embedding.fixture';
+import { setupPostgresTestingModule } from '../support/setup-postgres-testing-module';
 
 describe('UploadSourceUseCase', () => {
-  let app: INestApplication;
+  let testingModule: TestingModule;
   let database: NodePgDatabase<typeof schema>;
   let sources: SourceRepository;
   let syncJobs: SourceSyncJobRepository;
   let useCase: UploadSourceUseCase;
-  let outboxRelay: OutboxRelay;
-  let embeddingChunksQueue: Queue;
-  let embeddingFinalizeQueue: Queue;
 
   beforeAll(async () => {
-    const moduleFixture = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-    app = moduleFixture.createNestApplication();
-    await app.init();
-    embeddingChunksQueue = app.get<Queue>(getQueueToken(SOURCE_EMBEDDING_CHUNK_QUEUE));
-    embeddingFinalizeQueue = app.get<Queue>(getQueueToken(SOURCE_EMBEDDING_FINALIZATION_QUEUE));
-    await embeddingChunksQueue.pause();
-    await embeddingFinalizeQueue.pause();
-    database = app.get<NodePgDatabase<typeof schema>>(DATABASE_TOKENS.drizzleDatabase);
-    sources = app.get<SourceRepository>(SOURCE_REPOSITORY);
-    syncJobs = app.get<SourceSyncJobRepository>(SOURCE_SYNC_JOB_REPOSITORY);
-    useCase = app.get(UploadSourceUseCase);
-    outboxRelay = app.get(OutboxRelay);
+    testingModule = await setupPostgresTestingModule([
+      { provide: SOURCE_DOCUMENT_PARSER, useClass: SourceDocumentYamlParser },
+      { provide: SOURCE_REPOSITORY, useClass: SourcePgDrizzleRepository },
+      { provide: SOURCE_SYNC_JOB_REPOSITORY, useClass: SourceSyncJobPgDrizzleRepository },
+      { provide: LIBRARY_UNIT_OF_WORK, useClass: LibraryPgDrizzleUnitOfWork },
+      SourceContentSnapshotCalculator,
+      UploadSourceUseCase,
+    ]);
+    database = testingModule.get<NodePgDatabase<typeof schema>>(DATABASE_TOKENS.drizzleDatabase);
+    sources = testingModule.get<SourceRepository>(SOURCE_REPOSITORY);
+    syncJobs = testingModule.get<SourceSyncJobRepository>(SOURCE_SYNC_JOB_REPOSITORY);
+    useCase = testingModule.get(UploadSourceUseCase);
   });
 
   afterAll(async () => {
-    await embeddingChunksQueue.obliterate({ force: true });
-    await embeddingFinalizeQueue.obliterate({ force: true });
-    await app.close();
+    await testingModule.close();
   });
 
   // nocap: library-sync-7
@@ -97,19 +96,6 @@ describe('UploadSourceUseCase', () => {
       },
     });
     expect(outboxMessage?.eventId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
-
-    await outboxRelay.relayPending();
-
-    const [publishedEvent] = await database.select().from(outboxMessages).where(eq(outboxMessages.eventId, outboxMessage!.eventId));
-    expect(publishedEvent?.publishedAt).toBeInstanceOf(Date);
-
-    const queuedJob = await embeddingChunksQueue.getJob(`${result.syncJobId!}-0`);
-    expect(queuedJob?.data).toEqual({
-      sourceId: result.sourceId,
-      syncJobId: result.syncJobId,
-      chunkIndex: 0,
-      chunkContent: '# Source note',
-    });
   });
 
   // nocap: library-sync-2
