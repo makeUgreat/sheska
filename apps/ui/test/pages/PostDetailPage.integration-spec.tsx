@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -43,7 +43,7 @@ const MOCK_POST: GetPostResponse = {
 function buildMockHttpClient(overrides: MockHttpClientOverrides = {}): HttpClient {
   return {
     get: vi.fn().mockResolvedValue(MOCK_POST),
-    post: vi.fn(),
+    post: vi.fn().mockResolvedValue(undefined),
     patch: vi.fn(),
     postStream: vi.fn(),
     ...overrides,
@@ -104,6 +104,8 @@ function renderPageWithoutId(client: HttpClient) {
 }
 
 describe('PostDetailPage', () => {
+  afterEach(() => window.localStorage.clear());
+
   it('로딩 중에는 돌아가는 링크만 그리고 빈 상태나 오류를 그리지 않는다', () => {
     const client = buildMockHttpClient({
       get: vi.fn().mockReturnValue(new Promise(() => {})),
@@ -361,6 +363,28 @@ describe('PostDetailPage', () => {
     const link = await screen.findByTitle('FSD — no note yet');
 
     expect(link.textContent).toBe('FSD');
+  });
+
+  it('post를 받으면 조회를 한 번 기록한다', async () => {
+    const recordView = vi.fn().mockResolvedValue(undefined);
+
+    renderPage(buildMockHttpClient({ post: recordView }));
+
+    await waitFor(() => {
+      expect(recordView).toHaveBeenCalledWith('/posts/post-1/views', {});
+    });
+    expect(recordView).toHaveBeenCalledOnce();
+  });
+
+  it('post를 받지 못하면 조회를 기록하지 않는다', async () => {
+    const recordView = vi.fn().mockResolvedValue(undefined);
+
+    renderPage(buildMockHttpClient({ get: vi.fn().mockRejectedValue(new HttpError(404, 'Not Found')), post: recordView }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeDefined();
+    });
+    expect(recordView).not.toHaveBeenCalled();
   });
 
   it('에러가 발생하면 상태 코드와 실패한 대상을 보여준다', async () => {

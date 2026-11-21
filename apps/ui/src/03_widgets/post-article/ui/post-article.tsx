@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { AskPost } from '@/features/ask-post';
+import { useRecordPostView } from '@/features/record-post-view';
 import { usePost, type GetPostResponse } from '@/entities/post';
 import { parseOutline } from '@/shared/lib';
 import { PostArticleSection, type PostArticleState } from './post-article-section';
@@ -22,6 +23,7 @@ function getPostArticleState({
 
 export function PostArticle({ postId }: { postId: string | undefined }) {
   const { data: post, isLoading, error } = usePost(postId);
+  useRecordPostView(post?.postId);
   const headings = useMemo(() => parseOutline(post?.body ?? ''), [post?.body]);
   const state = getPostArticleState({ isLoading, error, post });
 
