@@ -1,6 +1,7 @@
 import { type Ref } from 'react';
-import { useInfinitePostsScroll, usePostsArchive } from '@/features/posts-archive';
+import { usePostsArchive } from '@/features/posts-archive';
 import { type PostSummary } from '@/entities/post';
+import { useInfiniteScroll } from '@/shared/lib';
 import { PostsListSection, type PostsListState, type PostsSearchMode } from './posts-list-section';
 
 function getSearchMode(semanticSearchApplied: boolean | null): PostsSearchMode {
@@ -49,7 +50,7 @@ export function PostsArchive() {
     hasNextPage,
     isFetchingNextPage,
   } = usePostsArchive();
-  const sentinelRef = useInfinitePostsScroll({
+  const sentinelRef = useInfiniteScroll({
     enabled: true,
     hasNextPage,
     isFetchingNextPage,

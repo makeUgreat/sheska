@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
-export function useInfinitePostsScroll({
+/** 목록 끝에 둔 sentinel이 화면에 들어오면 다음 페이지를 부른다. */
+export function useInfiniteScroll({
   enabled,
   hasNextPage,
   isFetchingNextPage,

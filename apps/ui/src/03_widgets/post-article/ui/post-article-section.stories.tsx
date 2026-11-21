@@ -69,6 +69,14 @@ export const Success: Story = {
   },
 };
 
+/** 소유자에게만 조회수가 링크다. hover하면 색이 바뀌고 화살표가 밀려 들어온다. */
+export const Owner: Story = {
+  args: {
+    state: { status: 'success', post },
+    canOpenViews: true,
+  },
+};
+
 export const SummaryReady: Story = {
   args: {
     state: {

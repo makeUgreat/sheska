@@ -365,6 +365,24 @@ describe('PostDetailPage', () => {
     expect(link.textContent).toBe('FSD');
   });
 
+  it('소유자에게는 조회수가 조회내역으로 가는 링크다', async () => {
+    const get = vi.fn((path: string) => Promise.resolve(path === '/auth/session' ? { authenticated: true } : MOCK_POST));
+
+    renderPage(buildMockHttpClient({ get }));
+
+    const link = await screen.findByRole('link', { name: '7 views, open view history' });
+    expect(link.getAttribute('href')).toBe('/posts/post-1/views');
+  });
+
+  it('방문자에게는 조회수가 링크가 아니다', async () => {
+    const get = vi.fn((path: string) => Promise.resolve(path === '/auth/session' ? { authenticated: false } : MOCK_POST));
+
+    renderPage(buildMockHttpClient({ get }));
+
+    await screen.findByRole('heading', { level: 1, name: '테스트 포스트' });
+    expect(screen.queryByRole('link', { name: /views/ })).toBeNull();
+  });
+
   it('post를 받으면 조회를 한 번 기록한다', async () => {
     const recordView = vi.fn().mockResolvedValue(undefined);
 
@@ -402,12 +420,12 @@ describe('PostDetailPage', () => {
   });
 
   it('post id가 없으면 빈 상태 메시지를 보여준다', () => {
-    const getPost = vi.fn();
+    const get = vi.fn().mockReturnValue(new Promise(() => {}));
 
-    renderPageWithoutId(buildMockHttpClient({ get: getPost }));
+    renderPageWithoutId(buildMockHttpClient({ get }));
 
     expect(screen.getByText('This page does not exist, or it was removed.')).toBeDefined();
-    expect(getPost).not.toHaveBeenCalled();
+    expect(get).not.toHaveBeenCalledWith(expect.stringMatching(/^\/posts\//), expect.anything());
   });
 
   it('getPost를 올바른 id로 호출한다', async () => {

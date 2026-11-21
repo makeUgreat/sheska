@@ -6,6 +6,8 @@ import {
   type CountPostsResponse,
   type GetPostResponse,
   type ListPostsParams,
+  type ListPostViewsParams,
+  type ListPostViewsResponse,
   type ListPostsResponse,
   type PublishPostRequest,
   type PublishPostResponse,
@@ -35,6 +37,18 @@ export function searchPosts(http: HttpClient, params: SearchPostsParams): Promis
 
 export function getPost(http: HttpClient, id: string): Promise<GetPostResponse> {
   return http.get(pathOf(PostApi.get, { id }), PostApi.get.response);
+}
+
+export function listPostViews(http: HttpClient, id: string, params?: ListPostViewsParams): Promise<ListPostViewsResponse> {
+  const queryParams: Record<string, string> = {};
+  if (params?.cursor) queryParams.cursor = params.cursor;
+  if (params?.limit) queryParams.limit = String(params.limit);
+
+  return http.get(
+    pathOf(PostApi.listViews, { id }),
+    PostApi.listViews.response,
+    Object.keys(queryParams).length > 0 ? queryParams : undefined,
+  );
 }
 
 export function recordPostView(http: HttpClient, id: string): Promise<void> {

@@ -2,6 +2,7 @@ import { Route, Routes, useLocation } from 'react-router-dom';
 import { LandingPage } from '@/pages/landing';
 import { PostDetailPage } from '@/pages/post-detail';
 import { PostsPage } from '@/pages/posts';
+import { PostViewsPage } from '@/pages/post-views';
 import { SourceDetailPage } from '@/pages/source-detail';
 import { SourceListPage } from '@/pages/source-list';
 import { Header } from '@/widgets/header';
@@ -21,6 +22,7 @@ export function App() {
         <Route path="/sources/:id" element={<SourceDetailPage />} />
         <Route path="/posts" element={<PostsPage />} />
         <Route path="/posts/:id" element={<PostDetailPage />} />
+        <Route path="/posts/:id/views" element={<PostViewsPage />} />
       </Routes>
     </div>
   );
