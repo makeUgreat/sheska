@@ -13,4 +13,6 @@ export { PostViewCount } from './post-view-count.vo';
 export { PostView } from './post-view.vo';
 export { PostViewClient } from './post-view-client.vo';
 export { type PostRepository, type PostRepositoryGetCriteria } from './post.repository';
+export { PostSummary, type PostSummaryOutcome } from './post-summary.aggregate';
+export { type PostSummaryRepository, type PostSummaryRepositoryFindCriteria } from './post-summary.repository';
 export { type PostViewRepository, type PostViewRepositoryFindCriteria } from './post-view.repository';
