@@ -36,6 +36,7 @@
     "test:debug": "vitest --project unit --inspect-brk --no-file-parallelism"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "1.6.0",
     "@aws-sdk/client-s3": "^3.1175.0",
     "@nestjs/bullmq": "^11.0.5",
     "@nestjs/common": "^11.2.11",
