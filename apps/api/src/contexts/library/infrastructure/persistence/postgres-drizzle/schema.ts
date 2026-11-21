@@ -72,6 +72,18 @@ export const postViews = pgTable(
   ],
 );
 
+export const postSummaries = pgTable('post_summaries', {
+  postId: text('post_id')
+    .primaryKey()
+    .references(() => posts.id, { onDelete: 'cascade' }),
+  fingerprint: text('fingerprint').notNull(),
+  sentences: text('sentences').array(),
+  model: text('model'),
+  finishedAt: timestamp('finished_at', { withTimezone: true }).notNull(),
+});
+
 export type PostViewRow = typeof postViews.$inferSelect;
 export type PostRow = typeof posts.$inferSelect;
 export type PostInsert = typeof posts.$inferInsert;
+export type PostSummaryRow = typeof postSummaries.$inferSelect;
+export type PostSummaryInsert = typeof postSummaries.$inferInsert;
