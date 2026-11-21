@@ -17,6 +17,7 @@ function buildPostQueryResult(overrides: Partial<PostQueryResult> = {}): PostQue
     title: overrides.title ?? '테스트 포스트',
     body: overrides.body ?? '테스트 source content',
     viewCount: overrides.viewCount ?? 1,
+    summary: { kind: 'pending' },
     createdAt: overrides.createdAt ?? new Date(),
     updatedAt: overrides.updatedAt ?? new Date(),
   };

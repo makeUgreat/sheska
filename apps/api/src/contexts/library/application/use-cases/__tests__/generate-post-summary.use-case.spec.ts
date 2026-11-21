@@ -188,6 +188,7 @@ function postResult(body: string): PostQueryResult {
     title: 'Outbox',
     body,
     viewCount: 0,
+    summary: { kind: 'pending' },
     createdAt: new Date('2026-11-21T00:00:00Z'),
     updatedAt: new Date('2026-11-21T00:00:00Z'),
   };

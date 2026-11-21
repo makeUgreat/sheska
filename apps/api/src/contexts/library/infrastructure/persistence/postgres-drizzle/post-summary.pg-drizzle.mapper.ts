@@ -24,7 +24,7 @@ export class PostSummaryPgDrizzleMapper {
     };
   }
 
-  private static toOutcome(this: void, row: PostSummaryRow): PostSummaryOutcome {
+  static toOutcome(this: void, row: Pick<PostSummaryRow, 'sentences' | 'model'>): PostSummaryOutcome {
     if (row.sentences === null && row.model === null) {
       return { kind: 'failed' };
     }
