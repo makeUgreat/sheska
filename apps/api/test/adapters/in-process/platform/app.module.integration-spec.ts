@@ -13,6 +13,7 @@ describe('AppModule', () => {
     vi.stubEnv('ATTACHMENT_STORAGE_BUCKET', 'sheska-attachments');
     vi.stubEnv('ATTACHMENT_STORAGE_ACCESS_KEY_ID', 'unused');
     vi.stubEnv('ATTACHMENT_STORAGE_SECRET_ACCESS_KEY', 'unused');
+    vi.stubEnv('ANTHROPIC_API_KEY', 'unused');
     vi.stubEnv('CORS_ORIGINS', 'http://localhost:4173');
     vi.stubEnv('OWNER_PASSWORD', 'test-owner-password');
   });

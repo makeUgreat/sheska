@@ -174,6 +174,7 @@ describe('Source', () => {
     expect(source.domainEvents[0]?.aggregateId).toBe(source.id);
   });
 
+  // nocap: library-summary-2
   it.each([
     { name: '새로 만들 때', change: (source: Source) => source },
     {

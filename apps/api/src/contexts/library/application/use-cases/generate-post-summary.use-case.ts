@@ -48,6 +48,19 @@ export class GeneratePostSummaryUseCase {
     return { outcome: summary.getProps().outcome.kind };
   }
 
+  async handleFailure(command: GeneratePostSummaryCommand): Promise<void> {
+    const { postId } = command;
+
+    const post = await this.posts.find({ id: postId });
+    if (!post) return;
+
+    const fingerprint = SourceFingerprint.ofBody(post.body);
+    const existing = await this.summaries.find({ postId });
+    if (existing?.isCompletedFor(fingerprint)) return;
+
+    await this.summaries.upsert(PostSummary.fail({ postId, fingerprint, finishedAt: new Date() }));
+  }
+
   private async summarize(postId: string, body: string, fingerprint: SourceFingerprint, context: CallContext): Promise<PostSummary> {
     try {
       const result = await this.generator.generate(toPostSummaryRequest(body), context);

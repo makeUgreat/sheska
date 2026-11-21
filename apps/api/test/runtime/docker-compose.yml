@@ -54,6 +54,7 @@ services:
       ATTACHMENT_STORAGE_BUCKET: sheska-attachments
       ATTACHMENT_STORAGE_ACCESS_KEY_ID: unused
       ATTACHMENT_STORAGE_SECRET_ACCESS_KEY: unused
+      ANTHROPIC_API_KEY: unused
       CORS_ORIGINS: http://localhost:4173
       OWNER_PASSWORD: test-owner-password
     ports:
