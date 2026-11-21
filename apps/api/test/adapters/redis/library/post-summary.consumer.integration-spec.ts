@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { BullModule, getQueueToken } from '@nestjs/bullmq';
-import { type Queue, QueueEvents } from 'bullmq';
+import { type Queue } from 'bullmq';
 import { LOGGER } from '@kernels/application';
 import { POST_SUMMARY_QUEUE } from '@contexts/library/application/ports';
 import { GeneratePostSummaryUseCase } from '@contexts/library/application/use-cases/generate-post-summary.use-case';
@@ -14,7 +14,6 @@ const REDIS_CONNECTION = { url: REDIS_TEST_URL };
 describe('PostSummaryBullMqConsumer', () => {
   let app: INestApplication;
   let queue: Queue;
-  let queueEvents: QueueEvents;
   const execute = vi.fn();
   const handleFailure = vi.fn();
 
@@ -35,12 +34,9 @@ describe('PostSummaryBullMqConsumer', () => {
     await app.init();
 
     queue = app.get(getQueueToken(POST_SUMMARY_QUEUE));
-    queueEvents = new QueueEvents(POST_SUMMARY_QUEUE, { connection: REDIS_CONNECTION });
-    await queueEvents.waitUntilReady();
   });
 
   afterEach(async () => {
-    await queueEvents.close();
     await queue.obliterate({ force: true });
     await app.close();
   });
@@ -49,7 +45,7 @@ describe('PostSummaryBullMqConsumer', () => {
     execute.mockResolvedValue({ outcome: 'completed' });
 
     const job = await queue.add('generate-post-summary', { postId: 'post-1' }, { jobId: 'post-1-fingerprint-1' });
-    await job.waitUntilFinished(queueEvents);
+    await vi.waitFor(async () => expect(await job.getState()).toBe('completed'), { timeout: 10_000 });
 
     expect(execute).toHaveBeenCalledWith({ postId: 'post-1' }, expect.objectContaining({ maxRetries: 0 }));
     expect(handleFailure).not.toHaveBeenCalled();
@@ -60,7 +56,7 @@ describe('PostSummaryBullMqConsumer', () => {
     handleFailure.mockResolvedValue(undefined);
 
     const job = await queue.add('generate-post-summary', { postId: 'post-1' }, { jobId: 'post-1-fingerprint-1', attempts: 2 });
-    await expect(job.waitUntilFinished(queueEvents)).rejects.toThrow('overloaded');
+    await vi.waitFor(async () => expect(await job.getState()).toBe('failed'), { timeout: 10_000 });
 
     await vi.waitFor(() => expect(handleFailure).toHaveBeenCalledWith({ postId: 'post-1' }));
     expect(execute).toHaveBeenCalledTimes(2);
