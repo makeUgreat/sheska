@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useInfinitePostsScroll } from './use-infinite-posts-scroll';
+import { useInfiniteScroll } from './use-infinite-scroll';
 
 type IntersectionCallback = IntersectionObserverCallback;
 
@@ -38,7 +38,7 @@ function InfiniteScrollHarness({
   isFetchingNextPage: boolean;
   fetchNextPage: () => unknown;
 }) {
-  const sentinelRef = useInfinitePostsScroll({
+  const sentinelRef = useInfiniteScroll({
     enabled,
     hasNextPage,
     isFetchingNextPage,
@@ -48,7 +48,7 @@ function InfiniteScrollHarness({
   return <div ref={sentinelRef} />;
 }
 
-describe('useInfinitePostsScroll', () => {
+describe('useInfiniteScroll', () => {
   beforeEach(() => {
     observers.length = 0;
     vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
