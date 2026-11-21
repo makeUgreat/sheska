@@ -1,31 +1,31 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { type TestingModule } from '@nestjs/testing';
 import { type SourceEmbeddingRepository } from '@contexts/ingestion/domain';
 import { SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
 import { type SourceRepository } from '@contexts/library/domain';
 import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
-import { AppModule } from '@platform/nest/app.module';
+import { SourcePgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
+import { SourceEmbeddingPgDrizzleRepository } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/source-embedding.pg-drizzle.repository';
 import { buildSourceEmbedding, VALID_EMBEDDING } from '../../../support/domains/fixtures/source-embedding.fixture';
 import { buildSource } from '../../../support/domains/fixtures/source.fixture';
+import { setupPostgresTestingModule } from '../support/setup-postgres-testing-module';
 
 describe('SourceEmbeddingDrizzleRepository', () => {
-  let app: INestApplication;
+  let testingModule: TestingModule;
   let sourceRepository: SourceRepository;
   let repository: SourceEmbeddingRepository;
 
   beforeAll(async () => {
-    const moduleFixture = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-    app = moduleFixture.createNestApplication();
-    await app.init();
-    sourceRepository = app.get<SourceRepository>(SOURCE_REPOSITORY);
-    repository = app.get<SourceEmbeddingRepository>(SOURCE_EMBEDDING_REPOSITORY);
+    testingModule = await setupPostgresTestingModule([
+      { provide: SOURCE_REPOSITORY, useClass: SourcePgDrizzleRepository },
+      { provide: SOURCE_EMBEDDING_REPOSITORY, useClass: SourceEmbeddingPgDrizzleRepository },
+    ]);
+    sourceRepository = testingModule.get<SourceRepository>(SOURCE_REPOSITORY);
+    repository = testingModule.get<SourceEmbeddingRepository>(SOURCE_EMBEDDING_REPOSITORY);
   });
 
   afterAll(async () => {
-    await app.close();
+    await testingModule.close();
   });
 
   it('source embedding을 저장한다', async () => {

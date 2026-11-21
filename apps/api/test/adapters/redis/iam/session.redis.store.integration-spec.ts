@@ -3,15 +3,14 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { UnavailableError } from '@core/errors';
 import { sha256Hex } from '@core/hash';
 import { SessionRedisStore } from '@contexts/iam/infrastructure/session/redis/session.redis.store';
-
-const REDIS_URL = 'redis://127.0.0.1:56379';
+import { REDIS_TEST_URL } from '../support/redis.connection';
 
 describe('SessionRedisStore', () => {
   let redis: Redis;
   let store: SessionRedisStore;
 
   beforeAll(() => {
-    redis = new Redis(REDIS_URL);
+    redis = new Redis(REDIS_TEST_URL);
     store = new SessionRedisStore(redis);
   });
 

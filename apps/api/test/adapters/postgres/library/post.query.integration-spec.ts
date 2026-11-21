@@ -1,38 +1,42 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { type TestingModule } from '@nestjs/testing';
 import { type PostQuery } from '@contexts/library/application/ports';
 import { type PostRepository } from '@contexts/library/domain';
 import { type SourceRepository } from '@contexts/library/domain';
 import { POST_QUERY, POST_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
 import { type SourceEmbeddingRepository, SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
-import { AppModule } from '@platform/nest/app.module';
+import { SourcePgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
+import { PostPgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.repository';
+import { PostPgDrizzleQuery } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.query';
+import { SourceEmbeddingPgDrizzleRepository } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/source-embedding.pg-drizzle.repository';
 import { buildPost } from '../../../support/domains/fixtures/post.fixture';
 import { buildSource } from '../../../support/domains/fixtures/source.fixture';
 import { buildSourceEmbedding, VALID_EMBEDDING } from '../../../support/domains/fixtures/source-embedding.fixture';
+import { setupPostgresTestingModule } from '../support/setup-postgres-testing-module';
 
 describe('PostPgDrizzleQuery', () => {
-  let app: INestApplication;
+  let testingModule: TestingModule;
   let postQuery: PostQuery;
   let posts: PostRepository;
   let sources: SourceRepository;
   let sourceEmbeddings: SourceEmbeddingRepository;
 
   beforeAll(async () => {
-    const moduleFixture = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-    app = moduleFixture.createNestApplication();
-    await app.init();
-    postQuery = app.get<PostQuery>(POST_QUERY);
-    posts = app.get<PostRepository>(POST_REPOSITORY);
-    sources = app.get<SourceRepository>(SOURCE_REPOSITORY);
-    sourceEmbeddings = app.get<SourceEmbeddingRepository>(SOURCE_EMBEDDING_REPOSITORY);
+    testingModule = await setupPostgresTestingModule([
+      { provide: SOURCE_REPOSITORY, useClass: SourcePgDrizzleRepository },
+      { provide: POST_REPOSITORY, useClass: PostPgDrizzleRepository },
+      { provide: POST_QUERY, useClass: PostPgDrizzleQuery },
+      { provide: SOURCE_EMBEDDING_REPOSITORY, useClass: SourceEmbeddingPgDrizzleRepository },
+    ]);
+    postQuery = testingModule.get<PostQuery>(POST_QUERY);
+    posts = testingModule.get<PostRepository>(POST_REPOSITORY);
+    sources = testingModule.get<SourceRepository>(SOURCE_REPOSITORY);
+    sourceEmbeddings = testingModule.get<SourceEmbeddingRepository>(SOURCE_EMBEDDING_REPOSITORY);
   });
 
   afterAll(async () => {
-    await app.close();
+    await testingModule.close();
   });
 
   it('post를 source body와 함께 id로 조회한다', async () => {

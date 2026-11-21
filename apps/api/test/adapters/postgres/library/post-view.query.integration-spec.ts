@@ -1,34 +1,38 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { type TestingModule } from '@nestjs/testing';
 import { type PostViewQuery } from '@contexts/library/application/ports';
 import { PostView, PostViewClient, type PostRepository, type PostViewRepository, type SourceRepository } from '@contexts/library/domain';
 import { POST_REPOSITORY, POST_VIEW_QUERY, POST_VIEW_REPOSITORY, SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
-import { AppModule } from '@platform/nest/app.module';
+import { SourcePgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
+import { PostPgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post.pg-drizzle.repository';
+import { PostViewPgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post-view.pg-drizzle.repository';
+import { PostViewPgDrizzleQuery } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post-view.pg-drizzle.query';
 import { buildPost } from '../../../support/domains/fixtures/post.fixture';
 import { buildSource } from '../../../support/domains/fixtures/source.fixture';
+import { setupPostgresTestingModule } from '../support/setup-postgres-testing-module';
 
 describe('PostViewPgDrizzleQuery', () => {
-  let app: INestApplication;
+  let testingModule: TestingModule;
   let postViewQuery: PostViewQuery;
   let postViews: PostViewRepository;
   let posts: PostRepository;
   let sources: SourceRepository;
 
   beforeAll(async () => {
-    const moduleFixture = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-    app = moduleFixture.createNestApplication();
-    await app.init();
-    postViewQuery = app.get<PostViewQuery>(POST_VIEW_QUERY);
-    postViews = app.get<PostViewRepository>(POST_VIEW_REPOSITORY);
-    posts = app.get<PostRepository>(POST_REPOSITORY);
-    sources = app.get<SourceRepository>(SOURCE_REPOSITORY);
+    testingModule = await setupPostgresTestingModule([
+      { provide: SOURCE_REPOSITORY, useClass: SourcePgDrizzleRepository },
+      { provide: POST_REPOSITORY, useClass: PostPgDrizzleRepository },
+      { provide: POST_VIEW_REPOSITORY, useClass: PostViewPgDrizzleRepository },
+      { provide: POST_VIEW_QUERY, useClass: PostViewPgDrizzleQuery },
+    ]);
+    postViewQuery = testingModule.get<PostViewQuery>(POST_VIEW_QUERY);
+    postViews = testingModule.get<PostViewRepository>(POST_VIEW_REPOSITORY);
+    posts = testingModule.get<PostRepository>(POST_REPOSITORY);
+    sources = testingModule.get<SourceRepository>(SOURCE_REPOSITORY);
   });
 
   afterAll(async () => {
-    await app.close();
+    await testingModule.close();
   });
 
   async function insertPost(externalSourceId: string): Promise<string> {

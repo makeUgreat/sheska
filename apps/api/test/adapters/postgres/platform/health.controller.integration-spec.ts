@@ -11,6 +11,7 @@ import { QueueHealthProbe } from '@platform/nest/queue/queue-health.probe';
 import { LOGGER } from '@kernels/application';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, type MockedFunction, vi } from 'vitest';
+import { POSTGRES_TEST_DATABASE_URL } from '../support/postgres.connection';
 
 type QueueHealthProbeMock = {
   check: MockedFunction<() => Promise<void>>;
@@ -59,7 +60,10 @@ describe('HealthController Postgres boundary', () => {
           useClass: HttpExceptionFilter,
         },
       ],
-    }).compile();
+    })
+      .overrideProvider(databaseConfig.KEY)
+      .useValue({ databaseUrl: POSTGRES_TEST_DATABASE_URL })
+      .compile();
 
     app = testingModule.createNestApplication();
     await app.init();

@@ -6,10 +6,10 @@ import {
   logIntegrationAdapterBanner,
   logIntegrationAdapterStep,
 } from '../../../support/integration-adapter-logger';
+import { REDIS_TEST_URL } from './redis.connection';
 
 const execAsync = promisify(exec);
 const REDIS_TEST_CONTAINER_NAME = 'sheska.test.redis';
-const REDIS_TEST_URL = 'redis://127.0.0.1:56379';
 const REDIS_COMPOSE_FILE = resolve(__dirname, 'docker-compose.yml');
 const REDIS_COMPOSE_CWD = resolve(__dirname, '../../..');
 const REDIS_LOG_CONTEXT: IntegrationAdapterLogContext = {

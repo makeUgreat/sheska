@@ -1,30 +1,30 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { type TestingModule } from '@nestjs/testing';
 import { sha256Hex } from '@core/hash';
 import { type SourceRepository, type SourceSyncJobRepository } from '@contexts/library/domain';
 import { SOURCE_REPOSITORY, SOURCE_SYNC_JOB_REPOSITORY } from '@contexts/library/library.di-tokens';
-import { AppModule } from '@platform/nest/app.module';
+import { SourcePgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
+import { SourceSyncJobPgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source-sync-job.pg-drizzle.repository';
 import { buildSourceSyncJob } from '../../../support/domains/fixtures/source-sync-job.fixture';
 import { buildSource } from '../../../support/domains/fixtures/source.fixture';
+import { setupPostgresTestingModule } from '../support/setup-postgres-testing-module';
 
 describe('SourceSyncJobDrizzleRepository', () => {
-  let app: INestApplication;
+  let testingModule: TestingModule;
   let sourceRepository: SourceRepository;
   let repository: SourceSyncJobRepository;
 
   beforeAll(async () => {
-    const moduleFixture = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-    app = moduleFixture.createNestApplication();
-    await app.init();
-    sourceRepository = app.get<SourceRepository>(SOURCE_REPOSITORY);
-    repository = app.get<SourceSyncJobRepository>(SOURCE_SYNC_JOB_REPOSITORY);
+    testingModule = await setupPostgresTestingModule([
+      { provide: SOURCE_REPOSITORY, useClass: SourcePgDrizzleRepository },
+      { provide: SOURCE_SYNC_JOB_REPOSITORY, useClass: SourceSyncJobPgDrizzleRepository },
+    ]);
+    sourceRepository = testingModule.get<SourceRepository>(SOURCE_REPOSITORY);
+    repository = testingModule.get<SourceSyncJobRepository>(SOURCE_SYNC_JOB_REPOSITORY);
   });
 
   afterAll(async () => {
-    await app.close();
+    await testingModule.close();
   });
 
   it('sync job을 저장한다', async () => {

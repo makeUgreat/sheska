@@ -6,10 +6,10 @@ import {
   logIntegrationAdapterBanner,
   logIntegrationAdapterStep,
 } from '../../../support/integration-adapter-logger';
+import { OLLAMA_TEST_BASE_URL } from './ollama.connection';
 
 const execAsync = promisify(exec);
 const OLLAMA_TEST_CONTAINER_NAME = 'sheska.test.ollama';
-const OLLAMA_TEST_URL = 'http://127.0.0.1:11435';
 const OLLAMA_TEST_MODEL = 'qwen3-embedding:0.6b';
 const OLLAMA_COMPOSE_FILE = resolve(__dirname, 'docker-compose.yml');
 const OLLAMA_COMPOSE_CWD = resolve(__dirname, '../../..');
@@ -17,7 +17,7 @@ const OLLAMA_LOG_CONTEXT: IntegrationAdapterLogContext = {
   adapter: 'OLLAMA',
   boundary: 'embedding-http',
   module: 'TextOllamaHttpEmbedder',
-  target: `${OLLAMA_TEST_URL} (${OLLAMA_TEST_MODEL})`,
+  target: `${OLLAMA_TEST_BASE_URL} (${OLLAMA_TEST_MODEL})`,
 };
 
 export default async function setup(): Promise<() => Promise<void>> {

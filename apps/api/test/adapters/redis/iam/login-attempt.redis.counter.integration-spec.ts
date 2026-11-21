@@ -3,8 +3,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { UnavailableError, UnexpectedError } from '@core/errors';
 import { LoginAttemptPolicy } from '@contexts/iam/domain';
 import { LoginAttemptRedisCounter } from '@contexts/iam/infrastructure/login-attempt/redis/login-attempt.redis.counter';
+import { REDIS_TEST_URL } from '../support/redis.connection';
 
-const REDIS_URL = 'redis://127.0.0.1:56379';
 const ADDRESS = '203.0.113.7';
 const POLICY = new LoginAttemptPolicy({
   maxFailures: 3,
@@ -17,7 +17,7 @@ describe('LoginAttemptRedisCounter', () => {
   let counter: LoginAttemptRedisCounter;
 
   beforeAll(() => {
-    redis = new Redis(REDIS_URL);
+    redis = new Redis(REDIS_TEST_URL);
     counter = new LoginAttemptRedisCounter(redis);
   });
 

@@ -3,8 +3,8 @@ import { UnavailableError } from '@core/errors';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
 import { TextOllamaHttpEmbedder } from '@contexts/ingestion/infrastructure/embedding/ollama-http/text.ollama-http.embedder';
+import { OLLAMA_TEST_BASE_URL } from '../support/ollama.connection';
 
-const OLLAMA_TEST_BASE_URL = 'http://127.0.0.1:11435';
 const OLLAMA_TEST_MODEL = 'qwen3-embedding:0.6b'; // 클래스 내부 OLLAMA_MODEL 상수와 일치해야 함 — global-setup.ts가 pull하는 모델
 const OLLAMA_UNREACHABLE_URL = 'http://127.0.0.1:19999';
 
