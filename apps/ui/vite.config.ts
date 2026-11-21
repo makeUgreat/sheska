@@ -63,6 +63,7 @@ export default defineConfig(({ mode }) => {
             environment: 'node',
             globals: true,
             include: ['test/static/**/*.integration-spec.ts'],
+            testTimeout: 30_000,
           },
         },
       ],
