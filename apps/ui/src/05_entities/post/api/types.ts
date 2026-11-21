@@ -8,6 +8,7 @@ import {
   type PostResponse,
   type PostSearchResultResponse,
   type PostSummaryResponse,
+  type PostViewResponse,
 } from '@sheska/contract';
 
 export type PostSummary = PostSummaryResponse & Partial<Pick<PostSearchResultResponse, 'similarity' | 'snippet'>>;
@@ -27,3 +28,6 @@ export type GetPostResponse = PostResponse;
 export type AiSummary = PostAiSummaryResponse;
 export type AskPostRequest = ApiRequest<typeof PostApi.ask>;
 export type AnswerEvent = ApiStreamEvent<typeof PostApi.ask>;
+export type PostView = PostViewResponse;
+export type ListPostViewsParams = ApiQuery<typeof PostApi.listViews>;
+export type ListPostViewsResponse = ApiResponse<typeof PostApi.listViews>;

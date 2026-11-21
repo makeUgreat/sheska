@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { AI_SUMMARY_NOTICE, type AiSummary, type GetPostResponse } from '@/entities/post';
 import { formatDottedDate } from '@/shared/lib';
 import { AiMark, ArticleLayout, BackLink, EmptyState, ErrorState } from '@/shared/ui';
@@ -8,7 +9,8 @@ export type PostArticleState =
   | { status: 'empty' }
   | { status: 'success'; post: GetPostResponse };
 
-export function PostArticleSection({ state }: { state: PostArticleState }) {
+/** `canOpenViews`면 조회수가 조회내역으로 가는 링크가 된다. 소유자만 조회내역을 읽을 수 있다. */
+export function PostArticleSection({ state, canOpenViews = false }: { state: PostArticleState; canOpenViews?: boolean }) {
   if (state.status === 'loading') {
     return (
       <div className="pt-10">
@@ -37,7 +39,7 @@ export function PostArticleSection({ state }: { state: PostArticleState }) {
 
   const { post } = state;
 
-  return <ArticleLayout header={<PostHeader post={post} />} body={post.body} />;
+  return <ArticleLayout header={<PostHeader post={post} canOpenViews={canOpenViews} />} body={post.body} />;
 }
 
 /** 목록으로 돌아가는 아이콘이다. */
@@ -61,7 +63,7 @@ function PendingBack() {
 const BACK_BESIDE_TITLE =
   'mb-3.5 -ml-2.5 margin-label:absolute margin-label:top-[3px] margin-label:right-[calc(100%+var(--spacing-gutter)-7px)] margin-label:m-0';
 
-function PostHeader({ post }: { post: GetPostResponse }) {
+function PostHeader({ post, canOpenViews }: { post: GetPostResponse; canOpenViews: boolean }) {
   return (
     <>
       <div className="relative">
@@ -81,12 +83,45 @@ function PostHeader({ post }: { post: GetPostResponse }) {
             {formatDottedDate(post.createdAt)}
           </time>
         </span>
-        <span>
-          <span className="tabular-nums text-text-secondary">{post.viewCount}</span> views
-        </span>
+        {canOpenViews ? (
+          <ViewsLink postId={post.postId} viewCount={post.viewCount} />
+        ) : (
+          <span>
+            <span className="tabular-nums text-text-secondary">{post.viewCount}</span> views
+          </span>
+        )}
       </p>
       <Summary summary={post.summary} />
     </>
+  );
+}
+
+/** 눌러야 갈 수 있다는 표시는 hover 때만 드러낸다. 평소에는 방문자에게 보이는 줄과 같다. */
+function ViewsLink({ postId, viewCount }: { postId: string; viewCount: number }) {
+  return (
+    <Link
+      to={`/posts/${postId}/views`}
+      aria-label={`${viewCount} views, open view history`}
+      className="group/views inline-flex items-center gap-1 rounded-sm transition-colors duration-150 hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 motion-reduce:transition-none"
+    >
+      <span className="tabular-nums text-text-secondary transition-colors duration-150 group-hover/views:text-accent-strong motion-reduce:transition-none">
+        {viewCount}
+      </span>{' '}
+      views
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        className="size-3 -translate-x-1 opacity-0 transition duration-200 group-hover/views:translate-x-0 group-hover/views:opacity-100 motion-reduce:transition-none"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M5 12h14" />
+        <path d="M13 6l6 6-6 6" />
+      </svg>
+    </Link>
   );
 }
 

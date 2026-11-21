@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { AskPost } from '@/features/ask-post';
 import { useRecordPostView } from '@/features/record-post-view';
 import { usePost, type GetPostResponse } from '@/entities/post';
+import { useViewer } from '@/entities/session';
 import { parseOutline } from '@/shared/lib';
 import { PostArticleSection, type PostArticleState } from './post-article-section';
 
@@ -24,12 +25,13 @@ function getPostArticleState({
 export function PostArticle({ postId }: { postId: string | undefined }) {
   const { data: post, isLoading, error } = usePost(postId);
   useRecordPostView(post?.postId);
+  const viewer = useViewer();
   const headings = useMemo(() => parseOutline(post?.body ?? ''), [post?.body]);
   const state = getPostArticleState({ isLoading, error, post });
 
   return (
     <>
-      <PostArticleSection state={state} />
+      <PostArticleSection state={state} canOpenViews={viewer === 'owner'} />
       {post && <AskPost key={post.postId} postId={post.postId} headings={headings} />}
     </>
   );

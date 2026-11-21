@@ -21,3 +21,21 @@ export function formatDottedDate(value: string) {
 
   return `${date.getFullYear()}.${month}.${day}`;
 }
+
+/** 같은 해 안에서 날짜만 보일 때 쓴다. 예: `11.21` */
+export function formatDottedMonthDay(value: string) {
+  const date = new Date(value);
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${month}.${day}`;
+}
+
+/** 24시간제 시:분이다. 예: `14:05` */
+export function formatTime(value: string) {
+  const date = new Date(value);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+
+  return `${hours}:${minutes}`;
+}

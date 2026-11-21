@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useHttpClient } from '@/shared/api';
-import { countPosts, getPost, listPosts, publishPost, searchPosts } from './client';
+import { countPosts, getPost, listPosts, listPostViews, publishPost, searchPosts } from './client';
 import { type PublishPostRequest } from './types';
 
 export function usePost(id: string | undefined) {
@@ -8,6 +8,18 @@ export function usePost(id: string | undefined) {
   return useQuery({
     queryKey: ['posts', id],
     queryFn: () => getPost(http, id!),
+    enabled: !!id,
+  });
+}
+
+/** 조회내역은 소유자만 읽는다. 권한이 없으면 API가 401이나 403으로 답한다. */
+export function useInfinitePostViews(id: string | undefined) {
+  const http = useHttpClient();
+  return useInfiniteQuery({
+    queryKey: ['posts', id, 'views'],
+    queryFn: ({ pageParam }) => listPostViews(http, id!, { cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: !!id,
   });
 }
