@@ -1,6 +1,7 @@
 import { StateConflictError } from '@core/errors';
 import { type PostRepository } from '@contexts/library/domain';
-import { type SourceDocument, type SourceLookup } from '@contexts/library/application/ports';
+import { type LibraryUnitOfWork, type SourceDocument, type SourceLookup } from '@contexts/library/application/ports';
+import { type OutboxWriter } from '@kernels/application';
 import { describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { PublishPostUseCase } from '../publish-post.use-case';
 import { buildPost } from '../../../../../../test/support/domains/fixtures/post.fixture';
@@ -9,6 +10,10 @@ type PostRepositoryMock = {
   get: MockedFunction<PostRepository['get']>;
   insert: MockedFunction<PostRepository['insert']>;
   update: MockedFunction<PostRepository['update']>;
+};
+
+type OutboxWriterMock = {
+  append: MockedFunction<OutboxWriter['append']>;
 };
 
 type SourceLookupMock = {
@@ -34,7 +39,7 @@ describe('PublishPostUseCase', () => {
     const sourceLookup = createSourceLookupMock({
       sourceContent: sourceContentWithFrontmatter,
     });
-    const useCase = new PublishPostUseCase(posts, sourceLookup);
+    const useCase = new PublishPostUseCase(createLibraryUnitOfWorkMock(posts), sourceLookup);
 
     const result = await useCase.execute({ sourceId: 'source-1' });
 
@@ -53,7 +58,7 @@ describe('PublishPostUseCase', () => {
     const sourceLookup = createSourceLookupMock({
       sourceContent: sourceContentWithoutFrontmatter,
     });
-    const useCase = new PublishPostUseCase(posts, sourceLookup);
+    const useCase = new PublishPostUseCase(createLibraryUnitOfWorkMock(posts), sourceLookup);
 
     const result = await useCase.execute({ sourceId: 'source-1' });
 
@@ -67,7 +72,7 @@ describe('PublishPostUseCase', () => {
       sourceContent: sourceContentWithFrontmatter,
     });
     sourceLookup.get.mockRejectedValue(notFoundError);
-    const useCase = new PublishPostUseCase(posts, sourceLookup);
+    const useCase = new PublishPostUseCase(createLibraryUnitOfWorkMock(posts), sourceLookup);
 
     await expect(useCase.execute({ sourceId: 'non-existent' })).rejects.toBe(notFoundError);
     expect(posts.insert).not.toHaveBeenCalled();
@@ -85,7 +90,7 @@ describe('PublishPostUseCase', () => {
     const sourceLookup = createSourceLookupMock({
       sourceContent: sourceContentWithFrontmatter,
     });
-    const useCase = new PublishPostUseCase(posts, sourceLookup);
+    const useCase = new PublishPostUseCase(createLibraryUnitOfWorkMock(posts), sourceLookup);
 
     await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(alreadyPublished);
   });
@@ -97,10 +102,43 @@ describe('PublishPostUseCase', () => {
       sourceContent: sourceContentWithFrontmatter,
     });
     sourceLookup.get.mockRejectedValue(lookupFailure);
-    const useCase = new PublishPostUseCase(posts, sourceLookup);
+    const useCase = new PublishPostUseCase(createLibraryUnitOfWorkMock(posts), sourceLookup);
 
     await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(lookupFailure);
     expect(posts.insert).not.toHaveBeenCalled();
+  });
+
+  it('post 저장과 같은 transaction에서 게시 메시지를 outbox에 기록한다', async () => {
+    const posts = createPostRepositoryMock();
+    const outbox = createOutboxWriterMock();
+    const sourceLookup = createSourceLookupMock({
+      sourceContent: sourceContentWithFrontmatter,
+    });
+    const useCase = new PublishPostUseCase(createLibraryUnitOfWorkMock(posts, outbox), sourceLookup);
+
+    await useCase.execute({ sourceId: 'source-1' });
+
+    expect(outbox.append).toHaveBeenCalledOnce();
+    expect(outbox.append.mock.calls[0]?.[0]).toMatchObject({
+      eventType: 'post.published',
+      eventVersion: 1,
+      payload: { postId: 'source-1' },
+    });
+    expect(posts.insert.mock.calls[0]?.[0]?.domainEvents).toEqual([]);
+  });
+
+  it('outbox 기록 exception을 전파하고 domain event를 유지한다', async () => {
+    const outboxFailure = new Error('Outbox operation failed');
+    const posts = createPostRepositoryMock();
+    const outbox = createOutboxWriterMock();
+    outbox.append.mockRejectedValue(outboxFailure);
+    const sourceLookup = createSourceLookupMock({
+      sourceContent: sourceContentWithFrontmatter,
+    });
+    const useCase = new PublishPostUseCase(createLibraryUnitOfWorkMock(posts, outbox), sourceLookup);
+
+    await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(outboxFailure);
+    expect(posts.insert.mock.calls[0]?.[0]?.domainEvents).toHaveLength(1);
   });
 
   it('post insert exception을 전파한다', async () => {
@@ -110,7 +148,7 @@ describe('PublishPostUseCase', () => {
     const sourceLookup = createSourceLookupMock({
       sourceContent: sourceContentWithFrontmatter,
     });
-    const useCase = new PublishPostUseCase(posts, sourceLookup);
+    const useCase = new PublishPostUseCase(createLibraryUnitOfWorkMock(posts), sourceLookup);
 
     await expect(useCase.execute({ sourceId: 'source-1' })).rejects.toBe(insertFailure);
   });
@@ -128,5 +166,17 @@ function createSourceLookupMock({ sourceContent }: { sourceContent: SourceDocume
   return {
     get: vi.fn<SourceLookup['get']>().mockResolvedValue(sourceContent),
     find: vi.fn<SourceLookup['find']>().mockResolvedValue(sourceContent),
+  };
+}
+
+function createLibraryUnitOfWorkMock(posts: PostRepositoryMock, outbox: OutboxWriterMock = createOutboxWriterMock()): LibraryUnitOfWork {
+  return {
+    execute: (work) => work({ posts, outbox } as never),
+  };
+}
+
+function createOutboxWriterMock(): OutboxWriterMock {
+  return {
+    append: vi.fn<OutboxWriter['append']>().mockResolvedValue(undefined),
   };
 }

@@ -273,6 +273,37 @@ describe('UploadSourceUseCase', () => {
     });
   });
 
+  it('본문이 바뀌면 source 갱신과 같은 transaction에서 본문 변경 메시지를 outbox에 기록한다', async () => {
+    const existingSource = restoreSource({
+      id: 'source-1',
+      externalSourceId: 'Notes/source.md',
+      content: '# Old source note',
+    });
+    const contentSnapshotCalculator = createContentSnapshotCalculatorMock({
+      content: '# New source note',
+    });
+    const sources = createSourceRepositoryMock();
+    sources.find.mockResolvedValue(existingSource);
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    const outbox = createOutboxWriterMock();
+    const useCase = new UploadSourceUseCase(
+      contentSnapshotCalculator,
+      sources,
+      syncJobs,
+      createLibraryUnitOfWorkMock(sources, syncJobs, outbox),
+    );
+
+    await useCase.execute({
+      externalSourceId: 'Notes/source.md',
+      content: '# New source note',
+    });
+
+    const appendedTypes = outbox.append.mock.calls.map(([message]) => message.eventType);
+    expect(appendedTypes).toEqual(['source.body_changed', 'source.sync_job.created']);
+    expect(outbox.append.mock.calls[0]?.[0]?.payload).toEqual({ sourceId: 'source-1' });
+    expect(existingSource.domainEvents).toEqual([]);
+  });
+
   // nocap: library-sync-5
   // nocap: library-sync-6
   it('본문은 같고 frontmatter만 바뀌었고 최근 sync job이 completed면 source만 갱신한다', async () => {
@@ -552,7 +583,7 @@ function createLibraryUnitOfWorkMock(
   outbox: OutboxWriterMock = createOutboxWriterMock(),
 ): LibraryUnitOfWork {
   return {
-    execute: (work) => work({ sources, syncJobs, outbox }),
+    execute: (work) => work({ sources, syncJobs, outbox, posts: {} as never }),
   };
 }
 

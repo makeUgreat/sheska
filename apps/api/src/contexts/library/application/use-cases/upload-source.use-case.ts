@@ -14,6 +14,7 @@ import {
 } from '../services/source-content-snapshot-calculator.service';
 import { type LibraryUnitOfWork } from '@contexts/library/application/ports';
 import { SourceSyncJobCreatedIntegrationEvent } from '@contexts/library/application/events/source-sync-job-created.integration-event';
+import { SourceBodyChangedEvent } from '@contexts/library/application/events/source-body-changed.outbox-message';
 import { SOURCE_REPOSITORY, SOURCE_SYNC_JOB_REPOSITORY, LIBRARY_UNIT_OF_WORK } from '@contexts/library/library.di-tokens';
 
 export interface UploadSourceCommand {
@@ -90,6 +91,9 @@ export class UploadSourceUseCase {
     await this.unitOfWork.execute(async (resources) => {
       if (sourceWrite === 'insert') await resources.sources.insert(source);
       if (sourceWrite === 'update') await resources.sources.update(source);
+      for (const message of this.toSourceBodyChangedEvents(source)) {
+        await resources.outbox.append(message);
+      }
 
       if (isNewSyncJob) {
         await resources.syncJobs.insert(syncJob);
@@ -99,6 +103,7 @@ export class UploadSourceUseCase {
       }
     });
 
+    source.clearDomainEvents();
     if (isNewSyncJob) syncJob.clearDomainEvents();
   }
 
@@ -123,6 +128,16 @@ export class UploadSourceUseCase {
         fields: [{ path: 'frontmatter.sheska', messages: ['must be true'] }],
       },
     });
+  }
+
+  private toSourceBodyChangedEvents(source: Source): SourceBodyChangedEvent[] {
+    return source.domainEvents.map(
+      (event) =>
+        new SourceBodyChangedEvent({
+          occurredAt: event.occurredAt,
+          sourceId: event.aggregateId,
+        }),
+    );
   }
 
   private toIntegrationEvents(syncJob: SourceSyncJob): SourceSyncJobCreatedIntegrationEvent[] {
