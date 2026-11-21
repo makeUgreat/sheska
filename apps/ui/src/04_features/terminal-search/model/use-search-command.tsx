@@ -80,7 +80,7 @@ function hitItem(post: SearchHit, words: string[]): TerminalTreeItem {
 function detailsOf(post: SearchHit, words: string[]) {
   const details: ReactNode[] = [];
   if (post.snippet) {
-    details.push(<TerminalHighlight text={toOneLine(post.snippet)} words={words} className="text-primary" />);
+    details.push(<TerminalHighlight text={toOneLine(post.snippet)} words={words} className="text-white" />);
   }
   if (post.similarity !== null) {
     details.push(

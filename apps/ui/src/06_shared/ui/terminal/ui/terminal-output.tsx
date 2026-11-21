@@ -16,7 +16,7 @@ export function TerminalText({ tone = 'plain', children }: { tone?: keyof typeof
   return <p className={`whitespace-pre-wrap ${TONE[tone]}`}>{children}</p>;
 }
 
-/** 검색어와 같은 부분을 굵게 보인다. 대소문자는 가리지 않는다. */
+/** 검색어와 같은 부분에 옅은 면을 깐다. 링크 색으로 칠하면 링크처럼 읽혀서 면으로 구분한다. 대소문자는 가리지 않는다. */
 export function TerminalHighlight({
   text,
   words,
@@ -33,7 +33,7 @@ export function TerminalHighlight({
   const parts = text.split(new RegExp(`(${terms.join('|')})`, 'gi'));
   return parts.map((part, index) =>
     index % 2 === 1 ? (
-      <mark key={index} className={`bg-transparent font-bold ${className}`}>
+      <mark key={index} className={`box-decoration-clone rounded-[2px] bg-on-surface/15 px-px font-bold ${className}`}>
         {part}
       </mark>
     ) : (
