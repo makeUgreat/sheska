@@ -68,7 +68,7 @@ describe('SourceEmbeddingChunkBullMqConsumer', () => {
     expect(updateProgress).toHaveBeenCalledWith(100);
   });
 
-  it('시도가 남아 있으면 sync job을 실패 처리하지 않는다', async () => {
+  it('시도가 남아 있으면 sync job을 실패 처리하지 않고 로그도 남기지 않는다', async () => {
     const { useCase, handleFailure, logger } = buildDependencies();
     const consumer = new SourceEmbeddingChunkBullMqConsumer(useCase, logger);
     const job = buildJob(undefined, { attemptsMade: 1, maxAttempts: 3 });
@@ -76,7 +76,7 @@ describe('SourceEmbeddingChunkBullMqConsumer', () => {
     await consumer.onFailed(job, new Error('transient'));
 
     expect(handleFailure).not.toHaveBeenCalled();
-    expect(logger.warn).toHaveBeenCalledOnce();
+    expect(logger.warn).not.toHaveBeenCalled();
     expect(logger.error).not.toHaveBeenCalled();
   });
 
@@ -91,7 +91,7 @@ describe('SourceEmbeddingChunkBullMqConsumer', () => {
     expect(handleFailure).toHaveBeenCalledWith(job.data);
   });
 
-  it('job payload를 쓸 수 없으면 보상을 건너뛰되 reject하지 않는다', async () => {
+  it('job payload를 쓸 수 없으면 실패 로그만 한 번 남기고 보상을 건너뛴다', async () => {
     const { useCase, handleFailure, logger } = buildDependencies();
     const consumer = new SourceEmbeddingChunkBullMqConsumer(useCase, logger);
     const job = buildJob(undefined, { attemptsMade: 3, maxAttempts: 3 });
@@ -100,11 +100,8 @@ describe('SourceEmbeddingChunkBullMqConsumer', () => {
     await expect(consumer.onFailed(job, new Error('terminal'))).resolves.toBeUndefined();
 
     expect(handleFailure).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith(
-      'source-embedding-chunk job failure compensation skipped',
-      expect.anything(),
-      expect.anything(),
-    );
+    expect(logger.error).toHaveBeenCalledOnce();
+    expect(logger.error).toHaveBeenCalledWith('source-embedding-chunk job failed', expect.any(Error), expect.anything());
   });
 
   it('보상 자체가 실패해도 reject하지 않고 error로 남긴다', async () => {

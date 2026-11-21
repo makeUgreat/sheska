@@ -46,25 +46,18 @@ export class SourceEmbeddingChunkBullMqConsumer extends WorkerHost {
     if (!job) return;
 
     const maxAttempts = job.opts.attempts ?? 1;
+    if (job.attemptsMade < maxAttempts) return;
+
     const context = {
       queueName: job.queueName,
       jobId: job.id,
       attempt: job.attemptsMade,
       maxAttempts,
     };
-
-    if (job.attemptsMade < maxAttempts) {
-      this.logger.warn(`${job.queueName} job attempt failed`, error, context);
-      return;
-    }
-
     this.logger.error(`${job.queueName} job failed`, error, context);
 
     const input = embedSourceChunkJobInputSchema.safeParse(job.data);
-    if (!input.success) {
-      this.logger.error(`${job.queueName} job failure compensation skipped`, input.error, context);
-      return;
-    }
+    if (!input.success) return;
 
     try {
       await this.embedSourceChunk.handleFailure({
