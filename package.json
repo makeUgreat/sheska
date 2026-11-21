@@ -11,6 +11,6 @@
   },
   "devDependencies": {
     "@makehash/nocap": "^0.3.0",
-    "dependency-cruiser": "^17.4.2"
+    "dependency-cruiser": "^17.4.3"
   }
 }

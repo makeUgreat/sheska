@@ -340,16 +340,14 @@ export class PostPgDrizzleQuery implements PostQuery {
     nextCursor: TCursor | null,
   ): { posts: PostQueryListItem[]; nextCursor: TCursor | null } {
     return {
-      posts: data.map(
-        (row): PostQueryListItem => ({
-          postId: row.id,
-          sourceId: row.sourceId,
-          title: row.title,
-          viewCount: row.viewCount,
-          createdAt: row.createdAt,
-          updatedAt: row.updatedAt,
-        }),
-      ),
+      posts: data.map((row): PostQueryListItem => ({
+        postId: row.id,
+        sourceId: row.sourceId,
+        title: row.title,
+        viewCount: row.viewCount,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      })),
       nextCursor,
     };
   }

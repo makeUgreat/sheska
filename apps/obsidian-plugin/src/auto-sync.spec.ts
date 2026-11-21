@@ -24,11 +24,9 @@ function asObsidianAbstractFile(file: TAbstractFile | TFile): ObsidianAbstractFi
 
 function syncTargetMetadataCache() {
   return {
-    getFileCache: vi.fn(
-      (_file: ObsidianFile): CachedMetadata => ({
-        frontmatter: { sheska: true },
-      }),
-    ),
+    getFileCache: vi.fn((_file: ObsidianFile): CachedMetadata => ({
+      frontmatter: { sheska: true },
+    })),
     getFirstLinkpathDest: vi.fn((_linkpath: string, _sourcePath: string): ObsidianFile | null => null),
   };
 }
