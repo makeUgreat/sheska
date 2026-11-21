@@ -27,7 +27,11 @@ function SummaryLines({ summary }: { summary: AiSummary }) {
     return (
       <span className="mt-1 grid grid-cols-[20px_minmax(0,1fr)] items-start">
         <AiMark twinkling={summary.status === 'pending'} className="mt-[5px] -ml-0.5 text-text-muted opacity-60" />
-        <span className="font-mono text-label-sm leading-[26px] tracking-normal text-text-muted">{AI_SUMMARY_NOTICE[summary.status]}</span>
+        <span
+          className={`font-mono text-label-sm leading-[26px] tracking-normal ${summary.status === 'pending' ? 'shimmer-text' : 'text-text-muted'}`}
+        >
+          {AI_SUMMARY_NOTICE[summary.status]}
+        </span>
       </span>
     );
   }

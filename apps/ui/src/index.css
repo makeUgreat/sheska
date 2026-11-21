@@ -13,6 +13,7 @@
   --animate-tree-light: tree-light 2.4s ease-in-out infinite;
   --animate-snowfall: snowfall 20s linear infinite;
   --animate-header-edge: header-edge 1.3s cubic-bezier(0.45, 0.05, 0.35, 1) infinite;
+  --animate-shimmer: shimmer 2.4s linear infinite;
 
   @keyframes blink {
     50% {
@@ -45,6 +46,15 @@
     from {
       opacity: 0;
       transform: translateY(3px);
+    }
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: -150% 0;
     }
   }
 
@@ -116,3 +126,26 @@ select {
   }
 }
 
+/* 밝은 띠가 지나가는 동안 일이 진행 중임을 알린다. 멈추면 띠가 보이지 않는 0% 자리에 선다. */
+@utility shimmer-text {
+  background-image: linear-gradient(90deg, var(--color-text-muted) 40%, var(--color-secondary) 50%, var(--color-text-muted) 60%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: var(--animate-shimmer);
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@utility shimmer-bar {
+  background-image: linear-gradient(90deg, var(--color-plate-line) 40%, var(--color-page-background) 50%, var(--color-plate-line) 60%);
+  background-size: 250% 100%;
+  animation: var(--animate-shimmer);
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
