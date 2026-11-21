@@ -35,6 +35,8 @@ attachmentStorage:
   secretName: sheska-attachment-storage
   endpoint: https://07b1e6b75a9a75c0810f9e10ab50cac7.r2.cloudflarestorage.com
   bucket: sheska-attachments
+anthropic:
+  secretName: sheska-anthropic
 otel:
   exporterOtlpEndpoint: http://alloy.observability.svc.cluster.local:4318
 nodeSelector: {}

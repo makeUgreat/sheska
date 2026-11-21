@@ -31,6 +31,7 @@ describe('PostSummaryBullMqConsumer', () => {
     expect(logger.error).not.toHaveBeenCalled();
   });
 
+  // nocap: library-summary-6
   it('마지막 시도가 실패하면 error 로그를 한 번 남기고 실패한 요약을 저장한다', async () => {
     const { consumer, handleFailure, logger } = setup();
 

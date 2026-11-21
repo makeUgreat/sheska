@@ -35,6 +35,8 @@ spec:
               value: /run/secrets/attachment-storage/access-key-id
             - name: ATTACHMENT_STORAGE_SECRET_ACCESS_KEY_FILE
               value: /run/secrets/attachment-storage/secret-access-key
+            - name: ANTHROPIC_API_KEY_FILE
+              value: /run/secrets/anthropic/api-key
             - name: OWNER_PASSWORD_FILE
               value: /run/secrets/owner-password/password
             - name: CORS_ORIGINS
@@ -74,6 +76,9 @@ spec:
             - name: attachment-storage
               mountPath: /run/secrets/attachment-storage
               readOnly: true
+            - name: anthropic
+              mountPath: /run/secrets/anthropic
+              readOnly: true
             - name: owner-password
               mountPath: /run/secrets/owner-password
               readOnly: true
@@ -82,6 +87,9 @@ spec:
         - name: attachment-storage
           secret:
             secretName: {{ .Values.attachmentStorage.secretName }}
+        - name: anthropic
+          secret:
+            secretName: {{ .Values.anthropic.secretName }}
         - name: owner-password
           secret:
             secretName: {{ .Values.ownerPassword.secretName }}

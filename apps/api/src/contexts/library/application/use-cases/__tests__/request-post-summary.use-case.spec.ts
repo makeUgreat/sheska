@@ -15,6 +15,7 @@ describe('RequestPostSummaryUseCase', () => {
     });
   });
 
+  // nocap: library-summary-1
   it('post가 없으면 요약 job을 넣지 않는다', async () => {
     const { useCase, dispatcher } = setup(null);
 

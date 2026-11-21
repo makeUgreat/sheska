@@ -34,6 +34,7 @@ describe('GeneratePostSummaryUseCase', () => {
     expect(summaries.upsert).not.toHaveBeenCalled();
   });
 
+  // nocap: library-summary-3
   it('같은 본문의 완료한 요약이 있으면 생성하지 않고 건너뛴다', async () => {
     const existing = PostSummary.complete({
       postId: 'post-1',
@@ -51,6 +52,7 @@ describe('GeneratePostSummaryUseCase', () => {
     expect(summaries.upsert).not.toHaveBeenCalled();
   });
 
+  // nocap: library-summary-3
   it('같은 본문의 실패한 요약이 있으면 다시 생성한다', async () => {
     const existing = PostSummary.fail({ postId: 'post-1', fingerprint: SourceFingerprint.ofBody(BODY), finishedAt: new Date() });
     const { useCase, summaries } = setup({ existing, result: completedResult('<sentence>다시 만든 요약임</sentence>') });
@@ -61,6 +63,7 @@ describe('GeneratePostSummaryUseCase', () => {
     expect(savedSummary(summaries).getProps().outcome).toMatchObject({ kind: 'completed', sentences: ['다시 만든 요약임'] });
   });
 
+  // nocap: library-summary-5
   it.each([
     {
       name: '응답이 잘리면',
@@ -79,6 +82,7 @@ describe('GeneratePostSummaryUseCase', () => {
     expect(logger.warn).toHaveBeenCalledWith('Post summary generation failed', { postId: 'post-1', reason });
   });
 
+  // nocap: library-summary-5
   it('입력이 모델 한도를 넘으면 실패한 요약으로 저장한다', async () => {
     const { useCase, summaries, logger } = setup({
       error: new InputTooLargeError({ code: 'text_generator.input_too_large', message: 'Input is too large', details: {} }),
@@ -99,6 +103,7 @@ describe('GeneratePostSummaryUseCase', () => {
     expect(summaries.upsert).not.toHaveBeenCalled();
   });
 
+  // nocap: library-summary-4
   it.each([
     { name: '본문이 바뀌면', latest: postResult('# Outbox\n바뀐 본문') },
     { name: 'post가 지워지면', latest: null },
@@ -113,6 +118,7 @@ describe('GeneratePostSummaryUseCase', () => {
 });
 
 describe('GeneratePostSummaryUseCase.handleFailure', () => {
+  // nocap: library-summary-6
   it('재시도를 모두 쓴 요약은 지금 본문의 실패한 요약으로 저장한다', async () => {
     const { useCase, summaries, logger, generator } = setup();
 
