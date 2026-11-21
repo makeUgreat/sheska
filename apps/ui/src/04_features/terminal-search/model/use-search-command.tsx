@@ -58,7 +58,11 @@ export function useSearchCommand({
           <TerminalTree
             root={<TerminalTreeRoot label={`"${query}"`} note={matches(posts.length, nextCursor !== null)} />}
             items={posts.map((post) => hitItem(post, args))}
-            footer="cat + Tab to open one"
+            footer={
+              <>
+                hint: type <kbd className="text-on-surface">cat</kbd> and press <kbd className="text-on-surface">Tab</kbd> to open one
+              </>
+            }
           />,
         );
       } catch (error) {
