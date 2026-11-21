@@ -1,43 +1,43 @@
 import { describe, expect, it } from 'vitest';
-import { IntegrationEvent, type IntegrationEventParams } from '../integration-event.base';
+import { OutboxMessage, type OutboxMessageParams } from '../outbox-message.base';
 
 const UUID_V7_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
-interface SourceCreatedIntegrationEventParams extends IntegrationEventParams {
+interface SourceCreatedEventParams extends OutboxMessageParams {
   readonly sourceId: string;
 }
 
-interface SourceDeletedIntegrationEventParams extends IntegrationEventParams {
+interface SourceDeletedEventParams extends OutboxMessageParams {
   readonly reason: string;
 }
 
-class SourceCreatedIntegrationEvent extends IntegrationEvent {
+class SourceCreatedEvent extends OutboxMessage {
   readonly eventType = 'source.created';
   readonly eventVersion = 1;
   readonly payload: { readonly sourceId: string };
 
-  constructor(params: SourceCreatedIntegrationEventParams) {
+  constructor(params: SourceCreatedEventParams) {
     super(params);
     this.payload = { sourceId: params.sourceId };
   }
 }
 
-class SourceDeletedIntegrationEvent extends IntegrationEvent {
+class SourceDeletedEvent extends OutboxMessage {
   readonly eventType = 'source.deleted';
   readonly eventVersion = 1;
   readonly payload: { readonly reason: string };
 
-  constructor(params: SourceDeletedIntegrationEventParams) {
+  constructor(params: SourceDeletedEventParams) {
     super(params);
     this.payload = { reason: params.reason };
   }
 }
 
-describe('IntegrationEvent', () => {
-  it('event metadata와 payload로 event를 생성한다', () => {
+describe('OutboxMessage', () => {
+  it('event metadata와 payload로 메시지를 생성한다', () => {
     const occurredAt = new Date('2026-09-10T00:00:00.000Z');
 
-    const event = new SourceCreatedIntegrationEvent({
+    const event = new SourceCreatedEvent({
       sourceId: 'source-1',
       occurredAt,
     });
@@ -53,14 +53,14 @@ describe('IntegrationEvent', () => {
   });
 
   it('eventType을 기준으로 event union을 좁힌다', () => {
-    const createdEvent = new SourceCreatedIntegrationEvent({
+    const createdEvent = new SourceCreatedEvent({
       sourceId: 'source-1',
     });
-    const deletedEvent = new SourceDeletedIntegrationEvent({
+    const deletedEvent = new SourceDeletedEvent({
       reason: 'requested',
     });
 
-    const readPayload = (event: SourceCreatedIntegrationEvent | SourceDeletedIntegrationEvent): string => {
+    const readPayload = (event: SourceCreatedEvent | SourceDeletedEvent): string => {
       switch (event.eventType) {
         case 'source.created':
           return event.payload.sourceId;
