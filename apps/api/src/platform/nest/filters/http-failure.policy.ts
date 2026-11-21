@@ -67,6 +67,11 @@ export const ERROR_KIND_POLICY: Record<ErrorKind, HttpFailurePolicy> = {
     exposure: 'masked',
     logLevel: 'error',
   },
+  [ERROR_KIND.INPUT_TOO_LARGE]: {
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    exposure: 'masked',
+    logLevel: 'error',
+  },
   [ERROR_KIND.UNEXPECTED]: {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
     exposure: 'masked',
