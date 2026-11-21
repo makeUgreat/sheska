@@ -132,7 +132,7 @@ function Summary({ summary }: { summary: AiSummary }) {
   return (
     <section aria-label="AI summary" className="mt-7">
       <p className={`flex items-center gap-1.5 font-mono text-label-sm uppercase ${ready ? 'text-accent-strong' : 'text-text-muted'}`}>
-        <AiMark className={ready ? 'text-accent' : 'opacity-60'} />
+        <AiMark twinkling={summary.status === 'pending'} className={ready ? 'text-accent' : 'opacity-60'} />
         AI summary
       </p>
       {summary.status === 'ready' ? (

@@ -2,7 +2,7 @@ const STAR = 'origin-center [transform-box:fill-box] motion-reduce:animate-none'
 
 /**
  * 감싼 행(`group/entry`)에 올린 동안 두 별이 번갈아 반짝인다.
- * `twinkling`이면 행과 상관없이 계속 반짝인다. AI가 답을 만드는 동안처럼 실제로 일이 진행될 때만 켠다.
+ * `twinkling`이면 행과 상관없이 계속 반짝인다. AI가 답이나 요약을 만드는 동안처럼 실제로 일이 진행될 때만 켠다.
  */
 export function AiMark({ className = '', twinkling = false }: { className?: string; twinkling?: boolean }) {
   const big = twinkling ? 'animate-twinkle-big' : 'group-hover/entry:animate-twinkle-big';
