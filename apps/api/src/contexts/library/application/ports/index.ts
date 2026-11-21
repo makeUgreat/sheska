@@ -13,6 +13,7 @@ export type {
 export type { LibraryUnitOfWork, LibraryUnitOfWorkResources } from './library.unit-of-work';
 export type { SyncJobProgress, SyncJobProgressLookup } from './sync-job-progress.lookup';
 export type { SearchQueryEmbedder } from './search-query.embedder';
+export type { TextGenerator, TextGenerationRequest, TextGenerationResult, TextGenerationFinishReason } from './text.generator';
 export type {
   PostQueryResult,
   PostQueryFindCriteria,
@@ -26,6 +27,7 @@ export type {
   PostQueryPaginateResult,
   PostQuerySearchResult,
   PostQuery,
+  PostQuerySummary,
 } from './post.query';
 export type {
   PostViewQuery,
@@ -34,3 +36,5 @@ export type {
   PostViewQueryPaginateOptions,
   PostViewQueryPaginateResult,
 } from './post-view.query';
+export { POST_SUMMARY_QUEUE } from './post-summary-job.dispatcher';
+export type { PostSummaryJob, PostSummaryJobDispatcher } from './post-summary-job.dispatcher';

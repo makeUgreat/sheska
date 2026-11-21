@@ -49,19 +49,19 @@ export class SourceEmbeddingFinalizationBullMqConsumer extends WorkerHost {
   async onFailed(job: Job<FinalizeEmbeddingWorkflowJobInput> | undefined, error: Error): Promise<void> {
     if (!job) return;
 
+    const maxAttempts = job.opts.attempts ?? 1;
+    if (job.attemptsMade < maxAttempts) return;
+
     const context = {
       queueName: job.queueName,
       jobId: job.id,
-      attemptsMade: job.attemptsMade,
+      attempt: job.attemptsMade,
+      maxAttempts,
     };
-
     this.logger.error(`${job.queueName} job failed`, error, context);
 
     const input = finalizeEmbeddingWorkflowJobInputSchema.safeParse(job.data);
-    if (!input.success) {
-      this.logger.error(`${job.queueName} job failure compensation skipped`, input.error, context);
-      return;
-    }
+    if (!input.success) return;
 
     try {
       await this.finalizeEmbeddingWorkflow.handleFailure({

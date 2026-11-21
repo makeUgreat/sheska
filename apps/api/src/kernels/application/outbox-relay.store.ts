@@ -1,7 +1,7 @@
-import { type IntegrationEvent } from './integration-event.base';
+import { type OutboxMessage } from './outbox-message.base';
 
 export interface ClaimedOutboxMessage {
-  readonly event: IntegrationEvent;
+  readonly message: OutboxMessage;
   readonly attemptCount: number;
 }
 

@@ -128,11 +128,11 @@ describe('PostDetailPage', () => {
     expect(screen.getByText((_, element) => element?.tagName === 'SPAN' && element.textContent === '7 views')).toBeDefined();
   });
 
-  it('AI 요약 자리에 요약이 준비되지 않았다고 알린다', async () => {
+  it('AI 요약 자리에 요약을 작성 중이라고 알린다', async () => {
     renderPage(buildMockHttpClient());
 
     const summary = await screen.findByRole('region', { name: 'AI summary' });
-    expect(within(summary).getByText('Summary not ready yet')).toBeDefined();
+    expect(within(summary).getByText('요약 작성 중')).toBeDefined();
   });
 
   it('요약이 있으면 요약 자리에 받은 줄을 모두 보여준다', async () => {
@@ -155,7 +155,7 @@ describe('PostDetailPage', () => {
     renderPage(client);
 
     const summary = await screen.findByRole('region', { name: 'AI summary' });
-    expect(within(summary).getByText('Summary could not be generated.')).toBeDefined();
+    expect(within(summary).getByText('요약을 만들지 못했어요')).toBeDefined();
   });
 
   describe('이 글에 묻기', () => {

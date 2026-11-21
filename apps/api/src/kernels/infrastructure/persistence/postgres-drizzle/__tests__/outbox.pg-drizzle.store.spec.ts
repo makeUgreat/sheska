@@ -40,9 +40,9 @@ describe('PgDrizzleOutboxStore', () => {
 
     const result = await store.claimDue(50, 30_000);
 
-    expect(result.map(({ event }) => event.eventId)).toEqual(['event-earlier', 'event-later']);
+    expect(result.map(({ message }) => message.eventId)).toEqual(['event-earlier', 'event-later']);
     expect(result[0]).toEqual({
-      event: {
+      message: {
         eventId: 'event-earlier',
         eventType: earlier.eventType,
         eventVersion: earlier.eventVersion,
@@ -63,7 +63,7 @@ describe('PgDrizzleOutboxStore', () => {
 
     const result = await store.claimDue(50, 30_000);
 
-    expect(result.map(({ event }) => event.eventId)).toEqual(['event-a', 'event-b']);
+    expect(result.map(({ message }) => message.eventId)).toEqual(['event-a', 'event-b']);
   });
 
   it('claim 실패를 infrastructure exception으로 감싼다', async () => {

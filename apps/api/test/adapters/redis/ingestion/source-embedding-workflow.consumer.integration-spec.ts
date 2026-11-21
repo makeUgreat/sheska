@@ -2,10 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { BullModule, getQueueToken } from '@nestjs/bullmq';
-import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
-import { type Queue, QueueEvents } from 'bullmq';
+import { type Job, type Queue } from 'bullmq';
 import { LOGGER } from '@kernels/application';
-import { IntegrationEventsModule } from '@platform/nest/events/integration-events.module';
 import {
   SOURCE_EMBEDDING_CHUNK_QUEUE,
   SOURCE_EMBEDDING_FINALIZATION_QUEUE,
@@ -28,7 +26,6 @@ describe('Embedding workflow consumers', () => {
   let app: INestApplication;
   let chunkQueue: Queue;
   let finalizeQueue: Queue;
-  let finalizeQueueEvents: QueueEvents;
   let workflowDispatcher: EmbeddingWorkflowDispatcher;
   const embed = vi.fn<(text: string) => Promise<{ embedding: number[]; model: string }>>();
   const upsert = vi.fn();
@@ -49,8 +46,6 @@ describe('Embedding workflow consumers', () => {
         BullModule.registerFlowProducer({
           name: SOURCE_EMBEDDING_FLOW_PRODUCER,
         }),
-        EventEmitterModule.forRoot(),
-        IntegrationEventsModule,
       ],
       providers: [
         SourceEmbeddingChunkBullMqConsumer,
@@ -87,21 +82,12 @@ describe('Embedding workflow consumers', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    const eventEmitter = app.get(EventEmitter2);
-    eventEmitter.on('source.ingestion.completed', () => undefined);
-    eventEmitter.on('source.ingestion.failed', () => undefined);
-
     chunkQueue = app.get(getQueueToken(SOURCE_EMBEDDING_CHUNK_QUEUE));
     finalizeQueue = app.get(getQueueToken(SOURCE_EMBEDDING_FINALIZATION_QUEUE));
     workflowDispatcher = app.get(EMBEDDING_WORKFLOW_DISPATCHER);
-    finalizeQueueEvents = new QueueEvents(SOURCE_EMBEDDING_FINALIZATION_QUEUE, {
-      connection: REDIS_CONNECTION,
-    });
-    await finalizeQueueEvents.waitUntilReady();
   });
 
   afterEach(async () => {
-    await finalizeQueueEvents.close();
     await chunkQueue.obliterate({ force: true });
     await finalizeQueue.obliterate({ force: true });
     await app.close();
@@ -124,7 +110,7 @@ describe('Embedding workflow consumers', () => {
     });
 
     const parent = await finalizeQueue.getJob('sync-job-1');
-    await parent!.waitUntilFinished(finalizeQueueEvents);
+    await waitForState(parent!, 'completed');
 
     expect(embed).toHaveBeenCalledTimes(2);
     expect(upsert).toHaveBeenCalledOnce();
@@ -151,7 +137,7 @@ describe('Embedding workflow consumers', () => {
     });
 
     const parent = await finalizeQueue.getJob('sync-job-1');
-    await parent!.waitUntilFinished(finalizeQueueEvents);
+    await waitForState(parent!, 'completed');
 
     // 첫 시도 1회 실패 + 재시도 1회 + 나머지 chunk 1회 = 3회.
     expect(embed).toHaveBeenCalledTimes(3);
@@ -170,7 +156,7 @@ describe('Embedding workflow consumers', () => {
     });
 
     const parent = await finalizeQueue.getJob('sync-job-1');
-    await expect(parent!.waitUntilFinished(finalizeQueueEvents)).rejects.toThrow();
+    await waitForState(parent!, 'failed');
 
     expect(embed).toHaveBeenCalledTimes(3);
     const child = await chunkQueue.getJob('sync-job-1-0');
@@ -199,3 +185,7 @@ describe('Embedding workflow consumers', () => {
     });
   });
 });
+
+async function waitForState(job: Job, state: 'completed' | 'failed'): Promise<void> {
+  await vi.waitFor(async () => expect(await job.getState()).toBe(state), { timeout: 15_000 });
+}

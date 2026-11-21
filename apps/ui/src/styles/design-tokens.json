@@ -325,6 +325,16 @@
         "lineHeight": "1.6"
       }
     },
+    "body-sm": {
+      "$description": "AI summary lines in post list rows. One step below body-md so the summary reads as a note under the 20px title.",
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.font-family.sans}",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "1.5714285714"
+      }
+    },
     "body-prose": {
       "$description": "Post body paragraphs and lists. Same size as body-md with looser leading, because Hangul fills its em box and a long paragraph is read line after line while body-md sits in one-line UI rows.",
       "$type": "typography",

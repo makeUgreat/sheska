@@ -1,4 +1,5 @@
 import { Module, type DynamicModule } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 import { SourceContentSnapshotCalculator } from '@contexts/library/application/services/source-content-snapshot-calculator.service';
 import { SourceFromRepositoryLookup } from '@contexts/library/application/services/source.from-repository.lookup';
 import { GetSourceUseCase } from '@contexts/library/application/use-cases/get-source.use-case';
@@ -35,6 +36,15 @@ import { CountPostsUseCase } from '@contexts/library/application/use-cases/count
 import { SourceSyncJobsHttpController } from '@contexts/library/presentation/http/source-sync-jobs.http.controller';
 import { IngestionIntegrationEventConsumer } from '@contexts/library/presentation/events/ingestion.integration-event.consumer';
 import { OutboxDeadLetteredIntegrationEventConsumer } from '@contexts/library/presentation/events/outbox-dead-lettered.integration-event.consumer';
+import { PostSummaryOutboxMessageConsumer } from '@contexts/library/presentation/events/post-summary.outbox-message.consumer';
+import { RequestPostSummaryUseCase } from '@contexts/library/application/use-cases/request-post-summary.use-case';
+import { PostSummaryJobBullMqDispatcher } from '@contexts/library/infrastructure/queue/bullmq/post-summary-job.bullmq.dispatcher';
+import { PostSummaryPgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post-summary.pg-drizzle.repository';
+import { GeneratePostSummaryUseCase } from '@contexts/library/application/use-cases/generate-post-summary.use-case';
+import { PostSummaryBullMqConsumer } from '@contexts/library/presentation/queue/bullmq/post-summary.bullmq.consumer';
+import { TextAnthropicGenerator } from '@contexts/library/infrastructure/text-generation/anthropic/text.anthropic.generator';
+import { anthropicConfig, type AnthropicConfig } from '@contexts/library/infrastructure/text-generation/anthropic/anthropic.config';
+import { POST_SUMMARY_QUEUE } from '@contexts/library/application/ports';
 import {
   type SourceEmbeddingLookup as IngestionSourceEmbeddingLookup,
   SOURCE_EMBEDDING_LOOKUP as INGESTION_SOURCE_EMBEDDING_LOOKUP,
@@ -57,6 +67,9 @@ import {
   POST_QUERY,
   POST_VIEW_REPOSITORY,
   POST_VIEW_QUERY,
+  POST_SUMMARY_JOB_DISPATCHER,
+  POST_SUMMARY_REPOSITORY,
+  POST_SUMMARY_TEXT_GENERATOR,
   SEARCH_QUERY_EMBEDDER,
   ATTACHMENT_IMAGE_CODEC,
   ATTACHMENT_CONTENT_STORE,
@@ -122,6 +135,10 @@ export class LibraryModule {
           useClass: PostViewPgDrizzleQuery,
         },
         {
+          provide: POST_SUMMARY_REPOSITORY,
+          useClass: PostSummaryPgDrizzleRepository,
+        },
+        {
           provide: SEARCH_QUERY_EMBEDDER,
           useFactory: (embedder: TextEmbedder) => new SearchQueryFromIngestionEmbedder(embedder),
           inject: [TEXT_EMBEDDER],
@@ -153,6 +170,8 @@ export class LibraryModule {
         SOURCE_REPOSITORY,
         SOURCE_SYNC_JOB_REPOSITORY,
         SOURCE_LOOKUP,
+        POST_QUERY,
+        POST_SUMMARY_REPOSITORY,
         ListSourcesUseCase,
         GetSourceUseCase,
         GetSourceSyncJobUseCase,
@@ -172,9 +191,26 @@ export class LibraryModule {
   static forRoot(_options: LibraryModuleOptions = {}): DynamicModule {
     return {
       module: LibraryModule,
-      imports: [LibraryModule.forFeature()],
+      imports: [LibraryModule.forFeature(), BullModule.registerQueue({ name: POST_SUMMARY_QUEUE })],
       controllers: [SourcesHttpController, SourceSyncJobsHttpController, PostsHttpController, AttachmentsHttpController],
-      providers: [ApplyIngestionUpdateUseCase, IngestionIntegrationEventConsumer, OutboxDeadLetteredIntegrationEventConsumer],
+      providers: [
+        ApplyIngestionUpdateUseCase,
+        IngestionIntegrationEventConsumer,
+        OutboxDeadLetteredIntegrationEventConsumer,
+        RequestPostSummaryUseCase,
+        PostSummaryOutboxMessageConsumer,
+        {
+          provide: POST_SUMMARY_JOB_DISPATCHER,
+          useClass: PostSummaryJobBullMqDispatcher,
+        },
+        GeneratePostSummaryUseCase,
+        PostSummaryBullMqConsumer,
+        {
+          provide: POST_SUMMARY_TEXT_GENERATOR,
+          useFactory: (config: AnthropicConfig) => new TextAnthropicGenerator(config, { model: 'claude-haiku-5-5', effort: 'low' }),
+          inject: [anthropicConfig.KEY],
+        },
+      ],
     };
   }
 }

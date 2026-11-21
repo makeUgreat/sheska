@@ -1,5 +1,5 @@
-import { type IntegrationEvent } from './integration-event.base';
+import { type OutboxMessage } from './outbox-message.base';
 
 export interface OutboxWriter {
-  append(event: IntegrationEvent): Promise<void>;
+  append(message: OutboxMessage): Promise<void>;
 }

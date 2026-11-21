@@ -123,7 +123,7 @@ function ViewsLink({ postId, viewCount }: { postId: string; viewCount: number })
 }
 
 /**
- * 요약이 없을 때도 자리를 남기고 문구만 바꾼다. 화면 맨 위 모양이 글마다 달라지지 않는다.
+ * 요약이 없을 때도 자리를 남긴다. 화면 맨 위 모양이 글마다 달라지지 않는다.
  * 줄 앞 32px 칸은 번호 자리다. 줄 수가 바뀌어도 글자의 왼쪽 끝이 같은 자리에 선다.
  */
 function Summary({ summary }: { summary: AiSummary }) {
@@ -132,17 +132,39 @@ function Summary({ summary }: { summary: AiSummary }) {
   return (
     <section aria-label="AI summary" className="mt-7">
       <p className={`flex items-center gap-1.5 font-mono text-label-sm uppercase ${ready ? 'text-accent-strong' : 'text-text-muted'}`}>
-        <AiMark className={ready ? 'text-accent' : 'opacity-60'} />
+        <AiMark twinkling={summary.status === 'pending'} className={ready ? 'text-accent' : 'opacity-60'} />
         AI summary
       </p>
-      {summary.status === 'ready' ? (
-        <SummaryLines lines={summary.lines} />
-      ) : (
-        <p className="mt-1.5 pl-8 font-mono text-label-sm leading-[28px] tracking-normal text-text-muted">
-          {AI_SUMMARY_NOTICE[summary.status]}
-        </p>
-      )}
+      <SummaryBody summary={summary} />
     </section>
+  );
+}
+
+function SummaryBody({ summary }: { summary: AiSummary }) {
+  switch (summary.status) {
+    case 'ready':
+      return <SummaryLines lines={summary.lines} />;
+    case 'pending':
+      return <PendingLines />;
+    case 'failed':
+      return (
+        <p className="mt-1.5 pl-8 font-mono text-label-sm leading-[28px] tracking-normal text-text-muted">{AI_SUMMARY_NOTICE.failed}</p>
+      );
+  }
+}
+
+/** 요약 줄이 들어올 자리를 막대로 보여 준다. 문구는 화면 낭독기에만 남긴다. */
+function PendingLines() {
+  return (
+    <div className="mt-1.5 pl-8">
+      <span className="sr-only">{AI_SUMMARY_NOTICE.pending}</span>
+      <span aria-hidden="true" className="flex h-7 items-center">
+        <span className="shimmer-bar h-2.5 w-[92%] rounded-[3px]" />
+      </span>
+      <span aria-hidden="true" className="flex h-7 items-center">
+        <span className="shimmer-bar h-2.5 w-[64%] rounded-[3px]" />
+      </span>
+    </div>
   );
 }
 

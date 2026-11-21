@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   OutboxDeadLetteredIntegrationEvent,
   type ClaimedOutboxMessage,
-  type IntegrationEvent,
-  type IntegrationEventDispatcher,
+  type OutboxMessage,
+  type OutboxMessageDispatcher,
   type LoggerPort,
   type OutboxRelayStore,
 } from '@kernels/application';
@@ -19,8 +19,8 @@ const OPTIONS: OutboxRelayOptions = {
 
 describe('OutboxRelay', () => {
   it('claim한 event를 전달한 뒤 published로 표시한다', async () => {
-    const event = buildIntegrationEvent();
-    const store = createStore([{ event, attemptCount: 1 }]);
+    const event = buildMessage();
+    const store = createStore([{ message: event, attemptCount: 1 }]);
     const dispatcher = createDispatcher();
     const relay = new OutboxRelay(store, dispatcher, createLogger(), { random: () => 1 }, OPTIONS);
 
@@ -32,8 +32,8 @@ describe('OutboxRelay', () => {
   });
 
   it('시도 횟수가 남은 실패는 backoff 지연으로 재시도를 예약한다', async () => {
-    const event = buildIntegrationEvent();
-    const store = createStore([{ event, attemptCount: 2 }]);
+    const event = buildMessage();
+    const store = createStore([{ message: event, attemptCount: 2 }]);
     const failure = new Error('Dispatcher unavailable');
     const dispatcher = createDispatcher();
     dispatcher.dispatch.mockRejectedValueOnce(failure);
@@ -47,8 +47,8 @@ describe('OutboxRelay', () => {
   });
 
   it('재시도 예약 실패는 warn으로 기록한다', async () => {
-    const event = buildIntegrationEvent();
-    const store = createStore([{ event, attemptCount: 1 }]);
+    const event = buildMessage();
+    const store = createStore([{ message: event, attemptCount: 1 }]);
     const failure = new Error('Dispatcher unavailable');
     const dispatcher = createDispatcher();
     dispatcher.dispatch.mockRejectedValueOnce(failure);
@@ -57,7 +57,7 @@ describe('OutboxRelay', () => {
 
     await relay.relayPending();
 
-    expect(logger.warn).toHaveBeenCalledWith('Integration event relay failed', failure, {
+    expect(logger.warn).toHaveBeenCalledWith('Outbox message relay failed', failure, {
       eventId: event.eventId,
       eventType: event.eventType,
       attempt: 1,
@@ -68,8 +68,8 @@ describe('OutboxRelay', () => {
   });
 
   it('시도 횟수를 모두 쓴 실패는 dead letter로 격리하고 재시도를 예약하지 않는다', async () => {
-    const event = buildIntegrationEvent();
-    const store = createStore([{ event, attemptCount: 3 }]);
+    const event = buildMessage();
+    const store = createStore([{ message: event, attemptCount: 3 }]);
     const failure = new Error('Dispatcher unavailable');
     const dispatcher = createDispatcher();
     dispatcher.dispatch.mockRejectedValueOnce(failure);
@@ -80,7 +80,7 @@ describe('OutboxRelay', () => {
 
     expect(store.markDeadLettered).toHaveBeenCalledWith(event.eventId, 'Dispatcher unavailable');
     expect(store.scheduleRetry).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith('Integration event dead-lettered', failure, {
+    expect(logger.error).toHaveBeenCalledWith('Outbox message dead-lettered', failure, {
       eventId: event.eventId,
       eventType: event.eventType,
       attempt: 3,
@@ -91,8 +91,8 @@ describe('OutboxRelay', () => {
   });
 
   it('격리한 event를 dead lettered 통합 이벤트로 알린다', async () => {
-    const event = buildIntegrationEvent();
-    const store = createStore([{ event, attemptCount: 3 }]);
+    const event = buildMessage();
+    const store = createStore([{ message: event, attemptCount: 3 }]);
     const dispatcher = createDispatcher();
     dispatcher.dispatch.mockRejectedValueOnce(new Error('Dispatcher unavailable'));
     const relay = new OutboxRelay(store, dispatcher, createLogger(), { random: () => 1 }, OPTIONS);
@@ -110,8 +110,8 @@ describe('OutboxRelay', () => {
   });
 
   it('dead letter 알림 발행이 실패해도 예외를 밖으로 던지지 않는다', async () => {
-    const event = buildIntegrationEvent();
-    const store = createStore([{ event, attemptCount: 3 }]);
+    const event = buildMessage();
+    const store = createStore([{ message: event, attemptCount: 3 }]);
     const notificationFailure = new Error('No listener registered');
     const dispatcher = createDispatcher();
     dispatcher.dispatch.mockRejectedValueOnce(new Error('Dispatcher unavailable')).mockRejectedValueOnce(notificationFailure);
@@ -128,11 +128,11 @@ describe('OutboxRelay', () => {
   });
 
   it('실패한 event 뒤에 오는 event도 계속 처리한다', async () => {
-    const failedEvent = buildIntegrationEvent({ eventId: 'event-1' });
-    const deliveredEvent = buildIntegrationEvent({ eventId: 'event-2' });
+    const failedEvent = buildMessage({ eventId: 'event-1' });
+    const deliveredEvent = buildMessage({ eventId: 'event-2' });
     const store = createStore([
-      { event: failedEvent, attemptCount: 1 },
-      { event: deliveredEvent, attemptCount: 1 },
+      { message: failedEvent, attemptCount: 1 },
+      { message: deliveredEvent, attemptCount: 1 },
     ]);
     const dispatcher = createDispatcher();
     dispatcher.dispatch.mockRejectedValueOnce(new Error('Dispatcher unavailable')).mockResolvedValueOnce(undefined);
@@ -145,10 +145,10 @@ describe('OutboxRelay', () => {
   });
 
   it('claim 실패를 전파하고 다음 polling에서 다시 시도할 수 있다', async () => {
-    const event = buildIntegrationEvent();
+    const event = buildMessage();
     const store = createStore([]);
     const failure = new Error('Database unavailable');
-    store.claimDue.mockRejectedValueOnce(failure).mockResolvedValueOnce([{ event, attemptCount: 1 }]);
+    store.claimDue.mockRejectedValueOnce(failure).mockResolvedValueOnce([{ message: event, attemptCount: 1 }]);
     const dispatcher = createDispatcher();
     const relay = new OutboxRelay(store, dispatcher, createLogger(), { random: () => 1 }, OPTIONS);
 
@@ -159,7 +159,7 @@ describe('OutboxRelay', () => {
   });
 });
 
-function buildIntegrationEvent(overrides: Partial<IntegrationEvent> = {}): IntegrationEvent {
+function buildMessage(overrides: Partial<OutboxMessage> = {}): OutboxMessage {
   return {
     eventId: 'event-1',
     eventType: 'source.sync_job.created',
@@ -181,7 +181,7 @@ function createStore(claimed: ClaimedOutboxMessage[]) {
 
 function createDispatcher() {
   return {
-    dispatch: vi.fn<IntegrationEventDispatcher['dispatch']>(),
+    dispatch: vi.fn<OutboxMessageDispatcher['dispatch']>(),
   };
 }
 

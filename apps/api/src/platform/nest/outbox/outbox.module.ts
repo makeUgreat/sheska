@@ -1,24 +1,24 @@
 import { Module } from '@nestjs/common';
 import {
-  INTEGRATION_EVENT_DISPATCHER,
-  type IntegrationEventDispatcher,
   LOGGER,
   type LoggerPort,
+  OUTBOX_MESSAGE_DISPATCHER,
+  type OutboxMessageDispatcher,
   type OutboxRelayStore,
 } from '@kernels/application';
 import { OutboxRelay, PgDrizzleOutboxStore, SYSTEM_RETRY_RUNTIME } from '@kernels/infrastructure';
 import { OUTBOX_RELAY_RUNNER_OPTIONS, OutboxRelayRunner } from './outbox-relay.runner';
-import { IntegrationEventsModule } from '../events/integration-events.module';
+import { OutboxMessageEventEmitterDispatcher } from './outbox-message.event-emitter.dispatcher';
 
 const OUTBOX_RELAY_STORE = Symbol('OUTBOX_RELAY_STORE');
 
 @Module({
-  imports: [IntegrationEventsModule],
   providers: [
     { provide: OUTBOX_RELAY_STORE, useClass: PgDrizzleOutboxStore },
+    { provide: OUTBOX_MESSAGE_DISPATCHER, useClass: OutboxMessageEventEmitterDispatcher },
     {
       provide: OutboxRelay,
-      useFactory: (store: OutboxRelayStore, dispatcher: IntegrationEventDispatcher, logger: LoggerPort) =>
+      useFactory: (store: OutboxRelayStore, dispatcher: OutboxMessageDispatcher, logger: LoggerPort) =>
         new OutboxRelay(store, dispatcher, logger, SYSTEM_RETRY_RUNTIME, {
           batchSize: 100,
           maxAttempts: 14,
@@ -26,7 +26,7 @@ const OUTBOX_RELAY_STORE = Symbol('OUTBOX_RELAY_STORE');
           maxDelayMs: 600_000,
           claimLeaseMs: 30_000,
         }),
-      inject: [OUTBOX_RELAY_STORE, INTEGRATION_EVENT_DISPATCHER, LOGGER],
+      inject: [OUTBOX_RELAY_STORE, OUTBOX_MESSAGE_DISPATCHER, LOGGER],
     },
     {
       provide: OUTBOX_RELAY_RUNNER_OPTIONS,

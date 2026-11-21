@@ -3,6 +3,7 @@ import { newId } from '@core/id';
 import { AggregateRoot } from '@kernels/domain';
 import { ExternalSourceId } from './external-source-id.vo';
 import { SourceBody } from './source-body.vo';
+import { SourceBodyChangedDomainEvent, type SourceDomainEvent } from './source.event';
 import { SourceFrontmatter, type SourceFrontmatterProps } from './source-frontmatter.vo';
 import { SourceSize } from './source-size.vo';
 import { SourceSyncJob } from './source-sync-job.aggregate';
@@ -14,7 +15,7 @@ interface SourceProps {
   size: SourceSize;
 }
 
-export class Source extends AggregateRoot<SourceProps> {
+export class Source extends AggregateRoot<SourceProps, SourceDomainEvent> {
   static create(params: SourceCreateParams): Source {
     const frontmatter = SourceFrontmatter.of(params.frontmatter);
     Source.ensureSyncTarget(frontmatter);
@@ -52,13 +53,10 @@ export class Source extends AggregateRoot<SourceProps> {
     const body = SourceBody.of(params.body);
     const size = SourceSize.of(params.size);
 
-    const changed = !this.props.body.hasSameTextAs(body) || !this.props.frontmatter.equals(frontmatter) || !this.props.size.equals(size);
-    if (!changed) return false;
+    const bodyChanged = this.changeBody(body);
+    const metadataChanged = this.changeMetadata(frontmatter, size);
 
-    this.props.frontmatter = frontmatter;
-    this.props.body = body;
-    this.props.size = size;
-    return true;
+    return bodyChanged || metadataChanged;
   }
 
   syncJobFor(latestSyncJob: SourceSyncJob | null): SourceSyncJob {
@@ -82,6 +80,24 @@ export class Source extends AggregateRoot<SourceProps> {
   }
 
   public validate(): void {}
+
+  private changeBody(body: SourceBody): boolean {
+    if (this.props.body.hasSameTextAs(body)) return false;
+
+    this.props.body = body;
+    this.addEvent(new SourceBodyChangedDomainEvent({ aggregateId: this.id }));
+
+    return true;
+  }
+
+  private changeMetadata(frontmatter: SourceFrontmatter, size: SourceSize): boolean {
+    if (this.props.frontmatter.equals(frontmatter) && this.props.size.equals(size)) return false;
+
+    this.props.frontmatter = frontmatter;
+    this.props.size = size;
+
+    return true;
+  }
 
   private static ensureSyncTarget(frontmatter: SourceFrontmatter): void {
     if (frontmatter.isSyncTarget()) return;

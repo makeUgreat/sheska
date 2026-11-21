@@ -12,6 +12,7 @@ import {
   Public,
   ZodValidationPipe,
 } from '@kernels/presentation';
+import { type PostQuerySummary } from '@contexts/library/application/ports';
 import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/library/application/use-cases/get-post.use-case';
 import { RecordPostViewUseCase } from '@contexts/library/application/use-cases/record-post-view.use-case';
@@ -37,6 +38,7 @@ interface PostSummary {
   readonly sourceId: string;
   readonly title: string;
   readonly viewCount: number;
+  readonly summary: PostQuerySummary;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
@@ -83,7 +85,9 @@ export class PostsHttpController {
       sourceId: body.sourceId,
     });
 
-    return PostApi.publish.response.parse(toPostSummaryResponse(result) satisfies ApiResponse<typeof PostApi.publish>);
+    return PostApi.publish.response.parse(
+      toPostSummaryResponse({ ...result, summary: { kind: 'pending' } }) satisfies ApiResponse<typeof PostApi.publish>,
+    );
   }
 
   // 정적 경로가 `:id`보다 먼저 등록되어야 한다.
@@ -183,8 +187,19 @@ function toPostSummaryResponse(post: PostSummary): PostSummaryResponse {
     sourceId: post.sourceId,
     title: post.title,
     viewCount: post.viewCount,
-    summary: { status: 'pending' },
+    summary: toAiSummaryResponse(post.summary),
     createdAt: post.createdAt.toISOString(),
     updatedAt: post.updatedAt.toISOString(),
   };
+}
+
+function toAiSummaryResponse(summary: PostQuerySummary): PostSummaryResponse['summary'] {
+  switch (summary.kind) {
+    case 'pending':
+      return { status: 'pending' };
+    case 'completed':
+      return { status: 'ready', lines: [...summary.sentences] };
+    case 'failed':
+      return { status: 'failed' };
+  }
 }

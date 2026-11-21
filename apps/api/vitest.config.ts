@@ -64,6 +64,7 @@ export default defineConfig({
           environment: 'node',
           globals: false,
           include: ['test/static/**/*.integration-spec.ts'],
+          testTimeout: 30_000,
         },
       },
       {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { type IntegrationEventDispatcher, type OutboxWriter } from '@kernels/application';
+import { type OutboxWriter } from '@kernels/application';
 import { type IngestionUnitOfWork } from '@contexts/ingestion/application/ports';
 import { SourceEmbedding } from '@contexts/ingestion/domain';
 import { type EmbedSourceChunkResult } from '@contexts/ingestion/application/use-cases/embed-source-chunk.use-case';
@@ -35,19 +35,17 @@ function buildUseCase() {
   const unitOfWork: IngestionUnitOfWork = {
     execute: (work) => work({ sourceEmbeddings: { upsert, find: vi.fn() }, outbox: { append } }),
   };
-  const dispatch = vi.fn<IntegrationEventDispatcher['dispatch']>().mockResolvedValue(undefined);
 
   return {
-    useCase: new FinalizeEmbeddingWorkflowUseCase(unitOfWork, { dispatch }),
+    useCase: new FinalizeEmbeddingWorkflowUseCase(unitOfWork),
     upsert,
     append,
-    dispatch,
   };
 }
 
 describe('FinalizeEmbeddingWorkflowUseCase', () => {
   it('child 결과를 index 순으로 저장하고 completed를 outbox에 기록한다', async () => {
-    const { useCase, upsert, append, dispatch } = buildUseCase();
+    const { useCase, upsert, append } = buildUseCase();
 
     await useCase.execute(payload, chunks);
 
@@ -59,7 +57,6 @@ describe('FinalizeEmbeddingWorkflowUseCase', () => {
         payload: { syncJobId: 'sync-job-1', totalChunks: 2 },
       }),
     );
-    expect(dispatch).not.toHaveBeenCalled();
   });
 
   // nocap: ingestion-sourceEmbedding-4
@@ -96,12 +93,12 @@ describe('FinalizeEmbeddingWorkflowUseCase', () => {
     expect(upsert).not.toHaveBeenCalled();
   });
 
-  it('finalize 실패를 sync job 실패 이벤트로 변환한다', async () => {
-    const { useCase, dispatch } = buildUseCase();
+  it('finalize 실패를 sync job 실패 이벤트로 outbox에 기록한다', async () => {
+    const { useCase, append } = buildUseCase();
 
     await useCase.handleFailure({ ...payload, syncJobId: 'sync-job-42' });
 
-    expect(dispatch).toHaveBeenCalledWith(
+    expect(append).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: 'source.ingestion.failed',
         payload: { syncJobId: 'sync-job-42' },

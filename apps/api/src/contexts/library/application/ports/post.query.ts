@@ -1,9 +1,14 @@
+import { type PostSummaryOutcome } from '@contexts/library/domain';
+
+export type PostQuerySummary = { readonly kind: 'pending' } | PostSummaryOutcome;
+
 export interface PostQueryResult {
   readonly postId: string;
   readonly sourceId: string;
   readonly title: string;
   readonly body: string;
   readonly viewCount: number;
+  readonly summary: PostQuerySummary;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
@@ -37,6 +42,7 @@ export type PostQueryListItem = {
   readonly sourceId: string;
   readonly title: string;
   readonly viewCount: number;
+  readonly summary: PostQuerySummary;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 };

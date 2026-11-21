@@ -68,7 +68,7 @@ describe('SourceEmbeddingFinalizationBullMqConsumer', () => {
     expect(handleFailure).toHaveBeenCalledWith(job.data);
   });
 
-  it('job payload를 쓸 수 없으면 보상을 건너뛰되 reject하지 않는다', async () => {
+  it('job payload를 쓸 수 없으면 실패 로그만 한 번 남기고 보상을 건너뛴다', async () => {
     const { useCase, handleFailure, logger } = buildDependencies();
     const consumer = new SourceEmbeddingFinalizationBullMqConsumer(useCase, logger);
     const job = buildJob();
@@ -77,11 +77,8 @@ describe('SourceEmbeddingFinalizationBullMqConsumer', () => {
     await expect(consumer.onFailed(job, new Error('save failed'))).resolves.toBeUndefined();
 
     expect(handleFailure).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith(
-      'source-embedding-finalization job failure compensation skipped',
-      expect.anything(),
-      expect.anything(),
-    );
+    expect(logger.error).toHaveBeenCalledOnce();
+    expect(logger.error).toHaveBeenCalledWith('source-embedding-finalization job failed', expect.any(Error), expect.anything());
   });
 
   it('보상 자체가 실패해도 reject하지 않고 error로 남긴다', async () => {

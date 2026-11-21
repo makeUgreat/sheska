@@ -1,7 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { count, desc, lt, sql, type SQL } from 'drizzle-orm';
+import { count, desc, inArray, lt, sql, type SQL } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { NotFoundError } from '@core/errors';
+import { type PostSummaryOutcome } from '@contexts/library/domain';
 import {
   type PostQuery,
   type PostQueryFindCriteria,
@@ -14,9 +15,11 @@ import {
   type PostQuerySearchResult,
   type PostQuerySearchCursor,
   type PostMatchReason,
+  PostQuerySummary,
 } from '@contexts/library/application/ports';
 import { classifyPostgresError, DATABASE_TOKENS, sliceForCursor } from '@kernels/infrastructure';
 import * as postsSchema from './schema';
+import { PostSummaryPgDrizzleMapper } from './post-summary.pg-drizzle.mapper';
 
 type QuerySchema = typeof postsSchema;
 
@@ -25,6 +28,7 @@ const CONTENT_SEARCH_WEIGHT = TITLE_SEARCH_WEIGHT * 0.4;
 const RRF_K = 60;
 const CANDIDATE_POOL_SIZE = 50;
 const EMBEDDING_MAX_DISTANCE = 0.6;
+const PENDING_SUMMARY: PostQuerySummary = { kind: 'pending' };
 
 type PostWithSourceRow = {
   post_id: string;
@@ -109,11 +113,14 @@ export class PostPgDrizzleQuery implements PostQuery {
       return null;
     }
 
+    const summaries = await this.findSummaries([row.post_id]);
+
     return {
       postId: row.post_id,
       sourceId: row.post_id,
       title: row.title,
       viewCount: row.view_count,
+      summary: summaries.get(row.post_id) ?? PENDING_SUMMARY,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
       body: row.source_body,
@@ -143,8 +150,9 @@ export class PostPgDrizzleQuery implements PostQuery {
       const { data, nextCursor } = sliceForCursor(rows, limit, (row) => ({
         id: row.id,
       }));
+      const summaries = await this.findSummaries(data.map((row) => row.id));
 
-      return this.toResult(data, nextCursor);
+      return this.toResult(data, nextCursor, summaries);
     } catch (error: unknown) {
       const ErrorClass = classifyPostgresError(error);
       throw new ErrorClass({
@@ -189,8 +197,9 @@ export class PostPgDrizzleQuery implements PostQuery {
         id: row.id,
         score: row.searchScore,
       }));
+      const summaries = await this.findSummaries(data.map((row) => row.id));
 
-      return this.toSearchResult(data, nextCursor, query);
+      return this.toSearchResult(data, nextCursor, query, summaries);
     } catch (error: unknown) {
       const ErrorClass = classifyPostgresError(error);
       throw new ErrorClass({
@@ -338,6 +347,7 @@ export class PostPgDrizzleQuery implements PostQuery {
   private toResult<TCursor extends PostQueryCursor>(
     data: PostListRow[],
     nextCursor: TCursor | null,
+    summaries: Map<string, PostSummaryOutcome>,
   ): { posts: PostQueryListItem[]; nextCursor: TCursor | null } {
     return {
       posts: data.map((row): PostQueryListItem => ({
@@ -345,6 +355,7 @@ export class PostPgDrizzleQuery implements PostQuery {
         sourceId: row.sourceId,
         title: row.title,
         viewCount: row.viewCount,
+        summary: summaries.get(row.id) ?? PENDING_SUMMARY,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       })),
@@ -352,13 +363,19 @@ export class PostPgDrizzleQuery implements PostQuery {
     };
   }
 
-  private toSearchResult(data: SearchPostRow[], nextCursor: PostQuerySearchCursor | null, query: string): PostQuerySearchResult {
+  private toSearchResult(
+    data: SearchPostRow[],
+    nextCursor: PostQuerySearchCursor | null,
+    query: string,
+    summaries: Map<string, PostSummaryOutcome>,
+  ): PostQuerySearchResult {
     return {
       posts: data.map((row) => ({
         postId: row.id,
         sourceId: row.sourceId,
         title: row.title,
         viewCount: row.viewCount,
+        summary: summaries.get(row.id) ?? PENDING_SUMMARY,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         matchReason: row.matchReason,
@@ -367,6 +384,17 @@ export class PostPgDrizzleQuery implements PostQuery {
       })),
       nextCursor,
     };
+  }
+
+  private async findSummaries(postIds: readonly string[]): Promise<Map<string, PostSummaryOutcome>> {
+    if (postIds.length === 0) return new Map();
+
+    const rows = await this.db
+      .select()
+      .from(postsSchema.postSummaries)
+      .where(inArray(postsSchema.postSummaries.postId, [...postIds]));
+
+    return new Map(rows.map((row) => [row.postId, PostSummaryPgDrizzleMapper.toOutcome(row)]));
   }
 
   private toSimilarityPercent(embeddingDistance: number | null): number | null {

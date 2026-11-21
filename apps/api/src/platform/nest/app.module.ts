@@ -6,11 +6,11 @@ import { IamModule } from '@contexts/iam';
 import { ownerPasswordSecretConfig } from '@contexts/iam/infrastructure/owner-password/secret/owner-password.secret.config';
 import { LibraryModule } from '@contexts/library/library.module';
 import { ollamaConfig } from '@contexts/ingestion/infrastructure/embedding/ollama-http/ollama-http.config';
+import { anthropicConfig } from '@contexts/library/infrastructure/text-generation/anthropic/anthropic.config';
 import { IngestionModule } from '@contexts/ingestion/ingestion.module';
 import { attachmentContentR2Config } from '@contexts/library/infrastructure/attachment-content/r2/attachment-content.r2.config';
 import { databaseConfig } from './database/database.config';
 import { DatabaseModule } from './database/database.module';
-import { IntegrationEventsModule } from './events/integration-events.module';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { HealthModule } from './health/health.module';
 import { httpConfig } from './http/http.config';
@@ -27,11 +27,19 @@ import { RedisModule } from './redis/redis.module';
     ConfigModule.forRoot({
       ignoreEnvFile: true,
       isGlobal: true,
-      load: [databaseConfig, httpConfig, loggerConfig, redisConfig, ollamaConfig, attachmentContentR2Config, ownerPasswordSecretConfig],
+      load: [
+        databaseConfig,
+        httpConfig,
+        loggerConfig,
+        redisConfig,
+        ollamaConfig,
+        attachmentContentR2Config,
+        anthropicConfig,
+        ownerPasswordSecretConfig,
+      ],
     }),
     LoggerModule,
     EventEmitterModule.forRoot({ wildcard: false }),
-    IntegrationEventsModule,
     QueueModule,
     RedisModule,
     DatabaseModule,
