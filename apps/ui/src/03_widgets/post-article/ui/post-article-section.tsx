@@ -1,6 +1,7 @@
+import { type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { AI_SUMMARY_NOTICE, type AiSummary, type GetPostResponse } from '@/entities/post';
-import { formatDottedDate } from '@/shared/lib';
+import { formatDottedDate, type RevealPhase, useStagedReveal } from '@/shared/lib';
 import { AiMark, ArticleLayout, BackLink, EmptyState, ErrorState } from '@/shared/ui';
 
 export type PostArticleState =
@@ -88,7 +89,7 @@ function PostHeader({ post, canOpenViews }: { post: GetPostResponse; canOpenView
           </span>
         )}
       </p>
-      <Summary summary={post.summary} />
+      <Summary key={post.postId} postId={post.postId} summary={post.summary} />
     </>
   );
 }
@@ -122,66 +123,129 @@ function ViewsLink({ postId, viewCount }: { postId: string; viewCount: number })
   );
 }
 
+const SUMMARY_HOLD_MS = 700;
+const LINE_STAGGER_MS = 140;
+
+function delayMs(ms: number): CSSProperties {
+  return { animationDelay: `${ms}ms` };
+}
+
 /**
  * 요약이 없을 때도 자리를 남긴다. 화면 맨 위 모양이 글마다 달라지지 않는다.
  * 줄 앞 32px 칸은 번호 자리다. 줄 수가 바뀌어도 글자의 왼쪽 끝이 같은 자리에 선다.
+ * 이미 만든 요약도 처음 볼 때는 작성 중처럼 잠깐 막대를 보인 뒤 드러낸다.
  */
-function Summary({ summary }: { summary: AiSummary }) {
-  const ready = summary.status === 'ready';
+function Summary({ postId, summary }: { postId: string; summary: AiSummary }) {
+  const { ref, phase } = useStagedReveal(postId, { ready: summary.status === 'ready', holdMs: SUMMARY_HOLD_MS });
+  const shown = summary.status === 'ready' && phase !== 'holding';
+  const writing = summary.status === 'pending' || (summary.status === 'ready' && phase === 'holding');
+  const pop = phase === 'revealing' ? 'animate-mark-pop motion-reduce:animate-none' : '';
 
   return (
-    <section aria-label="AI summary" className="mt-7">
-      <p className={`flex items-center gap-1.5 font-mono text-label-sm uppercase ${ready ? 'text-accent-strong' : 'text-text-muted'}`}>
-        <AiMark twinkling={summary.status === 'pending'} className={ready ? 'text-accent' : 'opacity-60'} />
+    <section ref={ref} aria-label="AI summary" className="mt-5">
+      <p className={`flex items-center gap-1.5 font-mono text-label-sm uppercase ${shown ? 'text-accent-strong' : 'text-text-muted'}`}>
+        <AiMark twinkling={writing} className={shown ? `text-accent ${pop}` : 'opacity-60'} />
         AI summary
       </p>
-      <SummaryBody summary={summary} />
+      <div className="mt-1.5 pl-[22px]">
+        <div className="relative">
+          <SummaryBody summary={summary} phase={phase} />
+        </div>
+      </div>
     </section>
   );
 }
 
-function SummaryBody({ summary }: { summary: AiSummary }) {
+function SummaryBody({ summary, phase }: { summary: AiSummary; phase: RevealPhase }) {
   switch (summary.status) {
     case 'ready':
-      return <SummaryLines lines={summary.lines} />;
+      return <ReadyLines lines={summary.lines} phase={phase} />;
     case 'pending':
-      return <PendingLines />;
-    case 'failed':
       return (
-        <p className="mt-1.5 pl-8 font-mono text-label-sm leading-[28px] tracking-normal text-text-muted">{AI_SUMMARY_NOTICE.failed}</p>
+        <>
+          <span className="sr-only">{AI_SUMMARY_NOTICE.pending}</span>
+          <PendingBars />
+        </>
       );
+    case 'failed':
+      return <p className="pl-8 text-body-sm leading-[26px] text-text-muted">{AI_SUMMARY_NOTICE.failed}</p>;
   }
 }
 
-/** 요약 줄이 들어올 자리를 막대로 보여 준다. 문구는 화면 낭독기에만 남긴다. */
-function PendingLines() {
+/** 붙잡는 동안에도 화면 낭독기에는 요약을 그대로 읽힌다. 막대는 보이기만 하는 연출이다. */
+function ReadyLines({ lines, phase }: { lines: string[]; phase: RevealPhase }) {
+  switch (phase) {
+    case 'holding':
+      return (
+        <>
+          <div className="sr-only">
+            <SummaryLines lines={lines} revealing={false} />
+          </div>
+          <PendingBars />
+        </>
+      );
+    case 'revealing':
+      return (
+        <>
+          <SummaryLines lines={lines} revealing />
+          <div className="pointer-events-none absolute inset-x-0 top-0 animate-fade-out motion-reduce:hidden">
+            <PendingBars />
+          </div>
+        </>
+      );
+    case 'shown':
+      return <SummaryLines lines={lines} revealing={false} />;
+  }
+}
+
+/** 요약 줄이 들어올 자리를 막대로 보여 준다. 번호 칸부터 채운다. */
+function PendingBars() {
   return (
-    <div className="mt-1.5 pl-8">
-      <span className="sr-only">{AI_SUMMARY_NOTICE.pending}</span>
-      <span aria-hidden="true" className="flex h-7 items-center">
+    <div aria-hidden="true" className="flex flex-col gap-0.5">
+      <span className="flex h-[26px] items-center">
         <span className="shimmer-bar h-2.5 w-[92%] rounded-[3px]" />
       </span>
-      <span aria-hidden="true" className="flex h-7 items-center">
+      <span className="flex h-[26px] items-center">
         <span className="shimmer-bar h-2.5 w-[64%] rounded-[3px]" />
       </span>
     </div>
   );
 }
 
-/** 번호는 순서가 있을 때만 뜻이 있다. 한 줄뿐이면 `01` 하나가 다음 줄이 빠진 것처럼 보여서 붙이지 않는다. */
-function SummaryLines({ lines }: { lines: string[] }) {
+/**
+ * 번호는 순서가 있을 때만 뜻이 있다. 한 줄뿐이면 `01` 하나가 다음 줄이 빠진 것처럼 보여서 붙이지 않는다.
+ * 드러날 때는 줄마다 조금씩 늦게 왼쪽부터 쓰인다. 막대 두 줄보다 많은 줄은 높이를 펼쳐 머리판 경계가 튀지 않게 한다.
+ */
+function SummaryLines({ lines, revealing }: { lines: string[]; revealing: boolean }) {
   const numbered = lines.length > 1;
 
   return (
-    <ol className="mt-1.5 flex flex-col gap-1.5">
-      {lines.map((line, index) => (
-        <li key={index} className="grid grid-cols-[32px_minmax(0,1fr)] items-start">
-          <span aria-hidden="true" className="font-mono text-label-sm leading-[28px] tracking-normal tabular-nums text-text-muted/70">
-            {numbered ? String(index + 1).padStart(2, '0') : ''}
-          </span>
-          <p className="text-body-md leading-[28px] text-text-secondary">{line}</p>
-        </li>
-      ))}
+    <ol className="flex flex-col gap-0.5">
+      {lines.map((line, index) => {
+        const opens = revealing && index >= 2;
+
+        return (
+          <li
+            key={index}
+            className={`grid grid-cols-[32px_minmax(0,1fr)] grid-rows-[1fr] items-baseline ${opens ? 'animate-row-open overflow-hidden motion-reduce:animate-none' : ''}`}
+            style={opens ? delayMs(index * LINE_STAGGER_MS) : undefined}
+          >
+            <span
+              aria-hidden="true"
+              className={`min-h-0 font-mono text-label-sm leading-[26px] tracking-normal tabular-nums text-text-muted/70 ${revealing ? 'animate-fade-in motion-reduce:animate-none' : ''}`}
+              style={revealing ? delayMs(index * LINE_STAGGER_MS) : undefined}
+            >
+              {numbered ? String(index + 1).padStart(2, '0') : ''}
+            </span>
+            <p
+              className={`min-h-0 text-body-md leading-[26px] text-text-secondary ${revealing ? 'reveal-sweep' : ''}`}
+              style={revealing ? delayMs(index * LINE_STAGGER_MS + 60) : undefined}
+            >
+              {line}
+            </p>
+          </li>
+        );
+      })}
     </ol>
   );
 }
