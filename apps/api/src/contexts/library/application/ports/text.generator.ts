@@ -24,6 +24,5 @@ export interface TextGenerationResult {
 }
 
 export interface TextGenerator {
-  /** 입력이 모델의 한도를 넘으면 자르지 않고 `InputTooLargeError`를 던진다 */
   generate(request: TextGenerationRequest, context: CallContext): Promise<TextGenerationResult>;
 }

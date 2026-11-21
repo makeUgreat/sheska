@@ -86,4 +86,24 @@ describe('PostSummary', () => {
       }),
     ).toThrow(InvariantViolationError);
   });
+
+  it.each([
+    {
+      name: '같은 본문으로 완료한 요약',
+      outcome: { kind: 'completed', sentences: ['첫째 문장'], model: 'claude-haiku-5-5' } as const,
+      fingerprint: 'fingerprint-1',
+      expected: true,
+    },
+    { name: '같은 본문으로 실패한 요약', outcome: { kind: 'failed' } as const, fingerprint: 'fingerprint-1', expected: false },
+    {
+      name: '다른 본문으로 완료한 요약',
+      outcome: { kind: 'completed', sentences: ['첫째 문장'], model: 'claude-haiku-5-5' } as const,
+      fingerprint: 'fingerprint-2',
+      expected: false,
+    },
+  ])('$name인지에 따라 본문의 완료 여부를 답한다', ({ outcome, fingerprint, expected }) => {
+    const summary = PostSummary.restore({ postId: 'source-1', fingerprint, outcome, finishedAt: FINISHED_AT });
+
+    expect(summary.isCompletedFor(SourceFingerprint.of('fingerprint-1'))).toBe(expected);
+  });
 });

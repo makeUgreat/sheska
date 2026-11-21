@@ -45,6 +45,10 @@ export class PostSummary extends AggregateRoot<PostSummaryProps> {
     });
   }
 
+  isCompletedFor(fingerprint: SourceFingerprint): boolean {
+    return this.props.outcome.kind === 'completed' && this.props.fingerprint.equals(fingerprint);
+  }
+
   public validate(): void {
     if (this.props.outcome.kind === 'completed' && this.props.outcome.sentences.length === 0) {
       throw new InvariantViolationError({
