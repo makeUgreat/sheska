@@ -218,22 +218,6 @@
         "components": [0.4941, 0.9059, 0.5294],
         "hex": "#7ee787"
       }
-    },
-    "snow": {
-      "$description": "Winter season only. Body of the snow that settles on the landing terminal window, light enough to read as snow on page-background.",
-      "$value": {
-        "colorSpace": "srgb",
-        "components": [0.9333, 0.949, 0.9686],
-        "hex": "#eef2f7"
-      }
-    },
-    "snow-shade": {
-      "$description": "Winter season only. Underside of the settled snow and the flakes that fall on page-background.",
-      "$value": {
-        "colorSpace": "srgb",
-        "components": [0.7882, 0.8196, 0.8706],
-        "hex": "#c9d1de"
-      }
     }
   },
   "typography": {

@@ -133,6 +133,10 @@ function renderPage(client: HttpClient, season: Season | null = null) {
   );
 }
 
+function textContentIs(text: string) {
+  return (_: string, element: Element | null) => element?.textContent === text;
+}
+
 async function typeCommand(prompt: string | RegExp, line: string) {
   const user = userEvent.setup();
   await user.type(await screen.findByLabelText(prompt), `${line}{Enter}`);
@@ -482,6 +486,25 @@ describe('LandingPage terminal', () => {
 
       await typeCommand('guest@hash:~$', 'snow');
       expect(await screen.findByText('Snowfall started.')).toBeDefined();
+    });
+
+    it('상태 줄은 snow 명령에 따라 눈이 내리는지 보여 준다', async () => {
+      const { client } = buildMockHttpClient();
+      renderPage(client, 'winter');
+
+      expect(await screen.findByText(textContentIs('snow on'))).toBeDefined();
+
+      await typeCommand('guest@hash:~$', 'snow');
+      expect(await screen.findByText(textContentIs('snow off'))).toBeDefined();
+    });
+
+    it('겨울이 아니면 상태 줄이 없다', async () => {
+      const { client } = buildMockHttpClient();
+      renderPage(client);
+
+      await screen.findByLabelText('guest@hash:~$');
+
+      expect(screen.queryByText(textContentIs('snow on'))).toBeNull();
     });
 
     it('겨울이 아니면 snow 명령이 없다', async () => {
