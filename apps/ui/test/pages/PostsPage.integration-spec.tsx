@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, type Mock } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -16,15 +16,15 @@ function buildMockHttpClient({
   countPosts = vi.fn().mockResolvedValue({ count: 0 }),
   searchPosts = vi.fn().mockResolvedValue({ posts: [], nextCursor: null }),
 }: {
-  listPosts?: ReturnType<typeof vi.fn>;
-  countPosts?: ReturnType<typeof vi.fn>;
-  searchPosts?: ReturnType<typeof vi.fn>;
+  listPosts?: Mock<() => Promise<unknown>>;
+  countPosts?: Mock<() => Promise<unknown>>;
+  searchPosts?: Mock<() => Promise<unknown>>;
 } = {}): HttpClient {
   return {
     get: vi.fn((path: string) => {
-      if (path === '/posts/count') return countPosts() as Promise<unknown>;
-      if (path === '/posts/search') return searchPosts() as Promise<unknown>;
-      return listPosts() as Promise<unknown>;
+      if (path === '/posts/count') return countPosts();
+      if (path === '/posts/search') return searchPosts();
+      return listPosts();
     }),
     post: vi.fn(),
     patch: vi.fn(),
