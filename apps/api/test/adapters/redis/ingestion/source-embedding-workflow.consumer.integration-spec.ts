@@ -2,10 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { BullModule, getQueueToken } from '@nestjs/bullmq';
-import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { type Queue, QueueEvents } from 'bullmq';
 import { LOGGER } from '@kernels/application';
-import { IntegrationEventsModule } from '@platform/nest/events/integration-events.module';
 import {
   SOURCE_EMBEDDING_CHUNK_QUEUE,
   SOURCE_EMBEDDING_FINALIZATION_QUEUE,
@@ -49,8 +47,6 @@ describe('Embedding workflow consumers', () => {
         BullModule.registerFlowProducer({
           name: SOURCE_EMBEDDING_FLOW_PRODUCER,
         }),
-        EventEmitterModule.forRoot(),
-        IntegrationEventsModule,
       ],
       providers: [
         SourceEmbeddingChunkBullMqConsumer,
@@ -86,10 +82,6 @@ describe('Embedding workflow consumers', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
-
-    const eventEmitter = app.get(EventEmitter2);
-    eventEmitter.on('source.ingestion.completed', () => undefined);
-    eventEmitter.on('source.ingestion.failed', () => undefined);
 
     chunkQueue = app.get(getQueueToken(SOURCE_EMBEDDING_CHUNK_QUEUE));
     finalizeQueue = app.get(getQueueToken(SOURCE_EMBEDDING_FINALIZATION_QUEUE));

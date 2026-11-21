@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { StateConflictError } from '@core/errors';
-import { INTEGRATION_EVENT_DISPATCHER, type IntegrationEventDispatcher } from '@kernels/application';
 import { SourceEmbedding } from '@contexts/ingestion/domain';
 import {
   IngestionCompletedIntegrationEvent,
@@ -21,8 +20,6 @@ export class FinalizeEmbeddingWorkflowUseCase {
   constructor(
     @Inject(INGESTION_UNIT_OF_WORK)
     private readonly unitOfWork: IngestionUnitOfWork,
-    @Inject(INTEGRATION_EVENT_DISPATCHER)
-    private readonly integrationEventDispatcher: IntegrationEventDispatcher,
   ) {}
 
   async execute(command: FinalizeEmbeddingWorkflowCommand, chunks: readonly EmbedSourceChunkResult[]): Promise<void> {
@@ -45,7 +42,7 @@ export class FinalizeEmbeddingWorkflowUseCase {
     const failedEvent = new IngestionFailedIntegrationEvent({
       syncJobId: command.syncJobId,
     });
-    await this.integrationEventDispatcher.dispatch(failedEvent);
+    await this.unitOfWork.execute(({ outbox }) => outbox.append(failedEvent));
   }
 
   private assembleSourceEmbedding(command: FinalizeEmbeddingWorkflowCommand, chunks: readonly EmbedSourceChunkResult[]): SourceEmbedding {
