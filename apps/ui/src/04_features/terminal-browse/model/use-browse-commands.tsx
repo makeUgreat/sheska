@@ -229,7 +229,7 @@ export function useBrowseCommands({
           return;
         }
 
-        navigate(entry.to);
+        void navigate(entry.to);
       } catch (error) {
         printRequestFailure(io, 'cat', error);
       }
@@ -276,7 +276,7 @@ export function useBrowseCommands({
         return;
       }
       if (page) {
-        navigate(page);
+        void navigate(page);
         return;
       }
       if (isDirectory(path) || readFile(path) !== undefined) {
@@ -291,7 +291,7 @@ export function useBrowseCommands({
           return;
         }
 
-        navigate(entry.to);
+        void navigate(entry.to);
       } catch (error) {
         printRequestFailure(io, 'open', error);
       }

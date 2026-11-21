@@ -79,12 +79,12 @@ export function Header() {
 
   function handleYellowClick() {
     if (!owner) {
-      navigate('/', { state: { run: 'su' } satisfies TerminalLaunchState });
+      void navigate('/', { state: { run: 'su' } satisfies TerminalLaunchState });
       return;
     }
     logOut.mutate(undefined, {
       onSuccess: () => {
-        if (isCurrent(pathname, '/sources')) navigate('/');
+        if (isCurrent(pathname, '/sources')) void navigate('/');
       },
     });
   }

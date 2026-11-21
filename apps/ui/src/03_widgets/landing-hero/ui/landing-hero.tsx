@@ -29,7 +29,7 @@ export function LandingHero({ articlesHref, githubHref }: { articlesHref: string
 
     terminal.current?.run(launch);
     // 새로고침이나 뒤로 가기로 같은 명령이 다시 돌지 않게 state를 지운다.
-    navigate(location.pathname, { replace: true, state: null });
+    void navigate(location.pathname, { replace: true, state: null });
   }, [launch, location.pathname, navigate]);
 
   return (
