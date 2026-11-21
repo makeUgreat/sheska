@@ -32,7 +32,7 @@ function groupByYear(entries: readonly ArchiveEntry[]): YearGroup[] {
 }
 
 const ENTRY =
-  'group/entry flex flex-col gap-1.5 border-b border-outline-variant/12 py-6 ' +
+  'group/entry flex flex-col gap-1 border-b border-outline-variant/12 py-6 ' +
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page-background';
 
 const YEAR_IN_MARGIN =

@@ -173,10 +173,10 @@ function SummaryLines({ lines }: { lines: string[] }) {
   const numbered = lines.length > 1;
 
   return (
-    <ol className="mt-1.5">
+    <ol className="mt-1.5 flex flex-col gap-1.5">
       {lines.map((line, index) => (
         <li key={index} className="grid grid-cols-[32px_minmax(0,1fr)] items-start">
-          <span aria-hidden="true" className="font-mono text-label-sm leading-[28px] tracking-normal tabular-nums text-accent-strong">
+          <span aria-hidden="true" className="font-mono text-label-sm leading-[28px] tracking-normal tabular-nums text-text-muted/70">
             {numbered ? String(index + 1).padStart(2, '0') : ''}
           </span>
           <p className="text-body-md leading-[28px] text-text-secondary">{line}</p>
