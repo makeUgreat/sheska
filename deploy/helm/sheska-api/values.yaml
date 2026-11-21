@@ -8,7 +8,7 @@ config:
 image:
   repository: willom2c/sheska-api
   pullPolicy: IfNotPresent
-  tag: "sha-fab0f1548f5462c96607520c3389979910250e13"
+  tag: "sha-1723dddb48cc3f27142371ab014975462635dfc8"
 service:
   type: ClusterIP
   port: 3000
