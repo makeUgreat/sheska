@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.5.1](https://github.com/makeUgreat/sheska/compare/1.5.0...1.5.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* move ui and obsidian-plugin to vitest 4 ([#479](https://github.com/makeUgreat/sheska/issues/479)) ([7ba1f3f](https://github.com/makeUgreat/sheska/commit/7ba1f3fd9c7f4a4767bd98d379906945bdb5e922)), closes [#382](https://github.com/makeUgreat/sheska/issues/382)
+* **obsidian-plugin:** move esbuild to 0.25 ([#481](https://github.com/makeUgreat/sheska/issues/481)) ([f7eb8eb](https://github.com/makeUgreat/sheska/commit/f7eb8eb920141790d3d5be01c4331d34bc968430)), closes [#382](https://github.com/makeUgreat/sheska/issues/382)
+* update dependencies within their semver ranges ([#478](https://github.com/makeUgreat/sheska/issues/478)) ([bf6b1df](https://github.com/makeUgreat/sheska/commit/bf6b1dfcd38c979f572d3ef648c0624fd9e66a53))
+
 ## [1.5.0](https://github.com/makeUgreat/sheska/compare/1.4.1...1.5.0) (2026-11-19)
 
 
