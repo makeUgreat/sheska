@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { customType, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { bigint, customType, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { type SourceFrontmatterProps } from '@contexts/library/domain';
 
 const tsvector = customType<{ data: string }>({
@@ -55,5 +55,20 @@ export const posts = pgTable('posts', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const postViews = pgTable(
+  'post_views',
+  {
+    id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+    postId: text('post_id')
+      .notNull()
+      .references(() => posts.id, { onDelete: 'cascade' }),
+    ip: text('ip').notNull(),
+    client: text('client').notNull(),
+    viewedAt: timestamp('viewed_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [index('post_views_post_id_ip_viewed_at_idx').on(table.postId, table.ip, table.viewedAt.desc())],
+);
+
+export type PostViewRow = typeof postViews.$inferSelect;
 export type PostRow = typeof posts.$inferSelect;
 export type PostInsert = typeof posts.$inferInsert;

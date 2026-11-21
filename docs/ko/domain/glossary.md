@@ -34,7 +34,9 @@ read_when:
 - post(`Post`): 소유자가 발행한 source임
   - source와 다름. 발행하지 않은 source도 있음
 - 발행: source를 post로 만드는 일임
-- 조회수(`PostViewCount`): post 상세를 조회한 횟수임
+- 조회수(`PostViewCount`): post 상세를 센 방문 횟수임. 같은 방문자는 30분에 한 번만 셈
+- 방문 기록(`PostView`): 조회수를 늘린 조회 하나의 post, IP, 방문 수단, 시각임
+- 방문 수단(`PostViewClient`): 방문자가 접속에 쓴 클라이언트임. User-Agent가 없으면 `unknown`임
 - 수정 시각: post 자신의 상태가 마지막으로 바뀐 시각임
 - 키워드 검색: 질의의 단어가 제목이나 본문에 들어 있는 post를 찾는 검색임
 - 의미 검색: 질의의 임베딩과 가까운 청크 임베딩을 가진 post를 찾는 검색임

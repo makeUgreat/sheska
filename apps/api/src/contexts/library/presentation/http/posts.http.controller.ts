@@ -1,10 +1,20 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, Req } from '@nestjs/common';
+import { type Request } from 'express';
 import { z } from 'zod';
 import { type ApiRequest, type ApiResponse, PostApi, type PostSummaryResponse, PERMISSION } from '@sheska/contract';
 import { callContext } from '@core/call-context';
-import { cursorQueryParamSchema, encodeCursor, ErrorCodes, Permission, Public, ZodValidationPipe } from '@kernels/presentation';
+import {
+  clientAddressOf,
+  cursorQueryParamSchema,
+  encodeCursor,
+  ErrorCodes,
+  Permission,
+  Public,
+  ZodValidationPipe,
+} from '@kernels/presentation';
 import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/library/application/use-cases/get-post.use-case';
+import { RecordPostViewUseCase } from '@contexts/library/application/use-cases/record-post-view.use-case';
 import { ListPostsUseCase } from '@contexts/library/application/use-cases/list-posts.use-case';
 import { SearchPostsUseCase } from '@contexts/library/application/use-cases/search-posts.use-case';
 import { CountPostsUseCase } from '@contexts/library/application/use-cases/count-posts.use-case';
@@ -31,6 +41,7 @@ export class PostsHttpController {
   constructor(
     private readonly publishPostUseCase: PublishPostUseCase,
     private readonly getPostUseCase: GetPostUseCase,
+    private readonly recordPostViewUseCase: RecordPostViewUseCase,
     private readonly listPostsUseCase: ListPostsUseCase,
     private readonly searchPostsUseCase: SearchPostsUseCase,
     private readonly countPostsUseCase: CountPostsUseCase,
@@ -121,6 +132,18 @@ export class PostsHttpController {
       ...toPostSummaryResponse(result),
       body: result.body,
     } satisfies ApiResponse<typeof PostApi.get>);
+  }
+
+  @Post(PostApi.recordView.path)
+  @Public()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ErrorCodes(PostApi.recordView.errors)
+  async recordView(@Param('id') id: string, @Req() request: Request): Promise<void> {
+    await this.recordPostViewUseCase.execute({
+      postId: id,
+      ip: clientAddressOf(request),
+      userAgent: request.headers['user-agent'],
+    });
   }
 }
 
