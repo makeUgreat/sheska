@@ -3,12 +3,7 @@ import { ValueObject } from '@kernels/domain';
 import { Guard } from '@core/guard';
 
 export type SourceFrontmatterValue =
-  | null
-  | string
-  | number
-  | boolean
-  | SourceFrontmatterValue[]
-  | { readonly [key: string]: SourceFrontmatterValue };
+  null | string | number | boolean | SourceFrontmatterValue[] | { readonly [key: string]: SourceFrontmatterValue };
 
 export type SourceFrontmatterProps = Readonly<Record<string, SourceFrontmatterValue>>;
 

@@ -4,10 +4,7 @@ import { formatDottedDate } from '@/shared/lib';
 import { AiMark, ArticleLayout, BackLink, EmptyState, ErrorState } from '@/shared/ui';
 
 export type PostArticleState =
-  | { status: 'loading' }
-  | { status: 'error'; error: Error }
-  | { status: 'empty' }
-  | { status: 'success'; post: GetPostResponse };
+  { status: 'loading' } | { status: 'error'; error: Error } | { status: 'empty' } | { status: 'success'; post: GetPostResponse };
 
 /** `canOpenViews`면 조회수가 조회내역으로 가는 링크가 된다. 소유자만 조회내역을 읽을 수 있다. */
 export function PostArticleSection({ state, canOpenViews = false }: { state: PostArticleState; canOpenViews?: boolean }) {

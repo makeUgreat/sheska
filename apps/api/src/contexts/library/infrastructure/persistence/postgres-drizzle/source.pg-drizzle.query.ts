@@ -102,27 +102,25 @@ export class SourcePgDrizzleQuery implements SourceQuery {
     const totalCount = rows[0] ? Number(rows[0].total_count) : 0;
 
     return {
-      sources: rows.map(
-        (row): SourceQueryListItem => ({
-          sourceId: row.id,
-          externalSourceId: row.external_source_id,
-          title: row.title,
-          fingerprint: row.fingerprint,
-          sizeBytes: row.size_bytes,
-          createdAt: new Date(row.created_at),
-          updatedAt: new Date(row.updated_at),
-          latestSyncJob:
-            row.sync_job_id && row.sync_job_status && row.sync_job_created_at
-              ? {
-                  syncJobId: row.sync_job_id,
-                  status: row.sync_job_status,
-                  totalChunks: row.sync_job_total_chunks,
-                  createdAt: new Date(row.sync_job_created_at),
-                }
-              : null,
-          publishedPostId: row.published_post_id,
-        }),
-      ),
+      sources: rows.map((row): SourceQueryListItem => ({
+        sourceId: row.id,
+        externalSourceId: row.external_source_id,
+        title: row.title,
+        fingerprint: row.fingerprint,
+        sizeBytes: row.size_bytes,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
+        latestSyncJob:
+          row.sync_job_id && row.sync_job_status && row.sync_job_created_at
+            ? {
+                syncJobId: row.sync_job_id,
+                status: row.sync_job_status,
+                totalChunks: row.sync_job_total_chunks,
+                createdAt: new Date(row.sync_job_created_at),
+              }
+            : null,
+        publishedPostId: row.published_post_id,
+      })),
       page,
       pageSize,
       totalCount,
