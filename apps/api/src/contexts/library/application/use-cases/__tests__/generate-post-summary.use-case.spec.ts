@@ -112,6 +112,44 @@ describe('GeneratePostSummaryUseCase', () => {
   });
 });
 
+describe('GeneratePostSummaryUseCase.handleFailure', () => {
+  it('재시도를 모두 쓴 요약은 지금 본문의 실패한 요약으로 저장한다', async () => {
+    const { useCase, summaries, logger, generator } = setup();
+
+    await useCase.handleFailure({ postId: 'post-1' });
+
+    expect(savedSummary(summaries).getProps()).toMatchObject({
+      fingerprint: SourceFingerprint.ofBody(BODY),
+      outcome: { kind: 'failed' },
+    });
+    expect(logger.warn).not.toHaveBeenCalled();
+    expect(generator.generate).not.toHaveBeenCalled();
+  });
+
+  it('post가 없으면 저장하지 않는다', async () => {
+    const { useCase, summaries } = setup({ posts: [null] });
+
+    await useCase.handleFailure({ postId: 'post-1' });
+
+    expect(summaries.upsert).not.toHaveBeenCalled();
+  });
+
+  it('같은 본문의 완료한 요약이 있으면 덮어쓰지 않는다', async () => {
+    const existing = PostSummary.complete({
+      postId: 'post-1',
+      fingerprint: SourceFingerprint.ofBody(BODY),
+      sentences: ['이미 만든 요약임'],
+      model: 'claude-haiku-5-5',
+      finishedAt: new Date(),
+    });
+    const { useCase, summaries } = setup({ existing });
+
+    await useCase.handleFailure({ postId: 'post-1' });
+
+    expect(summaries.upsert).not.toHaveBeenCalled();
+  });
+});
+
 function setup(
   options: {
     posts?: (PostQueryResult | null)[];
