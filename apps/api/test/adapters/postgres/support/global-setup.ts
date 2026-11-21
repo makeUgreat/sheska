@@ -7,11 +7,10 @@ import {
   logIntegrationAdapterBanner,
   logIntegrationAdapterStep,
 } from '../../../support/integration-adapter-logger';
+import { POSTGRES_TEST_DATABASE_URL } from './postgres.connection';
 
 const execAsync = promisify(exec);
 const POSTGRES_TEST_CONTAINER_NAME = 'sheska.test.db';
-const REDIS_TEST_CONTAINER_NAME = 'sheska.test.redis';
-const POSTGRES_TEST_DATABASE_URL = 'postgres://sheska:sheska@127.0.0.1:56432/sheska_test';
 const POSTGRES_COMPOSE_FILE = resolve(__dirname, 'docker-compose.yml');
 const POSTGRES_COMPOSE_CWD = resolve(__dirname, '../../..');
 const POSTGRES_LOG_CONTEXT: IntegrationAdapterLogContext = {
@@ -20,17 +19,10 @@ const POSTGRES_LOG_CONTEXT: IntegrationAdapterLogContext = {
   module: 'DatabaseModule',
   target: POSTGRES_TEST_DATABASE_URL,
 };
-const REDIS_LOG_CONTEXT: IntegrationAdapterLogContext = {
-  adapter: 'REDIS',
-  boundary: 'message-broker',
-  module: 'QueueModule',
-  target: 'redis://127.0.0.1:56379',
-};
 
 export default async function setup(): Promise<() => Promise<void>> {
   try {
     logIntegrationAdapterBanner(POSTGRES_LOG_CONTEXT);
-    logIntegrationAdapterBanner(REDIS_LOG_CONTEXT);
     await executeTestDatabaseContainer();
     logIntegrationAdapterStep(POSTGRES_LOG_CONTEXT, 'START', 'Running database migrations');
     await runMigrations(POSTGRES_TEST_DATABASE_URL);
@@ -41,7 +33,6 @@ export default async function setup(): Promise<() => Promise<void>> {
         cwd: POSTGRES_COMPOSE_CWD,
       });
       logIntegrationAdapterStep(POSTGRES_LOG_CONTEXT, 'DONE', `${POSTGRES_TEST_CONTAINER_NAME} cleaned up`);
-      logIntegrationAdapterStep(REDIS_LOG_CONTEXT, 'DONE', `${REDIS_TEST_CONTAINER_NAME} cleaned up`);
     };
   } catch (error) {
     console.error(error);
@@ -60,8 +51,6 @@ async function executeTestDatabaseContainer(): Promise<void> {
   });
   await waitForHealthyContainer(POSTGRES_TEST_CONTAINER_NAME);
   logIntegrationAdapterStep(POSTGRES_LOG_CONTEXT, 'READY', `${POSTGRES_TEST_CONTAINER_NAME} is healthy`);
-  await waitForHealthyContainer(REDIS_TEST_CONTAINER_NAME);
-  logIntegrationAdapterStep(REDIS_LOG_CONTEXT, 'READY', `${REDIS_TEST_CONTAINER_NAME} is healthy`);
 }
 
 async function waitForHealthyContainer(containerName: string): Promise<void> {
