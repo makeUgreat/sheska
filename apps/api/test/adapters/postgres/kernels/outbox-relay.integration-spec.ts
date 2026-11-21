@@ -1,11 +1,23 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { type TestingModule } from '@nestjs/testing';
 import { eq, sql } from 'drizzle-orm';
+import { OutboxMessage } from '@kernels/application';
 import { DATABASE_TOKENS, outboxMessages, PgDrizzleOutboxStore } from '@kernels/infrastructure';
 import { type ApiDrizzleDatabase } from '@platform/nest/database/drizzle-postgres.provider';
 import { setupPostgresTestingModule } from '../support/setup-postgres-testing-module';
 
 const LEASE_MS = 30_000;
+
+class PostPublishedEvent extends OutboxMessage {
+  readonly eventType = 'post.published';
+  readonly eventVersion = 1;
+  readonly payload: { readonly postId: string };
+
+  constructor(postId: string) {
+    super();
+    this.payload = { postId };
+  }
+}
 
 describe('PgDrizzleOutboxStore claim', () => {
   let testingModule: TestingModule;
@@ -33,7 +45,7 @@ describe('PgDrizzleOutboxStore claim', () => {
     const claimed = await store.claimDue(10, LEASE_MS);
 
     expect(claimed).toHaveLength(1);
-    expect(claimed[0]?.event.eventId).toBe('event-claim-1');
+    expect(claimed[0]?.message.eventId).toBe('event-claim-1');
     expect(claimed[0]?.attemptCount).toBe(1);
 
     const row = await findRow('event-claim-1');
@@ -91,6 +103,22 @@ describe('PgDrizzleOutboxStore claim', () => {
     expect(claimedEventIds(claimed)).not.toContain('event-published');
   });
 
+  it('integration event가 아닌 메시지도 기록하고 같은 모양으로 claim한다', async () => {
+    const message = new PostPublishedEvent('post-1');
+
+    await store.append(message);
+    const claimed = await store.claimDue(10, LEASE_MS);
+
+    expect(claimed).toHaveLength(1);
+    expect(claimed[0]?.message).toEqual({
+      eventId: message.eventId,
+      eventType: 'post.published',
+      eventVersion: 1,
+      occurredAt: message.occurredAt,
+      payload: { postId: 'post-1' },
+    });
+  });
+
   it('동시에 claim해도 같은 row를 두 번 내주지 않는다', async () => {
     await insertPendingMessage('event-contended');
 
@@ -130,5 +158,5 @@ describe('PgDrizzleOutboxStore claim', () => {
 });
 
 function claimedEventIds(claimed: Awaited<ReturnType<PgDrizzleOutboxStore['claimDue']>>): string[] {
-  return claimed.map(({ event }) => event.eventId);
+  return claimed.map(({ message }) => message.eventId);
 }

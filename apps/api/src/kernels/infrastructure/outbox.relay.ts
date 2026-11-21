@@ -2,8 +2,8 @@ import { computeRetryDelayMs } from '@core/backoff';
 import {
   OutboxDeadLetteredIntegrationEvent,
   type ClaimedOutboxMessage,
-  type IntegrationEvent,
-  type IntegrationEventDispatcher,
+  type OutboxMessage,
+  type OutboxMessageDispatcher,
   type LoggerPort,
   type OutboxRelayStore,
 } from '@kernels/application';
@@ -26,7 +26,7 @@ export class OutboxRelay {
 
   constructor(
     private readonly store: OutboxRelayStore,
-    private readonly dispatcher: IntegrationEventDispatcher,
+    private readonly dispatcher: OutboxMessageDispatcher,
     private readonly logger: LoggerPort,
     private readonly runtime: OutboxRelayRuntime,
     private readonly options: OutboxRelayOptions,
@@ -47,30 +47,30 @@ export class OutboxRelay {
     }
   }
 
-  private async relay({ event, attemptCount }: ClaimedOutboxMessage): Promise<void> {
+  private async relay({ message, attemptCount }: ClaimedOutboxMessage): Promise<void> {
     try {
-      await this.dispatcher.dispatch(event);
-      await this.store.markPublished(event.eventId);
+      await this.dispatcher.dispatch(message);
+      await this.store.markPublished(message.eventId);
     } catch (error: unknown) {
       const lastFailureReason = toFailureReason(error);
 
       if (attemptCount >= this.options.maxAttempts) {
-        await this.deadLetter(event, attemptCount, lastFailureReason, error);
+        await this.deadLetter(message, attemptCount, lastFailureReason, error);
         return;
       }
 
-      await this.scheduleRetry(event, attemptCount, lastFailureReason, error);
+      await this.scheduleRetry(message, attemptCount, lastFailureReason, error);
     }
   }
 
-  private async scheduleRetry(event: IntegrationEvent, attemptCount: number, lastFailureReason: string, error: unknown): Promise<void> {
+  private async scheduleRetry(message: OutboxMessage, attemptCount: number, lastFailureReason: string, error: unknown): Promise<void> {
     const failedAttemptIndex = attemptCount - 1;
     const delayMs = computeRetryDelayMs(failedAttemptIndex, this.options, this.runtime.random);
 
-    await this.store.scheduleRetry(event.eventId, delayMs, lastFailureReason);
-    this.logger.warn('Integration event relay failed', error, {
-      eventId: event.eventId,
-      eventType: event.eventType,
+    await this.store.scheduleRetry(message.eventId, delayMs, lastFailureReason);
+    this.logger.warn('Outbox message relay failed', error, {
+      eventId: message.eventId,
+      eventType: message.eventType,
       attempt: attemptCount,
       maxAttempts: this.options.maxAttempts,
       delayMs,
@@ -78,34 +78,34 @@ export class OutboxRelay {
     });
   }
 
-  private async deadLetter(event: IntegrationEvent, attemptCount: number, lastFailureReason: string, error: unknown): Promise<void> {
-    await this.store.markDeadLettered(event.eventId, lastFailureReason);
-    this.logger.error('Integration event dead-lettered', error, {
-      eventId: event.eventId,
-      eventType: event.eventType,
+  private async deadLetter(message: OutboxMessage, attemptCount: number, lastFailureReason: string, error: unknown): Promise<void> {
+    await this.store.markDeadLettered(message.eventId, lastFailureReason);
+    this.logger.error('Outbox message dead-lettered', error, {
+      eventId: message.eventId,
+      eventType: message.eventType,
       attempt: attemptCount,
       maxAttempts: this.options.maxAttempts,
       retryAllowed: false,
       retryBlockedReason: 'max_attempts_exhausted',
     });
 
-    await this.notifyDeadLettered(event, attemptCount);
+    await this.notifyDeadLettered(message, attemptCount);
   }
 
-  private async notifyDeadLettered(event: IntegrationEvent, attemptCount: number): Promise<void> {
+  private async notifyDeadLettered(message: OutboxMessage, attemptCount: number): Promise<void> {
     try {
       await this.dispatcher.dispatch(
         new OutboxDeadLetteredIntegrationEvent({
-          deadLetteredEventId: event.eventId,
-          deadLetteredEventType: event.eventType,
-          deadLetteredPayload: event.payload,
+          deadLetteredEventId: message.eventId,
+          deadLetteredEventType: message.eventType,
+          deadLetteredPayload: message.payload,
           attemptCount,
         }),
       );
     } catch (error: unknown) {
       this.logger.error('Dead-letter notification failed', error, {
-        eventId: event.eventId,
-        eventType: event.eventType,
+        eventId: message.eventId,
+        eventType: message.eventType,
       });
     }
   }
