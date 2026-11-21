@@ -22,7 +22,6 @@ describe('Post', () => {
     expect(post.getProps().viewCount.unpack()).toBe(42);
   });
 
-  // nocap: library-post-5
   it('viewCount를 1 증가시킨다', () => {
     const post = Post.restore({
       id: 'source-1',

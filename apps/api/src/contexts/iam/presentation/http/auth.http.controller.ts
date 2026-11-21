@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Header, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/common';
 import { type Request, type Response } from 'express';
 import { type ApiRequest, type ApiResponse, AuthApi, PERMISSION } from '@sheska/contract';
-import { ErrorCodes, Permission, Public, ZodValidationPipe } from '@kernels/presentation';
+import { clientAddressOf, ErrorCodes, Permission, Public, ZodValidationPipe } from '@kernels/presentation';
 import { GetSessionUseCase } from '@contexts/iam/application/use-cases/get-session.use-case';
 import { LogInUseCase } from '@contexts/iam/application/use-cases/log-in.use-case';
 import { LogOutUseCase } from '@contexts/iam/application/use-cases/log-out.use-case';
@@ -62,11 +62,4 @@ export class AuthHttpController {
   @Header('Cache-Control', 'no-store')
   @ErrorCodes(AuthApi.syncCheck.errors)
   syncCheck(): void {}
-}
-
-function clientAddressOf(request: Request): string {
-  // API로 들어오는 길은 Cloudflare Tunnel뿐이다. Cloudflare가 이 헤더를 실제 접속 IP로 덮어쓴다.
-  const forwarded = request.headers['cf-connecting-ip'];
-  if (typeof forwarded === 'string' && forwarded.length > 0) return forwarded;
-  return request.ip ?? 'unknown';
 }

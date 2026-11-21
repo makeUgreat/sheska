@@ -131,11 +131,21 @@ export const PostApi = {
     errors: [],
   }),
 
-  /** 조회할 때마다 조회수가 1 는다. */
+  /** 읽기만 한다. 조회수는 `recordView`가 늘린다. */
   get: defineApi({
     method: 'GET',
     path: '/posts/:id',
     response: postSchema,
+    errors: [PostErrorCode.NOT_FOUND],
+  }),
+
+  /**
+   * 방문자가 post 상세에 들어왔음을 기록한다. 같은 IP가 30분 안에 다시 보내면 조회수가 늘지 않는다.
+   * 클라이언트는 화면에 들어올 때만 보낸다. 다시 불러오기나 탭 복귀에는 보내지 않는다.
+   */
+  recordView: defineApi({
+    method: 'POST',
+    path: '/posts/:id/views',
     errors: [PostErrorCode.NOT_FOUND],
   }),
 

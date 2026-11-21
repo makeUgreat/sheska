@@ -5,6 +5,7 @@ import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConstraintViolationError, NotFoundError } from '@core/errors';
 import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
 import { GetPostUseCase } from '@contexts/library/application/use-cases/get-post.use-case';
+import { RecordPostViewUseCase } from '@contexts/library/application/use-cases/record-post-view.use-case';
 import { ListPostsUseCase } from '@contexts/library/application/use-cases/list-posts.use-case';
 import { SearchPostsUseCase } from '@contexts/library/application/use-cases/search-posts.use-case';
 import { CountPostsUseCase } from '@contexts/library/application/use-cases/count-posts.use-case';
@@ -24,6 +25,10 @@ type GetPostUseCaseMock = {
   execute: MockedFunction<GetPostUseCase['execute']>;
 };
 
+type RecordPostViewUseCaseMock = {
+  execute: MockedFunction<RecordPostViewUseCase['execute']>;
+};
+
 type ListPostsUseCaseMock = {
   execute: MockedFunction<ListPostsUseCase['execute']>;
 };
@@ -41,6 +46,7 @@ describe('PostsHttpController', () => {
   let httpServer: Server;
   let publishPostUseCase: PublishPostUseCaseMock;
   let getPostUseCase: GetPostUseCaseMock;
+  let recordPostViewUseCase: RecordPostViewUseCaseMock;
   let listPostsUseCase: ListPostsUseCaseMock;
   let searchPostsUseCase: SearchPostsUseCaseMock;
   let countPostsUseCase: CountPostsUseCaseMock;
@@ -48,6 +54,7 @@ describe('PostsHttpController', () => {
   beforeEach(async () => {
     publishPostUseCase = { execute: vi.fn<PublishPostUseCase['execute']>() };
     getPostUseCase = { execute: vi.fn<GetPostUseCase['execute']>() };
+    recordPostViewUseCase = { execute: vi.fn<RecordPostViewUseCase['execute']>() };
     listPostsUseCase = { execute: vi.fn<ListPostsUseCase['execute']>() };
     searchPostsUseCase = { execute: vi.fn<SearchPostsUseCase['execute']>() };
     countPostsUseCase = { execute: vi.fn<CountPostsUseCase['execute']>() };
@@ -57,6 +64,7 @@ describe('PostsHttpController', () => {
       providers: [
         { provide: PublishPostUseCase, useValue: publishPostUseCase },
         { provide: GetPostUseCase, useValue: getPostUseCase },
+        { provide: RecordPostViewUseCase, useValue: recordPostViewUseCase },
         { provide: ListPostsUseCase, useValue: listPostsUseCase },
         { provide: SearchPostsUseCase, useValue: searchPostsUseCase },
         { provide: CountPostsUseCase, useValue: countPostsUseCase },
@@ -431,7 +439,7 @@ describe('PostsHttpController', () => {
   });
 
   describe('GET /posts/:id', () => {
-    it('post를 200 응답으로 반환하고 viewCount를 증가시킨다', async () => {
+    it('post를 200 응답으로 반환한다', async () => {
       const now = new Date('2026-01-01T00:00:00.000Z');
       getPostUseCase.execute.mockResolvedValue({
         postId: 'post-1',
@@ -486,6 +494,50 @@ describe('PostsHttpController', () => {
       expect(response.body).toEqual({
         code: 'internal.unexpected',
         message: 'Internal server error',
+        details: {},
+      });
+    });
+  });
+
+  describe('POST /posts/:id/views', () => {
+    it('방문자의 IP와 User-Agent를 넘기고 204 응답을 반환한다', async () => {
+      recordPostViewUseCase.execute.mockResolvedValue(undefined);
+
+      await request(httpServer)
+        .post('/posts/post-1/views')
+        .set('cf-connecting-ip', '203.0.113.1')
+        .set('user-agent', 'Mozilla/5.0')
+        .expect(204);
+
+      expect(recordPostViewUseCase.execute).toHaveBeenCalledWith({
+        postId: 'post-1',
+        ip: '203.0.113.1',
+        userAgent: 'Mozilla/5.0',
+      });
+    });
+
+    it('User-Agent 헤더가 없으면 없는 그대로 넘긴다', async () => {
+      recordPostViewUseCase.execute.mockResolvedValue(undefined);
+
+      await request(httpServer).post('/posts/post-1/views').unset('user-agent').expect(204);
+
+      expect(recordPostViewUseCase.execute).toHaveBeenCalledWith(expect.objectContaining({ userAgent: undefined }));
+    });
+
+    it('post가 없으면 404 응답을 반환한다', async () => {
+      recordPostViewUseCase.execute.mockRejectedValue(
+        new NotFoundError({
+          code: 'post.not_found',
+          message: 'Post not found',
+          details: {},
+        }),
+      );
+
+      const response = await request(httpServer).post('/posts/non-existent/views').expect(404);
+
+      expect(response.body).toEqual({
+        code: 'post.not_found',
+        message: 'Post not found',
         details: {},
       });
     });

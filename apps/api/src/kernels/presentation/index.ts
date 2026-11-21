@@ -9,3 +9,4 @@ export {
 export { Permission, Public, ROUTE_ACCESS, type RouteAccess } from './access/route-access.decorator';
 export { ErrorCodes } from './error-codes.decorator';
 export { ZodValidationPipe } from './zod-validation.pipe';
+export { clientAddressOf } from './client-address';

@@ -10,4 +10,7 @@ export { type SourceRepository, type SourceRepositoryFindCriteria, type SourceRe
 export { type SourceSyncJobRepository } from './source-sync-job.repository';
 export { Post } from './post.aggregate';
 export { PostViewCount } from './post-view-count.vo';
+export { PostView } from './post-view.vo';
+export { PostViewClient } from './post-view-client.vo';
 export { type PostRepository, type PostRepositoryGetCriteria } from './post.repository';
+export { type PostViewRepository, type PostViewRepositoryFindCriteria } from './post-view.repository';

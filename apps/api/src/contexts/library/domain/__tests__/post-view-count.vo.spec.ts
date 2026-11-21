@@ -13,7 +13,6 @@ describe('PostViewCount', () => {
   });
 
   describe('increment', () => {
-    // nocap: library-post-5
     it('값을 1 증가시킨 새 인스턴스를 반환한다', () => {
       const count = PostViewCount.of(5);
 
