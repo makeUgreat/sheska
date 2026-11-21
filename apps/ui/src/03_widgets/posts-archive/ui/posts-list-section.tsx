@@ -21,23 +21,34 @@ function formatViews(count: number) {
   return `${count.toLocaleString('en-US')} ${count === 1 ? 'view' : 'views'}`;
 }
 
-/** 요약 줄 수는 정해져 있지 않다. 줄을 자르지 않고 받은 만큼 쌓는다. */
+/** 요약 줄 수는 정해져 있지 않다. 줄을 자르지 않고 받은 만큼 쌓는다. 번호는 상세 요약과 같이 두 줄 이상일 때만 붙인다. */
 function SummaryLines({ summary }: { summary: AiSummary }) {
   if (summary.status === 'pending' || summary.status === 'failed') {
     return (
       <span className="mt-1 grid grid-cols-[20px_minmax(0,1fr)] items-start">
-        <AiMark twinkling={summary.status === 'pending'} className="mt-[5px] -ml-0.5 text-text-muted opacity-60" />
-        <span className="font-mono text-label-sm leading-[26px] tracking-normal text-text-muted">{AI_SUMMARY_NOTICE[summary.status]}</span>
+        <AiMark twinkling={summary.status === 'pending'} className="mt-[3px] -ml-0.5 text-text-muted opacity-60" />
+        <span
+          className={`font-mono text-label-sm leading-[22px] tracking-normal ${summary.status === 'pending' ? 'shimmer-text' : 'text-text-muted'}`}
+        >
+          {AI_SUMMARY_NOTICE[summary.status]}
+        </span>
       </span>
     );
   }
 
+  const numbered = summary.lines.length > 1;
+
   return (
     <span className="mt-1 grid grid-cols-[20px_minmax(0,1fr)] items-start">
-      <AiMark className="mt-[5px] -ml-0.5 text-accent" />
-      <span className="flex min-w-0 flex-col text-body-md leading-[26px] text-text-muted">
+      <AiMark className="mt-[3px] -ml-0.5 text-accent" />
+      <span className="flex min-w-0 flex-col">
         {summary.lines.map((line, index) => (
-          <span key={index}>{line}</span>
+          <span key={index} className="grid grid-cols-[28px_minmax(0,1fr)] items-start">
+            <span aria-hidden="true" className="font-mono text-label-sm leading-[22px] tracking-normal tabular-nums text-accent-strong">
+              {numbered ? String(index + 1).padStart(2, '0') : ''}
+            </span>
+            <span className="text-body-sm text-text-muted">{line}</span>
+          </span>
         ))}
       </span>
     </span>
