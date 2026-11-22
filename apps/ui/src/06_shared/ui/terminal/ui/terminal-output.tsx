@@ -16,7 +16,7 @@ export function TerminalText({ tone = 'plain', children }: { tone?: keyof typeof
   return <p className={`whitespace-pre-wrap ${TONE[tone]}`}>{children}</p>;
 }
 
-/** 검색어와 같은 부분을 굵게 보인다. 대소문자는 가리지 않는다. */
+/** 검색어와 같은 부분에 옅은 면을 깐다. 링크 색으로 칠하면 링크처럼 읽혀서 면으로 구분한다. 대소문자는 가리지 않는다. */
 export function TerminalHighlight({
   text,
   words,
@@ -33,7 +33,7 @@ export function TerminalHighlight({
   const parts = text.split(new RegExp(`(${terms.join('|')})`, 'gi'));
   return parts.map((part, index) =>
     index % 2 === 1 ? (
-      <mark key={index} className={`bg-transparent font-bold ${className}`}>
+      <mark key={index} className={`box-decoration-clone rounded-[2px] bg-on-surface/15 px-px font-bold ${className}`}>
         {part}
       </mark>
     ) : (
@@ -46,50 +46,46 @@ function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-const BRANCH = 'flex-none whitespace-pre text-on-surface-muted/50';
+/** 세로선은 항목 높이 전체를 덮고, 마지막 항목에서는 첫 줄 가운데에서 멈춰 `└`가 된다. */
+const VERTICAL_BRANCH =
+  'before:absolute before:top-0 before:left-[calc(0.5ch-0.5px)] before:h-full before:border-l before:border-on-surface-muted/50 last:before:h-[0.5lh]';
+const HORIZONTAL_BRANCH =
+  'after:absolute after:top-[0.5lh] after:left-[calc(0.5ch-0.5px)] after:w-[2.5ch] after:border-t after:border-on-surface-muted/50';
 
 export interface TerminalTreeItem {
   key: string;
-  /** 가지 기호 뒤에 오는 첫 줄 */
+  /** 가지 선 뒤에 오는 첫 줄 */
   head: ReactNode;
-  /** 첫 줄 아래에 가지에 맞춰 한 줄씩 붙는 줄들 */
+  /** 첫 줄 아래에 조금 더 들여 붙는 줄들 */
   details?: ReactNode[];
 }
 
 /**
- * tree 명령처럼 `├──`, `└──`로 묶는다. 가지 기호는 장식이라 화면 낭독기에는 숨긴다.
- * 긴 제목이 줄바꿈되어도 가지 기호 오른쪽에 맞춘다.
+ * tree 명령처럼 `├──`, `└──` 모양의 선으로 묶는다.
+ * 선은 글자가 아니라 테두리라서 줄바꿈된 줄과 줄 사이에서도 끊기지 않고, 화면 낭독기에도 읽히지 않는다.
  */
 export function TerminalTree({ root, items, footer }: { root: ReactNode; items: TerminalTreeItem[]; footer?: ReactNode }) {
   return (
     <div>
       <p className={LINE_IN}>{root}</p>
       <ul>
-        {items.map((item, index) => {
-          const last = index === items.length - 1;
-          return (
-            <li key={item.key} className={LINE_IN} style={lineDelay(index + 1)}>
-              <p className="flex">
-                <span aria-hidden="true" className={BRANCH}>
-                  {last ? '└── ' : '├── '}
-                </span>
-                <span className="min-w-0 break-words">{item.head}</span>
+        {items.map((item, index) => (
+          <li
+            key={item.key}
+            className={`relative pl-[4ch] ${VERTICAL_BRANCH} ${HORIZONTAL_BRANCH} ${LINE_IN}`}
+            style={lineDelay(index + 1)}
+          >
+            <p className="break-words">{item.head}</p>
+            {item.details?.map((detail, detailIndex) => (
+              <p key={detailIndex} className="break-words pl-[2ch] text-on-surface-muted">
+                {detail}
               </p>
-              {item.details?.map((detail, detailIndex) => (
-                <p key={detailIndex} className="flex">
-                  <span aria-hidden="true" className={BRANCH}>
-                    {last ? '    ' : '│   '}
-                  </span>
-                  <span className="min-w-0 break-words text-on-surface-muted">{detail}</span>
-                </p>
-              ))}
-            </li>
-          );
-        })}
+            ))}
+          </li>
+        ))}
       </ul>
       {footer && (
-        <p className={`whitespace-pre-wrap text-on-surface-muted ${LINE_IN}`} style={lineDelay(items.length + 1)}>
-          {'    '}
+        <p className={`mt-[0.5lh] text-on-surface-muted ${LINE_IN}`} style={lineDelay(items.length + 1)}>
           {footer}
         </p>
       )}
