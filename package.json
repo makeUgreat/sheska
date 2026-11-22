@@ -6,7 +6,8 @@
   "packageManager": "pnpm@10.19.0",
   "scripts": {
     "lint": "depcruise apps --config .dependency-cruiser.cjs",
-    "rules:check": "nocap --spec \"docs/ko/domain/*.md\" --test \"apps/*/{src,test,scripts}/**/*{.spec,-spec}.{ts,tsx}\""
+    "rules:check": "nocap --spec \"docs/ko/domain/*.md\" --test \"apps/*/{src,test,scripts}/**/*{.spec,-spec}.{ts,tsx}\"",
+    "tasks:check": "node scripts/check-test-tasks.mjs"
   },
   "devDependencies": {
     "@makehash/nocap": "^0.3.0",
