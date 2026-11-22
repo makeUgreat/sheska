@@ -14,7 +14,7 @@ concurrency:
 
 env:
   TURBO_SCOPE: ${{ github.event_name == 'pull_request' && '--affected' || '' }}
-  TURBO_SCM_BASE: origin/${{ github.base_ref }}
+  TURBO_SCM_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
 
 jobs:
   node:
