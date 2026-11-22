@@ -8,7 +8,7 @@ const processingJob: SyncJobProgressInfo = {
 };
 
 const meta = {
-  title: 'Features/Sources/SyncJobStatus',
+  title: 'Entities/Source/SyncJobStatus',
   component: SyncJobBadge,
   tags: ['autodocs'],
   args: {

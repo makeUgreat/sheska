@@ -41,7 +41,7 @@ const samplePosts: PostSummary[] = [
 ];
 
 const meta = {
-  title: 'Features/Posts/PostsListSection',
+  title: 'Widgets/PostsArchive/PostsListSection',
   component: PostsListSection,
   tags: ['autodocs'],
   decorators: [
@@ -76,6 +76,17 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Populated: Story = {};
+
+export const MorePages: Story = {
+  args: {
+    state: {
+      status: 'success',
+      posts: samplePosts,
+      hasNextPage: true,
+      sentinelRef: null,
+    },
+  },
+};
 
 export const Loading: Story = {
   args: {

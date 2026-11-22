@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { SourceStatusFilter } from './source-status-filter';
 
 const meta = {
-  title: 'Features/Sources/SourceStatusFilter',
+  title: 'Widgets/SourceList/SourceStatusFilter',
   component: SourceStatusFilter,
   tags: ['autodocs'],
   args: {

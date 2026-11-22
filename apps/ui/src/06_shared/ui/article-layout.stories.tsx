@@ -38,7 +38,7 @@ const BODY = [
 ].join('\n');
 
 const meta = {
-  title: 'Shared UI/ArticleLayout',
+  title: 'Shared/ArticleLayout',
   component: ArticleLayout,
   parameters: { layout: 'fullscreen' },
   decorators: [

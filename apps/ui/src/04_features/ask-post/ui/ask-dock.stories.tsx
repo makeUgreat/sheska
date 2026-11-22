@@ -17,7 +17,7 @@ const done: AskEntry = {
 };
 
 const meta = {
-  title: 'Features/Posts/AskDock',
+  title: 'Features/AskPost/AskDock',
   component: AskDock,
   args: {
     entries: [],

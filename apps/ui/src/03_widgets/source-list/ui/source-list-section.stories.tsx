@@ -39,7 +39,7 @@ const sampleSources: SourceSummary[] = [
 ];
 
 const meta = {
-  title: 'Features/Sources/SourceListSection',
+  title: 'Widgets/SourceList/SourceListSection',
   component: SourceListSection,
   tags: ['autodocs'],
   decorators: [

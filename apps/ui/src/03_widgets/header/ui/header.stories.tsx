@@ -12,7 +12,7 @@ function buildStoryHttpClient(authenticated: boolean): HttpClient {
 }
 
 const meta = {
-  title: 'Shared Layout/Header',
+  title: 'Widgets/Header/Header',
   component: Header,
   tags: ['autodocs'],
   parameters: {

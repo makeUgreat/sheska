@@ -48,7 +48,7 @@ const post: GetPostResponse = {
 };
 
 const meta = {
-  title: 'Features/Posts/PostArticleSection',
+  title: 'Widgets/PostArticle/PostArticleSection',
   component: PostArticleSection,
   decorators: [
     (Story) => (
@@ -82,6 +82,15 @@ export const SummaryReady: Story = {
     state: {
       status: 'success',
       post: { ...post, summary: { ...READY_SUMMARY, lines: [...READY_SUMMARY.lines] } },
+    },
+  },
+};
+
+export const SummarySingleLine: Story = {
+  args: {
+    state: {
+      status: 'success',
+      post: { ...post, summary: { status: 'ready', lines: [READY_SUMMARY.lines[0]] } },
     },
   },
 };

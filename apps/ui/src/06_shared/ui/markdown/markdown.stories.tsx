@@ -4,7 +4,7 @@ import { Markdown } from './markdown';
 
 /** 상세 화면의 본문은 읽기 컬럼 폭 안에 놓인다. 줄 길이와 넘침은 이 폭에서 봐야 의미가 있다. */
 const meta = {
-  title: 'Shared UI/Markdown',
+  title: 'Shared/Markdown',
   component: Markdown,
   tags: ['autodocs'],
   decorators: [

@@ -5,7 +5,7 @@ import { ErrorState } from './error-state';
 const PAGE_COLUMN = 'w-screen max-w-[880px]';
 
 const meta = {
-  title: 'Shared UI/ErrorState',
+  title: 'Shared/ErrorState',
   component: ErrorState,
   tags: ['autodocs'],
   decorators: [
