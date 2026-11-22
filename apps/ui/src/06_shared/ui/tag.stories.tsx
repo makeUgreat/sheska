@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Tag } from './tag';
 
 const meta = {
-  title: 'Shared UI/Tag',
+  title: 'Shared/Tag',
   component: Tag,
   tags: ['autodocs'],
   args: {

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Pagination } from './pagination';
 
 const meta = {
-  title: 'Shared UI/Pagination',
+  title: 'Shared/Pagination',
   component: Pagination,
   tags: ['autodocs'],
   args: {

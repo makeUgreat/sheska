@@ -48,7 +48,7 @@ const post: GetPostResponse = {
 };
 
 const meta = {
-  title: 'Features/Posts/PostArticleSection',
+  title: 'Widgets/PostArticle/PostArticleSection',
   component: PostArticleSection,
   decorators: [
     (Story) => (

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { EmptyState } from './empty-state';
 
 const meta = {
-  title: 'Shared UI/EmptyState',
+  title: 'Shared/EmptyState',
   component: EmptyState,
   tags: ['autodocs'],
   args: {

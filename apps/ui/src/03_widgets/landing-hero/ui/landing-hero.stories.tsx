@@ -34,7 +34,7 @@ function buildStoryHttpClient(authenticated: boolean): HttpClient {
 }
 
 const meta = {
-  title: 'Widgets/LandingHero',
+  title: 'Widgets/LandingHero/LandingHero',
   component: LandingHero,
   tags: ['autodocs'],
   parameters: {

@@ -21,7 +21,7 @@ const sampleSource: SourceSummary = {
 };
 
 const meta = {
-  title: 'Features/Sources/SourceListItem',
+  title: 'Widgets/SourceList/SourceListItem',
   component: SourceListItem,
   tags: ['autodocs'],
   decorators: [

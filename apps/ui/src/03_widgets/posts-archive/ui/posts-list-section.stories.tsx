@@ -41,7 +41,7 @@ const samplePosts: PostSummary[] = [
 ];
 
 const meta = {
-  title: 'Features/Posts/PostsListSection',
+  title: 'Widgets/PostsArchive/PostsListSection',
   component: PostsListSection,
   tags: ['autodocs'],
   decorators: [
