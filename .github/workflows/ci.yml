@@ -2,6 +2,8 @@ name: CI
 
 on:
   pull_request:
+  push:
+    branches: [master]
 
 permissions:
   contents: read
@@ -10,41 +12,59 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  TURBO_SCOPE: ${{ github.event_name == 'pull_request' && '--affected' || '--force' }}
+
 jobs:
-  static:
+  node:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec turbo run lint typecheck build
+      - run: pnpm exec turbo run lint typecheck build test $TURBO_SCOPE
 
-  test:
+  docker:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec turbo run test
-      - run: pnpm --filter @sheska/ui exec playwright install --with-deps --only-shell chromium
-      - run: pnpm exec turbo run test:browser
+      - run: pnpm exec turbo run test:postgres test:redis test:runtime $TURBO_SCOPE
 
-  integration:
+  browser:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec turbo run test:postgres test:redis
+      - id: scope
+        run: echo "tasks=$(pnpm exec turbo run test:browser $TURBO_SCOPE --dry=json | jq '[.tasks[] | select(.task == "test:browser" and .command != "<NONEXISTENT>")] | length')" >> "$GITHUB_OUTPUT"
+      - if: steps.scope.outputs.tasks != '0'
+        run: pnpm --filter @sheska/ui exec playwright install --with-deps --only-shell chromium
+      - run: pnpm exec turbo run test:browser $TURBO_SCOPE
+
+  ci:
+    if: always()
+    needs: [node, docker, browser]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo '${{ toJSON(needs) }}' | jq -e 'all(.[]; .result == "success")'

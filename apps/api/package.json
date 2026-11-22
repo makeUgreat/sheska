@@ -20,6 +20,7 @@
     "test:lint": "vitest run --project lint",
     "test:postgres": "vitest run --project postgres",
     "test:redis": "vitest run --project redis",
+    "test:runtime": "pnpm runtime:start; status=$?; pnpm runtime:stop; exit $status",
     "test:ollama": "vitest run --project ollama",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "db:migrate": "NODE_ENV=development node --env-file=.env.development -r ts-node/register -r tsconfig-paths/register database/migrate.ts",

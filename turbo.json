@@ -17,6 +17,7 @@
     "test:pages": { "dependsOn": ["^build"] },
     "test:postgres": { "dependsOn": ["^build"] },
     "test:redis": { "dependsOn": ["^build"] },
+    "test:runtime": { "dependsOn": ["^build"] },
     "test:browser": { "dependsOn": ["^build"] },
     "test:ollama": { "dependsOn": ["^build"], "cache": false }
   }
