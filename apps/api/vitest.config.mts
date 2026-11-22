@@ -144,6 +144,17 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'runtime',
+          environment: 'node',
+          globals: false,
+          globalSetup: './test/runtime/global-setup.ts',
+          include: ['test/runtime/**/*.integration-spec.ts'],
+          testTimeout: 30_000,
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'ollama',
           environment: 'node',
           fileParallelism: false,

@@ -20,15 +20,13 @@
     "test:lint": "vitest run --project lint",
     "test:postgres": "vitest run --project postgres",
     "test:redis": "vitest run --project redis",
-    "test:runtime": "pnpm runtime:start; status=$?; pnpm runtime:stop; exit $status",
+    "test:runtime": "vitest run --project runtime",
     "test:ollama": "vitest run --project ollama",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "db:migrate": "NODE_ENV=development node --env-file=.env.development -r ts-node/register -r tsconfig-paths/register database/migrate.ts",
     "db:reset": "NODE_ENV=development node --env-file=.env.development -r ts-node/register -r tsconfig-paths/register database/reset.ts",
     "db:seed": "NODE_ENV=development node --env-file=.env.development -r ts-node/register -r tsconfig-paths/register database/seed.ts",
-    "deps:graph": "depcruise src test --config dependency-cruiser/config.cjs --output-type mermaid --output-to dependency-graph.mmd",
-    "runtime:start": "NODE_ENV=test ts-node --project tsconfig.json -r tsconfig-paths/register test/runtime/start.ts",
-    "runtime:stop": "NODE_ENV=test ts-node --project tsconfig.json -r tsconfig-paths/register test/runtime/stop.ts"
+    "deps:graph": "depcruise src test --config dependency-cruiser/config.cjs --output-type mermaid --output-to dependency-graph.mmd"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.6.0",
