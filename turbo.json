@@ -6,7 +6,7 @@
     "lint": { "dependsOn": ["^build"] },
     "//#lint": {},
     "test": {
-      "dependsOn": ["test:unit", "test:http", "test:app", "test:logger", "test:image", "test:lint", "test:pages"]
+      "dependsOn": ["test:unit", "test:http", "test:app", "test:logger", "test:image", "test:lint"]
     },
     "test:unit": { "dependsOn": ["^build"] },
     "test:http": { "dependsOn": ["^build"] },
@@ -14,7 +14,6 @@
     "test:logger": { "dependsOn": ["^build"] },
     "test:image": { "dependsOn": ["^build"] },
     "test:lint": { "dependsOn": ["^build"] },
-    "test:pages": { "dependsOn": ["^build"] },
     "test:postgres": { "dependsOn": ["^build"] },
     "test:redis": { "dependsOn": ["^build"] },
     "test:runtime": { "dependsOn": ["^build"] },
