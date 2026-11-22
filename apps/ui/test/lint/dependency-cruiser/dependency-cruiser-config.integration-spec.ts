@@ -10,7 +10,7 @@ import type { ICruiseOptions, ICruiseResult, IReporterOutput } from 'dependency-
 // fixture 는 alias 가 아니라 상대경로로 import 한다. dependency-cruiser 의 fixture 해석기는
 // baseDir 밖의 tsconfig paths 를 적용하지 못해 alias import 가 그래프에서 누락되기 때문이다.
 // 규칙은 해석된 경로로 매칭하므로 상대경로로도 동일하게 검증된다. 실제 실행에서 alias 가
-// 해석되는지는 `pnpm deps:check` 가 보장한다.
+// 해석되는지는 `pnpm lint` 가 보장한다.
 const uiRoot = process.cwd();
 const configPath = path.join(uiRoot, 'dependency-cruiser/config.cjs');
 

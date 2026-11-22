@@ -16,8 +16,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "prepare": "tsc",
-    "harness:static": "pnpm build"
+    "prepare": "tsc"
   },
   "dependencies": {
     "zod": "^4.6.7"

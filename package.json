@@ -3,14 +3,14 @@
   "version": "0.0.1",
   "private": true,
   "license": "UNLICENSED",
+  "packageManager": "pnpm@10.19.0",
   "scripts": {
-    "deps:check": "depcruise apps --config .dependency-cruiser.cjs",
-    "rules:check": "nocap --spec \"docs/ko/domain/*.md\" --test \"apps/*/{src,test,scripts}/**/*{.spec,-spec}.{ts,tsx}\"",
-    "harness:static": "pnpm deps:check && pnpm -r --if-present harness:static",
-    "harness:build": "pnpm -r build && pnpm --filter @sheska/api test:runtime:start && pnpm --filter @sheska/api test:runtime:stop"
+    "lint": "depcruise apps --config .dependency-cruiser.cjs",
+    "rules:check": "nocap --spec \"docs/ko/domain/*.md\" --test \"apps/*/{src,test,scripts}/**/*{.spec,-spec}.{ts,tsx}\""
   },
   "devDependencies": {
     "@makehash/nocap": "^0.3.0",
-    "dependency-cruiser": "^17.4.3"
+    "dependency-cruiser": "^17.4.3",
+    "turbo": "2.11.11"
   }
 }

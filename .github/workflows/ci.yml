@@ -16,47 +16,35 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
-        with:
-          version: 10.19.0
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm harness:static
-      - run: pnpm -r build
+      - run: pnpm exec turbo run lint typecheck build
 
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
-        with:
-          version: 10.19.0
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @sheska/api test:unit
-      - run: pnpm --filter @sheska/api test:integration:in-process
-      - run: pnpm --filter @sheska/ui test:unit
-      - run: pnpm --filter @sheska/ui test:integration
+      - run: pnpm exec turbo run test
       - run: pnpm --filter @sheska/ui exec playwright install --with-deps --only-shell chromium
-      - run: pnpm --filter @sheska/ui test:story
-      - run: pnpm --filter @sheska/obsidian-plugin test
+      - run: pnpm exec turbo run test:browser
 
   integration:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
-        with:
-          version: 10.19.0
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @sheska/api test:integration:postgres
-      - run: pnpm --filter @sheska/api test:integration:redis
+      - run: pnpm exec turbo run test:postgres test:redis

@@ -86,7 +86,7 @@ export const CodeFences: Story = {
       '',
       '```bash',
       '# 정적 검사를 한 번에 돌린다',
-      'pnpm --filter @sheska/ui harness:static',
+      'pnpm exec turbo run lint typecheck --filter=@sheska/ui',
       '```',
       '',
       '```json',

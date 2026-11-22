@@ -51,7 +51,7 @@ async function main() {
     return;
   }
 
-  const result = spawnSync('pnpm', ['harness:static'], {
+  const result = spawnSync('pnpm', ['exec', 'turbo', 'run', 'lint', 'typecheck', 'test:lint'], {
     cwd: root,
     encoding: 'utf8',
   });
@@ -69,10 +69,10 @@ async function main() {
   if (payload.stop_hook_active) {
     emit({
       continue: false,
-      stopReason: 'pnpm harness:static still fails after one automatic continuation.',
+      stopReason: 'pnpm exec turbo run lint typecheck test:lint still fails after one automatic continuation.',
       systemMessage:
-        'pnpm harness:static still fails. Manual review is needed.\n' +
-        'Manual command: pnpm harness:static\n\n' +
+        'pnpm exec turbo run lint typecheck test:lint still fails. Manual review is needed.\n' +
+        'Manual command: pnpm exec turbo run lint typecheck test:lint\n\n' +
         output,
     });
     return;
@@ -81,9 +81,9 @@ async function main() {
   emit({
     decision: 'block',
     reason:
-      'pnpm harness:static failed. Fix the reported static analysis failures, ' +
-      'then run pnpm harness:static again before stopping.\n' +
-      'Manual command: pnpm harness:static\n\n' +
+      'pnpm exec turbo run lint typecheck test:lint failed. Fix the reported static analysis failures, ' +
+      'then run pnpm exec turbo run lint typecheck test:lint again before stopping.\n' +
+      'Manual command: pnpm exec turbo run lint typecheck test:lint\n\n' +
       output,
   });
 }

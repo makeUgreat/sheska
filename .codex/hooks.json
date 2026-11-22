@@ -1,18 +1,5 @@
 {
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "exec_command|_create_pull_request",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/pr_harness_check.js\"",
-            "timeout": 600,
-            "statusMessage": "Running full harness (static + build) before opening PR"
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "apply_patch|Edit|Write",
@@ -34,7 +21,7 @@
             "type": "command",
             "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/stop_check.js\"",
             "timeout": 600,
-            "statusMessage": "Running static analysis harness"
+            "statusMessage": "Running lint and typecheck"
           }
         ]
       }

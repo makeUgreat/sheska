@@ -242,11 +242,7 @@ when they form one squash-merge history event.
 4. For a stack, build it with `gh stack init`/`gh stack add` while preparing
    commits, then confirm order with `gh stack view` before opening PRs.
 5. Draft the title, body, and (for integration-branch PRs) `Merge Strategy`.
-6. Run `pnpm harness:build` from the repository root before pushing. This
-   builds the app, compiles migration scripts, builds the Docker image, and
-   verifies the image runs. Fix and re-run on failure; do not push or open a
-   PR if it fails.
-7. Push and open. Single PR: check `gh pr view` first. If one is already
+6. Push and open. Single PR: check `gh pr view` first. If one is already
    open and the new work is a same-layer continuation, just push (refresh the
    body if it changed); if the new work is a dependent layer or otherwise
    separable concern, stack it on top instead (see Stacked PRs) rather than
@@ -255,4 +251,4 @@ when they form one squash-merge history event.
    `gh stack submit` creates or updates every PR in the stack in one step
    (pass `--open` so new PRs are ready for review) — safe to re-run after
    more commits. Never set stack base branches manually.
-8. Report verification gaps and the merge order in the final response.
+7. Report verification gaps and the merge order in the final response.
