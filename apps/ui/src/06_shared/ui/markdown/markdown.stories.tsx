@@ -314,11 +314,11 @@ export const LongContent: Story = {
   },
 };
 
-/** 저장소 주소를 풀리지 않는 도메인으로 두어 대체 이미지를 본다. 지정 폭이 본문보다 넓어도 본문 폭에 맞춰 줄어야 한다. */
+/** 저장소를 옆의 `fixtures` 폴더로 두고 없는 파일을 가리켜 대체 이미지를 본다. 지정 폭이 본문보다 넓어도 본문 폭에 맞춰 줄어야 한다. */
 export const Images: Story = {
   decorators: [
     (Story) => (
-      <AttachmentBaseUrlProvider baseUrl="http://attachment-storage.invalid">
+      <AttachmentBaseUrlProvider baseUrl={new URL('fixtures', import.meta.url).href}>
         <Story />
       </AttachmentBaseUrlProvider>
     ),

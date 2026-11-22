@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect } from 'storybook/test';
 import { ArticleLayout } from './article-layout';
 
 const AS_THE_DETAIL_PAGE_PLACES_IT = 'min-h-screen bg-page-background px-4 py-14';
@@ -71,5 +72,37 @@ export const WithFooter: Story = {
         <p className="font-mono text-label-sm uppercase text-text-muted">topics · layout · outline</p>
       </footer>
     ),
+  },
+};
+
+const ONE_HEADING = ['## 배경', '', '본문'].join('\n');
+
+export const EmptyBodyKeepsHeader: Story = {
+  name: '본문이 비어 있어도 header는 보여준다',
+  tags: ['!dev'],
+  args: { header: <h1>제목</h1>, body: '' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('heading', { name: '제목' })).toBeDefined();
+  },
+};
+
+export const FooterInsideArticle: Story = {
+  name: 'footer를 article 안에 렌더링한다',
+  tags: ['!dev'],
+  args: { header: <h1>제목</h1>, body: ONE_HEADING, footer: <p>topics</p> },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('article').contains(canvas.getByText('topics'))).toBe(true);
+  },
+};
+
+export const HeaderThenBodyStagger: Story = {
+  name: '머리, 본문 순서로 24ms 간격을 두고 나타난다',
+  tags: ['!dev'],
+  args: { header: <h1>제목</h1>, body: ONE_HEADING },
+  play: async ({ canvas }) => {
+    const header = canvas.getByRole('heading', { name: '제목' }).closest('header');
+    const body = canvas.getByRole('heading', { name: '배경' }).closest<HTMLElement>('div[style]');
+
+    await expect([header?.style.animationDelay, body?.style.animationDelay]).toEqual(['0ms', '24ms']);
   },
 };
