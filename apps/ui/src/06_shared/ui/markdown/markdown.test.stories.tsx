@@ -710,11 +710,11 @@ export const SectionHoverPreview: Story = {
     await user.click(heading('서버'));
 
     await user.hover(heading('다음'));
-    await expect(isFocused('다음')).toBe(true);
+    await waitFor(() => expect(isFocused('다음')).toBe(true));
     await expect(isFocused('서버')).toBe(false);
 
     await user.unhover(heading('다음'));
-    await expect(isFocused('서버')).toBe(true);
+    await waitFor(() => expect(isFocused('서버')).toBe(true));
   },
 };
 
