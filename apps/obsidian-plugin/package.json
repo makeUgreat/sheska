@@ -1,6 +1,6 @@
 {
   "name": "@sheska/obsidian-plugin",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "private": true,
   "description": "Obsidian plugin for Sheska API",
   "main": "main.js",
