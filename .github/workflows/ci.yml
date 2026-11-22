@@ -42,6 +42,8 @@ jobs:
       - run: pnpm --filter @sheska/api test:integration:in-process
       - run: pnpm --filter @sheska/ui test:unit
       - run: pnpm --filter @sheska/ui test:integration
+      - run: pnpm --filter @sheska/ui exec playwright install --with-deps --only-shell chromium
+      - run: pnpm --filter @sheska/ui test:story
       - run: pnpm --filter @sheska/obsidian-plugin test
 
   integration:

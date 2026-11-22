@@ -1,6 +1,8 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
+import { playwright } from '@vitest/browser-playwright';
 import { fileURLToPath } from 'node:url';
 import { loadEnv } from 'vite';
 
@@ -64,6 +66,19 @@ export default defineConfig(({ mode }) => {
             globals: true,
             include: ['test/static/**/*.integration-spec.ts'],
             testTimeout: 30_000,
+          },
+        },
+        {
+          extends: true,
+          plugins: [storybookTest({ configDir: fileURLToPath(new URL('.storybook', import.meta.url)) })],
+          test: {
+            name: 'story',
+            browser: {
+              enabled: true,
+              headless: true,
+              provider: playwright({ contextOptions: { reducedMotion: 'reduce' } }),
+              instances: [{ browser: 'chromium' }],
+            },
           },
         },
       ],

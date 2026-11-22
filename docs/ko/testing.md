@@ -22,9 +22,8 @@ read_when:
 | 도메인 불변식과 비즈니스 로직 | API 단위 |
 | 실제 의존성(DB, queue, 임베더)이 부과하는 동작 | API 통합 |
 | HTTP 응답 모양과 status | API HTTP 통합 |
-| 컴포넌트, hook, mapper | UI 단위 |
-| 여러 UI 협력자가 함께 도는 화면 흐름 | UI 통합 |
-| 폭에 따른 배치 | UI layout |
+| 화면이 없는 로직(순수 함수, hook, mapper, HTTP client) | UI 단위 |
+| 화면에 그려지는 것(컴포넌트 상태, 화면 흐름, 폭에 따른 배치) | UI 화면 |
 
 ## API
 - 단위 테스트는 server, Nest app, 외부 I/O를 시작하지 않음
@@ -34,5 +33,7 @@ read_when:
 
 ## UI
 - 사용자가 보는 text, role, label로 query함
-- Storybook story는 상태를 보는 fixture이고 동작의 증명이 아님
-- `jsdom`은 layout engine이 없어 배치를 증명하지 못함. 배치는 실제 browser의 layout 테스트가 숫자로 잼
+- UI 화면 테스트는 Storybook story를 실제 browser에 그리고 `play`에서 검증함
+- 상태를 보여 주는 story와 동작을 검증하는 story를 나눔. 검증만 하는 story에는 `!dev` tag를 붙여 사이드바에서 숨김
+- story는 서버 없이 그림. HTTP는 가짜 client로 바꾸고, 호출은 spy로 검증함
+- 기본은 동작 줄이기(reduced motion)를 켜고 돌림. 움직임을 검증하는 story만 끔
