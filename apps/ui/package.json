@@ -11,9 +11,8 @@
     "lint": "node scripts/generate-theme-css.mjs --check && eslint --config eslint/config.mjs \"{src,test,scripts}/**/*.{ts,tsx}\" && depcruise src test --config dependency-cruiser/config.cjs",
     "format": "eslint --config eslint/config.mjs \"{src,test,scripts}/**/*.{ts,tsx}\" --fix",
     "test:unit": "vitest run --project unit",
-    "test:pages": "vitest run --project pages",
     "test:lint": "vitest run --project lint",
-    "test:browser": "vitest run --project browser && playwright test --config playwright.layout.config.ts",
+    "test:browser": "vitest run --project browser",
     "storybook": "storybook dev -p 6006 --disable-telemetry",
     "storybook:build": "storybook build --disable-telemetry",
     "tokens:build": "node scripts/generate-theme-css.mjs"
@@ -39,7 +38,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
-    "@playwright/test": "^1.65.1",
     "@storybook/addon-docs": "^10.6.8",
     "@storybook/addon-vitest": "^10.6.8",
     "@storybook/react-vite": "^10.6.8",

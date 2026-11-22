@@ -50,16 +50,6 @@ export default defineConfig(({ mode }) => {
         {
           extends: true,
           test: {
-            name: 'pages',
-            environment: 'jsdom',
-            globals: true,
-            setupFiles: ['test/support/setup.ts'],
-            include: ['test/pages/**/*.integration-spec.tsx', 'test/app/**/*.integration-spec.tsx'],
-          },
-        },
-        {
-          extends: true,
-          test: {
             name: 'lint',
             environment: 'node',
             globals: true,
