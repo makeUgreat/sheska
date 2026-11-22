@@ -86,6 +86,15 @@ export const SummaryReady: Story = {
   },
 };
 
+export const SummarySingleLine: Story = {
+  args: {
+    state: {
+      status: 'success',
+      post: { ...post, summary: { status: 'ready', lines: [READY_SUMMARY.lines[0]] } },
+    },
+  },
+};
+
 export const SummaryFailed: Story = {
   args: {
     state: { status: 'success', post: { ...post, summary: { status: 'failed' } } },
