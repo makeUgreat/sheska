@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect } from 'storybook/test';
 import { AttachmentBaseUrlProvider } from './attachment-base-url';
 import { Markdown } from './markdown';
 
@@ -332,5 +333,60 @@ export const Images: Story = {
       '',
       'wiki embed는 그리지 않는다: ![[att/wiki.png]]',
     ].join('\n'),
+  },
+};
+
+const LIST_CODE_SPACING_BODY = [
+  '본문 문단 사이의 코드 블록은 본문 간격을 쓴다.',
+  '',
+  '```bash',
+  'pnpm install',
+  '```',
+  '',
+  '1. 의존성을 설치한다.',
+  '',
+  '   ```bash',
+  '   pnpm install',
+  '   ```',
+  '',
+  '2. 설정을 바꾼다.',
+].join('\n');
+
+async function listCodeSpacing(canvas: { getByText: (text: string) => HTMLElement }) {
+  await document.fonts.ready;
+  const bodyText = canvas.getByText('본문 문단 사이의 코드 블록은 본문 간격을 쓴다.');
+  const itemText = canvas.getByText('의존성을 설치한다.');
+  const nextItemText = canvas.getByText('설정을 바꾼다.');
+  const topLevelBlock = bodyText.nextElementSibling;
+  const listBlock = itemText.nextElementSibling;
+  if (!topLevelBlock || !listBlock) throw new Error('the spacing fixture is not rendered');
+
+  const box = (element: Element) => element.getBoundingClientRect();
+  return {
+    bodyTextToBlock: box(topLevelBlock).top - box(bodyText).bottom,
+    itemTextToBlock: box(listBlock).top - box(itemText).bottom,
+    blockToNextItem: box(nextItemText).top - box(listBlock).bottom,
+  };
+}
+
+export const CodeBlockInListIsTighterThanBody: Story = {
+  name: '항목 안 코드 블록은 본문 간격보다 좁게 붙는다',
+  tags: ['!dev'],
+  args: { body: LIST_CODE_SPACING_BODY },
+  play: async ({ canvas }) => {
+    const spacing = await listCodeSpacing(canvas);
+
+    await expect(spacing.blockToNextItem).toBeLessThan(spacing.bodyTextToBlock);
+  },
+};
+
+export const CodeBlockInListStaysWithItsItem: Story = {
+  name: '항목 안 코드 블록은 다음 항목보다 자기 항목에 가깝다',
+  tags: ['!dev'],
+  args: { body: LIST_CODE_SPACING_BODY },
+  play: async ({ canvas }) => {
+    const spacing = await listCodeSpacing(canvas);
+
+    await expect(spacing.itemTextToBlock).toBeLessThan(spacing.blockToNextItem);
   },
 };

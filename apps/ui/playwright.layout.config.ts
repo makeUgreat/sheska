@@ -10,13 +10,6 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,
     },
-    {
-      command: 'pnpm exec vite --host 127.0.0.1 --port 5175',
-      url: 'http://127.0.0.1:5175',
-      env: { VITE_SEASON: 'winter' },
-      reuseExistingServer: !process.env.CI,
-      timeout: 30_000,
-    },
   ],
   use: {
     baseURL: 'http://127.0.0.1:5174',
