@@ -43,3 +43,7 @@ read_when:
 ## CI
 - self-hosted runner(홈 서버)를 쓰는 workflow에는 `pull_request` trigger를 붙이지 않음
   - 저장소가 public이라 fork PR의 코드가 홈 서버에서 실행됨
+- PR 검사는 바뀐 workspace와 그 workspace에 기대는 workspace만 돌림. master push 검사는 전부 돌림
+  - master 검사가 PR 검사가 놓친 실패를 잡음
+- 필수 check는 결과를 모으는 `ci` job과 `pr-title`만 둠
+  - GitHub은 건너뛴 필수 check를 통과로 셈. `ci` job은 앞 job이 실패해도 건너뛰지 않고 실패로 끝남
