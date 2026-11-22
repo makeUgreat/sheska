@@ -4,8 +4,8 @@ import { resolve } from 'path';
 export default defineConfig({
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src'),
-      obsidian: resolve(__dirname, '__mocks__/obsidian.ts'),
+      '@': resolve(import.meta.dirname, 'src'),
+      obsidian: resolve(import.meta.dirname, '__mocks__/obsidian.ts'),
     },
   },
   test: {
