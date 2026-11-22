@@ -705,34 +705,16 @@ export const SectionHoverPreview: Story = {
   tags: ['!dev'],
   args: { body: SECTIONED },
   play: async ({ canvas, userEvent }) => {
-    const events: string[] = [];
-    const record = (event: Event) => {
-      const target =
-        event.target instanceof Element ? `${event.target.tagName}:${(event.target.textContent ?? '').slice(0, 10)}` : 'not-an-element';
-      const pointerType = event instanceof PointerEvent ? event.pointerType : '-';
-      events.push(`${event.type}/${pointerType}/${event.isTrusted ? 'TRUSTED' : 'synthetic'}/${target}`);
-    };
-    const types = ['pointerover', 'pointerout', 'pointerleave', 'pointerenter'];
-    types.forEach((type) => window.addEventListener(type, record, true));
-    const diagnose = (step: string) =>
-      `[${step}] innerWidth=${window.innerWidth} hasFocus=${document.hasFocus()} focusedSections=${[...document.querySelectorAll('[data-focus]')].map((el) => el.querySelector('h2, h3, h4, h5')?.textContent).join(',')} events=${events.join(' | ')}`;
+    const user = userEvent.setup({ skipHover: true });
+    const { heading, isFocused } = sectionsOf(canvas);
+    await user.click(heading('서버'));
 
-    try {
-      const user = userEvent.setup({ skipHover: true });
-      const { heading, isFocused } = sectionsOf(canvas);
-      await user.click(heading('서버'));
+    await user.hover(heading('다음'));
+    await waitFor(() => expect(isFocused('다음')).toBe(true));
+    await expect(isFocused('서버')).toBe(false);
 
-      await user.hover(heading('다음'));
-      const rightAfterHover = diagnose('right after hover');
-      await waitFor(() => expect(isFocused('다음'), `${rightAfterHover} || ${diagnose('after waiting')}`).toBe(true));
-      await expect(isFocused('서버'), diagnose('after hover, before reading 서버')).toBe(false);
-
-      await user.unhover(heading('다음'));
-      const rightAfterUnhover = diagnose('right after unhover');
-      await waitFor(() => expect(isFocused('서버'), `${rightAfterUnhover} || ${diagnose('after waiting')}`).toBe(true));
-    } finally {
-      types.forEach((type) => window.removeEventListener(type, record, true));
-    }
+    await user.unhover(heading('다음'));
+    await waitFor(() => expect(isFocused('서버')).toBe(true));
   },
 };
 
