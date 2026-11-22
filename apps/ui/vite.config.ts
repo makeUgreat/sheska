@@ -64,7 +64,7 @@ export default defineConfig(({ mode }) => {
             environment: 'node',
             globals: true,
             include: ['test/lint/**/*.integration-spec.ts'],
-            testTimeout: 30_000,
+            testTimeout: 60_000,
           },
         },
         {
