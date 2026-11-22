@@ -725,7 +725,7 @@ export const SectionHoverPreview: Story = {
       await user.hover(heading('다음'));
       const rightAfterHover = diagnose('right after hover');
       await waitFor(() => expect(isFocused('다음'), `${rightAfterHover} || ${diagnose('after waiting')}`).toBe(true));
-      await expect(isFocused('서버')).toBe(false);
+      await expect(isFocused('서버'), diagnose('after hover, before reading 서버')).toBe(false);
 
       await user.unhover(heading('다음'));
       const rightAfterUnhover = diagnose('right after unhover');
