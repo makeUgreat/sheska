@@ -53,7 +53,7 @@ describe('eslint/config.mjs', () => {
   });
 
   it('test file에는 source import path style rule을 적용하지 않는다', async () => {
-    const config = await calculateConfigForFile('test/static/eslint/eslint-config.integration-spec.ts');
+    const config = await calculateConfigForFile('test/lint/eslint/eslint-config.integration-spec.ts');
     const rules = getConfiguredRules(config);
 
     expect(rules['unused-imports/no-unused-imports']).toBeDefined();

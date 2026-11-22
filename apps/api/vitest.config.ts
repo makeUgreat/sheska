@@ -38,6 +38,14 @@ function swcTransform(): Plugin {
   };
 }
 
+const IN_PROCESS_BOUNDARIES = ['http', 'app', 'logger', 'image'];
+
+const CONTAINER_BOUNDARIES = {
+  postgres: 60_000,
+  redis: 60_000,
+  ollama: 360_000,
+};
+
 export default defineConfig({
   plugins: [swcTransform()],
   resolve: {
@@ -60,71 +68,38 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          name: 'static',
+          name: 'lint',
           environment: 'node',
           globals: false,
-          include: ['test/static/**/*.integration-spec.ts'],
+          include: ['test/lint/**/*.integration-spec.ts'],
           testTimeout: 30_000,
         },
       },
-      {
-        extends: true,
+      ...IN_PROCESS_BOUNDARIES.map((name) => ({
+        extends: true as const,
         test: {
-          name: 'in-process',
+          name,
           environment: 'node',
           fileParallelism: false,
           globals: false,
-          globalSetup: './test/support/in-process-integration-global-setup.ts',
-          include: ['test/**/*.integration-spec.ts'],
-          exclude: [
-            'test/static/**/*.integration-spec.ts',
-            'test/adapters/postgres/**/*.integration-spec.ts',
-            'test/adapters/redis/**/*.integration-spec.ts',
-            'test/adapters/ollama/**/*.integration-spec.ts',
-          ],
+          include: [`test/adapters/${name}/**/*.integration-spec.ts`],
           hookTimeout: 60_000,
           testTimeout: 30_000,
         },
-      },
-      {
-        extends: true,
+      })),
+      ...Object.entries(CONTAINER_BOUNDARIES).map(([name, hookTimeout]) => ({
+        extends: true as const,
         test: {
-          name: 'postgres',
+          name,
           environment: 'node',
           fileParallelism: false,
           globals: false,
-          globalSetup: './test/adapters/postgres/support/global-setup.ts',
-          include: ['test/adapters/postgres/**/*.integration-spec.ts'],
-          hookTimeout: 60_000,
+          globalSetup: `./test/adapters/${name}/support/global-setup.ts`,
+          include: [`test/adapters/${name}/**/*.integration-spec.ts`],
+          hookTimeout,
           testTimeout: 30_000,
         },
-      },
-      {
-        extends: true,
-        test: {
-          name: 'redis',
-          environment: 'node',
-          fileParallelism: false,
-          globals: false,
-          globalSetup: './test/adapters/redis/support/global-setup.ts',
-          include: ['test/adapters/redis/**/*.integration-spec.ts'],
-          hookTimeout: 60_000,
-          testTimeout: 30_000,
-        },
-      },
-      {
-        extends: true,
-        test: {
-          name: 'ollama',
-          environment: 'node',
-          fileParallelism: false,
-          globals: false,
-          globalSetup: './test/adapters/ollama/support/global-setup.ts',
-          include: ['test/adapters/ollama/**/*.integration-spec.ts'],
-          hookTimeout: 360_000,
-          testTimeout: 30_000,
-        },
-      },
+      })),
     ],
   },
 });

@@ -50,21 +50,20 @@ export default defineConfig(({ mode }) => {
         {
           extends: true,
           test: {
-            name: 'integration',
+            name: 'pages',
             environment: 'jsdom',
             globals: true,
             setupFiles: ['test/support/setup.ts'],
-            include: ['test/**/*.integration-spec.ts', 'test/**/*.integration-spec.tsx'],
-            exclude: ['test/static/**/*.integration-spec.ts'],
+            include: ['test/pages/**/*.integration-spec.tsx', 'test/app/**/*.integration-spec.tsx'],
           },
         },
         {
           extends: true,
           test: {
-            name: 'static',
+            name: 'lint',
             environment: 'node',
             globals: true,
-            include: ['test/static/**/*.integration-spec.ts'],
+            include: ['test/lint/**/*.integration-spec.ts'],
             testTimeout: 30_000,
           },
         },
@@ -72,7 +71,7 @@ export default defineConfig(({ mode }) => {
           extends: true,
           plugins: [storybookTest({ configDir: fileURLToPath(new URL('.storybook', import.meta.url)) })],
           test: {
-            name: 'story',
+            name: 'browser',
             browser: {
               enabled: true,
               headless: true,
