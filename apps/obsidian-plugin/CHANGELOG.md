@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.2](https://github.com/makeUgreat/sheska/compare/1.5.1...1.5.2) (2026-11-22)
+
+
+### Bug Fixes
+
+* load the CommonJS workspaces' Vitest configs as ESM ([#513](https://github.com/makeUgreat/sheska/issues/513)) ([73316fb](https://github.com/makeUgreat/sheska/commit/73316fb545defdad2fbc2e31273d2389a74ff2d6))
+
 ## [1.5.1](https://github.com/makeUgreat/sheska/compare/1.5.0...1.5.1) (2026-11-21)
 
 
