@@ -21,7 +21,7 @@
             "type": "command",
             "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/stop_check.js\"",
             "timeout": 600,
-            "statusMessage": "Running lint and typecheck"
+            "statusMessage": "Running lint, typecheck and unit tests"
           }
         ]
       }

@@ -51,7 +51,7 @@ async function main() {
     return;
   }
 
-  const result = spawnSync('pnpm', ['exec', 'turbo', 'run', 'lint', 'typecheck', 'test:lint'], {
+  const result = spawnSync('pnpm', ['exec', 'turbo', 'run', 'lint', 'typecheck', 'test:unit'], {
     cwd: root,
     encoding: 'utf8',
   });
@@ -69,10 +69,10 @@ async function main() {
   if (payload.stop_hook_active) {
     emit({
       continue: false,
-      stopReason: 'pnpm exec turbo run lint typecheck test:lint still fails after one automatic continuation.',
+      stopReason: 'pnpm exec turbo run lint typecheck test:unit still fails after one automatic continuation.',
       systemMessage:
-        'pnpm exec turbo run lint typecheck test:lint still fails. Manual review is needed.\n' +
-        'Manual command: pnpm exec turbo run lint typecheck test:lint\n\n' +
+        'pnpm exec turbo run lint typecheck test:unit still fails. Manual review is needed.\n' +
+        'Manual command: pnpm exec turbo run lint typecheck test:unit\n\n' +
         output,
     });
     return;
@@ -81,9 +81,9 @@ async function main() {
   emit({
     decision: 'block',
     reason:
-      'pnpm exec turbo run lint typecheck test:lint failed. Fix the reported static analysis failures, ' +
-      'then run pnpm exec turbo run lint typecheck test:lint again before stopping.\n' +
-      'Manual command: pnpm exec turbo run lint typecheck test:lint\n\n' +
+      'pnpm exec turbo run lint typecheck test:unit failed. Fix the reported lint, type and unit test failures, ' +
+      'then run pnpm exec turbo run lint typecheck test:unit again before stopping.\n' +
+      'Manual command: pnpm exec turbo run lint typecheck test:unit\n\n' +
       output,
   });
 }
