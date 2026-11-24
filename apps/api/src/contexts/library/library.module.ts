@@ -41,6 +41,7 @@ import { RequestPostSummaryUseCase } from '@contexts/library/application/use-cas
 import { PostSummaryJobBullMqDispatcher } from '@contexts/library/infrastructure/queue/bullmq/post-summary-job.bullmq.dispatcher';
 import { PostSummaryPgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post-summary.pg-drizzle.repository';
 import { GeneratePostSummaryUseCase } from '@contexts/library/application/use-cases/generate-post-summary.use-case';
+import { DEFAULT_POST_SUMMARY_PROMPT } from '@contexts/library/application/use-cases/generate-post-summary.prompt';
 import { PostSummaryBullMqConsumer } from '@contexts/library/presentation/queue/bullmq/post-summary.bullmq.consumer';
 import { TextAnthropicGenerator } from '@contexts/library/infrastructure/text-generation/anthropic/text.anthropic.generator';
 import { anthropicConfig, type AnthropicConfig } from '@contexts/library/infrastructure/text-generation/anthropic/anthropic.config';
@@ -70,6 +71,7 @@ import {
   POST_SUMMARY_JOB_DISPATCHER,
   POST_SUMMARY_REPOSITORY,
   POST_SUMMARY_TEXT_GENERATOR,
+  POST_SUMMARY_PROMPT,
   SEARCH_QUERY_EMBEDDER,
   ATTACHMENT_IMAGE_CODEC,
   ATTACHMENT_CONTENT_STORE,
@@ -205,6 +207,10 @@ export class LibraryModule {
         },
         GeneratePostSummaryUseCase,
         PostSummaryBullMqConsumer,
+        {
+          provide: POST_SUMMARY_PROMPT,
+          useValue: DEFAULT_POST_SUMMARY_PROMPT,
+        },
         {
           provide: POST_SUMMARY_TEXT_GENERATOR,
           useFactory: (config: AnthropicConfig) => new TextAnthropicGenerator(config, { model: 'claude-haiku-5-5', effort: 'low' }),

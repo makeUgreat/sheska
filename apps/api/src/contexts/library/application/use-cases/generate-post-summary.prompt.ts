@@ -1,6 +1,11 @@
 import { type TextGenerationRequest } from '@contexts/library/application/ports';
 
-export const POST_SUMMARY_INSTRUCTIONS = `<role>
+export interface PostSummaryPrompt {
+  readonly instructions: string;
+  readonly maxOutputTokens: number;
+}
+
+const DEFAULT_POST_SUMMARY_INSTRUCTIONS = `<role>
 너는 개인 기술 블로그의 글을 요약하는 도구다.
 </role>
 
@@ -25,15 +30,18 @@ export const POST_SUMMARY_INSTRUCTIONS = `<role>
 <sentence>둘째 문장</sentence>
 </output_format>`;
 
-const POST_SUMMARY_MAX_OUTPUT_TOKENS = 2_048;
+export const DEFAULT_POST_SUMMARY_PROMPT: PostSummaryPrompt = {
+  instructions: DEFAULT_POST_SUMMARY_INSTRUCTIONS,
+  maxOutputTokens: 2_048,
+};
 
 const SENTENCE_TAG = /<sentence>([\s\S]*?)<\/sentence>/g;
 
-export function toPostSummaryRequest(body: string): TextGenerationRequest {
+export function toPostSummaryRequest(body: string, prompt: PostSummaryPrompt): TextGenerationRequest {
   return {
-    instructions: POST_SUMMARY_INSTRUCTIONS,
+    instructions: prompt.instructions,
     input: `<post>\n${body}\n</post>`,
-    maxOutputTokens: POST_SUMMARY_MAX_OUTPUT_TOKENS,
+    maxOutputTokens: prompt.maxOutputTokens,
   };
 }
 

@@ -4,8 +4,8 @@ import { InputTooLargeError } from '@core/errors';
 import { LOGGER, type LoggerPort } from '@kernels/application';
 import { type PostQuery, type TextGenerationResult, type TextGenerator } from '@contexts/library/application/ports';
 import { PostSummary, type PostSummaryOutcome, type PostSummaryRepository, SourceFingerprint } from '@contexts/library/domain';
-import { POST_QUERY, POST_SUMMARY_REPOSITORY, POST_SUMMARY_TEXT_GENERATOR } from '@contexts/library/library.di-tokens';
-import { toPostSummaryRequest, toPostSummarySentences } from './generate-post-summary.prompt';
+import { POST_QUERY, POST_SUMMARY_PROMPT, POST_SUMMARY_REPOSITORY, POST_SUMMARY_TEXT_GENERATOR } from '@contexts/library/library.di-tokens';
+import { type PostSummaryPrompt, toPostSummaryRequest, toPostSummarySentences } from './generate-post-summary.prompt';
 
 export interface GeneratePostSummaryCommand {
   readonly postId: string;
@@ -26,6 +26,8 @@ export class GeneratePostSummaryUseCase {
     private readonly summaries: PostSummaryRepository,
     @Inject(POST_SUMMARY_TEXT_GENERATOR)
     private readonly generator: TextGenerator,
+    @Inject(POST_SUMMARY_PROMPT)
+    private readonly prompt: PostSummaryPrompt,
     @Inject(LOGGER)
     private readonly logger: LoggerPort,
   ) {}
@@ -63,7 +65,7 @@ export class GeneratePostSummaryUseCase {
 
   private async summarize(postId: string, body: string, fingerprint: SourceFingerprint, context: CallContext): Promise<PostSummary> {
     try {
-      const result = await this.generator.generate(toPostSummaryRequest(body), context);
+      const result = await this.generator.generate(toPostSummaryRequest(body, this.prompt), context);
       return this.toSummary(postId, fingerprint, result);
     } catch (error: unknown) {
       if (error instanceof InputTooLargeError) return this.fail(postId, fingerprint, 'input_too_large');
