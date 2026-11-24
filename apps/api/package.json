@@ -26,6 +26,7 @@
     "db:migrate": "NODE_ENV=development node --env-file=.env.development -r ts-node/register -r tsconfig-paths/register database/migrate.ts",
     "db:reset": "NODE_ENV=development node --env-file=.env.development -r ts-node/register -r tsconfig-paths/register database/reset.ts",
     "db:seed": "NODE_ENV=development node --env-file=.env.development -r ts-node/register -r tsconfig-paths/register database/seed.ts",
+    "eval:post-summary": "node --env-file=../../.dev-integrations.env --env-file=test/evals/anthropic/support/generate-post-summary.prompt.env -r ts-node/register -r tsconfig-paths/register test/evals/anthropic/library/generate-post-summary.prompt.experiment.ts",
     "deps:graph": "depcruise src test --config dependency-cruiser/config.cjs --output-type mermaid --output-to dependency-graph.mmd",
     "runtime:start": "NODE_ENV=test ts-node --project tsconfig.json -r tsconfig-paths/register test/runtime/start.ts",
     "runtime:stop": "NODE_ENV=test ts-node --project tsconfig.json -r tsconfig-paths/register test/runtime/stop.ts"
@@ -67,6 +68,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@arizeai/phoenix-client": "8.0.3",
     "@eslint/eslintrc": "^3.3.7",
     "@eslint/js": "^9.39.5",
     "@nestjs/cli": "^11.0.24",
