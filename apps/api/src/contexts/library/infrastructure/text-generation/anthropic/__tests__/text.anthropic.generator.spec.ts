@@ -1,3 +1,5 @@
+import { trace } from '@opentelemetry/api';
+import { tracing } from '@opentelemetry/sdk-node';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
@@ -129,6 +131,27 @@ describe('TextAnthropicGenerator', () => {
     );
 
     await expect(createGenerator().generate(REQUEST, buildContext(50, 0))).rejects.toThrow(TimeoutError);
+  });
+
+  it('지침, 입력, 응답 내용을 호출 span에 남긴다', async () => {
+    const exporter = new tracing.InMemorySpanExporter();
+    const provider = new tracing.BasicTracerProvider({ spanProcessors: [new tracing.SimpleSpanProcessor(exporter)] });
+    trace.setGlobalTracerProvider(provider);
+    stubFetch(() => messageResponse());
+
+    try {
+      await createGenerator().generate(REQUEST, buildContext());
+      await provider.forceFlush();
+    } finally {
+      trace.disable();
+    }
+
+    const [span] = exporter.getFinishedSpans();
+    expect(span.attributes).toMatchObject({
+      'gen_ai.system_instructions': JSON.stringify([{ type: 'text', content: '<role>요약 도구</role>' }]),
+      'gen_ai.input.messages': JSON.stringify([{ role: 'user', parts: [{ type: 'text', content: '<post>본문</post>' }] }]),
+    });
+    expect(span.attributes['gen_ai.output.messages']).toContain('<sentence>요약 문장임</sentence>');
   });
 });
 

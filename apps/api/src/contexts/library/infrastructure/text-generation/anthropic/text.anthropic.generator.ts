@@ -32,7 +32,12 @@ export class TextAnthropicGenerator implements TextGenerator {
     config: AnthropicConfig,
     private readonly options: TextAnthropicGeneratorOptions,
   ) {
-    this.client = new Anthropic({ apiKey: config.apiKey, maxRetries: 0 });
+    this.client = new Anthropic({
+      apiKey: config.apiKey,
+      maxRetries: 0,
+      // fetch instrumentation already sends the trace context, so the SDK would write it twice
+      openTelemetry: { propagation: false, traces: { contentMode: 'content' } },
+    });
   }
 
   async generate(request: TextGenerationRequest, context: CallContext): Promise<TextGenerationResult> {
