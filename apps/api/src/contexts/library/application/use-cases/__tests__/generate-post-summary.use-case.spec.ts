@@ -7,6 +7,7 @@ import { GeneratePostSummaryUseCase } from '../generate-post-summary.use-case';
 
 const BODY = '# Outbox\n이벤트를 트랜잭션과 함께 저장한다.';
 const CONTEXT = callContext({ deadlineMs: 60_000, maxRetries: 0 });
+const PROMPT = { instructions: '<role>요약 도구</role>', maxOutputTokens: 1_024 };
 
 describe('GeneratePostSummaryUseCase', () => {
   it('본문을 요약해 완료한 요약으로 저장한다', async () => {
@@ -22,6 +23,17 @@ describe('GeneratePostSummaryUseCase', () => {
       fingerprint: SourceFingerprint.ofBody(BODY),
       outcome: { kind: 'completed', sentences: ['이벤트 유실을 막는 방법을 설명함'], model: 'claude-haiku-5-5' },
     });
+  });
+
+  it('주입받은 프롬프트의 지침과 출력 토큰 상한으로 요청한다', async () => {
+    const { useCase, generator } = setup();
+
+    await useCase.execute({ postId: 'post-1' }, CONTEXT);
+
+    expect(generator.generate).toHaveBeenCalledWith(
+      expect.objectContaining({ instructions: PROMPT.instructions, maxOutputTokens: PROMPT.maxOutputTokens }),
+      CONTEXT,
+    );
   });
 
   it('post가 없으면 생성하지 않고 건너뛴다', async () => {
@@ -176,7 +188,7 @@ function setup(
       : vi.fn().mockResolvedValue(options.result ?? completedResult('<sentence>요약 문장임</sentence>')),
   };
   const logger = { log: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
-  const useCase = new GeneratePostSummaryUseCase(posts as never, summaries, generator, logger);
+  const useCase = new GeneratePostSummaryUseCase(posts as never, summaries, generator, PROMPT, logger);
 
   return { useCase, generator, summaries, logger };
 }

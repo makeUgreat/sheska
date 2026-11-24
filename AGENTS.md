@@ -31,5 +31,5 @@ Before adding or changing a convention document (`docs/ko/`, `apps/*/docs/ko/`, 
 
 ## Dev Integrations
 
-- Credentials for dev tools (PostgreSQL, Redis and Obsidian MCP, Obsidian Local REST API) live in the gitignored `.dev-integrations.env`. Copy `.dev-integrations.env.example` to start.
+- Credentials for dev tools (PostgreSQL, Redis and Obsidian MCP, Obsidian Local REST API, Phoenix experiments) live in the gitignored `.dev-integrations.env`. Copy `.dev-integrations.env.example` to start.
 - The home k3s cluster is documented in `~/WebstormProjects/hash-infra/CLAUDE.md`. kubectl needs the SSH tunnel described there, which you can open yourself.

@@ -66,6 +66,10 @@ Claude outputs/
 # Development integration settings (contains secrets)
 .dev-integrations.env
 
+# LLM experiment settings and prompt drafts
+apps/api/test/evals/**/*.env
+apps/api/test/evals/**/*.local.md
+
 # Helm subchart archives (re-resolved from Chart.lock via `helm dependency build`)
 deploy/helm/*/charts/*.tgz
 
