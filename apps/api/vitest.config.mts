@@ -54,7 +54,7 @@ export default defineConfig({
           name: 'unit',
           environment: 'node',
           globals: false,
-          include: ['src/**/*.spec.ts'],
+          include: ['src/**/*.spec.ts', 'test/evals/**/*.spec.ts'],
         },
       },
       {
