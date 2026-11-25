@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { RequestPostSummaryUseCase } from '@contexts/library/application/use-cases/request-post-summary.use-case';
+import { RequestPostSummaryUseCase } from '@contexts/library/application/use-cases/post-summary/request-post-summary.use-case';
 import { postPublishedOutboxMessageSchema, sourceBodyChangedOutboxMessageSchema } from './dto/post-summary.outbox-message.dto';
 
 @Injectable()

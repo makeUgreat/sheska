@@ -5,7 +5,7 @@ import { BullModule, getQueueToken } from '@nestjs/bullmq';
 import { type Queue } from 'bullmq';
 import { LOGGER } from '@kernels/application';
 import { POST_SUMMARY_QUEUE } from '@contexts/library/application/ports';
-import { GeneratePostSummaryUseCase } from '@contexts/library/application/use-cases/generate-post-summary.use-case';
+import { GeneratePostSummaryUseCase } from '@contexts/library/application/use-cases/post-summary/generate-post-summary.use-case';
 import { PostSummaryBullMqConsumer } from '@contexts/library/presentation/queue/bullmq/post-summary.bullmq.consumer';
 import { REDIS_TEST_URL } from '../support/redis.connection';
 

@@ -4,7 +4,7 @@ import { type Job } from 'bullmq';
 import { callContext } from '@core/call-context';
 import { LOGGER, type LoggerPort } from '@kernels/application';
 import { POST_SUMMARY_QUEUE } from '@contexts/library/application/ports';
-import { GeneratePostSummaryUseCase } from '@contexts/library/application/use-cases/generate-post-summary.use-case';
+import { GeneratePostSummaryUseCase } from '@contexts/library/application/use-cases/post-summary/generate-post-summary.use-case';
 import { generatePostSummaryJobInputSchema, type GeneratePostSummaryJobInput } from './dto/generate-post-summary.job-input.dto';
 
 @Processor(POST_SUMMARY_QUEUE)

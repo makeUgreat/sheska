@@ -2,7 +2,7 @@ import { parseArgs } from 'node:util';
 import { asExperimentEvaluator, runExperiment } from '@arizeai/phoenix-client/experiments';
 import { z } from 'zod';
 import { callContext } from '@core/call-context';
-import { toPostSummaryRequest, toPostSummarySentences } from '@contexts/library/application/use-cases/generate-post-summary.prompt';
+import { toPostSummaryRequest, toPostSummarySentences } from '@contexts/library/application/use-cases/post-summary/generate-post-summary.prompt';
 import { TextAnthropicGenerator } from '@contexts/library/infrastructure/text-generation/anthropic/text.anthropic.generator';
 import { KOREAN_GATE } from '../../library/post-summary/korean.gate';
 import { PLAIN_TEXT_GATE } from '../../library/post-summary/plain-text.gate';
