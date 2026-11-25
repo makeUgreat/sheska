@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { z } from 'zod';
-import { type PostSummaryPrompt } from '@contexts/library/application/use-cases/generate-post-summary.prompt';
+import { type PostSummaryPrompt } from '@contexts/library/application/use-cases/post-summary/generate-post-summary.prompt';
 import { type TextAnthropicGeneratorOptions } from '@contexts/library/infrastructure/text-generation/anthropic/text.anthropic.generator';
 
 export interface GeneratePostSummaryExperimentSettings {

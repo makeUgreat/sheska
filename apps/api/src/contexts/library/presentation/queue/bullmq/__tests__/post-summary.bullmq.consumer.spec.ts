@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { type Job } from 'bullmq';
-import { type GeneratePostSummaryUseCase } from '@contexts/library/application/use-cases/generate-post-summary.use-case';
+import { type GeneratePostSummaryUseCase } from '@contexts/library/application/use-cases/post-summary/generate-post-summary.use-case';
 import { type GeneratePostSummaryJobInput } from '../dto/generate-post-summary.job-input.dto';
 import { PostSummaryBullMqConsumer } from '../post-summary.bullmq.consumer';
 

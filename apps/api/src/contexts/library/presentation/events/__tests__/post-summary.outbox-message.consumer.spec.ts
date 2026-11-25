@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { type RequestPostSummaryUseCase } from '@contexts/library/application/use-cases/request-post-summary.use-case';
+import { type RequestPostSummaryUseCase } from '@contexts/library/application/use-cases/post-summary/request-post-summary.use-case';
 import { PostSummaryOutboxMessageConsumer } from '../post-summary.outbox-message.consumer';
 
 describe('PostSummaryOutboxMessageConsumer', () => {

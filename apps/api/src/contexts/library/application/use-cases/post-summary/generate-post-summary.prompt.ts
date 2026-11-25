@@ -1,4 +1,10 @@
-import { type TextGenerationRequest } from '@contexts/library/application/ports';
+import { type TextGenerationRequest, type TextGenerationResult } from '@contexts/library/application/ports';
+
+export interface PostSummaryDraft extends TextGenerationResult {
+  /** 요약한 원문 */
+  readonly body: string;
+  readonly sentences: readonly string[];
+}
 
 export interface PostSummaryPrompt {
   readonly instructions: string;

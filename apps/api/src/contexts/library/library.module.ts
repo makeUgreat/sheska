@@ -37,11 +37,11 @@ import { SourceSyncJobsHttpController } from '@contexts/library/presentation/htt
 import { IngestionIntegrationEventConsumer } from '@contexts/library/presentation/events/ingestion.integration-event.consumer';
 import { OutboxDeadLetteredIntegrationEventConsumer } from '@contexts/library/presentation/events/outbox-dead-lettered.integration-event.consumer';
 import { PostSummaryOutboxMessageConsumer } from '@contexts/library/presentation/events/post-summary.outbox-message.consumer';
-import { RequestPostSummaryUseCase } from '@contexts/library/application/use-cases/request-post-summary.use-case';
+import { RequestPostSummaryUseCase } from '@contexts/library/application/use-cases/post-summary/request-post-summary.use-case';
 import { PostSummaryJobBullMqDispatcher } from '@contexts/library/infrastructure/queue/bullmq/post-summary-job.bullmq.dispatcher';
 import { PostSummaryPgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/post-summary.pg-drizzle.repository';
-import { GeneratePostSummaryUseCase } from '@contexts/library/application/use-cases/generate-post-summary.use-case';
-import { DEFAULT_POST_SUMMARY_PROMPT } from '@contexts/library/application/use-cases/generate-post-summary.prompt';
+import { GeneratePostSummaryUseCase } from '@contexts/library/application/use-cases/post-summary/generate-post-summary.use-case';
+import { DEFAULT_POST_SUMMARY_PROMPT } from '@contexts/library/application/use-cases/post-summary/generate-post-summary.prompt';
 import { PostSummaryBullMqConsumer } from '@contexts/library/presentation/queue/bullmq/post-summary.bullmq.consumer';
 import { TextAnthropicGenerator } from '@contexts/library/infrastructure/text-generation/anthropic/text.anthropic.generator';
 import { anthropicConfig, type AnthropicConfig } from '@contexts/library/infrastructure/text-generation/anthropic/anthropic.config';
