@@ -59,6 +59,37 @@ describe('TextAnthropicGenerator', () => {
     });
   });
 
+  it.each<{ name: string; input: TextGenerationRequest['input'] }>([
+    { name: '빈 대화', input: [] },
+    {
+      name: 'assistant로 시작하는 대화',
+      input: [
+        { role: 'assistant', content: '<sentence>첫 응답</sentence>' },
+        { role: 'user', content: '다시 써라' },
+      ],
+    },
+  ])('$name은 호출하지 않고 첫 메시지가 user가 아니라는 InvalidDataError를 던진다', async ({ input }) => {
+    const fetchMock = stubFetch(() => messageResponse());
+
+    const result = createGenerator().generate({ ...REQUEST, input }, buildContext());
+
+    await expect(result).rejects.toMatchObject({ kind: 'invalid_data', code: 'anthropic.first_message_not_user' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('assistant로 끝나는 대화는 prefill이므로 호출하지 않고 InvalidDataError를 던진다', async () => {
+    const fetchMock = stubFetch(() => messageResponse());
+    const input: TextGenerationRequest['input'] = [
+      { role: 'user', content: '<post>본문</post>' },
+      { role: 'assistant', content: '<sentence>' },
+    ];
+
+    const result = createGenerator().generate({ ...REQUEST, input }, buildContext());
+
+    await expect(result).rejects.toMatchObject({ kind: 'invalid_data', code: 'anthropic.prefill_unsupported' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('text block만 이어 붙이고 thinking block은 버리며 응답한 모델을 돌려준다', async () => {
     stubFetch(() =>
       messageResponse({

@@ -41,6 +41,8 @@ export class TextAnthropicGenerator implements TextGenerator {
   }
 
   async generate(request: TextGenerationRequest, context: CallContext): Promise<TextGenerationResult> {
+    TextAnthropicGenerator.validateInput(request.input);
+
     return resiliencePipeline()
       .retry({
         maxRetries: context.maxRetries,
@@ -78,6 +80,26 @@ export class TextAnthropicGenerator implements TextGenerator {
       model: message.model,
       finishReason: TextAnthropicGenerator.toFinishReason(message.stop_reason),
     };
+  }
+
+  private static validateInput(input: TextGenerationRequest['input']): void {
+    const startsWithUser = input.at(0)?.role === 'user';
+    if (!startsWithUser) {
+      throw new InvalidDataError({
+        code: 'anthropic.first_message_not_user',
+        message: 'Anthropic input must start with a user message',
+        details: { fields: ['input'] },
+      });
+    }
+
+    const isPrefill = input.at(-1)?.role === 'assistant';
+    if (isPrefill) {
+      throw new InvalidDataError({
+        code: 'anthropic.prefill_unsupported',
+        message: 'Anthropic models used here do not accept a prefilled assistant message',
+        details: { fields: ['input'] },
+      });
+    }
   }
 
   private static toFinishReason(stopReason: Message['stop_reason']): TextGenerationFinishReason {
