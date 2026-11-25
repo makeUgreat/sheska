@@ -112,11 +112,11 @@ describe('GeneratePostSummaryUseCase', () => {
 
   // nocap: library-summary-5
   it.each([
-    { name: '꺼낼 문장이 없으면', text: '요약할 수 없음', explanation: '0문장 (1~3문장이어야 함)' },
+    { name: '꺼낼 문장이 없으면', text: '요약할 수 없음', explanation: '0문장 (1~5문장이어야 함)' },
     {
       name: '문장이 너무 많으면',
-      text: '<sentence>하나임</sentence><sentence>둘임</sentence><sentence>셋임</sentence><sentence>넷임</sentence>',
-      explanation: '4문장 (1~3문장이어야 함)',
+      text: '<sentence>하나임</sentence><sentence>둘임</sentence><sentence>셋임</sentence><sentence>넷임</sentence><sentence>다섯임</sentence><sentence>여섯임</sentence>',
+      explanation: '6문장 (1~5문장이어야 함)',
     },
   ])('$name 두 번 더 생성해 보고 모두 걸리면 실패한 요약으로 저장한다', async ({ text, explanation }) => {
     const { useCase, generator, summaries, logger } = setup({ result: completedResult(text) });
@@ -147,7 +147,7 @@ describe('GeneratePostSummaryUseCase', () => {
         input: [
           { role: 'user', content: `<post>\n${BODY}\n</post>` },
           { role: 'assistant', content: '요약할 수 없음' },
-          { role: 'user', content: expect.stringContaining('<violation>0문장 (1~3문장이어야 함)</violation>') as string },
+          { role: 'user', content: expect.stringContaining('<violation>0문장 (1~5문장이어야 함)</violation>') as string },
         ],
       }),
       CONTEXT,

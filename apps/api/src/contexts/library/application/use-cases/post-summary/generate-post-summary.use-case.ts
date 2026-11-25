@@ -77,7 +77,7 @@ export class GeneratePostSummaryUseCase {
     let outcome: TextGenerationGuardrailsOutcome<PostSummaryDraft>;
     try {
       outcome = await guardrails<PostSummaryDraft>({ maxRegenerations: 2 })
-        .check(new SentenceCountGate({ min: 1, max: 3 }), 'regenerate')
+        .check(new SentenceCountGate({ min: 1, max: 5 }), 'regenerate')
         .check(new NoMarkupGate(), 'regenerate')
         .check(new HangulRatioGate({ minPercent: 30 }), 'regenerate')
         .check(new LengthRatioGate({ maxPercent: 40 }), 'reject')
