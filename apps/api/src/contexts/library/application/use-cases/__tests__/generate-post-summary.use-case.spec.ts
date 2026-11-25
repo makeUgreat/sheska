@@ -18,7 +18,10 @@ describe('GeneratePostSummaryUseCase', () => {
     const result = await useCase.execute({ postId: 'post-1' }, CONTEXT);
 
     expect(result).toEqual({ outcome: 'completed' });
-    expect(generator.generate).toHaveBeenCalledWith(expect.objectContaining({ input: `<post>\n${BODY}\n</post>` }), CONTEXT);
+    expect(generator.generate).toHaveBeenCalledWith(
+      expect.objectContaining({ input: [{ role: 'user', content: `<post>\n${BODY}\n</post>` }] }),
+      CONTEXT,
+    );
     expect(savedSummary(summaries).getProps()).toMatchObject({
       fingerprint: SourceFingerprint.ofBody(BODY),
       outcome: { kind: 'completed', sentences: ['이벤트 유실을 막는 방법을 설명함'], model: 'claude-haiku-5-5' },

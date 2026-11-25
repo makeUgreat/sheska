@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_POST_SUMMARY_PROMPT, toPostSummaryRequest, toPostSummarySentences } from '../generate-post-summary.prompt';
 
 describe('toPostSummaryRequest', () => {
-  it('본문을 post 태그로 감싸 입력으로 보낸다', () => {
+  it('본문을 post 태그로 감싸 user 메시지 하나로 보낸다', () => {
     const request = toPostSummaryRequest('# 제목\n본문', DEFAULT_POST_SUMMARY_PROMPT);
 
-    expect(request.input).toBe('<post>\n# 제목\n본문\n</post>');
+    expect(request.input).toEqual([{ role: 'user', content: '<post>\n# 제목\n본문\n</post>' }]);
   });
 
   it('받은 프롬프트의 지침과 출력 토큰 상한을 그대로 쓴다', () => {

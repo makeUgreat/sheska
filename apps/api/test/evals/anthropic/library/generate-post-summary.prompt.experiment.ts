@@ -84,7 +84,10 @@ async function main(): Promise<void> {
       const sentenceLimit = toSentenceLimit(body);
       const request = toPostSummaryRequest(body, settings.prompt);
       const limitTag = sentenceLimit < MAX_SENTENCES ? `\n<sentence_limit>${sentenceLimit}</sentence_limit>` : '';
-      const limitedRequest = { ...request, input: `${request.input}${limitTag}` };
+      const limitedRequest = {
+        ...request,
+        input: request.input.map((message) => ({ ...message, content: `${message.content}${limitTag}` })),
+      };
       const rejected: string[][] = [];
 
       for (let attempts = 1; ; attempts++) {

@@ -4,9 +4,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { computeDeadline } from '@core/deadline';
 import { type CallContext } from '@core/call-context';
 import { BadResponseError, InputTooLargeError, InvalidDataError, TimeoutError, UnavailableError } from '@core/errors';
+import { type TextGenerationRequest } from '@contexts/library/application/ports';
 import { TextAnthropicGenerator } from '../text.anthropic.generator';
 
-const REQUEST = { instructions: '<role>요약 도구</role>', input: '<post>본문</post>', maxOutputTokens: 2_048 };
+const REQUEST: TextGenerationRequest = {
+  instructions: '<role>요약 도구</role>',
+  input: [{ role: 'user', content: '<post>본문</post>' }],
+  maxOutputTokens: 2_048,
+};
 
 describe('TextAnthropicGenerator', () => {
   afterEach(() => {
@@ -29,6 +34,60 @@ describe('TextAnthropicGenerator', () => {
       output_config: { effort: 'low' },
     });
     expect(new Headers(init.headers).get('x-stainless-retry-count')).toBe('0');
+  });
+
+  it('입력 대화를 순서와 역할을 지켜 messages로 보낸다', async () => {
+    const fetchMock = stubFetch(() => messageResponse());
+    const request: TextGenerationRequest = {
+      ...REQUEST,
+      input: [
+        { role: 'user', content: '<post>본문</post>' },
+        { role: 'assistant', content: '<sentence>첫 응답</sentence>' },
+        { role: 'user', content: '다시 써라' },
+      ],
+    };
+
+    await createGenerator().generate(request, buildContext());
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      messages: [
+        { role: 'user', content: '<post>본문</post>' },
+        { role: 'assistant', content: '<sentence>첫 응답</sentence>' },
+        { role: 'user', content: '다시 써라' },
+      ],
+    });
+  });
+
+  it.each<{ name: string; input: TextGenerationRequest['input'] }>([
+    { name: '빈 대화', input: [] },
+    {
+      name: 'assistant로 시작하는 대화',
+      input: [
+        { role: 'assistant', content: '<sentence>첫 응답</sentence>' },
+        { role: 'user', content: '다시 써라' },
+      ],
+    },
+  ])('$name은 호출하지 않고 첫 메시지가 user가 아니라는 InvalidDataError를 던진다', async ({ input }) => {
+    const fetchMock = stubFetch(() => messageResponse());
+
+    const result = createGenerator().generate({ ...REQUEST, input }, buildContext());
+
+    await expect(result).rejects.toMatchObject({ kind: 'invalid_data', code: 'anthropic.first_message_not_user' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('assistant로 끝나는 대화는 prefill이므로 호출하지 않고 InvalidDataError를 던진다', async () => {
+    const fetchMock = stubFetch(() => messageResponse());
+    const input: TextGenerationRequest['input'] = [
+      { role: 'user', content: '<post>본문</post>' },
+      { role: 'assistant', content: '<sentence>' },
+    ];
+
+    const result = createGenerator().generate({ ...REQUEST, input }, buildContext());
+
+    await expect(result).rejects.toMatchObject({ kind: 'invalid_data', code: 'anthropic.prefill_unsupported' });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('text block만 이어 붙이고 thinking block은 버리며 응답한 모델을 돌려준다', async () => {
