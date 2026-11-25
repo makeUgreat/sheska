@@ -5,7 +5,11 @@ import { type PostQueryResult, type TextGenerationResult } from '@contexts/libra
 import { PostSummary, SourceFingerprint } from '@contexts/library/domain';
 import { GeneratePostSummaryUseCase } from '../generate-post-summary.use-case';
 
-const BODY = '# Outbox\n이벤트를 트랜잭션과 함께 저장한다.';
+const BODY = [
+  '# Outbox',
+  '이벤트를 트랜잭션과 함께 저장한다. 별도 relay가 저장한 이벤트를 읽어 메시지 브로커로 보낸다.',
+  '전송에 실패하면 다음 주기에 다시 보내므로 이벤트가 사라지지 않는다.',
+].join('\n');
 const CONTEXT = callContext({ deadlineMs: 60_000, maxRetries: 0 });
 const PROMPT = { instructions: '<role>요약 도구</role>', maxOutputTokens: 1_024 };
 
@@ -83,18 +87,64 @@ describe('GeneratePostSummaryUseCase', () => {
     {
       name: '응답이 잘리면',
       result: { text: '<sentence>잘린', model: 'claude-haiku-5-5', finishReason: 'truncated' } as const,
-      reason: 'truncated',
+      explanation: 'truncated',
     },
-    { name: '모델이 거부하면', result: { text: '', model: 'claude-haiku-5-5', finishReason: 'refused' } as const, reason: 'refused' },
-    { name: '꺼낼 문장이 없으면', result: completedResult('요약할 수 없음'), reason: 'no_sentences' },
-  ])('$name 실패한 요약으로 저장하고 이유를 남긴다', async ({ result: generated, reason }) => {
-    const { useCase, summaries, logger } = setup({ result: generated });
+    {
+      name: '모델이 거부하면',
+      result: { text: '', model: 'claude-haiku-5-5', finishReason: 'refused' } as const,
+      explanation: 'refused',
+    },
+  ])('$name 다시 생성하지 않고 실패한 요약으로 저장하며 걸린 게이트를 남긴다', async ({ result: generated, explanation }) => {
+    const { useCase, generator, summaries, logger } = setup({ result: generated });
 
     const result = await useCase.execute({ postId: 'post-1' }, CONTEXT);
 
     expect(result).toEqual({ outcome: 'failed' });
     expect(savedSummary(summaries).getProps().outcome).toEqual({ kind: 'failed' });
-    expect(logger.warn).toHaveBeenCalledWith('Post summary generation failed', { postId: 'post-1', reason });
+    expect(logger.warn).toHaveBeenCalledWith('Post summary generation failed', {
+      postId: 'post-1',
+      reason: 'rejected',
+      gate: 'completed',
+      explanation,
+    });
+    expect(generator.generate).toHaveBeenCalledOnce();
+  });
+
+  // nocap: library-summary-5
+  it.each([
+    { name: '꺼낼 문장이 없으면', text: '요약할 수 없음', explanation: '0문장' },
+    {
+      name: '문장이 너무 많으면',
+      text: '<sentence>하나임</sentence><sentence>둘임</sentence><sentence>셋임</sentence><sentence>넷임</sentence>',
+      explanation: '4문장',
+    },
+  ])('$name 두 번 더 생성해 보고 모두 걸리면 실패한 요약으로 저장한다', async ({ text, explanation }) => {
+    const { useCase, generator, summaries, logger } = setup({ result: completedResult(text) });
+
+    const result = await useCase.execute({ postId: 'post-1' }, CONTEXT);
+
+    expect(result).toEqual({ outcome: 'failed' });
+    expect(savedSummary(summaries).getProps().outcome).toEqual({ kind: 'failed' });
+    expect(logger.warn).toHaveBeenCalledWith('Post summary generation failed', {
+      postId: 'post-1',
+      reason: 'rejected',
+      gate: 'sentence-count',
+      explanation,
+    });
+    expect(generator.generate).toHaveBeenCalledTimes(3);
+  });
+
+  it('다시 생성한 요약이 게이트를 통과하면 완료한 요약으로 저장한다', async () => {
+    const { useCase, generator, summaries } = setup();
+    generator.generate
+      .mockResolvedValueOnce(completedResult('요약할 수 없음'))
+      .mockResolvedValueOnce(completedResult('<sentence>다시 만든 요약임</sentence>'));
+
+    const result = await useCase.execute({ postId: 'post-1' }, CONTEXT);
+
+    expect(result).toEqual({ outcome: 'completed' });
+    expect(savedSummary(summaries).getProps().outcome).toMatchObject({ kind: 'completed', sentences: ['다시 만든 요약임'] });
+    expect(generator.generate).toHaveBeenCalledTimes(2);
   });
 
   // nocap: library-summary-5
