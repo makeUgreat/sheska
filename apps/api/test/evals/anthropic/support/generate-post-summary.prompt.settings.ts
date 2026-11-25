@@ -16,7 +16,7 @@ const settingsEnvSchema = z.object({
     .optional()
     .transform((name) => name || undefined),
   EVAL_POST_SUMMARY_MODEL: z.enum(['claude-haiku-5-5', 'claude-sonnet-5-5', 'claude-opus-5-5']),
-  EVAL_POST_SUMMARY_EFFORT: z.enum(['low', 'medium', 'high']),
+  EVAL_POST_SUMMARY_EFFORT: z.enum(['low', 'medium', 'high', 'xhigh', 'max']),
   EVAL_POST_SUMMARY_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive(),
   EVAL_POST_SUMMARY_INSTRUCTIONS_FILE: z.string().min(1),
 });

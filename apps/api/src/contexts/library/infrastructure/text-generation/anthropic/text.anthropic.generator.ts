@@ -22,7 +22,7 @@ const PROMPT_TOO_LONG_MESSAGE = 'prompt is too long';
 
 export interface TextAnthropicGeneratorOptions {
   readonly model: 'claude-haiku-5-5' | 'claude-sonnet-5-5' | 'claude-opus-5-5';
-  readonly effort: 'low' | 'medium' | 'high';
+  readonly effort: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 }
 
 export class TextAnthropicGenerator implements TextGenerator {
