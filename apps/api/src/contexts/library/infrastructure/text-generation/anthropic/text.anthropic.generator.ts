@@ -64,7 +64,7 @@ export class TextAnthropicGenerator implements TextGenerator {
           model: this.options.model,
           max_tokens: request.maxOutputTokens,
           system: request.instructions,
-          messages: [{ role: 'user', content: request.input }],
+          messages: request.input.map(({ role, content }) => ({ role, content })),
           output_config: { effort: this.options.effort },
         },
         { signal: attempt.signal },

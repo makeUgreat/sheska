@@ -40,7 +40,7 @@ const SENTENCE_TAG = /<sentence>([\s\S]*?)<\/sentence>/g;
 export function toPostSummaryRequest(body: string, prompt: PostSummaryPrompt): TextGenerationRequest {
   return {
     instructions: prompt.instructions,
-    input: `<post>\n${body}\n</post>`,
+    input: [{ role: 'user', content: `<post>\n${body}\n</post>` }],
     maxOutputTokens: prompt.maxOutputTokens,
   };
 }

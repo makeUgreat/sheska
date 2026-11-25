@@ -13,7 +13,13 @@ export type {
 export type { LibraryUnitOfWork, LibraryUnitOfWorkResources } from './library.unit-of-work';
 export type { SyncJobProgress, SyncJobProgressLookup } from './sync-job-progress.lookup';
 export type { SearchQueryEmbedder } from './search-query.embedder';
-export type { TextGenerator, TextGenerationRequest, TextGenerationResult, TextGenerationFinishReason } from './text.generator';
+export type {
+  TextGenerator,
+  TextGenerationMessage,
+  TextGenerationRequest,
+  TextGenerationResult,
+  TextGenerationFinishReason,
+} from './text.generator';
 export type {
   PostQueryResult,
   PostQueryFindCriteria,
