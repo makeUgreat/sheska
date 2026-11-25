@@ -58,4 +58,14 @@ describe('Guard', () => {
       expect(Guard.isPlainObject(value)).toBe(false);
     });
   });
+
+  describe('isPercent', () => {
+    it.each([0, 30, 100])('0~100 정수 %s이면 true로 판정한다', (value) => {
+      expect(Guard.isPercent(value)).toBe(true);
+    });
+
+    it.each([0.3, 30.5, -1, 101])('%s이면 false로 판정한다', (value) => {
+      expect(Guard.isPercent(value)).toBe(false);
+    });
+  });
 });
