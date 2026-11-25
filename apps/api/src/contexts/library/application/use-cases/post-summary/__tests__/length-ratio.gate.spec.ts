@@ -14,19 +14,22 @@ describe('LengthRatioGate', () => {
   it('요약이 산문의 40% 이하면 통과한다', () => {
     const draft = buildDraft({ body: BODY, sentences: ['나'.repeat(20), '다'.repeat(20)] });
 
-    expect(gate.judge(draft)).toEqual({ passed: true, explanation: '요약 40자 / 산문 100자 = 40%' });
+    expect(gate.judge(draft)).toEqual({ passed: true, explanation: '요약 40자 / 산문 100자 = 40% (40% 이하여야 함)' });
   });
 
   it('요약이 산문의 40%를 넘으면 실패한다', () => {
     const draft = buildDraft({ body: BODY, sentences: ['나'.repeat(41)] });
 
-    expect(gate.judge(draft)).toEqual({ passed: false, explanation: '요약 41자 / 산문 100자 = 41%' });
+    expect(gate.judge(draft)).toEqual({ passed: false, explanation: '요약 41자 / 산문 100자 = 41% (40% 이하여야 함)' });
   });
 
   it('요약 비율이 기준과 정확히 같으면 통과한다', () => {
     const draft = buildDraft({ body: BODY, sentences: ['나'.repeat(7)] });
 
-    expect(new LengthRatioGate({ maxPercent: 7 }).judge(draft)).toEqual({ passed: true, explanation: '요약 7자 / 산문 100자 = 7%' });
+    expect(new LengthRatioGate({ maxPercent: 7 }).judge(draft)).toEqual({
+      passed: true,
+      explanation: '요약 7자 / 산문 100자 = 7% (7% 이하여야 함)',
+    });
   });
 
   it.each([

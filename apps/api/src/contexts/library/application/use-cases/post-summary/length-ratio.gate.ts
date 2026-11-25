@@ -29,7 +29,7 @@ export class LengthRatioGate implements Gate<PostSummaryDraft> {
 
     return {
       passed: summaryLength * 100 <= this.options.maxPercent * proseLength,
-      explanation: `요약 ${summaryLength}자 / 산문 ${proseLength}자 = ${Math.round((summaryLength * 100) / proseLength)}%`,
+      explanation: `요약 ${summaryLength}자 / 산문 ${proseLength}자 = ${Math.round((summaryLength * 100) / proseLength)}% (${this.options.maxPercent}% 이하여야 함)`,
     };
   }
 }

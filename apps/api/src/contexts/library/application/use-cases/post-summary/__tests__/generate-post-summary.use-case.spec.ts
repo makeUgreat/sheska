@@ -112,11 +112,11 @@ describe('GeneratePostSummaryUseCase', () => {
 
   // nocap: library-summary-5
   it.each([
-    { name: '꺼낼 문장이 없으면', text: '요약할 수 없음', explanation: '0문장' },
+    { name: '꺼낼 문장이 없으면', text: '요약할 수 없음', explanation: '0문장 (1~3문장이어야 함)' },
     {
       name: '문장이 너무 많으면',
       text: '<sentence>하나임</sentence><sentence>둘임</sentence><sentence>셋임</sentence><sentence>넷임</sentence>',
-      explanation: '4문장',
+      explanation: '4문장 (1~3문장이어야 함)',
     },
   ])('$name 두 번 더 생성해 보고 모두 걸리면 실패한 요약으로 저장한다', async ({ text, explanation }) => {
     const { useCase, generator, summaries, logger } = setup({ result: completedResult(text) });
@@ -132,6 +132,26 @@ describe('GeneratePostSummaryUseCase', () => {
       explanation,
     });
     expect(generator.generate).toHaveBeenCalledTimes(3);
+  });
+
+  it('다시 생성할 때 앞선 답과 거절 사유를 대화로 이어 보낸다', async () => {
+    const { useCase, generator } = setup();
+    generator.generate
+      .mockResolvedValueOnce(completedResult('요약할 수 없음'))
+      .mockResolvedValueOnce(completedResult('<sentence>다시 만든 요약임</sentence>'));
+
+    await useCase.execute({ postId: 'post-1' }, CONTEXT);
+
+    expect(generator.generate).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        input: [
+          { role: 'user', content: `<post>\n${BODY}\n</post>` },
+          { role: 'assistant', content: '요약할 수 없음' },
+          { role: 'user', content: expect.stringContaining('<violation>0문장 (1~3문장이어야 함)</violation>') as string },
+        ],
+      }),
+      CONTEXT,
+    );
   });
 
   it('다시 생성한 요약이 게이트를 통과하면 완료한 요약으로 저장한다', async () => {

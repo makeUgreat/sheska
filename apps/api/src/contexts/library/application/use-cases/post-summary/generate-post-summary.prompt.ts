@@ -1,4 +1,5 @@
-import { type TextGenerationRequest, type TextGenerationResult } from '@contexts/library/application/ports';
+import { type GateFailure, type TextGenerationGuardrailsRejection } from '@kernels/application';
+import { type TextGenerationMessage, type TextGenerationRequest, type TextGenerationResult } from '@contexts/library/application/ports';
 
 export interface PostSummaryDraft extends TextGenerationResult {
   /** 요약한 원문 */
@@ -43,14 +44,29 @@ export const DEFAULT_POST_SUMMARY_PROMPT: PostSummaryPrompt = {
 
 const SENTENCE_TAG = /<sentence>([\s\S]*?)<\/sentence>/g;
 
-export function toPostSummaryRequest(body: string, prompt: PostSummaryPrompt): TextGenerationRequest {
+export function toPostSummaryRequest(
+  body: string,
+  prompt: PostSummaryPrompt,
+  rejected: readonly TextGenerationGuardrailsRejection<PostSummaryDraft>[],
+): TextGenerationRequest {
   return {
     instructions: prompt.instructions,
-    input: [{ role: 'user', content: `<post>\n${body}\n</post>` }],
+    input: [{ role: 'user', content: `<post>\n${body}\n</post>` }, ...rejected.flatMap(toRegenerationTurns)],
     maxOutputTokens: prompt.maxOutputTokens,
   };
 }
 
 export function toPostSummarySentences(text: string): string[] {
   return [...text.matchAll(SENTENCE_TAG)].map(([, sentence]) => sentence.trim()).filter((sentence) => sentence.length > 0);
+}
+
+function toRegenerationTurns({ output, failure }: TextGenerationGuardrailsRejection<PostSummaryDraft>): TextGenerationMessage[] {
+  const feedback: TextGenerationMessage = { role: 'user', content: toRejectionFeedback(failure) };
+  if (output.text.trim().length === 0) return [feedback];
+
+  return [{ role: 'assistant', content: output.text }, feedback];
+}
+
+function toRejectionFeedback(failure: GateFailure): string {
+  return `<violation>${failure.explanation}</violation>\n앞의 요약은 <rules>를 어겼다. 처음부터 다시 써라.`;
 }

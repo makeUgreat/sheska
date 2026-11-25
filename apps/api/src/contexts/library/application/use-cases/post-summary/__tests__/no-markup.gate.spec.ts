@@ -13,17 +13,17 @@ describe('NoMarkupGate', () => {
   });
 
   it.each([
-    ['수식', '복잡도를 $N \\times M$에서 줄인다.', '1번 문장: math'],
-    ['굵은 글씨', '**Negative Cache**를 도입한다.', '1번 문장: bold'],
-    ['위키 링크', '[[OR 조건]]과 이어진다.', '1번 문장: wikilink'],
-    ['마크다운 링크', '[RFC 7396](https://example.com)을 따른다.', '1번 문장: link'],
+    ['수식', '복잡도를 $N \\times M$에서 줄인다.', '1번 문장: math (마크다운, 위키링크, 수식 문법을 쓰면 안 됨)'],
+    ['굵은 글씨', '**Negative Cache**를 도입한다.', '1번 문장: bold (마크다운, 위키링크, 수식 문법을 쓰면 안 됨)'],
+    ['위키 링크', '[[OR 조건]]과 이어진다.', '1번 문장: wikilink (마크다운, 위키링크, 수식 문법을 쓰면 안 됨)'],
+    ['마크다운 링크', '[RFC 7396](https://example.com)을 따른다.', '1번 문장: link (마크다운, 위키링크, 수식 문법을 쓰면 안 됨)'],
   ])('%s 문법이 있으면 실패한다', (_, sentence, explanation) => {
     expect(gate.judge(buildDraft({ sentences: [sentence] }))).toEqual({ passed: false, explanation });
   });
 
   it('실패한 문장의 번호를 알린다', () => {
     expect(gate.judge(buildDraft({ sentences: ['평문이다.', '$O(n)$이다.', '**굵다**.'] })).explanation).toBe(
-      '2번 문장: math, 3번 문장: bold',
+      '2번 문장: math, 3번 문장: bold (마크다운, 위키링크, 수식 문법을 쓰면 안 됨)',
     );
   });
 

@@ -81,8 +81,8 @@ export class GeneratePostSummaryUseCase {
         .check(new NoMarkupGate(), 'regenerate')
         .check(new HangulRatioGate({ minPercent: 30 }), 'regenerate')
         .check(new LengthRatioGate({ maxPercent: 40 }), 'reject')
-        .execute(async () => {
-          const result = await this.generator.generate(toPostSummaryRequest(body, this.prompt), context);
+        .execute(async (rejected) => {
+          const result = await this.generator.generate(toPostSummaryRequest(body, this.prompt, rejected), context);
 
           return { ...result, body, sentences: toPostSummarySentences(result.text) };
         });
