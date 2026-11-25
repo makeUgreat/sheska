@@ -48,7 +48,7 @@ export class TextAnthropicGenerator implements TextGenerator {
       })
       .timeout({
         deadline: context.deadline,
-        attemptTimeoutMs: 60_000,
+        attemptTimeoutMs: 30_000,
       })
       .execute((attempt) => this.generateOnce(request, attempt));
   }
