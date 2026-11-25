@@ -11,7 +11,7 @@ const BODY = [
   '전송에 실패하면 다음 주기에 다시 보내므로 이벤트가 사라지지 않는다.',
 ].join('\n');
 const CONTEXT = callContext({ deadlineMs: 60_000, maxRetries: 0 });
-const PROMPT = { instructions: '<role>요약 도구</role>', maxOutputTokens: 1_024 };
+const PROMPT = { instructions: '<role>요약 도구</role>\n<sentence_limit>{{sentence_limit}}</sentence_limit>', maxOutputTokens: 1_024 };
 
 describe('GeneratePostSummaryUseCase', () => {
   it('본문을 요약해 완료한 요약으로 저장한다', async () => {
@@ -38,7 +38,10 @@ describe('GeneratePostSummaryUseCase', () => {
     await useCase.execute({ postId: 'post-1' }, CONTEXT);
 
     expect(generator.generate).toHaveBeenCalledWith(
-      expect.objectContaining({ instructions: PROMPT.instructions, maxOutputTokens: PROMPT.maxOutputTokens }),
+      expect.objectContaining({
+        instructions: '<role>요약 도구</role>\n<sentence_limit>1</sentence_limit>',
+        maxOutputTokens: PROMPT.maxOutputTokens,
+      }),
       CONTEXT,
     );
   });
@@ -110,13 +113,13 @@ describe('GeneratePostSummaryUseCase', () => {
     expect(generator.generate).toHaveBeenCalledOnce();
   });
 
-  // nocap: library-summary-5
+  // nocap: library-summary-7
   it.each([
-    { name: '꺼낼 문장이 없으면', text: '요약할 수 없음', explanation: '0문장 (1~5문장이어야 함)' },
+    { name: '꺼낼 문장이 없으면', text: '요약할 수 없음', explanation: '0문장 (1문장이어야 함)' },
     {
       name: '문장이 너무 많으면',
       text: '<sentence>하나임</sentence><sentence>둘임</sentence><sentence>셋임</sentence><sentence>넷임</sentence><sentence>다섯임</sentence><sentence>여섯임</sentence>',
-      explanation: '6문장 (1~5문장이어야 함)',
+      explanation: '6문장 (1문장이어야 함)',
     },
   ])('$name 두 번 더 생성해 보고 모두 걸리면 실패한 요약으로 저장한다', async ({ text, explanation }) => {
     const { useCase, generator, summaries, logger } = setup({ result: completedResult(text) });
@@ -134,6 +137,34 @@ describe('GeneratePostSummaryUseCase', () => {
     expect(generator.generate).toHaveBeenCalledTimes(3);
   });
 
+  // nocap: library-summary-7
+  it('요약이 본문에 비해 너무 길면 다시 생성해 보고 모두 걸리면 실패한 요약으로 저장한다', async () => {
+    const { useCase, generator, logger } = setup({ result: completedResult(`<sentence>${'요약'.repeat(30)}</sentence>`) });
+
+    const result = await useCase.execute({ postId: 'post-1' }, CONTEXT);
+
+    expect(result).toEqual({ outcome: 'failed' });
+    expect(logger.warn).toHaveBeenCalledWith('Post summary generation failed', expect.objectContaining({ gate: 'length-ratio' }));
+    expect(generator.generate).toHaveBeenCalledTimes(3);
+  });
+
+  it.each([
+    { name: '짧은 본문', body: BODY, limit: 1 },
+    { name: '긴 본문', body: `# 긴 글\n${'가'.repeat(2_000)}`, limit: 5 },
+  ])('$name이면 본문 길이로 계산한 최대 문장 수를 지침에 넣는다', async ({ body, limit }) => {
+    const { useCase, generator } = setup({
+      posts: [postResult(body), postResult(body)],
+      prompt: { instructions: '<sentence_limit>{{sentence_limit}}</sentence_limit>', maxOutputTokens: 1_024 },
+    });
+
+    await useCase.execute({ postId: 'post-1' }, CONTEXT);
+
+    expect(generator.generate).toHaveBeenCalledWith(
+      expect.objectContaining({ instructions: `<sentence_limit>${limit}</sentence_limit>` }),
+      CONTEXT,
+    );
+  });
+
   it('다시 생성할 때 앞선 답과 거절 사유를 대화로 이어 보낸다', async () => {
     const { useCase, generator } = setup();
     generator.generate
@@ -147,7 +178,7 @@ describe('GeneratePostSummaryUseCase', () => {
         input: [
           { role: 'user', content: `<post>\n${BODY}\n</post>` },
           { role: 'assistant', content: '요약할 수 없음' },
-          { role: 'user', content: expect.stringContaining('<violation>0문장 (1~5문장이어야 함)</violation>') as string },
+          { role: 'user', content: expect.stringContaining('<violation>0문장 (1문장이어야 함)</violation>') as string },
         ],
       }),
       CONTEXT,
@@ -165,6 +196,19 @@ describe('GeneratePostSummaryUseCase', () => {
     expect(result).toEqual({ outcome: 'completed' });
     expect(savedSummary(summaries).getProps().outcome).toMatchObject({ kind: 'completed', sentences: ['다시 만든 요약임'] });
     expect(generator.generate).toHaveBeenCalledTimes(2);
+  });
+
+  // nocap: library-summary-5
+  it('본문에 요약할 산문이 없으면 모델을 부르지 않고 실패한 요약으로 저장한다', async () => {
+    const body = '```ts\nconst a = 1;\n```';
+    const { useCase, generator, summaries, logger } = setup({ posts: [postResult(body), postResult(body)] });
+
+    const result = await useCase.execute({ postId: 'post-1' }, CONTEXT);
+
+    expect(result).toEqual({ outcome: 'failed' });
+    expect(savedSummary(summaries).getProps().outcome).toEqual({ kind: 'failed' });
+    expect(logger.warn).toHaveBeenCalledWith('Post summary generation failed', { postId: 'post-1', reason: 'no_prose' });
+    expect(generator.generate).not.toHaveBeenCalled();
   });
 
   // nocap: library-summary-5
@@ -247,6 +291,7 @@ function setup(
     existing?: PostSummary | null;
     result?: TextGenerationResult;
     error?: Error;
+    prompt?: typeof PROMPT;
   } = {},
 ) {
   const posts = { find: vi.fn() };
@@ -261,7 +306,7 @@ function setup(
       : vi.fn().mockResolvedValue(options.result ?? completedResult('<sentence>요약 문장임</sentence>')),
   };
   const logger = { log: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
-  const useCase = new GeneratePostSummaryUseCase(posts as never, summaries, generator, PROMPT, logger);
+  const useCase = new GeneratePostSummaryUseCase(posts as never, summaries, generator, options.prompt ?? PROMPT, logger);
 
   return { useCase, generator, summaries, logger };
 }

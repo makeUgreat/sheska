@@ -22,6 +22,13 @@ describe('SentenceCountGate', () => {
   it('6문장이면 실패한다', () => {
     expect(gate.judge(buildDraft({ sentences: sentencesOf(6) }))).toEqual({ passed: false, explanation: '6문장 (1~5문장이어야 함)' });
   });
+
+  it('최소와 최대가 같으면 그 수 하나를 기대값으로 알린다', () => {
+    expect(new SentenceCountGate({ min: 1, max: 1 }).judge(buildDraft({ sentences: sentencesOf(2) }))).toEqual({
+      passed: false,
+      explanation: '2문장 (1문장이어야 함)',
+    });
+  });
 });
 
 function buildDraft(overrides: Partial<PostSummaryDraft>): PostSummaryDraft {

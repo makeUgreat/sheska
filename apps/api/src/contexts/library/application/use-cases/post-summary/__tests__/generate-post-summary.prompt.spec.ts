@@ -5,19 +5,44 @@ import {
   type PostSummaryDraft,
   toPostSummaryRequest,
   toPostSummarySentences,
+  toSentenceLimit,
 } from '../generate-post-summary.prompt';
 
 describe('toPostSummaryRequest', () => {
   it('본문을 post 태그로 감싸 user 메시지 하나로 보낸다', () => {
-    const request = toPostSummaryRequest('# 제목\n본문', DEFAULT_POST_SUMMARY_PROMPT, []);
+    const request = toPostSummaryRequest('# 제목\n본문', DEFAULT_POST_SUMMARY_PROMPT, 5, []);
 
     expect(request.input).toEqual([{ role: 'user', content: '<post>\n# 제목\n본문\n</post>' }]);
   });
 
   it('받은 프롬프트의 지침과 출력 토큰 상한을 그대로 쓴다', () => {
-    const request = toPostSummaryRequest('본문', { instructions: '<role>다른 지침</role>', maxOutputTokens: 512 }, []);
+    const request = toPostSummaryRequest(
+      '본문',
+      { instructions: '<role>다른 지침</role> {{sentence_limit}}', maxOutputTokens: 512 },
+      5,
+      [],
+    );
 
-    expect(request).toMatchObject({ instructions: '<role>다른 지침</role>', maxOutputTokens: 512 });
+    expect(request).toMatchObject({ instructions: '<role>다른 지침</role> 5', maxOutputTokens: 512 });
+  });
+
+  it('지침의 최대 문장 수 자리를 받은 값으로 채운다', () => {
+    const prompt = { instructions: '<sentence_limit>{{sentence_limit}}</sentence_limit>', maxOutputTokens: 512 };
+
+    const request = toPostSummaryRequest('본문', prompt, 3, []);
+
+    expect(request.instructions).toBe('<sentence_limit>3</sentence_limit>');
+  });
+
+  it('지침에 최대 문장 수 자리가 없으면 던진다', () => {
+    const prompt = { instructions: '<role>자리 없는 지침</role>', maxOutputTokens: 512 };
+
+    expect(() => toPostSummaryRequest('본문', prompt, 3, [])).toThrow('Post summary instructions must contain {{sentence_limit}}');
+  });
+
+  it('기본 프롬프트는 최대 문장 수 자리를 두고 출력 토큰 상한은 4096이다', () => {
+    expect(DEFAULT_POST_SUMMARY_PROMPT.instructions).toContain('<sentence_limit>{{sentence_limit}}</sentence_limit>');
+    expect(DEFAULT_POST_SUMMARY_PROMPT.maxOutputTokens).toBe(4_096);
   });
 
   it('거절된 답마다 그 답과 거절 사유를 이어 붙여 다시 요청한다', () => {
@@ -30,7 +55,7 @@ describe('toPostSummaryRequest', () => {
       rejection('<sentence>**굵다**</sentence>', 'no-markup', '1번 문장: bold'),
     ];
 
-    const request = toPostSummaryRequest('본문', DEFAULT_POST_SUMMARY_PROMPT, rejected);
+    const request = toPostSummaryRequest('본문', DEFAULT_POST_SUMMARY_PROMPT, 5, rejected);
 
     expect(request.input).toEqual([
       { role: 'user', content: '<post>\n본문\n</post>' },
@@ -42,12 +67,38 @@ describe('toPostSummaryRequest', () => {
   });
 
   it('거절된 답이 비어 있으면 그 답은 빼고 거절 사유만 이어 붙인다', () => {
-    const request = toPostSummaryRequest('본문', DEFAULT_POST_SUMMARY_PROMPT, [rejection('  ', 'sentence-count', '0문장')]);
+    const request = toPostSummaryRequest('본문', DEFAULT_POST_SUMMARY_PROMPT, 5, [rejection('  ', 'sentence-count', '0문장')]);
 
     expect(request.input).toEqual([
       { role: 'user', content: '<post>\n본문\n</post>' },
       { role: 'user', content: expect.stringContaining('<violation>0문장</violation>') as string },
     ]);
+  });
+});
+
+describe('toSentenceLimit', () => {
+  const proseOf = (length: number) => '가'.repeat(length);
+
+  it.each([
+    [240, 1],
+    [377, 2],
+    [608, 3],
+    [954, 4],
+    [1201, 5],
+  ])('산문 %i자이면 최대 %i문장이다', (length, limit) => {
+    expect(toSentenceLimit(proseOf(length))).toBe(limit);
+  });
+
+  it('아주 짧은 글도 최대 1문장은 쓸 수 있다', () => {
+    expect(toSentenceLimit(proseOf(10))).toBe(1);
+  });
+
+  it('긴 글도 5문장을 넘지 않는다', () => {
+    expect(toSentenceLimit(proseOf(30_000))).toBe(5);
+  });
+
+  it('코드 블록은 길이에 넣지 않는다', () => {
+    expect(toSentenceLimit(`${proseOf(240)}\n\`\`\`ts\n${'x'.repeat(5000)}\n\`\`\``)).toBe(1);
   });
 });
 
