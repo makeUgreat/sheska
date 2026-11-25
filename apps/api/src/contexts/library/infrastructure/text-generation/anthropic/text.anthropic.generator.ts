@@ -9,13 +9,9 @@ import Anthropic, {
 import { type Message } from '@anthropic-ai/sdk/resources/messages';
 import { BadResponseError, InputTooLargeError, InvalidDataError, TimeoutError, UnavailableError } from '@core/errors';
 import { type CallContext } from '@core/call-context';
+import { type TextGenerationFinishReason } from '@kernels/application';
 import { classifyInfrastructureRetry, parseRetryAfterMs, resiliencePipeline, type ResilienceAttempt } from '@kernels/infrastructure';
-import {
-  type TextGenerationFinishReason,
-  type TextGenerationRequest,
-  type TextGenerationResult,
-  type TextGenerator,
-} from '@contexts/library/application/ports';
+import { type TextGenerationRequest, type TextGenerationResult, type TextGenerator } from '@contexts/library/application/ports';
 import { type AnthropicConfig } from './anthropic.config';
 
 const PROMPT_TOO_LONG_MESSAGE = 'prompt is too long';
