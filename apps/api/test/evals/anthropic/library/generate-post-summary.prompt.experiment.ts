@@ -5,12 +5,12 @@ import { callContext } from '@core/call-context';
 import {
   toPostSummaryRequest,
   toPostSummarySentences,
+  toSentenceLimit,
 } from '@contexts/library/application/use-cases/post-summary/generate-post-summary.prompt';
 import { TextAnthropicGenerator } from '@contexts/library/infrastructure/text-generation/anthropic/text.anthropic.generator';
 import { KOREAN_GATE } from '../../library/post-summary/korean.gate';
 import { PLAIN_TEXT_GATE } from '../../library/post-summary/plain-text.gate';
-import { MAX_SENTENCES, SENTENCE_COUNT_GATE } from '../../library/post-summary/sentence-count.gate';
-import { toSentenceLimit } from '../../library/post-summary/sentence-limit';
+import { SENTENCE_COUNT_GATE } from '../../library/post-summary/sentence-count.gate';
 import { SUMMARY_RATIO_GATE } from '../../library/post-summary/summary-ratio.gate';
 import { createPhoenixClient, toExperimentMetadata } from '../../support/phoenix.connection';
 import { type ExperimentRunData, toGateSummaries, toPhoenixEvaluator } from '../../support/phoenix.evaluator';
@@ -85,16 +85,11 @@ async function main(): Promise<void> {
       // runExperiment replaces the global tracer provider, and the SDK keeps the tracer it saw when the client was made
       const generator = new TextAnthropicGenerator({ apiKey }, settings.generator);
       const sentenceLimit = toSentenceLimit(body);
-      const request = toPostSummaryRequest(body, settings.prompt, []);
-      const limitTag = sentenceLimit < MAX_SENTENCES ? `\n<sentence_limit>${sentenceLimit}</sentence_limit>` : '';
-      const limitedRequest = {
-        ...request,
-        input: request.input.map((message) => ({ ...message, content: `${message.content}${limitTag}` })),
-      };
+      const request = toPostSummaryRequest(body, settings.prompt, sentenceLimit, []);
       const rejected: string[][] = [];
 
       for (let attempts = 1; ; attempts++) {
-        const result = await generator.generate(limitedRequest, callContext({ deadlineMs: 90_000, maxRetries: 0 }));
+        const result = await generator.generate(request, callContext({ deadlineMs: 90_000, maxRetries: 0 }));
         const sentences = toPostSummarySentences(result.text);
         const isGateViolation = result.finishReason === 'completed' && sentences.length > 0 && !passesGates(body, sentences);
 

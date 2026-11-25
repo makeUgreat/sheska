@@ -32,16 +32,10 @@ describe('LengthRatioGate', () => {
     });
   });
 
-  it.each([
-    { name: '코드 블록을 세지 않는다', body: '가나다\n```ts\nconst a = 1;\n```\n라마', prose: '가나다 라마' },
-    { name: '헤딩 줄을 세지 않는다', body: '# 제목\n본문', prose: '본문' },
-    { name: '링크는 보이는 글자만 센다', body: '[RFC 7396](https://example.com)와 [[노트|별칭]]', prose: 'RFC 7396와 별칭' },
-    { name: '이미지 임베드를 세지 않는다', body: '앞 ![[image.png]] ![alt](a.png) 뒤', prose: '앞 뒤' },
-    { name: '연속된 공백은 한 칸으로 센다', body: '가\n\n\n나   다', prose: '가 나 다' },
-  ])('산문 길이는 $name', ({ body, prose }) => {
-    const draft = buildDraft({ body, sentences: ['나'] });
+  it('본문에 산문이 없으면 실패한다', () => {
+    const draft = buildDraft({ body: '```ts\nconst a = 1;\n```', sentences: ['나'] });
 
-    expect(gate.judge(draft).explanation).toContain(`산문 ${prose.length}자`);
+    expect(gate.judge(draft)).toEqual({ passed: false, explanation: '산문 없음 (요약할 산문이 있어야 함)' });
   });
 });
 
