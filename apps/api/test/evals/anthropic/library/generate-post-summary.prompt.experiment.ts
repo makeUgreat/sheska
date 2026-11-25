@@ -85,7 +85,7 @@ async function main(): Promise<void> {
       // runExperiment replaces the global tracer provider, and the SDK keeps the tracer it saw when the client was made
       const generator = new TextAnthropicGenerator({ apiKey }, settings.generator);
       const sentenceLimit = toSentenceLimit(body);
-      const request = toPostSummaryRequest(body, settings.prompt);
+      const request = toPostSummaryRequest(body, settings.prompt, []);
       const limitTag = sentenceLimit < MAX_SENTENCES ? `\n<sentence_limit>${sentenceLimit}</sentence_limit>` : '';
       const limitedRequest = {
         ...request,

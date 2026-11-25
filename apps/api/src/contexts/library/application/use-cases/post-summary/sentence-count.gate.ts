@@ -15,6 +15,6 @@ export class SentenceCountGate implements Gate<PostSummaryDraft> {
     const count = sentences.length;
     const { min, max } = this.options;
 
-    return { passed: count >= min && count <= max, explanation: `${count}문장` };
+    return { passed: count >= min && count <= max, explanation: `${count}문장 (${min}~${max}문장이어야 함)` };
   }
 }

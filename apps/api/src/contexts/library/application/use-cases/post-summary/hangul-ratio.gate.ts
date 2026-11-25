@@ -25,11 +25,11 @@ export class HangulRatioGate implements Gate<PostSummaryDraft> {
     const hangul = text.match(HANGUL)?.length ?? 0;
     const latin = text.match(LATIN)?.length ?? 0;
     const letters = hangul + latin;
-    if (letters === 0) return { passed: true, explanation: '한글 비율 100%' };
+    if (letters === 0) return { passed: true, explanation: `한글 비율 100% (${this.options.minPercent}% 이상이어야 함)` };
 
     return {
       passed: hangul * 100 >= this.options.minPercent * letters,
-      explanation: `한글 비율 ${Math.round((hangul * 100) / letters)}%`,
+      explanation: `한글 비율 ${Math.round((hangul * 100) / letters)}% (${this.options.minPercent}% 이상이어야 함)`,
     };
   }
 }

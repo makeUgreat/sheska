@@ -1,11 +1,20 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { type CallContext } from '@core/call-context';
 import { InputTooLargeError } from '@core/errors';
-import { LOGGER, type LoggerPort } from '@kernels/application';
-import { type PostQuery, type TextGenerationResult, type TextGenerator } from '@contexts/library/application/ports';
+import { guardrails, LOGGER, type LoggerPort, type TextGenerationGuardrailsOutcome } from '@kernels/application';
+import { type PostQuery, type TextGenerator } from '@contexts/library/application/ports';
 import { PostSummary, type PostSummaryOutcome, type PostSummaryRepository, SourceFingerprint } from '@contexts/library/domain';
 import { POST_QUERY, POST_SUMMARY_PROMPT, POST_SUMMARY_REPOSITORY, POST_SUMMARY_TEXT_GENERATOR } from '@contexts/library/library.di-tokens';
-import { type PostSummaryPrompt, toPostSummaryRequest, toPostSummarySentences } from './generate-post-summary.prompt';
+import {
+  type PostSummaryDraft,
+  type PostSummaryPrompt,
+  toPostSummaryRequest,
+  toPostSummarySentences,
+} from './generate-post-summary.prompt';
+import { HangulRatioGate } from './hangul-ratio.gate';
+import { LengthRatioGate } from './length-ratio.gate';
+import { NoMarkupGate } from './no-markup.gate';
+import { SentenceCountGate } from './sentence-count.gate';
 
 export interface GeneratePostSummaryCommand {
   readonly postId: string;
@@ -15,7 +24,8 @@ export interface GeneratePostSummaryResult {
   readonly outcome: PostSummaryOutcome['kind'] | 'skipped';
 }
 
-type PostSummaryFailureReason = 'truncated' | 'refused' | 'no_sentences' | 'input_too_large';
+type PostSummaryFailure =
+  { readonly reason: 'input_too_large' } | { readonly reason: 'rejected'; readonly gate: string; readonly explanation: string };
 
 @Injectable()
 export class GeneratePostSummaryUseCase {
@@ -64,32 +74,32 @@ export class GeneratePostSummaryUseCase {
   }
 
   private async summarize(postId: string, body: string, fingerprint: SourceFingerprint, context: CallContext): Promise<PostSummary> {
+    let outcome: TextGenerationGuardrailsOutcome<PostSummaryDraft>;
     try {
-      const result = await this.generator.generate(toPostSummaryRequest(body, this.prompt), context);
-      return this.toSummary(postId, fingerprint, result);
+      outcome = await guardrails<PostSummaryDraft>({ maxRegenerations: 2 })
+        .check(new SentenceCountGate({ min: 1, max: 5 }), 'regenerate')
+        .check(new NoMarkupGate(), 'regenerate')
+        .check(new HangulRatioGate({ minPercent: 30 }), 'regenerate')
+        .check(new LengthRatioGate({ maxPercent: 40 }), 'reject')
+        .execute(async (rejected) => {
+          const result = await this.generator.generate(toPostSummaryRequest(body, this.prompt, rejected), context);
+
+          return { ...result, body, sentences: toPostSummarySentences(result.text) };
+        });
     } catch (error: unknown) {
-      if (error instanceof InputTooLargeError) return this.fail(postId, fingerprint, 'input_too_large');
+      if (error instanceof InputTooLargeError) return this.fail(postId, fingerprint, { reason: 'input_too_large' });
 
       throw error;
     }
+
+    if (outcome.kind === 'rejected') return this.fail(postId, fingerprint, { reason: 'rejected', ...outcome.failure });
+
+    const { sentences, model } = outcome.output;
+    return PostSummary.complete({ postId, fingerprint, sentences, model, finishedAt: new Date() });
   }
 
-  private toSummary(postId: string, fingerprint: SourceFingerprint, result: TextGenerationResult): PostSummary {
-    switch (result.finishReason) {
-      case 'truncated':
-      case 'refused':
-        return this.fail(postId, fingerprint, result.finishReason);
-      case 'completed': {
-        const sentences = toPostSummarySentences(result.text);
-        if (sentences.length === 0) return this.fail(postId, fingerprint, 'no_sentences');
-
-        return PostSummary.complete({ postId, fingerprint, sentences, model: result.model, finishedAt: new Date() });
-      }
-    }
-  }
-
-  private fail(postId: string, fingerprint: SourceFingerprint, reason: PostSummaryFailureReason): PostSummary {
-    this.logger.warn('Post summary generation failed', { postId, reason });
+  private fail(postId: string, fingerprint: SourceFingerprint, failure: PostSummaryFailure): PostSummary {
+    this.logger.warn('Post summary generation failed', { postId, ...failure });
 
     return PostSummary.fail({ postId, fingerprint, finishedAt: new Date() });
   }
