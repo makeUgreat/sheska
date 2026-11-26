@@ -32,8 +32,8 @@
   --color-terminal-output-error: #e3b341;
   --color-terminal-output-success: #7ee787;
 
-  --font-sans: "Geist", "Arial", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: "Geist Variable", "Arial", sans-serif;
+  --font-mono: "JetBrains Mono Variable", monospace;
 
   --text-headline-lg: 48px;
   --text-headline-lg--line-height: 1.1;

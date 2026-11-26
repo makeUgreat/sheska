@@ -232,11 +232,11 @@
     "font-family": {
       "sans": {
         "$type": "fontFamily",
-        "$value": ["Geist", "Arial", "sans-serif"]
+        "$value": ["Geist Variable", "Arial", "sans-serif"]
       },
       "mono": {
         "$type": "fontFamily",
-        "$value": ["JetBrains Mono", "monospace"]
+        "$value": ["JetBrains Mono Variable", "monospace"]
       }
     },
     "headline-lg": {
