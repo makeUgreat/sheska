@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/makeUgreat/sheska/compare/1.5.2...1.6.0) (2026-11-26)
+
+
+### Features
+
+* **obsidian-plugin:** keep the source when a synced note is renamed ([#543](https://github.com/makeUgreat/sheska/issues/543)) ([f221f26](https://github.com/makeUgreat/sheska/commit/f221f26f6133092ae99c31eef4083957cf4f3aee))
+
 ## [1.5.2](https://github.com/makeUgreat/sheska/compare/1.5.1...1.5.2) (2026-11-22)
 
 
