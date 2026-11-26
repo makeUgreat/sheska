@@ -53,6 +53,6 @@ export const SummaryClickOpensService: Story = {
     await userEvent.click(hit as Element);
 
     await expect(await canvas.findByRole('heading', { level: 1, name: 'Nocap' })).toBeVisible();
-    await expect(canvas.getByText('아직 준비 중입니다.')).toBeVisible();
+    await expect(canvas.getByText(/소개글은 아직 준비 중이에요/)).toBeVisible();
   },
 };
