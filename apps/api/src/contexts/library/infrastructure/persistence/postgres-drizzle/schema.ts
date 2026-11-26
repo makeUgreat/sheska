@@ -30,7 +30,7 @@ export const sourceSyncJobs = pgTable(
     id: text('id').primaryKey(),
     sourceId: text('source_id')
       .notNull()
-      .references(() => sources.id),
+      .references(() => sources.id, { onDelete: 'cascade' }),
     fingerprint: text('fingerprint').notNull(),
     status: text('status').notNull(),
     totalChunks: integer('total_chunks'),
@@ -49,7 +49,9 @@ export type SourceSyncJobRow = typeof sourceSyncJobs.$inferSelect;
 export type SourceSyncJobInsert = typeof sourceSyncJobs.$inferInsert;
 
 export const posts = pgTable('posts', {
-  id: text('id').primaryKey(),
+  id: text('id')
+    .primaryKey()
+    .references(() => sources.id, { onDelete: 'cascade' }),
   viewCount: integer('view_count').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
