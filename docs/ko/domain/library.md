@@ -77,9 +77,9 @@ stateDiagram-v2
   - 이유: 값이 애매한 파일까지 올리면 소유자가 의도하지 않은 노트가 검색과 RAG에 쓰임
 
 ### source를 지우는 조건
-- source는 그 vault 파일의 frontmatter `sheska`가 YAML boolean `false`일 때만 지울 수 있고, 그때는 지워야 함 <!-- nocap: library-source-7 -->
-  - 예: `sheska`를 지우거나, 파일을 지우거나 옮기거나, frontmatter를 읽을 수 없게 되어도 source는 지우지 않음
-  - 이유: 실수일 수 있는 변화로 post와 조회수를 잃게 하지 않음
+- source는 소유자가 지우라고 요청할 때만 지울 수 있음 <!-- nocap: library-source-7 -->
+  - 예: 소유자가 source 상세 화면에서 삭제를 누르면 그 source를 지움
+  - 이유: vault에서 생긴 변화는 실수일 수 있음. 그 변화로 post와 조회수를 잃게 하지 않음
 
 ### source와 함께 지우는 것
 - source를 지우면 그 source의 sync job과 post도 함께 지워야 함 <!-- nocap: library-source-8 -->
@@ -88,7 +88,7 @@ stateDiagram-v2
 - vault 파일을 언제 보내고, source 업로드를 받으면 무엇을 저장하고 임베딩을 다시 만드는지 정함
 
 ### push 방식
-- source는 동기화 클라이언트의 요청으로만 만들고, 바꾸고, 지울 수 있음 <!-- nocap: library-sync-1 -->
+- source는 동기화 클라이언트의 요청으로만 만들고 바꿀 수 있음 <!-- nocap: library-sync-1 -->
 
 ### 같은 업로드의 반복
 - 같은 source 업로드를 여러 번 받은 결과는 한 번 받은 결과와 같아야 함 <!-- nocap: library-sync-2 -->
@@ -145,6 +145,11 @@ stateDiagram-v2
 - 동기화 클라이언트는 frontmatter `title`이 비어 있으면 확장자를 뺀 파일 이름을 `title`로 넣어 보내야 함 <!-- nocap: library-sync-15 -->
   - 이유: 서버는 제목이 없으면 vault 전체 경로를 제목으로 씀. 폴더 이름이 공개 제목에 드러남
 
+### 옮긴 파일
+- 동기화 클라이언트는 vault 안에서 이름을 바꾸거나 옮긴 동기화 대상의 source를 새 경로로 옮겨야 함 <!-- nocap: library-sync-16 -->
+  - 예: Obsidian 밖에서 바꾼 경로는 새 source가 됨. 옛 source는 소유자가 지움
+  - 이유: 새 source가 생기면 post URL과 조회수를 잃고, 옛 post는 낡은 제목과 본문으로 남음
+
 ## Sync job 규칙 (syncJob)
 - sync job이 가질 수 있는 상태와 그 상태를 어떻게 읽는지 정함
 
@@ -188,6 +193,10 @@ stateDiagram-v2
 
 ### 조회와 수정 시각
 - 조회수 증가는 post의 수정 시각을 바꿀 수 없음 <!-- nocap: library-post-6 -->
+
+### 발행 취소
+- post를 발행 취소하면 그 post의 방문 기록과 요약도 함께 지워야 함 <!-- nocap: library-post-8 -->
+  - 예: 다시 발행하면 URL은 같지만 조회수는 0부터 셈. source와 임베딩은 남음
 
 ## 요약 규칙 (summary)
 - post 본문의 AI 요약을 언제 만들고 어떤 결과를 남기는지 정함
