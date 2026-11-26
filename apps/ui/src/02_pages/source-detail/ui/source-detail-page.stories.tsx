@@ -94,7 +94,7 @@ export const Loading: Story = {
   tags: ['!dev'],
   decorators: withPage(buildStoryHttpClient({ get: fn(() => new Promise(() => {})) })),
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('link', { name: '← Back to sources' })).toBeDefined();
+    await expect(canvas.getByRole('link', { name: '← sources' })).toBeDefined();
     await expect(canvas.queryByText('Not found')).toBeNull();
     await expect(canvas.queryByRole('alert')).toBeNull();
   },
@@ -109,20 +109,19 @@ export const Details: Story = {
       await expect(canvas.getByRole('heading', { name: 'Source note', level: 1 })).toBeDefined();
       await expect(canvas.getByText('Notes/source.md')).toBeDefined();
       await expect(canvas.getByText('tags')).toBeDefined();
-      await expect(canvas.getByText('["note","e2e"]')).toBeDefined();
+      await expect(canvas.getByText('note, e2e')).toBeDefined();
       await expect(canvas.getByRole('heading', { name: 'Source note', level: 2 })).toBeDefined();
       await expect(canvas.getByText('source-1')).toBeDefined();
       await expect(canvas.getByText('fingerprint-1')).toBeDefined();
-      await expect(canvas.getByText('completed')).toBeDefined();
-      await expect(canvas.getByText('sync-job-1')).toBeDefined();
-      await expect(canvas.getByText('text-embedding-3-small')).toBeDefined();
-      await expect(canvas.getByText('1536')).toBeDefined();
+      await expect(canvas.getByText('완료')).toBeDefined();
+      await expect(canvas.getByText('4 청크')).toBeDefined();
+      await expect(canvas.getByText('text-embedding-3-small · 1536d')).toBeDefined();
     });
   },
 };
 
 export const ProcessingProgress: Story = {
-  name: 'sync job이 processing 상태이면 진행률을 렌더링한다',
+  name: 'sync job이 processing 상태이면 청크 진행을 렌더링한다',
   tags: ['!dev'],
   decorators: withPage(
     buildStoryHttpClient({
@@ -153,10 +152,10 @@ export const ProcessingProgress: Story = {
   ),
   play: async ({ canvas }) => {
     await waitFor(async () => {
-      await expect(canvas.getByText('processing')).toBeDefined();
-      await expect(canvas.getByText('3/10 (30%)')).toBeDefined();
-      const progressbar = canvas.getByRole('progressbar');
-      await expect(progressbar.getAttribute('aria-valuenow')).toBe('30');
+      await expect(canvas.getByText('임베딩 중')).toBeDefined();
+      await expect(canvas.getByText('3 / 10 · 30%')).toBeDefined();
+      const progressbar = canvas.getByRole('progressbar', { name: '임베딩한 청크' });
+      await expect(progressbar.getAttribute('aria-valuenow')).toBe('3');
     });
   },
 };
@@ -187,7 +186,7 @@ export const PollsActiveSyncJob: Story = {
     await waitFor(async () => {
       await expect(pollSyncJob).toHaveBeenCalledWith('/sync-jobs/sync-job-1', expect.anything());
       await expect(pollSyncJob.mock.calls.filter(([path]) => path === '/sources/source-1').length).toBe(2);
-      await expect(canvas.getByText('text-embedding-3-small')).toBeDefined();
+      await expect(canvas.getByText('text-embedding-3-small · 1536d')).toBeDefined();
     });
   },
 };
@@ -198,8 +197,8 @@ export const NoEmbeddingOrJob: Story = {
   decorators: withPage(buildStoryHttpClient({ get: respondWith({ ...SOURCE, latestSyncJob: null, embedding: null }) })),
   play: async ({ canvas }) => {
     await waitFor(async () => {
-      await expect(canvas.getByText('No job')).toBeDefined();
-      await expect(canvas.getByText('Not yet generated')).toBeDefined();
+      await expect(canvas.getByText('기록 없음')).toBeDefined();
+      await expect(canvas.queryByText('모델')).toBeNull();
     });
   },
 };
@@ -234,5 +233,22 @@ export const RequestsById: Story = {
   decorators: withPage(buildStoryHttpClient({ get: getSourceById }), 'source-1'),
   play: async () => {
     await waitFor(() => expect(getSourceById).toHaveBeenCalledWith('/sources/source-1', expect.anything()));
+  },
+};
+
+const getPublishedSource = fn((path: string) =>
+  Promise.resolve(path === '/posts/post-1' ? { ...POST, viewCount: 3 } : { ...SOURCE, publishedPostId: 'post-1' }),
+);
+
+export const PublishedSource: Story = {
+  name: '게시된 source는 post를 읽어 조회수와 요약 상태를 보여 준다',
+  tags: ['!dev'],
+  decorators: withPage(buildStoryHttpClient({ get: getPublishedSource })),
+  play: async ({ canvas }) => {
+    await waitFor(async () => {
+      await expect(canvas.getByText('3회')).toBeDefined();
+      await expect(canvas.getByText('AI 요약 만드는 중')).toBeDefined();
+      await expect(canvas.getByRole('link', { name: '포스트 보기' }).getAttribute('href')).toBe('/posts/post-1');
+    });
   },
 };

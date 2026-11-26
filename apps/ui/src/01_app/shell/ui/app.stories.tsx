@@ -159,11 +159,11 @@ export const SourceListToDetail: Story = {
 };
 
 export const DetailBackToSources: Story = {
-  name: '상세 화면에서 Back to sources 링크로 목록으로 돌아온다',
+  name: '상세 화면에서 sources 돌아가기 링크로 목록으로 돌아온다',
   tags: ['!dev'],
   ...appAt('/sources/source-1'),
   play: async ({ canvas, userEvent }) => {
-    await userEvent.click(await canvas.findByRole('link', { name: '← Back to sources' }));
+    await userEvent.click(await canvas.findByRole('link', { name: '← sources' }));
 
     await waitFor(() => expect(canvas.getByRole('heading', { name: 'Sources' })).toBeDefined());
   },

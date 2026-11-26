@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { SyncJobBadge, SyncJobProgress, type SyncJobProgressInfo } from './sync-job-status';
+import { SyncJobProgress, type SyncJobProgressInfo } from './sync-job-status';
 
 const processingJob: SyncJobProgressInfo = {
   status: 'processing',
@@ -8,52 +8,31 @@ const processingJob: SyncJobProgressInfo = {
 };
 
 const meta = {
-  title: 'Entities/Source/SyncJobStatus',
-  component: SyncJobBadge,
+  title: 'Entities/Source/SyncJobProgress',
+  component: SyncJobProgress,
   tags: ['autodocs'],
   args: {
-    status: 'processing',
+    syncJob: processingJob,
   },
-} satisfies Meta<typeof SyncJobBadge>;
+} satisfies Meta<typeof SyncJobProgress>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const WaitingBadge: Story = {
-  args: {
-    status: 'waiting',
-  },
-};
-
-export const ProcessingBadge: Story = {};
-
-export const CompletedBadge: Story = {
-  args: {
-    status: 'completed',
-  },
-};
-
-export const FailedBadge: Story = {
-  args: {
-    status: 'failed',
-  },
-};
-
-export const ProcessingProgress: Story = {
-  render: () => <SyncJobProgress syncJob={processingJob} />,
-};
+export const ProcessingProgress: Story = {};
 
 export const HiddenProgress: Story = {
-  render: () => (
+  args: {
+    syncJob: {
+      ...processingJob,
+      status: 'completed',
+      processedChunks: 12,
+    },
+  },
+  render: (args) => (
     <div className="font-mono text-xs text-text-muted">
-      <SyncJobProgress
-        syncJob={{
-          ...processingJob,
-          status: 'completed',
-          processedChunks: 12,
-        }}
-      />
+      <SyncJobProgress {...args} />
       Progress is hidden for non-processing jobs.
     </div>
   ),
