@@ -57,6 +57,7 @@ export class AutoSyncService {
   private readonly syncingFiles = new Set<string>();
   private readonly pollingFiles = new Set<string>();
   private readonly reconcilingFiles = new Set<string>();
+  private readonly renamingFiles = new Set<string>();
   private isFlushing = false;
   private cancelled = false;
   private flushDebounced: Debouncer<[], void>;
@@ -112,6 +113,22 @@ export class AutoSyncService {
 
     this.dirtyFiles.set(file.path, file);
     this.flushDebounced();
+  }
+
+  /** `library-sync-16`: source를 새 경로로 옮겨야 post URL과 조회수가 남는다. */
+  async onVaultFileRenamed(file: TAbstractFile, oldPath: string): Promise<void> {
+    if (!this.settings.autoSyncEnabled) return;
+    if (!(file instanceof TFile)) return;
+    if (!this.syncCache[oldPath] || !this.isSyncTarget(file)) return;
+
+    this.renamingFiles.add(file.path);
+    try {
+      delete this.syncCache[oldPath];
+      await this.moveSource(oldPath, file.path);
+      await this.uploadAutomatically(file);
+    } finally {
+      this.renamingFiles.delete(file.path);
+    }
   }
 
   async runSweep(): Promise<void> {
@@ -389,7 +406,16 @@ export class AutoSyncService {
     return this.options.shouldPollSyncJob?.(path) ?? true;
   }
 
+  private async moveSource(oldPath: string, newPath: string): Promise<void> {
+    try {
+      await this.api.renameSource({ fromExternalSourceId: oldPath, toExternalSourceId: newPath });
+    } catch (err) {
+      console.error(`[Sheska] Could not move the source of "${oldPath}" to "${newPath}":`, err);
+    }
+  }
+
   private async uploadIfChanged(file: TFile): Promise<void> {
+    if (this.renamingFiles.has(file.path)) return;
     if (this.attachmentCache[file.path]) {
       await this.reuploadImage(file);
       return;
@@ -419,6 +445,7 @@ export class AutoSyncService {
   }
 
   private async uploadChangedDuringSweep(file: TFile): Promise<void> {
+    if (this.renamingFiles.has(file.path)) return;
     if (!this.isSyncTarget(file)) return;
     const cached = this.syncCache[file.path];
     if (cached?.mtime === file.stat.mtime) return;

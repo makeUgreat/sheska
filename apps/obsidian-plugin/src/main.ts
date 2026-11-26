@@ -347,8 +347,15 @@ export default class SheskaPlugin extends Plugin {
   private registerAutoSyncEvents(): void {
     this.registerEvent(this.app.vault.on('modify', (file) => this.handleVaultFileChanged(file)));
     this.registerEvent(this.app.vault.on('create', (file) => this.handleVaultFileChanged(file)));
+    this.registerEvent(this.app.vault.on('rename', (file, oldPath) => this.handleVaultFileRenamed(file, oldPath)));
     // `modify` fires before the frontmatter is re-indexed, so a new `sheska` value shows up only here.
     this.registerEvent(this.app.metadataCache.on('changed', (file) => this.handleVaultFileChanged(file)));
+  }
+
+  private handleVaultFileRenamed(file: TAbstractFile, oldPath: string): void {
+    void this.autoSyncService.onVaultFileRenamed(file, oldPath).finally(() => {
+      if (file instanceof TFile) this.refreshSyncIndicators(file.path);
+    });
   }
 
   private handleVaultFileChanged(file: TAbstractFile): void {

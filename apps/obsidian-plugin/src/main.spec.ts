@@ -302,7 +302,7 @@ describe('SheskaPlugin', () => {
     it('registers a file-menu event handler', async () => {
       await plugin.onload();
 
-      expect(plugin.registerEvent).toHaveBeenCalledTimes(5);
+      expect(plugin.registerEvent).toHaveBeenCalledTimes(6);
     });
 
     it('adds an Upload to Sheska item to the file menu', async () => {
@@ -638,11 +638,12 @@ describe('SheskaPlugin', () => {
       return { calls };
     }
 
-    it('registers modify and create vault event listeners', async () => {
+    it('registers modify, create and rename vault event listeners', async () => {
       await plugin.onload();
 
       expect(vaultEventHandlers['modify']).toBeInstanceOf(Function);
       expect(vaultEventHandlers['create']).toBeInstanceOf(Function);
+      expect(vaultEventHandlers['rename']).toBeInstanceOf(Function);
     });
 
     it('uploads a note once the metadata cache re-indexes its sheska true frontmatter', async () => {
