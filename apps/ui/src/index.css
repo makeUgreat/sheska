@@ -7,6 +7,7 @@
 @import "./styles/theme.css";
 @import "./styles/code-highlight.css";
 @import "./styles/section-focus.css";
+@import "./styles/card-list-focus.css";
 
 @theme {
   --breakpoint-margin-label: 900px;
