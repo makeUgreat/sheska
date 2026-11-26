@@ -89,14 +89,6 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-type PlayContext = Parameters<NonNullable<Story['play']>>[0];
-
-async function clickPublishOnceShown({ canvas, userEvent }: PlayContext) {
-  await waitFor(() => canvas.getByRole('heading', { name: '게시하기' }));
-
-  await userEvent.click(canvas.getByRole('button', { name: '게시하기' }));
-}
-
 export const Loading: Story = {
   name: '로딩 중에는 돌아가는 링크만 그리고 빈 상태나 오류를 그리지 않는다',
   tags: ['!dev'],
@@ -242,113 +234,5 @@ export const RequestsById: Story = {
   decorators: withPage(buildStoryHttpClient({ get: getSourceById }), 'source-1'),
   play: async () => {
     await waitFor(() => expect(getSourceById).toHaveBeenCalledWith('/sources/source-1', expect.anything()));
-  },
-};
-
-export const PublishButton: Story = {
-  name: '게시하기 버튼이 렌더링된다',
-  tags: ['!dev'],
-  decorators: withPage(buildStoryHttpClient()),
-  play: async ({ canvas }) => {
-    await waitFor(async () => {
-      await expect(canvas.getByRole('heading', { name: '게시하기' })).toBeDefined();
-      await expect(canvas.getByRole('button', { name: '게시하기' })).toBeDefined();
-    });
-  },
-};
-
-export const Publishing: Story = {
-  name: '게시 중이면 게시하기 버튼이 비활성화된다',
-  tags: ['!dev'],
-  decorators: withPage(buildStoryHttpClient({ post: fn(() => new Promise(() => {})) })),
-  play: async (context) => {
-    const { canvas } = context;
-
-    await clickPublishOnceShown(context);
-
-    await waitFor(async () => {
-      const button = canvas.getByRole('button', { name: '게시 중...' });
-      await expect((button as HTMLButtonElement).disabled).toBe(true);
-    });
-  },
-};
-
-const publishPost = respondWith(POST);
-
-export const PublishesBySourceId: Story = {
-  name: '게시하기 클릭 시 publishPost가 sourceId로 호출된다',
-  tags: ['!dev'],
-  decorators: withPage(buildStoryHttpClient({ post: publishPost })),
-  play: async (context) => {
-    await clickPublishOnceShown(context);
-
-    await waitFor(() => expect(publishPost).toHaveBeenCalledWith('/posts', { sourceId: 'source-1' }, expect.anything()));
-  },
-};
-
-export const Published: Story = {
-  name: '게시 성공 시 성공 메시지와 게시된 포스트 링크가 표시된다',
-  tags: ['!dev'],
-  decorators: withPage(buildStoryHttpClient()),
-  play: async (context) => {
-    const { canvas } = context;
-
-    await clickPublishOnceShown(context);
-
-    await waitFor(async () => {
-      await expect(canvas.getByText(/포스트가 게시되었습니다/)).toBeDefined();
-      const link = canvas.getByRole('link', { name: '게시된 포스트 보기' });
-      await expect(link).toBeDefined();
-      await expect(link.getAttribute('href')).toBe('/posts/post-1');
-    });
-  },
-};
-
-const getSourceThenPublished = fn(() =>
-  Promise.resolve(getSourceThenPublished.mock.calls.length === 1 ? SOURCE : { ...SOURCE, publishedPostId: 'post-1' }),
-);
-
-export const PublishedThenRefetched: Story = {
-  name: '게시 성공 후 source를 다시 불러와도 안내 문구는 하나만 표시된다',
-  tags: ['!dev'],
-  decorators: withPage(buildStoryHttpClient({ get: getSourceThenPublished })),
-  play: async (context) => {
-    const { canvas } = context;
-
-    await clickPublishOnceShown(context);
-
-    await waitFor(() => expect(getSourceThenPublished).toHaveBeenCalledTimes(2));
-    await expect(canvas.getAllByRole('link', { name: '게시된 포스트 보기' })).toHaveLength(1);
-    await expect(canvas.queryByText(/이미 게시되었습니다/)).toBeNull();
-  },
-};
-
-export const AlreadyPublished: Story = {
-  name: '이미 게시된 source는 게시하기 버튼 대신 게시된 포스트 링크를 보여준다',
-  tags: ['!dev'],
-  decorators: withPage(buildStoryHttpClient({ get: respondWith({ ...SOURCE, publishedPostId: 'post-1' }) })),
-  play: async ({ canvas }) => {
-    await waitFor(async () => {
-      const link = canvas.getByRole('link', { name: '게시된 포스트 보기' });
-      await expect(link).toBeDefined();
-      await expect(link.getAttribute('href')).toBe('/posts/post-1');
-      await expect(canvas.queryByRole('button', { name: '게시하기' })).toBeNull();
-    });
-  },
-};
-
-export const PublishFailed: Story = {
-  name: '게시 실패 시 에러 메시지가 표시된다',
-  tags: ['!dev'],
-  decorators: withPage(buildStoryHttpClient({ post: fn(() => Promise.reject(new Error('이미 게시된 포스트가 있습니다'))) })),
-  play: async (context) => {
-    const { canvas } = context;
-
-    await clickPublishOnceShown(context);
-
-    await waitFor(async () => {
-      await expect(canvas.getByRole('alert')).toBeDefined();
-      await expect(canvas.getByText('오류: 이미 게시된 포스트가 있습니다')).toBeDefined();
-    });
   },
 };

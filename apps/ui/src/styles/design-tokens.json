@@ -129,6 +129,14 @@
         "hex": "#a13c46"
       }
     },
+    "accent-deep": {
+      "$description": "Hover fill of the one filled primary button in an area, such as Publish. A step darker than accent-strong so the press reads without a second hue.",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.5255, 0.1882, 0.2275],
+        "hex": "#86303a"
+      }
+    },
     "accent-tint": {
       "$description": "Hover ring around the collapsed ask button. A soft accent halo marks it as the AI entry point without filling the button.",
       "$value": {

@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useHttpClient } from '@/shared/api';
-import { countPosts, getPost, listPosts, listPostViews, publishPost, searchPosts } from './client';
+import { countPosts, getPost, listPosts, listPostViews, publishPost, searchPosts, unpublishPost } from './client';
 import { type PublishPostRequest } from './types';
 
 export function usePost(id: string | undefined) {
@@ -60,6 +60,19 @@ export function usePublishPost() {
   return useMutation({
     mutationFn: (req: PublishPostRequest) => publishPost(http, req),
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['posts'] });
+      void queryClient.invalidateQueries({ queryKey: ['sources'] });
+    },
+  });
+}
+
+export function useUnpublishPost() {
+  const http = useHttpClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => unpublishPost(http, id),
+    onSuccess: (_, id) => {
+      queryClient.removeQueries({ queryKey: ['posts', id] });
       void queryClient.invalidateQueries({ queryKey: ['posts'] });
       void queryClient.invalidateQueries({ queryKey: ['sources'] });
     },

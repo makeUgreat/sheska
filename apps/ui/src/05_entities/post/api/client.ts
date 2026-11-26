@@ -59,6 +59,10 @@ export function publishPost(http: HttpClient, req: PublishPostRequest): Promise<
   return http.post(PostApi.publish.path, req, PostApi.publish.response);
 }
 
+export function unpublishPost(http: HttpClient, id: string): Promise<void> {
+  return http.delete(pathOf(PostApi.unpublish, { id }));
+}
+
 export function askAboutPost(http: HttpClient, id: string, req: AskPostRequest, signal?: AbortSignal): AsyncGenerator<AnswerEvent> {
   return http.postStream(pathOf(PostApi.ask, { id }), req, PostSchema.answerEvent, signal);
 }

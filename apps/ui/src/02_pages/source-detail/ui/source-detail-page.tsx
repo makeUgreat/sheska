@@ -139,7 +139,11 @@ export function SourceDetailPage() {
               </div>
             </dl>
 
-            <PublishPostPanel sourceId={source.sourceId} publishedPostId={source.publishedPostId} />
+            <PublishPostPanel
+              sourceId={source.sourceId}
+              publishedPostId={source.publishedPostId}
+              syncCompleted={displayedSyncJob?.status === 'completed'}
+            />
           </section>
 
           <FrontmatterSection frontmatter={source.frontmatter} />
