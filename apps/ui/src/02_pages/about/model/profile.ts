@@ -7,6 +7,11 @@ import serverLogo from '../assets/logos/server.svg';
 import sheskaLogo from '../assets/logos/sheska.svg';
 import siruLogo from '../assets/logos/siru.svg';
 
+export interface ServiceLink {
+  kind: 'site' | 'npm' | 'github';
+  href: string;
+}
+
 export interface Service {
   slug: string;
   name: string;
@@ -14,6 +19,7 @@ export interface Service {
   summary: string;
   preview: string;
   previewStyle: 'window' | 'diagram';
+  links: readonly ServiceLink[];
 }
 
 export const PROFILE = {
@@ -30,6 +36,10 @@ export const SERVICES: readonly Service[] = [
     summary: 'Obsidian vault의 노트를 공개 라이브러리로 바꿉니다. 글마다 AI 요약이 붙습니다.',
     preview: sheskaPreview,
     previewStyle: 'diagram',
+    links: [
+      { kind: 'site', href: 'https://hash.meogle.co.kr' },
+      { kind: 'github', href: 'https://github.com/makeUgreat/sheska' },
+    ],
   },
   {
     slug: 'siru',
@@ -38,6 +48,7 @@ export const SERVICES: readonly Service[] = [
     summary: '재고관리 ERP 서비스입니다.',
     preview: siruPreview,
     previewStyle: 'window',
+    links: [{ kind: 'site', href: 'https://siru-demo.hyunjin.kr' }],
   },
   {
     slug: 'nocap',
@@ -46,6 +57,10 @@ export const SERVICES: readonly Service[] = [
     summary: '명세 문서와 테스트를 ID로 연결해 아직 검증되지 않은 명세를 찾습니다.',
     preview: nocapPreview,
     previewStyle: 'window',
+    links: [
+      { kind: 'npm', href: 'https://www.npmjs.com/package/@makehash/nocap' },
+      { kind: 'github', href: 'https://github.com/makeUgreat/nocap' },
+    ],
   },
   {
     slug: 'home-cluster',
@@ -54,5 +69,6 @@ export const SERVICES: readonly Service[] = [
     summary: 'k3s와 ArgoCD로 운영하는 집 서버입니다. Sheska가 여기서 돌아갑니다.',
     preview: homeClusterPreview,
     previewStyle: 'diagram',
+    links: [],
   },
 ];
