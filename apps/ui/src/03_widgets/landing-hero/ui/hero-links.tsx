@@ -17,6 +17,13 @@ const ON_HOVER = 'opacity-0 transition-opacity duration-150 group-hover/link:opa
 
 const SMILE_CURVES = ['M7.6 13q1.4-1.6 2.8 0', 'M13.6 13q1.4-1.6 2.8 0', 'M10 16.2q2 1.8 4 0'];
 const CAT_SMILE_CURVES = ['M5.2 8q.8-.9 1.6 0', 'M9.2 8q.8-.9 1.6 0', 'M7.2 9.6q.8.7 1.6 0'];
+const BADGE_SMILE_CURVES = ['M8.04 13q1.26-1.44 2.52 0', 'M13.44 13q1.26-1.44 2.52 0', 'M10.2 15.88q1.8 1.62 3.6 0'];
+
+const BADGE_CLIP = 'M10.7 2h2.6a1.2 1.2 0 0 1 1.2 1.2v1.6a1.2 1.2 0 0 1-1.2 1.2h-2.6a1.2 1.2 0 0 1-1.2-1.2V3.2a1.2 1.2 0 0 1 1.2-1.2Z';
+const BADGE_CARD =
+  'M6 4h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm5.2 2.8h1.6a.6.6 0 0 1 0 1.2h-1.6a.6.6 0 0 1 0-1.2Z';
+const BADGE_HOLDER =
+  'M12 9.3a2.1 2.1 0 0 1 0 4.2a2.1 2.1 0 0 1 0-4.2ZM8.6 16.6a3.4 2.5 0 0 1 6.8 0ZM9.7 18.4h4.6a.7.7 0 0 1 0 1.4h-4.6a.7.7 0 0 1 0-1.4Z';
 
 /** 문서가 칠해진 부분이라 얼굴은 바탕색 선으로 뚫는다. */
 function PostsIcon({ hat }: { hat: boolean }) {
@@ -36,6 +43,28 @@ function PostsIcon({ hat }: { hat: boolean }) {
           ))}
         </g>
         {hat && <SantaHat transform="translate(1.4 -3.6) rotate(-14 6 6)" />}
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * 목걸이 명함. posts와 같은 16×20 칸과 모서리 반지름 2를 써서 부피감을 맞췄다.
+ * 고리는 카드와 겹치므로 evenodd 경로에 넣으면 겹친 곳이 뚫린다. 그래서 따로 칠한다.
+ */
+function AboutIcon({ hat }: { hat: boolean }) {
+  return (
+    <svg aria-hidden="true" className="h-6 w-6 overflow-visible" viewBox="0 0 24 24">
+      <g className={`${TILT} group-hover/link:rotate-[8deg] group-focus-visible/link:rotate-[8deg]`}>
+        <path fill="currentColor" d={BADGE_CLIP} />
+        <path className={AT_REST} fill="currentColor" fillRule="evenodd" d={BADGE_CARD + BADGE_HOLDER} />
+        <g className={ON_HOVER}>
+          <path fill="currentColor" fillRule="evenodd" d={BADGE_CARD} />
+          {BADGE_SMILE_CURVES.map((d) => (
+            <path key={d} d={d} className="fill-none stroke-page-background" strokeWidth={1.44} strokeLinecap="round" />
+          ))}
+        </g>
+        {hat && <SantaHat transform="translate(6 -3.6) rotate(-8 6 6)" />}
       </g>
     </svg>
   );
@@ -71,13 +100,16 @@ function GitHubIcon({ hat }: { hat: boolean }) {
  * 그림의 오른쪽 끝을 창 끝에서 24px 안쪽에 둔다.
  * 그림은 40px 칸 가운데에 있어 칸 끝보다 8px 안쪽이므로 칸은 16px만 들인다.
  */
-export function HeroLinks({ articlesHref, githubHref }: { articlesHref: string; githubHref: string }) {
+export function HeroLinks({ articlesHref, aboutHref, githubHref }: { articlesHref: string; aboutHref: string; githubHref: string }) {
   const winter = useSeason() === 'winter';
 
   return (
     <nav aria-label="Links" className="absolute bottom-full right-4 mb-1 flex gap-1">
       <Link to={articlesHref} aria-label="posts" className={SURFACE}>
         <PostsIcon hat={winter} />
+      </Link>
+      <Link to={aboutHref} aria-label="about" className={SURFACE}>
+        <AboutIcon hat={winter} />
       </Link>
       <a href={githubHref} target="_blank" rel="noreferrer" aria-label="GitHub (opens in a new tab)" className={SURFACE}>
         <GitHubIcon hat={winter} />
