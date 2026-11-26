@@ -21,6 +21,7 @@ type SourceRepositoryMock = {
   get: MockedFunction<SourceRepository['get']>;
   insert: MockedFunction<SourceRepository['insert']>;
   update: MockedFunction<SourceRepository['update']>;
+  delete: MockedFunction<SourceRepository['delete']>;
 };
 
 type SourceSyncJobRepositoryMock = {
@@ -560,6 +561,7 @@ function createSourceRepositoryMock(): SourceRepositoryMock {
     get: vi.fn<SourceRepository['get']>().mockResolvedValue(buildSource()),
     insert: vi.fn<SourceRepository['insert']>().mockImplementation((source) => Promise.resolve(source)),
     update: vi.fn<SourceRepository['update']>().mockImplementation((source) => Promise.resolve(source)),
+    delete: vi.fn<SourceRepository['delete']>(),
   };
 }
 

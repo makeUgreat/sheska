@@ -4,6 +4,7 @@ import { ConstraintViolationError, NotFoundError } from '@core/errors';
 import {
   type Source,
   type SourceRepository,
+  type SourceRepositoryDeleteCriteria,
   type SourceRepositoryFindCriteria,
   type SourceRepositoryGetCriteria,
 } from '@contexts/library/domain';
@@ -132,5 +133,29 @@ export class SourcePgDrizzleRepository implements SourceRepository {
     }
 
     return SourcePgDrizzleMapper.toDomain(row);
+  }
+
+  async delete(criteria: SourceRepositoryDeleteCriteria): Promise<void> {
+    let rows: { id: string }[];
+
+    try {
+      rows = await this.db.delete(schema.sources).where(eq(schema.sources.id, criteria.id)).returning({ id: schema.sources.id });
+    } catch (error: unknown) {
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
+        code: 'source.delete_failed',
+        message: 'Source delete operation failed',
+        details: { id: criteria.id },
+        cause: error,
+      });
+    }
+
+    if (rows.length === 0) {
+      throw new NotFoundError({
+        code: 'source.not_found',
+        message: 'Source not found',
+        details: { id: criteria.id },
+      });
+    }
   }
 }

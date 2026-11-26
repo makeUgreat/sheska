@@ -6,9 +6,14 @@ export type SourceRepositoryGetCriteria = {
   readonly id: string;
 };
 
+export type SourceRepositoryDeleteCriteria = {
+  readonly id: string;
+};
+
 export interface SourceRepository {
   find(criteria: SourceRepositoryFindCriteria): Promise<Source | null>;
   get(criteria: SourceRepositoryGetCriteria): Promise<Source>;
   insert(source: Source): Promise<Source>;
   update(source: Source): Promise<Source>;
+  delete(criteria: SourceRepositoryDeleteCriteria): Promise<void>;
 }

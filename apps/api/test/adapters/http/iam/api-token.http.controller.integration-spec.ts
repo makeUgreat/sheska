@@ -172,7 +172,7 @@ describe('ApiTokenHttpController', () => {
 
     it.each([
       ['권한이 없으면', []],
-      ['없는 권한이면', ['sources:delete']],
+      ['없는 권한이면', ['sources:purge']],
     ])('%s 400 request.validation_failed이다', async (_, permissions) => {
       const response = await request(httpServer)
         .post('/api-tokens')

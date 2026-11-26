@@ -7,7 +7,12 @@ export { SourceFrontmatter } from './source-frontmatter.vo';
 export type { SourceFrontmatterProps, SourceFrontmatterValue } from './source-frontmatter.vo';
 export { SourceSize } from './source-size.vo';
 export { SourceSyncJob } from './source-sync-job.aggregate';
-export { type SourceRepository, type SourceRepositoryFindCriteria, type SourceRepositoryGetCriteria } from './source.repository';
+export {
+  type SourceRepository,
+  type SourceRepositoryDeleteCriteria,
+  type SourceRepositoryFindCriteria,
+  type SourceRepositoryGetCriteria,
+} from './source.repository';
 export { type SourceSyncJobRepository } from './source-sync-job.repository';
 export { Post } from './post.aggregate';
 export { PostPublishedDomainEvent } from './post.event';

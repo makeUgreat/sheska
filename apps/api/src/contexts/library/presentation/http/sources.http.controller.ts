@@ -1,10 +1,11 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import { type z } from 'zod';
 import { type ApiRequest, type ApiResponse, SourceApi, PERMISSION } from '@sheska/contract';
 import { ErrorCodes, Permission, ZodValidationPipe } from '@kernels/presentation';
 import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upload-source.use-case';
 import { ListSourcesUseCase } from '@contexts/library/application/use-cases/list-sources.use-case';
 import { GetSourceUseCase } from '@contexts/library/application/use-cases/get-source.use-case';
+import { DeleteSourceUseCase } from '@contexts/library/application/use-cases/delete-source.use-case';
 import { type SourceQueryPaginateResult } from '@contexts/library/application/ports';
 
 type SourceSummary = SourceQueryPaginateResult['sources'][number];
@@ -15,6 +16,7 @@ export class SourcesHttpController {
     private readonly uploadSourceUseCase: UploadSourceUseCase,
     private readonly listSourcesUseCase: ListSourcesUseCase,
     private readonly getSourceUseCase: GetSourceUseCase,
+    private readonly deleteSourceUseCase: DeleteSourceUseCase,
   ) {}
 
   @Get(SourceApi.list.path)
@@ -67,6 +69,14 @@ export class SourcesHttpController {
     const result = await this.uploadSourceUseCase.execute(body);
 
     return SourceApi.upload.response.parse(result satisfies ApiResponse<typeof SourceApi.upload>);
+  }
+
+  @Delete(SourceApi.delete.path)
+  @Permission(PERMISSION.SOURCES_DELETE)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ErrorCodes(SourceApi.delete.errors)
+  async delete(@Param('id') id: string): Promise<void> {
+    await this.deleteSourceUseCase.execute({ sourceId: id });
   }
 }
 

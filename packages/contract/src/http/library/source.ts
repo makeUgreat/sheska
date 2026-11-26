@@ -115,4 +115,11 @@ export const SourceApi = {
       AuthErrorCode.FORBIDDEN,
     ],
   }),
+
+  /** source를 지운다. 그 source의 post, 조회수, 방문 기록, AI 요약, sync job, 임베딩도 함께 지운다. vault 파일은 바뀌지 않는다. */
+  delete: defineApi({
+    method: 'DELETE',
+    path: '/sources/:id',
+    errors: [SourceErrorCode.NOT_FOUND, AuthErrorCode.UNAUTHENTICATED, AuthErrorCode.FORBIDDEN],
+  }),
 };

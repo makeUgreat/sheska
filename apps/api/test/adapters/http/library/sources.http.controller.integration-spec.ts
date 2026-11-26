@@ -6,6 +6,7 @@ import { ConstraintViolationError, NotFoundError, ValidationFailedError } from '
 import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upload-source.use-case';
 import { ListSourcesUseCase } from '@contexts/library/application/use-cases/list-sources.use-case';
 import { GetSourceUseCase } from '@contexts/library/application/use-cases/get-source.use-case';
+import { DeleteSourceUseCase } from '@contexts/library/application/use-cases/delete-source.use-case';
 import { SourcesHttpController } from '@contexts/library/presentation/http/sources.http.controller';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
 import { DeclaredErrorCodesInterceptor } from '@platform/nest/interceptors/declared-error-codes.interceptor';
@@ -26,12 +27,17 @@ type GetSourceUseCaseMock = {
   execute: MockedFunction<GetSourceUseCase['execute']>;
 };
 
+type DeleteSourceUseCaseMock = {
+  execute: MockedFunction<DeleteSourceUseCase['execute']>;
+};
+
 describe('SourcesHttpController', () => {
   let app: INestApplication;
   let httpServer: Server;
   let uploadSourceUseCase: UploadSourceUseCaseMock;
   let listSourcesUseCase: ListSourcesUseCaseMock;
   let getSourceUseCase: GetSourceUseCaseMock;
+  let deleteSourceUseCase: DeleteSourceUseCaseMock;
 
   beforeEach(async () => {
     uploadSourceUseCase = {
@@ -42,6 +48,9 @@ describe('SourcesHttpController', () => {
     };
     getSourceUseCase = {
       execute: vi.fn<GetSourceUseCase['execute']>(),
+    };
+    deleteSourceUseCase = {
+      execute: vi.fn<DeleteSourceUseCase['execute']>(),
     };
 
     const testingModule = await Test.createTestingModule({
@@ -58,6 +67,10 @@ describe('SourcesHttpController', () => {
         {
           provide: GetSourceUseCase,
           useValue: getSourceUseCase,
+        },
+        {
+          provide: DeleteSourceUseCase,
+          useValue: deleteSourceUseCase,
         },
         {
           provide: APP_INTERCEPTOR,
@@ -86,6 +99,34 @@ describe('SourcesHttpController', () => {
 
   afterEach(async () => {
     await app.close();
+  });
+
+  describe('DELETE /sources/:id', () => {
+    it('source를 지우고 204 응답을 반환한다', async () => {
+      deleteSourceUseCase.execute.mockResolvedValue(undefined);
+
+      await request(httpServer).delete('/sources/source-1').expect(204);
+
+      expect(deleteSourceUseCase.execute).toHaveBeenCalledWith({ sourceId: 'source-1' });
+    });
+
+    it('source가 없으면 404 응답을 반환한다', async () => {
+      deleteSourceUseCase.execute.mockRejectedValue(
+        new NotFoundError({
+          code: 'source.not_found',
+          message: 'Source not found',
+          details: {},
+        }),
+      );
+
+      const response = await request(httpServer).delete('/sources/non-existent').expect(404);
+
+      expect(response.body).toEqual({
+        code: 'source.not_found',
+        message: 'Source not found',
+        details: {},
+      });
+    });
   });
 
   describe('GET /sources', () => {
