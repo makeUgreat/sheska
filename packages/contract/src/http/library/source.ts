@@ -56,6 +56,8 @@ export const SourceErrorCode = {
    * 다시 보내면 먼저 받은 source를 갱신한다.
    */
   EXTERNAL_SOURCE_ID_ALREADY_EXISTS: 'source.external_source_id_already_exists',
+  /** 옮길 경로에 이미 다른 source가 있다. */
+  RENAME_TARGET_EXISTS: 'source.rename_target_exists',
 } as const;
 
 export const SourceApi = {
@@ -111,6 +113,31 @@ export const SourceApi = {
       SourceErrorCode.INVALID_FRONTMATTER,
       SourceErrorCode.EXTERNAL_SOURCE_ID_ALREADY_EXISTS,
       SourceSyncJobErrorCode.ALREADY_ACTIVE,
+      AuthErrorCode.UNAUTHENTICATED,
+      AuthErrorCode.FORBIDDEN,
+    ],
+  }),
+
+  /**
+   * vault 안에서 이름을 바꾸거나 옮긴 파일의 source를 새 경로로 옮긴다. source의 식별자는 그대로다.
+   * 옮긴 뒤 같은 요청을 다시 보내면 옮겨 둔 source를 돌려준다.
+   */
+  rename: defineApi({
+    method: 'POST',
+    path: '/sources/rename',
+    request: z.strictObject({
+      /** 옮기기 전 vault 파일 경로. 앞뒤 공백은 서버가 지운다. */
+      fromExternalSourceId: z.string().trim().min(1),
+      /** 옮긴 뒤 vault 파일 경로. 앞뒤 공백은 서버가 지운다. */
+      toExternalSourceId: z.string().trim().min(1),
+    }),
+    response: z.object({
+      sourceId: z.string(),
+    }),
+    errors: [
+      CommonErrorCode.VALIDATION_FAILED,
+      SourceErrorCode.NOT_FOUND,
+      SourceErrorCode.RENAME_TARGET_EXISTS,
       AuthErrorCode.UNAUTHENTICATED,
       AuthErrorCode.FORBIDDEN,
     ],

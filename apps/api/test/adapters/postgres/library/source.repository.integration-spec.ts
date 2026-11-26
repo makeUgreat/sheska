@@ -126,6 +126,30 @@ describe('SourceDrizzleRepository', () => {
     });
   });
 
+  describe('경로 옮기기', () => {
+    it('옮긴 source는 같은 식별자와 post를 유지하고 새 경로로 찾힌다', async () => {
+      const source = await repository.insert(buildSource({ externalSourceId: 'Notes/move-before.md' }));
+      await database.insert(schema.posts).values({ id: source.id });
+
+      source.moveTo('Notes/move-after.md');
+      await repository.update(source);
+
+      await expect(repository.find({ externalSourceId: 'Notes/move-before.md' })).resolves.toBeNull();
+      await expect(repository.find({ externalSourceId: 'Notes/move-after.md' })).resolves.toMatchObject({ id: source.id });
+      await expect(database.select().from(schema.posts).where(eq(schema.posts.id, source.id))).resolves.toHaveLength(1);
+    });
+
+    it('frontmatter title이 없으면 저장된 제목도 새 경로로 바뀐다', async () => {
+      const source = await repository.insert(buildSource({ externalSourceId: 'Notes/move-title-before.md' }));
+
+      source.moveTo('Notes/move-title-after.md');
+      await repository.update(source);
+
+      const [row] = await database.select({ title: schema.sources.title }).from(schema.sources).where(eq(schema.sources.id, source.id));
+      expect(row.title).toBe('Notes/move-title-after.md');
+    });
+  });
+
   describe('delete', () => {
     async function insertSourceWithDependents(externalSourceId: string): Promise<string> {
       const source = await repository.insert(buildSource({ externalSourceId }));

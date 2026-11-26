@@ -6,6 +6,7 @@ import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upl
 import { ListSourcesUseCase } from '@contexts/library/application/use-cases/list-sources.use-case';
 import { GetSourceUseCase } from '@contexts/library/application/use-cases/get-source.use-case';
 import { DeleteSourceUseCase } from '@contexts/library/application/use-cases/delete-source.use-case';
+import { RenameSourceUseCase } from '@contexts/library/application/use-cases/rename-source.use-case';
 import { type SourceQueryPaginateResult } from '@contexts/library/application/ports';
 
 type SourceSummary = SourceQueryPaginateResult['sources'][number];
@@ -17,6 +18,7 @@ export class SourcesHttpController {
     private readonly listSourcesUseCase: ListSourcesUseCase,
     private readonly getSourceUseCase: GetSourceUseCase,
     private readonly deleteSourceUseCase: DeleteSourceUseCase,
+    private readonly renameSourceUseCase: RenameSourceUseCase,
   ) {}
 
   @Get(SourceApi.list.path)
@@ -69,6 +71,19 @@ export class SourcesHttpController {
     const result = await this.uploadSourceUseCase.execute(body);
 
     return SourceApi.upload.response.parse(result satisfies ApiResponse<typeof SourceApi.upload>);
+  }
+
+  @Post(SourceApi.rename.path)
+  @Permission(PERMISSION.SOURCES_SYNC)
+  @HttpCode(HttpStatus.OK)
+  @ErrorCodes(SourceApi.rename.errors)
+  async rename(
+    @Body(new ZodValidationPipe(SourceApi.rename.request))
+    body: ApiRequest<typeof SourceApi.rename>,
+  ): Promise<ApiResponse<typeof SourceApi.rename>> {
+    const result = await this.renameSourceUseCase.execute(body);
+
+    return SourceApi.rename.response.parse(result satisfies ApiResponse<typeof SourceApi.rename>);
   }
 
   @Delete(SourceApi.delete.path)

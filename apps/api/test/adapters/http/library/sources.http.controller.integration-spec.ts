@@ -7,6 +7,7 @@ import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upl
 import { ListSourcesUseCase } from '@contexts/library/application/use-cases/list-sources.use-case';
 import { GetSourceUseCase } from '@contexts/library/application/use-cases/get-source.use-case';
 import { DeleteSourceUseCase } from '@contexts/library/application/use-cases/delete-source.use-case';
+import { RenameSourceUseCase } from '@contexts/library/application/use-cases/rename-source.use-case';
 import { SourcesHttpController } from '@contexts/library/presentation/http/sources.http.controller';
 import { HttpExceptionFilter } from '@platform/nest/filters/http-exception.filter';
 import { DeclaredErrorCodesInterceptor } from '@platform/nest/interceptors/declared-error-codes.interceptor';
@@ -31,6 +32,10 @@ type DeleteSourceUseCaseMock = {
   execute: MockedFunction<DeleteSourceUseCase['execute']>;
 };
 
+type RenameSourceUseCaseMock = {
+  execute: MockedFunction<RenameSourceUseCase['execute']>;
+};
+
 describe('SourcesHttpController', () => {
   let app: INestApplication;
   let httpServer: Server;
@@ -38,6 +43,7 @@ describe('SourcesHttpController', () => {
   let listSourcesUseCase: ListSourcesUseCaseMock;
   let getSourceUseCase: GetSourceUseCaseMock;
   let deleteSourceUseCase: DeleteSourceUseCaseMock;
+  let renameSourceUseCase: RenameSourceUseCaseMock;
 
   beforeEach(async () => {
     uploadSourceUseCase = {
@@ -51,6 +57,9 @@ describe('SourcesHttpController', () => {
     };
     deleteSourceUseCase = {
       execute: vi.fn<DeleteSourceUseCase['execute']>(),
+    };
+    renameSourceUseCase = {
+      execute: vi.fn<RenameSourceUseCase['execute']>(),
     };
 
     const testingModule = await Test.createTestingModule({
@@ -71,6 +80,10 @@ describe('SourcesHttpController', () => {
         {
           provide: DeleteSourceUseCase,
           useValue: deleteSourceUseCase,
+        },
+        {
+          provide: RenameSourceUseCase,
+          useValue: renameSourceUseCase,
         },
         {
           provide: APP_INTERCEPTOR,
@@ -99,6 +112,62 @@ describe('SourcesHttpController', () => {
 
   afterEach(async () => {
     await app.close();
+  });
+
+  describe('POST /sources/rename', () => {
+    it('source를 옮기고 식별자를 200 응답으로 반환한다', async () => {
+      renameSourceUseCase.execute.mockResolvedValue({ sourceId: 'source-1' });
+
+      const response = await request(httpServer)
+        .post('/sources/rename')
+        .send({ fromExternalSourceId: ' Notes/old.md ', toExternalSourceId: 'Notes/new.md' })
+        .expect(200);
+
+      expect(response.body).toEqual({ sourceId: 'source-1' });
+      expect(renameSourceUseCase.execute).toHaveBeenCalledWith({
+        fromExternalSourceId: 'Notes/old.md',
+        toExternalSourceId: 'Notes/new.md',
+      });
+    });
+
+    it('경로가 비어 있으면 400 응답을 반환하고 use case를 호출하지 않는다', async () => {
+      await request(httpServer)
+        .post('/sources/rename')
+        .send({ fromExternalSourceId: 'Notes/old.md', toExternalSourceId: '  ' })
+        .expect(400);
+
+      expect(renameSourceUseCase.execute).not.toHaveBeenCalled();
+    });
+
+    it('source가 없으면 404 응답을 반환한다', async () => {
+      renameSourceUseCase.execute.mockRejectedValue(
+        new NotFoundError({ code: 'source.not_found', message: 'Source not found', details: {} }),
+      );
+
+      const response = await request(httpServer)
+        .post('/sources/rename')
+        .send({ fromExternalSourceId: 'Notes/old.md', toExternalSourceId: 'Notes/new.md' })
+        .expect(404);
+
+      expect(response.body).toMatchObject({ code: 'source.not_found' });
+    });
+
+    it('새 경로에 다른 source가 있으면 409 응답을 반환한다', async () => {
+      renameSourceUseCase.execute.mockRejectedValue(
+        new ConstraintViolationError({
+          code: 'source.rename_target_exists',
+          message: 'Another source already uses the target path',
+          details: {},
+        }),
+      );
+
+      const response = await request(httpServer)
+        .post('/sources/rename')
+        .send({ fromExternalSourceId: 'Notes/old.md', toExternalSourceId: 'Notes/new.md' })
+        .expect(409);
+
+      expect(response.body).toMatchObject({ code: 'source.rename_target_exists' });
+    });
   });
 
   describe('DELETE /sources/:id', () => {

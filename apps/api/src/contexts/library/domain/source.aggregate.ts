@@ -59,6 +59,10 @@ export class Source extends AggregateRoot<SourceProps, SourceDomainEvent> {
     return bodyChanged || metadataChanged;
   }
 
+  moveTo(externalSourceId: string): void {
+    this.props.externalSourceId = ExternalSourceId.of(externalSourceId);
+  }
+
   syncJobFor(latestSyncJob: SourceSyncJob | null): SourceSyncJob {
     const { text, fingerprint } = this.props.body.unpack();
     if (latestSyncJob?.isWaitingOrCompletedFor(fingerprint)) {
