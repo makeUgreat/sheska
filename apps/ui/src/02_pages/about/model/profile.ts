@@ -8,6 +8,7 @@ import sheskaLogo from '../assets/logos/sheska.svg';
 import siruLogo from '../assets/logos/siru.svg';
 
 export interface Service {
+  slug: string;
   name: string;
   logo: { src: string; alt: string };
   since: number;
@@ -24,6 +25,7 @@ export const PROFILE = {
 
 export const SERVICES: readonly Service[] = [
   {
+    slug: 'sheska',
     name: 'Sheska',
     logo: { src: sheskaLogo, alt: '' },
     since: 2026,
@@ -32,6 +34,7 @@ export const SERVICES: readonly Service[] = [
     previewStyle: 'diagram',
   },
   {
+    slug: 'siru',
     name: 'Siru',
     logo: { src: siruLogo, alt: '' },
     since: 2026,
@@ -40,6 +43,7 @@ export const SERVICES: readonly Service[] = [
     previewStyle: 'window',
   },
   {
+    slug: 'nocap',
     name: 'Nocap',
     logo: { src: npmLogo, alt: 'npm 패키지' },
     since: 2026,
@@ -48,6 +52,7 @@ export const SERVICES: readonly Service[] = [
     previewStyle: 'window',
   },
   {
+    slug: 'home-cluster',
     name: 'Home Cluster',
     logo: { src: serverLogo, alt: '' },
     since: 2026,
