@@ -1,7 +1,6 @@
 import { type Element } from 'hast';
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
-
-const COPIED_RESET_MS = 2000;
+import { createContext, useContext, useRef, type ReactNode, type RefObject } from 'react';
+import { useCopyToClipboard } from '../../lib';
 
 const LABEL = 'font-mono text-label-sm tracking-normal text-on-surface-muted';
 
@@ -52,31 +51,19 @@ function Glyph({ children }: { children: ReactNode }) {
 }
 
 function CopyButton({ source }: { source: RefObject<HTMLPreElement | null> }) {
-  const [copied, setCopied] = useState(false);
+  const { result, copy } = useCopyToClipboard();
+  const copied = result === 'copied';
 
-  useEffect(() => {
-    if (!copied) return;
-
-    const timer = window.setTimeout(() => setCopied(false), COPIED_RESET_MS);
-    return () => window.clearTimeout(timer);
-  }, [copied]);
-
-  const copy = useCallback(() => {
+  function copySource() {
     const text = source.current?.textContent;
-    if (!text) return;
-
-    /** Clipboard는 비보안 컨텍스트에서 아예 없으므로 실패를 정상 경로로 둔다. */
-    void navigator.clipboard
-      ?.writeText(text)
-      .then(() => setCopied(true))
-      .catch(() => setCopied(false));
-  }, [source]);
+    if (text) copy(text);
+  }
 
   return (
     <>
       <button
         type="button"
-        onClick={copy}
+        onClick={copySource}
         aria-label="Copy code"
         className={`-m-1.5 p-1.5 transition-colors focus-visible:outline-none ${
           copied ? 'text-accent' : 'text-on-surface-muted hover:text-accent focus-visible:text-accent'

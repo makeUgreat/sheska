@@ -1,19 +1,17 @@
 import { Link, useParams } from 'react-router-dom';
-import {
-  type EmbeddingInfo,
-  type SyncJob,
-  type SyncJobSummary,
-  SyncJobBadge,
-  SyncJobProgress,
-  useSource,
-  useSyncJob,
-} from '@/entities/source';
+import { useSource, useSyncJob } from '@/entities/source';
 import { PublishPostPanel } from '@/features/publish-post';
-import { formatBytes } from '@/shared/lib';
 import { EmptyState, ErrorState, Markdown } from '@/shared/ui';
+import { SourceFileSection } from './source-file-section';
+import { SourceSyncSection } from './source-sync-section';
+
+const RAIL_FIRST_WHEN_WRAPPED = 'flex flex-row-reverse flex-wrap';
 
 function formatFrontmatterValue(value: unknown): string {
-  return typeof value === 'string' ? value : JSON.stringify(value);
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value) && value.every((item) => typeof item === 'string')) return value.join(', ');
+
+  return JSON.stringify(value);
 }
 
 function FrontmatterSection({ frontmatter }: { frontmatter: Record<string, unknown> }) {
@@ -21,69 +19,17 @@ function FrontmatterSection({ frontmatter }: { frontmatter: Record<string, unkno
   if (entries.length === 0) return null;
 
   return (
-    <section className="mb-8">
-      <h2 className="mb-3 text-base font-semibold text-gray-950">Frontmatter</h2>
-      <dl className="grid gap-4 rounded-lg border border-gray-200 bg-page-background p-5 sm:grid-cols-2">
-        {entries.map(([key, value]) => (
-          <div key={key} className="min-w-0">
-            <dt className="text-xs font-medium uppercase text-gray-500">{key}</dt>
-            <dd className="mt-1 break-words text-sm text-gray-900">{formatFrontmatterValue(value)}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
-  );
-}
-
-function SyncJobSection({ syncJob }: { syncJob: SyncJob | SyncJobSummary | null }) {
-  if (!syncJob) {
-    return (
-      <>
-        <dt className="text-xs font-medium uppercase text-gray-500">Embedding Status</dt>
-        <dd className="text-sm text-gray-400">No job</dd>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <dt className="text-xs font-medium uppercase text-gray-500">Embedding Status</dt>
-      <dd className="text-sm text-gray-900">
-        <div className="flex items-center gap-2">
-          <SyncJobBadge status={syncJob.status} />
-          <span className="text-sm text-gray-500">{new Date(syncJob.createdAt).toLocaleString()}</span>
+    <dl
+      aria-label="Frontmatter"
+      className="mb-8 grid grid-cols-[7rem_minmax(0,1fr)] gap-x-3 gap-y-2 border-b border-plate-line pb-6 text-body-sm"
+    >
+      {entries.map(([key, value]) => (
+        <div key={key} className="contents">
+          <dt className="font-mono text-code-snippet text-text-muted">{key}</dt>
+          <dd className="min-w-0 break-words text-text-primary">{formatFrontmatterValue(value)}</dd>
         </div>
-        <div className="mt-2">
-          <SyncJobProgress syncJob={syncJob} />
-        </div>
-      </dd>
-      <dt className="text-xs font-medium uppercase text-gray-500">Sync Job ID</dt>
-      <dd className="break-all font-mono text-code-snippet text-gray-900">{syncJob.syncJobId}</dd>
-    </>
-  );
-}
-
-function EmbeddingSection({ embedding }: { embedding: EmbeddingInfo | null }) {
-  if (!embedding) {
-    return (
-      <>
-        <dt className="text-xs font-medium uppercase text-gray-500">Embedding</dt>
-        <dd className="text-sm text-gray-400">Not yet generated</dd>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <dt className="text-xs font-medium uppercase text-gray-500">Embedding Model</dt>
-      <dd className="break-all text-sm text-gray-900">{embedding.model}</dd>
-      <dt className="text-xs font-medium uppercase text-gray-500">Dimensions</dt>
-      <dd className="text-sm text-gray-900">{embedding.dimensions}</dd>
-      <dt className="text-xs font-medium uppercase text-gray-500">Embedding Created</dt>
-      <dd className="text-sm text-gray-900">{new Date(embedding.createdAt).toLocaleString()}</dd>
-      <dt className="text-xs font-medium uppercase text-gray-500">Embedding Updated</dt>
-      <dd className="text-sm text-gray-900">{new Date(embedding.updatedAt).toLocaleString()}</dd>
-    </>
+      ))}
+    </dl>
   );
 }
 
@@ -94,63 +40,38 @@ export function SourceDetailPage() {
   const displayedSyncJob = polledSyncJob ?? source?.latestSyncJob ?? null;
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10">
-      <Link to="/sources" className="mb-6 inline-block text-sm font-medium text-gray-500 hover:text-gray-900">
-        ← Back to sources
+    <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+      <Link to="/sources" className="font-mono text-label-sm tracking-normal text-text-muted hover:text-text-primary">
+        ← sources
       </Link>
       {isLoading ? null : error ? (
         <ErrorState error={error} />
       ) : source ? (
         <>
-          <header className="mb-8 border-b border-outline-variant/10 pb-6">
-            <p className="mb-2 font-mono text-label-sm uppercase text-accent-hover">Source</p>
-            <h1 className="break-words text-3xl font-bold text-gray-950">{source.title}</h1>
-            <p className="mt-1 break-words text-sm text-gray-500">{source.externalSourceId}</p>
-            <p className="mt-3 text-sm text-gray-500">
-              {formatBytes(source.sizeBytes)} · Updated {new Date(source.updatedAt).toLocaleString()}
-            </p>
+          <header className="mt-4 border-b border-plate-line pb-6">
+            <h1 className="break-words text-balance text-headline-sm text-text-primary">{source.title}</h1>
+            <p className="mt-1.5 break-all font-mono text-code-snippet text-text-muted">{source.externalSourceId}</p>
           </header>
 
-          <section className="mb-8 grid gap-6 lg:grid-cols-[1fr_18rem]">
-            <dl className="grid gap-4 rounded-lg border border-gray-200 bg-page-background p-5 sm:grid-cols-2">
-              <div>
-                <dt className="text-xs font-medium uppercase text-gray-500">ID</dt>
-                <dd className="mt-1 break-all font-mono text-code-snippet text-gray-900">{source.sourceId}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium uppercase text-gray-500">Size</dt>
-                <dd className="mt-1 text-sm text-gray-900">{formatBytes(source.sizeBytes)}</dd>
-              </div>
-              <div className="sm:col-span-2">
-                <dt className="text-xs font-medium uppercase text-gray-500">Fingerprint</dt>
-                <dd className="mt-1 break-all font-mono text-code-snippet text-gray-900">{source.fingerprint}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium uppercase text-gray-500">Created</dt>
-                <dd className="mt-1 text-sm text-gray-900">{new Date(source.createdAt).toLocaleString()}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium uppercase text-gray-500">Updated</dt>
-                <dd className="mt-1 text-sm text-gray-900">{new Date(source.updatedAt).toLocaleString()}</dd>
-              </div>
-              <div className="sm:col-span-2 grid gap-3 border-t border-gray-200 pt-4">
-                <SyncJobSection syncJob={displayedSyncJob} />
-                <EmbeddingSection embedding={source.embedding} />
-              </div>
-            </dl>
+          <div className={`mt-8 gap-x-12 gap-y-8 ${RAIL_FIRST_WHEN_WRAPPED}`}>
+            <aside
+              aria-label="Source 상태"
+              className="min-w-0 flex-[1_1_18rem] divide-y divide-plate-line [&>section]:py-5 [&>section:first-child]:pt-0"
+            >
+              <PublishPostPanel
+                sourceId={source.sourceId}
+                publishedPostId={source.publishedPostId}
+                syncCompleted={displayedSyncJob?.status === 'completed'}
+              />
+              <SourceSyncSection syncJob={displayedSyncJob} embedding={source.embedding} />
+              <SourceFileSection source={source} />
+            </aside>
 
-            <PublishPostPanel sourceId={source.sourceId} publishedPostId={source.publishedPostId} />
-          </section>
-
-          <FrontmatterSection frontmatter={source.frontmatter} />
-
-          <section>
-            <h2 className="mb-3 text-base font-semibold text-gray-950">Content</h2>
-            <Markdown
-              body={source.body}
-              className="max-h-[36rem] overflow-auto rounded-lg border border-outline-variant/10 bg-page-background p-5"
-            />
-          </section>
+            <div className="min-w-0 flex-[999_1_35rem]">
+              <FrontmatterSection frontmatter={source.frontmatter} />
+              <Markdown body={source.body} />
+            </div>
+          </div>
         </>
       ) : (
         <EmptyState variant="document" className="py-24" />

@@ -1,18 +1,5 @@
 import { type SyncJobStatus } from '../api/types';
 
-const STATUS_STYLES: Record<SyncJobStatus, string> = {
-  waiting: 'bg-surface-container-high text-secondary',
-  processing: 'bg-surface-container-high text-primary',
-  completed: 'bg-accent-strong text-white',
-  failed: 'bg-error-container text-on-error-container',
-};
-
-export function SyncJobBadge({ status }: { status: SyncJobStatus }) {
-  const style = STATUS_STYLES[status] ?? 'bg-gray-100 text-gray-700';
-
-  return <span className={`rounded px-2 py-0.5 font-mono text-xs font-medium ${style}`}>{status}</span>;
-}
-
 export interface SyncJobProgressInfo {
   status: SyncJobStatus;
   totalChunks: number | null;
