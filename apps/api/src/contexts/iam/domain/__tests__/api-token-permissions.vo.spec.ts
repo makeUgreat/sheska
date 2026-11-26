@@ -19,7 +19,7 @@ describe('ApiTokenPermissions', () => {
 
   it.each([
     ['권한이 없으면', []],
-    ['없는 권한이 있으면', ['sources:sync', 'sources:delete']],
+    ['없는 권한이 있으면', ['sources:sync', 'sources:purge']],
   ])('%s 만들 수 없다', (_, values) => {
     expect(() => ApiTokenPermissions.of(values)).toThrow(
       expect.objectContaining({

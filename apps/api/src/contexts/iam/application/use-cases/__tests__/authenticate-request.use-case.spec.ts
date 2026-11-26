@@ -66,7 +66,7 @@ describe('AuthenticateRequestUseCase', () => {
     const { useCase, sessions } = build({ sessionActive: true });
 
     await expect(useCase.execute({ credential: SESSION })).resolves.toEqual({
-      permissions: ['sources:sync', 'sources:read', 'posts:publish', 'post_views:read', 'api_tokens:manage'],
+      permissions: ['sources:sync', 'sources:read', 'sources:delete', 'posts:publish', 'post_views:read', 'api_tokens:manage'],
     });
     expect(sessions.isActive).toHaveBeenCalledWith('session-token');
   });

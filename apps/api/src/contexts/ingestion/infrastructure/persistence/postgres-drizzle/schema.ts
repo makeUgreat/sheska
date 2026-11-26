@@ -1,4 +1,5 @@
 import { customType, integer, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
+import { sources } from '@contexts/library/infrastructure/persistence/postgres-drizzle/schema';
 
 const vector = (name: string, dimensions: number) =>
   customType<{ data: number[]; driverData: string }>({
@@ -16,7 +17,9 @@ const vector = (name: string, dimensions: number) =>
 export const sourceEmbeddings = pgTable(
   'source_embeddings',
   {
-    sourceId: text('source_id').notNull(),
+    sourceId: text('source_id')
+      .notNull()
+      .references(() => sources.id, { onDelete: 'cascade' }),
     chunkIndex: integer('chunk_index').notNull(),
     chunkContent: text('chunk_content').notNull(),
     embedding: vector('embedding', 1024).notNull(),

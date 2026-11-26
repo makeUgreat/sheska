@@ -8,6 +8,7 @@ function buildMockRepository(overrides: Partial<SourceRepository> = {}): SourceR
     get: vi.fn(),
     insert: vi.fn(),
     update: vi.fn(),
+    delete: vi.fn(),
     ...overrides,
   } satisfies SourceRepository;
 }

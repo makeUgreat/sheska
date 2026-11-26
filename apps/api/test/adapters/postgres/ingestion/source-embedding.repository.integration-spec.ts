@@ -28,6 +28,17 @@ describe('SourceEmbeddingDrizzleRepository', () => {
     await testingModule.close();
   });
 
+  // nocap: ingestion-sourceEmbedding-7
+  it('지운 source의 임베딩은 저장을 거부하고 남기지 않는다', async () => {
+    const source = await sourceRepository.insert(buildSource({ externalSourceId: 'Notes/source-embedding-deleted.md' }));
+    await sourceRepository.delete({ id: source.id });
+
+    await expect(repository.upsert(buildSourceEmbedding({ sourceId: source.id }))).rejects.toMatchObject({
+      code: 'source_embedding.upsert_failed',
+    });
+    await expect(repository.find({ sourceId: source.id })).resolves.toBeNull();
+  });
+
   it('source embedding을 저장한다', async () => {
     const source = await sourceRepository.insert(
       buildSource({

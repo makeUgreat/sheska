@@ -9,6 +9,8 @@ export const PERMISSION = {
   SOURCES_SYNC: 'sources:sync',
   /** 공개하지 않은 노트를 포함해 올린 노트의 목록과 원문을 읽는다. */
   SOURCES_READ: 'sources:read',
+  /** 올린 노트와 그 노트의 글, 조회수, 요약, 임베딩을 지운다. Obsidian 플러그인에는 주지 않는다. */
+  SOURCES_DELETE: 'sources:delete',
   /** 올린 노트를 블로그 글로 공개한다. */
   POSTS_PUBLISH: 'posts:publish',
   /** post의 조회내역(방문자의 IP와 방문 수단)을 읽는다. */
