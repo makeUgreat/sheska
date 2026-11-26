@@ -6,7 +6,6 @@ import { CopyButton } from '@/shared/ui';
 
 const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2';
 const BUTTON = `inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md px-4 text-body-sm font-medium transition-colors disabled:cursor-not-allowed disabled:bg-plate-line disabled:text-text-muted ${FOCUS_RING}`;
-/** 채운 버튼은 한 영역에 하나만 둔다. 주 동작인 게시만 accent로 채운다. */
 const PUBLISH_BUTTON = `${BUTTON} bg-accent-strong text-white hover:bg-accent-deep`;
 const CONFIRM_BUTTON = `${BUTTON} bg-text-primary text-white hover:bg-surface-container-high`;
 const OUTLINE_BUTTON = `${BUTTON} border border-outline-variant/25 bg-page-background text-text-primary hover:border-text-primary disabled:border-transparent`;

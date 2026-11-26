@@ -2,8 +2,7 @@ import { type EmbeddingInfo, type SyncJob, type SyncJobSummary } from '@/entitie
 import { formatDottedMonthDay, formatTime } from '@/shared/lib';
 import { CopyButton } from '@/shared/ui';
 
-/** 청크가 이보다 많으면 한 칸이 너무 얇아져서 이어진 막대로 그린다. */
-const CELL_LIMIT = 40;
+const MAX_CHUNK_CELLS = 40;
 
 const KEY = 'text-text-muted';
 
@@ -65,7 +64,7 @@ function ChunkTrack({ syncJob }: { syncJob: SyncJob | SyncJobSummary }) {
     'aria-valuenow': done,
   } as const;
 
-  if (total > CELL_LIMIT) {
+  if (total > MAX_CHUNK_CELLS) {
     return (
       <div {...progress} className="mt-3 h-1 overflow-hidden rounded-full bg-plate-line">
         <div className="h-full bg-accent transition-[width] duration-300" style={{ width: `${(done / total) * 100}%` }} />

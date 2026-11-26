@@ -5,6 +5,8 @@ import { EmptyState, ErrorState, Markdown } from '@/shared/ui';
 import { SourceFileSection } from './source-file-section';
 import { SourceSyncSection } from './source-sync-section';
 
+const RAIL_FIRST_WHEN_WRAPPED = 'flex flex-row-reverse flex-wrap';
+
 function formatFrontmatterValue(value: unknown): string {
   if (typeof value === 'string') return value;
   if (Array.isArray(value) && value.every((item) => typeof item === 'string')) return value.join(', ');
@@ -51,8 +53,7 @@ export function SourceDetailPage() {
             <p className="mt-1.5 break-all font-mono text-code-snippet text-text-muted">{source.externalSourceId}</p>
           </header>
 
-          {/* 좁은 화면에서 레일이 원문 위로 올라오도록 DOM 순서를 [레일, 원문]으로 두고 넓을 때만 뒤집어 놓는다. */}
-          <div className="mt-8 flex flex-row-reverse flex-wrap gap-x-12 gap-y-8">
+          <div className={`mt-8 gap-x-12 gap-y-8 ${RAIL_FIRST_WHEN_WRAPPED}`}>
             <aside
               aria-label="Source 상태"
               className="min-w-0 flex-[1_1_18rem] divide-y divide-plate-line [&>section]:py-5 [&>section:first-child]:pt-0"
