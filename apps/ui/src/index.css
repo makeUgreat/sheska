@@ -1,4 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/jetbrains-mono";
 @import "tailwindcss";
 @import "./styles/theme.css";
 @import "./styles/code-highlight.css";
