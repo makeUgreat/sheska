@@ -58,6 +58,7 @@ function setup({ viewCount, latest }: { viewCount: number; latest: PostView | nu
     get: vi.fn<PostRepository['get']>().mockResolvedValue(Post.restore({ id: 'post-1', viewCount })),
     insert: vi.fn<PostRepository['insert']>(),
     update: vi.fn<PostRepository['update']>().mockImplementation((post) => Promise.resolve(post)),
+    delete: vi.fn<PostRepository['delete']>(),
   };
   const postViews = {
     findLatest: vi.fn<PostViewRepository['findLatest']>().mockResolvedValue(latest),

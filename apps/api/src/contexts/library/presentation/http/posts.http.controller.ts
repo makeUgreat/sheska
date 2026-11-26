@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query, Req } from '@nestjs/common';
 import { type Request } from 'express';
 import { z } from 'zod';
 import { type ApiRequest, type ApiResponse, PostApi, type PostSummaryResponse, PERMISSION } from '@sheska/contract';
@@ -14,6 +14,7 @@ import {
 } from '@kernels/presentation';
 import { type PostQuerySummary } from '@contexts/library/application/ports';
 import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
+import { UnpublishPostUseCase } from '@contexts/library/application/use-cases/unpublish-post.use-case';
 import { GetPostUseCase } from '@contexts/library/application/use-cases/get-post.use-case';
 import { RecordPostViewUseCase } from '@contexts/library/application/use-cases/record-post-view.use-case';
 import { ListPostViewsUseCase } from '@contexts/library/application/use-cases/list-post-views.use-case';
@@ -47,6 +48,7 @@ interface PostSummary {
 export class PostsHttpController {
   constructor(
     private readonly publishPostUseCase: PublishPostUseCase,
+    private readonly unpublishPostUseCase: UnpublishPostUseCase,
     private readonly getPostUseCase: GetPostUseCase,
     private readonly recordPostViewUseCase: RecordPostViewUseCase,
     private readonly listPostViewsUseCase: ListPostViewsUseCase,
@@ -88,6 +90,14 @@ export class PostsHttpController {
     return PostApi.publish.response.parse(
       toPostSummaryResponse({ ...result, summary: { kind: 'pending' } }) satisfies ApiResponse<typeof PostApi.publish>,
     );
+  }
+
+  @Delete(PostApi.unpublish.path)
+  @Permission(PERMISSION.POSTS_PUBLISH)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ErrorCodes(PostApi.unpublish.errors)
+  async unpublish(@Param('id') id: string): Promise<void> {
+    await this.unpublishPostUseCase.execute({ postId: id });
   }
 
   // 정적 경로가 `:id`보다 먼저 등록되어야 한다.

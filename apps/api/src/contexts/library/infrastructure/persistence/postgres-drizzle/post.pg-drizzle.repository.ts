@@ -2,7 +2,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { ConstraintViolationError, NotFoundError } from '@core/errors';
-import { type Post, type PostRepository, type PostRepositoryGetCriteria } from '@contexts/library/domain';
+import {
+  type Post,
+  type PostRepository,
+  type PostRepositoryDeleteCriteria,
+  type PostRepositoryGetCriteria,
+} from '@contexts/library/domain';
 import { classifyPostgresError, DATABASE_TOKENS } from '@kernels/infrastructure';
 import * as schema from './schema';
 import { PostPgDrizzleMapper } from './post.pg-drizzle.mapper';
@@ -96,5 +101,29 @@ export class PostPgDrizzleRepository implements PostRepository {
     }
 
     return PostPgDrizzleMapper.toDomain(row);
+  }
+
+  async delete(criteria: PostRepositoryDeleteCriteria): Promise<void> {
+    let rows: { id: string }[];
+
+    try {
+      rows = await this.db.delete(schema.posts).where(eq(schema.posts.id, criteria.id)).returning({ id: schema.posts.id });
+    } catch (error: unknown) {
+      const ErrorClass = classifyPostgresError(error);
+      throw new ErrorClass({
+        code: 'post.delete_failed',
+        message: 'Post delete operation failed',
+        details: { id: criteria.id },
+        cause: error,
+      });
+    }
+
+    if (rows.length === 0) {
+      throw new NotFoundError({
+        code: 'post.not_found',
+        message: 'Post not found',
+        details: { id: criteria.id },
+      });
+    }
   }
 }

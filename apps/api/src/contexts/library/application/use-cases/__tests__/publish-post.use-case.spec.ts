@@ -10,6 +10,7 @@ type PostRepositoryMock = {
   get: MockedFunction<PostRepository['get']>;
   insert: MockedFunction<PostRepository['insert']>;
   update: MockedFunction<PostRepository['update']>;
+  delete: MockedFunction<PostRepository['delete']>;
 };
 
 type OutboxWriterMock = {
@@ -159,6 +160,7 @@ function createPostRepositoryMock(): PostRepositoryMock {
     get: vi.fn<PostRepository['get']>().mockResolvedValue(buildPost()),
     insert: vi.fn<PostRepository['insert']>().mockImplementation((post) => Promise.resolve(post)),
     update: vi.fn<PostRepository['update']>().mockImplementation((post) => Promise.resolve(post)),
+    delete: vi.fn<PostRepository['delete']>(),
   };
 }
 

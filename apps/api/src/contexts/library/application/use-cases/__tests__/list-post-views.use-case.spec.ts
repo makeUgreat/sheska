@@ -14,6 +14,7 @@ function setup() {
     get: vi.fn<PostRepository['get']>().mockResolvedValue(Post.restore({ id: 'post-1', viewCount: 1 })),
     insert: vi.fn<PostRepository['insert']>(),
     update: vi.fn<PostRepository['update']>(),
+    delete: vi.fn<PostRepository['delete']>(),
   };
   const postViewQuery = { paginate: vi.fn<PostViewQuery['paginate']>().mockResolvedValue(PAGE) };
 
