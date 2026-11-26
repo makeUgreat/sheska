@@ -1,12 +1,15 @@
 import { Link } from 'react-router-dom';
 import { PROFILE, SERVICES, type Service } from '../model/profile';
 
-const HOVER_SHIFT =
-  'transition-transform duration-[600ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] group-hover:-translate-x-1.5 group-hover:-translate-y-1.5 group-has-focus-visible:-translate-x-1.5 group-has-focus-visible:-translate-y-1.5 motion-reduce:transition-none';
+const HOVER_MOTION = 'transition-transform duration-[600ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] motion-reduce:transition-none';
+
+const HOVER_SHIFT = `${HOVER_MOTION} group-hover:-translate-x-1.5 group-hover:-translate-y-1.5 group-has-focus-visible:-translate-x-1.5 group-has-focus-visible:-translate-y-1.5`;
+
+const HOVER_LIFT = `${HOVER_MOTION} group-hover:-translate-y-1 group-has-focus-visible:-translate-y-1`;
 
 /** stretched link: 제목 링크의 ::after가 article 전체를 덮어 카드 어디를 눌러도 이동한다. */
 const CARD_LINK =
-  'transition-colors duration-150 group-hover:text-accent-strong focus:outline-none focus-visible:text-accent-strong motion-reduce:transition-none after:absolute after:-inset-2.5 after:rounded-[18px] focus-visible:after:ring-2 focus-visible:after:ring-accent';
+  'focus:outline-none after:absolute after:-inset-2.5 after:rounded-[18px] focus-visible:after:ring-2 focus-visible:after:ring-accent';
 
 const PREVIEW_POSITION = 'absolute left-[9%] top-[11%] w-[106%] max-w-none';
 
@@ -28,20 +31,17 @@ function ServiceEntry({ service }: { service: Service }) {
     <article className="group relative grid gap-4">
       <ServicePreview service={service} />
       <div className="grid gap-1">
-        <div className="flex items-baseline justify-between gap-4">
-          <h3 className="text-title-lg tracking-[-0.01em]">
-            <img
-              src={service.logo.src}
-              alt={service.logo.alt}
-              className="mr-2 inline-block size-[26px] rounded-md align-[-0.21em] transition-[filter] duration-150 group-hover:brightness-[0.82] group-has-focus-visible:brightness-[0.82] motion-reduce:transition-none"
-            />
-            <Link to={`/about/${service.slug}`} className={CARD_LINK}>
-              {service.name}
-            </Link>
-          </h3>
-          <span className="font-mono text-body-sm tabular-nums text-text-muted">{service.since} —</span>
-        </div>
-        <p className="max-w-[52ch] text-text-secondary">{service.summary}</p>
+        <h3 className="text-title-lg tracking-[-0.01em]">
+          <img
+            src={service.logo.src}
+            alt={service.logo.alt}
+            className={`mr-2 inline-block size-[26px] rounded-md align-[-0.21em] ${HOVER_LIFT}`}
+          />
+          <Link to={`/about/${service.slug}`} className={CARD_LINK}>
+            <span className={`inline-block ${HOVER_LIFT}`}>{service.name}</span>
+          </Link>
+        </h3>
+        <p className={`max-w-[52ch] text-text-secondary ${HOVER_LIFT}`}>{service.summary}</p>
       </div>
     </article>
   );
@@ -60,7 +60,7 @@ export function AboutPage() {
         <h2 id="about-services" className="font-mono text-label-sm uppercase text-text-muted">
           Services
         </h2>
-        <div className="grid gap-14">
+        <div className="card-list-focus grid gap-14">
           {SERVICES.map((service) => (
             <ServiceEntry key={service.slug} service={service} />
           ))}

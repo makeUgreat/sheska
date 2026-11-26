@@ -1,0 +1,31 @@
+/*
+ * 카드 목록에서 hover나 focus한 카드 밖의 카드를 흐린다.
+ * 규칙과 수치는 docs/ko/design.md의 "섹션 강조"와 section-focus를 따른다.
+ */
+@utility card-list-focus {
+  /* 풀릴 때는 천천히 돌아온다. */
+  & > * {
+    transition: opacity 320ms ease-out;
+  }
+
+  /* 흐리기는 늦게 시작해서 카드 사이를 지나는 마우스에 목록이 깜빡이지 않게 한다. */
+  &:has(:focus-visible) > :not(:has(:focus-visible)) {
+    opacity: 0.3;
+    transition: opacity 200ms ease 100ms;
+  }
+
+  /* 터치 기기는 sticky hover로 흐림이 남으므로 hover를 쓰지 않는다. */
+  @media (hover: hover) {
+    &:has(> :hover) > :not(:hover) {
+      opacity: 0.3;
+      transition: opacity 200ms ease 100ms;
+    }
+  }
+
+  /* 흐리는 규칙의 specificity가 더 높아서 important로 덮는다. */
+  @media (prefers-reduced-motion: reduce) {
+    & > * {
+      transition: none !important;
+    }
+  }
+}
