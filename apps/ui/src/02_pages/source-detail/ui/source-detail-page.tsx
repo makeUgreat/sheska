@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { useSource, useSyncJob } from '@/entities/source';
+import { DeleteSourcePanel } from '@/features/delete-source';
 import { PublishPostPanel } from '@/features/publish-post';
 import { EmptyState, ErrorState, Markdown } from '@/shared/ui';
 import { SourceFileSection } from './source-file-section';
@@ -65,6 +66,7 @@ export function SourceDetailPage() {
               />
               <SourceSyncSection syncJob={displayedSyncJob} embedding={source.embedding} />
               <SourceFileSection source={source} />
+              <DeleteSourcePanel sourceId={source.sourceId} />
             </aside>
 
             <div className="min-w-0 flex-[999_1_35rem]">

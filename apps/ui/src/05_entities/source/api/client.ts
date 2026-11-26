@@ -15,6 +15,10 @@ export function getSource(http: HttpClient, id: string): Promise<GetSourceRespon
   return http.get(pathOf(SourceApi.get, { id }), SourceApi.get.response);
 }
 
+export function deleteSource(http: HttpClient, id: string): Promise<void> {
+  return http.delete(pathOf(SourceApi.delete, { id }));
+}
+
 export function getSyncJob(http: HttpClient, id: string): Promise<SyncJob> {
   return http.get(pathOf(SourceSyncJobApi.get, { id }), SourceSyncJobApi.get.response);
 }

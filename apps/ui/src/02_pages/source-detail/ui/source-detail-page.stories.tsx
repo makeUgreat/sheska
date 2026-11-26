@@ -116,6 +116,7 @@ export const Details: Story = {
       await expect(canvas.getByText('완료')).toBeDefined();
       await expect(canvas.getByText('4 청크')).toBeDefined();
       await expect(canvas.getByText('text-embedding-3-small · 1536d')).toBeDefined();
+      await expect(canvas.getByRole('button', { name: 'Source 삭제' })).toBeDefined();
     });
   },
 };
