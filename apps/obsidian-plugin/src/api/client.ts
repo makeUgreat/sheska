@@ -13,6 +13,8 @@ import {
 export type HealthResponse = ApiResponse<typeof HealthApi.ready>;
 export type UploadSourceRequest = ApiRequest<typeof SourceApi.upload>;
 export type UploadSourceResponse = ApiResponse<typeof SourceApi.upload>;
+export type RenameSourceRequest = ApiRequest<typeof SourceApi.rename>;
+export type RenameSourceResponse = ApiResponse<typeof SourceApi.rename>;
 export type SourceSyncJobResponse = ApiResponse<typeof SourceSyncJobApi.get>;
 export type UploadAttachmentResponse = ApiResponse<typeof AttachmentApi.upload>;
 
@@ -90,6 +92,10 @@ export class SheskaApiClient {
 
   uploadSource(body: UploadSourceRequest): Promise<UploadSourceResponse> {
     return this.post(SourceApi.upload.path, body, SourceApi.upload.response);
+  }
+
+  renameSource(body: RenameSourceRequest): Promise<RenameSourceResponse> {
+    return this.post(SourceApi.rename.path, body, SourceApi.rename.response);
   }
 
   uploadAttachment(path: string, data: ArrayBuffer): Promise<UploadAttachmentResponse> {

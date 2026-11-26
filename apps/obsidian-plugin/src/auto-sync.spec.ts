@@ -78,6 +78,7 @@ function makeService(
     }),
     getSyncJob: vi.fn(),
     uploadAttachment: vi.fn().mockResolvedValue({}),
+    renameSource: vi.fn().mockResolvedValue({ sourceId: 'source-1' }),
   };
   const vault = {
     read: vi.fn().mockResolvedValue('content'),
@@ -1276,6 +1277,77 @@ describe('AutoSyncService', () => {
 
       await expect(service.uploadFile(asObsidianFile(note))).rejects.toThrow(UploadBlockedError);
       expect(api.uploadSource).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('rename', () => {
+    const SYNCED = { mtime: 100, status: 'synced' as const, sourceId: 'source-1' };
+
+    // nocap: library-sync-16
+    it('moves the source to the new path and uploads the renamed file so its title follows', async () => {
+      const syncCache: SyncCache = { 'old.md': { ...SYNCED } };
+      const { api, service } = makeService({ autoSyncEnabled: true }, syncCache);
+      const file = new TFile('new.md', { ctime: 0, mtime: 100, size: 1 });
+
+      await service.onVaultFileRenamed(asObsidianAbstractFile(file), 'old.md');
+
+      expect(api.renameSource).toHaveBeenCalledWith({ fromExternalSourceId: 'old.md', toExternalSourceId: 'new.md' });
+      expect(api.uploadSource).toHaveBeenCalledWith(expect.objectContaining({ externalSourceId: 'new.md' }));
+      expect(api.renameSource.mock.invocationCallOrder[0]).toBeLessThan(api.uploadSource.mock.invocationCallOrder[0]);
+      expect(syncCache['old.md']).toBeUndefined();
+      expect(syncCache['new.md']).toMatchObject({ mtime: 100 });
+    });
+
+    it('still uploads the renamed file when the server cannot move the source', async () => {
+      const syncCache: SyncCache = { 'old.md': { ...SYNCED } };
+      const { api, service } = makeService({ autoSyncEnabled: true }, syncCache);
+      api.renameSource.mockRejectedValue(new SheskaApiError(404, 'Not Found', '', 'source.not_found'));
+      const file = new TFile('new.md', { ctime: 0, mtime: 100, size: 1 });
+
+      await service.onVaultFileRenamed(asObsidianAbstractFile(file), 'old.md');
+
+      expect(api.uploadSource).toHaveBeenCalledWith(expect.objectContaining({ externalSourceId: 'new.md' }));
+      expect(syncCache['old.md']).toBeUndefined();
+    });
+
+    it('leaves a renamed file that was never uploaded to the normal sync', async () => {
+      const { api, service } = makeService({ autoSyncEnabled: true }, {});
+      const file = new TFile('new.md', { ctime: 0, mtime: 100, size: 1 });
+
+      await service.onVaultFileRenamed(asObsidianAbstractFile(file), 'old.md');
+
+      expect(api.renameSource).not.toHaveBeenCalled();
+      expect(api.uploadSource).not.toHaveBeenCalled();
+    });
+
+    it('ignores renames while auto sync is off', async () => {
+      const syncCache: SyncCache = { 'old.md': { ...SYNCED } };
+      const { api, service } = makeService({ autoSyncEnabled: false }, syncCache);
+      const file = new TFile('new.md', { ctime: 0, mtime: 100, size: 1 });
+
+      await service.onVaultFileRenamed(asObsidianAbstractFile(file), 'old.md');
+
+      expect(api.renameSource).not.toHaveBeenCalled();
+      expect(syncCache['old.md']).toBeDefined();
+    });
+
+    it('does not upload the new path from a change event before the source is moved', async () => {
+      const syncCache: SyncCache = { 'old.md': { ...SYNCED } };
+      const { api, service } = makeService({ autoSyncEnabled: true, autoSyncDebounceSeconds: 0 }, syncCache);
+      let finishRename: (value: { sourceId: string }) => void = () => undefined;
+      api.renameSource.mockReturnValue(new Promise((resolve) => (finishRename = resolve)));
+      const file = new TFile('new.md', { ctime: 0, mtime: 100, size: 1 });
+
+      const renaming = service.onVaultFileRenamed(asObsidianAbstractFile(file), 'old.md');
+      service.onVaultFileChanged(asObsidianAbstractFile(file));
+      await vi.runAllTimersAsync();
+
+      expect(api.uploadSource).not.toHaveBeenCalled();
+
+      finishRename({ sourceId: 'source-1' });
+      await renaming;
+
+      expect(api.uploadSource).toHaveBeenCalledOnce();
     });
   });
 });
