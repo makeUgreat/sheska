@@ -4,6 +4,7 @@ import { SourceContentSnapshotCalculator } from '@contexts/library/application/s
 import { SourceFromRepositoryLookup } from '@contexts/library/application/services/source.from-repository.lookup';
 import { GetSourceUseCase } from '@contexts/library/application/use-cases/get-source.use-case';
 import { DeleteSourceUseCase } from '@contexts/library/application/use-cases/delete-source.use-case';
+import { RenameSourceUseCase } from '@contexts/library/application/use-cases/rename-source.use-case';
 import { GetSourceSyncJobUseCase } from '@contexts/library/application/use-cases/get-source-sync-job.use-case';
 import { ListSourcesUseCase } from '@contexts/library/application/use-cases/list-sources.use-case';
 import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upload-source.use-case';
@@ -160,6 +161,7 @@ export class LibraryModule {
         ListSourcesUseCase,
         GetSourceUseCase,
         DeleteSourceUseCase,
+        RenameSourceUseCase,
         GetSourceSyncJobUseCase,
         UploadSourceUseCase,
         PublishPostUseCase,
@@ -181,6 +183,7 @@ export class LibraryModule {
         ListSourcesUseCase,
         GetSourceUseCase,
         DeleteSourceUseCase,
+        RenameSourceUseCase,
         GetSourceSyncJobUseCase,
         UploadSourceUseCase,
         PublishPostUseCase,

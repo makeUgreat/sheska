@@ -1,7 +1,7 @@
 import { sha256Hex } from '@core/hash';
 import { Source, SourceBodyChangedDomainEvent, SourceSyncJob, type SourceFrontmatterProps } from '@contexts/library/domain';
 import { describe, expect, it } from 'vitest';
-import { sourceContentOf } from '../../../../../test/support/domains/fixtures/source.fixture';
+import { buildSource, sourceContentOf } from '../../../../../test/support/domains/fixtures/source.fixture';
 
 const UUID_V7_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
@@ -215,6 +215,30 @@ describe('Source', () => {
     });
 
     expect(sourceContentOf(source).title).toBe('Notes/source.md');
+  });
+
+  describe('moveTo', () => {
+    it('새 경로로 바꾼다', () => {
+      const source = buildSource({ externalSourceId: 'Notes/old.md' });
+
+      source.moveTo('Notes/new.md');
+
+      expect(source.getProps().externalSourceId.unpack()).toBe('Notes/new.md');
+    });
+
+    it('frontmatter title이 없으면 제목이 새 경로를 따른다', () => {
+      const source = buildSource({ externalSourceId: 'Notes/old.md' });
+
+      source.moveTo('Notes/new.md');
+
+      expect(source.title()).toBe('Notes/new.md');
+    });
+
+    it('새 경로가 비어 있으면 거부한다', () => {
+      const source = buildSource({ externalSourceId: 'Notes/old.md' });
+
+      expect(() => source.moveTo('  ')).toThrow(expect.objectContaining({ code: 'source.empty_external_source_id' }));
+    });
   });
 
   describe('syncJobFor', () => {
