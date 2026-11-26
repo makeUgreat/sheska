@@ -208,4 +208,11 @@ export const PostApi = {
       AuthErrorCode.FORBIDDEN,
     ],
   }),
+
+  /** post를 발행 취소한다. 방문 기록과 요약도 함께 지우고, source와 임베딩은 남긴다. */
+  unpublish: defineApi({
+    method: 'DELETE',
+    path: '/posts/:id',
+    errors: [PostErrorCode.NOT_FOUND, AuthErrorCode.UNAUTHENTICATED, AuthErrorCode.FORBIDDEN],
+  }),
 };

@@ -4,6 +4,7 @@ import { Test } from '@nestjs/testing';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConstraintViolationError, NotFoundError } from '@core/errors';
 import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
+import { UnpublishPostUseCase } from '@contexts/library/application/use-cases/unpublish-post.use-case';
 import { GetPostUseCase } from '@contexts/library/application/use-cases/get-post.use-case';
 import { RecordPostViewUseCase } from '@contexts/library/application/use-cases/record-post-view.use-case';
 import { ListPostViewsUseCase } from '@contexts/library/application/use-cases/list-post-views.use-case';
@@ -21,6 +22,10 @@ import { afterEach, beforeEach, describe, expect, it, type MockedFunction, vi } 
 
 type PublishPostUseCaseMock = {
   execute: MockedFunction<PublishPostUseCase['execute']>;
+};
+
+type UnpublishPostUseCaseMock = {
+  execute: MockedFunction<UnpublishPostUseCase['execute']>;
 };
 
 type GetPostUseCaseMock = {
@@ -51,6 +56,7 @@ describe('PostsHttpController', () => {
   let app: INestApplication;
   let httpServer: Server;
   let publishPostUseCase: PublishPostUseCaseMock;
+  let unpublishPostUseCase: UnpublishPostUseCaseMock;
   let getPostUseCase: GetPostUseCaseMock;
   let recordPostViewUseCase: RecordPostViewUseCaseMock;
   let listPostViewsUseCase: ListPostViewsUseCaseMock;
@@ -60,6 +66,7 @@ describe('PostsHttpController', () => {
 
   beforeEach(async () => {
     publishPostUseCase = { execute: vi.fn<PublishPostUseCase['execute']>() };
+    unpublishPostUseCase = { execute: vi.fn<UnpublishPostUseCase['execute']>() };
     getPostUseCase = { execute: vi.fn<GetPostUseCase['execute']>() };
     recordPostViewUseCase = { execute: vi.fn<RecordPostViewUseCase['execute']>() };
     listPostViewsUseCase = { execute: vi.fn<ListPostViewsUseCase['execute']>() };
@@ -71,6 +78,7 @@ describe('PostsHttpController', () => {
       controllers: [PostsHttpController],
       providers: [
         { provide: PublishPostUseCase, useValue: publishPostUseCase },
+        { provide: UnpublishPostUseCase, useValue: unpublishPostUseCase },
         { provide: GetPostUseCase, useValue: getPostUseCase },
         { provide: RecordPostViewUseCase, useValue: recordPostViewUseCase },
         { provide: ListPostViewsUseCase, useValue: listPostViewsUseCase },
@@ -186,6 +194,34 @@ describe('PostsHttpController', () => {
       expect(response.body).toEqual({
         code: 'internal.unexpected',
         message: 'Internal server error',
+        details: {},
+      });
+    });
+  });
+
+  describe('DELETE /posts/:id', () => {
+    it('post를 발행 취소하고 204 응답을 반환한다', async () => {
+      unpublishPostUseCase.execute.mockResolvedValue(undefined);
+
+      await request(httpServer).delete('/posts/post-1').expect(204);
+
+      expect(unpublishPostUseCase.execute).toHaveBeenCalledWith({ postId: 'post-1' });
+    });
+
+    it('post가 없으면 404 응답을 반환한다', async () => {
+      unpublishPostUseCase.execute.mockRejectedValue(
+        new NotFoundError({
+          code: 'post.not_found',
+          message: 'Post not found',
+          details: {},
+        }),
+      );
+
+      const response = await request(httpServer).delete('/posts/non-existent').expect(404);
+
+      expect(response.body).toEqual({
+        code: 'post.not_found',
+        message: 'Post not found',
         details: {},
       });
     });

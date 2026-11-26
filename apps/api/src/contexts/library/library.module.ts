@@ -27,6 +27,7 @@ import { AttachmentImageSharpCodec } from '@contexts/library/infrastructure/atta
 import { AttachmentContentR2Store } from '@contexts/library/infrastructure/attachment-content/r2/attachment-content.r2.store';
 import { PostsHttpController } from '@contexts/library/presentation/http/posts.http.controller';
 import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
+import { UnpublishPostUseCase } from '@contexts/library/application/use-cases/unpublish-post.use-case';
 import { GetPostUseCase } from '@contexts/library/application/use-cases/get-post.use-case';
 import { RecordPostViewUseCase } from '@contexts/library/application/use-cases/record-post-view.use-case';
 import { ListPostViewsUseCase } from '@contexts/library/application/use-cases/list-post-views.use-case';
@@ -160,6 +161,7 @@ export class LibraryModule {
         GetSourceSyncJobUseCase,
         UploadSourceUseCase,
         PublishPostUseCase,
+        UnpublishPostUseCase,
         GetPostUseCase,
         RecordPostViewUseCase,
         ListPostViewsUseCase,
@@ -179,6 +181,7 @@ export class LibraryModule {
         GetSourceSyncJobUseCase,
         UploadSourceUseCase,
         PublishPostUseCase,
+        UnpublishPostUseCase,
         GetPostUseCase,
         RecordPostViewUseCase,
         ListPostViewsUseCase,
