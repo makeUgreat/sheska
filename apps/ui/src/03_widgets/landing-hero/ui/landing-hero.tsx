@@ -14,7 +14,7 @@ import { WinterLogo } from './winter/winter-logo';
 /** figlet small 글꼴. 웹 글꼴에 없는 블록 문자 대신 ASCII만 써서 폭이 어긋나지 않는다. */
 const LOGO = [' _  _   _   ___ _  _ ', '| || | /_\\ / __| || |', '| __ |/ _ \\\\__ \\ __ |', '|_||_/_/ \\_\\___/_||_|'].join('\n');
 
-export function LandingHero({ articlesHref, githubHref }: { articlesHref: string; githubHref: string }) {
+export function LandingHero({ articlesHref, aboutHref, githubHref }: { articlesHref: string; aboutHref: string; githubHref: string }) {
   const terminal = useRef<TerminalHandle>(null);
   const { viewer, commands: shellCommands, prompt } = useShellCommands();
   const owner = viewer === 'owner';
@@ -40,7 +40,7 @@ export function LandingHero({ articlesHref, githubHref }: { articlesHref: string
 
       <div className="z-10 mx-auto w-full max-w-container-terminal px-0 sm:px-6">
         <div className="relative">
-          <HeroLinks articlesHref={articlesHref} githubHref={githubHref} />
+          <HeroLinks articlesHref={articlesHref} aboutHref={aboutHref} githubHref={githubHref} />
           <TerminalWindow
             yellowLabel={owner ? 'Log out' : 'Log in'}
             onYellowClick={() => terminal.current?.run(owner ? 'exit' : 'su')}
