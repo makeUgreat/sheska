@@ -2,13 +2,8 @@ import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { type AiSummary, usePost, usePublishPost, useUnpublishPost } from '@/entities/post';
 import { formatDottedDate, formatTime } from '@/shared/lib';
-import { CopyButton } from '@/shared/ui';
+import { ACTION_BUTTON, CopyButton, FOCUS_RING, Spinner } from '@/shared/ui';
 
-const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2';
-const BUTTON = `inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md px-4 text-body-sm font-medium transition-colors disabled:cursor-not-allowed disabled:bg-plate-line disabled:text-text-muted ${FOCUS_RING}`;
-const PUBLISH_BUTTON = `${BUTTON} bg-accent-strong text-white hover:bg-accent-deep`;
-const CONFIRM_BUTTON = `${BUTTON} bg-text-primary text-white hover:bg-surface-container-high`;
-const OUTLINE_BUTTON = `${BUTTON} border border-outline-variant/25 bg-page-background text-text-primary hover:border-text-primary disabled:border-transparent`;
 const DESCRIPTION = 'mt-1.5 text-body-sm text-text-secondary';
 
 const SUMMARY_LABEL: Record<AiSummary['status'], string> = {
@@ -60,15 +55,6 @@ function OpenGlyph() {
       <path d="M6 3h7v7" />
       <path d="M13 3 4 12" />
     </Glyph>
-  );
-}
-
-function Spinner() {
-  return (
-    <span
-      aria-hidden="true"
-      className="size-3.5 animate-spin rounded-full border-2 border-current border-r-transparent motion-reduce:animate-none"
-    />
   );
 }
 
@@ -177,18 +163,18 @@ export function PublishPostPanel({
                 </>
               )}
               <div className="mt-3.5 grid gap-2">
-                <button type="button" onClick={() => unpublish(postId)} disabled={unpublishPost.isPending} className={CONFIRM_BUTTON}>
+                <button type="button" onClick={() => unpublish(postId)} disabled={unpublishPost.isPending} className={ACTION_BUTTON.ink}>
                   {unpublishPost.isPending ? <Spinner /> : <HideGlyph />}
                   {unpublishPost.isPending ? '취소하는 중...' : unpublishPost.isError ? '다시 시도' : '게시 취소하기'}
                 </button>
-                <button type="button" onClick={stopConfirming} disabled={unpublishPost.isPending} className={OUTLINE_BUTTON}>
+                <button type="button" onClick={stopConfirming} disabled={unpublishPost.isPending} className={ACTION_BUTTON.outline}>
                   그만두기
                 </button>
               </div>
             </div>
           ) : (
             <div className="mt-3.5 grid gap-2">
-              <Link to={`/posts/${postId}`} className={OUTLINE_BUTTON}>
+              <Link to={`/posts/${postId}`} className={ACTION_BUTTON.outline}>
                 포스트 보기
                 <OpenGlyph />
               </Link>
@@ -219,7 +205,7 @@ export function PublishPostPanel({
             </p>
           )}
           <div className="mt-3.5 grid">
-            <button type="button" onClick={publish} disabled={publishPost.isPending} className={PUBLISH_BUTTON}>
+            <button type="button" onClick={publish} disabled={publishPost.isPending} className={ACTION_BUTTON.accent}>
               {publishPost.isPending ? <Spinner /> : <PublishGlyph />}
               {publishPost.isPending ? '게시하는 중...' : unpublishPost.isSuccess ? '다시 게시하기' : '게시하기'}
             </button>

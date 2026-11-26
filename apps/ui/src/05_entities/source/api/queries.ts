@@ -1,6 +1,6 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useHttpClient } from '@/shared/api';
-import { getSource, getSyncJob, listSources } from './client';
+import { deleteSource, getSource, getSyncJob, listSources } from './client';
 import { type SyncJobSummary, type SyncJobSummaryStatus } from './types';
 
 const SYNC_JOB_POLL_INTERVAL_MS = 2000;
@@ -53,5 +53,19 @@ export function useSyncJob(syncJob: SyncJobSummary | null | undefined, sourceId:
     enabled: isActive,
     refetchInterval: (query) =>
       query.state.data && ACTIVE_SYNC_JOB_STATUSES.has(query.state.data.status) ? SYNC_JOB_POLL_INTERVAL_MS : false,
+  });
+}
+
+export function useDeleteSource() {
+  const http = useHttpClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteSource(http, id),
+    onSuccess: (_, id) => {
+      queryClient.removeQueries({ queryKey: ['sources', id] });
+      queryClient.removeQueries({ queryKey: ['posts', id] });
+      void queryClient.invalidateQueries({ queryKey: ['sources'] });
+      void queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
   });
 }
