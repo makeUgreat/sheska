@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect } from 'storybook/test';
 import { MemoryRouter } from 'react-router-dom';
 import { type SourceSummary } from '@/entities/source';
 import { SourceListItem } from './source-list-item';
@@ -83,5 +84,30 @@ export const LongTitle: Story = {
       ...sampleSource,
       title: 'A deliberately long source title that should wrap cleanly inside the source list row',
     },
+  },
+};
+
+const ACCENT_STRONG = 'rgb(161, 60, 70)';
+
+export const CompletedGlyph: Story = {
+  name: '끝난 동기화는 상태 기호를 accent로 칠한다',
+  tags: ['!dev'],
+  play: async ({ canvas }) => {
+    await expect(getComputedStyle(canvas.getByText('●')).color).toBe(ACCENT_STRONG);
+  },
+};
+
+export const FailedGlyph: Story = {
+  name: '실패한 동기화는 색 없이 기호와 글자로만 알린다',
+  tags: ['!dev'],
+  args: {
+    source: {
+      ...sampleSource,
+      latestSyncJob: { ...sampleSource.latestSyncJob!, status: 'failed' },
+    },
+  },
+  play: async ({ canvas }) => {
+    await expect(getComputedStyle(canvas.getByText('■')).color).not.toBe(ACCENT_STRONG);
+    await expect(getComputedStyle(canvas.getByText('failed')).color).not.toBe(ACCENT_STRONG);
   },
 };
