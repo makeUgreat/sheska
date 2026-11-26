@@ -157,6 +157,8 @@ const VIEWPORTS = {
 /** route마다 fixture가 화면에 그려졌다는 표시다. 이것이 보인 뒤에 폭을 잰다. */
 const ROUTES = {
   '/': (canvas: Canvas) => canvas.findByRole('link', { name: 'posts' }),
+  '/about': (canvas: Canvas) => canvas.findByRole('heading', { level: 1 }),
+  '/about/home-cluster': (canvas: Canvas) => canvas.findByRole('heading', { level: 1 }),
   '/posts': (canvas: Canvas) => canvas.findByRole('link', { name: /Building a Digital Garden from the Terminal/ }),
   '/posts/post-0': (canvas: Canvas) => canvas.findByRole('table'),
   '/sources': (canvas: Canvas) => canvas.findByRole('link', { name: `Source titled ${UNBREAKABLE}` }),
@@ -193,6 +195,8 @@ function noHorizontalScroll(width: Width, route: keyof typeof ROUTES): Story {
 }
 
 export const At320Landing: Story = noHorizontalScroll(320, '/');
+export const At320About: Story = noHorizontalScroll(320, '/about');
+export const At320Service: Story = noHorizontalScroll(320, '/about/home-cluster');
 export const At320Posts: Story = noHorizontalScroll(320, '/posts');
 export const At320PostDetail: Story = noHorizontalScroll(320, '/posts/post-0');
 export const At320Sources: Story = noHorizontalScroll(320, '/sources');

@@ -1,4 +1,5 @@
 import type { RouteObject } from 'react-router-dom';
+import { AboutPage, ServicePage } from '@/pages/about';
 import { LandingPage } from '@/pages/landing';
 import { PostDetailPage } from '@/pages/post-detail';
 import { PostsPage } from '@/pages/posts';
@@ -12,6 +13,8 @@ export const routes: RouteObject[] = [
     element: <App />,
     children: [
       { path: '/', element: <LandingPage /> },
+      { path: '/about', element: <AboutPage /> },
+      { path: '/about/:slug', element: <ServicePage /> },
       { path: '/sources', element: <SourceListPage /> },
       { path: '/sources/:id', element: <SourceDetailPage /> },
       { path: '/posts', element: <PostsPage /> },
