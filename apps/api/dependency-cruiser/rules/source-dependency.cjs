@@ -2,6 +2,7 @@ const docs = require('../docs.cjs');
 const { nodeBuiltinModule, sourceTestFiles } = require('../patterns.cjs');
 
 const externalModule = `${nodeBuiltinModule}|(^|/)node_modules/`;
+const persistenceSchemaFile = '^src/contexts/[^/]+/infrastructure/persistence/[^/]+/schema[.]ts$';
 
 module.exports = [
   {
@@ -217,9 +218,24 @@ module.exports = [
       `See ${docs.sourceDependency}#public-surface.`,
     from: {
       path: '^src/contexts/([^/]+)/',
+      pathNot: persistenceSchemaFile,
     },
     to: {
       path: '^src/contexts/(?!$1/)[^/]+/(domain|infrastructure|presentation|acl)/',
+    },
+  },
+  {
+    name: 'api-persistence-schema-only-to-other-persistence-schema',
+    severity: 'error',
+    comment:
+      'A persistence schema may import another context only to declare an ON DELETE CASCADE foreign key on that context persistence schema. ' +
+      `See ${docs.contextIntegration}#삭제의-크로스-컨텍스트-fk-예외.`,
+    from: {
+      path: '^src/contexts/([^/]+)/infrastructure/persistence/[^/]+/schema[.]ts$',
+    },
+    to: {
+      path: '^src/contexts/(?!$1/)[^/]+/',
+      pathNot: persistenceSchemaFile,
     },
   },
   {
