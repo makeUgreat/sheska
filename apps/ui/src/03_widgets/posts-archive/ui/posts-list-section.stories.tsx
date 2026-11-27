@@ -1,7 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MemoryRouter } from 'react-router-dom';
+import { expect, within } from 'storybook/test';
 import { type PostSummary } from '@/entities/post';
 import { PostsListSection } from './posts-list-section';
+
+const LONG_SERIES_NAME = '집에서 돌리는 k3s 클러스터를 처음부터 운영까지 기록하기';
 
 const samplePosts: PostSummary[] = [
   {
@@ -17,6 +20,7 @@ const samplePosts: PostSummary[] = [
         '동작 검증은 통합 테스트에 남겼다.',
       ],
     },
+    series: { name: 'Sheska UI 구조', position: 3, total: 4 },
     createdAt: '2026-08-05T08:30:00.000Z',
     updatedAt: '2026-08-05T09:30:00.000Z',
   },
@@ -26,6 +30,7 @@ const samplePosts: PostSummary[] = [
     title: 'Using UI State Fixtures for Component Review',
     viewCount: 91,
     summary: { status: 'failed' },
+    series: null,
     createdAt: '2026-08-04T08:30:00.000Z',
     updatedAt: '2026-08-04T09:30:00.000Z',
   },
@@ -35,6 +40,7 @@ const samplePosts: PostSummary[] = [
     title: 'A deliberately long archive title that should wrap cleanly inside the post list section',
     viewCount: 1_208,
     summary: { status: 'pending' },
+    series: { name: LONG_SERIES_NAME, position: 3, total: 12 },
     createdAt: '2026-08-03T08:30:00.000Z',
     updatedAt: '2026-08-03T09:30:00.000Z',
   },
@@ -76,6 +82,27 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Populated: Story = {};
+
+const VIEWPORTS = {
+  width320: { name: '320 × 900', styles: { width: '320px', height: '900px' } },
+};
+
+export const LongSeriesNameAt320: Story = {
+  name: '320px에서 긴 시리즈 이름은 한 줄로 자르고 자리는 남긴다',
+  tags: ['!dev'],
+  globals: { viewport: { value: 'width320', isRotated: false } },
+  parameters: { viewport: { options: VIEWPORTS } },
+  play: async ({ canvas }) => {
+    await expect(window.innerWidth).toBe(320);
+    await document.fonts.ready;
+
+    const link = canvas.getByRole('link', { name: /A deliberately long archive title/ });
+    const name = within(link).getByText(LONG_SERIES_NAME);
+    await expect(name).toHaveAttribute('title', LONG_SERIES_NAME);
+    await expect(name.scrollWidth).toBeGreaterThan(name.clientWidth);
+    await expect(within(link).getByText('3 / 12')).toBeVisible();
+  },
+};
 
 export const MorePages: Story = {
   args: {

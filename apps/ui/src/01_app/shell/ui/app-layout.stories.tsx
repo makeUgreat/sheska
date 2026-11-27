@@ -145,7 +145,7 @@ type Canvas = Parameters<NonNullable<Story['play']>>[0]['canvas'];
 
 /**
  * 320px is the support floor, 640px is where the header and the search row change shape,
- * 900px is where the archive year and the back link move into the left margin.
+ * 900px is where heading symbols and the back link move into the left margin.
  */
 type Width = 320 | 640 | 900 | 1280;
 

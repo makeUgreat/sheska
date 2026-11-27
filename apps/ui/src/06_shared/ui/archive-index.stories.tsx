@@ -9,25 +9,21 @@ const entries: ArchiveEntry[] = [
     id: 'cilium',
     href: '/posts/cilium',
     title: 'Kubernetes 홈랩에서 Cilium으로 갈아탄 이유',
-    date: '2026-09-12T12:00:00.000Z',
   },
   {
     id: 'proxmox',
     href: '/posts/proxmox',
     title: 'Proxmox 클러스터 스토리지 설계',
-    date: '2026-09-03T12:00:00.000Z',
   },
   {
     id: 'long',
     href: '/posts/long',
     title: 'A deliberately long archive title that wraps onto a second line instead of ending with an ellipsis',
-    date: '2026-01-20T12:00:00.000Z',
   },
   {
     id: 'hnsw',
     href: '/posts/hnsw',
     title: 'pgvector HNSW 인덱스 튜닝 기록',
-    date: '2025-08-27T12:00:00.000Z',
   },
 ];
 
@@ -50,7 +46,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const ByYear: Story = {};
+export const Default: Story = {};
 
 export const WithDetail: Story = {
   args: {
@@ -69,13 +65,13 @@ export const WithMeta: Story = {
   args: {
     entries: entries.map((entry, index) => ({
       ...entry,
-      meta: index % 2 === 0 ? [`${91 - index * 9}% match`, '1,208 views'] : ['342 views'],
+      meta: index % 2 === 0 ? `${91 - index * 9}% match` : undefined,
     })),
   },
 };
 
 function buildEntries(titles: string[]): ArchiveEntry[] {
-  return titles.map((title) => ({ id: title, href: `/posts/${title}`, title, date: '2026-11-18T00:00:00Z' }));
+  return titles.map((title) => ({ id: title, href: `/posts/${title}`, title }));
 }
 
 function delayOf(canvas: { getByRole: (role: 'link', options: { name: RegExp }) => HTMLElement }, title: string) {

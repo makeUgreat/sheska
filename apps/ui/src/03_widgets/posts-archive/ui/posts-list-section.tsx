@@ -1,5 +1,5 @@
 import { type CSSProperties, type FormEvent, type Ref } from 'react';
-import { AI_SUMMARY_NOTICE, type AiSummary, type PostSummary } from '@/entities/post';
+import { AI_SUMMARY_NOTICE, type AiSummary, type PostSeries, type PostSummary } from '@/entities/post';
 import { type RevealPhase, useStagedReveal } from '@/shared/lib';
 import { AiMark, ArchiveIndex, EmptyState, EndOfList, ErrorState } from '@/shared/ui';
 
@@ -17,10 +17,6 @@ export type PostsListState =
       hasNextPage: boolean;
       sentinelRef: Ref<HTMLDivElement>;
     };
-
-function formatViews(count: number) {
-  return `${count.toLocaleString('en-US')} ${count === 1 ? 'view' : 'views'}`;
-}
 
 const SUMMARY_ROW = 'relative mt-1 grid grid-cols-[20px_minmax(0,1fr)] items-start margin-label:block';
 
@@ -157,6 +153,26 @@ function Lines({ lines, revealing }: { lines: string[]; revealing: boolean }) {
   );
 }
 
+function SeriesMeta({ series }: { series: PostSeries }) {
+  return (
+    <span className="flex min-w-0 items-baseline gap-2">
+      <span className="sr-only">Series</span>
+      <span title={series.name} className="min-w-0 truncate">
+        {series.name}
+      </span>
+      <span className="shrink-0">
+        {series.position} / {series.total}
+      </span>
+    </span>
+  );
+}
+
+function postMeta(post: PostSummary, isSearching: boolean) {
+  if (isSearching) return post.similarity != null && `${post.similarity}% match`;
+
+  return post.series && <SeriesMeta series={post.series} />;
+}
+
 function Highlighted({ text, query }: { text: string; query: string }) {
   if (!query) return <>{text}</>;
 
@@ -241,10 +257,7 @@ export function PostsListSection({
                   id: post.postId,
                   href: `/posts/${post.postId}`,
                   title: <Highlighted text={post.title} query={highlight} />,
-                  date: post.createdAt,
-                  meta: [post.similarity != null && `${post.similarity}% match`, formatViews(post.viewCount)].filter(
-                    (item) => typeof item === 'string',
-                  ),
+                  meta: postMeta(post, isSearching),
                   detail: isSearching ? (
                     post.snippet && (
                       <span className="mt-2 line-clamp-2 text-body-md text-text-muted">

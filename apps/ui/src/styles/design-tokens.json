@@ -435,7 +435,7 @@
       "$value": "1100px"
     },
     "margin-label": {
-      "$description": "Width of the column a page hangs in the left margin of the reading column: the archive year. `--breakpoint-margin-label` (900px) is derived from it. The column is centred at the measure, so each margin must hold this width, a gutter and the 16px page padding: measure + 2 × (this width + gutter + 16px) = 876px, about 891px with the reserved scrollbar gutter, rounded up to 900px. Below that the label sits above the content it marks.",
+      "$description": "Width of the column a page hangs in the left margin of the reading column: body heading symbols such as `##`. `--breakpoint-margin-label` (900px) is derived from it. The column is centred at the measure, so each margin must hold this width, a gutter and the 16px page padding: measure + 2 × (this width + gutter + 16px) = 876px, about 891px with the reserved scrollbar gutter, rounded up to 900px. Below that the label sits above the content it marks.",
       "$value": "48px"
     },
     "header": {
