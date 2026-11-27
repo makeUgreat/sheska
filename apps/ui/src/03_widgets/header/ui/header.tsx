@@ -7,6 +7,7 @@ import { useRetypedCommand } from '../model/use-retyped-command';
 
 const SECTIONS = [
   { href: '/posts', label: 'posts', ownerOnly: false },
+  { href: '/about', label: 'about', ownerOnly: false },
   { href: '/sources', label: 'sources', ownerOnly: true },
 ] as const;
 
