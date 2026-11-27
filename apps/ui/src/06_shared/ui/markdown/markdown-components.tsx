@@ -61,9 +61,9 @@ const OUTDENTED = 'margin-label:-ml-(--outdent)';
 type HeadingTag = keyof typeof HEADING_STYLE;
 
 /**
- * 넓은 화면에서는 기호를 왼쪽 여백에 걸어 heading 글자가 본문 왼쪽 끝에 맞게 한다.
+ * 넓은 화면에서는 기호를 왼쪽 여백의 한 세로선에 걸어 heading 내어쓰기와 상관없이 같은 자리에 둔다.
  * Pseudo-element라 복사 결과에 섞이지 않고, `/ ''` 대체 텍스트로 스크린 리더도 읽지 않는다.
- * `######`는 여백 폭보다 넓다. `justify-end`라야 넘친 부분이 heading 쪽이 아니라 바깥으로 나간다.
+ * `justify-end`라야 기호 길이와 상관없이 오른쪽 끝이 세로선에 맞는다.
  */
 const SOURCE_MARK =
   'before:mr-2 before:font-mono before:font-normal before:tracking-normal before:text-[0.8em] ' +

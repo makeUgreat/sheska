@@ -27,7 +27,7 @@
     color: var(--color-accent);
   }
 
-  /* Vault `#`의 기호는 평소에도 accent라서 한 단계 진하게 바꾼다. */
+  /* 큰 절의 `#`는 accent라서 강조할 때 한 단계 진하게 바꾼다. */
   & section[data-focus] > h2::before {
     color: var(--color-accent-strong);
   }
