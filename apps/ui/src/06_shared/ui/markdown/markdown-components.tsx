@@ -5,7 +5,7 @@ import { CodeBlock, isMathBlock, useInsideCodeBlock } from './code-block';
 import { MarkdownImage } from './markdown-image';
 import { CALLOUT_ELEMENT, CALLOUT_TITLE_ELEMENT, WIKI_LINK_ELEMENT } from '../../lib/markdown';
 import { Callout, CalloutTitle } from './obsidian/callout';
-import { WikiLink } from './obsidian/wiki-link';
+import { LINK_STYLE, WikiLink } from './obsidian/wiki-link';
 
 /** Anchor로 이동하면 목적지가 sticky header 뒤에 가려진다. */
 const BELOW_HEADER = 'scroll-mt-[calc(var(--spacing-header)+var(--spacing-gutter))]';
@@ -197,7 +197,7 @@ const components: Components = {
   ),
   hr: () => <hr className="my-12 h-auto border-0 text-center font-mono text-code-snippet text-text-muted before:content-['---'_/_'']" />,
   a: ({ children, href }) => (
-    <a href={href} className="text-accent-strong underline underline-offset-2 transition-colors hover:text-accent-hover">
+    <a href={href} className={LINK_STYLE}>
       {children}
     </a>
   ),
