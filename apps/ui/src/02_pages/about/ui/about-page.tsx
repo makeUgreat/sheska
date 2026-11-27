@@ -47,13 +47,19 @@ function ServiceEntry({ service }: { service: Service }) {
   );
 }
 
+const STICKY_BELOW_HEADER = 'lg:sticky lg:top-[calc(var(--spacing-header)+48px)] lg:self-start';
+
 export function AboutPage() {
   return (
     <main className="mx-auto grid max-w-container-terminal gap-14 px-gutter pb-20 pt-12 lg:grid-cols-[4fr_7fr] lg:gap-20 lg:px-14 lg:pb-28 lg:pt-18">
-      <header className="lg:sticky lg:top-[calc(var(--spacing-header)+48px)] lg:self-start">
-        <h1 className="text-headline-lg font-medium tracking-[-0.03em]">{PROFILE.name}</h1>
-        <p className="mt-3.5 text-body-lg">{PROFILE.role}</p>
-        <p className="mt-4 max-w-[32ch] text-text-secondary">{PROFILE.bio}</p>
+      <header className={STICKY_BELOW_HEADER}>
+        <h1 className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+          <span className="text-headline-lg font-medium tracking-[-0.03em]">{PROFILE.name}</span>{' '}
+          <span className="font-mono text-[15px] font-normal text-text-muted">{PROFILE.handle}</span>
+        </h1>
+        <p className="mt-6 max-w-[32ch] text-pretty break-keep text-text-secondary">
+          <span className="text-text-primary">{PROFILE.headline}</span> {PROFILE.bio}
+        </p>
       </header>
 
       <section aria-labelledby="about-services" className="grid min-w-0 content-start gap-6">

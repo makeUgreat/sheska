@@ -24,8 +24,9 @@ export interface Service {
 
 export const PROFILE = {
   name: '김진명',
-  role: '서비스를 만들고 직접 운영하는 백엔드 개발자',
-  bio: '직접 만든 서비스를 집 서버에서 직접 운영합니다.',
+  handle: 'hash_kim',
+  headline: '복잡한 시스템을 오래 다룰 수 있게 만드는 일에 관심이 많습니다.',
+  bio: '의존성과 도메인 모델로 복잡성을 다루고, 명확한 계약과 관측 가능성으로 믿을 수 있는 시스템을 만들고자 합니다. 요즘은 LLM 결과의 품질을 평가하는 방법도 고민하고 있습니다.',
 } as const;
 
 export const SERVICES: readonly Service[] = [
