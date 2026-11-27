@@ -13,7 +13,7 @@ export function TerminalWindow({
   children: ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-white/5 bg-surface shadow-2xl">
+    <div className="overflow-hidden rounded-xl border border-white/5 bg-surface shadow-2xl antialiased">
       <div className="flex items-center gap-2 border-b border-white/5 bg-surface-container-low/80 px-4 py-3">
         <TrafficLights yellowAction={{ label: yellowLabel, onClick: onYellowClick }} />
       </div>
