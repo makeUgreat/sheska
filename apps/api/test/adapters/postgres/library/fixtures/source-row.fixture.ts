@@ -12,6 +12,8 @@ export function buildSourceRow(params: Partial<SourceRow> = {}): SourceRow {
     externalSourceId,
     body,
     frontmatter: params.frontmatter ?? {},
+    series: params.series ?? null,
+    seriesOrder: params.seriesOrder ?? null,
     title: params.title ?? externalSourceId,
     fingerprint: params.fingerprint ?? 'fingerprint-1',
     sizeBytes: params.sizeBytes ?? sourceContentByteSize(body),

@@ -386,6 +386,64 @@ describe('UploadSourceUseCase', () => {
     expect(syncJobs.insert).not.toHaveBeenCalled();
   });
 
+  it('frontmatter의 시리즈를 source에 담아 저장한다', async () => {
+    const documentParser = createDocumentParserMock({
+      content: '# Source note',
+      frontmatter: { sheska: true, series: ' RAG ', series_order: 2 },
+    });
+    const sources = createSourceRepositoryMock();
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    const useCase = new UploadSourceUseCase(documentParser, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
+
+    await useCase.execute({ externalSourceId: 'Notes/source.md', content: '# Source note' });
+
+    expect(sources.insert.mock.calls[0]?.[0].getProps().series.unpack()).toEqual({ kind: 'member', name: 'RAG', order: 2 });
+  });
+
+  // nocap: library-source-9
+  it('시리즈가 틀리면 source를 조회하거나 저장하지 않고 거부한다', async () => {
+    const documentParser = createDocumentParserMock({
+      content: '# Source note',
+      frontmatter: { sheska: true, series: 'RAG' },
+    });
+    const sources = createSourceRepositoryMock();
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    const useCase = new UploadSourceUseCase(documentParser, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
+
+    await expect(useCase.execute({ externalSourceId: 'Notes/source.md', content: '# Source note' })).rejects.toMatchObject({
+      kind: 'validation_failed',
+      code: 'source.invalid_series',
+    });
+    expect(sources.find).not.toHaveBeenCalled();
+    expect(sourceWriteCalls(sources)).toHaveLength(0);
+    expect(syncJobs.insert).not.toHaveBeenCalled();
+  });
+
+  it('시리즈를 저장하기 전에 올린 노트를 그대로 다시 올리면 시리즈를 채워 갱신한다', async () => {
+    const frontmatter = { sheska: true, series: 'RAG', series_order: 1 };
+    const existingSource = Source.restore({
+      id: 'source-1',
+      externalSourceId: 'Notes/source.md',
+      body: '# Source note',
+      frontmatter,
+      series: { kind: 'none' },
+      fingerprint: sha256Hex('# Source note'),
+      size: sourceContentByteSize('# Source note'),
+    });
+    const documentParser = createDocumentParserMock({ content: '# Source note', frontmatter });
+    const sources = createSourceRepositoryMock();
+    sources.find.mockResolvedValue(existingSource);
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    syncJobs.findLatest.mockResolvedValue(restoreSyncJob({ sourceId: 'source-1', status: 'completed' }));
+    const useCase = new UploadSourceUseCase(documentParser, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
+
+    await useCase.execute({ externalSourceId: 'Notes/source.md', content: '# Source note' });
+
+    expect(sources.update).toHaveBeenCalledOnce();
+    expect(sources.update.mock.calls[0]?.[0].getProps().series.unpack()).toEqual({ kind: 'member', name: 'RAG', order: 1 });
+    expect(syncJobs.insert).not.toHaveBeenCalled();
+  });
+
   // nocap: library-source-4
   it('문서 형식이 틀린 parser 실패를 호출자가 고칠 오류로 바꿔 거부한다', async () => {
     const documentParser: DocumentParserMock = {
@@ -627,6 +685,7 @@ function expectSourceSavedWith(
     body: expected.content,
     fingerprint: sha256Hex(expected.content),
     frontmatter: { sheska: true },
+    series: { kind: 'none' },
     title: expected.externalSourceId,
     size: sourceContentByteSize(expected.content),
   });
@@ -664,6 +723,7 @@ function restoreSource(params: { id: string; externalSourceId: string; content: 
     externalSourceId: params.externalSourceId,
     body: params.content,
     frontmatter: { sheska: true },
+    series: { kind: 'none' },
     fingerprint: sha256Hex(params.content),
     size: sourceContentByteSize(params.content),
   });

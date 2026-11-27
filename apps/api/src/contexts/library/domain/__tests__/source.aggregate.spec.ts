@@ -3,6 +3,7 @@ import {
   Source,
   SourceBodyChangedDomainEvent,
   SourceFrontmatter,
+  SourceSeries,
   SourceSyncJob,
   type SourceFrontmatterProps,
 } from '@contexts/library/domain';
@@ -15,6 +16,7 @@ const frontmatterProps = { sheska: true, title: 'Source note' };
 const content = {
   body: '# Source note',
   frontmatter: SourceFrontmatter.parse(frontmatterProps),
+  series: SourceSeries.none(),
   size: 50,
 };
 
@@ -38,6 +40,7 @@ describe('Source', () => {
     expect(sourceContentOf(source)).toEqual({
       ...content,
       frontmatter: frontmatterProps,
+      series: { kind: 'none' },
       title: 'Source note',
       fingerprint: sha256Hex(content.body),
     });
@@ -91,6 +94,7 @@ describe('Source', () => {
     expect(sourceContentOf(source)).toEqual({
       ...next,
       frontmatter: nextFrontmatterProps,
+      series: { kind: 'none' },
       title: 'Renamed',
       fingerprint: sha256Hex(content.body),
     });
@@ -140,6 +144,7 @@ describe('Source', () => {
     expect(sourceContentOf(source)).toEqual({
       ...next,
       frontmatter: frontmatterProps,
+      series: { kind: 'none' },
       title: 'Source note',
       fingerprint: sha256Hex('# Changed'),
     });
@@ -184,6 +189,7 @@ describe('Source', () => {
       externalSourceId: 'Notes/source.md',
       ...content,
       frontmatter: frontmatterProps,
+      series: { kind: 'none' },
       fingerprint: 'stored-fingerprint',
     });
 
@@ -197,10 +203,80 @@ describe('Source', () => {
       externalSourceId: 'Notes/source.md',
       ...content,
       frontmatter: {},
+      series: { kind: 'none' },
       fingerprint: sha256Hex(content.body),
     });
 
     expect(sourceContentOf(source).title).toBe('Notes/source.md');
+  });
+
+  describe('series', () => {
+    const seriesFrontmatter = { sheska: true, series: 'RAG', series_order: 1 };
+    const seriesContent = {
+      ...content,
+      frontmatter: SourceFrontmatter.parse(seriesFrontmatter),
+      series: SourceSeries.parse(seriesFrontmatter),
+    };
+
+    it('생성할 때 받은 시리즈를 담는다', () => {
+      const source = Source.create({ externalSourceId: 'Notes/source.md', ...seriesContent });
+
+      expect(source.getProps().series.unpack()).toEqual({ kind: 'member', name: 'RAG', order: 1 });
+    });
+
+    it('시리즈가 바뀌면 내용을 갱신한다', () => {
+      const source = Source.create({ externalSourceId: 'Notes/source.md', ...seriesContent });
+      const nextFrontmatter = { ...seriesFrontmatter, series_order: 2 };
+
+      const result = source.syncContent({
+        ...seriesContent,
+        frontmatter: SourceFrontmatter.parse(nextFrontmatter),
+        series: SourceSeries.parse(nextFrontmatter),
+      });
+
+      expect(result).toBe(true);
+      expect(source.getProps().series.unpack()).toEqual({ kind: 'member', name: 'RAG', order: 2 });
+    });
+
+    it('시리즈가 같으면 바뀌지 않은 것이다', () => {
+      const source = Source.create({ externalSourceId: 'Notes/source.md', ...seriesContent });
+
+      const result = source.syncContent({ ...seriesContent, series: SourceSeries.parse(seriesFrontmatter) });
+
+      expect(result).toBe(false);
+    });
+
+    it('frontmatter가 같아도 저장된 시리즈가 없으면 시리즈를 채운다', () => {
+      const source = Source.restore({
+        id: 'source-1',
+        externalSourceId: 'Notes/source.md',
+        ...content,
+        frontmatter: seriesFrontmatter,
+        series: { kind: 'none' },
+        fingerprint: sha256Hex(content.body),
+      });
+
+      const result = source.syncContent(seriesContent);
+
+      expect(result).toBe(true);
+      expect(source.getProps().series.unpack()).toEqual({ kind: 'member', name: 'RAG', order: 1 });
+    });
+
+    it.each([
+      ['저장된 시리즈를', { kind: 'member', name: 'RAG', order: 1 } as const],
+      ['시리즈가 없음을', { kind: 'none' } as const],
+    ])('복원할 때 %s 그대로 쓴다', (_label, series) => {
+      const source = Source.restore({
+        id: 'source-1',
+        externalSourceId: 'Notes/source.md',
+        ...content,
+        frontmatter: frontmatterProps,
+        series,
+        fingerprint: sha256Hex(content.body),
+      });
+
+      expect(source.getProps().series.unpack()).toEqual(series);
+    });
   });
 
   describe('moveTo', () => {

@@ -13,6 +13,8 @@ export const sources = pgTable(
     externalSourceId: text('external_source_id').notNull().unique(),
     body: text('body').notNull(),
     frontmatter: jsonb('frontmatter').$type<SourceFrontmatterProps>().notNull().default({}),
+    series: text('series'),
+    seriesOrder: integer('series_order'),
     title: text('title').notNull(),
     fingerprint: text('fingerprint').notNull(),
     sizeBytes: integer('size_bytes').notNull(),

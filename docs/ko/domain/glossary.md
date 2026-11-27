@@ -35,6 +35,8 @@ read_when:
   - source와 다름. 발행하지 않은 source도 있음
 - 발행: source를 post로 만드는 일임
 - 발행 취소: post를 지워 source만 남기는 일임
+- 시리즈(`SourceSeries`): 같은 frontmatter `series` 이름으로 묶은 글의 차례임
+  - 한 글의 자리는 `series_order`로 정함(`library-source-9`)
 - 조회수(`PostViewCount`): post 상세를 센 방문 횟수임. 같은 방문자는 30분에 한 번만 셈
 - 방문 기록(`PostView`): 조회수를 늘린 조회 하나의 post, IP, 방문 수단, 시각임
 - 방문 수단(`PostViewClient`): 방문자가 접속에 쓴 클라이언트임. User-Agent가 없으면 `unknown`임

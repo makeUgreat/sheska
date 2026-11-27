@@ -20,6 +20,7 @@ describe('SourcePgDrizzleMapper', () => {
     expect(sourceContentOf(source)).toEqual({
       body: '안녕',
       frontmatter: { title: '인사' },
+      series: { kind: 'none' },
       title: '인사',
       fingerprint: 'fingerprint-1',
       size: sourceContentByteSize('안녕'),
@@ -44,6 +45,33 @@ describe('SourcePgDrizzleMapper', () => {
     expect(() => SourcePgDrizzleMapper.toDomain(row)).toThrow('Source size must be a non-negative integer');
   });
 
+  it.each([
+    ['series만 있으면', { series: 'RAG', seriesOrder: null }],
+    ['series_order만 있으면', { series: null, seriesOrder: 1 }],
+  ])('저장된 시리즈 열 중 %s domain invariant error를 throw한다', (_label, columns) => {
+    const row = buildSourceRow(columns);
+
+    expect(() => SourcePgDrizzleMapper.toDomain(row)).toThrow(
+      expect.objectContaining({ kind: 'invariant_violation', code: 'source.partial_series' }),
+    );
+  });
+
+  it('저장된 시리즈 열로 시리즈를 복원한다', () => {
+    const row = buildSourceRow({ series: 'RAG', seriesOrder: 2 });
+
+    const source = SourcePgDrizzleMapper.toDomain(row);
+
+    expect(source.getProps().series.unpack()).toEqual({ kind: 'member', name: 'RAG', order: 2 });
+  });
+
+  it('시리즈를 시리즈 열로 변환한다', () => {
+    const source = buildSource({ frontmatter: { series: 'RAG', series_order: 2 } });
+
+    const row = SourcePgDrizzleMapper.toInsert(source);
+
+    expect(row).toMatchObject({ series: 'RAG', seriesOrder: 2 });
+  });
+
   it('Source aggregate를 source insert row로 변환한다', () => {
     const source = buildSource();
 
@@ -54,6 +82,8 @@ describe('SourcePgDrizzleMapper', () => {
       externalSourceId: 'Notes/source.md',
       body: '# Source note',
       frontmatter: { sheska: true },
+      series: null,
+      seriesOrder: null,
       title: 'Notes/source.md',
       fingerprint: sha256Hex('# Source note'),
       sizeBytes: sourceContentByteSize('# Source note'),

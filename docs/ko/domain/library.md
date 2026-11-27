@@ -84,6 +84,14 @@ stateDiagram-v2
 ### source와 함께 지우는 것
 - source를 지우면 그 source의 sync job과 post도 함께 지워야 함 <!-- nocap: library-source-8 -->
 
+### source 시리즈
+- frontmatter `series`와 `series_order`는 함께 있거나 함께 없어야 함 <!-- nocap: library-source-9 -->
+  - 예: `series:`처럼 값이 비어 있으면 없는 것으로 봄
+  - 예: `series`만 있거나 `series_order`만 있으면 업로드를 거부함
+- `series`는 앞뒤 공백을 지운 값이 비어 있지 않은 문자열이어야 하고, `series_order`는 1 이상의 정수여야 함 <!-- nocap: library-source-10 -->
+  - 예: `series: ""`, `series: 3`, `series_order: 0`, `series_order: 1.5`, `series_order: "2"`는 거부함
+  - 이유: 틀린 값을 무시하면 작성자가 모르는 채 틀린 번호가 공개됨
+
 ## 동기화 규칙 (sync)
 - vault 파일을 언제 보내고, source 업로드를 받으면 무엇을 저장하고 임베딩을 다시 만드는지 정함
 
