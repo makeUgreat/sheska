@@ -39,13 +39,13 @@ export const CardLinkNamesOnlyTheService: Story = {
   },
 };
 
-export const SummaryClickOpensService: Story = {
-  name: '카드의 요약 자리를 눌러도 그 서비스 링크가 눌린다',
+export const PreviewClickOpensService: Story = {
+  name: '카드의 미리보기를 눌러도 그 서비스 링크가 눌린다',
   tags: ['!dev'],
   play: async ({ canvas, userEvent }) => {
-    const summary = canvas.getByText(/아직 검증되지 않은 명세를 찾습니다/);
-    summary.scrollIntoView({ block: 'center' });
-    const { x, y, width, height } = summary.getBoundingClientRect();
+    const preview = canvas.getByRole('img', { name: 'Nocap 미리보기' });
+    preview.scrollIntoView({ block: 'center' });
+    const { x, y, width, height } = preview.getBoundingClientRect();
     const hit = document.elementFromPoint(x + width / 2, y + height / 2);
 
     await expect(hit).toBe(canvas.getByRole('link', { name: 'Nocap' }));

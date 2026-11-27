@@ -30,7 +30,7 @@ function ServiceEntry({ service }: { service: Service }) {
   return (
     <article className="group relative grid gap-4">
       <ServicePreview service={service} />
-      <div className="grid gap-1">
+      <div className="grid gap-2">
         <h3 className="text-title-lg tracking-[-0.01em]">
           <img
             src={service.logo.src}
@@ -41,7 +41,13 @@ function ServiceEntry({ service }: { service: Service }) {
             <span className={`inline-block ${HOVER_LIFT}`}>{service.name}</span>
           </Link>
         </h3>
-        <p className={`max-w-[52ch] text-text-secondary ${HOVER_LIFT}`}>{service.summary}</p>
+        <p className={`max-w-[52ch] text-pretty break-keep text-text-secondary ${HOVER_LIFT}`}>
+          {service.description.map((sentence) => (
+            <span key={sentence} className="block">
+              {sentence}
+            </span>
+          ))}
+        </p>
       </div>
     </article>
   );
