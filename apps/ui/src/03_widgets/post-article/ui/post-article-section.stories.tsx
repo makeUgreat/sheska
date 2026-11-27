@@ -158,6 +158,56 @@ export const NoSeries: Story = {
   },
 };
 
+export const WithRelatedProject: Story = {
+  args: {
+    state: { status: 'success', post: { ...post, series: SERIES, project: 'sheska' } },
+  },
+};
+
+export const SeriesThenRelatedProject: Story = {
+  name: '끝판에 시리즈 목록 다음 관련 프로젝트를 보이고, 이름은 About의 프로젝트 화면으로 이어진다',
+  tags: ['!dev'],
+  args: WithRelatedProject.args,
+  play: async ({ canvas }) => {
+    const series = canvas.getByRole('navigation', { name: 'Sheska UI 구조' });
+    const related = canvas.getByRole('region', { name: 'Sheska' });
+    await expect(series.compareDocumentPosition(related) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    await expect(within(related).getByText('Related project')).toBeVisible();
+    await expect(within(related).getByRole('link', { name: 'Sheska' })).toHaveAttribute('href', '/about/sheska');
+    await expect(within(related).getByText(/Obsidian에 쓴 노트를 동기화해/)).toBeVisible();
+  },
+};
+
+export const RelatedProjectWithoutSeries: Story = {
+  name: '시리즈가 없어도 관련 프로젝트가 있으면 끝판에 보인다',
+  tags: ['!dev'],
+  args: { state: { status: 'success', post: { ...post, project: 'home-cluster' } } },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('navigation')).toBeNull();
+    await expect(canvas.getByRole('link', { name: 'Home Cluster' })).toHaveAttribute('href', '/about/home-cluster');
+  },
+};
+
+export const UnknownProjectHidden: Story = {
+  name: '화면이 모르는 프로젝트 값은 끝판에 보이지 않는다',
+  tags: ['!dev'],
+  args: { state: { status: 'success', post: { ...post, series: SERIES, project: 'sheksa' } } },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('navigation', { name: 'Sheska UI 구조' })).toBeVisible();
+    await expect(canvas.queryByText('Related project')).toBeNull();
+  },
+};
+
+export const NoEndPlate: Story = {
+  name: '시리즈도 관련 프로젝트도 없는 글은 끝판을 그리지 않는다',
+  tags: ['!dev'],
+  args: { state: { status: 'success', post: { ...post, project: 'sheksa' } } },
+  play: async ({ canvasElement }) => {
+    await expect(canvasElement.querySelector('article > footer')).toBeNull();
+  },
+};
+
 export const LongSeriesNameAt320: Story = {
   name: '320px에서 긴 시리즈 이름은 한 줄로 자르고 자리는 남긴다',
   tags: ['!dev'],
