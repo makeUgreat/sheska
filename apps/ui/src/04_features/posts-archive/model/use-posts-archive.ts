@@ -57,10 +57,16 @@ export function usePostsArchive() {
     setSubmittedQuery(nextQuery);
   }
 
+  function closeSearch() {
+    setQuery('');
+    setSubmittedQuery('');
+  }
+
   return {
     query,
     setQuery,
     submitSearch,
+    closeSearch,
     normalizedQuery,
     isSearching,
     semanticSearchApplied,

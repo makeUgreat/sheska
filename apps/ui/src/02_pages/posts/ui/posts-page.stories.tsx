@@ -235,6 +235,7 @@ export const SearchSnippet: Story = {
     }),
   ),
   play: async ({ canvas, userEvent }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Search' }));
     await userEvent.type(canvas.getByLabelText('Search posts by title or content'), 'garden{Enter}');
 
     const link = await canvas.findByRole('link', { name: /검색된 포스트/ });
@@ -277,6 +278,7 @@ export const SemanticSimilarity: Story = {
     }),
   ),
   play: async ({ canvas, userEvent }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Search' }));
     await userEvent.type(canvas.getByLabelText('Search posts by title or content'), 'garden{Enter}');
 
     const semantic = await canvas.findByRole('link', { name: /의미로 찾은 포스트/ });
@@ -326,6 +328,7 @@ export const TypingDoesNotSearch: Story = {
   tags: ['!dev'],
   decorators: withPage(buildStoryHttpClient({ searchPosts: searchWhileTyping })),
   play: async ({ canvas, userEvent }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Search' }));
     await userEvent.type(canvas.getByLabelText('Search posts by title or content'), 'garden');
 
     await expect(searchWhileTyping).not.toHaveBeenCalled();
@@ -353,6 +356,7 @@ export const SearchOnEnter: Story = {
   tags: ['!dev'],
   decorators: withPage(buildStoryHttpClient({ searchPosts: searchOnEnter })),
   play: async ({ canvas, userEvent }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Search' }));
     await userEvent.type(canvas.getByLabelText('Search posts by title or content'), 'garden{Enter}');
 
     await waitFor(async () => {
@@ -362,18 +366,18 @@ export const SearchOnEnter: Story = {
   },
 };
 
-const searchOnButton = respondWith({ posts: [], nextCursor: null, semanticSearchApplied: false });
+const searchWithoutMatch = respondWith({ posts: [], nextCursor: null, semanticSearchApplied: false });
 
-export const SearchOnButton: Story = {
-  name: 'Search 버튼을 누르면 검색한다',
+export const NoMatchShowsQuery: Story = {
+  name: '찾은 글이 없으면 검색어와 함께 알린다',
   tags: ['!dev'],
-  decorators: withPage(buildStoryHttpClient({ searchPosts: searchOnButton })),
+  decorators: withPage(buildStoryHttpClient({ searchPosts: searchWithoutMatch })),
   play: async ({ canvas, userEvent }) => {
-    await userEvent.type(canvas.getByLabelText('Search posts by title or content'), 'fts');
     await userEvent.click(canvas.getByRole('button', { name: 'Search' }));
+    await userEvent.type(canvas.getByLabelText('Search posts by title or content'), 'fts{Enter}');
 
     await waitFor(async () => {
-      await expect(searchOnButton).toHaveBeenCalledTimes(1);
+      await expect(searchWithoutMatch).toHaveBeenCalledTimes(1);
       await expect(canvas.getByText('"fts"')).toBeDefined();
       await expect(canvas.getByText('Nothing matches this.')).toBeDefined();
     });
@@ -394,7 +398,7 @@ const PROJECT_POST: PostSummary = {
 const listByProject = respondWith(NO_POSTS);
 
 export const FiltersByProject: Story = {
-  name: '칩을 누르면 그 프로젝트로 목록을 다시 읽고, All을 누르면 거르기를 푼다',
+  name: '탭을 누르면 그 프로젝트로 목록을 다시 읽고, All을 누르면 거르기를 푼다',
   tags: ['!dev'],
   decorators: withPage(buildStoryHttpClient({ listPosts: listByProject })),
   play: async ({ canvas, userEvent }) => {
@@ -469,14 +473,36 @@ export const ReplaysRowsAfterSwitching: Story = {
 const listBeforeSearch = respondWith(NO_POSTS);
 
 export const SearchClearsProject: Story = {
-  name: '검색하면 프로젝트 거르기를 풀고 칩을 숨긴다',
+  name: '검색하면 프로젝트 거르기를 풀고 탭 줄을 숨기며, 닫으면 All로 돌아온다',
   tags: ['!dev'],
   decorators: withPage(buildStoryHttpClient({ listPosts: listBeforeSearch }), ['/posts?project=sheska']),
   play: async ({ canvas, userEvent }) => {
     await waitFor(() => expect(listBeforeSearch).toHaveBeenLastCalledWith({ project: 'sheska' }));
 
+    await userEvent.click(canvas.getByRole('button', { name: 'Search' }));
     await userEvent.type(canvas.getByLabelText('Search posts by title or content'), 'garden{Enter}');
     await waitFor(() => expect(canvas.queryByRole('group', { name: 'Filter by project' })).toBeNull());
     await waitFor(() => expect(listBeforeSearch).toHaveBeenLastCalledWith(undefined));
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Close search' }));
+    await expect(canvas.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
+  },
+};
+
+const listWhileClosing = respondWith(NO_POSTS);
+const searchNever = respondWith(NO_POSTS);
+
+export const ClosingBeforeSearchKeepsProject: Story = {
+  name: '찾기 전에 검색 줄을 닫으면 고른 프로젝트를 그대로 둔다',
+  tags: ['!dev'],
+  decorators: withPage(buildStoryHttpClient({ listPosts: listWhileClosing, searchPosts: searchNever }), ['/posts?project=sheska']),
+  play: async ({ canvas, userEvent }) => {
+    await waitFor(() => expect(listWhileClosing).toHaveBeenLastCalledWith({ project: 'sheska' }));
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Search' }));
+    await userEvent.type(canvas.getByLabelText('Search posts by title or content'), 'gar{Escape}');
+    await expect(canvas.getByRole('button', { name: 'Sheska' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(listWhileClosing).toHaveBeenLastCalledWith({ project: 'sheska' });
+    await expect(searchNever).not.toHaveBeenCalled();
   },
 };

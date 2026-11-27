@@ -40,6 +40,7 @@ export function PostsArchive() {
     query,
     setQuery,
     submitSearch,
+    closeSearch,
     normalizedQuery,
     isSearching,
     semanticSearchApplied,
@@ -75,6 +76,7 @@ export function PostsArchive() {
         query,
         onQueryChange: setQuery,
         onQuerySubmit: submitSearch,
+        onClose: closeSearch,
         normalizedQuery: isSearching ? normalizedQuery : '',
         mode: searchMode,
       }}
