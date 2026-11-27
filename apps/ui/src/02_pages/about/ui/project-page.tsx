@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { EmptyState } from '@/shared/ui';
-import { SERVICES, type ServiceLink } from '../model/profile';
+import { findProject, type ProjectLink } from '@/entities/project';
 
 const ICON_PROPS = {
   'aria-hidden': true,
@@ -14,7 +14,7 @@ const ICON_PROPS = {
   strokeLinejoin: 'round',
 } as const;
 
-const LINK_FACE: Record<ServiceLink['kind'], { label: string; icon: ReactNode }> = {
+const LINK_FACE: Record<ProjectLink['kind'], { label: string; icon: ReactNode }> = {
   site: {
     label: '사이트',
     icon: (
@@ -47,7 +47,7 @@ const LINK_FACE: Record<ServiceLink['kind'], { label: string; icon: ReactNode }>
 const MUTED_LINK =
   'rounded-md text-body-sm font-medium transition-colors duration-150 hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:transition-none';
 
-function ServiceLinks({ links }: { links: readonly ServiceLink[] }) {
+function ProjectLinks({ links }: { links: readonly ProjectLink[] }) {
   return (
     <ul className="mt-5.5 flex flex-wrap justify-center gap-x-4.5 gap-y-1.5">
       {links.map((link) => (
@@ -81,11 +81,11 @@ function ServiceLinks({ links }: { links: readonly ServiceLink[] }) {
   );
 }
 
-export function ServicePage() {
+export function ProjectPage() {
   const { slug } = useParams<{ slug: string }>();
-  const service = SERVICES.find((candidate) => candidate.slug === slug);
+  const project = slug ? findProject(slug) : undefined;
 
-  if (!service) {
+  if (!project) {
     return (
       <main className="mx-auto max-w-container-terminal px-gutter">
         <EmptyState variant="document" className="py-24" />
@@ -93,12 +93,12 @@ export function ServicePage() {
     );
   }
 
-  const hasLinks = service.links.length > 0;
+  const hasLinks = project.links.length > 0;
 
   return (
     <main className="mx-auto flex max-w-container-terminal flex-col items-center px-gutter pb-24 pt-20 text-center lg:pt-28">
-      <img src={service.logo.src} alt={service.logo.alt} className="size-16 rounded-[15px] shadow-[0_14px_30px_-16px_rgb(16_19_25/0.4)]" />
-      <h1 className="mt-5.5 text-headline-md tracking-[-0.02em]">{service.name}</h1>
+      <img src={project.logo.src} alt={project.logo.alt} className="size-16 rounded-[15px] shadow-[0_14px_30px_-16px_rgb(16_19_25/0.4)]" />
+      <h1 className="mt-5.5 text-headline-md tracking-[-0.02em]">{project.name}</h1>
       <p className="mt-2.5 text-balance text-text-muted">
         소개글은 아직 준비 중이에요. 😅
         {hasLinks && (
@@ -108,7 +108,7 @@ export function ServicePage() {
           </>
         )}
       </p>
-      {hasLinks && <ServiceLinks links={service.links} />}
+      {hasLinks && <ProjectLinks links={project.links} />}
       <Link to="/about" className={`mt-10 inline-flex items-center gap-2 text-text-muted ${MUTED_LINK}`}>
         <svg
           aria-hidden="true"

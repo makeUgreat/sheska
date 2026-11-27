@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { PROFILE, SERVICES, type Service } from '../model/profile';
+import { PROJECTS, type Project } from '@/entities/project';
+import { PROFILE } from '../model/profile';
 
 const HOVER_MOTION = 'transition-transform duration-[600ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] motion-reduce:transition-none';
 
@@ -18,34 +19,34 @@ const PREVIEW_IMAGE = {
   diagram: `${PREVIEW_POSITION} ${HOVER_SHIFT}`,
 } as const;
 
-function ServicePreview({ service }: { service: Service }) {
+function ProjectPreview({ project }: { project: Project }) {
   return (
     <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-linear-160 from-plate to-plate-line ring-1 ring-inset ring-text-primary/5">
-      <img src={service.preview} alt={`${service.name} 미리보기`} className={PREVIEW_IMAGE[service.previewStyle]} />
+      <img src={project.preview} alt={`${project.name} 미리보기`} className={PREVIEW_IMAGE[project.previewStyle]} />
     </div>
   );
 }
 
-function ServiceEntry({ service }: { service: Service }) {
+function ProjectEntry({ project }: { project: Project }) {
   return (
     <article className="group relative grid gap-4">
-      <ServicePreview service={service} />
+      <ProjectPreview project={project} />
       <div className="grid gap-2">
         <div className="flex items-baseline justify-between gap-3">
           <h3 className="min-w-0 text-title-lg tracking-[-0.01em]">
             <img
-              src={service.logo.src}
-              alt={service.logo.alt}
+              src={project.logo.src}
+              alt={project.logo.alt}
               className={`mr-[7px] inline-block size-[21px] rounded-[5px] align-[-0.1em] ${HOVER_LIFT}`}
             />
-            <Link to={`/about/${service.slug}`} className={CARD_LINK}>
-              <span className={`inline-block ${HOVER_LIFT}`}>{service.name}</span>
+            <Link to={`/about/${project.slug}`} className={CARD_LINK}>
+              <span className={`inline-block ${HOVER_LIFT}`}>{project.name}</span>
             </Link>
           </h3>
-          <p className={`shrink-0 font-mono text-label-sm uppercase text-text-muted ${HOVER_LIFT}`}>{service.category}</p>
+          <p className={`shrink-0 font-mono text-label-sm uppercase text-text-muted ${HOVER_LIFT}`}>{project.category}</p>
         </div>
-        <p className={`max-w-[52ch] text-pretty break-keep ${HOVER_LIFT}`}>{service.tagline}</p>
-        <p className={`max-w-[52ch] text-body-sm text-pretty break-keep text-text-muted ${HOVER_LIFT}`}>{service.description}</p>
+        <p className={`max-w-[52ch] text-pretty break-keep ${HOVER_LIFT}`}>{project.tagline}</p>
+        <p className={`max-w-[52ch] text-body-sm text-pretty break-keep text-text-muted ${HOVER_LIFT}`}>{project.description}</p>
       </div>
     </article>
   );
@@ -76,11 +77,11 @@ export function AboutPage() {
       >
         <h2 id="about-projects" className={`${RAIL} ${STICKY_BELOW_HEADER}`}>
           Projects
-          <span className="tabular-nums text-text-muted">{String(SERVICES.length).padStart(2, '0')}</span>
+          <span className="tabular-nums text-text-muted">{String(PROJECTS.length).padStart(2, '0')}</span>
         </h2>
         <div className="card-list-focus grid gap-14">
-          {SERVICES.map((service) => (
-            <ServiceEntry key={service.slug} service={service} />
+          {PROJECTS.map((project) => (
+            <ProjectEntry key={project.slug} project={project} />
           ))}
         </div>
       </section>

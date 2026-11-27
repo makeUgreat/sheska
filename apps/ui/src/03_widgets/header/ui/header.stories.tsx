@@ -41,7 +41,7 @@ function atRoute(route: string, { authenticated = false, queryClient = new Query
 
 export const OnPosts: Story = { decorators: atRoute('/posts') };
 export const OnPostDetail: Story = { decorators: atRoute('/posts/01932abc') };
-export const OnAboutService: Story = { decorators: atRoute('/about/home-cluster') };
+export const OnAboutProject: Story = { decorators: atRoute('/about/home-cluster') };
 export const OwnerOnSources: Story = { decorators: atRoute('/sources', { authenticated: true }) };
 
 function awaitingPage() {

@@ -2,13 +2,13 @@ import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AboutPage } from './about-page';
-import { ServicePage } from './service-page';
+import { ProjectPage } from './project-page';
 
 const withAboutRoutes: Decorator = (Story) => (
   <MemoryRouter initialEntries={['/about']}>
     <Routes>
       <Route path="/about" element={<Story />} />
-      <Route path="/about/:slug" element={<ServicePage />} />
+      <Route path="/about/:slug" element={<ProjectPage />} />
     </Routes>
   </MemoryRouter>
 );
@@ -28,7 +28,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-export const CardLinkNamesOnlyTheService: Story = {
+export const CardLinkNamesOnlyTheProject: Story = {
   name: '카드 링크는 서비스 이름으로만 읽힌다',
   tags: ['!dev'],
   play: async ({ canvas }) => {
@@ -39,7 +39,7 @@ export const CardLinkNamesOnlyTheService: Story = {
   },
 };
 
-export const PreviewClickOpensService: Story = {
+export const PreviewClickOpensProject: Story = {
   name: '카드의 미리보기를 눌러도 그 서비스 링크가 눌린다',
   tags: ['!dev'],
   play: async ({ canvas, userEvent }) => {

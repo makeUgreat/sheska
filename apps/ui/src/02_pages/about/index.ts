@@ -1,2 +1,2 @@
 export { AboutPage } from './ui/about-page';
-export { ServicePage } from './ui/service-page';
+export { ProjectPage } from './ui/project-page';
