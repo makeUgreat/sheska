@@ -438,6 +438,34 @@ export const KeepsListWhileSwitching: Story = {
   },
 };
 
+const OTHER_POST: PostSummary = { ...PROJECT_POST, postId: 'post-other', sourceId: 'source-other', title: '다른 포스트', project: 'siru' };
+
+let releaseSheska = () => {};
+const listThenRelease = fn((query?: Record<string, string>) =>
+  query?.project
+    ? new Promise((resolve) => {
+        releaseSheska = () => resolve({ posts: [PROJECT_POST], nextCursor: null });
+      })
+    : Promise.resolve({ posts: [PROJECT_POST, OTHER_POST], nextCursor: null }),
+);
+
+export const ReplaysRowsAfterSwitching: Story = {
+  name: '프로젝트를 바꾸면 새 목록이 온 뒤에 남은 행도 처음부터 다시 나타난다',
+  tags: ['!dev'],
+  decorators: withPage(buildStoryHttpClient({ listPosts: listThenRelease })),
+  play: async ({ canvas, userEvent }) => {
+    const before = (await canvas.findByRole('link', { name: /프로젝트 포스트/ })).closest('li');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Sheska' }));
+    await waitFor(() => expect(listThenRelease).toHaveBeenLastCalledWith({ project: 'sheska' }));
+    await expect(canvas.getByRole('link', { name: /프로젝트 포스트/ }).closest('li')).toBe(before);
+
+    releaseSheska();
+    await waitFor(() => expect(canvas.queryByRole('link', { name: /다른 포스트/ })).toBeNull());
+    await expect(canvas.getByRole('link', { name: /프로젝트 포스트/ }).closest('li')).not.toBe(before);
+  },
+};
+
 const listBeforeSearch = respondWith(NO_POSTS);
 
 export const SearchClearsProject: Story = {

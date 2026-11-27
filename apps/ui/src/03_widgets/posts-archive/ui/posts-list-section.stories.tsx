@@ -74,6 +74,7 @@ const meta = {
     filter: {
       project: null,
       onProjectChange: fn(),
+      listedProject: null,
       switching: false,
     },
     state: {
@@ -132,7 +133,7 @@ export const ProjectChips: Story = {
   name: '칩은 고른 프로젝트를 눌린 상태로 보이고, 누른 칩의 프로젝트를 알린다',
   tags: ['!dev'],
   args: {
-    filter: { project: 'sheska', onProjectChange: fn(), switching: false },
+    filter: { project: 'sheska', onProjectChange: fn(), listedProject: 'sheska', switching: false },
   },
   play: async ({ canvas, args, userEvent }) => {
     const chips = within(canvas.getByRole('group', { name: 'Filter by project' }));
@@ -153,7 +154,7 @@ export const SwitchingProject: Story = {
   name: '프로젝트를 바꾸는 동안 앞 목록을 흐리게 남긴다',
   tags: ['!dev'],
   args: {
-    filter: { project: 'siru', onProjectChange: fn(), switching: true },
+    filter: { project: 'siru', onProjectChange: fn(), listedProject: null, switching: true },
   },
   play: async ({ canvas }) => {
     const list = canvas.getByRole('link', { name: /Introducing Storybook/ }).closest('[aria-busy]');
