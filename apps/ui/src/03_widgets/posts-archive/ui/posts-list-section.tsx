@@ -1,5 +1,4 @@
-import { type CSSProperties, type FormEvent, type Ref, useRef, useState } from 'react';
-import { flushSync } from 'react-dom';
+import { type CSSProperties, type FocusEvent, type FormEvent, type Ref, type RefObject, useEffect, useRef, useState } from 'react';
 import { AI_SUMMARY_NOTICE, type AiSummary, type PostSeries, type PostSummary } from '@/entities/post';
 import { findProject, type Project, PROJECTS, ProjectTag } from '@/entities/project';
 import { type RevealPhase, useStagedReveal } from '@/shared/lib';
@@ -211,22 +210,20 @@ function postMeta(post: PostSummary, isSearching: boolean) {
   return <ProjectMeta project={project} series={post.series ?? null} />;
 }
 
-const TAB =
-  'group relative inline-flex h-9 items-center px-3 pt-1 font-mono text-label-sm tracking-normal text-text-muted transition-colors duration-150 ' +
-  'hover:text-text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent motion-reduce:transition-none';
+const SEARCH_LABEL = 'Search posts by title or content';
 
-const PRESSED_WELL =
-  "before:absolute before:inset-x-[3px] before:top-1.5 before:bottom-0 before:rounded-t-[7px] before:bg-text-primary/5 before:opacity-0 before:content-[''] " +
-  'before:shadow-[inset_0_2px_4px_rgb(16_19_25/0.16),inset_1px_0_0_rgb(16_19_25/0.07),inset_-1px_0_0_rgb(16_19_25/0.07)] ' +
-  'before:transition-opacity before:duration-150 aria-pressed:text-text-primary aria-pressed:before:opacity-100 motion-reduce:before:transition-none';
+const SEARCH_MODE_HINT = { smart: 'smart search', basic: 'basic search' };
 
-const PRESSABLE_LABEL =
-  'relative inline-flex items-center gap-1.5 transition-transform duration-150 group-active:translate-y-px group-aria-pressed:translate-y-px motion-reduce:transition-none';
+const INDEX_BUTTON =
+  'group inline-flex h-[30px] items-center gap-1.5 rounded-md px-2 font-mono text-label-sm tracking-normal text-text-muted transition-colors duration-150 ' +
+  'hover:text-text-secondary aria-pressed:font-semibold aria-pressed:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent motion-reduce:transition-none';
 
-const RULED_ROWS =
-  'bg-[repeating-linear-gradient(to_bottom,transparent_0_35px,color-mix(in_srgb,var(--color-outline-variant)_25%,transparent)_35px_36px)]';
+const ALL_MARK_DIM =
+  'opacity-45 grayscale transition-[opacity,filter] duration-250 group-hover:opacity-80 group-aria-pressed:opacity-100 group-aria-pressed:grayscale-0 motion-reduce:transition-none';
 
-const SEARCH_MODE_LABEL = { smart: 'Smart search', basic: 'Basic search' };
+const PROJECT_LOGO_DIM =
+  '[&_img]:opacity-45 [&_img]:grayscale [&_img]:transition-[opacity,filter] [&_img]:duration-250 group-hover:[&_img]:opacity-80 ' +
+  'group-aria-pressed:[&_img]:opacity-100 group-aria-pressed:[&_img]:grayscale-0 motion-reduce:[&_img]:transition-none';
 
 function SearchIcon({ className }: { className: string }) {
   return (
@@ -237,139 +234,184 @@ function SearchIcon({ className }: { className: string }) {
   );
 }
 
-function ProjectTabs({
+function AllProjectsMark() {
+  return (
+    <svg
+      viewBox="0 0 14 14"
+      aria-hidden="true"
+      className={`size-3.5 shrink-0 rounded-[3px] bg-accent ${ALL_MARK_DIM} group-aria-pressed:animate-mark-pop motion-reduce:animate-none`}
+    >
+      <circle cx="4.6" cy="4.6" r="1.6" fill="#fff" />
+      <circle cx="9.4" cy="4.6" r="1.6" fill="#fff" opacity=".7" />
+      <circle cx="4.6" cy="9.4" r="1.6" fill="#fff" opacity=".7" />
+      <circle cx="9.4" cy="9.4" r="1.6" fill="#fff" opacity=".45" />
+    </svg>
+  );
+}
+
+function ProjectIndex({
   selected,
   onSelect,
-  onOpenSearch,
-  searchButtonRef,
+  receded,
 }: {
   selected: string | null;
   onSelect: (project: string | null) => void;
-  onOpenSearch: () => void;
-  searchButtonRef: Ref<HTMLButtonElement>;
+  receded: boolean;
 }) {
   return (
-    <div role="group" aria-label="Filter by project" className={`flex flex-wrap ${RULED_ROWS}`}>
-      <button type="button" aria-pressed={selected === null} onClick={() => onSelect(null)} className={`${TAB} ${PRESSED_WELL}`}>
-        <span className={PRESSABLE_LABEL}>All</span>
-      </button>
-      {PROJECTS.map((project) => (
-        <button
-          key={project.slug}
-          type="button"
-          aria-pressed={selected === project.slug}
-          onClick={() => onSelect(project.slug)}
-          className={`${TAB} ${PRESSED_WELL}`}
+    <div
+      className={`mt-4 transition-[opacity,filter] duration-250 motion-reduce:transition-none margin-index:absolute margin-index:inset-y-0 margin-index:right-[calc(100%+40px)] margin-index:mt-0 margin-index:w-margin-index ${receded ? 'opacity-35 grayscale' : ''}`}
+    >
+      <div className="margin-index:sticky margin-index:top-[calc(var(--spacing-header)+48px)] margin-index:grid margin-index:gap-1.5">
+        <span
+          aria-hidden="true"
+          className="hidden font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted margin-index:block"
         >
-          <span className={PRESSABLE_LABEL}>
-            <ProjectTag project={project} />
-          </span>
-        </button>
-      ))}
-      <button ref={searchButtonRef} type="button" onClick={onOpenSearch} className={`${TAB} ml-auto hover:text-accent-strong`}>
-        <span className={PRESSABLE_LABEL}>
-          <SearchIcon className="size-[13px] shrink-0" />
-          Search
+          Projects
         </span>
-      </button>
+        <div role="group" aria-label="Filter by project" className="-ml-2 flex flex-wrap margin-index:grid margin-index:gap-0.5">
+          <button type="button" aria-pressed={selected === null} onClick={() => onSelect(null)} className={INDEX_BUTTON}>
+            <AllProjectsMark />
+            All
+          </button>
+          {PROJECTS.map((project) => (
+            <button
+              key={project.slug}
+              type="button"
+              aria-pressed={selected === project.slug}
+              onClick={() => onSelect(project.slug)}
+              className={`${INDEX_BUTTON} ${PROJECT_LOGO_DIM}`}
+            >
+              <ProjectTag project={project} />
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
+function searchHint({ draft, submitted, mode }: { draft: string; submitted: string; mode: PostsSearchMode }) {
+  const edited = draft.trim() !== submitted;
+  if (edited) return draft.trim() ? '↵ run' : '↵ run · esc quit';
+  if (!submitted) return '↵ run · esc quit';
+  if (!mode) return '';
 
-function SearchStatus({ query, mode, className }: { query: string; mode: PostsSearchMode; className: string }) {
-  return (
-    <span
-      role="status"
-      className={`min-w-0 items-center gap-2 whitespace-nowrap font-mono text-label-sm tracking-normal text-text-muted ${className}`}
-    >
-      {query ? (
-        <>
-          <span className="flex min-w-0">
-            Results for “<span className="truncate text-text-primary">{query}</span>”
-          </span>
-          {mode && <span>· {SEARCH_MODE_LABEL[mode]}</span>}
-        </>
-      ) : (
-        <>
-          <span>Press Enter to search</span>
-          <span className="hidden @min-[560px]:inline">· Esc to close</span>
-        </>
-      )}
-    </span>
-  );
+  return `→ ${SEARCH_MODE_HINT[mode]}`;
 }
 
-function ArchiveHead({ search, filter, isSearching }: { search: PostsSearch; filter: PostsFilter; isSearching: boolean }) {
-  const [searchOpen, setSearchOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const searchButtonRef = useRef<HTMLButtonElement>(null);
-  const showsSearch = searchOpen || isSearching;
-  const query = isSearching ? search.normalizedQuery : '';
-
-  function openSearch() {
-    flushSync(() => setSearchOpen(true));
-    inputRef.current?.focus();
-  }
-
-  function closeSearch() {
-    flushSync(() => {
-      setSearchOpen(false);
-      search.onClose();
-    });
-    searchButtonRef.current?.focus();
-  }
+function SearchPrompt({
+  search,
+  focused,
+  onFocusChange,
+  inputRef,
+}: {
+  search: PostsSearch;
+  focused: boolean;
+  onFocusChange: (focused: boolean) => void;
+  inputRef: RefObject<HTMLInputElement>;
+}) {
+  const [caretAtEnd, setCaretAtEnd] = useState(true);
+  const isSearching = search.normalizedQuery.length > 0;
+  const hint = searchHint({ draft: search.query, submitted: search.normalizedQuery, mode: search.mode });
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     search.onQuerySubmit();
   }
 
+  function handleBlur(e: FocusEvent<HTMLFormElement>) {
+    if (e.currentTarget.contains(e.relatedTarget)) return;
+
+    onFocusChange(false);
+  }
+
+  function close() {
+    search.onClose();
+    inputRef.current?.blur();
+  }
+
   return (
-    <div className="@container relative mt-6 grid">
-      <div className={`col-start-1 row-start-1 min-w-0 ${showsSearch ? 'invisible' : ''}`}>
-        <ProjectTabs
-          selected={filter.project}
-          onSelect={filter.onProjectChange}
-          onOpenSearch={openSearch}
-          searchButtonRef={searchButtonRef}
-        />
-      </div>
-      <div className={`col-start-1 row-start-1 min-w-0 ${showsSearch ? '' : 'invisible'}`}>
-        <form role="search" onSubmit={handleSubmit} className="flex h-9 items-center gap-2.5 px-3">
-          <SearchIcon className="size-3.5 shrink-0 text-text-muted" />
-          <label htmlFor="posts-archive-search" className="sr-only">
-            Search posts by title or content
-          </label>
+    <form
+      role="search"
+      onSubmit={handleSubmit}
+      onFocus={() => onFocusChange(true)}
+      onBlur={handleBlur}
+      className="group/search relative min-w-0 transition-[flex-grow] duration-[380ms] ease-[cubic-bezier(0.65,0,0.35,1)] motion-reduce:transition-none sm:flex-[0_1_300px] sm:focus-within:grow"
+    >
+      <div className="flex h-[34px] items-center gap-2 rounded-[7px] bg-text-primary/4 px-2.5 text-text-muted transition-[background-color,padding] duration-250 group-focus-within/search:bg-transparent group-focus-within/search:px-0 motion-reduce:transition-none">
+        <SearchIcon className="size-[13px] shrink-0 group-focus-within/search:hidden" />
+        <span
+          aria-hidden="true"
+          className="hidden shrink-0 font-mono text-[20px] font-medium leading-7 text-accent-strong group-focus-within/search:inline"
+        >
+          <span className="font-normal text-text-muted">$ </span>grep
+        </span>
+        <label htmlFor="posts-archive-search" className="sr-only">
+          {SEARCH_LABEL}
+        </label>
+        <span className="relative flex min-w-0 flex-1 items-center">
           <input
             ref={inputRef}
             id="posts-archive-search"
             type="search"
-            placeholder="Search title or content"
+            placeholder="Search posts"
+            autoComplete="off"
             value={search.query}
             onChange={(e) => search.onQueryChange(e.target.value)}
+            onSelect={(e) => setCaretAtEnd(e.currentTarget.selectionStart === e.currentTarget.value.length)}
             onKeyDown={(e) => {
-              if (e.key === 'Escape') closeSearch();
+              if (e.key === 'Escape') close();
             }}
-            className="min-w-24 flex-1 border-0 bg-transparent text-body-md text-text-primary caret-accent outline-none placeholder:text-text-muted [&::-webkit-search-cancel-button]:hidden"
+            className={`w-full min-w-0 border-0 bg-transparent text-body-sm text-text-primary caret-accent outline-none placeholder:text-text-muted group-focus-within/search:font-mono group-focus-within/search:text-[20px] group-focus-within/search:font-medium group-focus-within/search:leading-7 group-focus-within/search:placeholder:text-transparent [&::-webkit-search-cancel-button]:hidden ${caretAtEnd ? 'group-focus-within/search:caret-transparent' : ''}`}
           />
-          <SearchStatus query={query} mode={search.mode} className="hidden @min-[560px]:flex" />
+          {focused && caretAtEnd && (
+            <span aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center overflow-hidden">
+              <span className="invisible whitespace-pre font-mono text-[20px] font-medium leading-7">{search.query}</span>
+              <span className="ml-px h-[21px] w-[11px] shrink-0 animate-pulse bg-accent motion-reduce:animate-none" />
+            </span>
+          )}
+        </span>
+        {isSearching ? (
           <button
             type="button"
             aria-label="Close search"
-            onClick={closeSearch}
+            onClick={close}
             className="inline-flex size-6 shrink-0 items-center justify-center rounded-md font-mono text-[15px] text-text-muted hover:bg-text-primary/5 hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             ×
           </button>
-        </form>
-        <SearchStatus query={query} mode={search.mode} className="flex h-9 px-3 @min-[560px]:hidden" />
+        ) : (
+          <kbd className="hidden h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded border border-text-primary/12 px-1 font-mono text-[11px] leading-none text-text-muted sm:inline-flex">
+            {focused ? 'esc' : '/'}
+          </kbd>
+        )}
       </div>
-      <span
-        aria-hidden="true"
-        className={`pointer-events-none absolute inset-x-0 top-[35px] h-px origin-right bg-accent transition-transform duration-300 ease-[cubic-bezier(0.65,0,0.35,1)] motion-reduce:transition-none ${showsSearch ? 'scale-x-100' : 'scale-x-0'}`}
-      />
-    </div>
+      {(focused || isSearching) && (
+        <p
+          role="status"
+          className="sr-only font-mono text-label-sm tracking-normal text-text-muted sm:not-sr-only sm:absolute sm:left-0 sm:top-full sm:mt-1.5 sm:whitespace-nowrap"
+        >
+          {hint}
+        </p>
+      )}
+    </form>
   );
+}
+
+function useSlashToSearch(inputRef: RefObject<HTMLInputElement>) {
+  useEffect(() => {
+    function focusSearch(e: KeyboardEvent) {
+      const typing = e.target instanceof HTMLElement && e.target.closest('input, textarea, select, [contenteditable="true"]') !== null;
+      const pressedSlash = e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey;
+      if (pressedSlash && !typing) {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    }
+
+    document.addEventListener('keydown', focusSearch);
+    return () => document.removeEventListener('keydown', focusSearch);
+  }, [inputRef]);
 }
 
 const SWITCHING_PROJECT = 'opacity-35 transition-opacity delay-200 duration-150 motion-reduce:transition-none';
@@ -391,17 +433,29 @@ function Highlighted({ text, query }: { text: string; query: string }) {
 }
 
 export function PostsListSection({ search, filter, state }: { search: PostsSearch; filter: PostsFilter; state: PostsListState }) {
+  const [searchFocused, setSearchFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useSlashToSearch(inputRef);
   const isSearching = search.normalizedQuery.length > 0;
   const highlight = isSearching ? search.normalizedQuery : '';
+  const awaitingRun = searchFocused && (!isSearching || search.query.trim() !== search.normalizedQuery);
+
+  function selectProject(project: string | null) {
+    if (isSearching) search.onClose();
+    filter.onProjectChange(project);
+  }
 
   return (
     <section id="posts" className="px-4 pb-32 pt-16">
-      <div className="mx-auto max-w-measure">
-        <h1 className="text-headline-md text-text-primary">Posts</h1>
+      <div className="relative mx-auto max-w-measure">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+          <h1 className="shrink-0 text-headline-md text-text-primary">Posts</h1>
+          <SearchPrompt search={search} focused={searchFocused} onFocusChange={setSearchFocused} inputRef={inputRef} />
+        </div>
 
-        <ArchiveHead search={search} filter={filter} isSearching={isSearching} />
+        <ProjectIndex selected={filter.project} onSelect={selectProject} receded={searchFocused} />
 
-        <div className="mt-2">
+        <div className={`mt-6 transition-opacity duration-300 motion-reduce:transition-none ${awaitingRun ? 'opacity-25' : ''}`}>
           {state.status === 'loading' ? null : state.status === 'error' ? (
             <ErrorState error={state.error} />
           ) : state.status === 'empty' ? (
