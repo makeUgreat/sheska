@@ -1,6 +1,9 @@
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/ibm-plex-sans";
 @import "@fontsource-variable/jetbrains-mono";
-@import "wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.css";
+@import "@fontsource/ibm-plex-sans-kr/400.css";
+@import "@fontsource/ibm-plex-sans-kr/500.css";
+@import "@fontsource/ibm-plex-sans-kr/600.css";
+@import "@fontsource/ibm-plex-sans-kr/700.css";
 @import "pretendard/dist/web/static/Pretendard-Regular.css";
 @import "pretendard/dist/web/static/Pretendard-Medium.css";
 @import "tailwindcss";

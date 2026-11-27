@@ -232,7 +232,7 @@
     "font-family": {
       "sans": {
         "$type": "fontFamily",
-        "$value": ["Geist Variable", "Wanted Sans Variable", "Arial", "sans-serif"]
+        "$value": ["IBM Plex Sans Variable", "IBM Plex Sans KR", "Arial", "sans-serif"]
       },
       "mono": {
         "$type": "fontFamily",
