@@ -2,7 +2,8 @@ import { type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { AI_SUMMARY_NOTICE, type AiSummary, type GetPostResponse } from '@/entities/post';
 import { formatDottedDate, type RevealPhase, useStagedReveal } from '@/shared/lib';
-import { AiMark, ArticleLayout, BackLink, EmptyState, ErrorState } from '@/shared/ui';
+import { AiMark, ArticleLayout, EmptyState, ErrorState } from '@/shared/ui';
+import { SeriesContents, SeriesLine } from './post-series';
 
 export type PostArticleState =
   { status: 'loading' } | { status: 'error'; error: Error } | { status: 'empty' } | { status: 'success'; post: GetPostResponse };
@@ -37,19 +38,47 @@ export function PostArticleSection({ state, canOpenViews = false }: { state: Pos
 
   const { post } = state;
 
-  return <ArticleLayout header={<PostHeader post={post} canOpenViews={canOpenViews} />} body={post.body} />;
+  return (
+    <ArticleLayout
+      header={<PostHeader post={post} canOpenViews={canOpenViews} />}
+      body={post.body}
+      footer={post.series && <SeriesContents series={post.series} postId={post.postId} />}
+    />
+  );
 }
 
-/** 목록으로 돌아가는 아이콘이다. */
-function BackToPosts({ className }: { className?: string }) {
-  return <BackLink to="/posts" label="Back to posts" title="목록으로" className={className} />;
+/** 좁은 화면에서는 메타 줄과 같은 글자 링크이고, 넓은 화면에서는 32px 칸 안의 아이콘이다. */
+function BackToPosts({ className = '' }: { className?: string }) {
+  return (
+    <Link
+      to="/posts"
+      aria-label="Back to posts"
+      title="목록으로"
+      className={`flex h-6 w-fit shrink-0 items-center gap-1 rounded-sm font-mono text-label-sm uppercase text-text-muted transition-colors hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent margin-label:size-8 margin-label:justify-center margin-label:rounded-md ${className}`}
+    >
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        className="size-3.5 margin-label:size-[18px]"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M19 12H5" />
+        <path d="M11 6l-6 6 6 6" />
+      </svg>
+      <span className="margin-label:sr-only">Posts</span>
+    </Link>
+  );
 }
 
 /** 글을 아직 못 그린 동안에는 제목이 없으므로 돌아가는 아이콘을 맨 위 왼쪽에 둔다. */
 function PendingBack() {
   return (
     <div className="mb-5">
-      <BackToPosts className="-ml-2.5" />
+      <BackToPosts className="margin-label:-ml-2.5" />
     </div>
   );
 }
@@ -57,15 +86,16 @@ function PendingBack() {
 /**
  * 좁은 화면에서는 제목 위 왼쪽에 선다. 넓은 화면에서는 본문 heading의 `##`처럼 제목 첫 줄 왼쪽 여백에 건다.
  * 그림의 오른쪽 끝과 제목 사이를 `##`과 같은 gutter로 둔다. 제목 첫 줄 높이 38.4px의 가운데에 맞춘다.
+ * 시리즈 줄이 있으면 그 높이 28px과 아래 여백 8px만큼 내려간다.
  */
-const BACK_BESIDE_TITLE =
-  'mb-3.5 -ml-2.5 margin-label:absolute margin-label:top-[3px] margin-label:right-[calc(100%+var(--spacing-gutter)-7px)] margin-label:m-0';
+const BACK_BESIDE_TITLE = 'mb-2 margin-label:absolute margin-label:right-[calc(100%+var(--spacing-gutter)-7px)] margin-label:m-0';
 
 function PostHeader({ post, canOpenViews }: { post: GetPostResponse; canOpenViews: boolean }) {
   return (
     <>
       <div className="relative">
-        <BackToPosts className={BACK_BESIDE_TITLE} />
+        <BackToPosts className={`${BACK_BESIDE_TITLE} ${post.series ? 'margin-label:top-[39px]' : 'margin-label:top-[3px]'}`} />
+        {post.series && <SeriesLine series={post.series} />}
         <h1 className="break-words font-sans text-headline-md text-text-primary">{post.title}</h1>
       </div>
       <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-mono text-label-sm uppercase text-text-muted">
