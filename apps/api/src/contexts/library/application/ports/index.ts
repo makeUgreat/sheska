@@ -27,6 +27,10 @@ export type {
   PostQueryPaginateResult,
   PostQuerySearchResult,
   PostQuery,
+  PostQueryPageItem,
+  PostQuerySeries,
+  PostQuerySeriesPost,
+  PostQuerySeriesWithPosts,
   PostQuerySummary,
 } from './post.query';
 export type {

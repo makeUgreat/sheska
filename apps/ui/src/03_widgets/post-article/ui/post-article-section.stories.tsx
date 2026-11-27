@@ -42,6 +42,7 @@ const post: GetPostResponse = {
   title: 'Feature-Sliced Design in the Sheska UI',
   viewCount: 128,
   summary: { status: 'pending' },
+  series: null,
   body,
   createdAt: '2026-09-01T12:00:00.000Z',
   updatedAt: '2026-09-21T12:00:00.000Z',

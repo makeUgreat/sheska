@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useInfiniteListPosts, useInfiniteSearchPosts } from '@/entities/post';
+import {
+  type ListPostsResponse,
+  type PostSummary,
+  type SearchPostsResponse,
+  useInfiniteListPosts,
+  useInfiniteSearchPosts,
+} from '@/entities/post';
 
 export function usePostsArchive() {
   const [searchParams] = useSearchParams();
@@ -17,6 +23,7 @@ export function usePostsArchive() {
   const firstSearchPage = searchResult.data?.pages[0];
   const semanticSearchApplied = isSearching ? (firstSearchPage?.semanticSearchApplied ?? null) : null;
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = result;
+  const pages: ReadonlyArray<ListPostsResponse | SearchPostsResponse> = data?.pages ?? [];
 
   function submitSearch() {
     const nextQuery = query.trim();
@@ -36,7 +43,7 @@ export function usePostsArchive() {
     normalizedQuery,
     isSearching,
     semanticSearchApplied,
-    posts: data?.pages.flatMap((page) => page.posts) ?? [],
+    posts: pages.flatMap((page): PostSummary[] => page.posts),
     isLoading,
     error,
     fetchNextPage,

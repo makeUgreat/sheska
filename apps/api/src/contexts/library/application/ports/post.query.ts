@@ -2,6 +2,21 @@ import { type PostSummaryOutcome } from '@contexts/library/domain';
 
 export type PostQuerySummary = { readonly kind: 'pending' } | PostSummaryOutcome;
 
+export type PostQuerySeries = {
+  readonly name: string;
+  readonly position: number;
+  readonly total: number;
+};
+
+export type PostQuerySeriesPost = {
+  readonly postId: string;
+  readonly title: string;
+};
+
+export type PostQuerySeriesWithPosts = PostQuerySeries & {
+  readonly posts: ReadonlyArray<PostQuerySeriesPost>;
+};
+
 export interface PostQueryResult {
   readonly postId: string;
   readonly sourceId: string;
@@ -9,6 +24,7 @@ export interface PostQueryResult {
   readonly body: string;
   readonly viewCount: number;
   readonly summary: PostQuerySummary;
+  readonly series: PostQuerySeriesWithPosts | null;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
@@ -47,6 +63,10 @@ export type PostQueryListItem = {
   readonly updatedAt: Date;
 };
 
+export type PostQueryPageItem = PostQueryListItem & {
+  readonly series: PostQuerySeries | null;
+};
+
 export type PostMatchReason = 'keyword' | 'semantic' | 'both';
 
 export type PostQuerySearchResultItem = PostQueryListItem & {
@@ -56,7 +76,7 @@ export type PostQuerySearchResultItem = PostQueryListItem & {
 };
 
 export type PostQueryPaginateResult = {
-  readonly posts: ReadonlyArray<PostQueryListItem>;
+  readonly posts: ReadonlyArray<PostQueryPageItem>;
   readonly nextCursor: PostQueryCursor | null;
 };
 

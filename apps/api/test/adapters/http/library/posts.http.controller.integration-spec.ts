@@ -239,6 +239,7 @@ describe('PostsHttpController', () => {
             title: '테스트 포스트',
             viewCount: 0,
             summary: { kind: 'completed', sentences: ['첫 문장임', '둘째 문장임'], model: 'claude-haiku-5-5' },
+            series: { name: 'RAG', position: 2, total: 5 },
             createdAt: now,
             updatedAt: now,
           },
@@ -257,6 +258,7 @@ describe('PostsHttpController', () => {
           title: '테스트 포스트',
           viewCount: 0,
           summary: { status: 'ready', lines: ['첫 문장임', '둘째 문장임'] },
+          series: { name: 'RAG', position: 2, total: 5 },
           createdAt: now.toISOString(),
           updatedAt: now.toISOString(),
         },
@@ -494,6 +496,15 @@ describe('PostsHttpController', () => {
         title: '테스트 포스트',
         viewCount: 1,
         summary: { kind: 'failed' },
+        series: {
+          name: 'RAG',
+          position: 1,
+          total: 2,
+          posts: [
+            { postId: 'post-1', title: '테스트 포스트' },
+            { postId: 'post-2', title: '다음 포스트' },
+          ],
+        },
         createdAt: now,
         updatedAt: now,
         body: '테스트 본문',
@@ -511,6 +522,15 @@ describe('PostsHttpController', () => {
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
         body: '테스트 본문',
+        series: {
+          name: 'RAG',
+          position: 1,
+          total: 2,
+          posts: [
+            { postId: 'post-1', title: '테스트 포스트' },
+            { postId: 'post-2', title: '다음 포스트' },
+          ],
+        },
       });
       expect(getPostUseCase.execute).toHaveBeenCalledWith({ postId: 'post-1' });
     });
