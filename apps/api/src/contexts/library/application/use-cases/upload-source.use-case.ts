@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ValidationFailedError } from '@core/errors';
+import { InvalidDataError, ValidationFailedError } from '@core/errors';
 import {
   ExternalSourceId,
   Source,
@@ -8,14 +8,15 @@ import {
   type SourceRepository,
   type SourceSyncJobRepository,
 } from '@contexts/library/domain';
-import {
-  SourceContentSnapshotCalculator,
-  type SourceContentSnapshotCalculation,
-} from '../services/source-content-snapshot-calculator.service';
-import { type LibraryUnitOfWork } from '@contexts/library/application/ports';
+import { type LibraryUnitOfWork, type ParsedSourceDocument, type SourceDocumentParser } from '@contexts/library/application/ports';
 import { SourceSyncJobCreatedIntegrationEvent } from '@contexts/library/application/events/source-sync-job-created.integration-event';
 import { SourceBodyChangedEvent } from '@contexts/library/application/events/source-body-changed.outbox-message';
-import { SOURCE_REPOSITORY, SOURCE_SYNC_JOB_REPOSITORY, LIBRARY_UNIT_OF_WORK } from '@contexts/library/library.di-tokens';
+import {
+  SOURCE_DOCUMENT_PARSER,
+  SOURCE_REPOSITORY,
+  SOURCE_SYNC_JOB_REPOSITORY,
+  LIBRARY_UNIT_OF_WORK,
+} from '@contexts/library/library.di-tokens';
 
 export interface UploadSourceCommand {
   readonly externalSourceId: string;
@@ -29,15 +30,11 @@ export interface UploadSourceResult {
   readonly syncJobId?: string;
 }
 
-export interface UploadSourceContentSnapshotCalculator {
-  calculate(content: string): SourceContentSnapshotCalculation;
-}
-
 @Injectable()
 export class UploadSourceUseCase {
   constructor(
-    @Inject(SourceContentSnapshotCalculator)
-    private readonly contentSnapshotCalculator: UploadSourceContentSnapshotCalculator,
+    @Inject(SOURCE_DOCUMENT_PARSER)
+    private readonly documentParser: SourceDocumentParser,
     @Inject(SOURCE_REPOSITORY)
     private readonly sources: SourceRepository,
     @Inject(SOURCE_SYNC_JOB_REPOSITORY)
@@ -48,18 +45,38 @@ export class UploadSourceUseCase {
 
   async execute(command: UploadSourceCommand): Promise<UploadSourceResult> {
     const externalSourceId = ExternalSourceId.of(command.externalSourceId).unpack();
-    const snapshot = this.contentSnapshotCalculator.calculate(command.content);
-    this.ensureSyncTarget(snapshot);
+    const document = this.parseDocument(command.content);
+    this.ensureSyncTarget(document);
+    const size = new TextEncoder().encode(command.content).length;
 
     const existingSource = await this.sources.find({ externalSourceId });
-    const changes = existingSource ? await this.syncSource(existingSource, snapshot) : this.createSource(externalSourceId, snapshot);
+    const changes = existingSource
+      ? await this.syncSource(existingSource, document, size)
+      : this.createSource(externalSourceId, document, size);
 
     await this.persist(changes);
     return this.toResult(changes);
   }
 
-  private createSource(externalSourceId: string, snapshot: SourceContentSnapshotCalculation): UploadChanges {
-    const source = Source.create({ externalSourceId, ...snapshot });
+  // WHY: parser 오류를 그대로 두면 500이 된다. 사용자가 올린 파일이 틀린 것이므로 400으로 바꾼다.
+  private parseDocument(content: string): ParsedSourceDocument {
+    try {
+      return this.documentParser.parse(content);
+    } catch (error: unknown) {
+      if (!(error instanceof InvalidDataError)) throw error;
+      throw new ValidationFailedError({
+        code: 'source.invalid_frontmatter',
+        message: 'Source frontmatter is invalid',
+        details: {
+          fields: [{ path: 'frontmatter', messages: [error.message] }],
+        },
+        cause: error,
+      });
+    }
+  }
+
+  private createSource(externalSourceId: string, document: ParsedSourceDocument, size: number): UploadChanges {
+    const source = Source.create({ externalSourceId, ...document, size });
 
     return {
       source,
@@ -69,8 +86,8 @@ export class UploadSourceUseCase {
     };
   }
 
-  private async syncSource(source: Source, snapshot: SourceContentSnapshotCalculation): Promise<UploadChanges> {
-    const sourceChanged = source.syncContent(snapshot);
+  private async syncSource(source: Source, document: ParsedSourceDocument, size: number): Promise<UploadChanges> {
+    const sourceChanged = source.syncContent({ ...document, size });
     const latestSyncJob = await this.syncJobs.findLatest({
       sourceId: source.id,
     });
@@ -118,8 +135,8 @@ export class UploadSourceUseCase {
     };
   }
 
-  private ensureSyncTarget(snapshot: SourceContentSnapshotCalculation): void {
-    if (SourceFrontmatter.of(snapshot.frontmatter).isSyncTarget()) return;
+  private ensureSyncTarget(document: ParsedSourceDocument): void {
+    if (SourceFrontmatter.of(document.frontmatter).isSyncTarget()) return;
 
     throw new ValidationFailedError({
       code: 'source.not_sync_target',
