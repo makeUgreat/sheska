@@ -10,7 +10,13 @@
   }
 
   & section > :is(h2, h3, h4, h5)::before {
-    transition: color 160ms ease;
+    transition:
+      color 160ms ease,
+      opacity 160ms ease;
+  }
+
+  & section[data-focus] > :is(h2, h3, h4, h5)::before {
+    opacity: 1;
   }
 
   & section[data-focus] > :is(h2, h3, h4, h5) {

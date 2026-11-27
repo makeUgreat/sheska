@@ -49,12 +49,14 @@ function Pre({ node, children }: { node?: Element; children?: ReactNode }) {
 
 /** 넓은 화면에서는 얕은 단계일수록 본문 왼쪽 끝보다 더 왼쪽에서 시작해 깊이가 위치로도 보인다. */
 const HEADING_STYLE = {
-  h2: 'mt-12 mb-4 font-sans text-headline-sm text-text-primary margin-label:-ml-8',
-  h3: 'mt-10 mb-3 font-sans text-title-lg text-text-primary margin-label:-ml-6',
-  h4: 'mt-8 mb-2 font-sans text-title-md text-text-primary margin-label:-ml-4',
-  h5: 'mt-6 mb-2 font-sans text-title-sm text-text-primary margin-label:-ml-2',
-  h6: 'mt-4 mb-2 font-mono text-label-sm uppercase text-text-primary',
+  h2: 'mt-12 mb-4 font-sans text-headline-sm text-text-primary [--outdent:--spacing(4)]',
+  h3: 'mt-10 mb-3 font-sans text-title-lg text-text-primary [--outdent:--spacing(3)]',
+  h4: 'mt-8 mb-2 font-sans text-title-md text-text-primary [--outdent:--spacing(2)]',
+  h5: 'mt-6 mb-2 font-sans text-title-sm text-text-primary [--outdent:--spacing(1)]',
+  h6: 'mt-4 mb-2 font-mono text-label-sm uppercase text-text-primary [--outdent:0px]',
 } as const;
+
+const OUTDENTED = 'margin-label:-ml-(--outdent)';
 
 type HeadingTag = keyof typeof HEADING_STYLE;
 
@@ -64,13 +66,14 @@ type HeadingTag = keyof typeof HEADING_STYLE;
  * `######`는 여백 폭보다 넓다. `justify-end`라야 넘친 부분이 heading 쪽이 아니라 바깥으로 나간다.
  */
 const SOURCE_MARK =
-  'before:mr-2 before:font-mono before:font-normal before:tracking-normal ' +
-  'margin-label:before:-ml-[calc(var(--spacing-margin-label)+var(--spacing-gutter))] margin-label:before:mr-gutter ' +
-  'margin-label:before:inline-flex margin-label:before:w-(--spacing-margin-label) margin-label:before:justify-end';
+  'before:mr-2 before:font-mono before:font-normal before:tracking-normal before:text-[0.8em] ' +
+  'margin-label:before:ml-[calc(var(--outdent)-var(--spacing-margin-label)-var(--mark-gap))] margin-label:before:mr-[calc(var(--mark-gap)-var(--outdent))] ' +
+  'margin-label:before:inline-flex margin-label:before:w-(--spacing-margin-label) margin-label:before:justify-end margin-label:before:opacity-0 ' +
+  '[--mark-gap:--spacing(8)]';
 
 const SECTION_MARK = `${SOURCE_MARK} before:text-accent`;
 
-const SUBSECTION_MARK = `${SOURCE_MARK} before:text-code-snippet before:text-text-muted`;
+const SUBSECTION_MARK = `${SOURCE_MARK} before:text-text-muted`;
 
 /** 기호는 낮춘 뒤의 tag가 아니라 원문 단계를 따른다. `#####`와 `######`는 같은 h6로 그려진다. */
 const HEADING_MARK = {
@@ -92,7 +95,7 @@ const HeadingBelowTitle = (source: SourceHeading): Components['h1'] => {
 
   return function Heading({ children, id }) {
     return (
-      <Tag id={id} className={`${HEADING_STYLE[Tag]} ${HEADING_MARK[source]} ${BELOW_HEADER}`}>
+      <Tag id={id} className={`${HEADING_STYLE[Tag]} ${OUTDENTED} ${HEADING_MARK[source]} ${BELOW_HEADER}`}>
         {children}
       </Tag>
     );
