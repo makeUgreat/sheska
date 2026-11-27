@@ -545,9 +545,9 @@ describe('SourcesHttpController', () => {
       uploadSourceUseCase.execute.mockRejectedValue(
         new ValidationFailedError({
           code: 'source.invalid_project',
-          message: '`project` must be one of sheska, siru, nocap, home-cluster',
+          message: '`project` must be a single string',
           details: {
-            fields: [{ path: 'frontmatter.project', messages: ['must be one of sheska, siru, nocap, home-cluster'] }],
+            fields: [{ path: 'frontmatter.project', messages: ['must be a single string'] }],
           },
         }),
       );

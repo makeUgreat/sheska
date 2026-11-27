@@ -93,10 +93,12 @@ stateDiagram-v2
   - 이유: 틀린 값을 무시하면 작성자가 모르는 채 틀린 번호가 공개됨
 
 ### source 관련 프로젝트
-- frontmatter `project`는 없거나, 정해 둔 프로젝트 slug 중 하나여야 함 <!-- nocap: library-source-11 -->
-  - 예: `project:`처럼 값이 비어 있으면 없는 것으로 봄
-  - 예: `project: sheksa`, `project: [sheska, siru]`, `project: 3`은 업로드를 거부함
-  - 이유: 틀린 값을 무시하면 작성자가 모르는 채 프로젝트 표시가 빠짐
+- frontmatter `project`는 없거나 문자열이어야 함 <!-- nocap: library-source-11 -->
+  - 예: `project:`, `project: ""`처럼 값이 비어 있으면 없는 것으로 봄
+  - 예: `project: [sheska, siru]`, `project: 3`은 업로드를 거부함
+- 관련 프로젝트는 앞뒤 공백을 지우고 소문자로 바꾼 값으로 저장해야 함 <!-- nocap: library-source-12 -->
+  - 예: `project: " Sheska "`는 `sheska`로 저장함
+  - 이유: 어떤 프로젝트를 보여 줄지는 화면이 정함. 같은 프로젝트를 대소문자만 다르게 적어도 같은 값이 되어야 함
 
 ## 동기화 규칙 (sync)
 - vault 파일을 언제 보내고, source 업로드를 받으면 무엇을 저장하고 임베딩을 다시 만드는지 정함

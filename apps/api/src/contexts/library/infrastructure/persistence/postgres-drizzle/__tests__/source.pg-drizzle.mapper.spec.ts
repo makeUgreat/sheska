@@ -78,7 +78,7 @@ describe('SourcePgDrizzleMapper', () => {
 
     const source = SourcePgDrizzleMapper.toDomain(row);
 
-    expect(source.getProps().project.unpack()).toEqual({ kind: 'related', slug: 'siru' });
+    expect(source.getProps().project.unpack()).toEqual({ kind: 'related', name: 'siru' });
   });
 
   it('관련 프로젝트를 관련 프로젝트 열로 변환한다', () => {

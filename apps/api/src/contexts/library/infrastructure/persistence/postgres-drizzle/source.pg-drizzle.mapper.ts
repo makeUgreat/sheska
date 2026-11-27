@@ -30,7 +30,7 @@ export class SourcePgDrizzleMapper {
       frontmatter: frontmatter.unpack(),
       series: seriesProps.kind === 'member' ? seriesProps.name : null,
       seriesOrder: seriesProps.kind === 'member' ? seriesProps.order : null,
-      project: projectProps.kind === 'related' ? projectProps.slug : null,
+      project: projectProps.kind === 'related' ? projectProps.name : null,
       title: source.title(),
       body: text,
       fingerprint: fingerprint.unpack(),
@@ -57,6 +57,6 @@ export class SourcePgDrizzleMapper {
   private static toProject(this: void, row: Pick<SourceRow, 'project'>): SourceProjectProps {
     if (row.project === null) return { kind: 'none' };
 
-    return { kind: 'related', slug: row.project };
+    return { kind: 'related', name: row.project };
   }
 }

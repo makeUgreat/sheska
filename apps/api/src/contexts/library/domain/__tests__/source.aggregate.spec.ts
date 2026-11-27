@@ -299,7 +299,7 @@ describe('Source', () => {
     it('생성할 때 받은 관련 프로젝트를 담는다', () => {
       const source = Source.create({ externalSourceId: 'Notes/source.md', ...projectContent });
 
-      expect(source.getProps().project.unpack()).toEqual({ kind: 'related', slug: 'sheska' });
+      expect(source.getProps().project.unpack()).toEqual({ kind: 'related', name: 'sheska' });
     });
 
     it('관련 프로젝트가 바뀌면 내용을 갱신한다', () => {
@@ -313,7 +313,7 @@ describe('Source', () => {
       });
 
       expect(result).toBe(true);
-      expect(source.getProps().project.unpack()).toEqual({ kind: 'related', slug: 'siru' });
+      expect(source.getProps().project.unpack()).toEqual({ kind: 'related', name: 'siru' });
     });
 
     it('관련 프로젝트가 같으면 바뀌지 않은 것이다', () => {
@@ -338,11 +338,11 @@ describe('Source', () => {
       const result = source.syncContent(projectContent);
 
       expect(result).toBe(true);
-      expect(source.getProps().project.unpack()).toEqual({ kind: 'related', slug: 'sheska' });
+      expect(source.getProps().project.unpack()).toEqual({ kind: 'related', name: 'sheska' });
     });
 
     it.each([
-      ['저장된 관련 프로젝트를', { kind: 'related', slug: 'nocap' } as const],
+      ['저장된 관련 프로젝트를', { kind: 'related', name: 'nocap' } as const],
       ['관련 프로젝트가 없음을', { kind: 'none' } as const],
     ])('복원할 때 %s 그대로 쓴다', (_label, project) => {
       const source = Source.restore({
