@@ -214,6 +214,10 @@ const SEARCH_LABEL = 'Search posts by title or content';
 
 const SEARCH_MODE_HINT = { smart: 'smart search', basic: 'basic search' };
 
+const PROMPT_COMMAND = 'grep';
+const PROMPT_KEY_DELAY_MS = 70;
+const PROMPT_FIRST_KEY_MS = 90;
+
 const INDEX_BUTTON =
   'group inline-flex h-[30px] items-center gap-1.5 rounded-md px-2 font-mono text-label-sm tracking-normal text-text-muted transition-colors duration-150 ' +
   'hover:text-text-secondary aria-pressed:font-semibold aria-pressed:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent motion-reduce:transition-none';
@@ -299,6 +303,28 @@ function searchHint({ draft, submitted, mode }: { draft: string; submitted: stri
   return `→ ${SEARCH_MODE_HINT[mode]}`;
 }
 
+function usePromptTyping(active: boolean) {
+  const [typedLength, setTypedLength] = useState(0);
+
+  useEffect(() => {
+    if (!active) {
+      setTypedLength(0);
+      return;
+    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setTypedLength(PROMPT_COMMAND.length);
+      return;
+    }
+
+    const timers = Array.from(PROMPT_COMMAND, (_, index) =>
+      window.setTimeout(() => setTypedLength((length) => Math.max(length, index + 1)), PROMPT_FIRST_KEY_MS + index * PROMPT_KEY_DELAY_MS),
+    );
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [active]);
+
+  return { typedCommand: PROMPT_COMMAND.slice(0, typedLength), finishTyping: () => setTypedLength(PROMPT_COMMAND.length) };
+}
+
 function SearchPrompt({
   search,
   focused,
@@ -311,6 +337,8 @@ function SearchPrompt({
   inputRef: RefObject<HTMLInputElement>;
 }) {
   const [caretAtEnd, setCaretAtEnd] = useState(true);
+  const { typedCommand, finishTyping } = usePromptTyping(focused);
+  const commandTyped = typedCommand.length === PROMPT_COMMAND.length;
   const isSearching = search.normalizedQuery.length > 0;
   const hint = searchHint({ draft: search.query, submitted: search.normalizedQuery, mode: search.mode });
 
@@ -336,15 +364,17 @@ function SearchPrompt({
       onSubmit={handleSubmit}
       onFocus={() => onFocusChange(true)}
       onBlur={handleBlur}
-      className="group/search relative min-w-0 transition-[flex-grow] duration-[380ms] ease-[cubic-bezier(0.65,0,0.35,1)] motion-reduce:transition-none sm:flex-[0_1_300px] sm:focus-within:grow"
+      className="group/search relative min-w-0 sm:flex-[0_1_300px] sm:focus-within:grow"
     >
-      <div className="flex h-[34px] items-center gap-2 rounded-[7px] bg-text-primary/4 px-2.5 text-text-muted transition-[background-color,padding] duration-250 group-focus-within/search:bg-transparent group-focus-within/search:px-0 motion-reduce:transition-none">
+      <div className="flex h-[34px] items-center gap-2 rounded-[7px] bg-text-primary/4 px-2.5 text-text-muted transition-colors duration-250 group-focus-within/search:gap-0 group-focus-within/search:bg-transparent group-focus-within/search:px-0 motion-reduce:transition-none">
         <SearchIcon className="size-[13px] shrink-0 group-focus-within/search:hidden" />
         <span
           aria-hidden="true"
-          className="hidden shrink-0 font-mono text-[20px] font-medium leading-7 text-accent-strong group-focus-within/search:inline"
+          className="hidden shrink-0 whitespace-pre font-mono text-[20px] font-medium leading-7 text-accent-strong group-focus-within/search:inline"
         >
-          <span className="font-normal text-text-muted">$ </span>grep
+          <span className="font-normal text-text-muted">$ </span>
+          {typedCommand}
+          {commandTyped && ' '}
         </span>
         <label htmlFor="posts-archive-search" className="sr-only">
           {SEARCH_LABEL}
@@ -357,7 +387,10 @@ function SearchPrompt({
             placeholder="Search posts"
             autoComplete="off"
             value={search.query}
-            onChange={(e) => search.onQueryChange(e.target.value)}
+            onChange={(e) => {
+              finishTyping();
+              search.onQueryChange(e.target.value);
+            }}
             onSelect={(e) => setCaretAtEnd(e.currentTarget.selectionStart === e.currentTarget.value.length)}
             onKeyDown={(e) => {
               if (e.key === 'Escape') close();
