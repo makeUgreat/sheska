@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Source, type SourceRepository } from '@contexts/library/domain';
+import { Source, SourceFrontmatter, type SourceRepository } from '@contexts/library/domain';
 import { SourceFromRepositoryLookup } from '../source.from-repository.lookup';
 
 function buildMockRepository(overrides: Partial<SourceRepository> = {}): SourceRepository {
@@ -19,7 +19,7 @@ describe('SourceFromRepositoryLookup', () => {
       const source = Source.create({
         externalSourceId: 'external-1',
         body: '# Source note',
-        frontmatter: { sheska: true, title: 'Source note' },
+        frontmatter: SourceFrontmatter.parse({ sheska: true, title: 'Source note' }),
         size: 50,
       });
       const repository = buildMockRepository({

@@ -1,13 +1,20 @@
 import { sha256Hex } from '@core/hash';
-import { Source, SourceBodyChangedDomainEvent, SourceSyncJob, type SourceFrontmatterProps } from '@contexts/library/domain';
+import {
+  Source,
+  SourceBodyChangedDomainEvent,
+  SourceFrontmatter,
+  SourceSyncJob,
+  type SourceFrontmatterProps,
+} from '@contexts/library/domain';
 import { describe, expect, it } from 'vitest';
 import { buildSource, sourceContentOf } from '../../../../../test/support/domains/fixtures/source.fixture';
 
 const UUID_V7_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
+const frontmatterProps = { sheska: true, title: 'Source note' };
 const content = {
   body: '# Source note',
-  frontmatter: { sheska: true, title: 'Source note' },
+  frontmatter: SourceFrontmatter.parse(frontmatterProps),
   size: 50,
 };
 
@@ -15,7 +22,7 @@ function titleOf(frontmatter: SourceFrontmatterProps): string {
   return Source.create({
     externalSourceId: ' Notes/source.md ',
     ...content,
-    frontmatter: { sheska: true, ...frontmatter },
+    frontmatter: SourceFrontmatter.parse({ sheska: true, ...frontmatter }),
   }).title();
 }
 
@@ -30,6 +37,7 @@ describe('Source', () => {
     expect(source.getProps().externalSourceId.unpack()).toBe('Notes/source.md');
     expect(sourceContentOf(source)).toEqual({
       ...content,
+      frontmatter: frontmatterProps,
       title: 'Source note',
       fingerprint: sha256Hex(content.body),
     });
@@ -56,30 +64,6 @@ describe('Source', () => {
     expect(titleOf(frontmatter)).toBe('Notes/source.md');
   });
 
-  // nocap: library-source-6
-  it('동기화 대상이 아닌 frontmatter로는 source를 만들 수 없다', () => {
-    expect(() =>
-      Source.create({
-        externalSourceId: 'Notes/source.md',
-        ...content,
-        frontmatter: { title: 'Source note' },
-      }),
-    ).toThrow(expect.objectContaining({ code: 'source.not_sync_target' }));
-  });
-
-  // nocap: library-source-6
-  it('동기화 대상이 아닌 frontmatter로는 source를 갱신할 수 없다', () => {
-    const source = Source.create({
-      externalSourceId: 'Notes/source.md',
-      ...content,
-    });
-
-    expect(() => source.syncContent({ ...content, frontmatter: { sheska: false } })).toThrow(
-      expect.objectContaining({ code: 'source.not_sync_target' }),
-    );
-    expect(sourceContentOf(source).frontmatter).toEqual(content.frontmatter);
-  });
-
   it('아무것도 바뀌지 않으면 내용을 바꾸지 않는다', () => {
     const source = Source.create({
       externalSourceId: 'Notes/source.md',
@@ -98,16 +82,15 @@ describe('Source', () => {
       externalSourceId: 'Notes/source.md',
       ...content,
     });
-    const next = {
-      ...content,
-      frontmatter: { sheska: true, title: 'Renamed', tags: ['a'] },
-    };
+    const nextFrontmatterProps = { sheska: true, title: 'Renamed', tags: ['a'] };
+    const next = { ...content, frontmatter: SourceFrontmatter.parse(nextFrontmatterProps) };
 
     const result = source.syncContent(next);
 
     expect(result).toBe(true);
     expect(sourceContentOf(source)).toEqual({
       ...next,
+      frontmatter: nextFrontmatterProps,
       title: 'Renamed',
       fingerprint: sha256Hex(content.body),
     });
@@ -118,12 +101,12 @@ describe('Source', () => {
     const source = Source.create({
       externalSourceId: 'Notes/source.md',
       ...content,
-      frontmatter: { sheska: true, tags: ['a'] },
+      frontmatter: SourceFrontmatter.parse({ sheska: true, tags: ['a'] }),
     });
 
     const result = source.syncContent({
       ...content,
-      frontmatter: { tags: ['a'], sheska: true },
+      frontmatter: SourceFrontmatter.parse({ tags: ['a'], sheska: true }),
     });
 
     expect(result).toBe(false);
@@ -156,6 +139,7 @@ describe('Source', () => {
     expect(result).toBe(true);
     expect(sourceContentOf(source)).toEqual({
       ...next,
+      frontmatter: frontmatterProps,
       title: 'Source note',
       fingerprint: sha256Hex('# Changed'),
     });
@@ -179,7 +163,8 @@ describe('Source', () => {
     { name: '새로 만들 때', change: (source: Source) => source },
     {
       name: 'frontmatter만 바뀔 때',
-      change: (source: Source) => source.syncContent({ ...content, frontmatter: { sheska: true, title: 'Renamed' } }),
+      change: (source: Source) =>
+        source.syncContent({ ...content, frontmatter: SourceFrontmatter.parse({ sheska: true, title: 'Renamed' }) }),
     },
     { name: '크기만 바뀔 때', change: (source: Source) => source.syncContent({ ...content, size: 51 }) },
   ])('$name는 본문 변경 사건을 기록하지 않는다', ({ change }) => {
@@ -198,6 +183,7 @@ describe('Source', () => {
       id: 'source-1',
       externalSourceId: 'Notes/source.md',
       ...content,
+      frontmatter: frontmatterProps,
       fingerprint: 'stored-fingerprint',
     });
 

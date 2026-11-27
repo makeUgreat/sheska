@@ -1,6 +1,5 @@
 import { Module, type DynamicModule } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
-import { SourceContentSnapshotCalculator } from '@contexts/library/application/services/source-content-snapshot-calculator.service';
 import { SourceFromRepositoryLookup } from '@contexts/library/application/services/source.from-repository.lookup';
 import { GetSourceUseCase } from '@contexts/library/application/use-cases/get-source.use-case';
 import { DeleteSourceUseCase } from '@contexts/library/application/use-cases/delete-source.use-case';
@@ -156,7 +155,6 @@ export class LibraryModule {
           provide: ATTACHMENT_CONTENT_STORE,
           useClass: AttachmentContentR2Store,
         },
-        SourceContentSnapshotCalculator,
         AttachmentImageOptimizer,
         ListSourcesUseCase,
         GetSourceUseCase,

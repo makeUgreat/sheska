@@ -5,7 +5,6 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sha256Hex } from '@core/hash';
 import { DATABASE_TOKENS, outboxMessages } from '@kernels/infrastructure';
 import { type SourceRepository, type SourceSyncJobRepository } from '@contexts/library/domain';
-import { SourceContentSnapshotCalculator } from '@contexts/library/application/services/source-content-snapshot-calculator.service';
 import { UploadSourceUseCase } from '@contexts/library/application/use-cases/upload-source.use-case';
 import { SourceDocumentYamlParser } from '@contexts/library/infrastructure/parser/source-document.yaml.parser';
 import { LibraryPgDrizzleUnitOfWork } from '@contexts/library/infrastructure/persistence/postgres-drizzle/library.pg-drizzle.unit-of-work';
@@ -36,7 +35,6 @@ describe('UploadSourceUseCase', () => {
       { provide: SOURCE_REPOSITORY, useClass: SourcePgDrizzleRepository },
       { provide: SOURCE_SYNC_JOB_REPOSITORY, useClass: SourceSyncJobPgDrizzleRepository },
       { provide: LIBRARY_UNIT_OF_WORK, useClass: LibraryPgDrizzleUnitOfWork },
-      SourceContentSnapshotCalculator,
       UploadSourceUseCase,
     ]);
     database = testingModule.get<NodePgDatabase<typeof schema>>(DATABASE_TOKENS.drizzleDatabase);

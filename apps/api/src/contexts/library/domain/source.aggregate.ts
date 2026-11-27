@@ -1,4 +1,3 @@
-import { InvariantViolationError } from '@core/errors';
 import { newId } from '@core/id';
 import { AggregateRoot } from '@kernels/domain';
 import { ExternalSourceId } from './external-source-id.vo';
@@ -17,14 +16,11 @@ interface SourceProps {
 
 export class Source extends AggregateRoot<SourceProps, SourceDomainEvent> {
   static create(params: SourceCreateParams): Source {
-    const frontmatter = SourceFrontmatter.of(params.frontmatter);
-    Source.ensureSyncTarget(frontmatter);
-
     return new Source({
       id: newId(),
       props: {
         externalSourceId: ExternalSourceId.of(params.externalSourceId),
-        frontmatter,
+        frontmatter: params.frontmatter,
         body: SourceBody.of(params.body),
         size: SourceSize.of(params.size),
       },
@@ -47,14 +43,12 @@ export class Source extends AggregateRoot<SourceProps, SourceDomainEvent> {
     });
   }
 
-  syncContent(params: { frontmatter: SourceFrontmatterProps; body: string; size: number }): boolean {
-    const frontmatter = SourceFrontmatter.of(params.frontmatter);
-    Source.ensureSyncTarget(frontmatter);
+  syncContent(params: { frontmatter: SourceFrontmatter; body: string; size: number }): boolean {
     const body = SourceBody.of(params.body);
     const size = SourceSize.of(params.size);
 
     const bodyChanged = this.changeBody(body);
-    const metadataChanged = this.changeMetadata(frontmatter, size);
+    const metadataChanged = this.changeMetadata(params.frontmatter, size);
 
     return bodyChanged || metadataChanged;
   }
@@ -102,16 +96,6 @@ export class Source extends AggregateRoot<SourceProps, SourceDomainEvent> {
 
     return true;
   }
-
-  private static ensureSyncTarget(frontmatter: SourceFrontmatter): void {
-    if (frontmatter.isSyncTarget()) return;
-
-    throw new InvariantViolationError({
-      code: 'source.not_sync_target',
-      message: 'Source frontmatter must have `sheska: true`',
-      details: { fields: ['frontmatter.sheska'] },
-    });
-  }
 }
 
 interface SourceRestoreParams {
@@ -127,7 +111,7 @@ interface SourceRestoreParams {
 
 interface SourceCreateParams {
   externalSourceId: string;
-  frontmatter: SourceFrontmatterProps;
+  frontmatter: SourceFrontmatter;
   body: string;
   size: number;
 }
