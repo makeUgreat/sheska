@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/makeUgreat/sheska/compare/1.6.0...1.7.0) (2026-11-27)
+
+
+### Features
+
+* **plugin:** show why Sheska rejected a note at the top of the note ([#559](https://github.com/makeUgreat/sheska/issues/559)) ([6063d8e](https://github.com/makeUgreat/sheska/commit/6063d8eea4ebe6f011ac15edce4a50f804e797fb))
+
 ## [1.6.0](https://github.com/makeUgreat/sheska/compare/1.5.2...1.6.0) (2026-11-26)
 
 
