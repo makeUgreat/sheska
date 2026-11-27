@@ -10,14 +10,16 @@ const PLATE =
   'relative isolate pt-10 pb-8 before:absolute before:inset-y-0 before:left-1/2 before:-z-10 before:w-screen before:-translate-x-1/2 ' +
   'before:border-b before:border-plate-line before:bg-plate';
 
+const HEAD_WIDER = 'margin-label:-mx-6';
+
 const END_PLATE =
-  'relative isolate mt-16 pt-10 before:absolute before:top-0 before:-bottom-36 before:left-1/2 before:-z-10 before:w-screen before:-translate-x-1/2 ' +
+  'relative isolate mt-16 pt-10 before:absolute before:top-0 before:-bottom-24 before:left-1/2 before:-z-10 before:w-screen before:-translate-x-1/2 ' +
   'before:border-t before:border-plate-line before:bg-plate';
 
 export function ArticleLayout({ header, body, footer }: { header: ReactNode; body: string; footer?: ReactNode }) {
   return (
     <article>
-      <header className={`${PLATE} ${LINE_IN}`} style={lineDelay(0)}>
+      <header className={`${PLATE} ${HEAD_WIDER} ${LINE_IN}`} style={lineDelay(0)}>
         {header}
       </header>
 
