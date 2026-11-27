@@ -237,6 +237,10 @@
       "mono": {
         "$type": "fontFamily",
         "$value": ["JetBrains Mono Variable", "Pretendard", "monospace"]
+      },
+      "serif": {
+        "$type": "fontFamily",
+        "$value": ["Noto Serif KR", "Georgia", "serif"]
       }
     },
     "headline-lg": {

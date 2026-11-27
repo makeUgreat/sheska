@@ -126,13 +126,9 @@ const DONE_MARK = `${TASK_MARK} text-accent-strong before:content-['[x]'_/_'']`;
 
 const TODO_MARK = `${TASK_MARK} text-text-muted before:content-['[_]'_/_'']`;
 
-/**
- * 인용 안의 문단마다 `>`를 붙인다. 문단이 여럿이면 첫 문단에만 붙여서는 인용의 끝이 보이지 않는다.
- * 인용은 여백에 걸지 않고 들여 쓴다. 안에 든 목록과 code fence는 기호가 없어 들여쓰기로만 인용에 속함이 보인다.
- */
-const QUOTE_MARK =
-  '[&>p]:before:inline-flex [&>p]:before:-ml-5 [&>p]:before:w-5 [&>p]:before:font-mono [&>p]:before:text-code-snippet ' +
-  "[&>p]:before:text-text-muted [&>p]:before:content-['>'_/_'']";
+const QUOTE =
+  "relative my-8 pl-5 font-serif text-text-primary before:absolute before:-top-1.5 before:-left-1 before:text-[40px] before:leading-none before:text-accent before:content-['“'_/_''] " +
+  '[&>p]:mb-2 [&>p:last-child]:mb-0 [&>p]:text-[17px]/[1.7] [&>p]:font-medium [&>p]:text-text-primary [&_:is(ul,ol)]:font-sans';
 
 const components: Components = {
   h1: HeadingBelowTitle('h1'),
@@ -191,11 +187,11 @@ const components: Components = {
     </ol>
   ),
   blockquote: ({ id, children }) => (
-    <blockquote id={id} className={anchored(id, `my-7 pl-5 text-body-prose text-text-secondary ${QUOTE_MARK}`)}>
+    <blockquote id={id} className={anchored(id, QUOTE)}>
       {children}
     </blockquote>
   ),
-  hr: () => <hr className="my-12 h-auto border-0 text-center font-mono text-code-snippet text-text-muted before:content-['---'_/_'']" />,
+  hr: () => <hr className="my-12 h-auto border-0 text-center font-serif text-[22px] leading-none text-accent before:content-['⁂'_/_'']" />,
   a: ({ children, href }) => (
     <a href={href} className={LINK_STYLE}>
       {children}
