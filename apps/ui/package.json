@@ -18,8 +18,9 @@
     "tokens:build": "node scripts/generate-theme-css.mjs"
   },
   "dependencies": {
-    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/ibm-plex-sans": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource/ibm-plex-sans-kr": "^5.3.0",
     "@sheska/contract": "workspace:*",
     "@tailwindcss/vite": "^4.3.5",
     "@tanstack/react-query": "^5.108.2",
@@ -37,8 +38,7 @@
     "remark-math": "^6.0.0",
     "remark-parse": "^11.0.0",
     "tailwindcss": "^4.3.5",
-    "unified": "^11.0.5",
-    "wanted-sans": "^1.0.3"
+    "unified": "^11.0.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
