@@ -92,6 +92,12 @@ stateDiagram-v2
   - 예: `series: ""`, `series: 3`, `series_order: 0`, `series_order: 1.5`, `series_order: "2"`는 거부함
   - 이유: 틀린 값을 무시하면 작성자가 모르는 채 틀린 번호가 공개됨
 
+### source 관련 프로젝트
+- frontmatter `project`는 없거나, 정해 둔 프로젝트 slug 중 하나여야 함 <!-- nocap: library-source-11 -->
+  - 예: `project:`처럼 값이 비어 있으면 없는 것으로 봄
+  - 예: `project: sheksa`, `project: [sheska, siru]`, `project: 3`은 업로드를 거부함
+  - 이유: 틀린 값을 무시하면 작성자가 모르는 채 프로젝트 표시가 빠짐
+
 ## 동기화 규칙 (sync)
 - vault 파일을 언제 보내고, source 업로드를 받으면 무엇을 저장하고 임베딩을 다시 만드는지 정함
 

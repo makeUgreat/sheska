@@ -3,6 +3,7 @@ import {
   Source,
   SourceBodyChangedDomainEvent,
   SourceFrontmatter,
+  SourceProject,
   SourceSeries,
   SourceSyncJob,
   type SourceFrontmatterProps,
@@ -17,6 +18,7 @@ const content = {
   body: '# Source note',
   frontmatter: SourceFrontmatter.parse(frontmatterProps),
   series: SourceSeries.none(),
+  project: SourceProject.none(),
   size: 50,
 };
 
@@ -41,6 +43,7 @@ describe('Source', () => {
       ...content,
       frontmatter: frontmatterProps,
       series: { kind: 'none' },
+      project: { kind: 'none' },
       title: 'Source note',
       fingerprint: sha256Hex(content.body),
     });
@@ -95,6 +98,7 @@ describe('Source', () => {
       ...next,
       frontmatter: nextFrontmatterProps,
       series: { kind: 'none' },
+      project: { kind: 'none' },
       title: 'Renamed',
       fingerprint: sha256Hex(content.body),
     });
@@ -145,6 +149,7 @@ describe('Source', () => {
       ...next,
       frontmatter: frontmatterProps,
       series: { kind: 'none' },
+      project: { kind: 'none' },
       title: 'Source note',
       fingerprint: sha256Hex('# Changed'),
     });
@@ -190,6 +195,7 @@ describe('Source', () => {
       ...content,
       frontmatter: frontmatterProps,
       series: { kind: 'none' },
+      project: { kind: 'none' },
       fingerprint: 'stored-fingerprint',
     });
 
@@ -204,6 +210,7 @@ describe('Source', () => {
       ...content,
       frontmatter: {},
       series: { kind: 'none' },
+      project: { kind: 'none' },
       fingerprint: sha256Hex(content.body),
     });
 
@@ -253,6 +260,7 @@ describe('Source', () => {
         ...content,
         frontmatter: seriesFrontmatter,
         series: { kind: 'none' },
+        project: { kind: 'none' },
         fingerprint: sha256Hex(content.body),
       });
 
@@ -272,10 +280,82 @@ describe('Source', () => {
         ...content,
         frontmatter: frontmatterProps,
         series,
+        project: { kind: 'none' },
         fingerprint: sha256Hex(content.body),
       });
 
       expect(source.getProps().series.unpack()).toEqual(series);
+    });
+  });
+
+  describe('project', () => {
+    const projectFrontmatter = { sheska: true, project: 'sheska' };
+    const projectContent = {
+      ...content,
+      frontmatter: SourceFrontmatter.parse(projectFrontmatter),
+      project: SourceProject.parse(projectFrontmatter),
+    };
+
+    it('생성할 때 받은 관련 프로젝트를 담는다', () => {
+      const source = Source.create({ externalSourceId: 'Notes/source.md', ...projectContent });
+
+      expect(source.getProps().project.unpack()).toEqual({ kind: 'related', slug: 'sheska' });
+    });
+
+    it('관련 프로젝트가 바뀌면 내용을 갱신한다', () => {
+      const source = Source.create({ externalSourceId: 'Notes/source.md', ...projectContent });
+      const nextFrontmatter = { ...projectFrontmatter, project: 'siru' };
+
+      const result = source.syncContent({
+        ...projectContent,
+        frontmatter: SourceFrontmatter.parse(nextFrontmatter),
+        project: SourceProject.parse(nextFrontmatter),
+      });
+
+      expect(result).toBe(true);
+      expect(source.getProps().project.unpack()).toEqual({ kind: 'related', slug: 'siru' });
+    });
+
+    it('관련 프로젝트가 같으면 바뀌지 않은 것이다', () => {
+      const source = Source.create({ externalSourceId: 'Notes/source.md', ...projectContent });
+
+      const result = source.syncContent({ ...projectContent, project: SourceProject.parse(projectFrontmatter) });
+
+      expect(result).toBe(false);
+    });
+
+    it('frontmatter가 같아도 저장된 관련 프로젝트가 없으면 관련 프로젝트를 채운다', () => {
+      const source = Source.restore({
+        id: 'source-1',
+        externalSourceId: 'Notes/source.md',
+        ...content,
+        frontmatter: projectFrontmatter,
+        series: { kind: 'none' },
+        project: { kind: 'none' },
+        fingerprint: sha256Hex(content.body),
+      });
+
+      const result = source.syncContent(projectContent);
+
+      expect(result).toBe(true);
+      expect(source.getProps().project.unpack()).toEqual({ kind: 'related', slug: 'sheska' });
+    });
+
+    it.each([
+      ['저장된 관련 프로젝트를', { kind: 'related', slug: 'nocap' } as const],
+      ['관련 프로젝트가 없음을', { kind: 'none' } as const],
+    ])('복원할 때 %s 그대로 쓴다', (_label, project) => {
+      const source = Source.restore({
+        id: 'source-1',
+        externalSourceId: 'Notes/source.md',
+        ...content,
+        frontmatter: frontmatterProps,
+        series: { kind: 'none' },
+        project,
+        fingerprint: sha256Hex(content.body),
+      });
+
+      expect(source.getProps().project.unpack()).toEqual(project);
     });
   });
 

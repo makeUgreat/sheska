@@ -427,6 +427,7 @@ describe('UploadSourceUseCase', () => {
       body: '# Source note',
       frontmatter,
       series: { kind: 'none' },
+      project: { kind: 'none' },
       fingerprint: sha256Hex('# Source note'),
       size: sourceContentByteSize('# Source note'),
     });
@@ -441,6 +442,65 @@ describe('UploadSourceUseCase', () => {
 
     expect(sources.update).toHaveBeenCalledOnce();
     expect(sources.update.mock.calls[0]?.[0].getProps().series.unpack()).toEqual({ kind: 'member', name: 'RAG', order: 1 });
+    expect(syncJobs.insert).not.toHaveBeenCalled();
+  });
+
+  it('frontmatter의 관련 프로젝트를 source에 담아 저장한다', async () => {
+    const documentParser = createDocumentParserMock({
+      content: '# Source note',
+      frontmatter: { sheska: true, project: 'home-cluster' },
+    });
+    const sources = createSourceRepositoryMock();
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    const useCase = new UploadSourceUseCase(documentParser, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
+
+    await useCase.execute({ externalSourceId: 'Notes/source.md', content: '# Source note' });
+
+    expect(sources.insert.mock.calls[0]?.[0].getProps().project.unpack()).toEqual({ kind: 'related', slug: 'home-cluster' });
+  });
+
+  // nocap: library-source-11
+  it('관련 프로젝트가 틀리면 source를 조회하거나 저장하지 않고 거부한다', async () => {
+    const documentParser = createDocumentParserMock({
+      content: '# Source note',
+      frontmatter: { sheska: true, project: 'sheksa' },
+    });
+    const sources = createSourceRepositoryMock();
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    const useCase = new UploadSourceUseCase(documentParser, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
+
+    await expect(useCase.execute({ externalSourceId: 'Notes/source.md', content: '# Source note' })).rejects.toMatchObject({
+      kind: 'validation_failed',
+      code: 'source.invalid_project',
+    });
+    expect(sources.find).not.toHaveBeenCalled();
+    expect(sourceWriteCalls(sources)).toHaveLength(0);
+    expect(syncJobs.insert).not.toHaveBeenCalled();
+  });
+
+  it('관련 프로젝트를 저장하기 전에 올린 노트를 그대로 다시 올리면 관련 프로젝트를 채워 갱신한다', async () => {
+    const frontmatter = { sheska: true, project: 'sheska' };
+    const existingSource = Source.restore({
+      id: 'source-1',
+      externalSourceId: 'Notes/source.md',
+      body: '# Source note',
+      frontmatter,
+      series: { kind: 'none' },
+      project: { kind: 'none' },
+      fingerprint: sha256Hex('# Source note'),
+      size: sourceContentByteSize('# Source note'),
+    });
+    const documentParser = createDocumentParserMock({ content: '# Source note', frontmatter });
+    const sources = createSourceRepositoryMock();
+    sources.find.mockResolvedValue(existingSource);
+    const syncJobs = createSourceSyncJobRepositoryMock();
+    syncJobs.findLatest.mockResolvedValue(restoreSyncJob({ sourceId: 'source-1', status: 'completed' }));
+    const useCase = new UploadSourceUseCase(documentParser, sources, syncJobs, createLibraryUnitOfWorkMock(sources, syncJobs));
+
+    await useCase.execute({ externalSourceId: 'Notes/source.md', content: '# Source note' });
+
+    expect(sources.update).toHaveBeenCalledOnce();
+    expect(sources.update.mock.calls[0]?.[0].getProps().project.unpack()).toEqual({ kind: 'related', slug: 'sheska' });
     expect(syncJobs.insert).not.toHaveBeenCalled();
   });
 
@@ -686,6 +746,7 @@ function expectSourceSavedWith(
     fingerprint: sha256Hex(expected.content),
     frontmatter: { sheska: true },
     series: { kind: 'none' },
+    project: { kind: 'none' },
     title: expected.externalSourceId,
     size: sourceContentByteSize(expected.content),
   });
@@ -724,6 +785,7 @@ function restoreSource(params: { id: string; externalSourceId: string; content: 
     body: params.content,
     frontmatter: { sheska: true },
     series: { kind: 'none' },
+    project: { kind: 'none' },
     fingerprint: sha256Hex(params.content),
     size: sourceContentByteSize(params.content),
   });

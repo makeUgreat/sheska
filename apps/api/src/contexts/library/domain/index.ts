@@ -6,6 +6,7 @@ export { SourceFingerprint } from './source-fingerprint.vo';
 export { SourceFrontmatter } from './source-frontmatter.vo';
 export type { SourceFrontmatterProps, SourceFrontmatterValue } from './source-frontmatter.vo';
 export { SourceSeries, type SourceSeriesProps } from './source-series.vo';
+export { SourceProject, type SourceProjectProps, type SourceProjectSlug } from './source-project.vo';
 export { SourceSize } from './source-size.vo';
 export { SourceSyncJob } from './source-sync-job.aggregate';
 export {

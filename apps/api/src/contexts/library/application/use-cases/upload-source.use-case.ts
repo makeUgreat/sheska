@@ -4,6 +4,7 @@ import {
   ExternalSourceId,
   Source,
   SourceFrontmatter,
+  SourceProject,
   SourceSeries,
   type SourceSyncJob,
   type SourceRepository,
@@ -51,6 +52,7 @@ export class UploadSourceUseCase {
       body: document.body,
       frontmatter: SourceFrontmatter.parse(document.frontmatter),
       series: SourceSeries.parse(document.frontmatter),
+      project: SourceProject.parse(document.frontmatter),
       size: new TextEncoder().encode(command.content).length,
     };
 
@@ -165,6 +167,7 @@ interface UploadContent {
   readonly body: string;
   readonly frontmatter: SourceFrontmatter;
   readonly series: SourceSeries;
+  readonly project: SourceProject;
   readonly size: number;
 }
 

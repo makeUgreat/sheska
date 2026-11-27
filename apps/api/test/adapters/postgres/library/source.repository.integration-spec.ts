@@ -7,7 +7,7 @@ import { type SourceEmbeddingRepository } from '@contexts/ingestion/domain';
 import { SourceEmbeddingPgDrizzleRepository } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/source-embedding.pg-drizzle.repository';
 import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
 import { SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
-import { SourceFrontmatter, SourceSeries, type SourceRepository } from '@contexts/library/domain';
+import { SourceFrontmatter, SourceProject, SourceSeries, type SourceRepository } from '@contexts/library/domain';
 import * as schema from '@contexts/library/infrastructure/persistence/postgres-drizzle/schema';
 import { SourcePgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
 import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
@@ -50,6 +50,7 @@ describe('SourceDrizzleRepository', () => {
       fingerprint: sha256Hex('# Source note'),
       frontmatter: { sheska: true },
       series: { kind: 'none' },
+      project: { kind: 'none' },
       title: externalSourceId,
       size: sourceContentByteSize('# Source note'),
     });
@@ -64,6 +65,7 @@ describe('SourceDrizzleRepository', () => {
       body: '# Changed source note',
       frontmatter: SourceFrontmatter.parse({ sheska: true }),
       series: SourceSeries.none(),
+      project: SourceProject.none(),
       size: sourceContentByteSize('# Changed source note'),
     });
 
@@ -76,6 +78,7 @@ describe('SourceDrizzleRepository', () => {
       fingerprint: sha256Hex('# Changed source note'),
       frontmatter: { sheska: true },
       series: { kind: 'none' },
+      project: { kind: 'none' },
       title: externalSourceId,
       size: sourceContentByteSize('# Changed source note'),
     });
@@ -100,12 +103,41 @@ describe('SourceDrizzleRepository', () => {
       body: '# Source note',
       frontmatter: SourceFrontmatter.parse({ sheska: true }),
       series: SourceSeries.none(),
+      project: SourceProject.none(),
       size: sourceContentByteSize('# Source note'),
     });
     await repository.update(source);
     const [row] = await database.select().from(schema.sources).where(eq(schema.sources.externalSourceId, externalSourceId));
 
     expect(row).toMatchObject({ series: null, seriesOrder: null });
+  });
+
+  it('관련 프로젝트를 저장하고 조회한다', async () => {
+    const externalSourceId = 'Notes/project-source.md';
+    const source = buildSource({ externalSourceId, frontmatter: { project: 'nocap' } });
+
+    await repository.insert(source);
+    const findResult = await repository.find({ externalSourceId });
+
+    expect(findResult?.getProps().project.unpack()).toEqual({ kind: 'related', slug: 'nocap' });
+  });
+
+  it('관련 프로젝트를 지우면 관련 프로젝트 열을 비운다', async () => {
+    const externalSourceId = 'Notes/project-removed-source.md';
+    const source = buildSource({ externalSourceId, frontmatter: { project: 'nocap' } });
+    await repository.insert(source);
+
+    source.syncContent({
+      body: '# Source note',
+      frontmatter: SourceFrontmatter.parse({ sheska: true }),
+      series: SourceSeries.none(),
+      project: SourceProject.none(),
+      size: sourceContentByteSize('# Source note'),
+    });
+    await repository.update(source);
+    const [row] = await database.select().from(schema.sources).where(eq(schema.sources.externalSourceId, externalSourceId));
+
+    expect(row).toMatchObject({ project: null });
   });
 
   it('id로 source를 조회한다', async () => {
@@ -122,6 +154,7 @@ describe('SourceDrizzleRepository', () => {
       fingerprint: sha256Hex('# Source note'),
       frontmatter: { sheska: true },
       series: { kind: 'none' },
+      project: { kind: 'none' },
       title: 'Notes/find-source-by-id.md',
       size: sourceContentByteSize('# Source note'),
     });

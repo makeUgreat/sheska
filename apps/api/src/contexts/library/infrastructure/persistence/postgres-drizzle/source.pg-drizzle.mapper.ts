@@ -1,5 +1,5 @@
 import { InvariantViolationError } from '@core/errors';
-import { Source, type SourceSeriesProps } from '@contexts/library/domain';
+import { Source, type SourceProjectProps, type SourceSeriesProps } from '@contexts/library/domain';
 import { type SourceInsert, type SourceRow } from './schema';
 
 export class SourcePgDrizzleMapper {
@@ -9,6 +9,7 @@ export class SourcePgDrizzleMapper {
       externalSourceId: row.externalSourceId,
       frontmatter: row.frontmatter,
       series: SourcePgDrizzleMapper.toSeries(row),
+      project: SourcePgDrizzleMapper.toProject(row),
       body: row.body,
       fingerprint: row.fingerprint,
       size: row.sizeBytes,
@@ -18,9 +19,10 @@ export class SourcePgDrizzleMapper {
   }
 
   static toInsert(source: Source): SourceInsert {
-    const { externalSourceId, frontmatter, series, body, size } = source.getProps();
+    const { externalSourceId, frontmatter, series, project, body, size } = source.getProps();
     const { text, fingerprint } = body.unpack();
     const seriesProps = series.unpack();
+    const projectProps = project.unpack();
 
     return {
       id: source.id,
@@ -28,6 +30,7 @@ export class SourcePgDrizzleMapper {
       frontmatter: frontmatter.unpack(),
       series: seriesProps.kind === 'member' ? seriesProps.name : null,
       seriesOrder: seriesProps.kind === 'member' ? seriesProps.order : null,
+      project: projectProps.kind === 'related' ? projectProps.slug : null,
       title: source.title(),
       body: text,
       fingerprint: fingerprint.unpack(),
@@ -49,5 +52,11 @@ export class SourcePgDrizzleMapper {
       message: 'A stored source must have both series and series_order, or neither',
       details: { fields: ['series', 'seriesOrder'] },
     });
+  }
+
+  private static toProject(this: void, row: Pick<SourceRow, 'project'>): SourceProjectProps {
+    if (row.project === null) return { kind: 'none' };
+
+    return { kind: 'related', slug: row.project };
   }
 }
