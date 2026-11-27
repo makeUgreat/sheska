@@ -94,7 +94,7 @@ export function CodeBlock({ children, node }: { children?: ReactNode; node?: Ele
   const language = languageOf(node);
 
   return (
-    <div className="my-7 overflow-hidden rounded-lg bg-surface">
+    <div className="my-7 overflow-hidden rounded-lg bg-surface antialiased">
       {/*
        * 위 padding이 1px을 더 가진다. Border가 바 안쪽 아래에 붙고, descender가
        * 없는 대문자 mono 잉크는 line box 중앙보다 위에 앉기 때문이다.

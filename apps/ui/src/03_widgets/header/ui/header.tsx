@@ -76,7 +76,7 @@ export function Header() {
   const { waiting, slowSeconds } = useAwaitedFetch();
 
   return (
-    <header className="sticky top-0 z-50 bg-surface">
+    <header className="sticky top-0 z-50 bg-surface antialiased">
       <div className="h-11 border-b border-white/5 bg-surface-container-low/80 px-4">
         <div className="mx-auto flex h-full max-w-content items-center justify-between gap-3 sm:gap-6">
           <div className="flex items-center gap-2">
