@@ -30,7 +30,7 @@ function ServiceEntry({ service }: { service: Service }) {
   return (
     <article className="group relative grid gap-4">
       <ServicePreview service={service} />
-      <div className="grid gap-1">
+      <div className="grid gap-2">
         <h3 className="text-title-lg tracking-[-0.01em]">
           <img
             src={service.logo.src}
@@ -41,24 +41,44 @@ function ServiceEntry({ service }: { service: Service }) {
             <span className={`inline-block ${HOVER_LIFT}`}>{service.name}</span>
           </Link>
         </h3>
-        <p className={`max-w-[52ch] text-text-secondary ${HOVER_LIFT}`}>{service.summary}</p>
+        <p className={`max-w-[52ch] text-pretty break-keep text-text-secondary ${HOVER_LIFT}`}>
+          {service.description.map((sentence) => (
+            <span key={sentence} className="block">
+              {sentence}
+            </span>
+          ))}
+        </p>
       </div>
     </article>
   );
 }
 
+const STICKY_BELOW_HEADER = 'lg:sticky lg:top-[calc(var(--spacing-header)+48px)] lg:self-start';
+
+/** 넓은 화면에서는 두 열 사이 여백에 세로로 세운다. 아래에서 위로 읽히도록 뒤집는다. */
+const RAIL =
+  'flex items-center gap-3 font-mono text-label-sm uppercase tracking-[0.2em] text-text-primary after:h-px after:flex-1 after:bg-plate-line lg:rotate-180 lg:[writing-mode:vertical-rl] lg:after:h-14 lg:after:w-px lg:after:flex-none';
+
 export function AboutPage() {
   return (
     <main className="mx-auto grid max-w-container-terminal gap-14 px-gutter pb-20 pt-12 lg:grid-cols-[4fr_7fr] lg:gap-20 lg:px-14 lg:pb-28 lg:pt-18">
-      <header className="lg:sticky lg:top-[calc(var(--spacing-header)+48px)] lg:self-start">
-        <h1 className="text-headline-lg font-medium tracking-[-0.03em]">{PROFILE.name}</h1>
-        <p className="mt-3.5 text-body-lg">{PROFILE.role}</p>
-        <p className="mt-4 max-w-[32ch] text-text-secondary">{PROFILE.bio}</p>
+      <header className={STICKY_BELOW_HEADER}>
+        <h1 className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+          <span className="text-headline-lg font-medium tracking-[-0.03em]">{PROFILE.name}</span>{' '}
+          <span className="font-mono text-[15px] font-normal text-text-muted">{PROFILE.handle}</span>
+        </h1>
+        <p className="mt-6 max-w-[32ch] text-pretty break-keep text-text-secondary">
+          <span className="text-text-primary">{PROFILE.headline}</span> {PROFILE.bio}
+        </p>
       </header>
 
-      <section aria-labelledby="about-services" className="grid min-w-0 content-start gap-6">
-        <h2 id="about-services" className="font-mono text-label-sm uppercase text-text-muted">
-          Services
+      <section
+        aria-labelledby="about-projects"
+        className="grid min-w-0 content-start gap-6 lg:-ml-12 lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-x-7"
+      >
+        <h2 id="about-projects" className={`${RAIL} ${STICKY_BELOW_HEADER}`}>
+          Projects
+          <span className="tabular-nums text-text-muted">{String(SERVICES.length).padStart(2, '0')}</span>
         </h2>
         <div className="card-list-focus grid gap-14">
           {SERVICES.map((service) => (
