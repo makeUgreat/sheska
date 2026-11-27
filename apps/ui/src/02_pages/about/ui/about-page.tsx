@@ -49,6 +49,10 @@ function ServiceEntry({ service }: { service: Service }) {
 
 const STICKY_BELOW_HEADER = 'lg:sticky lg:top-[calc(var(--spacing-header)+48px)] lg:self-start';
 
+/** 넓은 화면에서는 두 열 사이 여백에 세로로 세운다. 아래에서 위로 읽히도록 뒤집는다. */
+const RAIL =
+  'flex items-center gap-3 font-mono text-label-sm uppercase tracking-[0.2em] text-text-primary after:h-px after:flex-1 after:bg-plate-line lg:rotate-180 lg:[writing-mode:vertical-rl] lg:after:h-14 lg:after:w-px lg:after:flex-none';
+
 export function AboutPage() {
   return (
     <main className="mx-auto grid max-w-container-terminal gap-14 px-gutter pb-20 pt-12 lg:grid-cols-[4fr_7fr] lg:gap-20 lg:px-14 lg:pb-28 lg:pt-18">
@@ -62,9 +66,13 @@ export function AboutPage() {
         </p>
       </header>
 
-      <section aria-labelledby="about-services" className="grid min-w-0 content-start gap-6">
-        <h2 id="about-services" className="font-mono text-label-sm uppercase text-text-muted">
-          Services
+      <section
+        aria-labelledby="about-projects"
+        className="grid min-w-0 content-start gap-6 lg:-ml-12 lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-x-7"
+      >
+        <h2 id="about-projects" className={`${RAIL} ${STICKY_BELOW_HEADER}`}>
+          Projects
+          <span className="tabular-nums text-text-muted">{String(SERVICES.length).padStart(2, '0')}</span>
         </h2>
         <div className="card-list-focus grid gap-14">
           {SERVICES.map((service) => (
