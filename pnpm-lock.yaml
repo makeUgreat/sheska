@@ -284,6 +284,9 @@ importers:
       '@fontsource/ibm-plex-sans-kr':
         specifier: ^5.3.0
         version: 5.3.0
+      '@fontsource/noto-serif-kr':
+        specifier: ^5.3.1
+        version: 5.3.1
       '@sheska/contract':
         specifier: workspace:*
         version: link:../../packages/contract
@@ -1145,6 +1148,9 @@ packages:
 
   '@fontsource/ibm-plex-sans-kr@5.3.0':
     resolution: {integrity: sha512-Malq1TQAnpPHASG76fAthnCY0E41py2r7pZ5JEjgmGfA5tVGz7gwBfvrkhPvT3ZmyMobQrJakHhKZVuXQp7FjQ==}
+
+  '@fontsource/noto-serif-kr@5.3.1':
+    resolution: {integrity: sha512-xtsAgK4S4MjPllHRSAFaMiB7xnFb8Nlhx47uPaD/qvyTP5WgRICNawZmwGzLVshCyA/QmydSVzA9kWF8otycpQ==}
 
   '@grpc/grpc-js@1.14.7':
     resolution: {integrity: sha512-W4W/fcBMGRVtG6dW2c7cw2mnpS3hvbBd+oQXjh2iYFTZDk1JJmcNqkM5KSaPubQpamlUUurrlb7G1s9NJeERmQ==}
@@ -8004,6 +8010,8 @@ snapshots:
   '@fontsource-variable/jetbrains-mono@5.3.0': {}
 
   '@fontsource/ibm-plex-sans-kr@5.3.0': {}
+
+  '@fontsource/noto-serif-kr@5.3.1': {}
 
   '@grpc/grpc-js@1.14.7':
     dependencies:

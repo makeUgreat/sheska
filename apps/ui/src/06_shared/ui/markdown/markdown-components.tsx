@@ -5,7 +5,7 @@ import { CodeBlock, isMathBlock, useInsideCodeBlock } from './code-block';
 import { MarkdownImage } from './markdown-image';
 import { CALLOUT_ELEMENT, CALLOUT_TITLE_ELEMENT, WIKI_LINK_ELEMENT } from '../../lib/markdown';
 import { Callout, CalloutTitle } from './obsidian/callout';
-import { WikiLink } from './obsidian/wiki-link';
+import { LINK_STYLE, WikiLink } from './obsidian/wiki-link';
 
 /** Anchor로 이동하면 목적지가 sticky header 뒤에 가려진다. */
 const BELOW_HEADER = 'scroll-mt-[calc(var(--spacing-header)+var(--spacing-gutter))]';
@@ -38,7 +38,7 @@ function CodeText({ className, children }: { className?: string; children?: Reac
   return insideCodeBlock ? (
     <code className={className}>{children}</code>
   ) : (
-    <code className="mx-0.5 font-mono text-code-snippet text-accent-strong">{children}</code>
+    <code className="mx-0.5 font-mono text-[0.875em] text-accent-strong">{children}</code>
   );
 }
 
@@ -49,28 +49,31 @@ function Pre({ node, children }: { node?: Element; children?: ReactNode }) {
 
 /** 넓은 화면에서는 얕은 단계일수록 본문 왼쪽 끝보다 더 왼쪽에서 시작해 깊이가 위치로도 보인다. */
 const HEADING_STYLE = {
-  h2: 'mt-12 mb-4 font-sans text-headline-sm text-text-primary margin-label:-ml-8',
-  h3: 'mt-10 mb-3 font-sans text-title-lg text-text-primary margin-label:-ml-6',
-  h4: 'mt-8 mb-2 font-sans text-title-md text-text-primary margin-label:-ml-4',
-  h5: 'mt-6 mb-2 font-sans text-title-sm text-text-primary margin-label:-ml-2',
-  h6: 'mt-4 mb-2 font-mono text-label-sm uppercase text-text-primary',
+  h2: 'mt-12 mb-4 font-sans text-headline-sm text-text-primary [--outdent:--spacing(4)]',
+  h3: 'mt-10 mb-3 font-sans text-title-lg text-text-primary [--outdent:--spacing(3)]',
+  h4: 'mt-8 mb-2 font-sans text-title-md text-text-primary [--outdent:--spacing(2)]',
+  h5: 'mt-6 mb-2 font-sans text-title-sm text-text-primary [--outdent:--spacing(1)]',
+  h6: 'mt-4 mb-2 font-mono text-label-sm uppercase text-text-primary [--outdent:0px]',
 } as const;
+
+const OUTDENTED = 'margin-label:-ml-(--outdent)';
 
 type HeadingTag = keyof typeof HEADING_STYLE;
 
 /**
- * 넓은 화면에서는 기호를 왼쪽 여백에 걸어 heading 글자가 본문 왼쪽 끝에 맞게 한다.
+ * 넓은 화면에서는 기호를 왼쪽 여백의 한 세로선에 걸어 heading 내어쓰기와 상관없이 같은 자리에 둔다.
  * Pseudo-element라 복사 결과에 섞이지 않고, `/ ''` 대체 텍스트로 스크린 리더도 읽지 않는다.
- * `######`는 여백 폭보다 넓다. `justify-end`라야 넘친 부분이 heading 쪽이 아니라 바깥으로 나간다.
+ * `justify-end`라야 기호 길이와 상관없이 오른쪽 끝이 세로선에 맞는다.
  */
 const SOURCE_MARK =
-  'before:mr-2 before:font-mono before:font-normal before:tracking-normal ' +
-  'margin-label:before:-ml-[calc(var(--spacing-margin-label)+var(--spacing-gutter))] margin-label:before:mr-gutter ' +
-  'margin-label:before:inline-flex margin-label:before:w-(--spacing-margin-label) margin-label:before:justify-end';
+  'before:mr-2 before:font-mono before:font-normal before:tracking-normal before:text-[0.8em] ' +
+  'margin-label:before:ml-[calc(var(--outdent)-var(--spacing-margin-label)-var(--mark-gap))] margin-label:before:mr-[calc(var(--mark-gap)-var(--outdent))] ' +
+  'margin-label:before:inline-flex margin-label:before:w-(--spacing-margin-label) margin-label:before:justify-end margin-label:before:opacity-0 ' +
+  '[--mark-gap:--spacing(8)]';
 
 const SECTION_MARK = `${SOURCE_MARK} before:text-accent`;
 
-const SUBSECTION_MARK = `${SOURCE_MARK} before:text-code-snippet before:text-text-muted`;
+const SUBSECTION_MARK = `${SOURCE_MARK} before:text-text-muted`;
 
 /** 기호는 낮춘 뒤의 tag가 아니라 원문 단계를 따른다. `#####`와 `######`는 같은 h6로 그려진다. */
 const HEADING_MARK = {
@@ -92,7 +95,7 @@ const HeadingBelowTitle = (source: SourceHeading): Components['h1'] => {
 
   return function Heading({ children, id }) {
     return (
-      <Tag id={id} className={`${HEADING_STYLE[Tag]} ${HEADING_MARK[source]} ${BELOW_HEADER}`}>
+      <Tag id={id} className={`${HEADING_STYLE[Tag]} ${OUTDENTED} ${HEADING_MARK[source]} ${BELOW_HEADER}`}>
         {children}
       </Tag>
     );
@@ -101,6 +104,10 @@ const HeadingBelowTitle = (source: SourceHeading): Components['h1'] => {
 
 /** `::marker`의 글꼴은 Safari가 무시한다. 그래도 기호 문자 자체는 같으므로 그대로 둔다. */
 const LIST_MARK = 'marker:font-mono marker:text-code-snippet marker:text-text-muted';
+
+const ROOT_NODE =
+  '[:not(li)>&>li]:relative [:not(li)>&>li]:before:absolute [:not(li)>&>li]:before:top-[11px] [:not(li)>&>li]:before:-left-3.5 ' +
+  "[:not(li)>&>li]:before:size-1.5 [:not(li)>&>li]:before:rounded-full [:not(li)>&>li]:before:bg-outline-variant/55 [:not(li)>&>li]:before:content-['']";
 
 /**
  * 중첩 목록은 `-` 대신 tree 연결선으로 부모와 이어 그린다. 마지막 항목에서 세로선이 끝나 목록의 끝이 보인다.
@@ -113,19 +120,15 @@ const TREE_BRANCH =
   "[li>&>li:not(:last-child)]:after:absolute [li>&>li:not(:last-child)]:after:top-3.5 [li>&>li:not(:last-child)]:after:bottom-0 [li>&>li:not(:last-child)]:after:-left-4 [li>&>li:not(:last-child)]:after:border-l [li>&>li:not(:last-child)]:after:border-outline-variant/30 [li>&>li:not(:last-child)]:after:content-['']";
 
 /** Checkbox는 상태를 읽기 도구에 전하려고 남기고, 눈에는 원문 표기만 보인다. */
-const TASK_MARK = 'shrink-0 font-mono text-code-snippet margin-label:-ml-[calc(3ch+--spacing(2))]';
+const TASK_MARK = 'shrink-0 font-mono text-code-snippet';
 
 const DONE_MARK = `${TASK_MARK} text-accent-strong before:content-['[x]'_/_'']`;
 
 const TODO_MARK = `${TASK_MARK} text-text-muted before:content-['[_]'_/_'']`;
 
-/**
- * 인용 안의 문단마다 `>`를 붙인다. 문단이 여럿이면 첫 문단에만 붙여서는 인용의 끝이 보이지 않는다.
- * 인용은 여백에 걸지 않고 들여 쓴다. 안에 든 목록과 code fence는 기호가 없어 들여쓰기로만 인용에 속함이 보인다.
- */
-const QUOTE_MARK =
-  '[&>p]:before:inline-flex [&>p]:before:-ml-5 [&>p]:before:w-5 [&>p]:before:font-mono [&>p]:before:text-code-snippet ' +
-  "[&>p]:before:text-text-muted [&>p]:before:content-['>'_/_'']";
+const QUOTE =
+  "relative my-8 pl-5 font-serif text-text-primary before:absolute before:-top-1.5 before:-left-1 before:text-[40px] before:leading-none before:text-accent before:content-['“'_/_''] " +
+  '[&>p]:mb-2 [&>p:last-child]:mb-0 [&>p]:text-[17px]/[1.7] [&>p]:font-medium [&>p]:text-text-primary [&_:is(ul,ol)]:font-sans';
 
 const components: Components = {
   h1: HeadingBelowTitle('h1'),
@@ -173,7 +176,7 @@ const components: Components = {
         {children}
       </ul>
     ) : (
-      <ul id={id} className={anchored(id, `${LIST_BASE} ${LIST_MARK} list-['-_'] pl-4 ${TREE_BRANCH}`)}>
+      <ul id={id} className={anchored(id, `${LIST_BASE} list-none pl-4 ${ROOT_NODE} ${TREE_BRANCH}`)}>
         {children}
       </ul>
     ),
@@ -184,13 +187,13 @@ const components: Components = {
     </ol>
   ),
   blockquote: ({ id, children }) => (
-    <blockquote id={id} className={anchored(id, `my-7 pl-5 text-body-prose text-text-secondary ${QUOTE_MARK}`)}>
+    <blockquote id={id} className={anchored(id, QUOTE)}>
       {children}
     </blockquote>
   ),
-  hr: () => <hr className="my-12 h-auto border-0 text-center font-mono text-code-snippet text-text-muted before:content-['---'_/_'']" />,
+  hr: () => <hr className="my-12 h-auto border-0 text-center font-serif text-[22px] leading-none text-accent before:content-['⁂'_/_'']" />,
   a: ({ children, href }) => (
-    <a href={href} className="text-accent-strong underline underline-offset-2 transition-colors hover:text-accent-hover">
+    <a href={href} className={LINK_STYLE}>
       {children}
     </a>
   ),

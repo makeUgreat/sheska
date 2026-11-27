@@ -420,9 +420,9 @@ export const StaticCallout: Story = {
 
 const CALLOUT_COLOR_BODIES = ['> [!error] 실패', '> [!faq] 질문', '> [!constructor] 모르는 type'];
 
-/** 본문마다 따로 그린 `Markdown`에서 첫 callout 선의 class를 읽는다. */
+/** 본문마다 따로 그린 `Markdown`에서 첫 callout 면의 class를 읽는다. */
 export const CalloutColorGroups: Story = {
-  name: 'callout 선 색은 type 별칭과 모르는 type을 묶음으로 나눈다',
+  name: 'callout 면 색은 type 별칭과 모르는 type을 묶음으로 나눈다',
   tags: ['!dev'],
   render: () => (
     <>
@@ -433,11 +433,11 @@ export const CalloutColorGroups: Story = {
   ),
   play: async ({ canvasElement }) => {
     const articles = [...(canvasElement.firstElementChild?.children ?? [])];
-    const [error, faq, unknown] = articles.map((article) => article.querySelector('.border-l-2')?.className);
+    const [error, faq, unknown] = articles.map((article) => article.firstElementChild?.className);
 
-    await expect(error).toContain('border-caution');
-    await expect(faq).toContain('border-accent-strong');
-    await expect(unknown).toContain('border-text-muted');
+    await expect(error).toContain('bg-caution/6');
+    await expect(faq).toContain('bg-accent-strong/6');
+    await expect(unknown).toContain('bg-text-muted/6');
   },
 };
 

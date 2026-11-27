@@ -4,6 +4,7 @@
 @import "@fontsource/ibm-plex-sans-kr/500.css";
 @import "@fontsource/ibm-plex-sans-kr/600.css";
 @import "@fontsource/ibm-plex-sans-kr/700.css";
+@import "@fontsource/noto-serif-kr/500.css";
 @import "pretendard/dist/web/static/Pretendard-Regular.css";
 @import "pretendard/dist/web/static/Pretendard-Medium.css";
 @import "tailwindcss";

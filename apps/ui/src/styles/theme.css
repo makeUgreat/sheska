@@ -34,6 +34,7 @@
 
   --font-sans: "IBM Plex Sans Variable", "IBM Plex Sans KR", "Arial", sans-serif;
   --font-mono: "JetBrains Mono Variable", "Pretendard", monospace;
+  --font-serif: "Noto Serif KR", "Georgia", serif;
 
   --text-headline-lg: 48px;
   --text-headline-lg--line-height: 1.1;
