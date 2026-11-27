@@ -38,7 +38,7 @@ function CodeText({ className, children }: { className?: string; children?: Reac
   return insideCodeBlock ? (
     <code className={className}>{children}</code>
   ) : (
-    <code className="mx-0.5 font-mono text-code-snippet text-accent-strong">{children}</code>
+    <code className="mx-0.5 font-mono text-[0.875em] text-accent-strong">{children}</code>
   );
 }
 

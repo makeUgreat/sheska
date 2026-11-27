@@ -229,7 +229,7 @@ function AnswerText({ text }: { text: string }) {
     <p className="whitespace-pre-wrap break-words text-body-prose text-text-secondary">
       {text.split(/(`[^`\n]+`)/).map((part, index) =>
         part.length > 2 && part.startsWith('`') && part.endsWith('`') ? (
-          <code key={index} className="mx-0.5 font-mono text-code-snippet text-accent-strong">
+          <code key={index} className="mx-0.5 font-mono text-[0.875em] text-accent-strong">
             {part.slice(1, -1)}
           </code>
         ) : (
