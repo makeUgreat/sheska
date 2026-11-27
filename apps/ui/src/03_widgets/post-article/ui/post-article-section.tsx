@@ -1,8 +1,10 @@
 import { type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { AI_SUMMARY_NOTICE, type AiSummary, type GetPostResponse } from '@/entities/post';
+import { findProject } from '@/entities/project';
 import { formatDottedDate, type RevealPhase, useStagedReveal } from '@/shared/lib';
 import { AiMark, ArticleLayout, EmptyState, ErrorState } from '@/shared/ui';
+import { RelatedProject } from './post-related-project';
 import { SeriesContents, SeriesLine } from './post-series';
 
 export type PostArticleState =
@@ -38,12 +40,18 @@ export function PostArticleSection({ state, canOpenViews = false }: { state: Pos
 
   const { post } = state;
 
+  return <ArticleLayout header={<PostHeader post={post} canOpenViews={canOpenViews} />} body={post.body} footer={toPostEnd(post)} />;
+}
+
+function toPostEnd(post: GetPostResponse) {
+  const project = post.project ? findProject(post.project) : undefined;
+  if (!post.series && !project) return undefined;
+
   return (
-    <ArticleLayout
-      header={<PostHeader post={post} canOpenViews={canOpenViews} />}
-      body={post.body}
-      footer={post.series && <SeriesContents series={post.series} postId={post.postId} />}
-    />
+    <div className="flex flex-col gap-12">
+      {post.series && <SeriesContents series={post.series} postId={post.postId} />}
+      {project && <RelatedProject project={project} />}
+    </div>
   );
 }
 

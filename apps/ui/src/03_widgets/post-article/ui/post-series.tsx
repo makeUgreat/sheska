@@ -23,7 +23,7 @@ export function SeriesContents({ series, postId }: { series: PostSeries; postId:
   const headingId = useId();
 
   return (
-    <nav aria-labelledby={headingId} className="mt-16 border-t border-plate-line pt-6">
+    <nav aria-labelledby={headingId}>
       <p className="font-mono text-label-sm uppercase text-text-muted">Series</p>
       <h2 id={headingId} className="mt-1 break-words font-sans text-title-md text-text-primary">
         {series.name}
