@@ -21,6 +21,7 @@ describe('SourcePgDrizzleMapper', () => {
       body: '안녕',
       frontmatter: { title: '인사' },
       series: { kind: 'none' },
+      project: { kind: 'none' },
       title: '인사',
       fingerprint: 'fingerprint-1',
       size: sourceContentByteSize('안녕'),
@@ -72,6 +73,22 @@ describe('SourcePgDrizzleMapper', () => {
     expect(row).toMatchObject({ series: 'RAG', seriesOrder: 2 });
   });
 
+  it('저장된 관련 프로젝트 열로 관련 프로젝트를 복원한다', () => {
+    const row = buildSourceRow({ project: 'siru' });
+
+    const source = SourcePgDrizzleMapper.toDomain(row);
+
+    expect(source.getProps().project.unpack()).toEqual({ kind: 'related', slug: 'siru' });
+  });
+
+  it('관련 프로젝트를 관련 프로젝트 열로 변환한다', () => {
+    const source = buildSource({ frontmatter: { project: 'siru' } });
+
+    const row = SourcePgDrizzleMapper.toInsert(source);
+
+    expect(row).toMatchObject({ project: 'siru' });
+  });
+
   it('Source aggregate를 source insert row로 변환한다', () => {
     const source = buildSource();
 
@@ -84,6 +101,7 @@ describe('SourcePgDrizzleMapper', () => {
       frontmatter: { sheska: true },
       series: null,
       seriesOrder: null,
+      project: null,
       title: 'Notes/source.md',
       fingerprint: sha256Hex('# Source note'),
       sizeBytes: sourceContentByteSize('# Source note'),

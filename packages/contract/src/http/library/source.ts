@@ -57,6 +57,11 @@ export const SourceErrorCode = {
    */
   INVALID_SERIES: 'source.invalid_series',
   /**
+   * frontmatter `project`가 정해 둔 프로젝트 slug가 아니다. 쓸 수 있는 값은 `sheska`, `siru`, `nocap`, `home-cluster`다.
+   * `details.fields[].path`는 `frontmatter.project`다.
+   */
+  INVALID_PROJECT: 'source.invalid_project',
+  /**
    * 같은 경로의 새 파일을 다른 요청이 같은 순간에 먼저 받았다.
    * 다시 보내면 먼저 받은 source를 갱신한다.
    */
@@ -117,6 +122,7 @@ export const SourceApi = {
       SourceErrorCode.NOT_SYNC_TARGET,
       SourceErrorCode.INVALID_FRONTMATTER,
       SourceErrorCode.INVALID_SERIES,
+      SourceErrorCode.INVALID_PROJECT,
       SourceErrorCode.EXTERNAL_SOURCE_ID_ALREADY_EXISTS,
       SourceSyncJobErrorCode.ALREADY_ACTIVE,
       AuthErrorCode.UNAUTHENTICATED,

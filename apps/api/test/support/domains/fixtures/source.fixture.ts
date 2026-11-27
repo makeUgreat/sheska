@@ -1,4 +1,4 @@
-import { Source, SourceFrontmatter, SourceSeries, type SourceFrontmatterProps } from '@contexts/library/domain';
+import { Source, SourceFrontmatter, SourceProject, SourceSeries, type SourceFrontmatterProps } from '@contexts/library/domain';
 
 export function buildSource(
   params: {
@@ -23,6 +23,7 @@ export function buildSource(
     body,
     frontmatter: SourceFrontmatter.parse(frontmatter),
     series: SourceSeries.parse(frontmatter),
+    project: SourceProject.parse(frontmatter),
     size: params.size ?? sourceContentByteSize(params.content ?? body),
   });
 }
@@ -32,12 +33,13 @@ export function sourceContentByteSize(content: string): number {
 }
 
 export function sourceContentOf(source: Source) {
-  const { frontmatter, series, body, size } = source.getProps();
+  const { frontmatter, series, project, body, size } = source.getProps();
   const { text, fingerprint } = body.unpack();
 
   return {
     frontmatter: frontmatter.unpack(),
     series: series.unpack(),
+    project: project.unpack(),
     title: source.title(),
     body: text,
     fingerprint: fingerprint.unpack(),

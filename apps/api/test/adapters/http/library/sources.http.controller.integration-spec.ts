@@ -541,6 +541,31 @@ describe('SourcesHttpController', () => {
       });
     });
 
+    it('관련 프로젝트가 틀린 업로드는 400 응답과 틀린 키를 반환한다', async () => {
+      uploadSourceUseCase.execute.mockRejectedValue(
+        new ValidationFailedError({
+          code: 'source.invalid_project',
+          message: '`project` must be one of sheska, siru, nocap, home-cluster',
+          details: {
+            fields: [{ path: 'frontmatter.project', messages: ['must be one of sheska, siru, nocap, home-cluster'] }],
+          },
+        }),
+      );
+
+      const response = await request(httpServer)
+        .post('/sources')
+        .send({
+          externalSourceId: 'Notes/source.md',
+          content: '# Source note',
+        })
+        .expect(400);
+
+      expect(response.body).toMatchObject({
+        code: 'source.invalid_project',
+        details: { fields: [{ path: 'frontmatter.project' }] },
+      });
+    });
+
     it('use case가 계약에 선언한 ConstraintViolationError를 throw하면 409 응답을 반환한다', async () => {
       uploadSourceUseCase.execute.mockRejectedValue(
         new ConstraintViolationError({

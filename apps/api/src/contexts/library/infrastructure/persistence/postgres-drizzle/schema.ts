@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { bigint, customType, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
-import { type SourceFrontmatterProps } from '@contexts/library/domain';
+import { type SourceFrontmatterProps, type SourceProjectSlug } from '@contexts/library/domain';
 
 const tsvector = customType<{ data: string }>({
   dataType: () => 'tsvector',
@@ -15,6 +15,7 @@ export const sources = pgTable(
     frontmatter: jsonb('frontmatter').$type<SourceFrontmatterProps>().notNull().default({}),
     series: text('series'),
     seriesOrder: integer('series_order'),
+    project: text('project').$type<SourceProjectSlug>(),
     title: text('title').notNull(),
     fingerprint: text('fingerprint').notNull(),
     sizeBytes: integer('size_bytes').notNull(),
