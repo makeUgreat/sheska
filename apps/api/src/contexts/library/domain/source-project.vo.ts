@@ -2,11 +2,7 @@ import { InvariantViolationError, ValidationFailedError } from '@core/errors';
 import { ValueObject } from '@kernels/domain';
 import { type SourceFrontmatterProps, type SourceFrontmatterValue } from './source-frontmatter.vo';
 
-export type SourceProjectSlug = 'sheska' | 'siru' | 'nocap' | 'home-cluster';
-
-const PROJECT_SLUGS: readonly SourceProjectSlug[] = ['sheska', 'siru', 'nocap', 'home-cluster'];
-
-export type SourceProjectProps = { readonly kind: 'none' } | { readonly kind: 'related'; readonly slug: SourceProjectSlug };
+export type SourceProjectProps = { readonly kind: 'none' } | { readonly kind: 'related'; readonly name: string };
 
 export class SourceProject extends ValueObject<SourceProjectProps> {
   private constructor(props: SourceProjectProps) {
@@ -25,32 +21,39 @@ export class SourceProject extends ValueObject<SourceProjectProps> {
     const value = frontmatter.project ?? null;
     if (value === null) return SourceProject.none();
 
-    if (!SourceProject.isSlug(value)) {
+    if (!SourceProject.isText(value)) {
       throw new ValidationFailedError({
         code: 'source.invalid_project',
-        message: `\`project\` must be one of ${PROJECT_SLUGS.join(', ')}`,
+        message: '`project` must be a single string',
         details: {
-          fields: [{ path: 'frontmatter.project', messages: [`must be one of ${PROJECT_SLUGS.join(', ')}`] }],
+          fields: [{ path: 'frontmatter.project', messages: ['must be a single string'] }],
         },
       });
     }
 
-    return new SourceProject({ kind: 'related', slug: value });
+    const name = SourceProject.normalize(value);
+    if (name === '') return SourceProject.none();
+
+    return new SourceProject({ kind: 'related', name });
   }
 
   protected validate(props: SourceProjectProps): void {
     if (props.kind === 'none') return;
 
-    if (!SourceProject.isSlug(props.slug)) {
+    if (props.name === '' || props.name !== SourceProject.normalize(props.name)) {
       throw new InvariantViolationError({
         code: 'source.invalid_project',
-        message: `Source project must be one of ${PROJECT_SLUGS.join(', ')}`,
+        message: 'Source project must be a non-empty, trimmed, lowercase name',
         details: { fields: ['project'] },
       });
     }
   }
 
-  private static isSlug(value: SourceFrontmatterValue): value is SourceProjectSlug {
-    return PROJECT_SLUGS.some((slug) => slug === value);
+  private static isText(value: SourceFrontmatterValue): value is string {
+    return typeof value === 'string';
+  }
+
+  private static normalize(value: string): string {
+    return value.trim().toLowerCase();
   }
 }

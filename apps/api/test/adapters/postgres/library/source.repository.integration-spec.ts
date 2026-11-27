@@ -119,7 +119,7 @@ describe('SourceDrizzleRepository', () => {
     await repository.insert(source);
     const findResult = await repository.find({ externalSourceId });
 
-    expect(findResult?.getProps().project.unpack()).toEqual({ kind: 'related', slug: 'nocap' });
+    expect(findResult?.getProps().project.unpack()).toEqual({ kind: 'related', name: 'nocap' });
   });
 
   it('관련 프로젝트를 지우면 관련 프로젝트 열을 비운다', async () => {

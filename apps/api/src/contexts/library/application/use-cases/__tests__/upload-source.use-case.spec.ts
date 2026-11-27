@@ -448,7 +448,7 @@ describe('UploadSourceUseCase', () => {
   it('frontmatter의 관련 프로젝트를 source에 담아 저장한다', async () => {
     const documentParser = createDocumentParserMock({
       content: '# Source note',
-      frontmatter: { sheska: true, project: 'home-cluster' },
+      frontmatter: { sheska: true, project: ' Home-Cluster ' },
     });
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
@@ -456,14 +456,14 @@ describe('UploadSourceUseCase', () => {
 
     await useCase.execute({ externalSourceId: 'Notes/source.md', content: '# Source note' });
 
-    expect(sources.insert.mock.calls[0]?.[0].getProps().project.unpack()).toEqual({ kind: 'related', slug: 'home-cluster' });
+    expect(sources.insert.mock.calls[0]?.[0].getProps().project.unpack()).toEqual({ kind: 'related', name: 'home-cluster' });
   });
 
   // nocap: library-source-11
   it('관련 프로젝트가 틀리면 source를 조회하거나 저장하지 않고 거부한다', async () => {
     const documentParser = createDocumentParserMock({
       content: '# Source note',
-      frontmatter: { sheska: true, project: 'sheksa' },
+      frontmatter: { sheska: true, project: ['sheska', 'siru'] },
     });
     const sources = createSourceRepositoryMock();
     const syncJobs = createSourceSyncJobRepositoryMock();
@@ -500,7 +500,7 @@ describe('UploadSourceUseCase', () => {
     await useCase.execute({ externalSourceId: 'Notes/source.md', content: '# Source note' });
 
     expect(sources.update).toHaveBeenCalledOnce();
-    expect(sources.update.mock.calls[0]?.[0].getProps().project.unpack()).toEqual({ kind: 'related', slug: 'sheska' });
+    expect(sources.update.mock.calls[0]?.[0].getProps().project.unpack()).toEqual({ kind: 'related', name: 'sheska' });
     expect(syncJobs.insert).not.toHaveBeenCalled();
   });
 

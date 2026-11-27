@@ -57,7 +57,7 @@ export const SourceErrorCode = {
    */
   INVALID_SERIES: 'source.invalid_series',
   /**
-   * frontmatter `project`가 정해 둔 프로젝트 slug가 아니다. 쓸 수 있는 값은 `sheska`, `siru`, `nocap`, `home-cluster`다.
+   * frontmatter `project`가 문자열 하나가 아니다. 예: 목록, 숫자.
    * `details.fields[].path`는 `frontmatter.project`다.
    */
   INVALID_PROJECT: 'source.invalid_project',
