@@ -30,11 +30,6 @@ export interface TerminalCommand {
   complete?(argument: string): string[];
 }
 
-/** 다른 화면이 터미널 화면으로 보낼 때 router state에 담는다. 도착하면 이 줄을 한 번 실행한다. */
-export interface TerminalLaunchState {
-  run: string;
-}
-
 /** `ls`나 `grep`이 방금 보인 항목. `cat`이 이 제목으로 Tab 완성하고 연다. */
 export interface TerminalListedEntry {
   title: string;

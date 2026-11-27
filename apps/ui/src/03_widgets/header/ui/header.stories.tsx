@@ -7,7 +7,6 @@ import { Header } from './header';
 function buildStoryHttpClient(authenticated: boolean): HttpClient {
   return {
     get: () => Promise.resolve({ authenticated }),
-    delete: () => Promise.resolve(),
   } as unknown as HttpClient;
 }
 

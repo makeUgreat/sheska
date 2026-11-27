@@ -51,15 +51,11 @@ function createTestQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
 }
 
-function buildStoryHttpClient(
-  overrides: { get?: HttpCall } = {},
-  { authenticated = true, deleteSpy = fn<HttpCall>(() => Promise.resolve()) }: { authenticated?: boolean; deleteSpy?: HttpCall } = {},
-): HttpClient {
-  let loggedIn = authenticated;
+function buildStoryHttpClient(overrides: { get?: HttpCall } = {}, { authenticated = true }: { authenticated?: boolean } = {}): HttpClient {
   return {
     get: fn((path: string) => {
       if (path === '/auth/session') {
-        return Promise.resolve({ authenticated: loggedIn });
+        return Promise.resolve({ authenticated });
       }
       if (path === '/sources') {
         return Promise.resolve(SOURCE_LIST);
@@ -74,10 +70,6 @@ function buildStoryHttpClient(
     }),
     post: fn(),
     patch: fn(),
-    delete: (path: string) => {
-      loggedIn = false;
-      return deleteSpy(path);
-    },
     ...overrides,
   } as unknown as HttpClient;
 }
@@ -224,31 +216,6 @@ export const GuestHeader: Story = {
     await expect(await canvas.findByText('guest@hash')).toBeDefined();
     await expect(canvas.getByText('open ~/posts')).toBeDefined();
     await expect(canvas.queryByRole('link', { name: 'sources' })).toBeNull();
-  },
-};
-
-export const GuestLogIn: Story = {
-  name: '방문자가 노란 점을 누르면 메인 터미널에서 su를 실행한다',
-  tags: ['!dev'],
-  ...appAt('/posts', buildStoryHttpClient({}, { authenticated: false })),
-  play: async ({ canvas, userEvent }) => {
-    await userEvent.click(await canvas.findByRole('button', { name: 'Log in' }));
-
-    await expect(await canvas.findByLabelText('Password:')).toBeDefined();
-  },
-};
-
-const ownerDelete = fn<HttpCall>(() => Promise.resolve());
-
-export const OwnerLogOut: Story = {
-  name: '소유자가 노란 점을 누르면 로그아웃하고 sources 화면을 떠난다',
-  tags: ['!dev'],
-  ...appAt('/sources', buildStoryHttpClient({}, { deleteSpy: ownerDelete })),
-  play: async ({ canvas, userEvent }) => {
-    await userEvent.click(await canvas.findByRole('button', { name: 'Log out' }));
-
-    await expect(ownerDelete).toHaveBeenCalledWith('/auth/session');
-    await expect(await canvas.findByLabelText('guest@hash:~$')).toBeDefined();
   },
 };
 
