@@ -3,7 +3,7 @@ import nocapPreview from '../assets/nocap.webp';
 import sheskaPreview from '../assets/sheska.webp';
 import siruPreview from '../assets/siru.webp';
 import npmLogo from '../assets/logos/npm.svg';
-import serverLogo from '../assets/logos/server.svg';
+import homeClusterLogo from '../assets/logos/home-cluster.svg';
 import sheskaLogo from '../assets/logos/sheska.svg';
 import siruLogo from '../assets/logos/siru.svg';
 
@@ -67,7 +67,7 @@ export const PROJECTS: readonly Project[] = [
   {
     slug: 'home-cluster',
     name: 'Home Cluster',
-    logo: { src: serverLogo, alt: '' },
+    logo: { src: homeClusterLogo, alt: '' },
     category: 'Infra',
     tagline: 'N97·N100·N150 미니 PC 3대를 k3s로 묶어 운영하는 홈서버예요.',
     description: 'Sheska와 Siru가 배포되어 있고 새 기술과 인프라를 실험하는 공간이에요.',
