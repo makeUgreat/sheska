@@ -8,7 +8,7 @@ export default defineConfig({
     './src/contexts/iam/infrastructure/persistence/postgres-drizzle/schema.ts',
     './src/kernels/infrastructure/persistence/postgres-drizzle/outbox.pg-drizzle.schema.ts',
   ],
-  out: './database/drizzle',
+  out: process.env.DRIZZLE_OUT ?? './database/drizzle',
   dbCredentials: {
     url: process.env.DATABASE_URL ?? '',
   },

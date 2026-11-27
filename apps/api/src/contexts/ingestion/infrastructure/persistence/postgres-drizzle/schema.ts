@@ -1,4 +1,4 @@
-import { customType, integer, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
+import { customType, index, integer, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
 import { sources } from '@contexts/library/infrastructure/persistence/postgres-drizzle/schema';
 
 const vector = (name: string, dimensions: number) =>
@@ -27,7 +27,10 @@ export const sourceEmbeddings = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [primaryKey({ columns: [t.sourceId, t.chunkIndex] })],
+  (t) => [
+    primaryKey({ columns: [t.sourceId, t.chunkIndex] }),
+    index('source_embeddings_embedding_hnsw_idx').using('hnsw', t.embedding.op('vector_cosine_ops')),
+  ],
 );
 
 export type SourceEmbeddingRow = typeof sourceEmbeddings.$inferSelect;
