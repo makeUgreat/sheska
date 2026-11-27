@@ -26,6 +26,8 @@ export function usePostsArchive() {
   const isSearching = normalizedQuery.length >= 1;
 
   const listResult = useInfiniteListPosts({ limit, project: project ?? undefined });
+  const [listedProject, setListedProject] = useState(project);
+  if (!listResult.isPlaceholderData && listedProject !== project) setListedProject(project);
   const searchResult = useInfiniteSearchPosts(normalizedQuery, limit);
   const result = isSearching ? searchResult : listResult;
   const firstSearchPage = searchResult.data?.pages[0];
@@ -64,6 +66,7 @@ export function usePostsArchive() {
     semanticSearchApplied,
     project,
     selectProject,
+    listedProject,
     isSwitchingProject: !isSearching && listResult.isPlaceholderData,
     posts: pages.flatMap((page): PostSummary[] => page.posts),
     isLoading,

@@ -259,6 +259,7 @@ export function PostsListSection({
   filter: {
     project: string | null;
     onProjectChange: (project: string | null) => void;
+    listedProject: string | null;
     switching: boolean;
   };
   state: PostsListState;
@@ -317,6 +318,7 @@ export function PostsListSection({
           ) : (
             <div aria-busy={filter.switching} className={filter.switching ? SWITCHING_PROJECT : SETTLED}>
               <ArchiveIndex
+                key={filter.listedProject ?? 'all'}
                 entries={state.posts.map((post) => ({
                   id: post.postId,
                   href: `/posts/${post.postId}`,

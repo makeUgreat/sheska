@@ -45,6 +45,7 @@ export function PostsArchive() {
     semanticSearchApplied,
     project,
     selectProject,
+    listedProject,
     isSwitchingProject,
     posts,
     isLoading,
@@ -80,6 +81,7 @@ export function PostsArchive() {
       filter={{
         project,
         onProjectChange: selectProject,
+        listedProject,
         switching: isSwitchingProject,
       }}
       state={state}
