@@ -107,35 +107,40 @@ export const LinksToDetail: Story = {
   },
 };
 
-export const ViewCounts: Story = {
-  name: 'post 항목 안에 조회수를 보여준다',
+export const SeriesMeta: Story = {
+  name: '시리즈 글에만 시리즈 이름과 자리를 보이고, 날짜와 조회수는 보이지 않는다',
   tags: ['!dev'],
   decorators: listing([
     {
       postId: 'post-1',
       sourceId: 'source-1',
-      title: '많이 읽은 포스트',
+      title: '시리즈 포스트',
       viewCount: 1208,
       summary: { status: 'pending' },
+      series: { name: 'RAG 파이프라인', position: 2, total: 5 },
       createdAt: NOW,
       updatedAt: NOW,
     },
     {
       postId: 'post-2',
       sourceId: 'source-2',
-      title: '한 번 읽은 포스트',
+      title: '혼자인 포스트',
       viewCount: 1,
       summary: { status: 'pending' },
+      series: null,
       createdAt: NOW,
       updatedAt: NOW,
     },
   ]),
   play: async ({ canvas }) => {
-    const popular = await canvas.findByRole('link', { name: /많이 읽은 포스트/ });
-    const once = canvas.getByRole('link', { name: /한 번 읽은 포스트/ });
+    const inSeries = await canvas.findByRole('link', { name: /시리즈 포스트/ });
+    const alone = canvas.getByRole('link', { name: /혼자인 포스트/ });
 
-    await expect(within(popular).getByText('1,208 views')).toBeDefined();
-    await expect(within(once).getByText('1 view')).toBeDefined();
+    await expect(within(inSeries).getByText('RAG 파이프라인')).toBeDefined();
+    await expect(within(inSeries).getByText('2 / 5')).toBeDefined();
+    await expect(within(alone).queryByText(/ \/ /)).toBeNull();
+    await expect(canvas.queryByText(/views?$/)).toBeNull();
+    await expect(canvas.queryByText('Jan 01')).toBeNull();
   },
 };
 
@@ -235,38 +240,6 @@ export const SearchSnippet: Story = {
     const link = await canvas.findByRole('link', { name: /검색된 포스트/ });
     await expect(within(link).getByText(/근처 본문/)).toBeDefined();
     await expect(within(link).queryByText('요약 작성 중')).toBeNull();
-  },
-};
-
-export const GroupedByYear: Story = {
-  name: 'post를 작성 연도별로 묶어 보여준다',
-  tags: ['!dev'],
-  decorators: listing([
-    {
-      postId: 'post-1',
-      sourceId: 'source-1',
-      title: '올해 포스트',
-      viewCount: 1,
-      summary: { status: 'pending' },
-      createdAt: '2026-03-01T12:00:00.000Z',
-      updatedAt: '2026-03-01T12:00:00.000Z',
-    },
-    {
-      postId: 'post-2',
-      sourceId: 'source-2',
-      title: '작년 포스트',
-      viewCount: 2,
-      summary: { status: 'pending' },
-      createdAt: '2025-03-01T12:00:00.000Z',
-      updatedAt: '2025-03-01T12:00:00.000Z',
-    },
-  ]),
-  play: async ({ canvas }) => {
-    const thisYear = await canvas.findByRole('region', { name: '2026' });
-    const lastYear = canvas.getByRole('region', { name: '2025' });
-
-    await expect(within(thisYear).getByRole('link', { name: /올해 포스트/ })).toBeDefined();
-    await expect(within(lastYear).getByRole('link', { name: /작년 포스트/ })).toBeDefined();
   },
 };
 
