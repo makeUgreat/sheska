@@ -21,6 +21,7 @@ const MOCK_POST: GetPostResponse = {
   viewCount: 7,
   summary: { status: 'pending' },
   series: null,
+  project: null,
   createdAt: NOW,
   updatedAt: NOW,
   body: [

@@ -95,6 +95,7 @@ describe('PostPgDrizzleQuery', () => {
     const { posts: result } = await postQuery.paginate({
       limit: 20,
       cursor: null,
+      project: null,
     });
 
     const ids = result.map((p) => p.postId);
@@ -114,6 +115,7 @@ describe('PostPgDrizzleQuery', () => {
       const { posts: result, nextCursor } = await postQuery.paginate({
         limit: 2,
         cursor: null,
+        project: null,
       });
 
       expect(result).toHaveLength(2);
@@ -131,10 +133,11 @@ describe('PostPgDrizzleQuery', () => {
       await posts.insert(post2);
       await posts.insert(post3);
 
-      const firstPage = await postQuery.paginate({ limit: 2, cursor: null });
+      const firstPage = await postQuery.paginate({ limit: 2, cursor: null, project: null });
       const secondPage = await postQuery.paginate({
         limit: 2,
         cursor: firstPage.nextCursor!,
+        project: null,
       });
 
       const firstIds = firstPage.posts.map((p) => p.postId);
@@ -152,6 +155,7 @@ describe('PostPgDrizzleQuery', () => {
       const { posts: result, nextCursor } = await postQuery.paginate({
         limit: 10,
         cursor: veryOldCursor,
+        project: null,
       });
 
       expect(result).toHaveLength(0);
@@ -166,11 +170,12 @@ describe('PostPgDrizzleQuery', () => {
       const { posts: saved } = await postQuery.paginate({
         limit: 100,
         cursor: null,
+        project: null,
       });
       const savedPost1 = saved.find((p) => p.postId === post1.id)!;
       const cursor = { id: savedPost1.postId };
 
-      const { posts: result } = await postQuery.paginate({ limit: 10, cursor });
+      const { posts: result } = await postQuery.paginate({ limit: 10, cursor, project: null });
 
       const ids = result.map((p) => p.postId);
       expect(ids).not.toContain(post1.id);
@@ -187,6 +192,7 @@ describe('PostPgDrizzleQuery', () => {
       const { posts: result } = await postQuery.paginate({
         limit: 2,
         cursor: null,
+        project: null,
       });
 
       const ids = result.map((p) => p.postId);
@@ -776,7 +782,7 @@ describe('PostPgDrizzleQuery', () => {
         PostSummary.fail({ postId: source.id, fingerprint: SourceFingerprint.of('fingerprint-1'), finishedAt: FINISHED_AT }),
       );
 
-      const listed = await postQuery.paginate({ limit: 100, cursor: null });
+      const listed = await postQuery.paginate({ limit: 100, cursor: null, project: null });
       const searched = await postQuery.search({ query: 'Outbox 요약 목록', limit: 20, cursor: null, queryEmbedding: null });
 
       expect(listed.posts.find((post) => post.postId === source.id)?.summary).toEqual({ kind: 'failed' });
@@ -832,12 +838,67 @@ describe('PostPgDrizzleQuery', () => {
       const plain = await sources.insert(buildSource({ externalSourceId: 'Notes/pq-series-list-plain.md' }));
       await posts.insert(buildPost({ sourceId: plain.id }));
 
-      const { posts: listed } = await postQuery.paginate({ limit: 100, cursor: null });
+      const { posts: listed } = await postQuery.paginate({ limit: 100, cursor: null, project: null });
       const seriesOf = (postId: string) => listed.find((post) => post.postId === postId)?.series;
 
       expect(seriesOf(first)).toEqual({ name: 'PQ 목록', position: 1, total: 2 });
       expect(seriesOf(second)).toEqual({ name: 'PQ 목록', position: 2, total: 2 });
       expect(seriesOf(plain.id)).toBeNull();
+    });
+  });
+
+  describe('관련 프로젝트', () => {
+    async function insertProjectSource(params: { slug: string; project: string | null; publish?: boolean }) {
+      const source = await sources.insert(
+        buildSource({
+          externalSourceId: `Notes/pq-project-${params.slug}.md`,
+          frontmatter: params.project === null ? {} : { project: params.project },
+        }),
+      );
+      if (params.publish ?? true) await posts.insert(buildPost({ sourceId: source.id }));
+
+      return source.id;
+    }
+
+    it('상세와 목록은 저장된 관련 프로젝트를 돌려준다', async () => {
+      const related = await insertProjectSource({ slug: 'returned', project: 'pq-returned' });
+      const plain = await insertProjectSource({ slug: 'returned-none', project: null });
+
+      const detail = await postQuery.find({ id: related });
+      const { posts: listed } = await postQuery.paginate({ limit: 100, cursor: null, project: null });
+      const projectOf = (postId: string) => listed.find((post) => post.postId === postId)?.project;
+
+      expect(detail?.project).toBe('pq-returned');
+      expect(projectOf(related)).toBe('pq-returned');
+      expect(projectOf(plain)).toBeNull();
+    });
+
+    it('목록에 프로젝트를 주면 그 프로젝트와 관련된 발행된 post만 최신순으로 돌려준다', async () => {
+      const older = await insertProjectSource({ slug: 'filter-1', project: 'pq-filter' });
+      await insertProjectSource({ slug: 'filter-other', project: 'pq-filter-other' });
+      await insertProjectSource({ slug: 'filter-none', project: null });
+      const newer = await insertProjectSource({ slug: 'filter-2', project: 'pq-filter' });
+      await insertProjectSource({ slug: 'filter-draft', project: 'pq-filter', publish: false });
+
+      const result = await postQuery.paginate({ limit: 100, cursor: null, project: 'pq-filter' });
+
+      expect(result.posts.map((post) => post.postId)).toEqual([newer, older]);
+      expect(result.nextCursor).toBeNull();
+    });
+
+    it('프로젝트로 거른 목록의 다음 페이지도 그 프로젝트 안에서 이어진다', async () => {
+      const first = await insertProjectSource({ slug: 'page-1', project: 'pq-page' });
+      await insertProjectSource({ slug: 'page-other-1', project: 'pq-page-other' });
+      const second = await insertProjectSource({ slug: 'page-2', project: 'pq-page' });
+      await insertProjectSource({ slug: 'page-other-2', project: 'pq-page-other' });
+      const third = await insertProjectSource({ slug: 'page-3', project: 'pq-page' });
+
+      const firstPage = await postQuery.paginate({ limit: 2, cursor: null, project: 'pq-page' });
+      const secondPage = await postQuery.paginate({ limit: 2, cursor: firstPage.nextCursor, project: 'pq-page' });
+
+      expect(firstPage.posts.map((post) => post.postId)).toEqual([third, second]);
+      expect(secondPage.posts.map((post) => post.postId)).toEqual([first]);
+      expect(secondPage.nextCursor).toBeNull();
     });
   });
 

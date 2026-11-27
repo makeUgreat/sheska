@@ -19,6 +19,7 @@ function buildPostQueryResult(overrides: Partial<PostQueryResult> = {}): PostQue
     viewCount: overrides.viewCount ?? 1,
     summary: { kind: 'pending' },
     series: null,
+    project: null,
     createdAt: overrides.createdAt ?? new Date(),
     updatedAt: overrides.updatedAt ?? new Date(),
   };

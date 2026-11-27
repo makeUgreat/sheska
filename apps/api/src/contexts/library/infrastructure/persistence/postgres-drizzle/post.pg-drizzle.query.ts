@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { count, desc, inArray, lt, sql, type SQL } from 'drizzle-orm';
+import { and, count, desc, inArray, lt, sql, type SQL } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { NotFoundError } from '@core/errors';
 import { type PostSummaryOutcome } from '@contexts/library/domain';
@@ -41,6 +41,7 @@ type PostWithSourceRow = {
   updated_at: Date;
   source_body: string;
   series: string | null;
+  project: string | null;
 };
 
 type SeriesPositionRow = {
@@ -62,6 +63,7 @@ type PostListRow = {
   viewCount: number;
   createdAt: Date;
   updatedAt: Date;
+  project: string | null;
 };
 
 type SearchPostRow = {
@@ -108,7 +110,8 @@ export class PostPgDrizzleQuery implements PostQuery {
           p.created_at,
           p.updated_at,
           s.body        AS source_body,
-          s.series
+          s.series,
+          s.project
         FROM posts p
         INNER JOIN sources s ON p.id = s.id
         WHERE p.id = ${criteria.id}
@@ -142,17 +145,16 @@ export class PostPgDrizzleQuery implements PostQuery {
       viewCount: row.view_count,
       summary: summaries.get(row.post_id) ?? PENDING_SUMMARY,
       series,
+      project: row.project,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
       body: row.source_body,
     };
   }
 
-  async paginate({ limit, cursor }: PostQueryPaginateOptions): Promise<PostQueryPaginateResult> {
-    const isFirstPage = cursor === null;
-
+  async paginate({ limit, cursor, project }: PostQueryPaginateOptions): Promise<PostQueryPaginateResult> {
     try {
-      const baseQuery = this.db
+      const rows = await this.db
         .select({
           id: postsSchema.posts.id,
           sourceId: postsSchema.posts.id,
@@ -160,13 +162,18 @@ export class PostPgDrizzleQuery implements PostQuery {
           viewCount: postsSchema.posts.viewCount,
           createdAt: postsSchema.posts.createdAt,
           updatedAt: postsSchema.posts.updatedAt,
+          project: sql<string | null>`s.project`,
         })
         .from(postsSchema.posts)
         .innerJoin(sql`sources s`, sql`${postsSchema.posts.id} = s.id`)
+        .where(
+          and(
+            project === null ? undefined : sql`s.project = ${project}`,
+            cursor === null ? undefined : lt(postsSchema.posts.id, cursor.id),
+          ),
+        )
         .orderBy(desc(postsSchema.posts.id))
         .limit(limit + 1);
-
-      const rows = isFirstPage ? await baseQuery : await baseQuery.where(lt(postsSchema.posts.id, cursor.id));
 
       const { data, nextCursor } = sliceForCursor(rows, limit, (row) => ({
         id: row.id,
@@ -380,6 +387,7 @@ export class PostPgDrizzleQuery implements PostQuery {
         viewCount: row.viewCount,
         summary: summaries.get(row.id) ?? PENDING_SUMMARY,
         series: series.get(row.id) ?? null,
+        project: row.project,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       })),

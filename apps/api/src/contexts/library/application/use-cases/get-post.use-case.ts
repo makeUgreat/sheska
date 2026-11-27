@@ -14,6 +14,7 @@ export interface GetPostResult {
   readonly viewCount: number;
   readonly summary: PostQuerySummary;
   readonly series: PostQuerySeriesWithPosts | null;
+  readonly project: string | null;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }

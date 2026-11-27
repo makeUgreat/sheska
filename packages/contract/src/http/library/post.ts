@@ -48,6 +48,12 @@ const seriesSchema = z.object({
   total: z.number().int().positive(),
 });
 
+/**
+ * frontmatter `project`를 앞뒤 공백을 지우고 소문자로 바꾼 값. 서버는 어떤 프로젝트가 있는지 모른다.
+ * 화면은 아는 값만 보여 주고 모르는 값은 없는 것처럼 다룬다.
+ */
+const projectSchema = z.string().min(1);
+
 const seriesWithPostsSchema = seriesSchema.extend({
   /** 같은 시리즈의 발행된 post 전체. 차례대로 있고 이 post도 들어 있다. */
   posts: z.array(z.object({ postId: z.string(), title: z.string() })).min(1),
@@ -56,12 +62,16 @@ const seriesWithPostsSchema = seriesSchema.extend({
 const listItemSchema = summarySchema.extend({
   /** 시리즈에 속하지 않으면 `null`이다. */
   series: seriesSchema.nullable(),
+  /** 관련 프로젝트가 없으면 `null`이다. */
+  project: projectSchema.nullable(),
 });
 
 const postSchema = summarySchema.extend({
   body: z.string(),
   /** 시리즈에 속하지 않으면 `null`이다. */
   series: seriesWithPostsSchema.nullable(),
+  /** 관련 프로젝트가 없으면 `null`이다. */
+  project: projectSchema.nullable(),
 });
 
 const searchResultSchema = summarySchema.extend({
@@ -129,6 +139,8 @@ export const PostApi = {
     query: z.strictObject({
       cursor: cursorSchema.optional(),
       limit: limitSchema,
+      /** 주면 이 프로젝트와 관련된 post만 돌려준다. 서버가 앞뒤 공백을 지우고 소문자로 바꿔 비교한다. */
+      project: z.string().trim().toLowerCase().min(1).optional(),
     }),
     response: z.object({
       posts: z.array(listItemSchema),
