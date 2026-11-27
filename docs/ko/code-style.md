@@ -5,6 +5,7 @@ applies_to:
 read_when:
   - 함수 몸통을 쓰거나 리뷰할 때
   - 조건 분기의 순서를 정할 때
+  - 주석을 쓰거나 지울 때
 ---
 
 # 코드 모양
@@ -34,3 +35,22 @@ read_when:
   - 뒤에 이어지는 본문이 없으므로 순서가 기본 동작을 잘못 전하지 않음
 - 값의 종류에 따라 동작이 나뉘면 `switch`로 씀. 예: `switch (credential.type)`
   - 동작이 종류별로 나뉜다는 것이 모양으로 드러남
+
+## 주석
+- 코드에는 계약이 아닌 주석을 쓰지 않음. 의도는 변수와 함수 이름으로 드러냄
+  - 코드가 바뀌어도 주석은 같이 바뀌지 않음. 코드와 갈라진 주석은 없는 주석보다 나쁨
+  - 이름으로 드러나지 않는 이유는 커밋 메시지나 PR 본문에 씀
+- 계약에는 JSDoc으로 뜻을 적음. 계약은 다음 셋임
+  - HTTP 계약의 필드와 오류 code ([HTTP contract](../../apps/api/docs/ko/architecture/http-contract.md))
+  - 설정 묶음 env schema의 환경 변수 ([Runtime wiring](../../apps/api/docs/ko/architecture/runtime-wiring.md))
+  - application port가 주고받는 값의 뜻. 예: union 값의 뜻, 단위
+    - port JSDoc에도 구현 세부와 이유는 쓰지 않음
+- 계약이 아닌 주석은 `// WHY:`로 시작하는 한 줄 주석으로 씀. JSDoc(`/** */`)은 계약에만 씀
+  - JSDoc은 hover에 보이는 API 설명임. 이유 설명이 섞이면 계약과 구분할 수 없음
+  - 예: `// WHY: parser 오류를 그대로 두면 500이 된다. 사용자가 올린 파일이 틀린 것이므로 400으로 바꾼다.`
+- lint와 타입 검사 지시어, `// nocap: <규칙 ID>` 태그는 도구가 읽는 표시임. 이 규칙의 대상이 아님
+  - 예: `// eslint-disable-next-line`, `// @ts-expect-error`
+- 사람은 계약이 아닌 자리에도 주석을 추가할 수 있음. AI agent는 사용자가 요청할 때만 계약이 아닌 자리에 주석을 추가함
+  - 사람이 남기거나 요청한 주석은 이름으로 드러낼 수 없는 제약이라고 판단한 결과임
+- AI agent는 이미 있는 주석을 지우지 않고, 사용자가 지운 주석을 되살리지 않음
+  - agent가 주석이 설명하는 코드를 바꿔 주석 내용이 틀리게 되면, 주석을 고칠지 사용자에게 물음
