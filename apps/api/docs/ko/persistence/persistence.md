@@ -19,6 +19,13 @@ related:
 ## 검색 벡터 열
 - 검색 벡터는 색인 대상과 같은 테이블의 generated column으로 둠. 애플리케이션이나 다른 테이블의 trigger가 쓰지 않음
 
+## Migration
+- migration은 schema.ts를 먼저 고치고 `pnpm --filter api db:generate --name <이름>`으로 만듦
+  - SQL만 손으로 쓰면 snapshot이 schema.ts를 따라가지 않음. 다음 generate가 같은 변경을 다시 만듦
+- drizzle이 표현하지 못하는 변경은 `db:generate --custom --name <이름>`으로 빈 migration을 만들고 SQL을 채움
+  - 예: 함수, extension, 데이터 backfill
+- CI는 db:generate가 새 파일을 만들지 않는지 검사함. schema.ts와 migration이 어긋나면 실패함
+
 ## Mapper
 - DB 행은 도메인의 복원 API로 객체를 만들고, 복원 중 생긴 도메인 exception은 그대로 전파함
 - 쓰기 메서드가 돌려주는 객체는 DB가 돌려준 행으로 복원함

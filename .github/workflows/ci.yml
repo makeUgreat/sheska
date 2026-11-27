@@ -30,7 +30,7 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec turbo run lint typecheck build test $TURBO_SCOPE
+      - run: pnpm exec turbo run lint typecheck build test db:check $TURBO_SCOPE
 
   docker:
     runs-on: ubuntu-latest

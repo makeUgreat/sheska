@@ -5,6 +5,7 @@
     "typecheck": { "dependsOn": ["^build"] },
     "lint": { "dependsOn": ["^build"] },
     "//#lint": {},
+    "db:check": {},
     "test": {
       "dependsOn": ["test:unit", "test:http", "test:app", "test:logger", "test:image", "test:lint"]
     },

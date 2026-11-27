@@ -23,6 +23,7 @@
     "test:runtime": "pnpm runtime:start; status=$?; pnpm runtime:stop; exit $status",
     "test:ollama": "vitest run --project ollama",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
+    "db:check": "sh database/check.sh",
     "db:migrate": "NODE_ENV=development node --env-file=.env.development -r ts-node/register -r tsconfig-paths/register database/migrate.ts",
     "db:reset": "NODE_ENV=development node --env-file=.env.development -r ts-node/register -r tsconfig-paths/register database/reset.ts",
     "db:seed": "NODE_ENV=development node --env-file=.env.development -r ts-node/register -r tsconfig-paths/register database/seed.ts",
