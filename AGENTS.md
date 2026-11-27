@@ -20,6 +20,7 @@ Before adding or changing a convention document (`docs/ko/`, `apps/*/docs/ko/`, 
 - [Context integration](apps/api/docs/ko/architecture/context-integration.md): events, outbox, cross-context ports and ACL
 - [Source dependency](apps/api/docs/ko/architecture/source-dependency.md): where code goes, import direction, public surface, kernels
 - [Runtime wiring](apps/api/docs/ko/architecture/runtime-wiring.md): NestJS modules and DI, config bundles, secrets
+- [Data boundary](apps/api/docs/ko/architecture/data-boundary.md): parsing outside values (HTTP, file content, external APIs, stored rows) into domain objects, and where each check belongs
 - [HTTP contract](apps/api/docs/ko/architecture/http-contract.md): endpoints, request/response shapes, error codes. Also read it when UI or Obsidian plugin code calls the API.
 - [Persistence](apps/api/docs/ko/persistence/persistence.md): schema, constraints, mappers, repository and query port methods
 - [Errors and logging](apps/api/docs/ko/operability/error.md), [Fault tolerance](apps/api/docs/ko/operability/fault-tolerance.md), [Observability](apps/api/docs/ko/operability/observability.md)
