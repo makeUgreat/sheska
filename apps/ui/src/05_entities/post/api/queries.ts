@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useHttpClient } from '@/shared/api';
 import { countPosts, getPost, listPosts, listPostViews, publishPost, searchPosts, unpublishPost } from './client';
 import { type PublishPostRequest } from './types';
@@ -32,13 +32,14 @@ export function useCountPosts() {
   });
 }
 
-export function useInfiniteListPosts(limit?: number, enabled = true) {
+export function useInfiniteListPosts({ limit, project }: { limit?: number; project?: string } = {}, enabled = true) {
   const http = useHttpClient();
   return useInfiniteQuery({
-    queryKey: ['posts', 'infinite', limit],
-    queryFn: ({ pageParam }) => listPosts(http, { cursor: pageParam, limit }),
+    queryKey: ['posts', 'infinite', limit, project],
+    queryFn: ({ pageParam }) => listPosts(http, { cursor: pageParam, limit, project }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    placeholderData: keepPreviousData,
     enabled,
   });
 }

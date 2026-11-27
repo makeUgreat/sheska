@@ -22,25 +22,25 @@ function buildStoryHttpClient({
   countPosts = respondWith({ count: 0 }),
   searchPosts = respondWith(NO_POSTS),
 }: {
-  listPosts?: () => Promise<unknown>;
+  listPosts?: (query?: Record<string, string>) => Promise<unknown>;
   countPosts?: () => Promise<unknown>;
   searchPosts?: () => Promise<unknown>;
 } = {}): HttpClient {
   return {
-    get: fn((path: string) => {
+    get: fn((path: string, _schema: unknown, query?: Record<string, string>) => {
       if (path === '/posts/count') return countPosts();
       if (path === '/posts/search') return searchPosts();
-      return listPosts();
+      return listPosts(query);
     }),
     post: fn(),
     patch: fn(),
   } as unknown as HttpClient;
 }
 
-function withPage(client: HttpClient) {
+function withPage(client: HttpClient, initialEntries?: string[]) {
   return [
     (Story: () => React.ReactElement) => (
-      <MemoryRouter>
+      <MemoryRouter initialEntries={initialEntries}>
         <QueryClientProvider client={createTestQueryClient()}>
           <HttpClientProvider client={client}>
             <Story />
@@ -377,5 +377,78 @@ export const SearchOnButton: Story = {
       await expect(canvas.getByText('"fts"')).toBeDefined();
       await expect(canvas.getByText('Nothing matches this.')).toBeDefined();
     });
+  },
+};
+
+const PROJECT_POST: PostSummary = {
+  postId: 'post-project',
+  sourceId: 'source-project',
+  title: '프로젝트 포스트',
+  viewCount: 1,
+  summary: { status: 'pending' },
+  project: 'sheska',
+  createdAt: NOW,
+  updatedAt: NOW,
+};
+
+const listByProject = respondWith(NO_POSTS);
+
+export const FiltersByProject: Story = {
+  name: '칩을 누르면 그 프로젝트로 목록을 다시 읽고, All을 누르면 거르기를 푼다',
+  tags: ['!dev'],
+  decorators: withPage(buildStoryHttpClient({ listPosts: listByProject })),
+  play: async ({ canvas, userEvent }) => {
+    await waitFor(() => expect(listByProject).toHaveBeenCalledWith(undefined));
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Sheska' }));
+    await waitFor(() => expect(listByProject).toHaveBeenLastCalledWith({ project: 'sheska' }));
+    await expect(canvas.getByRole('button', { name: 'Sheska' })).toHaveAttribute('aria-pressed', 'true');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'All' }));
+    await expect(canvas.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
+  },
+};
+
+const listFromUnknownProject = respondWith(NO_POSTS);
+
+export const IgnoresUnknownProject: Story = {
+  name: '주소의 프로젝트를 화면이 모르면 거르지 않는다',
+  tags: ['!dev'],
+  decorators: withPage(buildStoryHttpClient({ listPosts: listFromUnknownProject }), ['/posts?project=sheksa']),
+  play: async ({ canvas }) => {
+    await waitFor(() => expect(listFromUnknownProject).toHaveBeenCalledWith(undefined));
+    await expect(canvas.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
+  },
+};
+
+const listThenWait = fn((query?: Record<string, string>) =>
+  query?.project ? new Promise(() => {}) : Promise.resolve({ posts: [PROJECT_POST], nextCursor: null }),
+);
+
+export const KeepsListWhileSwitching: Story = {
+  name: '프로젝트를 바꾸면 새 목록이 올 때까지 앞 목록을 흐리게 남긴다',
+  tags: ['!dev'],
+  decorators: withPage(buildStoryHttpClient({ listPosts: listThenWait })),
+  play: async ({ canvas, userEvent }) => {
+    const link = await canvas.findByRole('link', { name: /프로젝트 포스트/ });
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Siru' }));
+    await waitFor(() => expect(link.closest('[aria-busy]')).toHaveAttribute('aria-busy', 'true'));
+    await expect(link).toBeVisible();
+  },
+};
+
+const listBeforeSearch = respondWith(NO_POSTS);
+
+export const SearchClearsProject: Story = {
+  name: '검색하면 프로젝트 거르기를 풀고 칩을 숨긴다',
+  tags: ['!dev'],
+  decorators: withPage(buildStoryHttpClient({ listPosts: listBeforeSearch }), ['/posts?project=sheska']),
+  play: async ({ canvas, userEvent }) => {
+    await waitFor(() => expect(listBeforeSearch).toHaveBeenLastCalledWith({ project: 'sheska' }));
+
+    await userEvent.type(canvas.getByLabelText('Search posts by title or content'), 'garden{Enter}');
+    await waitFor(() => expect(canvas.queryByRole('group', { name: 'Filter by project' })).toBeNull());
+    await waitFor(() => expect(listBeforeSearch).toHaveBeenLastCalledWith(undefined));
   },
 };

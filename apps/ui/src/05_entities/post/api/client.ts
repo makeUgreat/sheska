@@ -19,6 +19,7 @@ export function listPosts(http: HttpClient, params?: ListPostsParams): Promise<L
   const queryParams: Record<string, string> = {};
   if (params?.cursor) queryParams.cursor = params.cursor;
   if (params?.limit) queryParams.limit = String(params.limit);
+  if (params?.project) queryParams.project = params.project;
 
   return http.get(PostApi.list.path, PostApi.list.response, Object.keys(queryParams).length > 0 ? queryParams : undefined);
 }

@@ -16,6 +16,7 @@ export type PostSeries = PostSeriesResponse;
 
 export type PostSummary = PostSummaryResponse & {
   series?: PostSeries | null;
+  project?: string | null;
 } & Partial<Pick<PostSearchResultResponse, 'similarity' | 'snippet'>>;
 
 export type ListPostsParams = ApiQuery<typeof PostApi.list>;
