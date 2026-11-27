@@ -9,7 +9,7 @@ export function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
 
   return (
-    <main className="min-h-screen overflow-x-clip bg-page-background px-4 pb-36">
+    <main className="min-h-screen overflow-x-clip bg-page-background px-4 pb-24">
       <div className="relative mx-auto max-w-measure">
         <PostArticle postId={id} />
       </div>
