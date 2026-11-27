@@ -60,13 +60,10 @@ function useRehypePlugins(body: string) {
  *
  * 제목 아래 글은 `<section>` 안에 든다. 본문 바로 아래 block을 고르는 규칙은 섹션 바로 아래 block도 함께 고른다.
  *
- * 넓은 화면에서는 본문 바로 아래 목록의 기호를 왼쪽 여백에 건다. 중첩 목록은 들여쓰기로 깊이를 보여야 하므로 남긴다.
- *
  * 긴 수식 block은 줄일 수 없으므로 자기 안에서 가로로 스크롤한다.
  */
 const BODY =
   'section-focus break-words break-keep [&>*:first-child]:mt-0 [&>section:first-child>:first-child]:mt-0 ' +
-  'margin-label:[&>ul]:pl-0 margin-label:[&>ol]:pl-0 margin-label:[&_section>ul]:pl-0 margin-label:[&_section>ol]:pl-0 ' +
   '[&_.katex-display]:overflow-x-auto [&_.katex-display]:overflow-y-hidden';
 
 export function Markdown({ body, className = '' }: { body: string; className?: string }) {
