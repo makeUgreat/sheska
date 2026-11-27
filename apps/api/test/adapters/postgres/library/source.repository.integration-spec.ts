@@ -7,7 +7,7 @@ import { type SourceEmbeddingRepository } from '@contexts/ingestion/domain';
 import { SourceEmbeddingPgDrizzleRepository } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/source-embedding.pg-drizzle.repository';
 import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
 import { SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
-import { type SourceRepository } from '@contexts/library/domain';
+import { SourceFrontmatter, type SourceRepository } from '@contexts/library/domain';
 import * as schema from '@contexts/library/infrastructure/persistence/postgres-drizzle/schema';
 import { SourcePgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
 import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
@@ -61,7 +61,7 @@ describe('SourceDrizzleRepository', () => {
 
     source.syncContent({
       body: '# Changed source note',
-      frontmatter: { sheska: true },
+      frontmatter: SourceFrontmatter.parse({ sheska: true }),
       size: sourceContentByteSize('# Changed source note'),
     });
 

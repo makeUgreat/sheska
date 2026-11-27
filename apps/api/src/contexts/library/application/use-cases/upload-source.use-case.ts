@@ -46,13 +46,14 @@ export class UploadSourceUseCase {
   async execute(command: UploadSourceCommand): Promise<UploadSourceResult> {
     const externalSourceId = ExternalSourceId.of(command.externalSourceId).unpack();
     const document = this.parseDocument(command.content);
-    this.ensureSyncTarget(document);
-    const size = new TextEncoder().encode(command.content).length;
+    const content: UploadContent = {
+      body: document.body,
+      frontmatter: SourceFrontmatter.parse(document.frontmatter),
+      size: new TextEncoder().encode(command.content).length,
+    };
 
     const existingSource = await this.sources.find({ externalSourceId });
-    const changes = existingSource
-      ? await this.syncSource(existingSource, document, size)
-      : this.createSource(externalSourceId, document, size);
+    const changes = existingSource ? await this.syncSource(existingSource, content) : this.createSource(externalSourceId, content);
 
     await this.persist(changes);
     return this.toResult(changes);
@@ -75,8 +76,8 @@ export class UploadSourceUseCase {
     }
   }
 
-  private createSource(externalSourceId: string, document: ParsedSourceDocument, size: number): UploadChanges {
-    const source = Source.create({ externalSourceId, ...document, size });
+  private createSource(externalSourceId: string, content: UploadContent): UploadChanges {
+    const source = Source.create({ externalSourceId, ...content });
 
     return {
       source,
@@ -86,8 +87,8 @@ export class UploadSourceUseCase {
     };
   }
 
-  private async syncSource(source: Source, document: ParsedSourceDocument, size: number): Promise<UploadChanges> {
-    const sourceChanged = source.syncContent({ ...document, size });
+  private async syncSource(source: Source, content: UploadContent): Promise<UploadChanges> {
+    const sourceChanged = source.syncContent(content);
     const latestSyncJob = await this.syncJobs.findLatest({
       sourceId: source.id,
     });
@@ -135,18 +136,6 @@ export class UploadSourceUseCase {
     };
   }
 
-  private ensureSyncTarget(document: ParsedSourceDocument): void {
-    if (SourceFrontmatter.of(document.frontmatter).isSyncTarget()) return;
-
-    throw new ValidationFailedError({
-      code: 'source.not_sync_target',
-      message: 'Only a file whose frontmatter has `sheska: true` can be uploaded',
-      details: {
-        fields: [{ path: 'frontmatter.sheska', messages: ['must be true'] }],
-      },
-    });
-  }
-
   private toSourceBodyChangedEvents(source: Source): SourceBodyChangedEvent[] {
     return source.domainEvents.map(
       (event) =>
@@ -168,6 +157,12 @@ export class UploadSourceUseCase {
         }),
     );
   }
+}
+
+interface UploadContent {
+  readonly body: string;
+  readonly frontmatter: SourceFrontmatter;
+  readonly size: number;
 }
 
 interface UploadChanges {

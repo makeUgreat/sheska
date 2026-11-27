@@ -3,8 +3,8 @@ import { SourceFrontmatter } from '../source-frontmatter.vo';
 
 describe('SourceFrontmatter', () => {
   // nocap: library-source-6
-  it('sheska가 YAML boolean true이면 동기화 대상이다', () => {
-    expect(SourceFrontmatter.of({ sheska: true }).isSyncTarget()).toBe(true);
+  it('sheska가 YAML boolean true이면 frontmatter로 읽는다', () => {
+    expect(SourceFrontmatter.parse({ sheska: true, title: 'Retry' }).unpack()).toEqual({ sheska: true, title: 'Retry' });
   });
 
   // nocap: library-source-6
@@ -14,8 +14,14 @@ describe('SourceFrontmatter', () => {
     ['1', { sheska: 1 }],
     ['false', { sheska: false }],
     ['없음', {}],
-  ])('sheska가 %s이면 동기화 대상이 아니다', (_label, frontmatter) => {
-    expect(SourceFrontmatter.of(frontmatter).isSyncTarget()).toBe(false);
+  ])('sheska가 %s이면 호출자가 고칠 오류로 거부한다', (_label, frontmatter) => {
+    expect(() => SourceFrontmatter.parse(frontmatter)).toThrow(
+      expect.objectContaining({
+        kind: 'validation_failed',
+        code: 'source.not_sync_target',
+        details: { fields: [{ path: 'frontmatter.sheska', messages: ['must be true'] }] },
+      }),
+    );
   });
 
   it('중첩된 객체까지 키 순서와 무관하게 비교한다', () => {

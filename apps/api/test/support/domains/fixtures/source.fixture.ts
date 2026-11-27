@@ -1,4 +1,4 @@
-import { Source, type SourceFrontmatterProps } from '@contexts/library/domain';
+import { Source, SourceFrontmatter, type SourceFrontmatterProps } from '@contexts/library/domain';
 
 export function buildSource(
   params: {
@@ -16,11 +16,11 @@ export function buildSource(
   return Source.create({
     externalSourceId,
     body,
-    frontmatter: {
+    frontmatter: SourceFrontmatter.parse({
       sheska: true,
       ...params.frontmatter,
       ...(params.title ? { title: params.title } : {}),
-    },
+    }),
     size: params.size ?? sourceContentByteSize(params.content ?? body),
   });
 }
