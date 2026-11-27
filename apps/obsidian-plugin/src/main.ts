@@ -1,10 +1,11 @@
-import { Notice, Plugin, TFile } from 'obsidian';
+import { MarkdownView, Notice, Plugin, TFile } from 'obsidian';
 import type { TAbstractFile } from 'obsidian';
 import { SheskaApiClient } from '@/api/client';
 import { readApiToken } from '@/api-token';
 import { AutoSyncService } from '@/auto-sync';
 import { FileExplorerSyncDecorator, type FileExplorerSyncStatus } from '@/file-explorer-sync-decorator';
 import { HealthCheckScheduler } from '@/health-check';
+import { renderRejectionBanner } from '@/rejection-banner';
 import { SheskaSettingTab } from '@/settings';
 import type { SheskaSettings } from '@/settings';
 import { PluginDataStore } from '@/storage';
@@ -49,6 +50,7 @@ export default class SheskaPlugin extends Plugin {
     this.registerAutoSyncEvents();
     this.registerSyncStatusBar();
     this.registerFileExplorerSyncBadges();
+    this.registerRejectionBanners();
 
     this.healthCheckScheduler.start();
     this.startAutoSyncSweepInterval();
@@ -63,6 +65,7 @@ export default class SheskaPlugin extends Plugin {
   }
 
   onunload(): void {
+    this.clearRejectionBanners();
     this.healthCheckScheduler.stop();
     this.stopAutoSyncSweepInterval();
     this.stopSyncJobReconcileInterval();
@@ -111,6 +114,7 @@ export default class SheskaPlugin extends Plugin {
     await this.saveSyncCache();
 
     this.fileExplorerSyncDecorator.renderAll();
+    this.refreshRejectionBanners();
     const activeFile = this.app.workspace.getActiveFile();
     if (activeFile) this.updateSyncStatusBar(activeFile);
   }
@@ -228,6 +232,32 @@ export default class SheskaPlugin extends Plugin {
   private refreshSyncIndicators(path: string): void {
     this.refreshStatusBarIfActive(path);
     this.fileExplorerSyncDecorator?.render(path);
+    this.refreshRejectionBanners();
+  }
+
+  private registerRejectionBanners(): void {
+    this.registerEvent(this.app.workspace.on('layout-change', () => this.refreshRejectionBanners()));
+    this.app.workspace.onLayoutReady(() => this.refreshRejectionBanners());
+  }
+
+  /** 한 노트를 여러 창에 열 수 있고, 창이 다른 노트로 바뀌면 이전 노트의 배너를 지워야 한다. */
+  private refreshRejectionBanners(): void {
+    for (const view of this.markdownViews()) {
+      renderRejectionBanner(view.contentEl, view.file ? this.autoSyncService.getRejection(view.file) : null);
+    }
+  }
+
+  private clearRejectionBanners(): void {
+    for (const view of this.markdownViews()) {
+      renderRejectionBanner(view.contentEl, null);
+    }
+  }
+
+  private markdownViews(): MarkdownView[] {
+    return this.app.workspace
+      .getLeavesOfType('markdown')
+      .map((leaf) => leaf.view)
+      .filter((view): view is MarkdownView => view instanceof MarkdownView);
   }
 
   private refreshStatusBarIfActive(path: string): void {
@@ -247,6 +277,7 @@ export default class SheskaPlugin extends Plugin {
       this.app.workspace.on('file-open', (file) => {
         this.updateSyncStatusBar(file);
         this.pollActiveFileSyncJob(file);
+        this.refreshRejectionBanners();
       }),
     );
   }

@@ -2,6 +2,12 @@ import type { Plugin } from 'obsidian';
 import { DEFAULT_SETTINGS } from '@/settings';
 import type { SheskaSettings } from '@/settings';
 
+/** 서버가 고쳐야 하는 이유로 거부한 노트 버전의 원인이다. */
+export interface NoteRejection {
+  code?: string;
+  message: string;
+}
+
 export interface SyncCacheEntry {
   mtime: number;
   syncedAt?: number;
@@ -12,6 +18,7 @@ export interface SyncCacheEntry {
   status?: 'accepted' | 'processing' | 'synced' | 'failed' | 'unknown' | 'retrying';
   retryCount?: number;
   nextRetryAt?: number;
+  rejection?: NoteRejection;
 }
 
 export type SyncCache = Record<string, SyncCacheEntry>;

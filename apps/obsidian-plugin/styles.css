@@ -46,3 +46,44 @@
     transform: rotate(360deg);
   }
 }
+
+.view-content.sheska-has-rejection {
+  display: flex;
+  flex-direction: column;
+}
+
+.view-content.sheska-has-rejection > .markdown-source-view,
+.view-content.sheska-has-rejection > .markdown-reading-view {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sheska-rejection-banner {
+  background-color: rgba(var(--color-red-rgb), 0.1);
+  border-bottom: 1px solid rgba(var(--color-red-rgb), 0.4);
+  flex: 0 0 auto;
+  font-size: var(--font-ui-small);
+  padding: var(--size-4-2) var(--size-4-4);
+}
+
+.sheska-rejection-banner p {
+  margin: 0;
+}
+
+.sheska-rejection-banner-title {
+  color: var(--text-error);
+  font-weight: var(--font-semibold);
+}
+
+.sheska-rejection-banner-message {
+  color: var(--text-normal);
+  margin-top: var(--size-2-1);
+  user-select: text;
+}
+
+.sheska-rejection-banner-code {
+  color: var(--text-muted);
+  display: inline-block;
+  margin-top: var(--size-2-1);
+  user-select: text;
+}

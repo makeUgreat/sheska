@@ -117,7 +117,7 @@ describe('SheskaApiClient', () => {
       });
     });
 
-    it('carries the failure code when the body is an API error response', async () => {
+    it('carries the failure code and message when the body is an API error response', async () => {
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({
@@ -139,6 +139,7 @@ describe('SheskaApiClient', () => {
       await expect(client.get('/sources', passthrough)).rejects.toMatchObject({
         status: 422,
         code: 'source.invalid_content',
+        serverMessage: 'Invalid content',
       });
     });
 
@@ -156,6 +157,7 @@ describe('SheskaApiClient', () => {
       await expect(client.get('/sources', passthrough)).rejects.toMatchObject({
         status: 502,
         code: undefined,
+        serverMessage: undefined,
       });
     });
   });
