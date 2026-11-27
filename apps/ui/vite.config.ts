@@ -16,6 +16,8 @@ const sourceLayerAliases = {
   '@': './src',
 };
 
+const neverInlineFonts = (filePath: string) => (/\.woff2?$/.test(filePath) ? false : undefined);
+
 export default defineConfig(({ mode }) => {
   const { API_BASE_URL } = loadEnv(mode, fileURLToPath(new URL('.', import.meta.url)), '');
   const apiProxy = {
@@ -33,6 +35,7 @@ export default defineConfig(({ mode }) => {
         replacement: fileURLToPath(new URL(target, import.meta.url)),
       })),
     },
+    build: { assetsInlineLimit: neverInlineFonts },
     server: { proxy: apiProxy },
     preview: { proxy: apiProxy },
     test: {
