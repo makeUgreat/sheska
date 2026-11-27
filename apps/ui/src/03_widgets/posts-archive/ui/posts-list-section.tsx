@@ -1,5 +1,6 @@
-import { type CSSProperties, type FormEvent, type Ref } from 'react';
+import { type CSSProperties, type FormEvent, type ReactNode, type Ref } from 'react';
 import { AI_SUMMARY_NOTICE, type AiSummary, type PostSeries, type PostSummary } from '@/entities/post';
+import { findProject, type Project, PROJECTS, ProjectTag } from '@/entities/project';
 import { type RevealPhase, useStagedReveal } from '@/shared/lib';
 import { AiMark, ArchiveIndex, EmptyState, EndOfList, ErrorState } from '@/shared/ui';
 
@@ -167,11 +168,66 @@ function SeriesMeta({ series }: { series: PostSeries }) {
   );
 }
 
+function ProjectMeta({ project, series }: { project: Project; series: PostSeries | null }) {
+  return (
+    <span className="flex min-w-0 items-center">
+      <span className="sr-only">Project</span>
+      <ProjectTag project={project} className="text-text-secondary" />
+      {series && (
+        <>
+          <span aria-hidden="true" className="mx-2">
+            ·
+          </span>
+          <SeriesMeta series={series} />
+        </>
+      )}
+    </span>
+  );
+}
+
 function postMeta(post: PostSummary, isSearching: boolean) {
   if (isSearching) return post.similarity != null && `${post.similarity}% match`;
 
-  return post.series && <SeriesMeta series={post.series} />;
+  const project = post.project ? findProject(post.project) : undefined;
+  if (!project) return post.series && <SeriesMeta series={post.series} />;
+
+  return <ProjectMeta project={project} series={post.series ?? null} />;
 }
+
+const CHIP =
+  'inline-flex h-[30px] items-center rounded-full border px-3 font-mono text-label-sm tracking-normal transition-colors duration-150 ' +
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:transition-none';
+
+function ProjectChip({ pressed, onPress, children }: { pressed: boolean; onPress: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={pressed}
+      onClick={onPress}
+      className={`${CHIP} ${pressed ? 'border-text-primary text-text-primary' : 'border-plate-line text-text-secondary hover:border-text-muted'}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ProjectChips({ selected, onSelect }: { selected: string | null; onSelect: (project: string | null) => void }) {
+  return (
+    <div role="group" aria-label="Filter by project" className="mt-4 flex flex-wrap gap-2">
+      <ProjectChip pressed={selected === null} onPress={() => onSelect(null)}>
+        All
+      </ProjectChip>
+      {PROJECTS.map((project) => (
+        <ProjectChip key={project.slug} pressed={selected === project.slug} onPress={() => onSelect(project.slug)}>
+          <ProjectTag project={project} />
+        </ProjectChip>
+      ))}
+    </div>
+  );
+}
+
+const SWITCHING_PROJECT = 'opacity-35 transition-opacity delay-200 duration-150 motion-reduce:transition-none';
+const SETTLED = 'transition-opacity duration-150 motion-reduce:transition-none';
 
 function Highlighted({ text, query }: { text: string; query: string }) {
   if (!query) return <>{text}</>;
@@ -190,6 +246,7 @@ function Highlighted({ text, query }: { text: string; query: string }) {
 
 export function PostsListSection({
   search,
+  filter,
   state,
 }: {
   search: {
@@ -198,6 +255,11 @@ export function PostsListSection({
     onQuerySubmit: () => void;
     normalizedQuery: string;
     mode: PostsSearchMode;
+  };
+  filter: {
+    project: string | null;
+    onProjectChange: (project: string | null) => void;
+    switching: boolean;
   };
   state: PostsListState;
 }) {
@@ -241,6 +303,8 @@ export function PostsListSection({
           )}
         </form>
 
+        {!isSearching && <ProjectChips selected={filter.project} onSelect={filter.onProjectChange} />}
+
         <div className="mt-10">
           {state.status === 'loading' ? null : state.status === 'error' ? (
             <ErrorState error={state.error} />
@@ -251,7 +315,7 @@ export function PostsListSection({
               <EmptyState variant="list" className={ARCHIVE_SPACING} />
             )
           ) : (
-            <>
+            <div aria-busy={filter.switching} className={filter.switching ? SWITCHING_PROJECT : SETTLED}>
               <ArchiveIndex
                 entries={state.posts.map((post) => ({
                   id: post.postId,
@@ -271,7 +335,7 @@ export function PostsListSection({
               />
               <div ref={state.sentinelRef} className="h-px" aria-hidden="true" />
               {!state.hasNextPage && <EndOfList label="End of posts" className={ARCHIVE_SPACING} />}
-            </>
+            </div>
           )}
         </div>
       </div>

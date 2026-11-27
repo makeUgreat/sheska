@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MemoryRouter } from 'react-router-dom';
-import { expect, within } from 'storybook/test';
+import { expect, fn, waitFor, within } from 'storybook/test';
 import { type PostSummary } from '@/entities/post';
 import { PostsListSection } from './posts-list-section';
 
@@ -21,6 +21,7 @@ const samplePosts: PostSummary[] = [
       ],
     },
     series: { name: 'Sheska UI 구조', position: 3, total: 4 },
+    project: 'sheska',
     createdAt: '2026-08-05T08:30:00.000Z',
     updatedAt: '2026-08-05T09:30:00.000Z',
   },
@@ -31,6 +32,7 @@ const samplePosts: PostSummary[] = [
     viewCount: 91,
     summary: { status: 'failed' },
     series: null,
+    project: 'siru',
     createdAt: '2026-08-04T08:30:00.000Z',
     updatedAt: '2026-08-04T09:30:00.000Z',
   },
@@ -41,6 +43,7 @@ const samplePosts: PostSummary[] = [
     viewCount: 1_208,
     summary: { status: 'pending' },
     series: { name: LONG_SERIES_NAME, position: 3, total: 12 },
+    project: 'sheksa',
     createdAt: '2026-08-03T08:30:00.000Z',
     updatedAt: '2026-08-03T09:30:00.000Z',
   },
@@ -67,6 +70,11 @@ const meta = {
       onQuerySubmit: () => undefined,
       normalizedQuery: '',
       mode: null,
+    },
+    filter: {
+      project: null,
+      onProjectChange: fn(),
+      switching: false,
     },
     state: {
       status: 'success',
@@ -101,6 +109,57 @@ export const LongSeriesNameAt320: Story = {
     await expect(name).toHaveAttribute('title', LONG_SERIES_NAME);
     await expect(name.scrollWidth).toBeGreaterThan(name.clientWidth);
     await expect(within(link).getByText('3 / 12')).toBeVisible();
+  },
+};
+
+export const ProjectMeta: Story = {
+  name: '관련 프로젝트는 로고와 이름을 시리즈 앞에 두고, 화면이 모르는 값은 보이지 않는다',
+  tags: ['!dev'],
+  play: async ({ canvas }) => {
+    const withSeries = canvas.getByRole('link', { name: /Introducing Storybook/ });
+    const withoutSeries = canvas.getByRole('link', { name: /Using UI State Fixtures/ });
+    const unknown = canvas.getByRole('link', { name: /A deliberately long archive title/ });
+
+    await expect(withSeries.textContent).toMatch(/Sheska·SeriesSheska UI 구조3 \/ 4/);
+    await expect(within(withoutSeries).getByText('Siru')).toBeVisible();
+    await expect(withoutSeries.textContent).not.toContain('·');
+    await expect(within(unknown).queryByText(/sheksa/i)).toBeNull();
+    await expect(within(unknown).getByText('3 / 12')).toBeVisible();
+  },
+};
+
+export const ProjectChips: Story = {
+  name: '칩은 고른 프로젝트를 눌린 상태로 보이고, 누른 칩의 프로젝트를 알린다',
+  tags: ['!dev'],
+  args: {
+    filter: { project: 'sheska', onProjectChange: fn(), switching: false },
+  },
+  play: async ({ canvas, args, userEvent }) => {
+    const chips = within(canvas.getByRole('group', { name: 'Filter by project' }));
+
+    await expect(chips.getByRole('button', { name: 'Sheska' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(chips.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'false');
+    await expect(chips.getAllByRole('button').map((chip) => chip.textContent)).toEqual(['All', 'Sheska', 'Siru', 'Nocap', 'Home Cluster']);
+
+    await userEvent.click(chips.getByRole('button', { name: 'Siru' }));
+    await expect(args.filter.onProjectChange).toHaveBeenLastCalledWith('siru');
+
+    await userEvent.click(chips.getByRole('button', { name: 'All' }));
+    await expect(args.filter.onProjectChange).toHaveBeenLastCalledWith(null);
+  },
+};
+
+export const SwitchingProject: Story = {
+  name: '프로젝트를 바꾸는 동안 앞 목록을 흐리게 남긴다',
+  tags: ['!dev'],
+  args: {
+    filter: { project: 'siru', onProjectChange: fn(), switching: true },
+  },
+  play: async ({ canvas }) => {
+    const list = canvas.getByRole('link', { name: /Introducing Storybook/ }).closest('[aria-busy]');
+
+    await expect(list).toHaveAttribute('aria-busy', 'true');
+    await waitFor(() => expect(getComputedStyle(list!).opacity).toBe('0.35'));
   },
 };
 
@@ -165,6 +224,16 @@ export const SmartSearch: Story = {
       hasNextPage: false,
       sentinelRef: null,
     },
+  },
+};
+
+export const SearchHidesProjectChips: Story = {
+  name: '검색하는 동안에는 프로젝트 칩을 숨긴다',
+  tags: ['!dev'],
+  args: SmartSearch.args,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('link', { name: /Introducing Storybook/ })).toBeVisible();
+    await expect(canvas.queryByRole('group', { name: 'Filter by project' })).toBeNull();
   },
 };
 

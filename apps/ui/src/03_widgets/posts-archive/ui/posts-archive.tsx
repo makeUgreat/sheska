@@ -43,6 +43,9 @@ export function PostsArchive() {
     normalizedQuery,
     isSearching,
     semanticSearchApplied,
+    project,
+    selectProject,
+    isSwitchingProject,
     posts,
     isLoading,
     error,
@@ -73,6 +76,11 @@ export function PostsArchive() {
         onQuerySubmit: submitSearch,
         normalizedQuery: isSearching ? normalizedQuery : '',
         mode: searchMode,
+      }}
+      filter={{
+        project,
+        onProjectChange: selectProject,
+        switching: isSwitchingProject,
       }}
       state={state}
     />
