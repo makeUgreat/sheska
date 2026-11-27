@@ -200,7 +200,7 @@ function noHorizontalScroll(width: Width, route: keyof typeof ROUTES): Story {
 
 export const At320Landing: Story = noHorizontalScroll(320, '/');
 export const At320About: Story = noHorizontalScroll(320, '/about');
-export const At320Service: Story = noHorizontalScroll(320, '/about/home-cluster');
+export const At320Project: Story = noHorizontalScroll(320, '/about/home-cluster');
 export const At320Posts: Story = noHorizontalScroll(320, '/posts');
 export const At320PostDetail: Story = noHorizontalScroll(320, '/posts/post-0');
 export const At320Sources: Story = noHorizontalScroll(320, '/sources');

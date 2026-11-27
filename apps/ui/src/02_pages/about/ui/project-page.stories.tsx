@@ -1,9 +1,9 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { ServicePage } from './service-page';
+import { ProjectPage } from './project-page';
 
-const withServiceRoute: Decorator = (Story, { parameters }) => (
+const withProjectRoute: Decorator = (Story, { parameters }) => (
   <MemoryRouter initialEntries={[(parameters.path as string | undefined) ?? '/about/sheska']}>
     <Routes>
       <Route path="/about" element={<h1>About</h1>} />
@@ -13,13 +13,13 @@ const withServiceRoute: Decorator = (Story, { parameters }) => (
 );
 
 const meta = {
-  title: 'Pages/About/ServicePage',
-  component: ServicePage,
-  decorators: [withServiceRoute],
+  title: 'Pages/About/ProjectPage',
+  component: ProjectPage,
+  decorators: [withProjectRoute],
   parameters: {
     layout: 'fullscreen',
   },
-} satisfies Meta<typeof ServicePage>;
+} satisfies Meta<typeof ProjectPage>;
 
 export default meta;
 
@@ -27,7 +27,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-export const OpensServiceLinksInNewTab: Story = {
+export const OpensProjectLinksInNewTab: Story = {
   name: '서비스 링크는 새 탭으로 연다',
   tags: ['!dev'],
   parameters: { path: '/about/nocap' },
