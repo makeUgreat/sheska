@@ -25,6 +25,7 @@ export interface PostQueryResult {
   readonly viewCount: number;
   readonly summary: PostQuerySummary;
   readonly series: PostQuerySeriesWithPosts | null;
+  readonly project: string | null;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
@@ -44,6 +45,8 @@ export type PostQuerySearchCursor = PostQueryCursor & {
 export type PostQueryPaginateOptions = {
   readonly limit: number;
   readonly cursor: PostQueryCursor | null;
+  /** 정규화한 관련 프로젝트 이름. `null`이면 모든 post다. */
+  readonly project: string | null;
 };
 
 export type PostQuerySearchOptions = {
@@ -65,6 +68,7 @@ export type PostQueryListItem = {
 
 export type PostQueryPageItem = PostQueryListItem & {
   readonly series: PostQuerySeries | null;
+  readonly project: string | null;
 };
 
 export type PostMatchReason = 'keyword' | 'semantic' | 'both';

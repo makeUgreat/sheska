@@ -5,6 +5,7 @@ import { POST_QUERY } from '@contexts/library/library.di-tokens';
 export interface ListPostsCommand {
   readonly cursor: PostQueryCursor | null;
   readonly limit: number;
+  readonly project: string | null;
 }
 
 @Injectable()
@@ -18,6 +19,7 @@ export class ListPostsUseCase {
     return this.postQuery.paginate({
       limit: command.limit,
       cursor: command.cursor,
+      project: command.project,
     });
   }
 }

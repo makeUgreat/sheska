@@ -31,7 +31,7 @@ describe('PostPgDrizzleQuery', () => {
     const db = createFailingSelectDb();
     const query = new PostPgDrizzleQuery(db as never);
 
-    await expect(query.paginate({ limit: 20, cursor: null })).rejects.toMatchObject({
+    await expect(query.paginate({ limit: 20, cursor: null, project: null })).rejects.toMatchObject({
       code: 'post.paginate_failed',
     });
   });

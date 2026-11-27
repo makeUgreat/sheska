@@ -67,12 +67,14 @@ export class PostsHttpController {
     const result = await this.listPostsUseCase.execute({
       cursor: query.cursor ?? null,
       limit: query.limit,
+      project: query.project ?? null,
     });
 
     return PostApi.list.response.parse({
       posts: result.posts.map((post) => ({
         ...toPostSummaryResponse(post),
         series: post.series,
+        project: post.project,
       })),
       nextCursor: result.nextCursor ? encodeCursor(result.nextCursor) : null,
     } satisfies ApiResponse<typeof PostApi.list>);
@@ -155,6 +157,7 @@ export class PostsHttpController {
       ...toPostSummaryResponse(result),
       body: result.body,
       series: result.series === null ? null : toSeriesWithPostsResponse(result.series),
+      project: result.project,
     } satisfies ApiResponse<typeof PostApi.get>);
   }
 

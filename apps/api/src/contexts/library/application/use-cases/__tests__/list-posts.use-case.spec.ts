@@ -31,6 +31,7 @@ describe('ListPostsUseCase', () => {
             viewCount: 0,
             summary: { kind: 'pending' },
             series: null,
+            project: null,
             createdAt: new Date(),
             updatedAt: new Date(),
           },
@@ -41,6 +42,7 @@ describe('ListPostsUseCase', () => {
             viewCount: 0,
             summary: { kind: 'pending' },
             series: null,
+            project: null,
             createdAt: new Date(),
             updatedAt: new Date(),
           },
@@ -49,7 +51,7 @@ describe('ListPostsUseCase', () => {
     );
     const useCase = new ListPostsUseCase(postQuery);
 
-    const result = await useCase.execute({ limit: 20, cursor: null });
+    const result = await useCase.execute({ limit: 20, cursor: null, project: null });
 
     expect(result.posts).toHaveLength(2);
     expect(result.posts[0]).toMatchObject({
@@ -72,7 +74,7 @@ describe('ListPostsUseCase', () => {
     postQuery.paginate.mockResolvedValue(buildPaginateResult());
     const useCase = new ListPostsUseCase(postQuery);
 
-    const result = await useCase.execute({ limit: 20, cursor: null });
+    const result = await useCase.execute({ limit: 20, cursor: null, project: null });
 
     expect(result.posts).toHaveLength(0);
   });
@@ -90,6 +92,7 @@ describe('ListPostsUseCase', () => {
             viewCount: 0,
             summary: { kind: 'pending' },
             series: null,
+            project: null,
             createdAt: new Date(),
             updatedAt: new Date(),
           },
@@ -99,7 +102,7 @@ describe('ListPostsUseCase', () => {
     );
     const useCase = new ListPostsUseCase(postQuery);
 
-    const result = await useCase.execute({ limit: 20, cursor: null });
+    const result = await useCase.execute({ limit: 20, cursor: null, project: null });
 
     expect(result.nextCursor).toEqual(cursor);
   });
@@ -109,22 +112,23 @@ describe('ListPostsUseCase', () => {
     postQuery.paginate.mockResolvedValue(buildPaginateResult({ nextCursor: null }));
     const useCase = new ListPostsUseCase(postQuery);
 
-    const result = await useCase.execute({ limit: 20, cursor: null });
+    const result = await useCase.execute({ limit: 20, cursor: null, project: null });
 
     expect(result.nextCursor).toBeNull();
   });
 
-  it('command의 limit/cursor를 그대로 paginate에 전달한다', async () => {
+  it('command의 limit/cursor/project를 그대로 paginate에 전달한다', async () => {
     const cursor = { id: 'post-cursor-id' };
     const postQuery = createPostQueryMock();
     postQuery.paginate.mockResolvedValue(buildPaginateResult());
     const useCase = new ListPostsUseCase(postQuery);
 
-    await useCase.execute({ limit: 10, cursor });
+    await useCase.execute({ limit: 10, cursor, project: 'sheska' });
 
     expect(postQuery.paginate).toHaveBeenCalledWith({
       limit: 10,
       cursor,
+      project: 'sheska',
     });
   });
 
@@ -134,7 +138,7 @@ describe('ListPostsUseCase', () => {
     postQuery.paginate.mockRejectedValue(paginateFailure);
     const useCase = new ListPostsUseCase(postQuery);
 
-    await expect(useCase.execute({ limit: 20, cursor: null })).rejects.toBe(paginateFailure);
+    await expect(useCase.execute({ limit: 20, cursor: null, project: null })).rejects.toBe(paginateFailure);
   });
 });
 

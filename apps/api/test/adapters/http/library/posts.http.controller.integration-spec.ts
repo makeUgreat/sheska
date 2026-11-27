@@ -240,6 +240,7 @@ describe('PostsHttpController', () => {
             viewCount: 0,
             summary: { kind: 'completed', sentences: ['첫 문장임', '둘째 문장임'], model: 'claude-haiku-5-5' },
             series: { name: 'RAG', position: 2, total: 5 },
+            project: 'sheska',
             createdAt: now,
             updatedAt: now,
           },
@@ -259,6 +260,7 @@ describe('PostsHttpController', () => {
           viewCount: 0,
           summary: { status: 'ready', lines: ['첫 문장임', '둘째 문장임'] },
           series: { name: 'RAG', position: 2, total: 5 },
+          project: 'sheska',
           createdAt: now.toISOString(),
           updatedAt: now.toISOString(),
         },
@@ -267,6 +269,7 @@ describe('PostsHttpController', () => {
       expect(listPostsUseCase.execute).toHaveBeenCalledWith({
         cursor: null,
         limit: 20,
+        project: null,
       });
     });
 
@@ -282,7 +285,32 @@ describe('PostsHttpController', () => {
       expect(listPostsUseCase.execute).toHaveBeenCalledWith({
         cursor: { id: 'post-1' },
         limit: 5,
+        project: null,
       });
+    });
+
+    it('project 쿼리 파라미터를 앞뒤 공백을 지운 소문자로 use case에 전달한다', async () => {
+      listPostsUseCase.execute.mockResolvedValue({
+        posts: [],
+        nextCursor: null,
+      });
+
+      await request(httpServer).get('/posts').query({ project: ' Sheska ' }).expect(200);
+
+      expect(listPostsUseCase.execute).toHaveBeenCalledWith({
+        cursor: null,
+        limit: 20,
+        project: 'sheska',
+      });
+    });
+
+    it.each(['', '   '])('project 쿼리 파라미터가 비어 있으면(%j) 400 응답을 반환한다', async (project) => {
+      const response = await request(httpServer).get('/posts').query({ project }).expect(400);
+
+      expect(response.body).toMatchObject({
+        code: 'request.validation_failed',
+      });
+      expect(listPostsUseCase.execute).not.toHaveBeenCalled();
     });
 
     it('유효하지 않은 limit이면 400 응답을 반환한다', async () => {
@@ -505,6 +533,7 @@ describe('PostsHttpController', () => {
             { postId: 'post-2', title: '다음 포스트' },
           ],
         },
+        project: 'sheska',
         createdAt: now,
         updatedAt: now,
         body: '테스트 본문',
@@ -531,6 +560,7 @@ describe('PostsHttpController', () => {
             { postId: 'post-2', title: '다음 포스트' },
           ],
         },
+        project: 'sheska',
       });
       expect(getPostUseCase.execute).toHaveBeenCalledWith({ postId: 'post-1' });
     });
