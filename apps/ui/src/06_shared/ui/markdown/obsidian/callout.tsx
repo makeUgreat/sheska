@@ -33,10 +33,10 @@ const TONES: Record<string, Tone> = {
   bug: 'caution',
 };
 
-const LINE: Record<Tone, string> = {
-  neutral: 'border-text-muted',
-  accent: 'border-accent-strong',
-  caution: 'border-caution',
+const SURFACE: Record<Tone, string> = {
+  neutral: 'bg-text-muted/6',
+  accent: 'bg-accent-strong/6',
+  caution: 'bg-caution/6',
 };
 
 const LABEL: Record<Tone, string> = {
@@ -52,7 +52,8 @@ function toneOf(type: string | undefined): Tone {
 }
 
 export function Callout({ id, type, fold, className = '', children }: CalloutProperties) {
-  const style = `group my-7 border-l-2 pl-4.5 text-body-prose text-text-secondary ${LINE[toneOf(type)]} ${className}`.trim();
+  const style =
+    `group my-7 rounded-lg px-4.5 py-3.5 text-body-prose text-text-secondary [&>:not(:first-child)]:ml-7 [&>:last-child]:mb-0 ${SURFACE[toneOf(type)]} ${className}`.trim();
 
   if (fold) {
     return (
@@ -79,27 +80,71 @@ function Chevron() {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
-      className="size-4 transition-transform group-open:rotate-90 motion-reduce:transition-none"
+      className="size-4 rotate-90 transition-transform group-open:-rotate-90 motion-reduce:transition-none"
     >
       <path d="m9 18 6-6-6-6" />
     </svg>
   );
 }
 
+function ToneIcon({ tone }: { tone: Tone }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={`mr-2.5 inline-block size-[18px] align-[-3px] ${LABEL[tone]}`}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <TonePath tone={tone} />
+    </svg>
+  );
+}
+
+function TonePath({ tone }: { tone: Tone }) {
+  switch (tone) {
+    case 'neutral':
+      return (
+        <>
+          <path d="M12 16v-4" />
+          <path d="M12 8h.01" strokeWidth="2.6" />
+        </>
+      );
+    case 'accent':
+      return <path d="m8.5 12.2 2.4 2.4 4.6-5" />;
+    case 'caution':
+      return (
+        <>
+          <path d="M12 7.5v5" />
+          <path d="M12 16.3h.01" strokeWidth="2.6" />
+        </>
+      );
+  }
+}
+
 /** Label은 원문 `[!type]`을 대신하는 표시라 복사 결과에 섞이지 않게 한다. Type은 읽기 도구가 읽도록 글자로 둔다. */
 export function CalloutTitle({ type, fold, children }: CalloutProperties) {
   const tone = toneOf(type);
-  const label = <span className={`mr-2 font-mono text-label-sm uppercase select-none ${LABEL[tone]}`}>{type}</span>;
+  const label = (
+    <>
+      <ToneIcon tone={tone} />
+      <span className="sr-only select-none">{type}</span>
+    </>
+  );
 
   if (fold) {
     return (
-      <summary className="flex cursor-pointer group-open:mb-2 list-none gap-1.5 font-semibold text-text-primary [&::-webkit-details-marker]:hidden">
-        <span className={`flex h-7 shrink-0 items-center ${LABEL[tone]}`}>
-          <Chevron />
-        </span>
-        <span className="min-w-0">
+      <summary className="flex cursor-pointer items-center gap-3 group-open:mb-2 list-none font-semibold text-text-primary [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 flex-1">
           {label}
           {children}
+        </span>
+        <span className={`flex shrink-0 items-center ${LABEL[tone]}`}>
+          <Chevron />
         </span>
       </summary>
     );
