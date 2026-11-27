@@ -31,23 +31,21 @@ function ServiceEntry({ service }: { service: Service }) {
     <article className="group relative grid gap-4">
       <ServicePreview service={service} />
       <div className="grid gap-2">
-        <h3 className="text-title-lg tracking-[-0.01em]">
-          <img
-            src={service.logo.src}
-            alt={service.logo.alt}
-            className={`mr-2 inline-block size-[26px] rounded-md align-[-0.21em] ${HOVER_LIFT}`}
-          />
-          <Link to={`/about/${service.slug}`} className={CARD_LINK}>
-            <span className={`inline-block ${HOVER_LIFT}`}>{service.name}</span>
-          </Link>
-        </h3>
-        <p className={`max-w-[52ch] text-pretty break-keep text-text-secondary ${HOVER_LIFT}`}>
-          {service.description.map((sentence) => (
-            <span key={sentence} className="block">
-              {sentence}
-            </span>
-          ))}
-        </p>
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="min-w-0 text-title-lg tracking-[-0.01em]">
+            <img
+              src={service.logo.src}
+              alt={service.logo.alt}
+              className={`mr-[7px] inline-block size-[21px] rounded-[5px] align-[-0.1em] ${HOVER_LIFT}`}
+            />
+            <Link to={`/about/${service.slug}`} className={CARD_LINK}>
+              <span className={`inline-block ${HOVER_LIFT}`}>{service.name}</span>
+            </Link>
+          </h3>
+          <p className={`shrink-0 font-mono text-label-sm uppercase text-text-muted ${HOVER_LIFT}`}>{service.category}</p>
+        </div>
+        <p className={`max-w-[52ch] text-pretty break-keep ${HOVER_LIFT}`}>{service.tagline}</p>
+        <p className={`max-w-[52ch] text-body-sm text-pretty break-keep text-text-muted ${HOVER_LIFT}`}>{service.description}</p>
       </div>
     </article>
   );
