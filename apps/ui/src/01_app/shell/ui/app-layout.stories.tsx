@@ -230,8 +230,8 @@ export const SearchAt320: Story = {
   ...atViewport(320, '/posts'),
   play: async ({ canvas, userEvent }) => {
     await expect(window.innerWidth).toBe(320);
-    await userEvent.click(canvas.getByRole('button', { name: 'Search' }));
-    const searchbox = canvas.getByRole('searchbox');
+    const searchbox = await canvas.findByRole('searchbox');
+    await userEvent.click(searchbox);
     const { width, height } = searchbox.getBoundingClientRect();
     await expect(searchbox).toBeVisible();
     await expect(searchbox).toBeEnabled();

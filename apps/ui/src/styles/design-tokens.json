@@ -442,6 +442,10 @@
       "$description": "Width of the column a page hangs in the left margin of the reading column: body heading symbols such as `##`. `--breakpoint-margin-label` (900px) is derived from it. The column is centred at the measure, so each margin must hold this width, a gutter and the 16px page padding: measure + 2 × (this width + gutter + 16px) = 876px, about 891px with the reserved scrollbar gutter, rounded up to 900px. Below that the label sits above the content it marks.",
       "$value": "48px"
     },
+    "margin-index": {
+      "$description": "Width of the project index the post list hangs in the left margin. `--breakpoint-margin-index` (1180px) is derived from it. Each margin must hold this width, the 40px gap to the list and the 16px page padding: measure + 2 × (this width + 40px + 16px) = 1152px, about 1167px with the reserved scrollbar gutter, rounded up to 1180px. Below that the index is a row of chips under the title.",
+      "$value": "170px"
+    },
     "header": {
       "$description": "Height of the sticky terminal header. Anything that must clear it — sticky rails, scroll-margin on anchor targets — offsets from this.",
       "$value": "84px"
