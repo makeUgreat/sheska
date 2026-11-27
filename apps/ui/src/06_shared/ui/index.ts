@@ -32,5 +32,4 @@ export {
   type TerminalIo,
   type TerminalListedEntry,
   type TerminalPrompt,
-  type TerminalLaunchState,
 } from './terminal';

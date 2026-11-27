@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useLogOut, useViewer } from '@/entities/session';
-import { prefersReducedMotion, PromptText, TrafficLights, type TerminalLaunchState } from '@/shared/ui';
+import { Link, useLocation } from 'react-router-dom';
+import { useViewer } from '@/entities/session';
+import { prefersReducedMotion, PromptText, TrafficLights } from '@/shared/ui';
 import { useAwaitedFetch } from '../model/use-awaited-fetch';
 import { useRetypedCommand } from '../model/use-retyped-command';
 
@@ -70,24 +70,9 @@ function PromptSpinner() {
 
 export function Header() {
   const { pathname } = useLocation();
-  const navigate = useNavigate();
-  const viewer = useViewer();
-  const logOut = useLogOut();
-  const owner = viewer === 'owner';
+  const owner = useViewer() === 'owner';
   const command = useRetypedCommand(toCommand(pathname));
   const { waiting, slowSeconds } = useAwaitedFetch();
-
-  function handleYellowClick() {
-    if (!owner) {
-      void navigate('/', { state: { run: 'su' } satisfies TerminalLaunchState });
-      return;
-    }
-    logOut.mutate(undefined, {
-      onSuccess: () => {
-        if (isCurrent(pathname, '/sources')) void navigate('/');
-      },
-    });
-  }
 
   return (
     <header className="sticky top-0 z-50 bg-surface">
@@ -95,7 +80,7 @@ export function Header() {
         <div className="mx-auto flex h-full max-w-content items-center justify-between gap-3 sm:gap-6">
           <div className="flex items-center gap-2">
             <span className="mr-2 hidden sm:flex">
-              <TrafficLights yellowLabel={owner ? 'Log out' : 'Log in'} onYellowClick={handleYellowClick} />
+              <TrafficLights />
             </span>
             <Link
               to="/"

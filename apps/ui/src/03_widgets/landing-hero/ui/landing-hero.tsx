@@ -1,7 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useRef } from 'react';
 import { useSeason } from '@/shared/lib';
-import { Terminal, type TerminalHandle, type TerminalLaunchState } from '@/shared/ui';
+import { Terminal, type TerminalHandle } from '@/shared/ui';
 import { useShellCommands } from '../model/use-shell-commands';
 import { useSnowCommand } from '../model/use-snow-command';
 import { formatWinterGreeting } from '../model/winter-status';
@@ -18,20 +17,9 @@ export function LandingHero({ articlesHref, aboutHref, githubHref }: { articlesH
   const terminal = useRef<TerminalHandle>(null);
   const { viewer, commands: shellCommands, prompt } = useShellCommands();
   const owner = viewer === 'owner';
-  const location = useLocation();
-  const navigate = useNavigate();
-  const launch = (location.state as TerminalLaunchState | null)?.run;
   const winter = useSeason() === 'winter';
   const snow = useSnowCommand();
   const commands = winter ? [...shellCommands, snow.command] : shellCommands;
-
-  useEffect(() => {
-    if (!launch) return;
-
-    terminal.current?.run(launch);
-    // 새로고침이나 뒤로 가기로 같은 명령이 다시 돌지 않게 state를 지운다.
-    void navigate(location.pathname, { replace: true, state: null });
-  }, [launch, location.pathname, navigate]);
 
   return (
     <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white px-4 pb-24 pt-12">

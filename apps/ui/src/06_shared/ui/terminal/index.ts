@@ -12,12 +12,4 @@ export {
 export { printRequestFailure } from './ui/request-failure';
 export { clearCommand } from './model/clear-command';
 export { prefersReducedMotion } from './model/use-count-up';
-export type {
-  AskOptions,
-  TerminalCommand,
-  TerminalHandle,
-  TerminalIo,
-  TerminalListedEntry,
-  TerminalPrompt,
-  TerminalLaunchState,
-} from './model/types';
+export type { AskOptions, TerminalCommand, TerminalHandle, TerminalIo, TerminalListedEntry, TerminalPrompt } from './model/types';
