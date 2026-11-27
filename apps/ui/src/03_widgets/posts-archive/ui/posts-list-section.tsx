@@ -1,4 +1,5 @@
-import { type CSSProperties, type FormEvent, type ReactNode, type Ref } from 'react';
+import { type CSSProperties, type FormEvent, type Ref, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { AI_SUMMARY_NOTICE, type AiSummary, type PostSeries, type PostSummary } from '@/entities/post';
 import { findProject, type Project, PROJECTS, ProjectTag } from '@/entities/project';
 import { type RevealPhase, useStagedReveal } from '@/shared/lib';
@@ -18,6 +19,22 @@ export type PostsListState =
       hasNextPage: boolean;
       sentinelRef: Ref<HTMLDivElement>;
     };
+
+type PostsSearch = {
+  query: string;
+  onQueryChange: (query: string) => void;
+  onQuerySubmit: () => void;
+  onClose: () => void;
+  normalizedQuery: string;
+  mode: PostsSearchMode;
+};
+
+type PostsFilter = {
+  project: string | null;
+  onProjectChange: (project: string | null) => void;
+  listedProject: string | null;
+  switching: boolean;
+};
 
 const SUMMARY_ROW = 'relative mt-1 grid grid-cols-[20px_minmax(0,1fr)] items-start margin-label:block';
 
@@ -194,34 +211,163 @@ function postMeta(post: PostSummary, isSearching: boolean) {
   return <ProjectMeta project={project} series={post.series ?? null} />;
 }
 
-const CHIP =
-  'inline-flex h-[30px] items-center rounded-full border px-3 font-mono text-label-sm tracking-normal transition-colors duration-150 ' +
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:transition-none';
+const TAB =
+  'group relative inline-flex h-9 items-center px-3 pt-1 font-mono text-label-sm tracking-normal text-text-muted transition-colors duration-150 ' +
+  'hover:text-text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent motion-reduce:transition-none';
 
-function ProjectChip({ pressed, onPress, children }: { pressed: boolean; onPress: () => void; children: ReactNode }) {
+const PRESSED_WELL =
+  "before:absolute before:inset-x-[3px] before:top-1.5 before:bottom-0 before:rounded-t-[7px] before:bg-text-primary/5 before:opacity-0 before:content-[''] " +
+  'before:shadow-[inset_0_2px_4px_rgb(16_19_25/0.16),inset_1px_0_0_rgb(16_19_25/0.07),inset_-1px_0_0_rgb(16_19_25/0.07)] ' +
+  'before:transition-opacity before:duration-150 aria-pressed:text-text-primary aria-pressed:before:opacity-100 motion-reduce:before:transition-none';
+
+const PRESSABLE_LABEL =
+  'relative inline-flex items-center gap-1.5 transition-transform duration-150 group-active:translate-y-px group-aria-pressed:translate-y-px motion-reduce:transition-none';
+
+const RULED_ROWS =
+  'bg-[repeating-linear-gradient(to_bottom,transparent_0_35px,color-mix(in_srgb,var(--color-outline-variant)_25%,transparent)_35px_36px)]';
+
+const SEARCH_MODE_LABEL = { smart: 'Smart search', basic: 'Basic search' };
+
+function SearchIcon({ className }: { className: string }) {
   return (
-    <button
-      type="button"
-      aria-pressed={pressed}
-      onClick={onPress}
-      className={`${CHIP} ${pressed ? 'border-text-primary text-text-primary' : 'border-plate-line text-text-secondary hover:border-text-muted'}`}
-    >
-      {children}
-    </button>
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} aria-hidden="true" className={className}>
+      <circle cx="7" cy="7" r="4.8" />
+      <path d="M10.5 10.5 14 14" strokeLinecap="round" />
+    </svg>
   );
 }
 
-function ProjectChips({ selected, onSelect }: { selected: string | null; onSelect: (project: string | null) => void }) {
+function ProjectTabs({
+  selected,
+  onSelect,
+  onOpenSearch,
+  searchButtonRef,
+}: {
+  selected: string | null;
+  onSelect: (project: string | null) => void;
+  onOpenSearch: () => void;
+  searchButtonRef: Ref<HTMLButtonElement>;
+}) {
   return (
-    <div role="group" aria-label="Filter by project" className="mt-4 flex flex-wrap gap-2">
-      <ProjectChip pressed={selected === null} onPress={() => onSelect(null)}>
-        All
-      </ProjectChip>
+    <div role="group" aria-label="Filter by project" className={`flex flex-wrap ${RULED_ROWS}`}>
+      <button type="button" aria-pressed={selected === null} onClick={() => onSelect(null)} className={`${TAB} ${PRESSED_WELL}`}>
+        <span className={PRESSABLE_LABEL}>All</span>
+      </button>
       {PROJECTS.map((project) => (
-        <ProjectChip key={project.slug} pressed={selected === project.slug} onPress={() => onSelect(project.slug)}>
-          <ProjectTag project={project} />
-        </ProjectChip>
+        <button
+          key={project.slug}
+          type="button"
+          aria-pressed={selected === project.slug}
+          onClick={() => onSelect(project.slug)}
+          className={`${TAB} ${PRESSED_WELL}`}
+        >
+          <span className={PRESSABLE_LABEL}>
+            <ProjectTag project={project} />
+          </span>
+        </button>
       ))}
+      <button ref={searchButtonRef} type="button" onClick={onOpenSearch} className={`${TAB} ml-auto hover:text-accent-strong`}>
+        <span className={PRESSABLE_LABEL}>
+          <SearchIcon className="size-[13px] shrink-0" />
+          Search
+        </span>
+      </button>
+    </div>
+  );
+}
+
+function SearchStatus({ query, mode, className }: { query: string; mode: PostsSearchMode; className: string }) {
+  return (
+    <span
+      role="status"
+      className={`min-w-0 items-center gap-2 whitespace-nowrap font-mono text-label-sm tracking-normal text-text-muted ${className}`}
+    >
+      {query ? (
+        <>
+          <span className="flex min-w-0">
+            Results for “<span className="truncate text-text-primary">{query}</span>”
+          </span>
+          {mode && <span>· {SEARCH_MODE_LABEL[mode]}</span>}
+        </>
+      ) : (
+        <>
+          <span>Press Enter to search</span>
+          <span className="hidden @min-[560px]:inline">· Esc to close</span>
+        </>
+      )}
+    </span>
+  );
+}
+
+function ArchiveHead({ search, filter, isSearching }: { search: PostsSearch; filter: PostsFilter; isSearching: boolean }) {
+  const [searchOpen, setSearchOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const searchButtonRef = useRef<HTMLButtonElement>(null);
+  const showsSearch = searchOpen || isSearching;
+  const query = isSearching ? search.normalizedQuery : '';
+
+  function openSearch() {
+    flushSync(() => setSearchOpen(true));
+    inputRef.current?.focus();
+  }
+
+  function closeSearch() {
+    flushSync(() => {
+      setSearchOpen(false);
+      search.onClose();
+    });
+    searchButtonRef.current?.focus();
+  }
+
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    search.onQuerySubmit();
+  }
+
+  return (
+    <div className="@container relative mt-6 grid">
+      <div className={`col-start-1 row-start-1 min-w-0 ${showsSearch ? 'invisible' : ''}`}>
+        <ProjectTabs
+          selected={filter.project}
+          onSelect={filter.onProjectChange}
+          onOpenSearch={openSearch}
+          searchButtonRef={searchButtonRef}
+        />
+      </div>
+      <div className={`col-start-1 row-start-1 min-w-0 ${showsSearch ? '' : 'invisible'}`}>
+        <form role="search" onSubmit={handleSubmit} className="flex h-9 items-center gap-2.5 px-3">
+          <SearchIcon className="size-3.5 shrink-0 text-text-muted" />
+          <label htmlFor="posts-archive-search" className="sr-only">
+            Search posts by title or content
+          </label>
+          <input
+            ref={inputRef}
+            id="posts-archive-search"
+            type="search"
+            placeholder="Search title or content"
+            value={search.query}
+            onChange={(e) => search.onQueryChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') closeSearch();
+            }}
+            className="min-w-24 flex-1 border-0 bg-transparent text-body-md text-text-primary caret-accent outline-none placeholder:text-text-muted [&::-webkit-search-cancel-button]:hidden"
+          />
+          <SearchStatus query={query} mode={search.mode} className="hidden @min-[560px]:flex" />
+          <button
+            type="button"
+            aria-label="Close search"
+            onClick={closeSearch}
+            className="inline-flex size-6 shrink-0 items-center justify-center rounded-md font-mono text-[15px] text-text-muted hover:bg-text-primary/5 hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            ×
+          </button>
+        </form>
+        <SearchStatus query={query} mode={search.mode} className="flex h-9 px-3 @min-[560px]:hidden" />
+      </div>
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-x-0 top-[35px] h-px origin-right bg-accent transition-transform duration-300 ease-[cubic-bezier(0.65,0,0.35,1)] motion-reduce:transition-none ${showsSearch ? 'scale-x-100' : 'scale-x-0'}`}
+      />
     </div>
   );
 }
@@ -244,69 +390,18 @@ function Highlighted({ text, query }: { text: string; query: string }) {
   );
 }
 
-export function PostsListSection({
-  search,
-  filter,
-  state,
-}: {
-  search: {
-    query: string;
-    onQueryChange: (query: string) => void;
-    onQuerySubmit: () => void;
-    normalizedQuery: string;
-    mode: PostsSearchMode;
-  };
-  filter: {
-    project: string | null;
-    onProjectChange: (project: string | null) => void;
-    listedProject: string | null;
-    switching: boolean;
-  };
-  state: PostsListState;
-}) {
+export function PostsListSection({ search, filter, state }: { search: PostsSearch; filter: PostsFilter; state: PostsListState }) {
   const isSearching = search.normalizedQuery.length > 0;
   const highlight = isSearching ? search.normalizedQuery : '';
-
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    search.onQuerySubmit();
-  }
 
   return (
     <section id="posts" className="px-4 pb-32 pt-16">
       <div className="mx-auto max-w-measure">
         <h1 className="text-headline-md text-text-primary">Posts</h1>
 
-        <form className="mt-6" role="search" onSubmit={handleSubmit}>
-          <label htmlFor="posts-archive-search" className="sr-only">
-            Search posts by title or content
-          </label>
-          <div className="flex items-center gap-3 border-b border-outline-variant/25 transition-colors focus-within:border-accent">
-            <input
-              id="posts-archive-search"
-              type="search"
-              placeholder="Search title or content"
-              value={search.query}
-              onChange={(e) => search.onQueryChange(e.target.value)}
-              className="min-w-0 flex-1 border-0 bg-transparent py-2 text-body-md text-text-primary caret-accent outline-none placeholder:text-text-muted"
-            />
-            <button
-              type="submit"
-              className="shrink-0 font-mono text-label-sm tracking-normal text-text-muted transition-colors hover:text-accent-strong focus-visible:text-accent-strong focus-visible:outline-none"
-            >
-              Search
-            </button>
-          </div>
-          {isSearching && search.mode !== null && (
-            <p className="mt-2 font-mono text-label-sm tracking-normal text-text-muted">
-              {search.mode === 'smart' ? 'Smart search' : 'Basic search'}
-            </p>
-          )}
-        </form>
+        <ArchiveHead search={search} filter={filter} isSearching={isSearching} />
 
-        {!isSearching && <ProjectChips selected={filter.project} onSelect={filter.onProjectChange} />}
-
-        <div className="mt-10">
+        <div className="mt-2">
           {state.status === 'loading' ? null : state.status === 'error' ? (
             <ErrorState error={state.error} />
           ) : state.status === 'empty' ? (

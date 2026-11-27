@@ -68,6 +68,7 @@ const meta = {
       query: '',
       onQueryChange: () => undefined,
       onQuerySubmit: () => undefined,
+      onClose: fn(),
       normalizedQuery: '',
       mode: null,
     },
@@ -129,24 +130,72 @@ export const ProjectMeta: Story = {
   },
 };
 
-export const ProjectChips: Story = {
-  name: '칩은 고른 프로젝트를 눌린 상태로 보이고, 누른 칩의 프로젝트를 알린다',
+export const ProjectTabs: Story = {
+  name: '탭은 고른 프로젝트를 눌린 상태로 보이고, 누른 탭의 프로젝트를 알린다',
   tags: ['!dev'],
   args: {
     filter: { project: 'sheska', onProjectChange: fn(), listedProject: 'sheska', switching: false },
   },
   play: async ({ canvas, args, userEvent }) => {
-    const chips = within(canvas.getByRole('group', { name: 'Filter by project' }));
+    const group = within(canvas.getByRole('group', { name: 'Filter by project' }));
+    const tabs = group.getAllByRole('button').filter((button) => button.hasAttribute('aria-pressed'));
 
-    await expect(chips.getByRole('button', { name: 'Sheska' })).toHaveAttribute('aria-pressed', 'true');
-    await expect(chips.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'false');
-    await expect(chips.getAllByRole('button').map((chip) => chip.textContent)).toEqual(['All', 'Sheska', 'Siru', 'Nocap', 'Home Cluster']);
+    await expect(group.getByRole('button', { name: 'Sheska' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(group.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'false');
+    await expect(tabs.map((tab) => tab.textContent)).toEqual(['All', 'Sheska', 'Siru', 'Nocap', 'Home Cluster']);
 
-    await userEvent.click(chips.getByRole('button', { name: 'Siru' }));
+    await userEvent.click(group.getByRole('button', { name: 'Siru' }));
     await expect(args.filter.onProjectChange).toHaveBeenLastCalledWith('siru');
 
-    await userEvent.click(chips.getByRole('button', { name: 'All' }));
+    await userEvent.click(group.getByRole('button', { name: 'All' }));
     await expect(args.filter.onProjectChange).toHaveBeenLastCalledWith(null);
+  },
+};
+
+export const OpensAndClosesSearch: Story = {
+  name: 'Search를 누르면 탭 줄 자리에 검색 줄이 열리고, Esc를 누르면 닫혀 Search로 돌아간다',
+  tags: ['!dev'],
+  play: async ({ canvas, args, userEvent }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Search' }));
+    await expect(canvas.getByRole('searchbox', { name: 'Search posts by title or content' })).toHaveFocus();
+    await expect(canvas.queryByRole('group', { name: 'Filter by project' })).toBeNull();
+    await expect(canvas.getByRole('status')).toHaveTextContent('Press Enter to search');
+
+    await userEvent.keyboard('{Escape}');
+    await expect(args.search.onClose).toHaveBeenCalledTimes(1);
+    await expect(canvas.getByRole('button', { name: 'Search' })).toHaveFocus();
+    await expect(canvas.getByRole('group', { name: 'Filter by project' })).toBeVisible();
+  },
+};
+
+export const KeepsListInPlace: Story = {
+  name: '검색 줄을 열어도 목록은 제자리에 있다',
+  tags: ['!dev'],
+  play: async ({ canvas, userEvent }) => {
+    await document.fonts.ready;
+
+    const firstRow = canvas.getByRole('link', { name: /Introducing Storybook/ });
+    const before = firstRow.getBoundingClientRect().top;
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Search' }));
+    await expect(firstRow.getBoundingClientRect().top).toBe(before);
+  },
+};
+
+export const KeepsListInPlaceAt320: Story = {
+  name: '320px에서 탭 줄이 두 줄이어도 검색 줄을 열 때 목록은 제자리에 있다',
+  tags: ['!dev'],
+  globals: { viewport: { value: 'width320', isRotated: false } },
+  parameters: { viewport: { options: VIEWPORTS } },
+  play: async ({ canvas, userEvent }) => {
+    await expect(window.innerWidth).toBe(320);
+    await document.fonts.ready;
+
+    const firstRow = canvas.getByRole('link', { name: /Introducing Storybook/ });
+    const before = firstRow.getBoundingClientRect().top;
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Search' }));
+    await expect(firstRow.getBoundingClientRect().top).toBe(before);
   },
 };
 
@@ -197,6 +246,7 @@ export const NoSearchResults: Story = {
       query: 'missing',
       onQueryChange: () => undefined,
       onQuerySubmit: () => undefined,
+      onClose: fn(),
       normalizedQuery: 'missing',
       mode: 'smart',
     },
@@ -212,6 +262,7 @@ export const SmartSearch: Story = {
       query: 'storybook',
       onQueryChange: () => undefined,
       onQuerySubmit: () => undefined,
+      onClose: fn(),
       normalizedQuery: 'storybook',
       mode: 'smart',
     },
@@ -228,13 +279,14 @@ export const SmartSearch: Story = {
   },
 };
 
-export const SearchHidesProjectChips: Story = {
-  name: '검색하는 동안에는 프로젝트 칩을 숨긴다',
+export const SearchHidesProjectTabs: Story = {
+  name: '검색하는 동안에는 탭 줄 대신 검색어와 검색 방식을 보인다',
   tags: ['!dev'],
   args: SmartSearch.args,
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('link', { name: /Introducing Storybook/ })).toBeVisible();
     await expect(canvas.queryByRole('group', { name: 'Filter by project' })).toBeNull();
+    await expect(canvas.getByRole('status')).toHaveTextContent('Results for “storybook”· Smart search');
   },
 };
 
@@ -244,6 +296,7 @@ export const BasicSearchFallback: Story = {
       query: 'storybook',
       onQueryChange: () => undefined,
       onQuerySubmit: () => undefined,
+      onClose: fn(),
       normalizedQuery: 'storybook',
       mode: 'basic',
     },
