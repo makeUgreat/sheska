@@ -148,13 +148,6 @@ body {
   background: var(--color-page-background);
 }
 
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
-
 @keyframes bounce-x {
   0%,
   100% {
