@@ -12,7 +12,7 @@ import {
   Public,
   ZodValidationPipe,
 } from '@kernels/presentation';
-import { type PostQuerySummary } from '@contexts/library/application/ports';
+import { type PostQuerySeriesWithPosts, type PostQuerySummary } from '@contexts/library/application/ports';
 import { PublishPostUseCase } from '@contexts/library/application/use-cases/publish-post.use-case';
 import { UnpublishPostUseCase } from '@contexts/library/application/use-cases/unpublish-post.use-case';
 import { GetPostUseCase } from '@contexts/library/application/use-cases/get-post.use-case';
@@ -70,7 +70,10 @@ export class PostsHttpController {
     });
 
     return PostApi.list.response.parse({
-      posts: result.posts.map(toPostSummaryResponse),
+      posts: result.posts.map((post) => ({
+        ...toPostSummaryResponse(post),
+        series: post.series,
+      })),
       nextCursor: result.nextCursor ? encodeCursor(result.nextCursor) : null,
     } satisfies ApiResponse<typeof PostApi.list>);
   }
@@ -151,6 +154,7 @@ export class PostsHttpController {
     return PostApi.get.response.parse({
       ...toPostSummaryResponse(result),
       body: result.body,
+      series: result.series === null ? null : toSeriesWithPostsResponse(result.series),
     } satisfies ApiResponse<typeof PostApi.get>);
   }
 
@@ -200,6 +204,15 @@ function toPostSummaryResponse(post: PostSummary): PostSummaryResponse {
     summary: toAiSummaryResponse(post.summary),
     createdAt: post.createdAt.toISOString(),
     updatedAt: post.updatedAt.toISOString(),
+  };
+}
+
+function toSeriesWithPostsResponse(series: PostQuerySeriesWithPosts): NonNullable<ApiResponse<typeof PostApi.get>['series']> {
+  return {
+    name: series.name,
+    position: series.position,
+    total: series.total,
+    posts: series.posts.map((post) => ({ postId: post.postId, title: post.title })),
   };
 }
 

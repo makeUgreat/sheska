@@ -516,6 +516,31 @@ describe('SourcesHttpController', () => {
       });
     });
 
+    it('시리즈가 틀린 업로드는 400 응답과 틀린 키를 반환한다', async () => {
+      uploadSourceUseCase.execute.mockRejectedValue(
+        new ValidationFailedError({
+          code: 'source.invalid_series',
+          message: '`series_order` must be an integer of 1 or more, set together with `series`',
+          details: {
+            fields: [{ path: 'frontmatter.series_order', messages: ['must be an integer of 1 or more, set together with `series`'] }],
+          },
+        }),
+      );
+
+      const response = await request(httpServer)
+        .post('/sources')
+        .send({
+          externalSourceId: 'Notes/source.md',
+          content: '# Source note',
+        })
+        .expect(400);
+
+      expect(response.body).toMatchObject({
+        code: 'source.invalid_series',
+        details: { fields: [{ path: 'frontmatter.series_order' }] },
+      });
+    });
+
     it('use case가 계약에 선언한 ConstraintViolationError를 throw하면 409 응답을 반환한다', async () => {
       uploadSourceUseCase.execute.mockRejectedValue(
         new ConstraintViolationError({

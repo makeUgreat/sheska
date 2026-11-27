@@ -68,6 +68,7 @@ describe('UploadSourceUseCase', () => {
       body: '# Source note',
       fingerprint: sha256Hex('# Source note'),
       frontmatter: { sheska: true },
+      series: { kind: 'none' },
       title: externalSourceId,
       size: sourceContentByteSize(content),
     });
@@ -145,6 +146,7 @@ custom:
         aliases: ['Nested Retries'],
         custom: { status: 'draft' },
       },
+      series: { kind: 'none' },
       title: 'Retry Amplification',
       size: sourceContentByteSize(content),
     });
@@ -219,6 +221,7 @@ custom:
       body: '# New source note',
       fingerprint: sha256Hex('# New source note'),
       frontmatter: { sheska: true },
+      series: { kind: 'none' },
       title: externalSourceId,
       size: sourceContentByteSize(newContent),
     });
@@ -260,6 +263,7 @@ custom:
       body: '# Same body',
       fingerprint: sha256Hex('# Same body'),
       frontmatter: { sheska: true, title: 'Renamed', tags: ['a', 'b'] },
+      series: { kind: 'none' },
       title: 'Renamed',
       size: sourceContentByteSize(newContent),
     });

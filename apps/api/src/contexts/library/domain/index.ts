@@ -5,6 +5,7 @@ export { SourceSyncJobCreatedDomainEvent } from './source-sync-job.event';
 export { SourceFingerprint } from './source-fingerprint.vo';
 export { SourceFrontmatter } from './source-frontmatter.vo';
 export type { SourceFrontmatterProps, SourceFrontmatterValue } from './source-frontmatter.vo';
+export { SourceSeries, type SourceSeriesProps } from './source-series.vo';
 export { SourceSize } from './source-size.vo';
 export { SourceSyncJob } from './source-sync-job.aggregate';
 export {

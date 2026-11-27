@@ -1,4 +1,4 @@
-import { Source, SourceFrontmatter, type SourceFrontmatterProps } from '@contexts/library/domain';
+import { Source, SourceFrontmatter, SourceSeries, type SourceFrontmatterProps } from '@contexts/library/domain';
 
 export function buildSource(
   params: {
@@ -12,15 +12,17 @@ export function buildSource(
 ): Source {
   const body = params.body ?? params.content ?? '# Source note';
   const externalSourceId = params.externalSourceId ?? 'Notes/source.md';
+  const frontmatter = {
+    sheska: true,
+    ...params.frontmatter,
+    ...(params.title ? { title: params.title } : {}),
+  };
 
   return Source.create({
     externalSourceId,
     body,
-    frontmatter: SourceFrontmatter.parse({
-      sheska: true,
-      ...params.frontmatter,
-      ...(params.title ? { title: params.title } : {}),
-    }),
+    frontmatter: SourceFrontmatter.parse(frontmatter),
+    series: SourceSeries.parse(frontmatter),
     size: params.size ?? sourceContentByteSize(params.content ?? body),
   });
 }
@@ -30,11 +32,12 @@ export function sourceContentByteSize(content: string): number {
 }
 
 export function sourceContentOf(source: Source) {
-  const { frontmatter, body, size } = source.getProps();
+  const { frontmatter, series, body, size } = source.getProps();
   const { text, fingerprint } = body.unpack();
 
   return {
     frontmatter: frontmatter.unpack(),
+    series: series.unpack(),
     title: source.title(),
     body: text,
     fingerprint: fingerprint.unpack(),

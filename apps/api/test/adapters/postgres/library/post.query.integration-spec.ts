@@ -784,6 +784,63 @@ describe('PostPgDrizzleQuery', () => {
     });
   });
 
+  describe('시리즈', () => {
+    async function insertSeriesSource(params: { slug: string; series: string; order: number; title: string; publish: boolean }) {
+      const source = await sources.insert(
+        buildSource({
+          externalSourceId: `Notes/pq-series-${params.slug}.md`,
+          title: params.title,
+          frontmatter: { series: params.series, series_order: params.order },
+        }),
+      );
+      if (params.publish) await posts.insert(buildPost({ sourceId: source.id }));
+
+      return source.id;
+    }
+
+    it('상세는 같은 시리즈의 발행된 post를 series_order 차례로 돌려준다', async () => {
+      const second = await insertSeriesSource({ slug: 'detail-2', series: 'PQ 상세', order: 2, title: '둘째 편', publish: true });
+      const first = await insertSeriesSource({ slug: 'detail-1', series: 'PQ 상세', order: 1, title: '첫째 편', publish: true });
+      await insertSeriesSource({ slug: 'detail-3', series: 'PQ 상세', order: 3, title: '셋째 편', publish: false });
+
+      const result = await postQuery.find({ id: second });
+
+      expect(result?.series).toEqual({
+        name: 'PQ 상세',
+        position: 2,
+        total: 2,
+        posts: [
+          { postId: first, title: '첫째 편' },
+          { postId: second, title: '둘째 편' },
+        ],
+      });
+    });
+
+    it('상세는 시리즈가 없으면 null을 돌려준다', async () => {
+      const source = await sources.insert(buildSource({ externalSourceId: 'Notes/pq-series-none.md' }));
+      await posts.insert(buildPost({ sourceId: source.id }));
+
+      const result = await postQuery.find({ id: source.id });
+
+      expect(result?.series).toBeNull();
+    });
+
+    it('목록은 post마다 발행된 post 안의 시리즈 자리를 돌려준다', async () => {
+      const second = await insertSeriesSource({ slug: 'list-2', series: 'PQ 목록', order: 2, title: '둘째 편', publish: true });
+      const first = await insertSeriesSource({ slug: 'list-1', series: 'PQ 목록', order: 1, title: '첫째 편', publish: true });
+      await insertSeriesSource({ slug: 'list-3', series: 'PQ 목록', order: 3, title: '셋째 편', publish: false });
+      const plain = await sources.insert(buildSource({ externalSourceId: 'Notes/pq-series-list-plain.md' }));
+      await posts.insert(buildPost({ sourceId: plain.id }));
+
+      const { posts: listed } = await postQuery.paginate({ limit: 100, cursor: null });
+      const seriesOf = (postId: string) => listed.find((post) => post.postId === postId)?.series;
+
+      expect(seriesOf(first)).toEqual({ name: 'PQ 목록', position: 1, total: 2 });
+      expect(seriesOf(second)).toEqual({ name: 'PQ 목록', position: 2, total: 2 });
+      expect(seriesOf(plain.id)).toBeNull();
+    });
+  });
+
   describe('count', () => {
     it('post를 저장하면 전체 갯수가 증가한다', async () => {
       const before = await postQuery.count();

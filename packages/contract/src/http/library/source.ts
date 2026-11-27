@@ -52,6 +52,11 @@ export const SourceErrorCode = {
   /** frontmatter 형식이 틀렸다. `details.fields`에 이유를 담는다. */
   INVALID_FRONTMATTER: 'source.invalid_frontmatter',
   /**
+   * frontmatter `series`와 `series_order`가 틀렸다. 한쪽만 있거나, 이름이 비었거나, 순서가 1 이상의 정수가 아니다.
+   * `details.fields[].path`가 틀린 키를 가리킨다. 예: `frontmatter.series_order`.
+   */
+  INVALID_SERIES: 'source.invalid_series',
+  /**
    * 같은 경로의 새 파일을 다른 요청이 같은 순간에 먼저 받았다.
    * 다시 보내면 먼저 받은 source를 갱신한다.
    */
@@ -111,6 +116,7 @@ export const SourceApi = {
       CommonErrorCode.VALIDATION_FAILED,
       SourceErrorCode.NOT_SYNC_TARGET,
       SourceErrorCode.INVALID_FRONTMATTER,
+      SourceErrorCode.INVALID_SERIES,
       SourceErrorCode.EXTERNAL_SOURCE_ID_ALREADY_EXISTS,
       SourceSyncJobErrorCode.ALREADY_ACTIVE,
       AuthErrorCode.UNAUTHENTICATED,

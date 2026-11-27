@@ -7,7 +7,7 @@ import { type SourceEmbeddingRepository } from '@contexts/ingestion/domain';
 import { SourceEmbeddingPgDrizzleRepository } from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/source-embedding.pg-drizzle.repository';
 import * as ingestionSchema from '@contexts/ingestion/infrastructure/persistence/postgres-drizzle/schema';
 import { SOURCE_EMBEDDING_REPOSITORY } from '@contexts/ingestion/ingestion.di-tokens';
-import { SourceFrontmatter, type SourceRepository } from '@contexts/library/domain';
+import { SourceFrontmatter, SourceSeries, type SourceRepository } from '@contexts/library/domain';
 import * as schema from '@contexts/library/infrastructure/persistence/postgres-drizzle/schema';
 import { SourcePgDrizzleRepository } from '@contexts/library/infrastructure/persistence/postgres-drizzle/source.pg-drizzle.repository';
 import { SOURCE_REPOSITORY } from '@contexts/library/library.di-tokens';
@@ -49,6 +49,7 @@ describe('SourceDrizzleRepository', () => {
       body: '# Source note',
       fingerprint: sha256Hex('# Source note'),
       frontmatter: { sheska: true },
+      series: { kind: 'none' },
       title: externalSourceId,
       size: sourceContentByteSize('# Source note'),
     });
@@ -62,6 +63,7 @@ describe('SourceDrizzleRepository', () => {
     source.syncContent({
       body: '# Changed source note',
       frontmatter: SourceFrontmatter.parse({ sheska: true }),
+      series: SourceSeries.none(),
       size: sourceContentByteSize('# Changed source note'),
     });
 
@@ -73,9 +75,37 @@ describe('SourceDrizzleRepository', () => {
       body: '# Changed source note',
       fingerprint: sha256Hex('# Changed source note'),
       frontmatter: { sheska: true },
+      series: { kind: 'none' },
       title: externalSourceId,
       size: sourceContentByteSize('# Changed source note'),
     });
+  });
+
+  it('시리즈를 저장하고 조회한다', async () => {
+    const externalSourceId = 'Notes/series-source.md';
+    const source = buildSource({ externalSourceId, frontmatter: { series: 'RAG', series_order: 2 } });
+
+    await repository.insert(source);
+    const findResult = await repository.find({ externalSourceId });
+
+    expect(findResult?.getProps().series.unpack()).toEqual({ kind: 'member', name: 'RAG', order: 2 });
+  });
+
+  it('시리즈를 지우면 시리즈 열을 비운다', async () => {
+    const externalSourceId = 'Notes/series-removed-source.md';
+    const source = buildSource({ externalSourceId, frontmatter: { series: 'RAG', series_order: 2 } });
+    await repository.insert(source);
+
+    source.syncContent({
+      body: '# Source note',
+      frontmatter: SourceFrontmatter.parse({ sheska: true }),
+      series: SourceSeries.none(),
+      size: sourceContentByteSize('# Source note'),
+    });
+    await repository.update(source);
+    const [row] = await database.select().from(schema.sources).where(eq(schema.sources.externalSourceId, externalSourceId));
+
+    expect(row).toMatchObject({ series: null, seriesOrder: null });
   });
 
   it('id로 source를 조회한다', async () => {
@@ -91,6 +121,7 @@ describe('SourceDrizzleRepository', () => {
       body: '# Source note',
       fingerprint: sha256Hex('# Source note'),
       frontmatter: { sheska: true },
+      series: { kind: 'none' },
       title: 'Notes/find-source-by-id.md',
       size: sourceContentByteSize('# Source note'),
     });

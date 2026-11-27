@@ -10,7 +10,10 @@ import {
   type PostQueryCursor,
   type PostQueryPaginateOptions,
   type PostQueryPaginateResult,
-  type PostQueryListItem,
+  type PostQueryPageItem,
+  type PostQuerySeries,
+  type PostQuerySeriesPost,
+  type PostQuerySeriesWithPosts,
   type PostQuerySearchOptions,
   type PostQuerySearchResult,
   type PostQuerySearchCursor,
@@ -37,6 +40,19 @@ type PostWithSourceRow = {
   created_at: Date;
   updated_at: Date;
   source_body: string;
+  series: string | null;
+};
+
+type SeriesPositionRow = {
+  post_id: string;
+  name: string;
+  position: number;
+  total: number;
+};
+
+type SeriesPostRow = {
+  post_id: string;
+  title: string;
 };
 
 type PostListRow = {
@@ -91,7 +107,8 @@ export class PostPgDrizzleQuery implements PostQuery {
           p.view_count,
           p.created_at,
           p.updated_at,
-          s.body        AS source_body
+          s.body        AS source_body,
+          s.series
         FROM posts p
         INNER JOIN sources s ON p.id = s.id
         WHERE p.id = ${criteria.id}
@@ -113,7 +130,10 @@ export class PostPgDrizzleQuery implements PostQuery {
       return null;
     }
 
-    const summaries = await this.findSummaries([row.post_id]);
+    const [summaries, series] = await Promise.all([
+      this.findSummaries([row.post_id]),
+      row.series === null ? null : this.findSeriesWithPosts(row.series, row.post_id),
+    ]);
 
     return {
       postId: row.post_id,
@@ -121,6 +141,7 @@ export class PostPgDrizzleQuery implements PostQuery {
       title: row.title,
       viewCount: row.view_count,
       summary: summaries.get(row.post_id) ?? PENDING_SUMMARY,
+      series,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
       body: row.source_body,
@@ -150,9 +171,10 @@ export class PostPgDrizzleQuery implements PostQuery {
       const { data, nextCursor } = sliceForCursor(rows, limit, (row) => ({
         id: row.id,
       }));
-      const summaries = await this.findSummaries(data.map((row) => row.id));
+      const postIds = data.map((row) => row.id);
+      const [summaries, series] = await Promise.all([this.findSummaries(postIds), this.findSeries(postIds)]);
 
-      return this.toResult(data, nextCursor, summaries);
+      return this.toResult(data, nextCursor, summaries, series);
     } catch (error: unknown) {
       const ErrorClass = classifyPostgresError(error);
       throw new ErrorClass({
@@ -348,14 +370,16 @@ export class PostPgDrizzleQuery implements PostQuery {
     data: PostListRow[],
     nextCursor: TCursor | null,
     summaries: Map<string, PostSummaryOutcome>,
-  ): { posts: PostQueryListItem[]; nextCursor: TCursor | null } {
+    series: Map<string, PostQuerySeries>,
+  ): { posts: PostQueryPageItem[]; nextCursor: TCursor | null } {
     return {
-      posts: data.map((row): PostQueryListItem => ({
+      posts: data.map((row): PostQueryPageItem => ({
         postId: row.id,
         sourceId: row.sourceId,
         title: row.title,
         viewCount: row.viewCount,
         summary: summaries.get(row.id) ?? PENDING_SUMMARY,
+        series: series.get(row.id) ?? null,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       })),
@@ -395,6 +419,48 @@ export class PostPgDrizzleQuery implements PostQuery {
       .where(inArray(postsSchema.postSummaries.postId, [...postIds]));
 
     return new Map(rows.map((row) => [row.postId, PostSummaryPgDrizzleMapper.toOutcome(row)]));
+  }
+
+  private async findSeries(postIds: readonly string[]): Promise<Map<string, PostQuerySeries>> {
+    if (postIds.length === 0) return new Map();
+
+    const ids = sql.join(
+      postIds.map((id) => sql`${id}`),
+      sql`, `,
+    );
+    const result = await this.db.execute<SeriesPositionRow>(sql`
+      SELECT ranked.post_id, ranked.name, ranked.position, ranked.total
+      FROM (
+        SELECT p.id AS post_id,
+          s.series AS name,
+          ROW_NUMBER() OVER (PARTITION BY s.series ORDER BY s.series_order, p.created_at, p.id)::int AS position,
+          COUNT(*) OVER (PARTITION BY s.series)::int AS total
+        FROM posts p
+        INNER JOIN sources s ON p.id = s.id
+        WHERE s.series IN (SELECT series FROM sources WHERE id IN (${ids}) AND series IS NOT NULL)
+      ) ranked
+      WHERE ranked.post_id IN (${ids})
+    `);
+
+    return new Map(result.rows.map((row) => [row.post_id, { name: row.name, position: row.position, total: row.total }]));
+  }
+
+  private async findSeriesWithPosts(name: string, postId: string): Promise<PostQuerySeriesWithPosts> {
+    const result = await this.db.execute<SeriesPostRow>(sql`
+      SELECT p.id AS post_id, s.title
+      FROM posts p
+      INNER JOIN sources s ON p.id = s.id
+      WHERE s.series = ${name}
+      ORDER BY s.series_order, p.created_at, p.id
+    `);
+    const posts: PostQuerySeriesPost[] = result.rows.map((row) => ({ postId: row.post_id, title: row.title }));
+
+    return {
+      name,
+      position: posts.findIndex((post) => post.postId === postId) + 1,
+      total: posts.length,
+      posts,
+    };
   }
 
   private toSimilarityPercent(embeddingDistance: number | null): number | null {

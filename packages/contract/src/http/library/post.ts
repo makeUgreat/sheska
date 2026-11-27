@@ -37,8 +37,31 @@ const viewSchema = z.object({
   client: z.string(),
 });
 
+/**
+ * 같은 frontmatter `series` 이름을 가진 발행된 post 안에서 이 post의 자리.
+ * 차례는 `series_order`, 발행 시각, `postId` 순이다. 발행하지 않은 source는 세지 않는다.
+ */
+const seriesSchema = z.object({
+  name: z.string(),
+  /** 1부터 센다. */
+  position: z.number().int().positive(),
+  total: z.number().int().positive(),
+});
+
+const seriesWithPostsSchema = seriesSchema.extend({
+  /** 같은 시리즈의 발행된 post 전체. 차례대로 있고 이 post도 들어 있다. */
+  posts: z.array(z.object({ postId: z.string(), title: z.string() })).min(1),
+});
+
+const listItemSchema = summarySchema.extend({
+  /** 시리즈에 속하지 않으면 `null`이다. */
+  series: seriesSchema.nullable(),
+});
+
 const postSchema = summarySchema.extend({
   body: z.string(),
+  /** 시리즈에 속하지 않으면 `null`이다. */
+  series: seriesWithPostsSchema.nullable(),
 });
 
 const searchResultSchema = summarySchema.extend({
@@ -74,6 +97,7 @@ const answerEventSchema = z.discriminatedUnion('type', [
 
 export const PostSchema = {
   summary: summarySchema,
+  listItem: listItemSchema,
   post: postSchema,
   searchResult: searchResultSchema,
   view: viewSchema,
@@ -82,6 +106,8 @@ export const PostSchema = {
 };
 
 export type PostSummaryResponse = z.infer<typeof summarySchema>;
+export type PostListItemResponse = z.infer<typeof listItemSchema>;
+export type PostSeriesResponse = z.infer<typeof seriesSchema>;
 export type PostAiSummaryResponse = z.infer<typeof aiSummarySchema>;
 export type PostResponse = z.infer<typeof postSchema>;
 export type PostSearchResultResponse = z.infer<typeof searchResultSchema>;
@@ -105,7 +131,7 @@ export const PostApi = {
       limit: limitSchema,
     }),
     response: z.object({
-      posts: z.array(summarySchema),
+      posts: z.array(listItemSchema),
       /** 마지막 페이지면 `null`이다. */
       nextCursor: cursorSchema.nullable(),
     }),
