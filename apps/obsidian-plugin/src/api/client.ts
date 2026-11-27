@@ -25,12 +25,15 @@ interface ResponseSchema<T> {
 export class SheskaApiError extends Error {
   readonly status: number;
   readonly code?: string;
+  /** 서버가 적은 원인 설명이다. 사람에게 보여 주기만 하고 분기에 쓰지 않는다. */
+  readonly serverMessage?: string;
 
-  constructor(status: number, statusText: string, body: string, code?: string) {
+  constructor(status: number, statusText: string, body: string, code?: string, serverMessage?: string) {
     super(`Sheska API error: ${status} ${statusText}${body ? ` — ${body}` : ''}`);
     this.name = 'SheskaApiError';
     this.status = status;
     this.code = code;
+    this.serverMessage = serverMessage;
   }
 }
 
@@ -66,7 +69,8 @@ export class SheskaApiClient {
 
     if (!res.ok) {
       const body = await res.text().catch(() => '');
-      throw new SheskaApiError(res.status, res.statusText, body, readFailureCode(body));
+      const failure = readFailure(body);
+      throw new SheskaApiError(res.status, res.statusText, body, failure?.code, failure?.message);
     }
     return res;
   }
@@ -112,10 +116,10 @@ export class SheskaApiClient {
   }
 }
 
-function readFailureCode(body: string): string | undefined {
+function readFailure(body: string): { code: string; message: string } | undefined {
   try {
     const parsed = errorResponseSchema.safeParse(JSON.parse(body));
-    return parsed.success ? parsed.data.code : undefined;
+    return parsed.success ? parsed.data : undefined;
   } catch {
     return undefined;
   }

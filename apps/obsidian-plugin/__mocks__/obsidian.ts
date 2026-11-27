@@ -108,8 +108,14 @@ export class Menu {
 
 export const workspaceEventHandlers: Record<string, ((...args: unknown[]) => void) | undefined> = {};
 
+export class MarkdownView {
+  file: TFile | null = null;
+  contentEl = {} as HTMLElement;
+}
+
 class MockWorkspace {
   getActiveFile = vi.fn().mockReturnValue(null);
+  getLeavesOfType = vi.fn((_type: string): { view: unknown }[] => []);
   onLayoutReady = vi.fn((callback: () => void) => callback());
 
   on(event: string, handler: ((menu: Menu, file: TFile) => void) | ((...args: unknown[]) => void)): object {

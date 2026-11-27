@@ -9,9 +9,13 @@ import {
   statusBarItems,
   TFile,
   Menu,
+  MarkdownView,
 } from '../__mocks__/obsidian';
 import SheskaPlugin from './main';
+import { renderRejectionBanner } from './rejection-banner';
 import { DEFAULT_SETTINGS } from './settings';
+
+vi.mock('./rejection-banner', () => ({ renderRejectionBanner: vi.fn() }));
 
 function makePlugin(loadDataResult: Record<string, unknown> = {}): SheskaPlugin {
   const plugin = new SheskaPlugin({} as never, {} as never);
@@ -302,7 +306,7 @@ describe('SheskaPlugin', () => {
     it('registers a file-menu event handler', async () => {
       await plugin.onload();
 
-      expect(plugin.registerEvent).toHaveBeenCalledTimes(6);
+      expect(plugin.registerEvent).toHaveBeenCalledTimes(7);
     });
 
     it('adds an Upload to Sheska item to the file menu', async () => {
@@ -394,6 +398,44 @@ describe('SheskaPlugin', () => {
       await callback();
 
       expect(noticeMessages).toContain('Failed to reach Sheska API. Check settings.');
+    });
+  });
+
+  describe('rejection banner', () => {
+    const rejection = { code: 'source_document.invalid_yaml', message: 'Nested mappings are not allowed' };
+
+    function viewOf(path: string): MarkdownView {
+      const view = new MarkdownView();
+      view.file = new TFile(path, { ctime: 0, mtime: 100, size: 1 });
+      view.contentEl = { path } as unknown as HTMLElement;
+      return view;
+    }
+
+    it('draws, for each open note, the reason its current version was rejected', async () => {
+      plugin = makePlugin({ syncCache: { 'a.md': { mtime: 100, status: 'failed', rejection } } });
+      const rejected = viewOf('a.md');
+      const synced = viewOf('b.md');
+      plugin.app.workspace.getLeavesOfType = vi.fn().mockReturnValue([{ view: rejected }, { view: synced }, { view: {} }]);
+      await plugin.onload();
+      vi.mocked(renderRejectionBanner).mockClear();
+
+      workspaceEventHandlers['layout-change']!();
+
+      expect(renderRejectionBanner).toHaveBeenCalledTimes(2);
+      expect(renderRejectionBanner).toHaveBeenCalledWith(rejected.contentEl, rejection);
+      expect(renderRejectionBanner).toHaveBeenCalledWith(synced.contentEl, null);
+    });
+
+    it('removes every banner when the plugin unloads', async () => {
+      plugin = makePlugin({ syncCache: { 'a.md': { mtime: 100, status: 'failed', rejection } } });
+      const rejected = viewOf('a.md');
+      plugin.app.workspace.getLeavesOfType = vi.fn().mockReturnValue([{ view: rejected }]);
+      await plugin.onload();
+      vi.mocked(renderRejectionBanner).mockClear();
+
+      plugin.onunload();
+
+      expect(renderRejectionBanner).toHaveBeenCalledExactlyOnceWith(rejected.contentEl, null);
     });
   });
 

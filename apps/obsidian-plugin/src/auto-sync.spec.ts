@@ -374,6 +374,120 @@ describe('AutoSyncService', () => {
     errorSpy.mockRestore();
   });
 
+  describe('rejection reasons', () => {
+    const invalidYaml = () => new SheskaApiError(400, 'Bad Request', '', 'source_document.invalid_yaml', 'Nested mappings are not allowed');
+
+    it('keeps the reason the server rejected this version for and notifies once', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+      const syncCache: SyncCache = {};
+      const { api, service, vault } = makeService({}, syncCache);
+      vault.getMarkdownFiles.mockReturnValue([file]);
+      api.uploadSource.mockRejectedValue(invalidYaml());
+
+      await service.runSweep();
+      syncCache['note.md'].nextRetryAt = Date.now();
+      vault.getAbstractFileByPath.mockReturnValue(file);
+      await service.runReconcile();
+
+      expect(service.getRejection(asObsidianFile(file))).toEqual({
+        code: 'source_document.invalid_yaml',
+        message: 'Nested mappings are not allowed',
+      });
+      expect(noticeMessages).toEqual(['Sheska: "note.md" was rejected (source_document.invalid_yaml).']);
+      errorSpy.mockRestore();
+    });
+
+    it('keeps no reason for a failure that a retry can get past', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+      const syncCache: SyncCache = {};
+      const { api, service, vault } = makeService({}, syncCache);
+      vault.getMarkdownFiles.mockReturnValue([file]);
+      api.uploadSource.mockRejectedValue(new SheskaApiError(503, 'Service Unavailable', ''));
+
+      await service.runSweep();
+
+      expect(service.getRejection(asObsidianFile(file))).toBeNull();
+      expect(noticeMessages).toEqual([]);
+      errorSpy.mockRestore();
+    });
+
+    it('falls back to the HTTP status when the server sent no message', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+      const { api, service, vault } = makeService({}, {});
+      vault.getMarkdownFiles.mockReturnValue([file]);
+      api.uploadSource.mockRejectedValue(new SheskaApiError(413, 'Payload Too Large', ''));
+
+      await service.runSweep();
+
+      expect(service.getRejection(asObsidianFile(file))).toEqual({ code: undefined, message: 'HTTP 413' });
+      errorSpy.mockRestore();
+    });
+
+    it('stops reporting the reason once the note is edited', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+      const { api, service, vault } = makeService({}, {});
+      vault.getMarkdownFiles.mockReturnValue([file]);
+      api.uploadSource.mockRejectedValue(invalidYaml());
+
+      await service.runSweep();
+      const edited = new TFile('note.md', { ctime: 0, mtime: 200, size: 1 });
+
+      expect(service.getRejection(asObsidianFile(edited))).toBeNull();
+      errorSpy.mockRestore();
+    });
+
+    it('drops the reason when a retry of the same version succeeds', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+      const syncCache: SyncCache = {};
+      const { api, service, vault } = makeService({}, syncCache, () => false);
+      vault.getMarkdownFiles.mockReturnValue([file]);
+      vault.getAbstractFileByPath.mockReturnValue(file);
+      api.uploadSource.mockRejectedValueOnce(invalidYaml());
+
+      await service.runSweep();
+      await vi.advanceTimersByTimeAsync(60_000);
+      await service.runReconcile();
+
+      expect(syncCache['note.md']).toMatchObject({ status: 'synced' });
+      expect(service.getRejection(asObsidianFile(file))).toBeNull();
+      errorSpy.mockRestore();
+    });
+
+    it('drops the reason when a retry of the same version fails only for a while', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+      const syncCache: SyncCache = {};
+      const { api, service, vault } = makeService({}, syncCache, () => false);
+      vault.getMarkdownFiles.mockReturnValue([file]);
+      vault.getAbstractFileByPath.mockReturnValue(file);
+      api.uploadSource.mockRejectedValueOnce(invalidYaml()).mockRejectedValueOnce(new SheskaApiError(503, 'Service Unavailable', ''));
+
+      await service.runSweep();
+      await vi.advanceTimersByTimeAsync(60_000);
+      await service.runReconcile();
+
+      expect(syncCache['note.md']).toMatchObject({ status: 'failed' });
+      expect(service.getRejection(asObsidianFile(file))).toBeNull();
+      errorSpy.mockRestore();
+    });
+
+    it('keeps the reason of a manual upload without a second notice', async () => {
+      const file = new TFile('note.md', { ctime: 0, mtime: 123, size: 1 });
+      const { api, service } = makeService({}, {});
+      api.uploadSource.mockRejectedValue(invalidYaml());
+
+      await expect(service.uploadFile(asObsidianFile(file))).rejects.toBeInstanceOf(SheskaApiError);
+
+      expect(service.getRejection(asObsidianFile(file))).toMatchObject({ code: 'source_document.invalid_yaml' });
+      expect(noticeMessages).toEqual([]);
+    });
+  });
+
   // nocap: library-sync-9
   it('retries a failed upload once its backoff elapses', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

@@ -4,7 +4,7 @@ import type { Debouncer, MetadataCache, TAbstractFile, Vault } from 'obsidian';
 import { isRetryableApiError, SheskaApiError } from '@/api/client';
 import type { SheskaApiClient } from '@/api/client';
 import type { SheskaSettings } from '@/settings';
-import type { AttachmentCache, SyncCache } from '@/storage';
+import type { AttachmentCache, NoteRejection, SyncCache, SyncCacheEntry } from '@/storage';
 import { type ImageLink, prepareUploadContent } from '@/upload-content';
 
 interface AutoSyncServiceOptions {
@@ -47,12 +47,19 @@ export class UploadBlockedError extends Error {
   }
 }
 
+/** 재시도로는 풀리지 않는 거부만 원인으로 남긴다. 장애는 재시도하면 지나간다. */
+function rejectionOf(error: unknown): NoteRejection | undefined {
+  if (!(error instanceof SheskaApiError) || isRetryableApiError(error)) return undefined;
+
+  return { code: error.code, message: error.serverMessage ?? `HTTP ${error.status}` };
+}
+
 export class AutoSyncService {
   private api: SheskaApiClient;
   private settings: SheskaSettings;
   private syncCache: SyncCache;
   private attachmentCache: AttachmentCache;
-  private readonly notifiedBlockedVersions = new Map<string, number>();
+  private readonly notifiedVersions = new Map<string, number>();
   private readonly dirtyFiles = new Map<string, TFile>();
   private readonly syncingFiles = new Set<string>();
   private readonly pollingFiles = new Set<string>();
@@ -149,7 +156,20 @@ export class AutoSyncService {
   }
 
   async uploadFile(file: TFile): Promise<void> {
-    await this.uploadFileCore(file);
+    try {
+      await this.uploadFileCore(file);
+    } catch (error) {
+      if (rejectionOf(error)) await this.recordUploadFailure(file, error);
+      throw error;
+    }
+  }
+
+  /** 지금 버전이 거부됐을 때만 돌려준다. 고쳐서 저장하면 다음 업로드 결과를 기다린다. */
+  getRejection(file: TFile): NoteRejection | null {
+    const cached = this.syncCache[file.path];
+    if (cached?.mtime !== file.stat.mtime) return null;
+
+    return cached.rejection ?? null;
   }
 
   /** `library-source-6`: only a YAML boolean `true`, so `"true"` or `yes` stays local. */
@@ -297,11 +317,11 @@ export class AutoSyncService {
     return found;
   }
 
-  private notifyBlockedUpload(file: TFile, error: UploadBlockedError): void {
-    if (this.notifiedBlockedVersions.get(file.path) === file.stat.mtime) return;
+  private notifyOncePerVersion(file: TFile, message: string): void {
+    if (this.notifiedVersions.get(file.path) === file.stat.mtime) return;
 
-    this.notifiedBlockedVersions.set(file.path, file.stat.mtime);
-    new Notice(`Sheska: ${error.message}.`);
+    this.notifiedVersions.set(file.path, file.stat.mtime);
+    new Notice(message);
   }
 
   private async uploadAutomatically(file: TFile): Promise<void> {
@@ -309,11 +329,13 @@ export class AutoSyncService {
       await this.uploadFileCore(file);
     } catch (err) {
       if (err instanceof UploadBlockedError) {
-        this.notifyBlockedUpload(file, err);
+        this.notifyOncePerVersion(file, `Sheska: ${err.message}.`);
         return;
       }
       console.error(`[Sheska] Auto-sync failed for "${file.path}":`, err);
-      await this.recordUploadFailure(file);
+      await this.recordUploadFailure(file, err);
+      const rejection = rejectionOf(err);
+      if (rejection) this.notifyRejection(file, rejection);
     }
   }
 
@@ -542,11 +564,15 @@ export class AutoSyncService {
     } catch (error) {
       const current = this.syncCache[file.path];
       if (current?.mtime === cached.mtime) {
-        this.syncCache[file.path] = {
+        const rejection = rejectionOf(error);
+        const failed: SyncCacheEntry = {
           ...current,
           status: 'failed',
           nextRetryAt: Date.now() + this.retryDelayMs(nextRetryCount),
         };
+        delete failed.rejection;
+        this.syncCache[file.path] = rejection ? { ...failed, rejection } : failed;
+        if (rejection) this.notifyRejection(file, rejection);
         await this.options.saveSyncCache();
         this.options.onSyncStateChanged?.(file.path);
       }
@@ -554,17 +580,23 @@ export class AutoSyncService {
     }
   }
 
-  private async recordUploadFailure(file: TFile): Promise<void> {
+  private async recordUploadFailure(file: TFile, error: unknown): Promise<void> {
     const retryCount = this.syncCache[file.path]?.retryCount ?? 0;
+    const rejection = rejectionOf(error);
 
     this.syncCache[file.path] = {
       mtime: file.stat.mtime,
       status: 'failed',
       retryCount,
       nextRetryAt: Date.now() + this.retryDelayMs(retryCount),
+      ...(rejection ? { rejection } : {}),
     };
     await this.options.saveSyncCache();
     this.options.onSyncStateChanged?.(file.path);
+  }
+
+  private notifyRejection(file: TFile, rejection: NoteRejection): void {
+    this.notifyOncePerVersion(file, `Sheska: "${file.path}" was rejected (${rejection.code ?? rejection.message}).`);
   }
 
   private retryDelayMs(retryCount: number): number {
