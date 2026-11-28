@@ -87,7 +87,7 @@ export const EmptyList: Story = {
   tags: ['!dev'],
   decorators: withPage(buildStoryHttpClient({ get: respondWith(NO_SOURCES) })),
   play: async ({ canvas }) => {
-    await waitFor(() => expect(canvas.getByText('Nothing has been collected yet.')).toBeDefined());
+    await waitFor(() => expect(canvas.getByText('Empty')).toBeDefined());
   },
 };
 

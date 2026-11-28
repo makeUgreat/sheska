@@ -153,7 +153,7 @@ export const Empty: Story = {
   tags: ['!dev'],
   decorators: [withPage(buildClient(fn(() => Promise.resolve({ views: [], nextCursor: null }))).client)],
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('Nothing has been collected yet.')).toBeDefined();
+    await expect(await canvas.findByText('Empty')).toBeDefined();
     await expect(canvas.queryByRole('table')).toBeNull();
   },
 };

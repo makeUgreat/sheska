@@ -544,7 +544,7 @@ export const MissingId: Story = {
   play: async ({ canvas }) => {
     const { get } = pendingGetHttp;
 
-    await expect(canvas.getByText('This page does not exist, or it was removed.')).toBeDefined();
+    await expect(canvas.getByText('Not found')).toBeDefined();
     await expect(get).not.toHaveBeenCalledWith(expect.stringMatching(/^\/posts\//), expect.anything());
   },
 };
