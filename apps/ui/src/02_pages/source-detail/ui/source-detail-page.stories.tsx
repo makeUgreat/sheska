@@ -222,7 +222,7 @@ export const NotFound: Story = {
   tags: ['!dev'],
   decorators: withPage(buildStoryHttpClient({ get: respondWith(null) })),
   play: async ({ canvas }) => {
-    await waitFor(() => expect(canvas.getByText('This page does not exist, or it was removed.')).toBeDefined());
+    await waitFor(() => expect(canvas.getByText('Not found')).toBeDefined());
   },
 };
 

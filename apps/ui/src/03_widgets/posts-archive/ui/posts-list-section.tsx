@@ -493,9 +493,9 @@ export function PostsListSection({ search, filter, state }: { search: PostsSearc
             <ErrorState error={state.error} />
           ) : state.status === 'empty' ? (
             isSearching ? (
-              <EmptyState variant="search" query={search.normalizedQuery} className={ARCHIVE_SPACING} />
+              <EmptyState variant="search" query={search.normalizedQuery} />
             ) : (
-              <EmptyState variant="list" className={ARCHIVE_SPACING} />
+              <EmptyState variant="list" />
             )
           ) : (
             <div aria-busy={filter.switching} className={filter.switching ? SWITCHING_PROJECT : SETTLED}>

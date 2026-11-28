@@ -82,7 +82,7 @@ export const EmptyList: Story = {
   tags: ['!dev'],
   decorators: listing([]),
   play: async ({ canvas }) => {
-    await waitFor(() => expect(canvas.getByText('Nothing has been collected yet.')).toBeDefined());
+    await waitFor(() => expect(canvas.getByText('Empty')).toBeDefined());
   },
 };
 
@@ -374,7 +374,7 @@ export const NoMatchShowsQuery: Story = {
     await waitFor(async () => {
       await expect(searchWithoutMatch).toHaveBeenCalledTimes(1);
       await expect(canvas.getByText('"fts"')).toBeDefined();
-      await expect(canvas.getByText('Nothing matches this.')).toBeDefined();
+      await expect(canvas.getByText('No match for')).toBeDefined();
     });
   },
 };

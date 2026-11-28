@@ -33,7 +33,7 @@ export function PostArticleSection({ state, canOpenViews = false }: { state: Pos
     return (
       <div className="pt-10">
         <PendingBack />
-        <EmptyState variant="document" className="py-24" />
+        <EmptyState variant="document" />
       </div>
     );
   }

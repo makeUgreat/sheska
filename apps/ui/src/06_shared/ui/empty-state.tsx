@@ -1,63 +1,101 @@
-const BAR = 'rounded-sm bg-outline-variant/10';
-const BAR_STRONG = 'rounded-sm bg-outline-variant/15';
-const GHOST_TOP = 'border-t border-dashed border-outline-variant/30';
+import type { ReactNode } from 'react';
 
-export type EmptyVariant = 'grid' | 'list' | 'document' | 'search';
+const GHOST = 'rounded-[3px] bg-outline-variant/6';
+const GHOST_STRONG = 'rounded-[3px] bg-outline-variant/9';
+const ROW_LINE = 'border-outline-variant/12';
+const RISE = 'animate-[terminal-line-in_420ms_cubic-bezier(0.2,0.7,0.3,1)_both] motion-reduce:animate-none';
+const RISE_STAGGER_MS = 90;
+const LABEL_DELAY_MS = 360;
+const FADE_OUT = '[mask-image:linear-gradient(rgb(0_0_0/0.7),transparent_90%)]';
 
-const COPY: Record<EmptyVariant, { kicker: string; label: string }> = {
-  grid: { kicker: 'Empty', label: 'Nothing has been collected yet.' },
-  list: { kicker: 'Empty', label: 'Nothing has been collected yet.' },
-  document: {
-    kicker: 'Not found',
-    label: 'This page does not exist, or it was removed.',
-  },
-  search: { kicker: 'No results', label: 'Nothing matches this.' },
-};
+export type EmptyVariant = 'list' | 'search' | 'document';
 
-function GhostCard() {
+type GhostRowShape = { meta: string; title: string; summary: [string, string] };
+
+const ROWS: GhostRowShape[] = [
+  { meta: 'w-[84px]', title: 'w-[62%]', summary: ['w-[94%]', 'w-[71%]'] },
+  { meta: 'w-[64px]', title: 'w-[48%]', summary: ['w-[88%]', 'w-[58%]'] },
+  { meta: 'w-[64px]', title: 'w-[56%]', summary: ['w-[91%]', 'w-[66%]'] },
+  { meta: 'w-[64px]', title: 'w-[44%]', summary: ['w-[85%]', 'w-[52%]'] },
+];
+
+const PARAGRAPH = ['w-[96%]', 'w-[89%]', 'w-[93%]', 'w-[61%]'];
+
+function rise(order: number) {
+  return { animationDelay: `${order * RISE_STAGGER_MS}ms` };
+}
+
+function GhostRow({ shape, withMeta, bordered = true }: { shape: GhostRowShape; withMeta: boolean; bordered?: boolean }) {
   return (
-    <div className={`${GHOST_TOP} pt-3`}>
-      <div className={`mb-2 h-2 w-1/2 ${BAR}`} />
-      <div className={`mb-2 h-3 w-[88%] ${BAR_STRONG}`} />
-      <div className={`h-2 w-[70%] ${BAR}`} />
+    <div className={`flex flex-col gap-1 py-6 ${bordered ? `border-b ${ROW_LINE}` : ''}`}>
+      {withMeta && (
+        <span className="flex h-4 items-center">
+          <span className={`h-2 ${shape.meta} ${GHOST}`} />
+        </span>
+      )}
+      <span className="flex h-[30px] items-center">
+        <span className={`h-3.5 ${shape.title} ${GHOST_STRONG}`} />
+      </span>
+      <span className="mt-1 flex flex-col gap-1">
+        {shape.summary.map((width) => (
+          <span key={width} className="grid h-[22px] grid-cols-[24px_minmax(0,1fr)] items-center">
+            <span className={`h-2 w-3 ${GHOST}`} />
+            <span className={`h-2 ${width} ${GHOST}`} />
+          </span>
+        ))}
+      </span>
     </div>
   );
 }
 
-function GhostGrid() {
+function Label({ children }: { children: ReactNode }) {
   return (
-    <div className="grid w-[400px] max-w-full grid-cols-3 gap-x-6">
-      <GhostCard />
-      <GhostCard />
-      <GhostCard />
-    </div>
+    <p
+      className="animate-fade-in bg-page-background px-4 font-mono text-label-sm uppercase text-text-muted motion-reduce:animate-none"
+      style={{ animationDelay: `${LABEL_DELAY_MS}ms` }}
+    >
+      {children}
+    </p>
   );
 }
 
-function GhostList() {
+function SearchLabel({ query }: { query: string }) {
   return (
-    <div className="flex w-[340px] max-w-full flex-col gap-5">
-      <GhostCard />
-      <GhostCard />
-    </div>
+    <Label>
+      No match for <span className="normal-case tracking-normal text-text-primary">&quot;{query}&quot;</span>
+    </Label>
+  );
+}
+
+function GhostList({ label, withMetaOnEveryRow }: { label: ReactNode; withMetaOnEveryRow: boolean }) {
+  const [first, ...rest] = ROWS;
+
+  return (
+    <>
+      <div aria-hidden="true" className={RISE}>
+        <GhostRow shape={first} withMeta bordered={false} />
+      </div>
+      <div className={`relative flex h-px items-center justify-center bg-outline-variant/12 ${RISE}`}>{label}</div>
+      <div aria-hidden="true" className={FADE_OUT}>
+        {rest.map((shape, index) => (
+          <div key={shape.title} className={RISE} style={rise(index + 1)}>
+            <GhostRow shape={shape} withMeta={withMetaOnEveryRow} />
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 
 function GhostDocument() {
   return (
-    <div className={`w-[290px] max-w-full text-left ${GHOST_TOP} pt-3.5`}>
-      <div className={`mb-3.5 h-4 w-[78%] ${BAR_STRONG}`} />
-      <div className={`mb-2 h-2 w-[96%] ${BAR}`} />
-      <div className={`mb-2 h-2 w-[88%] ${BAR}`} />
-      <div className={`mb-2 h-2 w-[93%] ${BAR}`} />
-      <div className={`h-2 w-[54%] ${BAR}`} />
+    <div aria-hidden="true" className={`pt-2 ${FADE_OUT}`}>
+      <div className={`h-2 w-[28%] ${GHOST} ${RISE}`} />
+      <div className={`mt-3.5 h-[22px] w-[72%] rounded ${GHOST_STRONG} ${RISE}`} />
+      {PARAGRAPH.map((width, index) => (
+        <div key={width} className={`h-2 ${width} ${GHOST} ${RISE} ${index === 0 ? 'mt-9' : 'mt-3.5'}`} style={rise(index < 2 ? 1 : 2)} />
+      ))}
     </div>
-  );
-}
-
-function QueryMark({ query }: { query: string }) {
-  return (
-    <span className="rounded-md bg-accent/10 px-4 py-2.5 font-mono text-display-terminal text-accent-strong">&quot;{query}&quot;</span>
   );
 }
 
@@ -65,30 +103,30 @@ type EmptyMark = { variant: 'search'; query: string } | { variant: Exclude<Empty
 
 export type EmptyStateProps = EmptyMark & { className?: string };
 
-function Mark(mark: EmptyMark) {
+function Content(mark: EmptyMark) {
   switch (mark.variant) {
     case 'search':
-      return <QueryMark query={mark.query} />;
-    case 'document':
-      return <GhostDocument />;
+      return <GhostList label={<SearchLabel query={mark.query} />} withMetaOnEveryRow />;
     case 'list':
-      return <GhostList />;
-    case 'grid':
-      return <GhostGrid />;
+      return <GhostList label={<Label>Empty</Label>} withMetaOnEveryRow={false} />;
+    case 'document':
+      return (
+        <>
+          <GhostDocument />
+          <div className="mt-6 flex justify-center">
+            <Label>Not found</Label>
+          </div>
+        </>
+      );
   }
 }
 
 export function EmptyState(props: EmptyStateProps) {
-  const { variant, className = '' } = props;
-  const { kicker, label } = COPY[variant];
+  const { className = '' } = props;
 
   return (
-    <div className={['flex flex-col items-center text-center', className].filter(Boolean).join(' ')}>
-      <div className="mb-6 flex items-center justify-center" aria-hidden="true">
-        <Mark {...props} />
-      </div>
-      <p className="font-mono text-label-sm uppercase text-text-muted">{kicker}</p>
-      <p className="mt-3.5 text-body-md text-text-secondary">{label}</p>
+    <div className={['w-full', className].filter(Boolean).join(' ')}>
+      <Content {...props} />
     </div>
   );
 }
