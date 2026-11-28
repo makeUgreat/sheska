@@ -241,11 +241,7 @@ function SearchIcon({ className }: { className: string }) {
 
 function AllProjectsMark() {
   return (
-    <svg
-      viewBox="0 0 14 14"
-      aria-hidden="true"
-      className={`size-3.5 shrink-0 rounded-[3px] bg-accent ${ALL_MARK_DIM} group-aria-pressed:animate-mark-pop motion-reduce:animate-none`}
-    >
+    <svg viewBox="0 0 14 14" aria-hidden="true" className={`size-3.5 shrink-0 rounded-[3px] bg-accent ${ALL_MARK_DIM}`}>
       <circle cx="4.6" cy="4.6" r="1.6" fill="#fff" />
       <circle cx="9.4" cy="4.6" r="1.6" fill="#fff" opacity=".7" />
       <circle cx="4.6" cy="9.4" r="1.6" fill="#fff" opacity=".7" />
