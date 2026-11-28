@@ -110,12 +110,31 @@ function stepInDelays({ canvas }: PlayContext) {
 }
 
 export const BlocksStepInInOrder: Story = {
-  name: '머리의 줄과 본문의 block이 순서대로 45ms 간격을 두고 올라온다',
+  name: '머리의 줄과 본문의 block이 순서대로 35ms 간격을 두고 올라온다',
   tags: ['!dev'],
   args: { header: <h1>제목</h1>, body: ONE_HEADING },
   beforeEach: allowMotion,
   play: async (context) => {
-    await expect(stepInDelays(context)).toEqual([[0], [45], [90]]);
+    await expect(stepInDelays(context)).toEqual([[0], [35], [70]]);
+  },
+};
+
+export const BlocksWaitHidden: Story = {
+  name: '차례가 오기 전의 block은 보이지 않다가 제자리로 올라온다',
+  tags: ['!dev'],
+  args: { header: <h1>제목</h1>, body: ONE_HEADING },
+  beforeEach: allowMotion,
+  play: async ({ canvas }) => {
+    const block = canvas.getByText('본문');
+    const [animation] = block.getAnimations();
+    animation?.pause();
+
+    if (animation) animation.currentTime = 0;
+    const waiting = getComputedStyle(block).opacity;
+    if (animation) animation.currentTime = 70 + 260;
+    const settled = getComputedStyle(block).opacity;
+
+    await expect([waiting, settled]).toEqual(['0', '1']);
   },
 };
 
