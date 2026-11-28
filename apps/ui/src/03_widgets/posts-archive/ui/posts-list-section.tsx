@@ -223,11 +223,12 @@ const INDEX_BUTTON =
   'hover:text-text-secondary aria-pressed:font-semibold aria-pressed:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent motion-reduce:transition-none';
 
 const ALL_MARK_DIM =
-  'opacity-45 grayscale transition-[opacity,filter] duration-250 group-hover:opacity-80 group-aria-pressed:opacity-100 group-aria-pressed:grayscale-0 motion-reduce:transition-none';
+  'opacity-45 grayscale brightness-86 transition-[opacity,filter] duration-250 group-hover:opacity-80 ' +
+  'group-aria-pressed:opacity-100 group-aria-pressed:grayscale-0 group-aria-pressed:brightness-100 motion-reduce:transition-none';
 
 const PROJECT_LOGO_DIM =
-  '[&_img]:opacity-45 [&_img]:grayscale [&_img]:transition-[opacity,filter] [&_img]:duration-250 group-hover:[&_img]:opacity-80 ' +
-  'group-aria-pressed:[&_img]:opacity-100 group-aria-pressed:[&_img]:grayscale-0 motion-reduce:[&_img]:transition-none';
+  '[&_img]:opacity-45 [&_img]:[filter:grayscale(1)_brightness(var(--logo-dim-brightness))] [&_img]:transition-[opacity,filter] [&_img]:duration-250 hover:[&_img]:opacity-80 ' +
+  'aria-pressed:[&_img]:opacity-100 aria-pressed:[&_img]:[filter:none] motion-reduce:[&_img]:transition-none';
 
 function SearchIcon({ className }: { className: string }) {
   return (
@@ -240,11 +241,7 @@ function SearchIcon({ className }: { className: string }) {
 
 function AllProjectsMark() {
   return (
-    <svg
-      viewBox="0 0 14 14"
-      aria-hidden="true"
-      className={`size-3.5 shrink-0 rounded-[3px] bg-accent ${ALL_MARK_DIM} group-aria-pressed:animate-mark-pop motion-reduce:animate-none`}
-    >
+    <svg viewBox="0 0 14 14" aria-hidden="true" className={`size-3.5 shrink-0 rounded-[3px] bg-accent ${ALL_MARK_DIM}`}>
       <circle cx="4.6" cy="4.6" r="1.6" fill="#fff" />
       <circle cx="9.4" cy="4.6" r="1.6" fill="#fff" opacity=".7" />
       <circle cx="4.6" cy="9.4" r="1.6" fill="#fff" opacity=".7" />
