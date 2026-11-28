@@ -226,8 +226,8 @@ const ALL_MARK_DIM =
   'opacity-45 grayscale transition-[opacity,filter] duration-250 group-hover:opacity-80 group-aria-pressed:opacity-100 group-aria-pressed:grayscale-0 motion-reduce:transition-none';
 
 const PROJECT_LOGO_DIM =
-  '[&_img]:opacity-45 [&_img]:grayscale [&_img]:transition-[opacity,filter] [&_img]:duration-250 group-hover:[&_img]:opacity-80 ' +
-  'group-aria-pressed:[&_img]:opacity-100 group-aria-pressed:[&_img]:grayscale-0 motion-reduce:[&_img]:transition-none';
+  '[&_img]:opacity-45 [&_img]:grayscale [&_img]:transition-[opacity,filter] [&_img]:duration-250 hover:[&_img]:opacity-80 ' +
+  'aria-pressed:[&_img]:opacity-100 aria-pressed:[&_img]:grayscale-0 motion-reduce:[&_img]:transition-none';
 
 function SearchIcon({ className }: { className: string }) {
   return (
