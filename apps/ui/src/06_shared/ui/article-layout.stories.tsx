@@ -119,6 +119,25 @@ export const BlocksStepInInOrder: Story = {
   },
 };
 
+export const BlocksWaitHidden: Story = {
+  name: '차례가 오기 전의 block은 보이지 않다가 제자리로 올라온다',
+  tags: ['!dev'],
+  args: { header: <h1>제목</h1>, body: ONE_HEADING },
+  beforeEach: allowMotion,
+  play: async ({ canvas }) => {
+    const block = canvas.getByText('본문');
+    const [animation] = block.getAnimations();
+    animation?.pause();
+
+    if (animation) animation.currentTime = 0;
+    const waiting = getComputedStyle(block).opacity;
+    if (animation) animation.currentTime = 90 + 320;
+    const settled = getComputedStyle(block).opacity;
+
+    await expect([waiting, settled]).toEqual(['0', '1']);
+  },
+};
+
 export const ReducedMotionStaysStill: Story = {
   name: '움직임 줄이기 설정이면 block을 움직이지 않는다',
   tags: ['!dev'],
