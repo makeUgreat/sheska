@@ -1,12 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { prefersReducedMotion } from './prefers-reduced-motion';
 
 export type RevealPhase = 'holding' | 'revealing' | 'shown';
 
 const revealedKeys = new Set<string>();
-
-function prefersReducedMotion() {
-  return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 /**
  * 이미 받은 내용도 방금 만든 것처럼 잠깐 붙잡았다가 드러낸다. 붙잡는 시간은 `ref`를 단 요소가 화면에 들어온 뒤부터 센다.

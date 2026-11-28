@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect } from 'storybook/test';
+import { expect, spyOn } from 'storybook/test';
 import { ArticleLayout } from './article-layout';
 
 const AS_THE_DETAIL_PAGE_PLACES_IT = 'min-h-screen bg-page-background px-4 py-14';
@@ -95,14 +95,35 @@ export const FooterInsideArticle: Story = {
   },
 };
 
-export const HeaderThenBodyStagger: Story = {
-  name: '머리, 본문 순서로 24ms 간격을 두고 나타난다',
+function allowMotion() {
+  const matchMedia = spyOn(window, 'matchMedia').mockReturnValue({ matches: false } as MediaQueryList);
+
+  return () => matchMedia.mockRestore();
+}
+
+type PlayContext = Parameters<NonNullable<Story['play']>>[0];
+
+function stepInDelays({ canvas }: PlayContext) {
+  const blocks = [canvas.getByRole('heading', { name: '제목' }), canvas.getByRole('heading', { name: '배경' }), canvas.getByText('본문')];
+
+  return blocks.map((block) => block.getAnimations().map((animation) => animation.effect?.getTiming().delay));
+}
+
+export const BlocksStepInInOrder: Story = {
+  name: '머리의 줄과 본문의 block이 순서대로 45ms 간격을 두고 올라온다',
   tags: ['!dev'],
   args: { header: <h1>제목</h1>, body: ONE_HEADING },
-  play: async ({ canvas }) => {
-    const header = canvas.getByRole('heading', { name: '제목' }).closest('header');
-    const body = canvas.getByRole('heading', { name: '배경' }).closest<HTMLElement>('div[style]');
+  beforeEach: allowMotion,
+  play: async (context) => {
+    await expect(stepInDelays(context)).toEqual([[0], [45], [90]]);
+  },
+};
 
-    await expect([header?.style.animationDelay, body?.style.animationDelay]).toEqual(['0ms', '24ms']);
+export const ReducedMotionStaysStill: Story = {
+  name: '움직임 줄이기 설정이면 block을 움직이지 않는다',
+  tags: ['!dev'],
+  args: { header: <h1>제목</h1>, body: ONE_HEADING },
+  play: async (context) => {
+    await expect(stepInDelays(context)).toEqual([[], [], []]);
   },
 };

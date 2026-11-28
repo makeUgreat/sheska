@@ -1,5 +1,5 @@
-import { type ReactNode } from 'react';
-import { LINE_IN, lineDelay } from './line-in';
+import { type ReactNode, useLayoutEffect, useRef } from 'react';
+import { prefersReducedMotion } from '../lib/prefers-reduced-motion';
 import { Markdown } from './markdown';
 
 /**
@@ -16,15 +16,44 @@ const END_PLATE =
   'relative isolate mt-16 pt-10 before:absolute before:top-0 before:-bottom-24 before:left-1/2 before:-z-10 before:w-screen before:-translate-x-1/2 ' +
   'before:border-t before:border-plate-line before:bg-plate';
 
+const STEPPED_BLOCKS = ':scope > header > *, :scope > div > * > :not(section), :scope > div section > :not(section)';
+const STEP_IN: Keyframe[] = [{ opacity: 0, transform: 'translateY(8px)' }];
+const STEP_IN_MS = 320;
+const STEP_GAP_MS = 45;
+const LAST_STEPPED_BLOCK = 12;
+
+function useStepIn() {
+  const ref = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    const article = ref.current;
+    if (!article || prefersReducedMotion()) return;
+
+    const blocks = [...article.querySelectorAll(STEPPED_BLOCKS)].filter((block) => block.getBoundingClientRect().top < window.innerHeight);
+    const animations = blocks.map((block, order) =>
+      block.animate(STEP_IN, {
+        duration: STEP_IN_MS,
+        delay: Math.min(order, LAST_STEPPED_BLOCK) * STEP_GAP_MS,
+        easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)',
+        fill: 'backwards',
+      }),
+    );
+
+    return () => animations.forEach((animation) => animation.cancel());
+  }, []);
+
+  return ref;
+}
+
 export function ArticleLayout({ header, body, footer }: { header: ReactNode; body: string; footer?: ReactNode }) {
+  const ref = useStepIn();
+
   return (
-    <article>
-      <header className={`${PLATE} ${HEAD_WIDER} ${LINE_IN}`} style={lineDelay(0)}>
-        {header}
-      </header>
+    <article ref={ref}>
+      <header className={`${PLATE} ${HEAD_WIDER}`}>{header}</header>
 
       {body && (
-        <div className={`mt-11 ${LINE_IN}`} style={lineDelay(1)}>
+        <div className="mt-11">
           <Markdown body={body} />
         </div>
       )}
