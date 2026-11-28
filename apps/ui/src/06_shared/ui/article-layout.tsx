@@ -18,8 +18,8 @@ const END_PLATE =
 
 const STEPPED_BLOCKS = ':scope > header > *, :scope > div > * > :not(section), :scope > div section > :not(section)';
 const STEP_IN: Keyframe[] = [{ offset: 0, opacity: 0, transform: 'translateY(8px)' }];
-const STEP_IN_MS = 320;
-const STEP_GAP_MS = 45;
+const STEP_IN_MS = 260;
+const STEP_GAP_MS = 35;
 const LAST_STEPPED_BLOCK = 12;
 
 function useStepIn() {
